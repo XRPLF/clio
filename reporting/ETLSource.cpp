@@ -25,47 +25,50 @@
 #include <boost/log/trivial.hpp>
 #include <reporting/ETLSource.h>
 
-namespace ripple {
-
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
 // Primarly used in read-only mode, to monitor when ledgers are validated
-ETLSource::ETLSource(std::string ip, std::string wsPort)
-    : ip_(ip)
-    , wsPort_(wsPort)
-    , ws_(std::make_unique<
+ETLSource::ETLSource(
+    boost::json::object const& config,
+    CassandraFlatMapBackend& backend)
+    : ws_(std::make_unique<
           boost::beast::websocket::stream<boost::beast::tcp_stream>>(
           boost::asio::make_strand(ioc_)))
     , resolver_(boost::asio::make_strand(ioc_))
     , timer_(ioc_)
+    , backend_(backend)
 {
-}
-
-ETLSource::ETLSource(std::string ip, std::string wsPort, std::string grpcPort)
-    : ip_(ip)
-    , wsPort_(wsPort)
-    , grpcPort_(grpcPort)
-    , ws_(std::make_unique<
-          boost::beast::websocket::stream<boost::beast::tcp_stream>>(
-          boost::asio::make_strand(ioc_)))
-    , resolver_(boost::asio::make_strand(ioc_))
-    , timer_(ioc_)
-{
-    try
+    if (config.contains("ip"))
     {
-        boost::asio::ip::tcp::endpoint endpoint{
-            boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
-        std::stringstream ss;
-        ss << endpoint;
-        stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-            grpc::CreateChannel(ss.str(), grpc::InsecureChannelCredentials()));
-        BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
+        auto ipJs = config.at("ip").as_string();
+        ip_ = {ipJs.c_str(), ipJs.size()};
     }
-    catch (std::exception const& e)
+    if (config.contains("ws_port"))
     {
-        BOOST_LOG_TRIVIAL(debug)
-            << "Exception while creating stub = " << e.what()
-            << " . Remote = " << toString();
+        auto portjs = config.at("ws_port").as_string();
+        wsPort_ = {portjs.c_str(), portjs.size()};
+    }
+    if (config.contains("grpc_port"))
+    {
+        auto portjs = config.at("grpc_port").as_string();
+        grpcPort_ = {portjs.c_str(), portjs.size()};
+        try
+        {
+            boost::asio::ip::tcp::endpoint endpoint{
+                boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
+            std::stringstream ss;
+            ss << endpoint;
+            stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
+                grpc::CreateChannel(
+                    ss.str(), grpc::InsecureChannelCredentials()));
+            BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
+        }
+        catch (std::exception const& e)
+        {
+            BOOST_LOG_TRIVIAL(debug)
+                << "Exception while creating stub = " << e.what()
+                << " . Remote = " << toString();
+        }
     }
 }
 
@@ -388,6 +391,7 @@ public:
     process(
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq,
+        CassandraFlatMapBackend& backend,
         bool abort = false)
     {
         std::cout << "Processing calldata" << std::endl;
@@ -429,12 +433,10 @@ public:
 
         for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
-            /*
-            flatMapBackend.store(
+            backend.store(
                 std::move(*obj.mutable_key()),
                 request_.ledger().sequence(),
                 std::move(*obj.mutable_data()));
-                */
         }
 
         return more ? CallStatus::MORE : CallStatus::DONE;
@@ -505,7 +507,7 @@ ETLSource::loadInitialLedger(uint32_t sequence)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
-            auto result = ptr->process(stub_, cq, abort);
+            auto result = ptr->process(stub_, cq, backend_, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
@@ -550,34 +552,18 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
     }
     return {status, std::move(response)};
 }
-/*
-ETLLoadBalancer::ETLLoadBalancer(ReportingETL& etl)
-    : etl_(etl)
-    , journal_(etl_.getApplication().journal("ReportingETL::LoadBalancer"))
+ETLLoadBalancer::ETLLoadBalancer(
+    boost::json::array const& config,
+    CassandraFlatMapBackend& backend)
 {
-}
-
-void
-ETLLoadBalancer::add(
-    std::string& host,
-    std::string& websocketPort,
-    std::string& grpcPort)
-{
-    std::unique_ptr<ETLSource> ptr =
-        std::make_unique<ETLSource>(host, websocketPort, grpcPort, etl_);
-    sources_.push_back(std::move(ptr));
-    BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
-                          << sources_.back()->toString();
-}
-
-void
-ETLLoadBalancer::add(std::string& host, std::string& websocketPort)
-{
-    std::unique_ptr<ETLSource> ptr =
-        std::make_unique<ETLSource>(host, websocketPort, etl_);
-    sources_.push_back(std::move(ptr));
-    BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
-                          << sources_.back()->toString();
+    for (auto& entry : config)
+    {
+        std::unique_ptr<ETLSource> source =
+            std::make_unique<ETLSource>(entry.as_object(), backend);
+        sources_.push_back(std::move(source));
+        BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
+                                << sources_.back()->toString();
+    }
 }
 
 void
@@ -588,12 +574,9 @@ ETLLoadBalancer::loadInitialLedger(uint32_t sequence)
             bool res = source->loadInitialLedger(sequence);
             if (!res)
             {
-                BOOST_LOG_TRIVIAL(error) << "Failed to download initial
-ledger.
-"
-                                       << " Sequence = " << sequence
-                                       << " source = " <<
-source->toString();
+                BOOST_LOG_TRIVIAL(error) << "Failed to download initial ledger."
+                                         << " Sequence = " << sequence
+                                         << " source = " << source->toString();
             }
             return res;
         },
@@ -634,6 +617,7 @@ ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects)
         return {};
 }
 
+/*
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
 ETLLoadBalancer::getP2pForwardingStub() const
 {
@@ -691,8 +675,9 @@ ETLSource::getP2pForwardingStub() const
         return org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateChannel(
                 beast::IP::Endpoint(
-                    boost::asio::ip::make_address(ip_),
-std::stoi(grpcPort_)) .to_string(), grpc::InsecureChannelCredentials()));
+                    boost::asio::ip::make_address(ip_), std::stoi(grpcPort_))
+                    .to_string(),
+                grpc::InsecureChannelCredentials()));
     }
     catch (std::exception const&)
     {
@@ -705,8 +690,7 @@ Json::Value
 ETLSource::forwardToP2p(RPC::JsonContext& context) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
-                           << "request = " <<
-context.params.toStyledString();
+                             << "request = " << context.params.toStyledString();
 
     Json::Value response;
     if (!connected_)
@@ -718,9 +702,10 @@ context.params.toStyledString();
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
     namespace websocket = beast::websocket;  // from
-<boost/beast/websocket.hpp> namespace net = boost::asio;             // from
-<boost/asio.hpp> using tcp = boost::asio::ip::tcp;        // from
-<boost/asio/ip/tcp.hpp> Json::Value& request = context.params; try
+    <boost / beast / websocket.hpp> namespace net = boost::asio;  // from
+    <boost / asio.hpp> using tcp = boost::asio::ip::tcp;          // from
+    <boost / asio / ip / tcp.hpp> Json::Value& request = context.params;
+    try
     {
         // The io_context is required for all I/O
         net::io_context ioc;
@@ -742,7 +727,7 @@ context.params.toStyledString();
         // and to tell rippled to charge the client IP for RPC
         // resources. See "secure_gateway" in
         //
-https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
+    https:  // github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator(
             [&context](websocket::request_type& req) {
                 req.set(
@@ -753,8 +738,8 @@ https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
                     http::field::forwarded,
                     "for=" + context.consumer.to_string());
             }));
-        BOOST_LOG_TRIVIAL(debug) << "client ip: " <<
-context.consumer.to_string();
+        BOOST_LOG_TRIVIAL(debug)
+            << "client ip: " << context.consumer.to_string();
 
         BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
         // Perform the websocket handshake
@@ -787,7 +772,7 @@ context.consumer.to_string();
         return response;
     }
 }
-
+*/
 template <class Func>
 bool
 ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
@@ -796,7 +781,7 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0;
 
-    while (!etl_.isStopping())
+    while (true)
     {
         auto& source = sources_[sourceIdx];
 
@@ -836,13 +821,9 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
         numAttempts++;
         if (numAttempts % sources_.size() == 0)
         {
-            // If another process loaded the ledger into the database, we
-can
-            // abort trying to fetch the ledger from a transaction
-processing
-            // process
-            if (etl_.getApplication().getLedgerMaster().getLedgerBySeq(
-                    ledgerSequence))
+            /*
+                if (etl_.getApplication().getLedgerMaster().getLedgerBySeq(
+                        ledgerSequence))
             {
                 BOOST_LOG_TRIVIAL(warning)
                     << __func__ << " : "
@@ -851,6 +832,7 @@ processing
                     << " Sequence = " << ledgerSequence;
                 break;
             }
+            */
             BOOST_LOG_TRIVIAL(error)
                 << __func__ << " : "
                 << "Error executing function "
@@ -859,7 +841,7 @@ processing
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }
-    return !etl_.isStopping();
+    return false;
 }
 
 void
@@ -875,5 +857,3 @@ ETLLoadBalancer::stop()
     for (auto& source : sources_)
         source->stop();
 }
-*/
-}  // namespace ripple

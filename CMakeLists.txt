@@ -7,6 +7,7 @@
 # Official repository: https://github.com/boostorg/beast
 #
 
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
 project(reporting)
 cmake_minimum_required(VERSION 3.17)
 set (CMAKE_CXX_STANDARD 17)
@@ -15,11 +16,16 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 
-FIND_PACKAGE( Boost 1.75 COMPONENTS log log_setup thread system REQUIRED )
+FIND_PACKAGE( Boost 1.75 COMPONENTS filesystem log log_setup thread system REQUIRED )
 
 add_executable (reporting
     websocket_server_async.cpp
 )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
+include(ExternalProject)
+message(${CMAKE_CURRENT_BINARY_DIR})
+message(${CMAKE_MODULE_PATH})
+include(cassandra)
 
 
 
@@ -83,7 +89,7 @@ target_include_directories (grpc_pbufs SYSTEM PUBLIC ${GRPC_GEN_DIR})
 target_link_libraries (grpc_pbufs ${_REFLECTION} ${_PROTOBUF_LIBPROTOBUF} ${_GRPC_GRPCPP})
 
 
-target_sources(reporting PRIVATE reporting/ETLSource.cpp)
+target_sources(reporting PRIVATE reporting/ETLSource.cpp reporting/ReportingBackend.cpp)
 
 
 message(${Boost_LIBRARIES})

@@ -24,6 +24,8 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <reporting/ETLSource.h>
+#include <reporting/ReportingBackend.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -267,6 +269,26 @@ main(int argc, char* argv[])
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
     auto const threads = std::max<int>(1, std::atoi(argv[3]));
     auto const config = parse_config(argv[4]);
+    if (!config)
+    {
+        std::cerr << "couldnt parse config. Exiting..." << std::endl;
+        return EXIT_FAILURE;
+    }
+    auto cassConfig =
+        (*config).at("database").as_object().at("cassandra").as_object();
+    std::cout << cassConfig << std::endl;
+
+    CassandraFlatMapBackend backend{cassConfig};
+    backend.open();
+    boost::json::array sources = (*config).at("etl_sources").as_array();
+    if (!sources.size())
+    {
+        std::cerr << "no etl sources listed in config. exiting..." << std::endl;
+        return EXIT_FAILURE;
+    }
+    ETLSource source{sources[0].as_object(), backend};
+    source.start();
+    // source.loadInitialLedger(60000000);
 
     // The io_context is required for all I/O
     net::io_context ioc{threads};
