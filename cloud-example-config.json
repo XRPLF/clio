@@ -1,0 +1,38 @@
+{
+    "database":
+    {
+        "type":"cassandra",
+        "cassandra":
+        {
+            "secure_connect_bundle":"[path/to/zip. ignore if using contact_points]",
+            "contact_points":"[ip. ignore if using secure_connect_bundle]",
+            "port":"[port. ignore if using_secure_connect_bundle]",
+            "keyspace":"clio",
+            "username":"[username, if any]",
+            "password":"[password, if any]",
+            "max_requests_outstanding":25000,
+            "threads":8
+        }
+    },
+    "etl_sources":
+    [
+        {
+            "ip":"[rippled ip]",
+            "ws_port":"6006",
+            "grpc_port":"50051"
+        }
+    ],
+    "dos_guard":
+    {
+        "whitelist":["127.0.0.1"]
+    },
+    "server":{
+        "ip":"0.0.0.0",
+        "port":8080
+    },
+    "log_level":"debug",
+    "log_file":"./clio.log",
+    "online_delete":0,
+    "extractor_threads":8,
+    "read_only":false
+}

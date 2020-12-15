@@ -1,0 +1,112 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2023, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include <rpc/common/AnyHandler.h>
+#include <rpc/handlers/impl/FakesAndMocks.h>
+#include <util/Fixtures.h>
+
+#include <boost/json/parse.hpp>
+
+using namespace std;
+using namespace RPCng;
+using namespace RPCng::validation;
+using namespace unittests::detail;
+
+namespace json = boost::json;
+
+class RPCTestHandlerTest : public NoLoggerFixture
+{
+};
+
+// example handler tests
+TEST_F(RPCTestHandlerTest, HandlerSuccess)
+{
+    auto const handler = AnyHandler{HandlerFake{}};
+    auto const input = json::parse(R"({ 
+        "hello": "world", 
+        "limit": 10
+    })");
+
+    auto const output = handler.process(input);
+    ASSERT_TRUE(output);
+
+    auto const val = output.value();
+    EXPECT_EQ(val.as_object().at("computed").as_string(), "world_10");
+}
+
+TEST_F(RPCTestHandlerTest, CoroutineHandlerSuccess)
+{
+    auto const handler = AnyHandler{CoroutineHandlerFake{}};
+    auto const input = json::parse(R"({ 
+        "hello": "world", 
+        "limit": 10
+    })");
+    boost::asio::io_context ctx;
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
+        ASSERT_TRUE(output);
+
+        auto const val = output.value();
+        EXPECT_EQ(val.as_object().at("computed").as_string(), "world_10");
+    });
+    ctx.run();
+}
+
+TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
+{
+    auto const handler = AnyHandler{NoInputHandlerFake{}};
+    auto const output = handler.process(json::parse(R"({})"));
+    ASSERT_TRUE(output);
+
+    auto const val = output.value();
+    EXPECT_EQ(val.as_object().at("computed").as_string(), "test");
+}
+
+TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
+{
+    auto const handler = AnyHandler{HandlerFake{}};
+    auto const input = json::parse(R"({ 
+        "hello": "not world", 
+        "limit": 10
+    })");
+
+    auto const output = handler.process(input);
+    ASSERT_FALSE(output);
+
+    auto const err = RPC::makeError(output.error());
+    EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
+    EXPECT_EQ(err.at("error_code").as_uint64(), 31);
+}
+
+TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
+{
+    auto const handler = AnyHandler{FailingHandlerFake{}};
+    auto const input = json::parse(R"({ 
+        "hello": "world", 
+        "limit": 10
+    })");
+
+    // validation succeeds but handler itself returns error
+    auto const output = handler.process(input);
+    ASSERT_FALSE(output);
+
+    auto const err = RPC::makeError(output.error());
+    EXPECT_EQ(err.at("error").as_string(), "Very custom error");
+}

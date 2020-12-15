@@ -1,0 +1,93 @@
+{
+    "database": {
+        "type": "cassandra",
+        "cassandra": {
+            "contact_points": "127.0.0.1",
+            "port": 9042,
+            "keyspace": "clio",
+            "replication_factor": 1,
+            "table_prefix": "",
+            "max_write_requests_outstanding": 25000,
+            "max_read_requests_outstanding": 30000,
+            "threads": 8
+        }
+    },
+    "etl_sources": [
+        {
+            "ip": "127.0.0.1",
+            "ws_port": "6006",
+            "grpc_port": "50051"
+        }
+    ],
+    "dos_guard": {
+        "whitelist": [
+            "127.0.0.1"
+        ], // comma-separated list of ips to exclude from rate limiting
+        /* The below values are the default values and are only specified here
+         * for documentation purposes. The rate limiter currently limits
+         * connections and bandwidth per ip. The rate limiter looks at the raw
+         * ip of a client connection, and so requests routed through a load
+         * balancer will all have the same ip and be treated as a single client
+         */
+        "max_fetches": 1000000, // max bytes per ip per sweep interval
+        "max_connections": 20, // max connections per ip
+        "max_requests": 20, // max connections per ip
+        "sweep_interval": 1 // time in seconds before resetting bytes per ip count
+    },
+    "cache": {
+        "peers": [
+            {
+                "ip": "127.0.0.1",
+                "port": 51234
+            }
+        ]
+    },
+    "server": {
+        "ip": "0.0.0.0",
+        "port": 51233,
+        /* Max number of requests to queue up before rejecting further requests.
+        * Defaults to 0, which disables the limit
+        */
+        "max_queue_size": 500
+    },
+    "log_channels": [
+        {
+            "channel": "Backend",
+            "log_level": "fatal"
+        },
+        {
+            "channel": "WebServer",
+            "log_level": "info"
+        },
+        {
+            "channel": "Subscriptions",
+            "log_level": "info"
+        },
+        {
+            "channel": "RPC",
+            "log_level": "error"
+        },
+        {
+            "channel": "ETL",
+            "log_level": "debug"
+        },
+        {
+            "channel": "Performance",
+            "log_level": "trace"
+        }
+    ],
+    "log_level": "info",
+    "log_format": "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%", // This is the default format
+    "log_to_console": true,
+    "log_directory": "./clio_log",
+    "log_rotation_size": 2048,
+    "log_directory_max_size": 51200,
+    "log_rotation_hour_interval": 12,
+    "log_tag_style": "uint",
+    "extractor_threads": 8,
+    "read_only": false,
+    //"start_sequence": [integer] the ledger index to start from,
+    //"finish_sequence": [integer] the ledger index to finish at,
+    //"ssl_cert_file" : "/full/path/to/cert.file",
+    //"ssl_key_file" : "/full/path/to/key.file"
+}

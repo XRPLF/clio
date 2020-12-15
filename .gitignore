@@ -1,0 +1,6 @@
+*clio*.log
+build*/
+.vscode
+.python-version
+config.json
+src/main/impl/Build.cpp
