@@ -11,7 +11,11 @@ project(reporting)
 cmake_minimum_required(VERSION 3.17)
 set (CMAKE_CXX_STANDARD 17)
 
-FIND_PACKAGE( Boost 1.75 COMPONENTS thread system log REQUIRED )
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+FIND_PACKAGE( Boost 1.75 COMPONENTS log log_setup thread system REQUIRED )
 
 add_executable (reporting
     websocket_server_async.cpp

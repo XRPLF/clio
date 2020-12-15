@@ -230,14 +230,22 @@ private:
 std::optional<boost::json::object>
 parse_config(const char* filename)
 {
-    std::ifstream in(filename, std::ios::in | std::ios::binary);
-    if (in)
+    try
     {
-        std::stringstream contents;
-        contents << in.rdbuf();
-        in.close();
-        boost::json::value value = boost::json::parse(contents.str());
-        return value.as_object();
+        std::ifstream in(filename, std::ios::in | std::ios::binary);
+        if (in)
+        {
+            std::stringstream contents;
+            contents << in.rdbuf();
+            in.close();
+            std::cout << contents.str() << std::endl;
+            boost::json::value value = boost::json::parse(contents.str());
+            return value.as_object();
+        }
+    }
+    catch (std::exception const& e)
+    {
+        std::cout << e.what() << std::endl;
     }
     return {};
 }
@@ -247,12 +255,12 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 4)
+    if (argc != 5)
     {
-        std::cerr
-            << "Usage: websocket-server-async <address> <port> <threads>\n"
-            << "Example:\n"
-            << "    websocket-server-async 0.0.0.0 8080 1\n";
+        std::cerr << "Usage: websocket-server-async <address> <port> <threads> "
+                     "<config_file> \n"
+                  << "Example:\n"
+                  << "    websocket-server-async 0.0.0.0 8080 1\n";
         return EXIT_FAILURE;
     }
     auto const address = net::ip::make_address(argv[1]);
