@@ -40,7 +40,7 @@ set (GRPC_GEN_DIR "${CMAKE_BINARY_DIR}/proto_gen_grpc")
 file (MAKE_DIRECTORY ${GRPC_GEN_DIR})
 set (GRPC_PROTO_SRCS)
 set (GRPC_PROTO_HDRS)
-set (GRPC_PROTO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/proto")
+set (GRPC_PROTO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/proto/org")
 file(GLOB_RECURSE GRPC_DEFINITION_FILES LIST_DIRECTORIES false "${GRPC_PROTO_ROOT}/*.proto")
 foreach(file ${GRPC_DEFINITION_FILES})
   get_filename_component(_abs_file ${file} ABSOLUTE)
@@ -64,7 +64,8 @@ foreach(file ${GRPC_DEFINITION_FILES})
             --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
          -I ${_proto_inc} -I ${_rel_dir}
          ${_abs_file}
-          DEPENDS ${_abs_file})
+          DEPENDS ${_abs_file}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set_source_files_properties(${src_1} ${src_2} ${hdr_1} ${hdr_2} PROPERTIES GENERATED TRUE)
     list(APPEND GRPC_PROTO_SRCS ${src_1} ${src_2})
     list(APPEND GRPC_PROTO_HDRS ${hdr_1} ${hdr_2})

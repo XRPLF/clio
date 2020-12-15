@@ -1,5 +1,0 @@
-package message;
-
-message Message2 {
-    repeated int32 id = 1;
-}
