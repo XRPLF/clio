@@ -36,38 +36,48 @@ set(_GRPC_GRPCPP grpc++)
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
 message(${CMAKE_CURRENT_BINARY_DIR})
 
-# Proto file
-get_filename_component(proto "message.proto" ABSOLUTE)
-get_filename_component(proto_path "${proto}" PATH)
+set (GRPC_GEN_DIR "${CMAKE_BINARY_DIR}/proto_gen_grpc")
+file (MAKE_DIRECTORY ${GRPC_GEN_DIR})
+set (GRPC_PROTO_SRCS)
+set (GRPC_PROTO_HDRS)
+set (GRPC_PROTO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/proto")
+file(GLOB_RECURSE GRPC_DEFINITION_FILES LIST_DIRECTORIES false "${GRPC_PROTO_ROOT}/*.proto")
+foreach(file ${GRPC_DEFINITION_FILES})
+  get_filename_component(_abs_file ${file} ABSOLUTE)
+  get_filename_component(_abs_dir ${_abs_file} DIRECTORY)
+  get_filename_component(_basename ${file} NAME_WE)
+  get_filename_component(_proto_inc ${GRPC_PROTO_ROOT} DIRECTORY) # updir one level
+  file(RELATIVE_PATH _rel_root_file ${_proto_inc} ${_abs_file})
+  get_filename_component(_rel_root_dir ${_rel_root_file} DIRECTORY)
+  file(RELATIVE_PATH _rel_dir ${CMAKE_CURRENT_SOURCE_DIR} ${_abs_dir})
 
-# Generated sources
-set(proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/message.pb.cc")
-set(proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/message.pb.h")
-set(grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/message.grpc.pb.cc")
-set(grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/message.grpc.pb.h")
-add_custom_command(
-      OUTPUT "${proto_srcs}" "${proto_hdrs}" "${grpc_srcs}" "${grpc_hdrs}"
-      COMMAND ${_PROTOBUF_PROTOC}
-      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
-        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-        -I "${proto_path}"
-        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${proto}"
-      DEPENDS "${proto}")
+  set (src_1 "${GRPC_GEN_DIR}/${_rel_root_dir}/${_basename}.grpc.pb.cc")
+  set (src_2 "${GRPC_GEN_DIR}/${_rel_root_dir}/${_basename}.pb.cc")
+  set (hdr_1 "${GRPC_GEN_DIR}/${_rel_root_dir}/${_basename}.grpc.pb.h")
+  set (hdr_2 "${GRPC_GEN_DIR}/${_rel_root_dir}/${_basename}.pb.h")
 
-# Include generated *.pb.h files
-# Targets greeter_[async_](client|server)
-target_sources(reporting PRIVATE message.pb.cc message.grpc.pb.cc)
+    add_custom_command(
+          OUTPUT "${src_1}" "${src_2}" "${hdr_1}" "${hdr_2}"
+          COMMAND ${_PROTOBUF_PROTOC}
+    ARGS --grpc_out=${GRPC_GEN_DIR}
+         --cpp_out=${GRPC_GEN_DIR}
+            --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+         -I ${_proto_inc} -I ${_rel_dir}
+         ${_abs_file}
+          DEPENDS ${_abs_file})
+    set_source_files_properties(${src_1} ${src_2} ${hdr_1} ${hdr_2} PROPERTIES GENERATED TRUE)
+    list(APPEND GRPC_PROTO_SRCS ${src_1} ${src_2})
+    list(APPEND GRPC_PROTO_HDRS ${hdr_1} ${hdr_2})
+endforeach()
 
-
-
-
-
-
+add_library (grpc_pbufs STATIC ${GRPC_PROTO_SRCS} ${GRPC_PROTO_HDRS})
+#target_include_directories (grpc_pbufs PRIVATE src)
+target_include_directories (grpc_pbufs SYSTEM PUBLIC ${GRPC_GEN_DIR})
+target_link_libraries (grpc_pbufs ${_REFLECTION} ${_PROTOBUF_LIBPROTOBUF} ${_GRPC_GRPCPP})
 
 
 
 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR})
-TARGET_LINK_LIBRARIES(reporting LINK_PUBLIC ${Boost_LIBRARIES} ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+TARGET_LINK_LIBRARIES(reporting LINK_PUBLIC ${Boost_LIBRARIES} grpc_pbufs)
