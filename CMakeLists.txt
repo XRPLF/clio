@@ -11,7 +11,7 @@ project(reporting)
 cmake_minimum_required(VERSION 3.17)
 set (CMAKE_CXX_STANDARD 17)
 
-FIND_PACKAGE( Boost 1.75 COMPONENTS thread log REQUIRED )
+FIND_PACKAGE( Boost 1.75 COMPONENTS thread system log REQUIRED )
 
 add_executable (reporting
     websocket_server_async.cpp
@@ -82,6 +82,6 @@ target_link_libraries (grpc_pbufs ${_REFLECTION} ${_PROTOBUF_LIBPROTOBUF} ${_GRP
 target_sources(reporting PRIVATE reporting/ETLSource.cpp)
 
 
-
+message(${Boost_LIBRARIES})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-TARGET_LINK_LIBRARIES(reporting LINK_PUBLIC ${Boost_LIBRARIES} ${Boost_LOG_LIBRARY} grpc_pbufs)
+TARGET_LINK_LIBRARIES(reporting PUBLIC ${Boost_LIBRARIES} grpc_pbufs)

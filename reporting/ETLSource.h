@@ -21,10 +21,10 @@
 #define RIPPLE_APP_REPORTING_ETLSOURCE_H_INCLUDED
 
 #include <boost/algorithm/string.hpp>
+#include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
-#include <boost/asio.hpp>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -63,9 +63,9 @@ class ETLSource
 
     std::string validatedLedgersRaw_;
 
-    //NetworkValidatedLedgers& networkValidatedLedgers_;
+    // NetworkValidatedLedgers& networkValidatedLedgers_;
 
-    //beast::Journal journal_;
+    // beast::Journal journal_;
 
     mutable std::mutex mtx_;
 
@@ -115,10 +115,7 @@ public:
     ETLSource(std::string ip, std::string wsPort);
 
     /// Create ETL source with gRPC endpoint
-    ETLSource(
-            std::string ip,
-            std::string wsPort,
-            std::string grpcPort);
+    ETLSource(std::string ip, std::string wsPort, std::string grpcPort);
 
     /// @param sequence ledger sequence to check for
     /// @return true if this source has the desired ledger
@@ -195,7 +192,6 @@ public:
     void
     stop()
     {
-
         assert(ws_);
         close(false);
     }
@@ -215,7 +211,6 @@ public:
             " , ip : " + ip_ + " , web socket port : " + wsPort_ +
             ", grpc port : " + grpcPort_ + " }";
     }
-
 
     /// Download a ledger in full
     /// @param ledgerSequence sequence of the ledger to download
@@ -273,7 +268,6 @@ public:
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
     getP2pForwardingStub() const;
     */
-
 };
 /*
  *

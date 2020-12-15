@@ -20,9 +20,11 @@
 */
 //==============================================================================
 
-#include <reporting/ETLSource.h>
-#include <boost/log/trivial.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/json.hpp>
+#include <boost/json/src.hpp>
+#include <boost/log/trivial.hpp>
+#include <reporting/ETLSource.h>
 
 namespace ripple {
 
@@ -40,10 +42,7 @@ ETLSource::ETLSource(std::string ip, std::string wsPort)
 {
 }
 
-ETLSource::ETLSource(
-    std::string ip,
-    std::string wsPort,
-    std::string grpcPort)
+ETLSource::ETLSource(std::string ip, std::string wsPort, std::string grpcPort)
     : ip_(ip)
     , wsPort_(wsPort)
     , grpcPort_(grpcPort)
@@ -60,17 +59,14 @@ ETLSource::ETLSource(
         std::stringstream ss;
         ss << endpoint;
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                grpc::CreateChannel(ss.str(),
-                    grpc::InsecureChannelCredentials()));
-BOOST_LOG_TRIVIAL(debug)
-         << "Made stub for remote = " << toString();
+            grpc::CreateChannel(ss.str(), grpc::InsecureChannelCredentials()));
+        BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
     }
     catch (std::exception const& e)
     {
-
-BOOST_LOG_TRIVIAL(debug)
-         << "Exception while creating stub = " << e.what()
-                               << " . Remote = " << toString();
+        BOOST_LOG_TRIVIAL(debug)
+            << "Exception while creating stub = " << e.what()
+            << " . Remote = " << toString();
     }
 }
 
@@ -84,15 +80,16 @@ ETLSource::reconnect(boost::beast::error_code ec)
     if (ec != boost::asio::error::operation_aborted &&
         ec != boost::asio::error::connection_refused)
     {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " : "
-                               << "error code = " << ec << " - " << toString();
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " : "
+            << "error code = " << ec << " - " << toString();
     }
     else
     {
-        BOOST_LOG_TRIVIAL(warning) << __func__ << " : "
-                              << "error code = " << ec << " - " << toString();
+        BOOST_LOG_TRIVIAL(warning)
+            << __func__ << " : "
+            << "error code = " << ec << " - " << toString();
     }
-
 
     // exponentially increasing timeouts, with a max of 30 seconds
     size_t waitTime = std::min(pow(2, numFailures_), 30.0);
@@ -157,8 +154,8 @@ ETLSource::onResolve(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type results)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : ec = " << ec << " - "
-                           << toString();
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " : ec = " << ec << " - " << toString();
     if (ec)
     {
         // try again
@@ -178,8 +175,8 @@ ETLSource::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : ec = " << ec << " - "
-                           << toString();
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " : ec = " << ec << " - " << toString();
     if (ec)
     {
         // start over
@@ -218,8 +215,8 @@ ETLSource::onConnect(
 void
 ETLSource::onHandshake(boost::beast::error_code ec)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : ec = " << ec << " - "
-                           << toString();
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " : ec = " << ec << " - " << toString();
     if (ec)
     {
         // start over
@@ -227,30 +224,23 @@ ETLSource::onHandshake(boost::beast::error_code ec)
     }
     else
     {
-        /*
-        Json::Value jv;
-        jv["command"] = "subscribe";
-
-        jv["streams"] = Json::arrayValue;
-        Json::Value ledgerStream("ledger");
-        jv["streams"].append(ledgerStream);
-        Json::Value txnStream("transactions_proposed");
-        jv["streams"].append(txnStream);
-        Json::FastWriter fastWriter;
-*/
+        boost::json::object jv{
+            {"command", "subscribe"},
+            {"streams", {"ledger", "transactions_proposed"}}};
+        std::string s = boost::json::serialize(jv);
         BOOST_LOG_TRIVIAL(trace) << "Sending subscribe stream message";
         // Send the message
-        ws_->async_write(
-            boost::asio::buffer("foo"),
-            [this](auto ec, size_t size) { onWrite(ec, size); });
+        ws_->async_write(boost::asio::buffer(s), [this](auto ec, size_t size) {
+            onWrite(ec, size);
+        });
     }
 }
 
 void
 ETLSource::onWrite(boost::beast::error_code ec, size_t bytesWritten)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : ec = " << ec << " - "
-                           << toString();
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " : ec = " << ec << " - " << toString();
     if (ec)
     {
         // start over
@@ -266,8 +256,8 @@ ETLSource::onWrite(boost::beast::error_code ec, size_t bytesWritten)
 void
 ETLSource::onRead(boost::beast::error_code ec, size_t size)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : ec = " << ec << " - "
-                           << toString();
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " : ec = " << ec << " - " << toString();
     // if error or error reading message, start over
     if (ec)
     {
@@ -295,62 +285,61 @@ ETLSource::handleMessage()
     connected_ = true;
     try
     {
-        /*
-        Json::Value response;
-        Json::Reader reader;
-        if (!reader.parse(
-                static_cast<char const*>(readBuffer_.data().data()), response))
-        {
-            BOOST_LOG_TRIVIAL(error)
-                << __func__ << " : "
-                << "Error parsing stream message."
-                << " Message = " << readBuffer_.data().data();
-            return false;
-        }
+        boost::json::value raw = boost::json::parse(
+            static_cast<char const*>(readBuffer_.data().data()));
+        boost::json::object response = raw.as_object();
 
         uint32_t ledgerIndex = 0;
-        if (response.isMember("result"))
+        if (response.contains("result"))
         {
-            if (response["result"].isMember(jss::ledger_index))
+            boost::json::object result = response["result"].as_object();
+            if (result.contains("ledger_index"))
             {
-                ledgerIndex = response["result"][jss::ledger_index].asUInt();
+                ledgerIndex = result["ledger_index"].as_uint64();
             }
-            if (response[jss::result].isMember(jss::validated_ledgers))
+            if (result.contains("validated_ledgers"))
             {
+                boost::json::string const& validatedLedgers =
+                    result["validated_ledgers"].as_string();
                 setValidatedRange(
-                    response[jss::result][jss::validated_ledgers].asString());
+                    {validatedLedgers.c_str(), validatedLedgers.size()});
             }
             BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " : "
                 << "Received a message on ledger "
-                << " subscription stream. Message : "
-                << response.toStyledString() << " - " << toString();
+                << " subscription stream. Message : " << response << " - "
+                << toString();
         }
         else
         {
-            if (response.isMember(jss::transaction))
+            if (response.contains("transaction"))
             {
-                if (etl_.getETLLoadBalancer().shouldPropagateTxnStream(this))
+                /*
+                if
+                (etl_.getETLLoadBalancer().shouldPropagateTxnStream(this))
                 {
                     etl_.getApplication().getOPs().forwardProposedTransaction(
                         response);
                 }
+                */
             }
             else
             {
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " : "
                     << "Received a message on ledger "
-                    << " subscription stream. Message : "
-                    << response.toStyledString() << " - " << toString();
-                if (response.isMember(jss::ledger_index))
+                    << " subscription stream. Message : " << response << " - "
+                    << toString();
+                if (response.contains("ledger_index"))
                 {
-                    ledgerIndex = response[jss::ledger_index].asUInt();
+                    ledgerIndex = response["ledger_index"].as_uint64();
                 }
-                if (response.isMember(jss::validated_ledgers))
+                if (response.contains("validated_ledgers"))
                 {
+                    boost::json::string const& validatedLedgers =
+                        response["validated_ledgers"].as_string();
                     setValidatedRange(
-                        response[jss::validated_ledgers].asString());
+                        {validatedLedgers.c_str(), validatedLedgers.size()});
                 }
             }
         }
@@ -361,9 +350,8 @@ ETLSource::handleMessage()
                 << __func__ << " : "
                 << "Pushing ledger sequence = " << ledgerIndex << " - "
                 << toString();
-            networkValidatedLedgers_.push(ledgerIndex);
+            // networkValidatedLedgers_.push(ledgerIndex);
         }
-        */
         return true;
     }
     catch (std::exception const& e)
@@ -383,15 +371,11 @@ class AsyncCallData
 
     grpc::Status status_;
 
-
-
 public:
-    AsyncCallData(
-        uint32_t seq)
+    AsyncCallData(uint32_t seq)
     {
         request_.mutable_ledger()->set_sequence(seq);
         request_.set_user("ETL");
-
 
         cur_ = std::make_unique<org::xrpl::rpc::v1::GetLedgerDataResponse>();
 
@@ -415,9 +399,10 @@ public:
         }
         if (!status_.ok())
         {
-            BOOST_LOG_TRIVIAL(debug) << "AsyncCallData status_ not ok: "
-                                   << " code = " << status_.error_code()
-                                   << " message = " << status_.error_message();
+            BOOST_LOG_TRIVIAL(debug)
+                << "AsyncCallData status_ not ok: "
+                << " code = " << status_.error_code()
+                << " message = " << status_.error_message();
             return CallStatus::ERRORED;
         }
         if (!next_->is_unlimited())
@@ -435,7 +420,6 @@ public:
         // if no marker returned, we are done
         if (cur_->marker().size() == 0)
             more = false;
-
 
         // if we are not done, make the next async call
         if (more)
@@ -498,17 +482,15 @@ ETLSource::loadInitialLedger(uint32_t sequence)
     std::vector<AsyncCallData> calls;
     calls.emplace_back(sequence);
 
-
     BOOST_LOG_TRIVIAL(debug) << "Starting data download for ledger " << sequence
-                           << ". Using source = " << toString();
+                             << ". Using source = " << toString();
 
     for (auto& c : calls)
         c.call(stub_, cq);
 
     size_t numFinished = 0;
     bool abort = false;
-    while (numFinished < calls.size() &&
-           cq.Next(&tag, &ok))
+    while (numFinished < calls.size() && cq.Next(&tag, &ok))
     {
         assert(tag);
 
@@ -524,8 +506,7 @@ ETLSource::loadInitialLedger(uint32_t sequence)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
-            auto result =
-                ptr->process(stub_, cq, abort);
+            auto result = ptr->process(stub_, cq, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
@@ -608,9 +589,12 @@ ETLLoadBalancer::loadInitialLedger(uint32_t sequence)
             bool res = source->loadInitialLedger(sequence);
             if (!res)
             {
-                BOOST_LOG_TRIVIAL(error) << "Failed to download initial ledger. "
+                BOOST_LOG_TRIVIAL(error) << "Failed to download initial
+ledger.
+"
                                        << " Sequence = " << sequence
-                                       << " source = " << source->toString();
+                                       << " source = " <<
+source->toString();
             }
             return res;
         },
@@ -708,9 +692,8 @@ ETLSource::getP2pForwardingStub() const
         return org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateChannel(
                 beast::IP::Endpoint(
-                    boost::asio::ip::make_address(ip_), std::stoi(grpcPort_))
-                    .to_string(),
-                grpc::InsecureChannelCredentials()));
+                    boost::asio::ip::make_address(ip_),
+std::stoi(grpcPort_)) .to_string(), grpc::InsecureChannelCredentials()));
     }
     catch (std::exception const&)
     {
@@ -723,7 +706,8 @@ Json::Value
 ETLSource::forwardToP2p(RPC::JsonContext& context) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
-                           << "request = " << context.params.toStyledString();
+                           << "request = " <<
+context.params.toStyledString();
 
     Json::Value response;
     if (!connected_)
@@ -734,11 +718,10 @@ ETLSource::forwardToP2p(RPC::JsonContext& context) const
     }
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
-    namespace websocket = beast::websocket;  // from <boost/beast/websocket.hpp>
-    namespace net = boost::asio;             // from <boost/asio.hpp>
-    using tcp = boost::asio::ip::tcp;        // from <boost/asio/ip/tcp.hpp>
-    Json::Value& request = context.params;
-    try
+    namespace websocket = beast::websocket;  // from
+<boost/beast/websocket.hpp> namespace net = boost::asio;             // from
+<boost/asio.hpp> using tcp = boost::asio::ip::tcp;        // from
+<boost/asio/ip/tcp.hpp> Json::Value& request = context.params; try
     {
         // The io_context is required for all I/O
         net::io_context ioc;
@@ -759,7 +742,8 @@ ETLSource::forwardToP2p(RPC::JsonContext& context) const
         // Set a decorator to change the User-Agent of the handshake
         // and to tell rippled to charge the client IP for RPC
         // resources. See "secure_gateway" in
-        // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
+        //
+https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator(
             [&context](websocket::request_type& req) {
                 req.set(
@@ -770,7 +754,8 @@ ETLSource::forwardToP2p(RPC::JsonContext& context) const
                     http::field::forwarded,
                     "for=" + context.consumer.to_string());
             }));
-        BOOST_LOG_TRIVIAL(debug) << "client ip: " << context.consumer.to_string();
+        BOOST_LOG_TRIVIAL(debug) << "client ip: " <<
+context.consumer.to_string();
 
         BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
         // Perform the websocket handshake
@@ -852,8 +837,10 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
         numAttempts++;
         if (numAttempts % sources_.size() == 0)
         {
-            // If another process loaded the ledger into the database, we can
-            // abort trying to fetch the ledger from a transaction processing
+            // If another process loaded the ledger into the database, we
+can
+            // abort trying to fetch the ledger from a transaction
+processing
             // process
             if (etl_.getApplication().getLedgerMaster().getLedgerBySeq(
                     ledgerSequence))
