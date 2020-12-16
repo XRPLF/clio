@@ -1,0 +1,3 @@
+[submodule "rippled"]
+	path = rippled
+	url = git@github.com:ripple/rippled.git
