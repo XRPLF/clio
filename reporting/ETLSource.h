@@ -29,6 +29,7 @@
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
+#include <reporting/ETLHelpers.h>
 
 /// This class manages a connection to a single ETL source. This is almost
 /// always a p2p node, but really could be another reporting node. This class
@@ -60,7 +61,7 @@ class ETLSource
 
     std::string validatedLedgersRaw_;
 
-    // NetworkValidatedLedgers& networkValidatedLedgers_;
+    NetworkValidatedLedgers& networkValidatedLedgers_;
 
     // beast::Journal journal_;
 
@@ -113,7 +114,8 @@ public:
     /// Primarly used in read-only mode, to monitor when ledgers are validated
     ETLSource(
         boost::json::object const& config,
-        CassandraFlatMapBackend& backend);
+        CassandraFlatMapBackend& backend,
+        NetworkValidatedLedgers& networkValidatedLedgers);
 
     /// @param sequence ledger sequence to check for
     /// @return true if this source has the desired ledger
@@ -283,7 +285,8 @@ private:
 public:
     ETLLoadBalancer(
         boost::json::array const& config,
-        CassandraFlatMapBackend& backend);
+        CassandraFlatMapBackend& backend,
+        NetworkValidatedLedgers& nwvl);
 
     /// Load the initial ledger, writing data to the queue
     /// @param sequence sequence of ledger to download

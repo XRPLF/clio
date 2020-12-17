@@ -30,12 +30,14 @@
 // Primarly used in read-only mode, to monitor when ledgers are validated
 ETLSource::ETLSource(
     boost::json::object const& config,
-    CassandraFlatMapBackend& backend)
+    CassandraFlatMapBackend& backend,
+    NetworkValidatedLedgers& networkValidatedLedgers)
     : ws_(std::make_unique<
           boost::beast::websocket::stream<boost::beast::tcp_stream>>(
           boost::asio::make_strand(ioc_)))
     , resolver_(boost::asio::make_strand(ioc_))
     , timer_(ioc_)
+    , networkValidatedLedgers_(networkValidatedLedgers)
     , backend_(backend)
 {
     if (config.contains("ip"))
@@ -352,7 +354,7 @@ ETLSource::handleMessage()
                 << __func__ << " : "
                 << "Pushing ledger sequence = " << ledgerIndex << " - "
                 << toString();
-            // networkValidatedLedgers_.push(ledgerIndex);
+            networkValidatedLedgers_.push(ledgerIndex);
         }
         return true;
     }
@@ -554,12 +556,13 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 }
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
-    CassandraFlatMapBackend& backend)
+    CassandraFlatMapBackend& backend,
+    NetworkValidatedLedgers& nwvl)
 {
     for (auto& entry : config)
     {
         std::unique_ptr<ETLSource> source =
-            std::make_unique<ETLSource>(entry.as_object(), backend);
+            std::make_unique<ETLSource>(entry.as_object(), backend, nwvl);
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
                                 << sources_.back()->toString();

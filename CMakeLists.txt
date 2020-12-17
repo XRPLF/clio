@@ -29,7 +29,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
 message(${CMAKE_MODULE_PATH})
-include(cassandra)
 #include(rippled/Builds/CMake/RippledCore.cmake)
 add_subdirectory(rippled)
 target_link_libraries(reporting PUBLIC xrpl_core grpc_pbufs)
@@ -48,6 +47,11 @@ INCLUDE_DIRECTORIES(${grpc_includes})
 INCLUDE_DIRECTORIES(${SOURCE_DIR}/src)
 ExternalProject_Get_Property(grpc_src SOURCE_DIR)
 INCLUDE_DIRECTORIES(${SOURCE_DIR}/include)
+get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
+message("${xrpl_core_includes}")
+INCLUDE_DIRECTORIES(${xrpl_core_includes})
+include(cassandra)
+include(Postgres)
 #include (FetchContent)
 #FetchContent_Declare(
 #  rippled
@@ -118,7 +122,7 @@ INCLUDE_DIRECTORIES(${SOURCE_DIR}/include)
 #target_link_libraries (grpc_protobufs ${_REFLECTION} ${_PROTOBUF_LIBPROTOBUF} ${_GRPC_GRPCPP})
 
 
-target_sources(reporting PRIVATE reporting/ETLSource.cpp reporting/ReportingBackend.cpp)
+target_sources(reporting PRIVATE reporting/ETLSource.cpp reporting/ReportingBackend.cpp reporting/Pg.cpp)
 
 
 message(${Boost_LIBRARIES})
