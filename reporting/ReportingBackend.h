@@ -81,24 +81,24 @@ private:
     const CassPrepared* selectObject_ = nullptr;
 
     // io_context used for exponential backoff for write retries
-    boost::asio::io_context ioContext_;
+    mutable boost::asio::io_context ioContext_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
     uint32_t maxRequestsOutstanding = 10000000;
-    std::atomic_uint32_t numRequestsOutstanding_ = 0;
+    mutable std::atomic_uint32_t numRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
     // requests
-    std::mutex throttleMutex_;
-    std::condition_variable throttleCv_;
+    mutable std::mutex throttleMutex_;
+    mutable std::condition_variable throttleCv_;
 
     // writes are asynchronous. This mutex and condition_variable is used to
     // wait for all writes to finish
-    std::mutex syncMutex_;
-    std::condition_variable syncCv_;
+    mutable std::mutex syncMutex_;
+    mutable std::condition_variable syncCv_;
 
     boost::json::object config_;
 
@@ -906,7 +906,7 @@ public:
 
     struct WriteCallbackData
     {
-        CassandraFlatMapBackend* backend;
+        CassandraFlatMapBackend const* backend;
         // The shared pointer to the node object must exist until it's
         // confirmed persisted. Otherwise, it can become deleted
         // prematurely if other copies are removed from caches.
@@ -917,7 +917,7 @@ public:
         uint32_t currentRetries = 0;
 
         WriteCallbackData(
-            CassandraFlatMapBackend* f,
+            CassandraFlatMapBackend const* f,
             std::string&& key,
             uint32_t sequence,
             std::string&& blob)
@@ -930,7 +930,7 @@ public:
     };
 
     void
-    write(WriteCallbackData& data, bool isRetry)
+    write(WriteCallbackData& data, bool isRetry) const
     {
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);
@@ -997,7 +997,7 @@ public:
     }
 
     void
-    store(std::string&& key, uint32_t seq, std::string&& blob)
+    store(std::string&& key, uint32_t seq, std::string&& blob) const
     {
         BOOST_LOG_TRIVIAL(trace) << "Writing to cassandra";
         WriteCallbackData* data =
@@ -1009,7 +1009,7 @@ public:
 
     struct WriteTransactionCallbackData
     {
-        CassandraFlatMapBackend* backend;
+        CassandraFlatMapBackend const* backend;
         // The shared pointer to the node object must exist until it's
         // confirmed persisted. Otherwise, it can become deleted
         // prematurely if other copies are removed from caches.
@@ -1021,7 +1021,7 @@ public:
         uint32_t currentRetries = 0;
 
         WriteTransactionCallbackData(
-            CassandraFlatMapBackend* f,
+            CassandraFlatMapBackend const* f,
             std::string&& hash,
             uint32_t sequence,
             std::string&& transaction,
@@ -1036,7 +1036,7 @@ public:
     };
 
     void
-    writeTransaction(WriteTransactionCallbackData& data, bool isRetry)
+    writeTransaction(WriteTransactionCallbackData& data, bool isRetry) const
     {
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);

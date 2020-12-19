@@ -122,7 +122,7 @@ include(Postgres)
 #target_link_libraries (grpc_protobufs ${_REFLECTION} ${_PROTOBUF_LIBPROTOBUF} ${_GRPC_GRPCPP})
 
 
-target_sources(reporting PRIVATE reporting/ETLSource.cpp reporting/ReportingBackend.cpp reporting/Pg.cpp)
+target_sources(reporting PRIVATE reporting/ETLSource.cpp reporting/ReportingBackend.cpp reporting/Pg.cpp reporting/DBHelpers.cpp)
 
 
 message(${Boost_LIBRARIES})

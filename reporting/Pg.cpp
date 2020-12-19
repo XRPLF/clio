@@ -1416,3 +1416,125 @@ initSchema(std::shared_ptr<PgPool> const& pool)
     }
 }
 
+// Load the ledger info for the specified ledger/s from the database
+// @param whichLedger specifies the ledger to load via ledger sequence, ledger
+// hash, a range of ledgers, or std::monostate (which loads the most recent)
+// @return LedgerInfo
+std::optional<ripple::LedgerInfo>
+getLedger(
+    std::variant<
+        std::monostate,
+        ripple::uint256,
+        uint32_t,
+        std::pair<uint32_t, uint32_t>> const& whichLedger,
+    std::shared_ptr<PgPool>& pgPool)
+{
+    ripple::LedgerInfo lgrInfo;
+    std::stringstream sql;
+    sql << "SELECT ledger_hash, prev_hash, account_set_hash, trans_set_hash, "
+           "total_coins, closing_time, prev_closing_time, close_time_res, "
+           "close_flags, ledger_seq FROM ledgers ";
+
+    uint32_t expNumResults = 1;
+
+    if (auto ledgerSeq = std::get_if<uint32_t>(&whichLedger))
+    {
+        sql << "WHERE ledger_seq = " + std::to_string(*ledgerSeq);
+    }
+    else if (auto ledgerHash = std::get_if<ripple::uint256>(&whichLedger))
+    {
+        sql << ("WHERE ledger_hash = \'\\x" + strHex(*ledgerHash) + "\'");
+    }
+    else
+    {
+        sql << ("ORDER BY ledger_seq desc LIMIT 1");
+    }
+    sql << ";";
+
+    BOOST_LOG_TRIVIAL(trace) << __func__ << " : sql = " << sql.str();
+
+    auto res = PgQuery(pgPool)(sql.str().data());
+    if (!res)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " : Postgres response is null - sql = " << sql.str();
+        assert(false);
+        return {};
+    }
+    else if (res.status() != PGRES_TUPLES_OK)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__
+                                 << " : Postgres response should have been "
+                                    "PGRES_TUPLES_OK but instead was "
+                                 << res.status() << " - msg  = " << res.msg()
+                                 << " - sql = " << sql.str();
+        assert(false);
+        return {};
+    }
+
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " Postgres result msg  : " << res.msg();
+
+    if (res.isNull() || res.ntuples() == 0)
+    {
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " : Ledger not found. sql = " << sql.str();
+        return {};
+    }
+    else if (res.ntuples() > 0)
+    {
+        if (res.nfields() != 10)
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__
+                << " : Wrong number of fields in Postgres "
+                   "response. Expected 10, but got "
+                << res.nfields() << " . sql = " << sql.str();
+            assert(false);
+            return {};
+        }
+    }
+
+    char const* hash = res.c_str(0, 0);
+    char const* prevHash = res.c_str(0, 1);
+    char const* accountHash = res.c_str(0, 2);
+    char const* txHash = res.c_str(0, 3);
+    std::int64_t totalCoins = res.asBigInt(0, 4);
+    std::int64_t closeTime = res.asBigInt(0, 5);
+    std::int64_t parentCloseTime = res.asBigInt(0, 6);
+    std::int64_t closeTimeRes = res.asBigInt(0, 7);
+    std::int64_t closeFlags = res.asBigInt(0, 8);
+    std::int64_t ledgerSeq = res.asBigInt(0, 9);
+
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " - Postgres response = " << hash << " , " << prevHash
+        << " , " << accountHash << " , " << txHash << " , " << totalCoins
+        << ", " << closeTime << ", " << parentCloseTime << ", " << closeTimeRes
+        << ", " << closeFlags << ", " << ledgerSeq << " - sql = " << sql.str();
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__
+        << " - Successfully fetched ledger with sequence = " << ledgerSeq
+        << " from Postgres";
+
+    using time_point = ripple::NetClock::time_point;
+    using duration = ripple::NetClock::duration;
+
+    ripple::LedgerInfo info;
+    if (!info.parentHash.parseHex(prevHash + 2))
+        assert(false);
+    if (!info.txHash.parseHex(txHash + 2))
+        assert(false);
+    if (!info.accountHash.parseHex(accountHash + 2))
+        assert(false);
+    info.drops = totalCoins;
+    info.closeTime = time_point{duration{closeTime}};
+    info.parentCloseTime = time_point{duration{parentCloseTime}};
+    info.closeFlags = closeFlags;
+    info.closeTimeResolution = duration{closeTimeRes};
+    info.seq = ledgerSeq;
+    if (!info.hash.parseHex(hash + 2))
+        assert(false);
+    info.validated = true;
+
+    return info;
+}

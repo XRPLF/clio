@@ -7,7 +7,7 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
 {
     CassandraFlatMapBackend::WriteCallbackData& requestParams =
         *static_cast<CassandraFlatMapBackend::WriteCallbackData*>(cbData);
-    CassandraFlatMapBackend& backend = *requestParams.backend;
+    CassandraFlatMapBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -42,7 +42,7 @@ flatMapWriteTransactionCallback(CassFuture* fut, void* cbData)
     CassandraFlatMapBackend::WriteTransactionCallbackData& requestParams =
         *static_cast<CassandraFlatMapBackend::WriteTransactionCallbackData*>(
             cbData);
-    CassandraFlatMapBackend& backend = *requestParams.backend;
+    CassandraFlatMapBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {

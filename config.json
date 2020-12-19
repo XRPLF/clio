@@ -1,0 +1,25 @@
+{
+    "database":
+    {
+        "cassandra":
+        {
+            "username":"xrplreporting",
+            "password":"",
+            "secure_connect_bundle":"/home/cj/secure-connect-xrplreporting.zip",
+            "keyspace":"xrplreporting",
+            "table_name":"cj",
+            "max_requests_outstanding":1000
+        },
+        "postgres": {
+            "connection":""
+        }
+    },
+    "etl_sources":
+    [
+        {
+            "ip":"127.0.0.1",
+            "ws_port":"6005",
+            "grpc_port":"50051"
+        }
+    ]
+}

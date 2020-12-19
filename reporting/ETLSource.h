@@ -46,7 +46,6 @@ class ETLSource
 
     std::string grpcPort_;
 
-    // a reference to the applications io_service
     boost::asio::io_context ioc_;
 
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;

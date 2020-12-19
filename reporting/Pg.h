@@ -20,8 +20,11 @@
 #ifndef RIPPLE_CORE_PG_H_INCLUDED
 #define RIPPLE_CORE_PG_H_INCLUDED
 
+#include <ripple/basics/chrono.h>
+#include <ripple/ledger/ReadView.h>
 #include <boost/json.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/log/trivial.hpp>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -510,5 +513,14 @@ make_PgPool(boost::json::object const& pgConfig);
  */
 void
 initSchema(std::shared_ptr<PgPool> const& pool);
+
+// Load the ledger info for the specified ledger/s from the database
+// @param whichLedger specifies the ledger to load via ledger sequence, ledger
+// hash or std::monostate (which loads the most recent)
+// @return vector of LedgerInfos
+std::optional<ripple::LedgerInfo>
+getLedger(
+    std::variant<std::monostate, ripple::uint256, uint32_t> const& whichLedger,
+    std::shared_ptr<PgPool>& pgPool);
 
 #endif  // RIPPLE_CORE_PG_H_INCLUDED
