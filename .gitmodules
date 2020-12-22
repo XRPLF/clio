@@ -1,4 +1,4 @@
 [submodule "rippled"]
-	path = rippled
+    path = rippled
     url = git@github.com:cjcobb23/rippled.git
     branch = reportingV2
