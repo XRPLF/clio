@@ -18,21 +18,57 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/json.hpp>
+
+#include <boost/log/core.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/trivial.hpp>
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <reporting/ETLSource.h>
-#include <reporting/ReportingBackend.h>
+#include <reporting/ReportingETL.h>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
 
 //------------------------------------------------------------------------------
+enum RPCCommand { tx, account_tx, ledger, account_info };
+std::unordered_map<std::string, RPCCommand> commandMap{
+    {"tx", tx},
+    {"account_tx", account_tx},
+    {"ledger", ledger},
+    {"account_info", account_info}};
 
+boost::json::object
+doAccountInfo(
+    boost::json::object const& request,
+    CassandraFlatMapBackend const& backend);
+boost::json::object
+buildResponse(
+    boost::json::object const& request,
+    CassandraFlatMapBackend const& backend)
+{
+    std::string command = request.at("command").as_string().c_str();
+    boost::json::object response;
+    switch (commandMap[command])
+    {
+        case tx:
+            break;
+        case account_tx:
+            break;
+        case ledger:
+            break;
+        case account_info:
+            return doAccountInfo(request, backend);
+            break;
+        default:
+            BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;
+    }
+    return response;
+}
 // Report a failure
 void
 fail(boost::beast::error_code ec, char const* what)
@@ -45,11 +81,14 @@ class session : public std::enable_shared_from_this<session>
 {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
+    CassandraFlatMapBackend const& backend_;
 
 public:
     // Take ownership of the socket
-    explicit session(boost::asio::ip::tcp::socket&& socket)
-        : ws_(std::move(socket))
+    explicit session(
+        boost::asio::ip::tcp::socket&& socket,
+        CassandraFlatMapBackend const& backend)
+        : ws_(std::move(socket)), backend_(backend)
     {
     }
 
@@ -119,11 +158,19 @@ public:
 
         if (ec)
             fail(ec, "read");
+        std::string msg{
+            static_cast<char const*>(buffer_.data().data()), buffer_.size()};
+        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
+        boost::json::value raw = boost::json::parse(msg);
+        // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
+        boost::json::object request = raw.as_object();
+        auto response = buildResponse(request, backend_);
+        BOOST_LOG_TRIVIAL(debug) << __func__ << response;
 
         // Echo the message
         ws_.text(ws_.got_text());
         ws_.async_write(
-            buffer_.data(),
+            boost::asio::buffer(boost::json::serialize(response)),
             boost::beast::bind_front_handler(
                 &session::on_write, shared_from_this()));
     }
@@ -151,12 +198,14 @@ class listener : public std::enable_shared_from_this<listener>
 {
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
+    CassandraFlatMapBackend const& backend_;
 
 public:
     listener(
         boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::endpoint endpoint)
-        : ioc_(ioc), acceptor_(ioc)
+        boost::asio::ip::tcp::endpoint endpoint,
+        CassandraFlatMapBackend const& backend)
+        : ioc_(ioc), acceptor_(ioc), backend_(backend)
     {
         boost::beast::error_code ec;
 
@@ -221,7 +270,7 @@ private:
         else
         {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket))->run();
+            std::make_shared<session>(std::move(socket), backend_)->run();
         }
 
         // Accept another connection
@@ -252,52 +301,82 @@ parse_config(const char* filename)
     return {};
 }
 //------------------------------------------------------------------------------
+//
+void
+initLogLevel(int level)
+{
+    switch (level)
+    {
+        case 0:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::trace);
+            break;
+        case 1:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::debug);
+            break;
+        case 2:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::info);
+            break;
+        case 3:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::warning);
+            break;
+        case 4:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::error);
+            break;
+        case 5:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::fatal);
+            break;
+        default:
+            boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::info);
+    }
+}
 
 int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 5)
+    if (argc != 5 and argc != 6)
     {
-        std::cerr << "Usage: websocket-server-async <address> <port> <threads> "
-                     "<config_file> \n"
-                  << "Example:\n"
-                  << "    websocket-server-async 0.0.0.0 8080 1\n";
+        std::cerr
+            << "Usage: websocket-server-async <address> <port> <threads> "
+               "<config_file> <log level> \n"
+            << "Example:\n"
+            << "    websocket-server-async 0.0.0.0 8080 1 config.json 2\n";
         return EXIT_FAILURE;
     }
     auto const address = boost::asio::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
     auto const threads = std::max<int>(1, std::atoi(argv[3]));
     auto const config = parse_config(argv[4]);
+    if (argc > 5)
+    {
+        initLogLevel(std::atoi(argv[5]));
+    }
+    else
+    {
+        initLogLevel(2);
+    }
     if (!config)
     {
         std::cerr << "couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
-    auto cassConfig =
-        (*config).at("database").as_object().at("cassandra").as_object();
-    std::cout << cassConfig << std::endl;
-
-    CassandraFlatMapBackend backend{cassConfig};
-    backend.open();
-    boost::json::array sources = (*config).at("etl_sources").as_array();
-    if (!sources.size())
-    {
-        std::cerr << "no etl sources listed in config. exiting..." << std::endl;
-        return EXIT_FAILURE;
-    }
-    NetworkValidatedLedgers nwvl;
-    ETLSource source{sources[0].as_object(), backend, nwvl};
-
-    source.start();
-    // source.loadInitialLedger(60000000);
 
     // The io_context is required for all I/O
     boost::asio::io_context ioc{threads};
+    ReportingETL etl{config.value(), ioc};
 
     // Create and launch a listening port
     std::make_shared<listener>(
-        ioc, boost::asio::ip::tcp::endpoint{address, port})
+        ioc,
+        boost::asio::ip::tcp::endpoint{address, port},
+        etl.getFlatMapBackend())
         ->run();
 
     // Run the I/O service on the requested number of threads
@@ -305,6 +384,9 @@ main(int argc, char* argv[])
     v.reserve(threads - 1);
     for (auto i = threads - 1; i > 0; --i)
         v.emplace_back([&ioc] { ioc.run(); });
+    std::cout << "created ETL" << std::endl;
+    etl.run();
+    std::cout << "running ETL" << std::endl;
     ioc.run();
 
     return EXIT_SUCCESS;

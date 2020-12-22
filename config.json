@@ -3,15 +3,14 @@
     {
         "cassandra":
         {
-            "username":"xrplreporting",
-            "password":"",
-            "secure_connect_bundle":"/home/cj/secure-connect-xrplreporting.zip",
-            "keyspace":"xrplreporting",
+            "contact_points":"34.221.15.227",
+            "port":9042,
+            "keyspace":"xrpl_reporting",
             "table_name":"cj",
-            "max_requests_outstanding":1000
+            "max_requests_outstanding":10000
         },
         "postgres": {
-            "connection":""
+            "conninfo":"postgres://postgres:coco@127.0.0.1/reporting"
         }
     },
     "etl_sources":

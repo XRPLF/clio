@@ -31,8 +31,10 @@
 ETLSource::ETLSource(
     boost::json::object const& config,
     CassandraFlatMapBackend& backend,
-    NetworkValidatedLedgers& networkValidatedLedgers)
-    : ws_(std::make_unique<
+    NetworkValidatedLedgers& networkValidatedLedgers,
+    boost::asio::io_context& ioContext)
+    : ioc_(ioContext)
+    , ws_(std::make_unique<
           boost::beast::websocket::stream<boost::beast::tcp_stream>>(
           boost::asio::make_strand(ioc_)))
     , resolver_(boost::asio::make_strand(ioc_))
@@ -289,8 +291,12 @@ ETLSource::handleMessage()
     connected_ = true;
     try
     {
-        boost::json::value raw = boost::json::parse(
-            static_cast<char const*>(readBuffer_.data().data()));
+        std::string msg{
+            static_cast<char const*>(readBuffer_.data().data()),
+            readBuffer_.size()};
+        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
+        boost::json::value raw = boost::json::parse(msg);
+        // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
         boost::json::object response = raw.as_object();
 
         uint32_t ledgerIndex = 0;
@@ -299,7 +305,7 @@ ETLSource::handleMessage()
             boost::json::object result = response["result"].as_object();
             if (result.contains("ledger_index"))
             {
-                ledgerIndex = result["ledger_index"].as_uint64();
+                ledgerIndex = result["ledger_index"].as_int64();
             }
             if (result.contains("validated_ledgers"))
             {
@@ -336,7 +342,7 @@ ETLSource::handleMessage()
                     << toString();
                 if (response.contains("ledger_index"))
                 {
-                    ledgerIndex = response["ledger_index"].as_uint64();
+                    ledgerIndex = response["ledger_index"].as_int64();
                 }
                 if (response.contains("validated_ledgers"))
                 {
@@ -557,12 +563,13 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
     CassandraFlatMapBackend& backend,
-    NetworkValidatedLedgers& nwvl)
+    NetworkValidatedLedgers& nwvl,
+    boost::asio::io_context& ioContext)
 {
     for (auto& entry : config)
     {
-        std::unique_ptr<ETLSource> source =
-            std::make_unique<ETLSource>(entry.as_object(), backend, nwvl);
+        std::unique_ptr<ETLSource> source = std::make_unique<ETLSource>(
+            entry.as_object(), backend, nwvl, ioContext);
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
                                 << sources_.back()->toString();
@@ -844,7 +851,7 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }
-    return false;
+    return true;
 }
 
 void

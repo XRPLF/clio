@@ -46,7 +46,7 @@ class ETLSource
 
     std::string grpcPort_;
 
-    boost::asio::io_context ioc_;
+    boost::asio::io_context& ioc_;
 
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
 
@@ -114,7 +114,8 @@ public:
     ETLSource(
         boost::json::object const& config,
         CassandraFlatMapBackend& backend,
-        NetworkValidatedLedgers& networkValidatedLedgers);
+        NetworkValidatedLedgers& networkValidatedLedgers,
+        boost::asio::io_context& ioContext);
 
     /// @param sequence ledger sequence to check for
     /// @return true if this source has the desired ledger
@@ -285,7 +286,8 @@ public:
     ETLLoadBalancer(
         boost::json::array const& config,
         CassandraFlatMapBackend& backend,
-        NetworkValidatedLedgers& nwvl);
+        NetworkValidatedLedgers& nwvl,
+        boost::asio::io_context& ioContext);
 
     /// Load the initial ledger, writing data to the queue
     /// @param sequence sequence of ledger to download

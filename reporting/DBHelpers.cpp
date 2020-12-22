@@ -22,10 +22,7 @@
 #include <reporting/DBHelpers.h>
 
 static bool
-writeToLedgersDB(
-    ripple::LedgerInfo const& info,
-    PgQuery& pgQuery,
-    beast::Journal& j)
+writeToLedgersDB(ripple::LedgerInfo const& info, PgQuery& pgQuery)
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
     auto cmd = boost::format(
@@ -73,7 +70,7 @@ writeToPostgres(
         // Writing to the ledgers db fails if the ledger already exists in the
         // db. In this situation, the ETL process has detected there is another
         // writer, and falls back to only publishing
-        if (!writeToLedgersDB(info, pg, j))
+        if (!writeToLedgersDB(info, pg))
         {
             BOOST_LOG_TRIVIAL(warning)
                 << __func__ << " : "

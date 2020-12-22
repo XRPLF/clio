@@ -193,7 +193,7 @@ public:
             }
 
             int port =
-                config_.contains("port") ? config_["port"].as_uint64() : 0;
+                config_.contains("port") ? config_["port"].as_int64() : 0;
             if (port)
             {
                 rc = cass_cluster_set_port(cluster, port);
@@ -630,7 +630,7 @@ public:
     // @param pno object in which to store the result
     // @return result status of query
     std::optional<std::vector<unsigned char>>
-    fetch(void const* key, uint32_t sequence)
+    fetch(void const* key, uint32_t sequence) const
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         CassStatement* statement = cass_prepared_bind(selectObject_);
@@ -999,7 +999,7 @@ public:
     void
     store(std::string&& key, uint32_t seq, std::string&& blob) const
     {
-        BOOST_LOG_TRIVIAL(trace) << "Writing to cassandra";
+        BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
         WriteCallbackData* data =
             new WriteCallbackData(this, std::move(key), seq, std::move(blob));
 
@@ -1124,7 +1124,7 @@ public:
         std::string&& transaction,
         std::string&& metadata)
     {
-        BOOST_LOG_TRIVIAL(trace) << "Writing to cassandra";
+        BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
         WriteTransactionCallbackData* data = new WriteTransactionCallbackData(
             this,
             std::move(hash),

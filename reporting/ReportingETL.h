@@ -20,12 +20,14 @@
 #ifndef RIPPLE_APP_REPORTING_REPORTINGETL_H_INCLUDED
 #define RIPPLE_APP_REPORTING_REPORTINGETL_H_INCLUDED
 
+#include <ripple/ledger/ReadView.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
 #include <reporting/ETLHelpers.h>
 #include <reporting/ETLSource.h>
+#include <reporting/Pg.h>
 #include <reporting/ReportingBackend.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
@@ -36,7 +38,6 @@
 #include <queue>
 
 #include <chrono>
-namespace ripple {
 
 struct AccountTransactionsData;
 
@@ -59,9 +60,10 @@ class ReportingETL
 {
 private:
     CassandraFlatMapBackend flatMapBackend_;
+    std::shared_ptr<PgPool> pgPool_;
 
     std::thread worker_;
-    // boost::asio::io_context& ioContext_;
+    boost::asio::io_context& ioContext_;
 
     /// Strand to ensure that ledgers are published in order.
     /// If ETL is started far behind the network, ledgers will be written and
@@ -75,7 +77,7 @@ private:
     /// includes reading all of the transactions from the database) is done from
     /// the application wide asio io_service, and a strand is used to ensure
     /// ledgers are published in order
-    // boost::asio::io_context::strand publishStrand_;
+    boost::asio::io_context::strand publishStrand_;
 
     /// Mechanism for communicating with ETL sources. ETLLoadBalancer wraps an
     /// arbitrary number of ETL sources and load balances ETL requests across
@@ -151,7 +153,7 @@ private:
     /// @param sequence the sequence of the ledger to download
     /// @return The ledger downloaded, with a full transaction and account state
     /// map
-    std::shared_ptr<Ledger>
+    std::optional<ripple::LedgerInfo>
     loadInitialLedger(uint32_t sequence);
 
     /// Run ETL. Extracts ledgers and writes them to the database, until a write
@@ -218,12 +220,9 @@ private:
     /// @param parent the previous ledger
     /// @param rawData data extracted from an ETL source
     /// @return the newly built ledger and data to write to Postgres
-    std::pair<std::shared_ptr<Ledger>, std::vector<AccountTransactionsData>>
-    buildNextLedger(
-        std::shared_ptr<Ledger>& parent,
-        org::xrpl::rpc::v1::GetLedgerResponse& rawData);
+    std::pair<ripple::LedgerInfo, std::vector<AccountTransactionsData>>
+    buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData);
 
-    /*
     /// Attempt to read the specified ledger from the database, and then publish
     /// that ledger to the ledgers stream.
     /// @param ledgerSequence the sequence of the ledger to publish
@@ -236,10 +235,12 @@ private:
     /// Publish the passed in ledger
     /// @param ledger the ledger to publish
     void
-    publishLedger(std::shared_ptr<Ledger>& ledger);
-*/
+    publishLedger(ripple::LedgerInfo const& lgrInfo);
+
 public:
-    ReportingETL(boost::json::object& config);
+    ReportingETL(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc);
 
     ~ReportingETL()
     {
@@ -330,5 +331,4 @@ private:
     doWork();
 };
 
-}  // namespace ripple
 #endif

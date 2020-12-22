@@ -21,7 +21,7 @@
 #define RIPPLE_APP_REPORTING_DBHELPERS_H_INCLUDED
 
 #include <ripple/basics/Log.h>
-#include <ripple/ledger/TxMeta.h>
+#include <ripple/protocol/TxMeta.h>
 #include <boost/container/flat_set.hpp>
 #include <reporting/Pg.h>
 

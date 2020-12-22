@@ -1422,11 +1422,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
 // @return LedgerInfo
 std::optional<ripple::LedgerInfo>
 getLedger(
-    std::variant<
-        std::monostate,
-        ripple::uint256,
-        uint32_t,
-        std::pair<uint32_t, uint32_t>> const& whichLedger,
+    std::variant<std::monostate, ripple::uint256, uint32_t> const& whichLedger,
     std::shared_ptr<PgPool>& pgPool)
 {
     ripple::LedgerInfo lgrInfo;
