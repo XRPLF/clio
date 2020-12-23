@@ -20,6 +20,7 @@
 #ifndef RIPPLE_APP_REPORTING_REPORTINGBACKEND_H_INCLUDED
 #define RIPPLE_APP_REPORTING_REPORTINGBACKEND_H_INCLUDED
 
+#include <ripple/basics/base_uint.h>
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/json.hpp>
@@ -905,8 +906,8 @@ public:
 
     struct ReadCallbackData
     {
-        CassandraFlatMapBackend& backend;
-        const void* const hash;
+        CassandraFlatMapBackend const& backend;
+        ripple::uint256 const& hash;
         BlobPair& result;
         std::condition_variable& cv;
 
@@ -914,8 +915,8 @@ public:
         size_t batchSize;
 
         ReadCallbackData(
-            CassandraFlatMapBackend& backend,
-            const void* const hash,
+            CassandraFlatMapBackend const& backend,
+            ripple::uint256 const& hash,
             BlobPair& result,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
@@ -933,7 +934,7 @@ public:
     };
 
     std::vector<BlobPair>
-    fetchBatch(std::vector<void const*> const& hashes)
+    fetchBatch(std::vector<ripple::uint256> const& hashes) const
     {
         std::size_t const numHashes = hashes.size();
         BOOST_LOG_TRIVIAL(trace)
@@ -947,7 +948,7 @@ public:
         for (std::size_t i = 0; i < hashes.size(); ++i)
         {
             cbs.push_back(std::make_shared<ReadCallbackData>(
-                *this, &hashes[i], results[i], cv, numFinished, numHashes));
+                *this, hashes[i], results[i], cv, numFinished, numHashes));
             read(*cbs[i]);
         }
         assert(results.size() == cbs.size());
@@ -963,12 +964,15 @@ public:
     }
 
     void
-    read(ReadCallbackData& data)
+    read(ReadCallbackData& data) const
     {
         CassStatement* statement = cass_prepared_bind(selectTransaction_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         CassError rc = cass_statement_bind_bytes(
-            statement, 0, static_cast<cass_byte_t const*>(data.hash), 32);
+            statement,
+            0,
+            static_cast<cass_byte_t const*>(data.hash.data()),
+            32);
         if (rc != CASS_OK)
         {
             size_t batchSize = data.batchSize;

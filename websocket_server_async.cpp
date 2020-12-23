@@ -51,6 +51,11 @@ doTx(
     boost::json::object const& request,
     CassandraFlatMapBackend const& backend,
     std::shared_ptr<PgPool>& pgPool);
+boost::json::object
+doAccountTx(
+    boost::json::object const& request,
+    CassandraFlatMapBackend const& backend,
+    std::shared_ptr<PgPool>& pgPool);
 
 boost::json::object
 buildResponse(
@@ -66,6 +71,7 @@ buildResponse(
             return doTx(request, backend, pgPool);
             break;
         case account_tx:
+            return doAccountTx(request, backend, pgPool);
             break;
         case ledger:
             break;
