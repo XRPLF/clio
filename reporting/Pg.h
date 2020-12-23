@@ -22,6 +22,7 @@
 
 #include <ripple/basics/chrono.h>
 #include <ripple/ledger/ReadView.h>
+#include <boost/icl/closed_interval.hpp>
 #include <boost/json.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/log/trivial.hpp>
@@ -522,5 +523,9 @@ std::optional<ripple::LedgerInfo>
 getLedger(
     std::variant<std::monostate, ripple::uint256, uint32_t> const& whichLedger,
     std::shared_ptr<PgPool>& pgPool);
+
+using LedgerRange = boost::icl::closed_interval<uint32_t>;
+std::optional<LedgerRange>
+getLedgerRange(std::shared_ptr<PgPool>& pgPool);
 
 #endif  // RIPPLE_CORE_PG_H_INCLUDED

@@ -326,6 +326,12 @@ public:
         return flatMapBackend_;
     }
 
+    std::shared_ptr<PgPool>&
+    getPgPool()
+    {
+        return pgPool_;
+    }
+
 private:
     void
     doWork();

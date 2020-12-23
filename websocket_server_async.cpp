@@ -47,15 +47,23 @@ doAccountInfo(
     boost::json::object const& request,
     CassandraFlatMapBackend const& backend);
 boost::json::object
+doTx(
+    boost::json::object const& request,
+    CassandraFlatMapBackend const& backend,
+    std::shared_ptr<PgPool>& pgPool);
+
+boost::json::object
 buildResponse(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend)
+    CassandraFlatMapBackend const& backend,
+    std::shared_ptr<PgPool>& pgPool)
 {
     std::string command = request.at("command").as_string().c_str();
     boost::json::object response;
     switch (commandMap[command])
     {
         case tx:
+            return doTx(request, backend, pgPool);
             break;
         case account_tx:
             break;
@@ -81,14 +89,17 @@ class session : public std::enable_shared_from_this<session>
 {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
+    std::string response_;
     CassandraFlatMapBackend const& backend_;
+    std::shared_ptr<PgPool>& pgPool_;
 
 public:
     // Take ownership of the socket
     explicit session(
         boost::asio::ip::tcp::socket&& socket,
-        CassandraFlatMapBackend const& backend)
-        : ws_(std::move(socket)), backend_(backend)
+        CassandraFlatMapBackend const& backend,
+        std::shared_ptr<PgPool>& pgPool)
+        : ws_(std::move(socket)), backend_(backend), pgPool_(pgPool)
     {
     }
 
@@ -164,13 +175,14 @@ public:
         boost::json::value raw = boost::json::parse(msg);
         // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
         boost::json::object request = raw.as_object();
-        auto response = buildResponse(request, backend_);
+        auto response = buildResponse(request, backend_, pgPool_);
         BOOST_LOG_TRIVIAL(debug) << __func__ << response;
+        response_ = boost::json::serialize(response);
 
         // Echo the message
         ws_.text(ws_.got_text());
         ws_.async_write(
-            boost::asio::buffer(boost::json::serialize(response)),
+            boost::asio::buffer(response_),
             boost::beast::bind_front_handler(
                 &session::on_write, shared_from_this()));
     }
@@ -199,13 +211,15 @@ class listener : public std::enable_shared_from_this<listener>
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
     CassandraFlatMapBackend const& backend_;
+    std::shared_ptr<PgPool>& pgPool_;
 
 public:
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
-        CassandraFlatMapBackend const& backend)
-        : ioc_(ioc), acceptor_(ioc), backend_(backend)
+        CassandraFlatMapBackend const& backend,
+        std::shared_ptr<PgPool>& pgPool)
+        : ioc_(ioc), acceptor_(ioc), backend_(backend), pgPool_(pgPool)
     {
         boost::beast::error_code ec;
 
@@ -270,7 +284,8 @@ private:
         else
         {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket), backend_)->run();
+            std::make_shared<session>(std::move(socket), backend_, pgPool_)
+                ->run();
         }
 
         // Accept another connection
@@ -376,7 +391,8 @@ main(int argc, char* argv[])
     std::make_shared<listener>(
         ioc,
         boost::asio::ip::tcp::endpoint{address, port},
-        etl.getFlatMapBackend())
+        etl.getFlatMapBackend(),
+        etl.getPgPool())
         ->run();
 
     // Run the I/O service on the requested number of threads

@@ -700,6 +700,83 @@ public:
             << " microseconds";
         return result;
     }
+    std::optional<
+        std::pair<std::vector<unsigned char>, std::vector<unsigned char>>>
+    fetchTransaction(void const* hash) const
+    {
+        BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+        auto start = std::chrono::system_clock::now();
+        CassStatement* statement = cass_prepared_bind(selectTransaction_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        CassError rc = cass_statement_bind_bytes(
+            statement, 0, static_cast<cass_byte_t const*>(hash), 32);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error) << "Binding Cassandra fetch query: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        CassFuture* fut;
+        do
+        {
+            fut = cass_session_execute(session_.get(), statement);
+            rc = cass_future_error_code(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Cassandra fetch error";
+                ss << ", retrying";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+        } while (rc != CASS_OK);
+
+        CassResult const* res = cass_future_get_result(fut);
+        cass_statement_free(statement);
+        cass_future_free(fut);
+
+        CassRow const* row = cass_result_first_row(res);
+        if (!row)
+        {
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch error: no rows";
+            cass_result_free(res);
+            return {};
+        }
+        cass_byte_t const* txBuf;
+        std::size_t txBufSize;
+        rc = cass_value_get_bytes(
+            cass_row_get_column(row, 0), &txBuf, &txBufSize);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch result error: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        std::vector<unsigned char> txResult{txBuf, txBuf + txBufSize};
+        cass_byte_t const* metaBuf;
+        std::size_t metaBufSize;
+        rc = cass_value_get_bytes(
+            cass_row_get_column(row, 0), &metaBuf, &metaBufSize);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch result error: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        std::vector<unsigned char> metaResult{metaBuf, metaBuf + metaBufSize};
+        cass_result_free(res);
+        auto end = std::chrono::system_clock::now();
+        BOOST_LOG_TRIVIAL(debug)
+            << "Fetched from cassandra in "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                   end - start)
+                   .count()
+            << " microseconds";
+        return {{txResult, metaResult}};
+    }
     /*
         std::pair<std::vector<std::pair<uint256, std::shared_ptr<Blob>>>,
     Status> doUpperBound(uint256 marker, std::uint32_t seq, std::uint32_t limit)

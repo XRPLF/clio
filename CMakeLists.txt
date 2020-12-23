@@ -60,7 +60,9 @@ target_sources(reporting PRIVATE
     reporting/Pg.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp
-    handlers/AccountInfo.cpp)
+    handlers/AccountInfo.cpp
+    handlers/Tx.cpp
+    handlers/RPCHelpers.cpp)
 
 
 message(${Boost_LIBRARIES})
