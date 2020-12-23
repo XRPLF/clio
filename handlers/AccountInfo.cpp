@@ -20,26 +20,9 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
+#include <handlers/RPCHelpers.h>
 #include <reporting/ReportingBackend.h>
 
-std::optional<ripple::AccountID>
-accountFromStringStrict(std::string const& account)
-{
-    boost::optional<ripple::AccountID> result;
-
-    auto const publicKey = ripple::parseBase58<ripple::PublicKey>(
-        ripple::TokenType::AccountPublic, account);
-
-    if (publicKey)
-        result = ripple::calcAccountID(*publicKey);
-    else
-        result = ripple::parseBase58<ripple::AccountID>(account);
-
-    if (result)
-        return result.value();
-    else
-        return {};
-}
 // {
 //   account: <ident>,
 //   strict: <bool>        // optional (default false)
@@ -94,9 +77,9 @@ doAccountInfo(
     {
         response["error"] = "no response from db";
     }
-    auto sle = std::make_shared<ripple::SLE>(
-        ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key);
-    if (!key.check(*sle))
+    ripple::STLedgerEntry sle{
+        ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
+    if (!key.check(sle))
     {
         response["error"] = "error fetching record from db";
         return response;
@@ -104,7 +87,7 @@ doAccountInfo(
     else
     {
         response["success"] = "fetched successfully!";
-        response["object"] = sle->getFullText();
+        response["object"] = getJson(sle);
         return response;
     }
 
@@ -130,3 +113,4 @@ doAccountInfo(
 
     return response;
 }
+

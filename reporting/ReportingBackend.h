@@ -633,6 +633,7 @@ public:
     fetch(void const* key, uint32_t sequence) const
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+        auto start = std::chrono::system_clock::now();
         CassStatement* statement = cass_prepared_bind(selectObject_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         CassError rc = cass_statement_bind_bytes(
@@ -690,6 +691,13 @@ public:
         }
         std::vector<unsigned char> result{buf, buf + bufSize};
         cass_result_free(res);
+        auto end = std::chrono::system_clock::now();
+        BOOST_LOG_TRIVIAL(debug)
+            << "Fetched from cassandra in "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                   end - start)
+                   .count()
+            << " microseconds";
         return result;
     }
     /*
