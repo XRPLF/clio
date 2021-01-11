@@ -63,7 +63,8 @@ target_sources(reporting PRIVATE
     handlers/AccountInfo.cpp
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp
-    handlers/AccountTx.cpp)
+    handlers/AccountTx.cpp
+    handlers/LedgerData.cpp)
 
 
 message(${Boost_LIBRARIES})
