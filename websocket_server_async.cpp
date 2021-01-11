@@ -45,7 +45,8 @@ std::unordered_map<std::string, RPCCommand> commandMap{
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend);
+    CassandraFlatMapBackend const& backend,
+    std::shared_ptr<PgPool>& postgres);
 boost::json::object
 doTx(
     boost::json::object const& request,
@@ -76,7 +77,7 @@ buildResponse(
         case ledger:
             break;
         case account_info:
-            return doAccountInfo(request, backend);
+            return doAccountInfo(request, backend, pgPool);
             break;
         default:
             BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;

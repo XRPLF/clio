@@ -489,7 +489,8 @@ public:
 
             query = {};
             query << "SELECT object, sequence FROM " << tableName << "flat"
-                  << " WHERE key = ? AND sequence <= ? ORDER BY sequence DESC";
+                  << " WHERE key = ? AND sequence <= ? ORDER BY sequence DESC "
+                     "LIMIT 1";
             prepare_future =
                 cass_session_prepare(session_.get(), query.str().c_str());
 

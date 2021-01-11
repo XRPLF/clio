@@ -12,21 +12,26 @@ import threading
 
 
 
-async def account_info(ip, port):
+async def account_info(ip, port, account, ledger):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"account_info","ledger_index":60392449,"account":"rLC64xxNif3GiY9FQnbaM4kcE6VvDhwRod"}))
-            res = json.loads(await ws.recv())
-            print(res)
+            if ledger is None:
+                await ws.send(json.dumps({"command":"account_info","account":account}))
+                res = json.loads(await ws.recv())
+                print(res)
+            else:
+                await ws.send(json.dumps({"command":"account_info","account":account, "ledger_index":int(ledger)}))
+                res = json.loads(await ws.recv())
+                print(res)
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
-async def account_tx(ip, port):
+async def account_tx(ip, port, account):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"account_tx","account":"rDzTZxa7NwD9vmNf5dvTbW4FQDNSRsfPv6"}))
+            await ws.send(json.dumps({"command":"account_tx","account":account}))
             res = json.loads(await ws.recv())
             print(res)
     except websockets.exceptions.ConnectionClosedError as e:
@@ -50,6 +55,8 @@ parser.add_argument('action', choices=["account_info", "tx", "account_tx"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
+parser.add_argument('--account', default="rLC64xxNif3GiY9FQnbaM4kcE6VvDhwRod")
+parser.add_argument('--ledger')
 
 
 
@@ -59,13 +66,13 @@ def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
     if args.action == "account_info":
         asyncio.get_event_loop().run_until_complete(
-                account_info(args.ip, args.port))
-    if args.action == "tx":
+                account_info(args.ip, args.port, args.account, args.ledger))
+    elif args.action == "tx":
         asyncio.get_event_loop().run_until_complete(
                 tx(args.ip, args.port, args.hash))
-    if args.action == "account_tx":
+    elif args.action == "account_tx":
         asyncio.get_event_loop().run_until_complete(
-                account_tx(args.ip, args.port))
+                account_tx(args.ip, args.port, args.account))
     else:
         print("incorrect arguments")
 

@@ -21,6 +21,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
+#include <reporting/Pg.h>
 #include <reporting/ReportingBackend.h>
 
 // {
@@ -42,7 +43,8 @@
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend)
+    CassandraFlatMapBackend const& backend,
+    std::shared_ptr<PgPool>& postgres)
 {
     boost::json::object response;
     std::string strIdent;
@@ -55,7 +57,25 @@ doAccountInfo(
         response["error"] = "missing account field";
         return response;
     }
-    size_t ledgerSequence = request.at("ledger_index").as_int64();
+    size_t ledgerSequence = 0;
+    if (not request.contains("ledger_index"))
+    {
+        std::optional<ripple::LedgerInfo> latest = getLedger({}, postgres);
+
+        if (not latest)
+        {
+            response["error"] = "database is empty";
+            return response;
+        }
+        else
+        {
+            ledgerSequence = latest->seq;
+        }
+    }
+    else
+    {
+        ledgerSequence = request.at("ledger_index").as_int64();
+    }
 
     // bool bStrict = request.contains("strict") &&
     // params.at("strict").as_bool();
@@ -71,8 +91,13 @@ doAccountInfo(
     }
     auto key = ripple::keylet::account(accountID.value());
 
+    auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
         backend.fetch(key.key.data(), ledgerSequence);
+    auto end = std::chrono::system_clock::now();
+    auto time =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
     if (!dbResponse)
     {
         response["error"] = "no response from db";
@@ -88,6 +113,7 @@ doAccountInfo(
     {
         response["success"] = "fetched successfully!";
         response["object"] = getJson(sle);
+        response["db_time"] = time;
         return response;
     }
 
