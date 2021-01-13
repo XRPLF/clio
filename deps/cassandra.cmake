@@ -12,7 +12,7 @@ if(NOT cassandra)
             GIT_REPOSITORY https://github.com/madler/zlib.git
             GIT_TAG master
             INSTALL_COMMAND ""
-            BUILD_BYPRODUCTS <BINARY_DIR>/${ep_lib_prefix}z.a
+            BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}z.a
             )
 
 
@@ -23,7 +23,7 @@ if(NOT cassandra)
 
         set_target_properties (zlib PROPERTIES
             IMPORTED_LOCATION
-            ${BINARY_DIR}/${ep_lib_prefix}z.a
+            ${BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}z.a
             INTERFACE_INCLUDE_DIRECTORIES
             ${SOURCE_DIR}/include)
         add_dependencies(zlib zlib_src)
@@ -48,8 +48,10 @@ if(NOT cassandra)
             BUILD_IN_SOURCE 1
             BUILD_COMMAND make
             INSTALL_COMMAND ""
-            BUILD_BYPRODUCTS <SOURCE_DIR>/lib/${ep_lib_prefix}krb5.a
+	    BUILD_BYPRODUCTS <SOURCE_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a
             )
+        message(${ep_lib_prefix}/krb5.a)
+	message(${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a)
 
         ExternalProject_Get_Property (krb5_src SOURCE_DIR)
         ExternalProject_Get_Property (krb5_src BINARY_DIR)
@@ -58,7 +60,7 @@ if(NOT cassandra)
 
         set_target_properties (krb5 PROPERTIES
             IMPORTED_LOCATION
-            ${BINARY_DIR}/lib/${ep_lib_prefix}krb5.a
+	    ${SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a
             INTERFACE_INCLUDE_DIRECTORIES
             ${SOURCE_DIR}/include)
         add_dependencies(krb5 krb5_src)
@@ -78,7 +80,7 @@ if(NOT cassandra)
             GIT_REPOSITORY https://github.com/libuv/libuv.git
             GIT_TAG v1.x
             INSTALL_COMMAND ""
-            BUILD_BYPRODUCTS <BINARY_DIR>/${ep_lib_prefix}uv_a.a
+            BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}uv_a.a
             )
 
         ExternalProject_Get_Property (libuv_src SOURCE_DIR)
@@ -88,7 +90,7 @@ if(NOT cassandra)
 
         set_target_properties (libuv1 PROPERTIES
             IMPORTED_LOCATION
-            ${BINARY_DIR}/${ep_lib_prefix}uv_a.a
+            ${BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}uv_a.a
             INTERFACE_INCLUDE_DIRECTORIES
             ${SOURCE_DIR}/include)
         add_dependencies(libuv1 libuv_src)
@@ -103,11 +105,11 @@ if(NOT cassandra)
         GIT_TAG master
         CMAKE_ARGS
         -DLIBUV_ROOT_DIR=${BINARY_DIR}
-        -DLIBUV_LIBARY=${BINARY_DIR}/libuv_a.a
         -DLIBUV_INCLUDE_DIR=${SOURCE_DIR}/include
         -DCASS_BUILD_STATIC=ON
+	-DCASS_BUILD_SHARED=OFF
         INSTALL_COMMAND ""
-        BUILD_BYPRODUCTS <BINARY_DIR>/${ep_lib_prefix}cassandra_static.a
+        BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}cassandra_static.a
         )
 
     ExternalProject_Get_Property (cassandra_src SOURCE_DIR)
@@ -117,9 +119,13 @@ if(NOT cassandra)
 
     set_target_properties (cassandra PROPERTIES
         IMPORTED_LOCATION
-        ${BINARY_DIR}/${ep_lib_prefix}cassandra_static.a
+        ${BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}cassandra_static.a
         INTERFACE_INCLUDE_DIRECTORIES
         ${SOURCE_DIR}/include)
+    message("cass dirs")
+    message(${BINARY_DIR})
+    message(${SOURCE_DIR})
+    message(${BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}cassandra_static.a)
     add_dependencies(cassandra cassandra_src)
 
     if(NOT libuv1)
@@ -144,7 +150,7 @@ if(NOT cassandra)
     endif()
 
     file(TO_CMAKE_PATH "${cassandra_src_SOURCE_DIR}" cassandra_src_SOURCE_DIR)
-    target_link_libraries(reporting INTERFACE cassandra)
+    target_link_libraries(reporting PUBLIC cassandra)
 else()
     message("Found system installed cassandra cpp driver")
     message(${cassandra})
