@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <ripple/app/ledger/LedgerToJson.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
@@ -45,8 +46,10 @@ doLedgerData(
     std::optional<int64_t> marker = request.contains("marker")
         ? request.at("marker").as_int64()
         : std::optional<int64_t>{};
-    size_t limit =
-        request.contains("limit") ? request.at("limit").as_int64() : 200;
+    bool binary =
+        request.contains("binary") ? request.at("binary").as_bool() : false;
+    size_t limit = request.contains("limit") ? request.at("limit").as_int64()
+                                             : (binary ? 2048 : 256);
     auto start = std::chrono::system_clock::now();
     auto [results, returnedMarker] =
         backend.doUpperBound(marker, ledger, limit);
@@ -61,7 +64,14 @@ doLedgerData(
     {
         ripple::STLedgerEntry sle{
             ripple::SerialIter{object.data(), object.size()}, key};
-        objects.push_back(getJson(sle));
+        if (binary)
+        {
+            boost::json::object entry;
+            entry["data"] = ripple::serializeHex(sle);
+            entry["index"] = ripple::to_string(sle.key());
+        }
+        else
+            objects.push_back(getJson(sle));
     }
     response["objects"] = objects;
     if (returnedMarker)
