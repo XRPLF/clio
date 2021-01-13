@@ -69,6 +69,7 @@ doLedgerData(
             boost::json::object entry;
             entry["data"] = ripple::serializeHex(sle);
             entry["index"] = ripple::to_string(sle.key());
+            objects.push_back(entry);
         }
         else
             objects.push_back(getJson(sle));
