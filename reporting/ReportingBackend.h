@@ -550,9 +550,9 @@ public:
             cass_future_free(prepare_future);
 
             query = {};
-            query << "SELECT key, object FROM " << tableName << "flat "
+            query << "SELECT filterEmpty(key, object) FROM " << tableName
+                  << "flat "
                   << " WHERE TOKEN(key) >= ? and sequence <= ?"
-                  << " and object > 0x"
                   << " PER PARTITION LIMIT 1 LIMIT ?"
                   << " ALLOW FILTERING";
 
@@ -877,6 +877,7 @@ public:
         ripple::uint256 key;
         std::vector<unsigned char> blob;
     };
+
     std::pair<std::vector<LedgerObject>, std::optional<int64_t>>
     doUpperBound(
         std::optional<int64_t> marker,
@@ -942,34 +943,40 @@ public:
         while (cass_iterator_next(iter))
         {
             CassRow const* row = cass_iterator_get_row(iter);
-
+            CassValue const* item = cass_row_get_column(row, 0);
+            CassIterator* tuple_iter = cass_iterator_from_tuple(item);
+            if (!cass_iterator_next(tuple_iter))
+            {
+                cass_iterator_free(tuple_iter);
+                continue;
+            }
             cass_byte_t const* outData;
             std::size_t outSize;
-
-            CassValue const* hash = cass_row_get_column(row, 0);
-            rc = cass_value_get_bytes(hash, &outData, &outSize);
+            CassValue const* key = cass_iterator_get_value(tuple_iter);
+            rc = cass_value_get_bytes(key, &outData, &outSize);
             if (rc != CASS_OK)
             {
                 cass_iterator_free(iter);
 
                 std::stringstream ss;
-                ss << "Cassandra fetch error";
+                ss << "Cassandra doUpperBound error";
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
             }
             ripple::uint256 resultHash = ripple::uint256::fromVoid(outData);
-
-            CassValue const* entry = cass_row_get_column(row, 1);
-            rc = cass_value_get_bytes(entry, &outData, &outSize);
+            cass_iterator_next(tuple_iter);
+            CassValue const* object = cass_iterator_get_value(tuple_iter);
+            rc = cass_value_get_bytes(object, &outData, &outSize);
             if (rc != CASS_OK)
             {
                 cass_iterator_free(iter);
 
                 std::stringstream ss;
-                ss << "Cassandra fetch error";
+                ss << "Cassandra doUpperBound error";
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
             }
+
             if (outSize > 0)
             {
                 std::vector<unsigned char> resultBlob{
@@ -977,7 +984,9 @@ public:
 
                 result.push_back({resultHash, resultBlob});
             }
+            cass_iterator_free(tuple_iter);
         }
+        cass_iterator_free(iter);
         if (result.size())
         {
             auto token = getToken(result[result.size() - 1].key.data());
