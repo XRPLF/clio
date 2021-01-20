@@ -444,7 +444,9 @@ public:
             backend.store(
                 std::move(*obj.mutable_key()),
                 request_.ledger().sequence(),
-                std::move(*obj.mutable_data()));
+                std::move(*obj.mutable_data()),
+                true,
+                false);
         }
 
         return more ? CallStatus::MORE : CallStatus::DONE;

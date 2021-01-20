@@ -285,10 +285,21 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 
     for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
     {
+        bool isCreated = false;
+        bool isDeleted = false;
+        if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::CREATED)
+            isCreated = true;
+        else if (
+            obj.mod_type() == org ::xrpl::rpc::v1::RawLedgerObject::DELETED)
+            isDeleted = true;
+
+        assert(not(isCreated and isDeleted));
         flatMapBackend_.store(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
-            std::move(*obj.mutable_data()));
+            std::move(*obj.mutable_data()),
+            isCreated,
+            isDeleted);
     }
     flatMapBackend_.sync();
     BOOST_LOG_TRIVIAL(debug)
