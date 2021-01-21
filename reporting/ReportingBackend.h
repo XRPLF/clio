@@ -1315,6 +1315,7 @@ public:
         bool isDeleted;
 
         uint32_t currentRetries = 0;
+        std::atomic<int> refs = 1;
 
         WriteCallbackData(
             CassandraFlatMapBackend const* f,
@@ -1330,6 +1331,8 @@ public:
             , isCreated(isCreated)
             , isDeleted(isDeleted)
         {
+            if (isCreated or isDeleted)
+                refs = 2;
         }
     };
 

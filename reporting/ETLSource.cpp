@@ -474,7 +474,7 @@ public:
         if (next_->marker().size() == 0)
             return "";
         else
-            return std::string{next_->marker().data()[0]};
+            return ripple::strHex(std::string{next_->marker().data()[0]});
     }
 };
 
