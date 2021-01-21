@@ -996,6 +996,7 @@ public:
         std::uint32_t seq,
         std::uint32_t limit) const
     {
+        BOOST_LOG_TRIVIAL(debug) << "Starting doUpperBound";
         CassStatement* statement = cass_prepared_bind(upperBound_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         int64_t markerVal = marker ? marker.value() : INT64_MIN;
@@ -1058,6 +1059,7 @@ public:
         cass_statement_free(statement);
         cass_future_free(fut);
 
+        BOOST_LOG_TRIVIAL(debug) << "doUpperBound - got keys";
         std::vector<ripple::uint256> keys;
 
         CassIterator* iter = cass_iterator_from_result(res);
@@ -1081,6 +1083,8 @@ public:
             }
             keys.push_back(ripple::uint256::fromVoid(outData));
         }
+        BOOST_LOG_TRIVIAL(debug)
+            << "doUpperBound - populated keys. num keys = " << keys.size();
         if (keys.size())
         {
             std::vector<LedgerObject> results;

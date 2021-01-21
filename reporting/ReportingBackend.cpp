@@ -273,6 +273,8 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
     else
     {
         auto finish = [&requestParams]() {
+            BOOST_LOG_TRIVIAL(trace)
+                << "flatMapReadObjectCallback - finished a read";
             size_t batchSize = requestParams.batchSize;
             if (++(requestParams.numFinished) == batchSize)
                 requestParams.cv.notify_all();

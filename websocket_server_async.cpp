@@ -70,6 +70,7 @@ buildResponse(
     std::shared_ptr<PgPool>& pgPool)
 {
     std::string command = request.at("command").as_string().c_str();
+    BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
     switch (commandMap[command])
     {

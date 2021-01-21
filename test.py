@@ -52,7 +52,7 @@ async def ledger_data(ip, port, ledger, limit):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"limit":int(limit)}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"limit":int(limit),"binary":True}))
             res = json.loads(await ws.recv())
             print(res)
     except websockets.exceptions.connectionclosederror as e:
@@ -66,7 +66,7 @@ async def ledger_data_full(ip, port, ledger):
             marker = None
             while True:
                 if marker is None:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":True}))
                     res = json.loads(await ws.recv())
                     print(res)
                     

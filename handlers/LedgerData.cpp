@@ -53,6 +53,8 @@ doLedgerData(
     auto start = std::chrono::system_clock::now();
     auto [results, returnedMarker] =
         backend.doUpperBound(marker, ledger, limit);
+    BOOST_LOG_TRIVIAL(debug)
+        << "doUpperBound returned " << results.size() << " results";
 
     auto end = std::chrono::system_clock::now();
 
