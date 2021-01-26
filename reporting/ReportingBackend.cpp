@@ -38,6 +38,42 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
             delete &requestParams;
     }
 }
+void
+flatMapWriteBookCallback(CassFuture* fut, void* cbData)
+{
+    CassandraFlatMapBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraFlatMapBackend::WriteCallbackData*>(cbData);
+    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    auto rc = cass_future_error_code(fut);
+    if (rc != CASS_OK)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying ";
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
+        auto wait = std::chrono::milliseconds(
+            lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        ++requestParams.currentRetries;
+        std::shared_ptr<boost::asio::steady_timer> timer =
+            std::make_shared<boost::asio::steady_timer>(
+                backend.ioContext_, std::chrono::steady_clock::now() + wait);
+        timer->async_wait([timer, &requestParams, &backend](
+                              const boost::system::error_code& error) {
+            backend.writeBook(requestParams, true);
+        });
+    }
+    else
+    {
+        --(backend.numRequestsOutstanding_);
+
+        backend.throttleCv_.notify_all();
+        if (backend.numRequestsOutstanding_ == 0)
+            backend.syncCv_.notify_all();
+        int remaining = --requestParams.refs;
+        if (remaining == 0)
+            delete &requestParams;
+    }
+}
 
 void
 flatMapWriteKeyCallback(CassFuture* fut, void* cbData)

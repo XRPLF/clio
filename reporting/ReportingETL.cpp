@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <ripple/basics/StringUtilities.h>
 #include <reporting/DBHelpers.h>
 #include <reporting/ReportingETL.h>
 
@@ -293,13 +294,26 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             obj.mod_type() == org ::xrpl::rpc::v1::RawLedgerObject::DELETED)
             isDeleted = true;
 
+        std::optional<ripple::uint256> bookDir;
+        if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::DELETED)
+        {
+            if (isOffer(obj.data()))
+                bookDir = getBook(obj.data());
+        }
+        else if (obj.book_of_deleted_offer().size())
+        {
+            bookDir =
+                ripple::uint256::fromVoid(obj.book_of_deleted_offer().data());
+        }
+
         assert(not(isCreated and isDeleted));
         flatMapBackend_.store(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
             std::move(*obj.mutable_data()),
             isCreated,
-            isDeleted);
+            isDeleted,
+            std::move(bookDir));
     }
     flatMapBackend_.sync();
     BOOST_LOG_TRIVIAL(debug)

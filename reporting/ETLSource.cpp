@@ -19,6 +19,7 @@
 */
 //==============================================================================
 
+#include <ripple/protocol/STLedgerEntry.h>
 #include <boost/asio/strand.hpp>
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
@@ -441,12 +442,22 @@ public:
 
         for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
+            std::optional<ripple::uint256> book;
+
+            short offer_bytes = (obj.data()[1] << 8) | obj.data()[2];
+            if (offer_bytes == 0x006f)
+            {
+                ripple::SerialIter it{obj.data().data(), obj.data().size()};
+                ripple::SLE sle{it, {}};
+                book = sle.getFieldH256(ripple::sfBookDirectory);
+            }
             backend.store(
                 std::move(*obj.mutable_key()),
                 request_.ledger().sequence(),
                 std::move(*obj.mutable_data()),
                 true,
-                false);
+                false,
+                std::move(book));
         }
 
         return more ? CallStatus::MORE : CallStatus::DONE;

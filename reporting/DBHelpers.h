@@ -48,6 +48,21 @@ struct AccountTransactionsData
     }
 };
 
+inline bool
+isOffer(std::string const& object)
+{
+    short offer_bytes = (object[1] << 8) | object[2];
+    return offer_bytes == 0x006f;
+}
+
+inline ripple::uint256
+getBook(std::string const& offer)
+{
+    ripple::SerialIter it{offer.data(), offer.size()};
+    ripple::SLE sle{it, {}};
+    return sle.getFieldH256(ripple::sfBookDirectory);
+}
+
 /// Write new ledger and transaction data to Postgres
 /// @param info Ledger Info to write
 /// @param accountTxData transaction data to write
