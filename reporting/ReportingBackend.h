@@ -1552,7 +1552,7 @@ public:
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
             {
-                BOOST_LOG_TRIVIAL(trace)
+                BOOST_LOG_TRIVIAL(info)
                     << __func__ << " : "
                     << "Max outstanding requests reached. "
                     << "Waiting for other requests to finish";
@@ -1620,7 +1620,7 @@ public:
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
             {
-                BOOST_LOG_TRIVIAL(trace)
+                BOOST_LOG_TRIVIAL(info)
                     << __func__ << " : "
                     << "Max outstanding requests reached. "
                     << "Waiting for other requests to finish";
@@ -1681,7 +1681,7 @@ public:
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
             {
-                BOOST_LOG_TRIVIAL(trace)
+                BOOST_LOG_TRIVIAL(info)
                     << __func__ << " : "
                     << "Max outstanding requests reached. "
                     << "Waiting for other requests to finish";
@@ -1771,7 +1771,7 @@ public:
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
             {
-                BOOST_LOG_TRIVIAL(trace)
+                BOOST_LOG_TRIVIAL(info)
                     << __func__ << " : "
                     << "Max outstanding requests reached. "
                     << "Waiting for other requests to finish";
@@ -1851,7 +1851,7 @@ public:
         bool isDeleted,
         std::optional<ripple::uint256>&& book) const
     {
-        BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
+        BOOST_LOG_TRIVIAL(info) << "Writing ledger object to cassandra";
         WriteCallbackData* data = new WriteCallbackData(
             this,
             std::move(key),
@@ -1863,6 +1863,8 @@ public:
 
         ++numRequestsOutstanding_;
         if (isCreated || isDeleted)
+            ++numRequestsOutstanding_;
+        if (book)
             ++numRequestsOutstanding_;
         write(*data, false);
         if (isCreated || isDeleted)
