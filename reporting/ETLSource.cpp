@@ -403,15 +403,16 @@ public:
         CassandraFlatMapBackend& backend,
         bool abort = false)
     {
-        std::cout << "Processing calldata" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "Processing response. "
+                                << "Marker prefix = " << getMarkerPrefix();
         if (abort)
         {
-            std::cout << "AsyncCallData aborted";
+            BOOST_LOG_TRIVIAL(error) << "AsyncCallData aborted";
             return CallStatus::ERRORED;
         }
         if (!status_.ok())
         {
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(error)
                 << "AsyncCallData status_ not ok: "
                 << " code = " << status_.error_code()
                 << " message = " << status_.error_message();
@@ -440,6 +441,7 @@ public:
             call(stub, cq);
         }
 
+        BOOST_LOG_TRIVIAL(info) << "Writing objects";
         for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
             std::optional<ripple::uint256> book;
@@ -459,6 +461,7 @@ public:
                 false,
                 std::move(book));
         }
+        BOOST_LOG_TRIVIAL(info) << "Wrote objects";
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
@@ -468,6 +471,7 @@ public:
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq)
     {
+        BOOST_LOG_TRIVIAL(info) << "Making next request. " << getMarkerPrefix();
         context_ = std::make_unique<grpc::ClientContext>();
 
         std::unique_ptr<grpc::ClientAsyncResponseReader<
@@ -504,8 +508,8 @@ ETLSource::loadInitialLedger(uint32_t sequence)
     std::vector<AsyncCallData> calls;
     calls.emplace_back(sequence);
 
-    BOOST_LOG_TRIVIAL(debug) << "Starting data download for ledger " << sequence
-                             << ". Using source = " << toString();
+    BOOST_LOG_TRIVIAL(info) << "Starting data download for ledger " << sequence
+                            << ". Using source = " << toString();
 
     for (auto& c : calls)
         c.call(stub_, cq);
@@ -526,13 +530,13 @@ ETLSource::loadInitialLedger(uint32_t sequence)
         }
         else
         {
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(info)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
             auto result = ptr->process(stub_, cq, backend_, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
-                BOOST_LOG_TRIVIAL(debug)
+                BOOST_LOG_TRIVIAL(info)
                     << "Finished a marker. "
                     << "Current number of finished = " << numFinished;
             }
