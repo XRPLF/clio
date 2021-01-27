@@ -1206,8 +1206,7 @@ public:
     }
 
     std::vector<LedgerObject>
-    doBookOffers(std::vector<unsigned char> const& book, uint32_t sequence)
-        const
+    doBookOffers(ripple::uint256 const& book, uint32_t sequence) const
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doBookOffers";
         CassStatement* statement = cass_prepared_bind(upperBound_);
