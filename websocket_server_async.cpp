@@ -35,13 +35,21 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-enum RPCCommand { tx, account_tx, ledger, account_info, ledger_data };
+enum RPCCommand {
+    tx,
+    account_tx,
+    ledger,
+    account_info,
+    ledger_data,
+    book_offers
+};
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
     {"account_tx", account_tx},
     {"ledger", ledger},
     {"account_info", account_info},
-    {"ledger_data", ledger_data}};
+    {"ledger_data", ledger_data},
+    {"book_offers", book_offers}};
 
 boost::json::object
 doAccountInfo(
@@ -62,6 +70,11 @@ boost::json::object
 doLedgerData(
     boost::json::object const& request,
     CassandraFlatMapBackend const& backend);
+boost::json::object
+doBookOffers(
+    boost::json::object const& request,
+    CassandraFlatMapBackend const& backend,
+    std::shared_ptr<PgPool>& pgPool);
 
 boost::json::object
 buildResponse(
@@ -87,6 +100,9 @@ buildResponse(
             break;
         case account_info:
             return doAccountInfo(request, backend, pgPool);
+            break;
+        case book_offers:
+            return doBookOffers(request, backend, pgPool);
             break;
         default:
             BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;
