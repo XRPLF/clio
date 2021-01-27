@@ -22,7 +22,7 @@ ledgerSequenceFromRequest(
     if (request.contains("ledger_index"))
     {
         sql << "ledger_seq = "
-            << std::to_string(request.at("ledger_index").as_uint64());
+            << std::to_string(request.at("ledger_index").as_int64());
     }
     else if (request.contains("ledger_hash"))
     {
