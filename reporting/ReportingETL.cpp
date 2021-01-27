@@ -295,7 +295,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted = true;
 
         std::optional<ripple::uint256> bookDir;
-        if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::DELETED)
+        if (isCreated)
         {
             if (isOffer(obj.data()))
                 bookDir = getBook(obj.data());
@@ -304,6 +304,10 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         {
             bookDir =
                 ripple::uint256::fromVoid(obj.book_of_deleted_offer().data());
+            for (size_t i = 0; i < 8; ++i)
+            {
+                bookDir->data()[bookDir->size() - 1 - i] = 0x00;
+            }
         }
 
         assert(not(isCreated and isDeleted));
@@ -335,6 +339,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
      * Behold, mortals! This function spawns three separate threads, which talk
      * to each other via 2 different thread safe queues and 1 atomic variable.
      * All threads and queues are function local. This function returns when all
+     *
      * of the threads exit. There are two termination conditions: the first is
      * if the load thread encounters a write conflict. In this case, the load
      * thread sets writeConflict, an atomic bool, to true, which signals the

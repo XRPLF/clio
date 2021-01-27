@@ -93,10 +93,10 @@ async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, 
     try:
         
         async with websockets.connect(address) as ws:
-            taker_gets = json.loads("{\"currency\":" + get_currency+"}")
+            taker_gets = json.loads("{\"currency\":\"" + get_currency+"\"}")
             if get_issuer is not None:
                 taker_gets["issuer"] = get_issuer
-            taker_pays = json.loads("{\"currency\":" + pay_currency + "}")
+            taker_pays = json.loads("{\"currency\":\"" + pay_currency + "\"}")
             if pay_issuer is not None:
                 taker_pays["issuer"] = pay_issuer 
 
@@ -116,9 +116,9 @@ parser.add_argument('--hash')
 parser.add_argument('--account', default="rLC64xxNif3GiY9FQnbaM4kcE6VvDhwRod")
 parser.add_argument('--ledger')
 parser.add_argument('--limit', default='200')
-paresr.add_argument('--taker_pays_issuer')
+parser.add_argument('--taker_pays_issuer')
 parser.add_argument('--taker_pays_currency')
-paresr.add_argument('--taker_gets_issuer')
+parser.add_argument('--taker_gets_issuer')
 parser.add_argument('--taker_gets_currency')
 
 
@@ -145,7 +145,7 @@ def run(args):
                 ledger_data_full(args.ip, args.port, args.ledger))
     elif args.action == "book_offers":
         asyncio.get_event_loop().run_until_complete(
-                book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer);
+                book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer))
     else:
         print("incorrect arguments")
 

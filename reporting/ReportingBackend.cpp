@@ -321,8 +321,10 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
         if (!row)
         {
             cass_result_free(res);
-            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch get row error : " << rc
-                                     << ", " << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error)
+                << "Cassandra fetch get row error : " << rc << ", "
+                << cass_error_desc(rc)
+                << " key = " << ripple::strHex(requestParams.key);
             finish();
             return;
         }

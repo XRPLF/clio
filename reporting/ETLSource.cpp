@@ -452,6 +452,10 @@ public:
                 ripple::SerialIter it{obj.data().data(), obj.data().size()};
                 ripple::SLE sle{it, {}};
                 book = sle.getFieldH256(ripple::sfBookDirectory);
+                for (size_t i = 0; i < 8; ++i)
+                {
+                    book->data()[book->size() - 1 - i] = 0x00;
+                }
             }
             backend.store(
                 std::move(*obj.mutable_key()),
@@ -571,8 +575,7 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
             << "ETLSource::fetchLedger - is_unlimited is "
                "false. Make sure secure_gateway is set "
                "correctly on the ETL source. source = "
-            << toString() << " response = " << response.DebugString()
-            << " status = " << status.error_message();
+            << toString() << " status = " << status.error_message();
         assert(false);
     }
     return {status, std::move(response)};

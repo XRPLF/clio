@@ -93,6 +93,7 @@ doBookOffers(
     CassandraFlatMapBackend const& backend,
     std::shared_ptr<PgPool>& pool)
 {
+    std::cout << "enter" << std::endl;
     boost::json::object response;
     auto sequence = ledgerSequenceFromRequest(request, pool);
 
@@ -292,7 +293,8 @@ doBookOffers(
     }
 
     std::uint32_t limit = 2048;
-    if (request.at("limit").kind() == boost::json::kind::int64)
+    if (request.contains("limit") and
+        request.at("limit").kind() == boost::json::kind::int64)
         limit = request.at("limit").as_int64();
 
     ripple::Book book = {

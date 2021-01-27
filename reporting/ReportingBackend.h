@@ -94,6 +94,7 @@ private:
     const CassPrepared* getCreated_ = nullptr;
     const CassPrepared* getBook_ = nullptr;
     const CassPrepared* insertBook_ = nullptr;
+    const CassPrepared* deleteBook_ = nullptr;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
@@ -485,8 +486,8 @@ public:
             query = {};
             query << "CREATE TABLE IF NOT EXISTS " << tableName << "books"
                   << " ( book blob, sequence bigint, key blob, deleted_at "
-                     "bigint static, PRIMARY KEY "
-                     "(book, sequence, key))";
+                     "bigint, PRIMARY KEY "
+                     "(book, key))";
             statement = makeStatement(query.str().c_str(), 0);
             fut = cass_session_execute(session_.get(), statement);
             rc = cass_future_error_code(fut);
@@ -618,7 +619,7 @@ public:
 
             query = {};
             query << "INSERT INTO " << tableName << "books"
-                  << " (book, sequence, key, deleted_at) VALUES (?, ?, ?, ?)";
+                  << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
             prepare_future =
                 cass_session_prepare(session_.get(), query.str().c_str());
 
@@ -639,6 +640,31 @@ public:
 
             /* Get the prepared object from the future */
             insertBook_ = cass_future_get_prepared(prepare_future);
+            cass_future_free(prepare_future);
+            query = {};
+
+            query << "INSERT INTO " << tableName << "books"
+                  << " (book, key, deleted_at) VALUES (?, ?, ?)";
+            prepare_future =
+                cass_session_prepare(session_.get(), query.str().c_str());
+
+            /* Wait for the statement to prepare and get the result */
+            rc = cass_future_error_code(prepare_future);
+
+            if (rc != CASS_OK)
+            {
+                /* Handle error */
+                cass_future_free(prepare_future);
+
+                std::stringstream ss;
+                ss << "nodestore: Error preparing insert : " << rc << ", "
+                   << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << ss.str();
+                continue;
+            }
+
+            /* Get the prepared object from the future */
+            deleteBook_ = cass_future_get_prepared(prepare_future);
             cass_future_free(prepare_future);
 
             query = {};
@@ -872,6 +898,16 @@ public:
             {
                 cass_prepared_free(getBook_);
                 getBook_ = nullptr;
+            }
+            if (insertBook_)
+            {
+                cass_prepared_free(insertBook_);
+                insertBook_ = nullptr;
+            }
+            if (deleteBook_)
+            {
+                cass_prepared_free(deleteBook_);
+                deleteBook_ = nullptr;
             }
             work_.reset();
             ioThread_.join();
@@ -1209,7 +1245,7 @@ public:
     doBookOffers(ripple::uint256 const& book, uint32_t sequence) const
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doBookOffers";
-        CassStatement* statement = cass_prepared_bind(upperBound_);
+        CassStatement* statement = cass_prepared_bind(getBook_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         CassError rc = cass_statement_bind_bytes(
             statement, 0, static_cast<cass_byte_t const*>(book.data()), 32);
@@ -1284,9 +1320,10 @@ public:
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
             }
             keys.push_back(ripple::uint256::fromVoid(outData));
+            std::cout << ripple::strHex(keys.back()) << std::endl;
         }
         BOOST_LOG_TRIVIAL(debug)
-            << "doUpperBound - populated keys. num keys = " << keys.size();
+            << "doBookOffers - populated keys. num keys = " << keys.size();
         if (keys.size())
         {
             std::vector<LedgerObject> results;
@@ -1766,6 +1803,10 @@ public:
     void
     writeBook(WriteCallbackData& data, bool isRetry) const
     {
+        assert(data.isCreated or data.isDeleted);
+        if (!data.isCreated and !data.isDeleted)
+            throw std::runtime_error(
+                "writing book that's neither created or deleted");
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
@@ -1779,7 +1820,11 @@ public:
                 });
             }
         }
-        CassStatement* statement = cass_prepared_bind(insertBook_);
+        CassStatement* statement = nullptr;
+        if (data.isCreated)
+            statement = cass_prepared_bind(insertBook_);
+        else if (data.isDeleted)
+            statement = cass_prepared_bind(deleteBook_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         const unsigned char* bookData = (unsigned char*)data.book->data();
         CassError rc = cass_statement_bind_bytes(
@@ -1796,21 +1841,10 @@ public:
             BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
             throw std::runtime_error(ss.str());
         }
-        rc = cass_statement_bind_int64(
-            statement, 1, (data.isCreated ? data.sequence : 0));
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "binding cassandra insert object: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
         const unsigned char* keyData = (unsigned char*)data.key.data();
         rc = cass_statement_bind_bytes(
             statement,
-            2,
+            1,
             static_cast<cass_byte_t const*>(keyData),
             data.key.size());
         if (rc != CASS_OK)
@@ -1822,17 +1856,29 @@ public:
             BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
             throw std::runtime_error(ss.str());
         }
-        rc = cass_statement_bind_int64(
-            statement, 3, (data.isDeleted ? data.sequence : INT64_MAX));
+        rc = cass_statement_bind_int64(statement, 2, data.sequence);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
             std::stringstream ss;
-
             ss << "binding cassandra insert object: " << rc << ", "
                << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
             throw std::runtime_error(ss.str());
+        }
+        if (data.isCreated)
+        {
+            rc = cass_statement_bind_int64(statement, 3, INT64_MAX);
+            if (rc != CASS_OK)
+            {
+                cass_statement_free(statement);
+                std::stringstream ss;
+
+                ss << "binding cassandra insert object: " << rc << ", "
+                   << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+                throw std::runtime_error(ss.str());
+            }
         }
         CassFuture* fut = cass_session_execute(session_.get(), statement);
         cass_statement_free(statement);
@@ -1850,7 +1896,7 @@ public:
         bool isDeleted,
         std::optional<ripple::uint256>&& book) const
     {
-        BOOST_LOG_TRIVIAL(info) << "Writing ledger object to cassandra";
+        BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
         WriteCallbackData* data = new WriteCallbackData(
             this,
             std::move(key),

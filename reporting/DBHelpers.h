@@ -60,7 +60,12 @@ getBook(std::string const& offer)
 {
     ripple::SerialIter it{offer.data(), offer.size()};
     ripple::SLE sle{it, {}};
-    return sle.getFieldH256(ripple::sfBookDirectory);
+    ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
+    for (size_t i = 0; i < 8; ++i)
+    {
+        book.data()[book.size() - 1 - i] = 0x00;
+    }
+    return book;
 }
 
 /// Write new ledger and transaction data to Postgres
