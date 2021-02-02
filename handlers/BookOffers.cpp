@@ -328,6 +328,7 @@ doBookOffers(
             {
                 boost::json::object empty;
                 empty["missing_key"] = ripple::strHex(obj.key);
+                empty["data"] = ripple::strHex(obj.blob);
                 return empty;
             }
         });
