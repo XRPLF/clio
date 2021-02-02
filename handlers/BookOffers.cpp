@@ -327,6 +327,7 @@ doBookOffers(
             catch (std::exception const& e)
             {
                 boost::json::object empty;
+                empty["missing_key"] = ripple::strHex(obj.key);
                 return empty;
             }
         });
