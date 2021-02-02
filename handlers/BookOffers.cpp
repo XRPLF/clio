@@ -318,9 +318,17 @@ doBookOffers(
         std::move_iterator(offers.end()),
         std::back_inserter(jsonOffers),
         [](auto obj) {
-            ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
-            ripple::SLE offer{it, obj.key};
-            return getJson(offer);
+            try
+            {
+                ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
+                ripple::SLE offer{it, obj.key};
+                return getJson(offer);
+            }
+            catch (std::exception const& e)
+            {
+                boost::json::object empty;
+                return empty;
+            }
         });
 
     end = std::chrono::system_clock::now();
