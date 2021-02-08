@@ -297,13 +297,26 @@ doBookOffers(
         request.at("limit").kind() == boost::json::kind::int64)
         limit = request.at("limit").as_int64();
 
+    ripple::uint256 cursor;
+    if (request.contains("cursor"))
+    {
+        cursor.parseHex(request.at("cursor").as_string().c_str());
+    }
+
     ripple::Book book = {
         {pay_currency, pay_issuer}, {get_currency, get_issuer}};
 
     auto start = std::chrono::system_clock::now();
     ripple::uint256 bookBase = getBookBase(book);
-    std::vector<CassandraFlatMapBackend::LedgerObject> offers =
-        backend.doBookOffers(bookBase, *sequence);
+    std::vector<CassandraFlatMapBackend::LedgerObject> offers;
+    if (!cursor.isZero())
+    {
+        offers = backend.doBookOffers(bookBase, *sequence, cursor);
+    }
+    else
+    {
+        offers = backend.doBookOffers(bookBase, *sequence);
+    }
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning) << "Time loading books from Postgres: "

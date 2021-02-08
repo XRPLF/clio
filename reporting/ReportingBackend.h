@@ -487,7 +487,7 @@ public:
             query << "CREATE TABLE IF NOT EXISTS " << tableName << "books"
                   << " ( book blob, sequence bigint, key blob, deleted_at "
                      "bigint, PRIMARY KEY "
-                     "(book, key))";
+                     "(book, key)) WITH CLUSTERING ORDER BY (key ASC)";
             statement = makeStatement(query.str().c_str(), 0);
             fut = cass_session_execute(session_.get(), statement);
             rc = cass_future_error_code(fut);
@@ -810,8 +810,9 @@ public:
 
             query = {};
             query << "SELECT key FROM " << tableName << "books "
-                  << " WHERE book = ? AND sequence <= ? AND deleted_at > ? "
-                     "ALLOW FILTERING";
+                  << " WHERE book = ? AND sequence <= ? AND deleted_at > ? AND"
+                     " key > ? "
+                     " ORDER BY key ASC LIMIT 300 ALLOW FILTERING";
 
             prepare_future =
                 cass_session_prepare(session_.get(), query.str().c_str());
@@ -1242,7 +1243,10 @@ public:
     }
 
     std::vector<LedgerObject>
-    doBookOffers(ripple::uint256 const& book, uint32_t sequence) const
+    doBookOffers(
+        ripple::uint256 const& book,
+        uint32_t sequence,
+        ripple::uint256 const& cursor = {}) const
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doBookOffers";
         CassStatement* statement = cass_prepared_bind(getBook_);
@@ -1277,7 +1281,17 @@ public:
                 << ", " << cass_error_desc(rc);
             return {};
         }
+        rc = cass_statement_bind_bytes(
+            statement, 3, static_cast<cass_byte_t const*>(cursor.data()), 32);
 
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra book to doBookOffers query: " << rc
+                << ", " << cass_error_desc(rc);
+            return {};
+        }
         CassFuture* fut;
         do
         {
