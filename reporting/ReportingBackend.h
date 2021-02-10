@@ -31,6 +31,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <reporting/DBHelpers.h>
 
 void
 flatMapWriteCallback(CassFuture* fut, void* cbData);
@@ -40,6 +41,8 @@ void
 flatMapWriteTransactionCallback(CassFuture* fut, void* cbData);
 void
 flatMapWriteBookCallback(CassFuture* fut, void* cbData);
+void
+flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
 void
 flatMapReadCallback(CassFuture* fut, void* cbData);
 void
@@ -95,6 +98,12 @@ private:
     const CassPrepared* getBook_ = nullptr;
     const CassPrepared* insertBook_ = nullptr;
     const CassPrepared* deleteBook_ = nullptr;
+    const CassPrepared* insertAccountTx_ = nullptr;
+    const CassPrepared* selectAccountTx_ = nullptr;
+    const CassPrepared* insertLedgerHeader_ = nullptr;
+    const CassPrepared* insertLedgerHash_ = nullptr;
+    const CassPrepared* updateLedgerRange_ = nullptr;
+    const CassPrepared* updateLedgerHeader_ = nullptr;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
@@ -145,709 +154,7 @@ public:
     // Create the table if it doesn't exist already
     // @param createIfMissing ignored
     void
-    open()
-    {
-        std::cout << config_ << std::endl;
-        auto getString = [this](std::string const& field) -> std::string {
-            if (config_.contains(field))
-            {
-                auto jsonStr = config_[field].as_string();
-                return {jsonStr.c_str(), jsonStr.size()};
-            }
-            return {""};
-        };
-        if (open_)
-        {
-            assert(false);
-            BOOST_LOG_TRIVIAL(error) << "database is already open";
-            return;
-        }
-
-        std::lock_guard<std::mutex> lock(mutex_);
-        CassCluster* cluster = cass_cluster_new();
-        if (!cluster)
-            throw std::runtime_error(
-                "nodestore:: Failed to create CassCluster");
-
-        std::string secureConnectBundle = getString("secure_connect_bundle");
-
-        if (!secureConnectBundle.empty())
-        {
-            /* Setup driver to connect to the cloud using the secure connection
-             * bundle */
-            if (cass_cluster_set_cloud_secure_connection_bundle(
-                    cluster, secureConnectBundle.c_str()) != CASS_OK)
-            {
-                BOOST_LOG_TRIVIAL(error)
-                    << "Unable to configure cloud using the "
-                       "secure connection bundle: "
-                    << secureConnectBundle;
-                throw std::runtime_error(
-                    "nodestore: Failed to connect using secure connection "
-                    "bundle");
-                return;
-            }
-        }
-        else
-        {
-            std::string contact_points = getString("contact_points");
-            if (contact_points.empty())
-            {
-                throw std::runtime_error(
-                    "nodestore: Missing contact_points in Cassandra config");
-            }
-            CassError rc = cass_cluster_set_contact_points(
-                cluster, contact_points.c_str());
-            if (rc != CASS_OK)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error setting Cassandra contact_points: "
-                   << contact_points << ", result: " << rc << ", "
-                   << cass_error_desc(rc);
-
-                throw std::runtime_error(ss.str());
-            }
-
-            int port =
-                config_.contains("port") ? config_["port"].as_int64() : 0;
-            if (port)
-            {
-                rc = cass_cluster_set_port(cluster, port);
-                if (rc != CASS_OK)
-                {
-                    std::stringstream ss;
-                    ss << "nodestore: Error setting Cassandra port: " << port
-                       << ", result: " << rc << ", " << cass_error_desc(rc);
-
-                    throw std::runtime_error(ss.str());
-                }
-            }
-        }
-        cass_cluster_set_token_aware_routing(cluster, cass_true);
-        CassError rc = cass_cluster_set_protocol_version(
-            cluster, CASS_PROTOCOL_VERSION_V4);
-        if (rc != CASS_OK)
-        {
-            std::stringstream ss;
-            ss << "nodestore: Error setting cassandra protocol version: "
-               << ", result: " << rc << ", " << cass_error_desc(rc);
-
-            throw std::runtime_error(ss.str());
-        }
-
-        std::string username = getString("username");
-        if (username.size())
-        {
-            BOOST_LOG_TRIVIAL(debug)
-                << "user = " << username.c_str()
-                << " password = " << getString("password").c_str();
-            cass_cluster_set_credentials(
-                cluster, username.c_str(), getString("password").c_str());
-        }
-
-        unsigned int const workers = std::thread::hardware_concurrency();
-        rc = cass_cluster_set_num_threads_io(cluster, workers);
-        if (rc != CASS_OK)
-        {
-            std::stringstream ss;
-            ss << "nodestore: Error setting Cassandra io threads to " << workers
-               << ", result: " << rc << ", " << cass_error_desc(rc);
-            throw std::runtime_error(ss.str());
-        }
-
-        cass_cluster_set_request_timeout(cluster, 2000);
-
-        rc = cass_cluster_set_queue_size_io(
-            cluster,
-            maxRequestsOutstanding);  // This number needs to scale w/ the
-                                      // number of request per sec
-        if (rc != CASS_OK)
-        {
-            std::stringstream ss;
-            ss << "nodestore: Error setting Cassandra max core connections per "
-                  "host"
-               << ", result: " << rc << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-
-        std::string certfile = getString("certfile");
-        if (certfile.size())
-        {
-            std::ifstream fileStream(
-                boost::filesystem::path(certfile).string(), std::ios::in);
-            if (!fileStream)
-            {
-                std::stringstream ss;
-                ss << "opening config file " << certfile;
-                throw std::system_error(
-                    errno, std::generic_category(), ss.str());
-            }
-            std::string cert(
-                std::istreambuf_iterator<char>{fileStream},
-                std::istreambuf_iterator<char>{});
-            if (fileStream.bad())
-            {
-                std::stringstream ss;
-                ss << "reading config file " << certfile;
-                throw std::system_error(
-                    errno, std::generic_category(), ss.str());
-            }
-
-            CassSsl* context = cass_ssl_new();
-            cass_ssl_set_verify_flags(context, CASS_SSL_VERIFY_NONE);
-            rc = cass_ssl_add_trusted_cert(context, cert.c_str());
-            if (rc != CASS_OK)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error setting Cassandra ssl context: " << rc
-                   << ", " << cass_error_desc(rc);
-                throw std::runtime_error(ss.str());
-            }
-
-            cass_cluster_set_ssl(cluster, context);
-            cass_ssl_free(context);
-        }
-
-        std::string keyspace = getString("keyspace");
-        if (keyspace.empty())
-        {
-            throw std::runtime_error(
-                "nodestore: Missing keyspace in Cassandra config");
-        }
-
-        std::string tableName = getString("table_name");
-        if (tableName.empty())
-        {
-            throw std::runtime_error(
-                "nodestore: Missing table name in Cassandra config");
-        }
-
-        cass_cluster_set_connect_timeout(cluster, 10000);
-
-        CassStatement* statement;
-        CassFuture* fut;
-        bool setupSessionAndTable = false;
-        while (!setupSessionAndTable)
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            session_.reset(cass_session_new());
-            assert(session_);
-
-            fut = cass_session_connect_keyspace(
-                session_.get(), cluster, keyspace.c_str());
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            if (rc != CASS_OK)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error connecting Cassandra session keyspace: "
-                   << rc << ", " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            std::stringstream query;
-            query << "CREATE TABLE IF NOT EXISTS " << tableName << "flat"
-                  << " ( key blob, sequence bigint, object blob, PRIMARY "
-                     "KEY(key, "
-                     "sequence)) WITH CLUSTERING ORDER BY (sequence DESC)";
-
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK && rc != CASS_ERROR_SERVER_INVALID_QUERY)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error creating Cassandra table: " << rc
-                   << ", " << cass_error_desc(rc) << " - " << query.str();
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            query = {};
-            query << "SELECT * FROM " << tableName << "flat"
-                  << " LIMIT 1";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK)
-            {
-                if (rc == CASS_ERROR_SERVER_INVALID_QUERY)
-                {
-                    BOOST_LOG_TRIVIAL(warning)
-                        << "table not here yet, sleeping 1s to "
-                           "see if table creation propagates";
-                    continue;
-                }
-                else
-                {
-                    std::stringstream ss;
-                    ss << "nodestore: Error checking for table: " << rc << ", "
-                       << cass_error_desc(rc);
-                    BOOST_LOG_TRIVIAL(error) << ss.str();
-                    continue;
-                }
-            }
-            query = {};
-            query << "CREATE TABLE IF NOT EXISTS " << tableName
-                  << "flattransactions"
-                  << " ( hash blob PRIMARY KEY, sequence bigint, transaction "
-                     "blob, metadata blob)";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK && rc != CASS_ERROR_SERVER_INVALID_QUERY)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error creating Cassandra table: " << rc
-                   << ", " << cass_error_desc(rc) << " - " << query.str();
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            query = {};
-            query << "SELECT * FROM " << tableName << "flattransactions"
-                  << " LIMIT 1";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK)
-            {
-                if (rc == CASS_ERROR_SERVER_INVALID_QUERY)
-                {
-                    BOOST_LOG_TRIVIAL(warning)
-                        << "table not here yet, sleeping 1s to "
-                           "see if table creation propagates";
-                    continue;
-                }
-                else
-                {
-                    std::stringstream ss;
-                    ss << "nodestore: Error checking for table: " << rc << ", "
-                       << cass_error_desc(rc);
-                    BOOST_LOG_TRIVIAL(error) << ss.str();
-                    continue;
-                }
-            }
-            query = {};
-            query << "CREATE TABLE IF NOT EXISTS " << tableName << "keys"
-                  << " ( key blob, created bigint, deleted bigint, PRIMARY KEY "
-                     "(key, created)) with clustering order by (created "
-                     "desc) ";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK && rc != CASS_ERROR_SERVER_INVALID_QUERY)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error creating Cassandra table: " << rc
-                   << ", " << cass_error_desc(rc) << " - " << query.str();
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            query = {};
-            query << "SELECT * FROM " << tableName << "keys"
-                  << " LIMIT 1";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK)
-            {
-                if (rc == CASS_ERROR_SERVER_INVALID_QUERY)
-                {
-                    BOOST_LOG_TRIVIAL(warning)
-                        << "table not here yet, sleeping 1s to "
-                           "see if table creation propagates";
-                    continue;
-                }
-                else
-                {
-                    std::stringstream ss;
-                    ss << "nodestore: Error checking for table: " << rc << ", "
-                       << cass_error_desc(rc);
-                    BOOST_LOG_TRIVIAL(error) << ss.str();
-                    continue;
-                }
-            }
-            query = {};
-            query << "CREATE TABLE IF NOT EXISTS " << tableName << "books"
-                  << " ( book blob, sequence bigint, key blob, deleted_at "
-                     "bigint, PRIMARY KEY "
-                     "(book, key)) WITH CLUSTERING ORDER BY (key ASC)";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK && rc != CASS_ERROR_SERVER_INVALID_QUERY)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error creating Cassandra table: " << rc
-                   << ", " << cass_error_desc(rc) << " - " << query.str();
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            query = {};
-            query << "SELECT * FROM " << tableName << "books"
-                  << " LIMIT 1";
-            statement = makeStatement(query.str().c_str(), 0);
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK)
-            {
-                if (rc == CASS_ERROR_SERVER_INVALID_QUERY)
-                {
-                    BOOST_LOG_TRIVIAL(warning)
-                        << "table not here yet, sleeping 1s to "
-                           "see if table creation propagates";
-                    continue;
-                }
-                else
-                {
-                    std::stringstream ss;
-                    ss << "nodestore: Error checking for table: " << rc << ", "
-                       << cass_error_desc(rc);
-                    BOOST_LOG_TRIVIAL(error) << ss.str();
-                    continue;
-                }
-            }
-            setupSessionAndTable = true;
-        }
-
-        cass_cluster_free(cluster);
-
-        bool setupPreparedStatements = false;
-        while (!setupPreparedStatements)
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            std::stringstream query;
-            query << "INSERT INTO " << tableName << "flat"
-                  << " (key, sequence, object) VALUES (?, ?, ?)";
-            CassFuture* prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing insert : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            insertObject_ = cass_future_get_prepared(prepare_future);
-
-            /* The future can be freed immediately after getting the prepared
-             * object
-             */
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "INSERT INTO " << tableName << "flattransactions"
-                  << " (hash, sequence, transaction, metadata) VALUES (?, ?, "
-                     "?, ?)";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing insert : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            insertTransaction_ = cass_future_get_prepared(prepare_future);
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "INSERT INTO " << tableName << "keys"
-                  << " (key, created, deleted) VALUES (?, ?, ?)";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing insert : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            insertKey_ = cass_future_get_prepared(prepare_future);
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "INSERT INTO " << tableName << "books"
-                  << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing insert : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            insertBook_ = cass_future_get_prepared(prepare_future);
-            cass_future_free(prepare_future);
-            query = {};
-
-            query << "INSERT INTO " << tableName << "books"
-                  << " (book, key, deleted_at) VALUES (?, ?, ?)";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing insert : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            deleteBook_ = cass_future_get_prepared(prepare_future);
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "SELECT created FROM " << tableName << "keys"
-                  << " WHERE key = ? ORDER BY created desc LIMIT 1";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing insert : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            getCreated_ = cass_future_get_prepared(prepare_future);
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "SELECT object, sequence FROM " << tableName << "flat"
-                  << " WHERE key = ? AND sequence <= ? ORDER BY sequence DESC "
-                     "LIMIT 1";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing select : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            selectObject_ = cass_future_get_prepared(prepare_future);
-
-            /* The future can be freed immediately after getting the prepared
-             * object
-             */
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "SELECT transaction,metadata FROM " << tableName
-                  << "flattransactions"
-                  << " WHERE hash = ?";
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            /* Wait for the statement to prepare and get the result */
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                /* Handle error */
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing select : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            /* Get the prepared object from the future */
-            selectTransaction_ = cass_future_get_prepared(prepare_future);
-
-            /* The future can be freed immediately after getting the prepared
-             * object
-             */
-            cass_future_free(prepare_future);
-
-            query = {};
-            query << "SELECT key FROM " << tableName << "keys "
-                  << " WHERE TOKEN(key) >= ? and created <= ?"
-                  << " and deleted > ?"
-                  << " PER PARTITION LIMIT 1 LIMIT ?"
-                  << " ALLOW FILTERING";
-
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            // Wait for the statement to prepare and get the result
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                // Handle error
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing upperBound : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str() << " : " << query.str();
-                continue;
-            }
-
-            // Get the prepared object from the future
-            upperBound_ = cass_future_get_prepared(prepare_future);
-
-            // The future can be freed immediately after getting the prepared
-            // object
-            //
-            cass_future_free(prepare_future);
-            query = {};
-            query << "SELECT TOKEN(key) FROM " << tableName << "flat "
-                  << " WHERE key = ? LIMIT 1";
-
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            // Wait for the statement to prepare and get the result
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                // Handle error
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing getToken : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            getToken_ = cass_future_get_prepared(prepare_future);
-
-            query = {};
-            query << "SELECT key FROM " << tableName << "books "
-                  << " WHERE book = ? AND sequence <= ? AND deleted_at > ? AND"
-                     " key > ? "
-                     " ORDER BY key ASC LIMIT 300 ALLOW FILTERING";
-
-            prepare_future =
-                cass_session_prepare(session_.get(), query.str().c_str());
-
-            // Wait for the statement to prepare and get the result
-            rc = cass_future_error_code(prepare_future);
-
-            if (rc != CASS_OK)
-            {
-                // Handle error
-                cass_future_free(prepare_future);
-
-                std::stringstream ss;
-                ss << "nodestore: Error preparing getToken : " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                continue;
-            }
-
-            getBook_ = cass_future_get_prepared(prepare_future);
-
-            setupPreparedStatements = true;
-        }
-
-        work_.emplace(ioContext_);
-        ioThread_ = std::thread{[this]() { ioContext_.run(); }};
-        open_ = true;
-
-        if (config_.contains("max_requests_outstanding"))
-        {
-            maxRequestsOutstanding =
-                config_["max_requests_outstanding"].as_int64();
-        }
-        BOOST_LOG_TRIVIAL(info) << "Opened database successfully";
-    }
+    open();
 
     // Close the connection to the database
     void
@@ -910,10 +217,223 @@ public:
                 cass_prepared_free(deleteBook_);
                 deleteBook_ = nullptr;
             }
+            if (insertAccountTx_)
+            {
+                cass_prepared_free(insertAccountTx_);
+                insertAccountTx_ = nullptr;
+            }
+
+            if (selectAccountTx_)
+            {
+                cass_prepared_free(selectAccountTx_);
+                selectAccountTx_ = nullptr;
+            }
+            if (insertLedgerHeader_)
+            {
+                cass_prepared_free(insertLedgerHeader_);
+                insertLedgerHeader_ = nullptr;
+            }
+            if (insertLedgerHash_)
+            {
+                cass_prepared_free(insertLedgerHash_);
+                insertLedgerHash_ = nullptr;
+            }
+            if (updateLedgerRange_)
+            {
+                cass_prepared_free(updateLedgerRange_);
+                updateLedgerRange_ = nullptr;
+            }
             work_.reset();
             ioThread_.join();
         }
         open_ = false;
+    }
+
+    using Blob = std::vector<unsigned char>;
+    using BlobPair = std::pair<Blob, Blob>;
+    std::pair<
+        std::vector<BlobPair>,
+        std::optional<std::pair<uint32_t, uint32_t>>>
+    doAccountTx(
+        ripple::AccountID const& account,
+        std::optional<std::pair<uint32_t, uint32_t>> cursor = {})
+    {
+        BOOST_LOG_TRIVIAL(debug) << "Starting doAccountTx";
+        CassStatement* statement = cass_prepared_bind(selectAccountTx_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+
+        CassError rc = cass_statement_bind_bytes(
+            statement, 0, static_cast<cass_byte_t const*>(account.data()), 20);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra account_tx query: " << rc << ", "
+                << cass_error_desc(rc);
+            return {};
+        }
+        if (!cursor)
+            cursor = std::make_pair(INT32_MAX, INT32_MAX);
+        CassTuple* cassCursor = cass_tuple_new(2);
+        cass_tuple_set_int64(cassCursor, 0, cursor->first);
+        cass_tuple_set_int64(cassCursor, 1, cursor->second);
+        rc = cass_statement_bind_tuple(statement, 1, cassCursor);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra tuple to account_tx: " << rc << ", "
+                << cass_error_desc(rc);
+            return {};
+        }
+
+        CassFuture* fut;
+        do
+        {
+            fut = cass_session_execute(session_.get(), statement);
+            rc = cass_future_error_code(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Cassandra account_tx fetch error";
+                ss << ", retrying";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+        } while (rc != CASS_OK);
+
+        CassResult const* res = cass_future_get_result(fut);
+        cass_statement_free(statement);
+        cass_future_free(fut);
+
+        BOOST_LOG_TRIVIAL(debug) << "doAccountTx - got hashes";
+        std::vector<ripple::uint256> hashes;
+        size_t numRows = cass_result_row_count(res);
+        bool more = numRows == 300;
+
+        CassIterator* iter = cass_iterator_from_result(res);
+        while (cass_iterator_next(iter))
+        {
+            CassRow const* row = cass_iterator_get_row(iter);
+
+            cass_byte_t const* outData;
+            std::size_t outSize;
+
+            CassValue const* hash = cass_row_get_column(row, 0);
+            rc = cass_value_get_bytes(hash, &outData, &outSize);
+            if (rc != CASS_OK)
+            {
+                cass_iterator_free(iter);
+
+                std::stringstream ss;
+                ss << "Cassandra fetch error";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+            hashes.push_back(ripple::uint256::fromVoid(outData));
+            --numRows;
+            if (numRows == 0)
+            {
+                if (more)
+                {
+                    CassValue const* cassCursorVal =
+                        cass_row_get_column(row, 1);
+                    CassIterator* tupleIter =
+                        cass_iterator_from_tuple(cassCursorVal);
+                    cass_iterator_next(tupleIter);
+                    CassValue const* seqVal =
+                        cass_iterator_get_value(tupleIter);
+                    cass_iterator_next(tupleIter);
+                    CassValue const* idxVal =
+                        cass_iterator_get_value(tupleIter);
+                    int64_t seqOut;
+                    int64_t idxOut;
+                    cass_value_get_int64(seqVal, &seqOut);
+                    cass_value_get_int64(idxVal, &idxOut);
+                    cursor->first = (uint32_t)seqOut;
+                    cursor->second = (uint32_t)idxOut;
+                }
+                else
+                {
+                    cursor = {};
+                }
+            }
+        }
+        BOOST_LOG_TRIVIAL(debug)
+            << "doAccountTx - populated hashes. num hashes = " << hashes.size();
+        if (hashes.size())
+        {
+            std::vector<BlobPair> results;
+            return {fetchBatch(hashes), cursor};
+        }
+
+        return {{}, {}};
+    }
+
+    void
+    writeLedger(
+        ripple::LedgerInfo const& ledgerInfo,
+        std::string&& header,
+        bool isFirst = false)
+    {
+        // write header
+
+        unsigned char* headerRaw = (unsigned char*)header.data();
+        ++numRequestsOutstanding_;
+        CassStatement* statement = cass_prepared_bind(insertLedgerHeader_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        CassError rc = cass_statement_bind_int64(statement, 0, ledgerInfo.seq);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra insert ledger header: " << rc << ", "
+                << cass_error_desc(rc);
+            return;
+        }
+        rc = cass_statement_bind_bytes(
+            statement,
+            1,
+            static_cast<cass_byte_t const*>(headerRaw),
+            header.size());
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra insert ledger header: " << rc << ", "
+                << cass_error_desc(rc);
+            return;
+        }
+        // actually do the write
+        // write hash
+        ++numRequestsOutstanding_;
+        statement = cass_prepared_bind(insertLedgerHash_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        rc = cass_statement_bind_bytes(
+            statement,
+            0,
+            static_cast<cass_byte_t const*>(ledgerInfo.hash.data()),
+            32);
+
+        rc = cass_statement_bind_int64(statement, 1, ledgerInfo.seq);
+        // actually do the write
+
+        // wait for all other writes to finish
+        sync();
+        // write range
+        if (isFirst)
+        {
+            statement = cass_prepared_bind(updateLedgerRange_);
+            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+            rc = cass_statement_bind_bool(statement, 0, cass_false);
+            rc = cass_statement_bind_int64(statement, 1, ledgerInfo.seq);
+            // execute
+        }
+        statement = cass_prepared_bind(updateLedgerRange_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        rc = cass_statement_bind_bool(statement, 0, cass_true);
+        rc = cass_statement_bind_int64(statement, 1, 1);
+        // actually execute the statement
     }
 
     // Synchronously fetch the object with key key and store the result in pno
@@ -1357,9 +877,6 @@ public:
         return true;
     }
 
-    using Blob = std::vector<unsigned char>;
-    using BlobPair = std::pair<Blob, Blob>;
-
     struct ReadCallbackData
     {
         CassandraFlatMapBackend const& backend;
@@ -1558,9 +1075,6 @@ public:
     struct WriteCallbackData
     {
         CassandraFlatMapBackend const* backend;
-        // The shared pointer to the node object must exist until it's
-        // confirmed persisted. Otherwise, it can become deleted
-        // prematurely if other copies are removed from caches.
         std::string key;
         uint32_t sequence;
         uint32_t createdSequence = 0;
@@ -1592,6 +1106,20 @@ public:
                 ++refs;
             if (book)
                 ++refs;
+        }
+    };
+    struct WriteAccountTxCallbackData
+    {
+        CassandraFlatMapBackend const* backend;
+        AccountTransactionsData data;
+
+        uint32_t currentRetries = 0;
+
+        WriteAccountTxCallbackData(
+            CassandraFlatMapBackend const* f,
+            AccountTransactionsData&& data)
+            : backend(f), data(std::move(data))
+        {
         }
     };
 
@@ -1933,6 +1461,89 @@ public:
         // handle book
     }
 
+    void
+    storeAccountTx(AccountTransactionsData&& data) const
+    {
+        WriteAccountTxCallbackData* cbData =
+            new WriteAccountTxCallbackData(this, std::move(data));
+        numRequestsOutstanding_ += data.accounts.size();
+        writeAccountTx(*cbData, false);
+    }
+
+    void
+    writeAccountTx(WriteAccountTxCallbackData& data, bool isRetry) const
+    {
+        {
+            std::unique_lock<std::mutex> lck(throttleMutex_);
+            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
+            {
+                BOOST_LOG_TRIVIAL(trace)
+                    << __func__ << " : "
+                    << "Max outstanding requests reached. "
+                    << "Waiting for other requests to finish";
+                throttleCv_.wait(lck, [this]() {
+                    return numRequestsOutstanding_ < maxRequestsOutstanding;
+                });
+            }
+        }
+        for (auto const& account : data.data.accounts)
+        {
+            CassStatement* statement = cass_prepared_bind(insertAccountTx_);
+            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+            const unsigned char* accountData = (unsigned char*)account.data();
+            CassError rc = cass_statement_bind_bytes(
+                statement,
+                0,
+                static_cast<cass_byte_t const*>(accountData),
+                account.size());
+            if (rc != CASS_OK)
+            {
+                cass_statement_free(statement);
+                std::stringstream ss;
+                ss << "Binding cassandra insert account: " << rc << ", "
+                   << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+                throw std::runtime_error(ss.str());
+            }
+            CassTuple* idx = cass_tuple_new(2);
+            rc = cass_tuple_set_int64(idx, 0, data.data.ledgerSequence);
+            if (rc != CASS_OK)
+            {
+                cass_statement_free(statement);
+                std::stringstream ss;
+                ss << "Binding ledger sequence to tuple: " << rc << ", "
+                   << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+                throw std::runtime_error(ss.str());
+            }
+            rc = cass_tuple_set_int64(idx, 1, data.data.transactionIndex);
+            if (rc != CASS_OK)
+            {
+                cass_statement_free(statement);
+                std::stringstream ss;
+                ss << "Binding tx idx to tuple: " << rc << ", "
+                   << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+                throw std::runtime_error(ss.str());
+            }
+            rc = cass_statement_bind_tuple(statement, 1, idx);
+            if (rc != CASS_OK)
+            {
+                cass_statement_free(statement);
+                std::stringstream ss;
+                ss << "Binding tuple: " << rc << ", " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+                throw std::runtime_error(ss.str());
+            }
+            CassFuture* fut = cass_session_execute(session_.get(), statement);
+            cass_statement_free(statement);
+
+            cass_future_set_callback(
+                fut, flatMapWriteAccountTxCallback, static_cast<void*>(&data));
+            cass_future_free(fut);
+        }
+    }
+
     struct WriteTransactionCallbackData
     {
         CassandraFlatMapBackend const* backend;
@@ -2078,6 +1689,8 @@ public:
     flatMapWriteTransactionCallback(CassFuture* fut, void* cbData);
     friend void
     flatMapWriteBookCallback(CassFuture* fut, void* cbData);
+    friend void
+    flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
 
     friend void
     flatMapReadCallback(CassFuture* fut, void* cbData);
