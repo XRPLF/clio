@@ -1378,11 +1378,12 @@ public:
         AccountTransactionsData data;
 
         uint32_t currentRetries = 0;
+        std::atomic<int> refs;
 
         WriteAccountTxCallbackData(
             CassandraFlatMapBackend const* f,
             AccountTransactionsData&& data)
-            : backend(f), data(std::move(data))
+            : backend(f), data(std::move(data)), refs(data.accounts.size())
         {
         }
     };

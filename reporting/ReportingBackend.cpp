@@ -241,7 +241,9 @@ flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData)
         backend.throttleCv_.notify_all();
         if (backend.numRequestsOutstanding_ == 0)
             backend.syncCv_.notify_all();
-        delete &requestParams;
+        int remaining = --requestParams.refs;
+        if (remaining == 0)
+            delete &requestParams;
     }
 }
 void
