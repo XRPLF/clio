@@ -43,29 +43,6 @@ toString(ripple::LedgerInfo const& info)
        << " ParentHash : " << strHex(info.parentHash) << " }";
     return ss.str();
 }
-ripple::LedgerInfo
-deserializeHeader(ripple::Slice data)
-{
-    ripple::SerialIter sit(data.data(), data.size());
-
-    ripple::LedgerInfo info;
-
-    info.seq = sit.get32();
-    info.drops = sit.get64();
-    info.parentHash = sit.get256();
-    info.txHash = sit.get256();
-    info.accountHash = sit.get256();
-    info.parentCloseTime =
-        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
-    info.closeTime =
-        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
-    info.closeTimeResolution = ripple::NetClock::duration{sit.get8()};
-    info.closeFlags = sit.get8();
-
-    info.hash = sit.get256();
-
-    return info;
-}
 }  // namespace detail
 
 std::vector<AccountTransactionsData>
@@ -112,7 +89,7 @@ std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
     // check that database is actually empty
-    auto ledger = getLedger(startingSequence, pgPool_);
+    auto ledger = flatMapBackend_.getLedgerBySequence(startingSequence);
     if (ledger)
     {
         BOOST_LOG_TRIVIAL(fatal) << __func__ << " : "
@@ -129,8 +106,8 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     if (!ledgerData)
         return {};
 
-    ripple::LedgerInfo lgrInfo = detail::deserializeHeader(
-        ripple::makeSlice(ledgerData->ledger_header()));
+    ripple::LedgerInfo lgrInfo =
+        deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -174,7 +151,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto ledger = getLedger(ledgerSequence, pgPool_);
+        auto ledger = flatMapBackend_.getLedgerBySequence(ledgerSequence);
 
         if (!ledger)
         {
@@ -263,14 +240,14 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
     return response;
 }
 
-std::pair<ripple::LedgerInfo, std::vector<AccountTransactionsData>>
+std::pair<ripple::LedgerInfo, bool>
 ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 {
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Beginning ledger update";
 
     ripple::LedgerInfo lgrInfo =
-        detail::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
+        deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -319,7 +296,12 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted,
             std::move(bookDir));
     }
-    flatMapBackend_.sync();
+    for (auto& data : accountTxData)
+    {
+        flatMapBackend_.storeAccountTx(std::move(data));
+    }
+    bool success = flatMapBackend_.writeLedger(
+        lgrInfo, std::move(*rawData.mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "
@@ -328,7 +310,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Finished ledger update. " << detail::toString(lgrInfo);
-    return {lgrInfo, std::move(accountTxData)};
+    return {lgrInfo, success};
 }
 
 // Database must be populated when this starts
@@ -361,7 +343,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
                              << "Starting etl pipeline";
     writing_ = true;
 
-    auto parent = getLedger(startSequence - 1, pgPool_);
+    auto parent = flatMapBackend_.getLedgerBySequence(startSequence - 1);
     if (!parent)
     {
         assert(false);
@@ -443,20 +425,22 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
                 continue;
 
             auto start = std::chrono::system_clock::now();
-            auto [lgrInfo, accountTxData] = buildNextLedger(*fetchResponse);
+            auto [lgrInfo, success] = buildNextLedger(*fetchResponse);
             auto end = std::chrono::system_clock::now();
-            if (!writeToPostgres(lgrInfo, accountTxData, pgPool_))
-                writeConflict = true;
 
             auto duration = ((end - start).count()) / 1000000000.0;
-            auto numTxns = accountTxData.size();
+            auto numTxns = fetchResponse->hashes_list().hashes_size();
+            auto numObjects = fetchResponse->ledger_objects().objects_size();
             BOOST_LOG_TRIVIAL(info)
                 << "Load phase of etl : "
                 << "Successfully published ledger! Ledger info: "
                 << detail::toString(lgrInfo) << ". txn count = " << numTxns
-                << ". load time = " << duration << ". load tps "
-                << numTxns / duration;
-            if (!writeConflict)
+                << ". object count = " << numObjects
+                << ". load time = " << duration
+                << ". load txns per second = " << numTxns / duration
+                << ". load objs per second = " << numObjects / duration;
+            // success is false if the ledger was already written
+            if (success)
             {
                 publishLedger(lgrInfo);
                 lastPublishedSequence = lgrInfo.seq;
@@ -492,12 +476,14 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
 void
 ReportingETL::monitor()
 {
-    auto ledger = getLedger(std::monostate(), pgPool_);
-    if (!ledger)
+    std::optional<uint32_t> latestSequence =
+        flatMapBackend_.getLatestLedgerSequence();
+    if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                                 << "Database is empty. Will download a ledger "
                                    "from the network.";
+        std::optional<ripple::LedgerInfo> ledger;
         if (startSequence_)
         {
             BOOST_LOG_TRIVIAL(info)
@@ -531,6 +517,8 @@ ReportingETL::monitor()
                 return;
             }
         }
+        if (ledger)
+            latestSequence = ledger->seq;
     }
     else
     {
@@ -543,7 +531,7 @@ ReportingETL::monitor()
             << __func__ << " : "
             << "Database already populated. Picking up from the tip of history";
     }
-    if (!ledger)
+    if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(error)
             << __func__ << " : "
@@ -554,7 +542,7 @@ ReportingETL::monitor()
     {
         // publishLedger(ledger);
     }
-    uint32_t nextSequence = ledger->seq + 1;
+    uint32_t nextSequence = latestSequence.value() + 1;
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "

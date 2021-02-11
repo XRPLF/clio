@@ -213,6 +213,7 @@ private:
         ripple::LedgerInfo const& ledger,
         org::xrpl::rpc::v1::GetLedgerResponse& data);
 
+    // TODO update this documentation
     /// Build the next ledger using the previous ledger and the extracted data.
     /// This function calls insertTransactions()
     /// @note rawData should be data that corresponds to the ledger immediately
@@ -220,7 +221,7 @@ private:
     /// @param parent the previous ledger
     /// @param rawData data extracted from an ETL source
     /// @return the newly built ledger and data to write to Postgres
-    std::pair<ripple::LedgerInfo, std::vector<AccountTransactionsData>>
+    std::pair<ripple::LedgerInfo, bool>
     buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData);
 
     /// Attempt to read the specified ledger from the database, and then publish

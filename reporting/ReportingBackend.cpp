@@ -244,6 +244,76 @@ flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData)
         delete &requestParams;
     }
 }
+void
+flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData)
+{
+    CassandraFlatMapBackend::WriteLedgerHeaderCallbackData& requestParams =
+        *static_cast<CassandraFlatMapBackend::WriteLedgerHeaderCallbackData*>(
+            cbData);
+    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    auto rc = cass_future_error_code(fut);
+    if (rc != CASS_OK)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying ";
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
+        auto wait = std::chrono::milliseconds(
+            lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        ++requestParams.currentRetries;
+        std::shared_ptr<boost::asio::steady_timer> timer =
+            std::make_shared<boost::asio::steady_timer>(
+                backend.ioContext_, std::chrono::steady_clock::now() + wait);
+        timer->async_wait([timer, &requestParams, &backend](
+                              const boost::system::error_code& error) {
+            backend.writeLedgerHeader(requestParams, true);
+        });
+    }
+    else
+    {
+        --(backend.numRequestsOutstanding_);
+
+        backend.throttleCv_.notify_all();
+        if (backend.numRequestsOutstanding_ == 0)
+            backend.syncCv_.notify_all();
+        delete &requestParams;
+    }
+}
+void
+flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData)
+{
+    CassandraFlatMapBackend::WriteLedgerHashCallbackData& requestParams =
+        *static_cast<CassandraFlatMapBackend::WriteLedgerHashCallbackData*>(
+            cbData);
+    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    auto rc = cass_future_error_code(fut);
+    if (rc != CASS_OK)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying ";
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
+        auto wait = std::chrono::milliseconds(
+            lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        ++requestParams.currentRetries;
+        std::shared_ptr<boost::asio::steady_timer> timer =
+            std::make_shared<boost::asio::steady_timer>(
+                backend.ioContext_, std::chrono::steady_clock::now() + wait);
+        timer->async_wait([timer, &requestParams, &backend](
+                              const boost::system::error_code& error) {
+            backend.writeLedgerHash(requestParams, true);
+        });
+    }
+    else
+    {
+        --(backend.numRequestsOutstanding_);
+
+        backend.throttleCv_.notify_all();
+        if (backend.numRequestsOutstanding_ == 0)
+            backend.syncCv_.notify_all();
+        delete &requestParams;
+    }
+}
 
 // Process the result of an asynchronous read. Retry on error
 // @param fut cassandra future associated with the read
@@ -901,7 +971,7 @@ CassandraFlatMapBackend::open()
 
         query = {};
         query << "CREATE TABLE IF NOT EXISTS " << tableName << "ledger_range"
-              << " (is_latest boolean PRIMARY KEY, sequence counter)";
+              << " (is_latest boolean PRIMARY KEY, sequence bigint)";
         statement = makeStatement(query.str().c_str(), 0);
         fut = cass_session_execute(session_.get(), statement);
         rc = cass_future_error_code(fut);
@@ -1343,28 +1413,72 @@ CassandraFlatMapBackend::open()
 
         insertLedgerHash_ = cass_future_get_prepared(prepare_future);
         query = {};
-        query << " UPDATE " << tableName << "ledger_range"
-              << " SET sequence = sequence + ? WHERE is_latest = ?";
+        query << " update " << tableName << "ledger_range"
+              << " set sequence = ? where is_latest = ? if sequence != ?";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());
 
-        // Wait for the statement to prepare and get the result
+        // wait for the statement to prepare and get the result
         rc = cass_future_error_code(prepare_future);
 
         if (rc != CASS_OK)
         {
-            // Handle error
+            // handle error
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
+            ss << "nodestore: error preparing gettoken : " << rc << ", "
                << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
         }
 
         updateLedgerRange_ = cass_future_get_prepared(prepare_future);
+        query = {};
+        query << " select header from ledgers where sequence = ?";
+
+        prepare_future =
+            cass_session_prepare(session_.get(), query.str().c_str());
+
+        // wait for the statement to prepare and get the result
+        rc = cass_future_error_code(prepare_future);
+
+        if (rc != CASS_OK)
+        {
+            // handle error
+            cass_future_free(prepare_future);
+
+            std::stringstream ss;
+            ss << "nodestore: error preparing gettoken : " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << ss.str();
+            continue;
+        }
+
+        selectLedgerBySeq_ = cass_future_get_prepared(prepare_future);
+        query = {};
+        query << " select sequence from ledgers_range where is_latest = true";
+
+        prepare_future =
+            cass_session_prepare(session_.get(), query.str().c_str());
+
+        // wait for the statement to prepare and get the result
+        rc = cass_future_error_code(prepare_future);
+
+        if (rc != CASS_OK)
+        {
+            // handle error
+            cass_future_free(prepare_future);
+
+            std::stringstream ss;
+            ss << "nodestore: error preparing gettoken : " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << ss.str();
+            continue;
+        }
+
+        selectLatestLedger_ = cass_future_get_prepared(prepare_future);
 
         setupPreparedStatements = true;
     }

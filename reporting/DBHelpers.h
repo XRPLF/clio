@@ -80,4 +80,27 @@ writeToPostgres(
     std::vector<AccountTransactionsData> const& accountTxData,
     std::shared_ptr<PgPool> const& pgPool);
 
+inline ripple::LedgerInfo
+deserializeHeader(ripple::Slice data)
+{
+    ripple::SerialIter sit(data.data(), data.size());
+
+    ripple::LedgerInfo info;
+
+    info.seq = sit.get32();
+    info.drops = sit.get64();
+    info.parentHash = sit.get256();
+    info.txHash = sit.get256();
+    info.accountHash = sit.get256();
+    info.parentCloseTime =
+        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
+    info.closeTime =
+        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
+    info.closeTimeResolution = ripple::NetClock::duration{sit.get8()};
+    info.closeFlags = sit.get8();
+
+    info.hash = sit.get256();
+
+    return info;
+}
 #endif

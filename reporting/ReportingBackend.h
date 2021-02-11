@@ -49,6 +49,10 @@ void
 flatMapReadObjectCallback(CassFuture* fut, void* cbData);
 void
 flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
+void
+flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
+void
+flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 class CassandraFlatMapBackend
 {
 private:
@@ -104,6 +108,8 @@ private:
     const CassPrepared* insertLedgerHash_ = nullptr;
     const CassPrepared* updateLedgerRange_ = nullptr;
     const CassPrepared* updateLedgerHeader_ = nullptr;
+    const CassPrepared* selectLedgerBySeq_ = nullptr;
+    const CassPrepared* selectLatestLedger_ = nullptr;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
@@ -370,19 +376,179 @@ public:
         return {{}, {}};
     }
 
-    void
+    struct WriteLedgerHeaderCallbackData
+    {
+        CassandraFlatMapBackend const* backend;
+        uint32_t sequence;
+        std::string header;
+        uint32_t currentRetries = 0;
+
+        WriteLedgerHeaderCallbackData(
+            CassandraFlatMapBackend const* f,
+            uint32_t sequence,
+            std::string&& header)
+            : backend(f), sequence(sequence), header(std::move(header))
+        {
+        }
+    };
+    struct WriteLedgerHashCallbackData
+    {
+        CassandraFlatMapBackend const* backend;
+        ripple::uint256 hash;
+        uint32_t sequence;
+        uint32_t currentRetries = 0;
+
+        WriteLedgerHashCallbackData(
+            CassandraFlatMapBackend const* f,
+            ripple::uint256 hash,
+            uint32_t sequence)
+            : backend(f), hash(hash), sequence(sequence)
+        {
+        }
+    };
+    bool
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& header,
-        bool isFirst = false)
+        bool isFirst = false) const
+    {
+        WriteLedgerHeaderCallbackData* headerCb =
+            new WriteLedgerHeaderCallbackData(
+                this, ledgerInfo.seq, std::move(header));
+        WriteLedgerHashCallbackData* hashCb = new WriteLedgerHashCallbackData(
+            this, ledgerInfo.hash, ledgerInfo.seq);
+        ++numRequestsOutstanding_;
+        ++numRequestsOutstanding_;
+        writeLedgerHeader(*headerCb, false);
+        writeLedgerHash(*hashCb, false);
+        // wait for all other writes to finish
+        sync();
+        // write range
+        if (isFirst)
+        {
+            CassStatement* statement = cass_prepared_bind(updateLedgerRange_);
+            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+            CassError rc =
+                cass_statement_bind_int64(statement, 0, ledgerInfo.seq);
+            rc = cass_statement_bind_bool(statement, 1, cass_false);
+
+            rc = cass_statement_bind_int64(statement, 2, ledgerInfo.seq);
+            CassFuture* fut;
+            do
+            {
+                fut = cass_session_execute(session_.get(), statement);
+                rc = cass_future_error_code(fut);
+                if (rc != CASS_OK)
+                {
+                    std::stringstream ss;
+                    ss << "Cassandra write error";
+                    ss << ", retrying";
+                    ss << ": " << cass_error_desc(rc);
+                    BOOST_LOG_TRIVIAL(warning) << ss.str();
+                }
+            } while (rc != CASS_OK);
+            cass_statement_free(statement);
+        }
+        CassStatement* statement = cass_prepared_bind(updateLedgerRange_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        // TODO check rc
+        CassError rc = cass_statement_bind_int64(statement, 0, ledgerInfo.seq);
+        assert(rc == CASS_OK);
+        rc = cass_statement_bind_bool(statement, 1, cass_true);
+        assert(rc == CASS_OK);
+        rc = cass_statement_bind_int64(statement, 2, ledgerInfo.seq);
+        assert(rc == CASS_OK);
+        CassFuture* fut;
+        do
+        {
+            fut = cass_session_execute(session_.get(), statement);
+            rc = cass_future_error_code(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Cassandra write error";
+                ss << ", retrying";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+        } while (rc != CASS_OK);
+        cass_statement_free(statement);
+        CassResult const* res = cass_future_get_result(fut);
+        cass_future_free(fut);
+
+        CassRow const* row = cass_result_first_row(res);
+        if (!row)
+        {
+            BOOST_LOG_TRIVIAL(error) << "Cassandra write error: no rows";
+            cass_result_free(res);
+            return false;
+        }
+        cass_bool_t success;
+        rc = cass_value_get_bool(cass_row_get_column(row, 0), &success);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra write error: " << rc << ", "
+                                     << cass_error_desc(rc);
+            return false;
+        }
+        cass_result_free(res);
+        return success == cass_true;
+    }
+    void
+    writeLedgerHash(WriteLedgerHashCallbackData& cb, bool isRetry) const
+    {
+        {
+            std::unique_lock<std::mutex> lck(throttleMutex_);
+            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
+            {
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " : "
+                    << "Max outstanding requests reached. "
+                    << "Waiting for other requests to finish";
+                throttleCv_.wait(lck, [this]() {
+                    return numRequestsOutstanding_ < maxRequestsOutstanding;
+                });
+            }
+        }
+        CassStatement* statement = cass_prepared_bind(insertLedgerHash_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        CassError rc = cass_statement_bind_bytes(
+            statement, 0, static_cast<cass_byte_t const*>(cb.hash.data()), 32);
+
+        assert(rc == CASS_OK);
+        rc = cass_statement_bind_int64(statement, 1, cb.sequence);
+        assert(rc == CASS_OK);
+        // actually do the write
+        CassFuture* fut = cass_session_execute(session_.get(), statement);
+        cass_statement_free(statement);
+
+        cass_future_set_callback(
+            fut, flatMapWriteLedgerHashCallback, static_cast<void*>(&cb));
+        cass_future_free(fut);
+    }
+
+    void
+    writeLedgerHeader(WriteLedgerHeaderCallbackData& cb, bool isRetry) const
     {
         // write header
-
-        unsigned char* headerRaw = (unsigned char*)header.data();
-        ++numRequestsOutstanding_;
+        {
+            std::unique_lock<std::mutex> lck(throttleMutex_);
+            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
+            {
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " : "
+                    << "Max outstanding requests reached. "
+                    << "Waiting for other requests to finish";
+                throttleCv_.wait(lck, [this]() {
+                    return numRequestsOutstanding_ < maxRequestsOutstanding;
+                });
+            }
+        }
+        unsigned char* headerRaw = (unsigned char*)cb.header.data();
         CassStatement* statement = cass_prepared_bind(insertLedgerHeader_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        CassError rc = cass_statement_bind_int64(statement, 0, ledgerInfo.seq);
+        CassError rc = cass_statement_bind_int64(statement, 0, cb.sequence);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -395,7 +561,7 @@ public:
             statement,
             1,
             static_cast<cass_byte_t const*>(headerRaw),
-            header.size());
+            cb.header.size());
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -405,38 +571,136 @@ public:
             return;
         }
         // actually do the write
-        // write hash
-        ++numRequestsOutstanding_;
-        statement = cass_prepared_bind(insertLedgerHash_);
-        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        rc = cass_statement_bind_bytes(
-            statement,
-            0,
-            static_cast<cass_byte_t const*>(ledgerInfo.hash.data()),
-            32);
+        CassFuture* fut = cass_session_execute(session_.get(), statement);
+        cass_statement_free(statement);
 
-        rc = cass_statement_bind_int64(statement, 1, ledgerInfo.seq);
-        // actually do the write
-
-        // wait for all other writes to finish
-        sync();
-        // write range
-        if (isFirst)
-        {
-            statement = cass_prepared_bind(updateLedgerRange_);
-            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-            rc = cass_statement_bind_bool(statement, 0, cass_false);
-            rc = cass_statement_bind_int64(statement, 1, ledgerInfo.seq);
-            // execute
-        }
-        statement = cass_prepared_bind(updateLedgerRange_);
-        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        rc = cass_statement_bind_bool(statement, 0, cass_true);
-        rc = cass_statement_bind_int64(statement, 1, 1);
-        // actually execute the statement
+        cass_future_set_callback(
+            fut, flatMapWriteLedgerHeaderCallback, static_cast<void*>(&cb));
+        cass_future_free(fut);
     }
 
-    // Synchronously fetch the object with key key and store the result in pno
+    std::optional<uint32_t>
+    getLatestLedgerSequence()
+    {
+        BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+        auto start = std::chrono::system_clock::now();
+        CassStatement* statement = cass_prepared_bind(selectLatestLedger_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        CassFuture* fut;
+        CassError rc;
+        do
+        {
+            fut = cass_session_execute(session_.get(), statement);
+            rc = cass_future_error_code(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Cassandra fetch error";
+                ss << ", retrying";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+        } while (rc != CASS_OK);
+
+        CassResult const* res = cass_future_get_result(fut);
+        cass_statement_free(statement);
+        cass_future_free(fut);
+
+        CassRow const* row = cass_result_first_row(res);
+        if (!row)
+        {
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch error: no rows";
+            cass_result_free(res);
+            return {};
+        }
+        cass_int64_t sequence;
+        rc = cass_value_get_int64(cass_row_get_column(row, 0), &sequence);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch result error: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        cass_result_free(res);
+        auto end = std::chrono::system_clock::now();
+        BOOST_LOG_TRIVIAL(debug)
+            << "Fetched from cassandra in "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                   end - start)
+                   .count()
+            << " microseconds";
+        return sequence;
+    }
+
+    std::optional<ripple::LedgerInfo>
+    getLedgerBySequence(uint32_t sequence)
+    {
+        BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+        auto start = std::chrono::system_clock::now();
+        CassStatement* statement = cass_prepared_bind(selectLedgerBySeq_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        CassError rc = cass_statement_bind_int64(statement, 0, sequence);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra ledger fetch query: " << rc << ", "
+                << cass_error_desc(rc);
+            return {};
+        }
+        CassFuture* fut;
+        do
+        {
+            fut = cass_session_execute(session_.get(), statement);
+            rc = cass_future_error_code(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Cassandra fetch error";
+                ss << ", retrying";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+        } while (rc != CASS_OK);
+
+        CassResult const* res = cass_future_get_result(fut);
+        cass_statement_free(statement);
+        cass_future_free(fut);
+
+        CassRow const* row = cass_result_first_row(res);
+        if (!row)
+        {
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch error: no rows";
+            cass_result_free(res);
+            return {};
+        }
+        cass_byte_t const* buf;
+        std::size_t bufSize;
+        rc = cass_value_get_bytes(cass_row_get_column(row, 0), &buf, &bufSize);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch result error: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        std::vector<unsigned char> result{buf, buf + bufSize};
+        ripple::LedgerInfo lgrInfo =
+            deserializeHeader(ripple::makeSlice(result));
+        cass_result_free(res);
+        auto end = std::chrono::system_clock::now();
+        BOOST_LOG_TRIVIAL(debug)
+            << "Fetched from cassandra in "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                   end - start)
+                   .count()
+            << " microseconds";
+        return lgrInfo;
+    }
+
+    // Synchronously fetch the object with key key and store the result in
+    // pno
     // @param key the key of the object
     // @param pno object in which to store the result
     // @return result status of query
@@ -1674,7 +1938,7 @@ public:
     }
 
     void
-    sync()
+    sync() const
     {
         std::unique_lock<std::mutex> lck(syncMutex_);
 
@@ -1691,6 +1955,10 @@ public:
     flatMapWriteBookCallback(CassFuture* fut, void* cbData);
     friend void
     flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
+    friend void
+    flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
+    friend void
+    flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 
     friend void
     flatMapReadCallback(CassFuture* fut, void* cbData);
