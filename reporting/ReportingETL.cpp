@@ -126,8 +126,12 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
     if (!stopping_)
     {
-        flatMapBackend_.sync();
-        writeToPostgres(lgrInfo, accountTxData, pgPool_);
+        for (auto& data : accountTxData)
+        {
+            flatMapBackend_.storeAccountTx(std::move(data));
+        }
+        bool success = flatMapBackend_.writeLedger(
+            lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     }
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
