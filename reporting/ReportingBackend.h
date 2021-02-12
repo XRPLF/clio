@@ -1729,9 +1729,9 @@ public:
     void
     storeAccountTx(AccountTransactionsData&& data) const
     {
+        numRequestsOutstanding_ += data.accounts.size();
         WriteAccountTxCallbackData* cbData =
             new WriteAccountTxCallbackData(this, std::move(data));
-        numRequestsOutstanding_ += data.accounts.size();
         writeAccountTx(*cbData, false);
     }
 
