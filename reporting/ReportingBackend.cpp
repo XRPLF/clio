@@ -1270,6 +1270,38 @@ CassandraFlatMapBackend::open()
         // object
         //
         cass_future_free(prepare_future);
+
+        query = {};
+        query << "SELECT filterempty(key,object) FROM " << tableName << "flat "
+              << " WHERE TOKEN(key) >= ? and sequence <= ?"
+              << " PER PARTITION LIMIT 1 LIMIT ?"
+              << " ALLOW FILTERING";
+
+        prepare_future =
+            cass_session_prepare(session_.get(), query.str().c_str());
+
+        // Wait for the statement to prepare and get the result
+        rc = cass_future_error_code(prepare_future);
+
+        if (rc != CASS_OK)
+        {
+            // Handle error
+            cass_future_free(prepare_future);
+
+            std::stringstream ss;
+            ss << "nodestore: Error preparing upperBound : " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << ss.str() << " : " << query.str();
+            continue;
+        }
+
+        // Get the prepared object from the future
+        upperBound2_ = cass_future_get_prepared(prepare_future);
+
+        // The future can be freed immediately after getting the prepared
+        // object
+        //
+        cass_future_free(prepare_future);
         query = {};
         query << "SELECT TOKEN(key) FROM " << tableName << "flat "
               << " WHERE key = ? LIMIT 1";

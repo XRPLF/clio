@@ -96,6 +96,7 @@ private:
     const CassPrepared* selectTransaction_ = nullptr;
     const CassPrepared* selectObject_ = nullptr;
     const CassPrepared* upperBound_ = nullptr;
+    const CassPrepared* upperBound2_ = nullptr;
     const CassPrepared* getToken_ = nullptr;
     const CassPrepared* insertKey_ = nullptr;
     const CassPrepared* getCreated_ = nullptr;
@@ -915,6 +916,108 @@ public:
         ripple::uint256 key;
         std::vector<unsigned char> blob;
     };
+    std::pair<std::vector<LedgerObject>, std::optional<int64_t>>
+    doUpperBound2(
+        std::optional<int64_t> marker,
+        std::uint32_t seq,
+        std::uint32_t limit) const
+    {
+        BOOST_LOG_TRIVIAL(debug) << "Starting doUpperBound2";
+        CassStatement* statement = cass_prepared_bind(upperBound2_);
+        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+        int64_t markerVal = marker ? marker.value() : INT64_MIN;
+
+        CassError rc = cass_statement_bind_int64(statement, 0, markerVal);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra hash to doUpperBound query: " << rc
+                << ", " << cass_error_desc(rc);
+            return {};
+        }
+
+        rc = cass_statement_bind_int64(statement, 1, seq);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra seq to doUpperBound query: " << rc << ", "
+                << cass_error_desc(rc);
+            return {};
+        }
+
+        rc = cass_statement_bind_int32(statement, 2, limit);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra limit to doUpperBound query: " << rc
+                << ", " << cass_error_desc(rc);
+            return {};
+        }
+
+        CassFuture* fut;
+        do
+        {
+            fut = cass_session_execute(session_.get(), statement);
+            rc = cass_future_error_code(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Cassandra fetch error";
+                ss << ", retrying";
+                ss << ": " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(warning) << ss.str();
+            }
+        } while (rc != CASS_OK);
+
+        CassResult const* res = cass_future_get_result(fut);
+        cass_statement_free(statement);
+        cass_future_free(fut);
+
+        BOOST_LOG_TRIVIAL(debug) << "doUpperBound - got keys";
+        std::vector<LedgerObject> results;
+
+        CassIterator* iter = cass_iterator_from_result(res);
+        while (cass_iterator_next(iter))
+        {
+            CassRow const* row = cass_iterator_get_row(iter);
+
+            {
+                CassValue const* tup = cass_row_get_column(row, 0);
+                CassIterator* tupleIter = cass_iterator_from_tuple(tup);
+                if (!tupleIter)
+                    continue;
+                cass_iterator_next(tupleIter);
+                CassValue const* keyVal = cass_iterator_get_value(tupleIter);
+                cass_iterator_next(tupleIter);
+                CassValue const* objectVal = cass_iterator_get_value(tupleIter);
+                cass_byte_t const* outData;
+                std::size_t outSize;
+                cass_value_get_bytes(keyVal, &outData, &outSize);
+                LedgerObject result;
+                result.key = ripple::uint256::fromVoid(outData);
+                cass_value_get_bytes(objectVal, &outData, &outSize);
+                std::vector<unsigned char> blob{outData, outData + outSize};
+                result.blob = std::move(blob);
+                results.push_back(std::move(result));
+                cass_iterator_free(tupleIter);
+            }
+        }
+        cass_iterator_free(iter);
+        cass_result_free(res);
+        BOOST_LOG_TRIVIAL(debug)
+            << "doUpperBound2 - populated results. num results = "
+            << results.size();
+        if (results.size())
+        {
+            auto token = getToken(results[results.size() - 1].key.data());
+            assert(token);
+            return std::make_pair(results, token);
+        }
+        return {{}, {}};
+    }
     std::pair<std::vector<LedgerObject>, std::optional<int64_t>>
     doUpperBound(
         std::optional<int64_t> marker,

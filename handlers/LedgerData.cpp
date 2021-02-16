@@ -50,11 +50,19 @@ doLedgerData(
         request.contains("binary") ? request.at("binary").as_bool() : false;
     size_t limit = request.contains("limit") ? request.at("limit").as_int64()
                                              : (binary ? 2048 : 256);
+    std::pair<
+        std::vector<CassandraFlatMapBackend::LedgerObject>,
+        std::optional<int64_t>>
+        resultsPair;
     auto start = std::chrono::system_clock::now();
-    auto [results, returnedMarker] =
-        backend.doUpperBound(marker, ledger, limit);
-    BOOST_LOG_TRIVIAL(debug)
-        << "doUpperBound returned " << results.size() << " results";
+    if (request.contains("version"))
+    {
+        resultsPair = backend.doUpperBound2(marker, ledger, limit);
+    }
+    else
+    {
+        resultsPair = backend.doUpperBound(marker, ledger, limit);
+    }
 
     auto end = std::chrono::system_clock::now();
 
@@ -62,6 +70,11 @@ doLedgerData(
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
     boost::json::array objects;
+    std::vector<CassandraFlatMapBackend::LedgerObject>& results =
+        resultsPair.first;
+    std::optional<int64_t>& returnedMarker = resultsPair.second;
+    BOOST_LOG_TRIVIAL(debug)
+        << "doUpperBound returned " << results.size() << " results";
     for (auto const& [key, object] : results)
     {
         ripple::STLedgerEntry sle{
@@ -82,7 +95,7 @@ doLedgerData(
 
     response["num_results"] = results.size();
     response["db_time"] = time;
-
+    response["time_per_result"] = time / results.size();
     return response;
 }
 
