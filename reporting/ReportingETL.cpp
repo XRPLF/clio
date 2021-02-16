@@ -428,13 +428,13 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
             if (isStopping())
                 continue;
 
+            auto numTxns = fetchResponse->transactions_list().transactions_size();
+            auto numObjects = fetchResponse->ledger_objects().objects_size();
             auto start = std::chrono::system_clock::now();
             auto [lgrInfo, success] = buildNextLedger(*fetchResponse);
             auto end = std::chrono::system_clock::now();
 
             auto duration = ((end - start).count()) / 1000000000.0;
-            auto numTxns = fetchResponse->hashes_list().hashes_size();
-            auto numObjects = fetchResponse->ledger_objects().objects_size();
             BOOST_LOG_TRIVIAL(info)
                 << "Load phase of etl : "
                 << "Successfully published ledger! Ledger info: "

@@ -838,9 +838,9 @@ CassandraFlatMapBackend::open()
         query = {};
         query << "CREATE TABLE IF NOT EXISTS " << tableName << "account_tx"
               << " ( account blob, seq_idx tuple<bigint, bigint>, "
-                 " hash blob"
+                 " hash blob, "
                  "PRIMARY KEY "
-                 "(account, seq_idx) WITH "
+                 "(account, seq_idx)) WITH "
                  "CLUSTERING ORDER BY (seq_idx desc)";
         statement = makeStatement(query.str().c_str(), 0);
         fut = cass_session_execute(session_.get(), statement);
@@ -1430,7 +1430,7 @@ CassandraFlatMapBackend::open()
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: error preparing gettoken : " << rc << ", "
+            ss << "nodestore: error preparing updateLedgerRange : " << rc << ", "
                << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
@@ -1438,7 +1438,7 @@ CassandraFlatMapBackend::open()
 
         updateLedgerRange_ = cass_future_get_prepared(prepare_future);
         query = {};
-        query << " select header from ledgers where sequence = ?";
+        query << " select header from " << tableName << "ledgers where sequence = ?";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());
@@ -1452,7 +1452,7 @@ CassandraFlatMapBackend::open()
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: error preparing gettoken : " << rc << ", "
+            ss << "nodestore: error preparing selectLedgerBySeq : " << rc << ", "
                << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
@@ -1460,7 +1460,7 @@ CassandraFlatMapBackend::open()
 
         selectLedgerBySeq_ = cass_future_get_prepared(prepare_future);
         query = {};
-        query << " select sequence from ledgers_range where is_latest = true";
+        query << " select sequence from " << tableName << "ledger_range where is_latest = true";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());
@@ -1474,7 +1474,7 @@ CassandraFlatMapBackend::open()
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: error preparing gettoken : " << rc << ", "
+            ss << "nodestore: error preparing selectLatestLedger : " << rc << ", "
                << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
