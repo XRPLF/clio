@@ -90,7 +90,7 @@ loadBookOfferIndexes(
 boost::json::object
 doBookOffers(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& pool)
 {
     std::cout << "enter" << std::endl;
@@ -308,14 +308,14 @@ doBookOffers(
 
     auto start = std::chrono::system_clock::now();
     ripple::uint256 bookBase = getBookBase(book);
-    std::vector<CassandraFlatMapBackend::LedgerObject> offers;
+    std::vector<BackendInterface::LedgerObject> offers;
     if (!cursor.isZero())
     {
-        offers = backend.doBookOffers(bookBase, *sequence, cursor);
+        offers = backend.fetchBookOffers(bookBase, *sequence, cursor);
     }
     else
     {
-        offers = backend.doBookOffers(bookBase, *sequence);
+        offers = backend.fetchBookOffers(bookBase, *sequence);
     }
     auto end = std::chrono::system_clock::now();
 

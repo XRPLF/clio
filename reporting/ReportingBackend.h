@@ -31,6 +31,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <reporting/BackendInterface.h>
 #include <reporting/DBHelpers.h>
 
 void
@@ -53,7 +54,8 @@ void
 flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
 void
 flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
-class CassandraFlatMapBackend
+
+class CassandraFlatMapBackend : BackendInterface
 {
 private:
     // convenience function for one-off queries. For normal reads and writes,
@@ -161,11 +163,11 @@ public:
     // Create the table if it doesn't exist already
     // @param createIfMissing ignored
     void
-    open();
+    open() override;
 
     // Close the connection to the database
     void
-    close()
+    close() override
     {
         {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -256,14 +258,13 @@ public:
         open_ = false;
     }
 
-    using Blob = std::vector<unsigned char>;
-    using BlobPair = std::pair<Blob, Blob>;
     std::pair<
-        std::vector<BlobPair>,
-        std::optional<std::pair<uint32_t, uint32_t>>>
-    doAccountTx(
+        std::vector<BackendInterface::TransactionAndMetadata>,
+        std::optional<BackendInterface::AccountTransactionsCursor>>
+    fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::optional<std::pair<uint32_t, uint32_t>> cursor = {})
+        std::optional<BackendInterface::AccountTransactionsCursor> const&
+            cursor) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doAccountTx";
         CassStatement* statement = cass_prepared_bind(selectAccountTx_);
@@ -279,11 +280,17 @@ public:
                 << cass_error_desc(rc);
             return {};
         }
-        if (!cursor)
-            cursor = std::make_pair(INT32_MAX, INT32_MAX);
         CassTuple* cassCursor = cass_tuple_new(2);
-        cass_tuple_set_int64(cassCursor, 0, cursor->first);
-        cass_tuple_set_int64(cassCursor, 1, cursor->second);
+        if (cursor)
+        {
+            cass_tuple_set_int64(cassCursor, 0, cursor->ledgerSequence);
+            cass_tuple_set_int64(cassCursor, 1, cursor->transactionIndex);
+        }
+        else
+        {
+            cass_tuple_set_int64(cassCursor, 0, INT32_MAX);
+            cass_tuple_set_int64(cassCursor, 1, INT32_MAX);
+        }
         rc = cass_statement_bind_tuple(statement, 1, cassCursor);
         if (rc != CASS_OK)
         {
@@ -319,6 +326,7 @@ public:
         bool more = numRows == 300;
 
         CassIterator* iter = cass_iterator_from_result(res);
+        std::optional<AccountTransactionsCursor> retCursor;
         while (cass_iterator_next(iter))
         {
             CassRow const* row = cass_iterator_get_row(iter);
@@ -357,12 +365,7 @@ public:
                     int64_t idxOut;
                     cass_value_get_int64(seqVal, &seqOut);
                     cass_value_get_int64(idxVal, &idxOut);
-                    cursor->first = (uint32_t)seqOut;
-                    cursor->second = (uint32_t)idxOut;
-                }
-                else
-                {
-                    cursor = {};
+                    retCursor = {(uint32_t)seqOut, (uint32_t)idxOut};
                 }
             }
         }
@@ -370,8 +373,7 @@ public:
             << "doAccountTx - populated hashes. num hashes = " << hashes.size();
         if (hashes.size())
         {
-            std::vector<BlobPair> results;
-            return {fetchBatch(hashes), cursor};
+            return {fetchTransactions(hashes), retCursor};
         }
 
         return {{}, {}};
@@ -411,7 +413,7 @@ public:
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& header,
-        bool isFirst = false) const
+        bool isFirst = false) const override
     {
         WriteLedgerHeaderCallbackData* headerCb =
             new WriteLedgerHeaderCallbackData(
@@ -581,7 +583,7 @@ public:
     }
 
     std::optional<uint32_t>
-    getLatestLedgerSequence()
+    fetchLatestLedgerSequence() const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         auto start = std::chrono::system_clock::now();
@@ -635,7 +637,7 @@ public:
     }
 
     std::optional<ripple::LedgerInfo>
-    getLedgerBySequence(uint32_t sequence)
+    fetchLedgerBySequence(uint32_t sequence) const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         auto start = std::chrono::system_clock::now();
@@ -705,15 +707,16 @@ public:
     // @param key the key of the object
     // @param pno object in which to store the result
     // @return result status of query
-    std::optional<std::vector<unsigned char>>
-    fetch(void const* key, uint32_t sequence) const
+    std::optional<BackendInterface::Blob>
+    fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
+        const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         auto start = std::chrono::system_clock::now();
         CassStatement* statement = cass_prepared_bind(selectObject_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         CassError rc = cass_statement_bind_bytes(
-            statement, 0, static_cast<cass_byte_t const*>(key), 32);
+            statement, 0, static_cast<cass_byte_t const*>(key.data()), 32);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -834,16 +837,15 @@ public:
         return token + 1;
     }
 
-    std::optional<
-        std::pair<std::vector<unsigned char>, std::vector<unsigned char>>>
-    fetchTransaction(void const* hash) const
+    std::optional<BackendInterface::TransactionAndMetadata>
+    fetchTransaction(ripple::uint256 const& hash) const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         auto start = std::chrono::system_clock::now();
         CassStatement* statement = cass_prepared_bind(selectTransaction_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         CassError rc = cass_statement_bind_bytes(
-            statement, 0, static_cast<cass_byte_t const*>(hash), 32);
+            statement, 0, static_cast<cass_byte_t const*>(hash.data()), 32);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -911,125 +913,18 @@ public:
             << " microseconds";
         return {{txResult, metaResult}};
     }
-    struct LedgerObject
-    {
-        ripple::uint256 key;
-        std::vector<unsigned char> blob;
-    };
-    std::pair<std::vector<LedgerObject>, std::optional<int64_t>>
-    doUpperBound2(
-        std::optional<int64_t> marker,
-        std::uint32_t seq,
-        std::uint32_t limit) const
-    {
-        BOOST_LOG_TRIVIAL(debug) << "Starting doUpperBound2";
-        CassStatement* statement = cass_prepared_bind(upperBound2_);
-        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        int64_t markerVal = marker ? marker.value() : INT64_MIN;
-
-        CassError rc = cass_statement_bind_int64(statement, 0, markerVal);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            BOOST_LOG_TRIVIAL(error)
-                << "Binding Cassandra hash to doUpperBound query: " << rc
-                << ", " << cass_error_desc(rc);
-            return {};
-        }
-
-        rc = cass_statement_bind_int64(statement, 1, seq);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            BOOST_LOG_TRIVIAL(error)
-                << "Binding Cassandra seq to doUpperBound query: " << rc << ", "
-                << cass_error_desc(rc);
-            return {};
-        }
-
-        rc = cass_statement_bind_int32(statement, 2, limit);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            BOOST_LOG_TRIVIAL(error)
-                << "Binding Cassandra limit to doUpperBound query: " << rc
-                << ", " << cass_error_desc(rc);
-            return {};
-        }
-
-        CassFuture* fut;
-        do
-        {
-            fut = cass_session_execute(session_.get(), statement);
-            rc = cass_future_error_code(fut);
-            if (rc != CASS_OK)
-            {
-                std::stringstream ss;
-                ss << "Cassandra fetch error";
-                ss << ", retrying";
-                ss << ": " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(warning) << ss.str();
-            }
-        } while (rc != CASS_OK);
-
-        CassResult const* res = cass_future_get_result(fut);
-        cass_statement_free(statement);
-        cass_future_free(fut);
-
-        BOOST_LOG_TRIVIAL(debug) << "doUpperBound - got keys";
-        std::vector<LedgerObject> results;
-
-        CassIterator* iter = cass_iterator_from_result(res);
-        while (cass_iterator_next(iter))
-        {
-            CassRow const* row = cass_iterator_get_row(iter);
-
-            {
-                CassValue const* tup = cass_row_get_column(row, 0);
-                CassIterator* tupleIter = cass_iterator_from_tuple(tup);
-                if (!tupleIter)
-                    continue;
-                cass_iterator_next(tupleIter);
-                CassValue const* keyVal = cass_iterator_get_value(tupleIter);
-                cass_iterator_next(tupleIter);
-                CassValue const* objectVal = cass_iterator_get_value(tupleIter);
-                cass_byte_t const* outData;
-                std::size_t outSize;
-                cass_value_get_bytes(keyVal, &outData, &outSize);
-                LedgerObject result;
-                result.key = ripple::uint256::fromVoid(outData);
-                cass_value_get_bytes(objectVal, &outData, &outSize);
-                std::vector<unsigned char> blob{outData, outData + outSize};
-                result.blob = std::move(blob);
-                results.push_back(std::move(result));
-                cass_iterator_free(tupleIter);
-            }
-        }
-        cass_iterator_free(iter);
-        cass_result_free(res);
-        BOOST_LOG_TRIVIAL(debug)
-            << "doUpperBound2 - populated results. num results = "
-            << results.size();
-        if (results.size())
-        {
-            auto token = getToken(results[results.size() - 1].key.data());
-            assert(token);
-            return std::make_pair(results, token);
-        }
-        return {{}, {}};
-    }
-    std::pair<std::vector<LedgerObject>, std::optional<int64_t>>
-    doUpperBound(
-        std::optional<int64_t> marker,
-        std::uint32_t seq,
-        std::uint32_t limit) const
+    BackendInterface::LedgerPage
+    fetchLedgerPage(
+        std::optional<BackendInterface::LedgerCursor> const& cursor,
+        std::uint32_t ledgerSequence,
+        std::uint32_t limit) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doUpperBound";
         CassStatement* statement = cass_prepared_bind(upperBound_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        int64_t markerVal = marker ? marker.value() : INT64_MIN;
+        int64_t cursorVal = cursor.has_value() ? cursor.value() : INT64_MIN;
 
-        CassError rc = cass_statement_bind_int64(statement, 0, markerVal);
+        CassError rc = cass_statement_bind_int64(statement, 0, cursorVal);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -1039,7 +934,7 @@ public:
             return {};
         }
 
-        rc = cass_statement_bind_int64(statement, 1, seq);
+        rc = cass_statement_bind_int64(statement, 1, ledgerSequence);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -1048,7 +943,7 @@ public:
                 << cass_error_desc(rc);
             return {};
         }
-        rc = cass_statement_bind_int64(statement, 2, seq);
+        rc = cass_statement_bind_int64(statement, 2, ledgerSequence);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -1116,24 +1011,25 @@ public:
         if (keys.size())
         {
             std::vector<LedgerObject> results;
-            std::vector<Blob> objs = fetchObjectsBatch(keys, seq);
+            std::vector<BackendInterface::Blob> objs =
+                fetchLedgerObjects(keys, ledgerSequence);
             for (size_t i = 0; i < objs.size(); ++i)
             {
                 results.push_back({keys[i], objs[i]});
             }
             auto token = getToken(results[results.size() - 1].key.data());
             assert(token);
-            return std::make_pair(results, token);
+            return {results, token};
         }
 
         return {{}, {}};
     }
 
-    std::vector<LedgerObject>
-    doBookOffers(
+    std::vector<BackendInterface::LedgerObject>
+    fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t sequence,
-        ripple::uint256 const& cursor = {}) const
+        std::optional<ripple::uint256> const& cursor) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doBookOffers";
         CassStatement* statement = cass_prepared_bind(getBook_);
@@ -1168,8 +1064,18 @@ public:
                 << ", " << cass_error_desc(rc);
             return {};
         }
-        rc = cass_statement_bind_bytes(
-            statement, 3, static_cast<cass_byte_t const*>(cursor.data()), 32);
+        if (cursor)
+            rc = cass_statement_bind_bytes(
+                statement,
+                3,
+                static_cast<cass_byte_t const*>(cursor->data()),
+                32);
+        else
+        {
+            ripple::uint256 zero = {};
+            rc = cass_statement_bind_bytes(
+                statement, 3, static_cast<cass_byte_t const*>(zero.data()), 32);
+        }
 
         if (rc != CASS_OK)
         {
@@ -1228,7 +1134,8 @@ public:
         if (keys.size())
         {
             std::vector<LedgerObject> results;
-            std::vector<Blob> objs = fetchObjectsBatch(keys, sequence);
+            std::vector<BackendInterface::Blob> objs =
+                fetchLedgerObjects(keys, sequence);
             for (size_t i = 0; i < objs.size(); ++i)
             {
                 results.push_back({keys[i], objs[i]});
@@ -1248,7 +1155,7 @@ public:
     {
         CassandraFlatMapBackend const& backend;
         ripple::uint256 const& hash;
-        BlobPair& result;
+        BackendInterface::TransactionAndMetadata& result;
         std::condition_variable& cv;
 
         std::atomic_uint32_t& numFinished;
@@ -1257,7 +1164,7 @@ public:
         ReadCallbackData(
             CassandraFlatMapBackend const& backend,
             ripple::uint256 const& hash,
-            BlobPair& result,
+            BackendInterface::TransactionAndMetadata& result,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
             size_t batchSize)
@@ -1273,8 +1180,8 @@ public:
         ReadCallbackData(ReadCallbackData const& other) = default;
     };
 
-    std::vector<BlobPair>
-    fetchBatch(std::vector<ripple::uint256> const& hashes) const
+    std::vector<BackendInterface::TransactionAndMetadata>
+    fetchTransactions(std::vector<ripple::uint256> const& hashes) const override
     {
         std::size_t const numHashes = hashes.size();
         BOOST_LOG_TRIVIAL(trace)
@@ -1282,7 +1189,8 @@ public:
         std::atomic_uint32_t numFinished = 0;
         std::condition_variable cv;
         std::mutex mtx;
-        std::vector<BlobPair> results{numHashes};
+        std::vector<BackendInterface::TransactionAndMetadata> results{
+            numHashes};
         std::vector<std::shared_ptr<ReadCallbackData>> cbs;
         cbs.reserve(numHashes);
         for (std::size_t i = 0; i < hashes.size(); ++i)
@@ -1338,7 +1246,7 @@ public:
         CassandraFlatMapBackend const& backend;
         ripple::uint256 const& key;
         uint32_t sequence;
-        Blob& result;
+        BackendInterface::Blob& result;
         std::condition_variable& cv;
 
         std::atomic_uint32_t& numFinished;
@@ -1348,7 +1256,7 @@ public:
             CassandraFlatMapBackend const& backend,
             ripple::uint256 const& key,
             uint32_t sequence,
-            Blob& result,
+            BackendInterface::Blob& result,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
             size_t batchSize)
@@ -1364,10 +1272,10 @@ public:
 
         ReadObjectCallbackData(ReadObjectCallbackData const& other) = default;
     };
-    std::vector<Blob>
-    fetchObjectsBatch(
+    std::vector<BackendInterface::Blob>
+    fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const
+        uint32_t sequence) const override
     {
         std::size_t const numKeys = keys.size();
         BOOST_LOG_TRIVIAL(trace)
@@ -1375,7 +1283,7 @@ public:
         std::atomic_uint32_t numFinished = 0;
         std::condition_variable cv;
         std::mutex mtx;
-        std::vector<Blob> results{numKeys};
+        std::vector<BackendInterface::Blob> results{numKeys};
         std::vector<std::shared_ptr<ReadObjectCallbackData>> cbs;
         cbs.reserve(numKeys);
         for (std::size_t i = 0; i < keys.size(); ++i)
@@ -1798,13 +1706,13 @@ public:
         cass_future_free(fut);
     }
     void
-    store(
+    writeLedgerObject(
         std::string&& key,
         uint32_t seq,
         std::string&& blob,
         bool isCreated,
         bool isDeleted,
-        std::optional<ripple::uint256>&& book) const
+        std::optional<ripple::uint256>&& book) const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
         WriteCallbackData* data = new WriteCallbackData(
@@ -1830,7 +1738,7 @@ public:
     }
 
     void
-    storeAccountTx(AccountTransactionsData&& data) const
+    writeAccountTransactions(AccountTransactionsData&& data) const override
     {
         numRequestsOutstanding_ += data.accounts.size();
         WriteAccountTxCallbackData* cbData =
@@ -2023,11 +1931,11 @@ public:
         cass_future_free(fut);
     }
     void
-    storeTransaction(
+    writeTransaction(
         std::string&& hash,
         uint32_t seq,
         std::string&& transaction,
-        std::string&& metadata)
+        std::string&& metadata) const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
         WriteTransactionCallbackData* data = new WriteTransactionCallbackData(
@@ -2042,7 +1950,7 @@ public:
     }
 
     void
-    sync() const
+    sync() const override
     {
         std::unique_lock<std::mutex> lck(syncMutex_);
 

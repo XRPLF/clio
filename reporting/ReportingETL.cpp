@@ -76,7 +76,7 @@ ReportingETL::insertTransactions(
         auto journal = ripple::debugLog();
         accountTxData.emplace_back(txMeta, std::move(nodestoreHash), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
-        flatMapBackend_.storeTransaction(
+        flatMapBackend_.writeTransaction(
             std::move(keyStr),
             ledger.seq,
             std::move(*raw),
@@ -89,7 +89,7 @@ std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
     // check that database is actually empty
-    auto ledger = flatMapBackend_.getLedgerBySequence(startingSequence);
+    auto ledger = flatMapBackend_.fetchLedgerBySequence(startingSequence);
     if (ledger)
     {
         BOOST_LOG_TRIVIAL(fatal) << __func__ << " : "
@@ -128,7 +128,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     {
         for (auto& data : accountTxData)
         {
-            flatMapBackend_.storeAccountTx(std::move(data));
+            flatMapBackend_.writeAccountTransactions(std::move(data));
         }
         bool success = flatMapBackend_.writeLedger(
             lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
@@ -155,7 +155,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto ledger = flatMapBackend_.getLedgerBySequence(ledgerSequence);
+        auto ledger = flatMapBackend_.fetchLedgerBySequence(ledgerSequence);
 
         if (!ledger)
         {
@@ -292,7 +292,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         }
 
         assert(not(isCreated and isDeleted));
-        flatMapBackend_.store(
+        flatMapBackend_.writeLedgerObject(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
             std::move(*obj.mutable_data()),
@@ -302,7 +302,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     }
     for (auto& data : accountTxData)
     {
-        flatMapBackend_.storeAccountTx(std::move(data));
+        flatMapBackend_.writeAccountTransactions(std::move(data));
     }
     bool success = flatMapBackend_.writeLedger(
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
@@ -347,7 +347,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
                              << "Starting etl pipeline";
     writing_ = true;
 
-    auto parent = flatMapBackend_.getLedgerBySequence(startSequence - 1);
+    auto parent = flatMapBackend_.fetchLedgerBySequence(startSequence - 1);
     if (!parent)
     {
         assert(false);
@@ -428,7 +428,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
             if (isStopping())
                 continue;
 
-            auto numTxns = fetchResponse->transactions_list().transactions_size();
+            auto numTxns =
+                fetchResponse->transactions_list().transactions_size();
             auto numObjects = fetchResponse->ledger_objects().objects_size();
             auto start = std::chrono::system_clock::now();
             auto [lgrInfo, success] = buildNextLedger(*fetchResponse);
@@ -481,7 +482,7 @@ void
 ReportingETL::monitor()
 {
     std::optional<uint32_t> latestSequence =
-        flatMapBackend_.getLatestLedgerSequence();
+        flatMapBackend_.fetchLatestLedgerSequence();
     if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "

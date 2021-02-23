@@ -741,6 +741,13 @@ CREATE TABLE IF NOT EXISTS ledgers (
     trans_set_hash    bytea  NOT NULL
 );
 
+
+CREATE TABLE IF NOT EXISTS objects (
+    key bytea PRIMARY KEY,
+    ledger_seq bigint NOT NULL,
+    object bytea NOT NULL
+);
+
 -- Index for lookups by ledger hash.
 CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
     USING hash (ledger_hash);
@@ -748,7 +755,10 @@ CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
 -- Transactions table. Deletes from the ledger table
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS transactions (
-    ledger_seq bigint NOT NULL,
+    hash bytea PRIMARY KEY,
+    ledger_seq bigint,
+    transaction bytea,
+    metadata bytea,
     transaction_index bigint NOT NULL,
     trans_id bytea NOT NULL,
     nodestore_hash bytea NOT NULL,

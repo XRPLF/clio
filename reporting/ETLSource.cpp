@@ -457,7 +457,7 @@ public:
                     book->data()[book->size() - 1 - i] = 0x00;
                 }
             }
-            backend.store(
+            backend.writeLedgerObject(
                 std::move(*obj.mutable_key()),
                 request_.ledger().sequence(),
                 std::move(*obj.mutable_data()),

@@ -93,7 +93,7 @@ doAccountInfo(
 
     auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
-        backend.fetch(key.key.data(), ledgerSequence);
+        backend.fetchLedgerObject(key.key, ledgerSequence);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)

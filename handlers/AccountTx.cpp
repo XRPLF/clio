@@ -105,10 +105,10 @@ doAccountTxStoredProcedure(
             std::shared_ptr<ripple::STTx const>,
             std::shared_ptr<ripple::STObject const>>>
             results;
-        auto dbResults = backend.fetchBatch(nodestoreHashes);
+        auto dbResults = backend.fetchTransactions(nodestoreHashes);
         for (auto const& res : dbResults)
         {
-            if (res.first.size() && res.second.size())
+            if (res.transaction.size() && res.metadata.size())
                 results.push_back(deserializeTxPlusMeta(res));
         }
         return results;

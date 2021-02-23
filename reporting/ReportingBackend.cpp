@@ -385,7 +385,7 @@ flatMapReadCallback(CassFuture* fut, void* cbData)
             return;
         }
         std::vector<unsigned char> meta{buf2, buf2 + buf2Size};
-        requestParams.result = std::make_pair(std::move(txn), std::move(meta));
+        requestParams.result = {std::move(txn), std::move(meta)};
         cass_result_free(res);
         finish();
     }
@@ -1462,15 +1462,16 @@ CassandraFlatMapBackend::open()
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: error preparing updateLedgerRange : " << rc << ", "
-               << cass_error_desc(rc);
+            ss << "nodestore: error preparing updateLedgerRange : " << rc
+               << ", " << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
         }
 
         updateLedgerRange_ = cass_future_get_prepared(prepare_future);
         query = {};
-        query << " select header from " << tableName << "ledgers where sequence = ?";
+        query << " select header from " << tableName
+              << "ledgers where sequence = ?";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());
@@ -1484,15 +1485,16 @@ CassandraFlatMapBackend::open()
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: error preparing selectLedgerBySeq : " << rc << ", "
-               << cass_error_desc(rc);
+            ss << "nodestore: error preparing selectLedgerBySeq : " << rc
+               << ", " << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
         }
 
         selectLedgerBySeq_ = cass_future_get_prepared(prepare_future);
         query = {};
-        query << " select sequence from " << tableName << "ledger_range where is_latest = true";
+        query << " select sequence from " << tableName
+              << "ledger_range where is_latest = true";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());
@@ -1506,8 +1508,8 @@ CassandraFlatMapBackend::open()
             cass_future_free(prepare_future);
 
             std::stringstream ss;
-            ss << "nodestore: error preparing selectLatestLedger : " << rc << ", "
-               << cass_error_desc(rc);
+            ss << "nodestore: error preparing selectLatestLedger : " << rc
+               << ", " << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << ss.str();
             continue;
         }

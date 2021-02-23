@@ -51,7 +51,7 @@ doTx(
         return response;
     }
 
-    auto dbResponse = backend.fetchTransaction(hash.data());
+    auto dbResponse = backend.fetchTransaction(hash);
     if (!dbResponse)
     {
         response["error"] = "Transaction not found in Cassandra";
