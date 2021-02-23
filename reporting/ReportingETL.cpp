@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <ripple/basics/StringUtilities.h>
+#include <reporting/BackendFactory.h>
 #include <reporting/DBHelpers.h>
 #include <reporting/ReportingETL.h>
 
@@ -76,7 +77,7 @@ ReportingETL::insertTransactions(
         auto journal = ripple::debugLog();
         accountTxData.emplace_back(txMeta, std::move(nodestoreHash), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
-        flatMapBackend_.writeTransaction(
+        flatMapBackend_->writeTransaction(
             std::move(keyStr),
             ledger.seq,
             std::move(*raw),
@@ -89,7 +90,7 @@ std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
     // check that database is actually empty
-    auto ledger = flatMapBackend_.fetchLedgerBySequence(startingSequence);
+    auto ledger = flatMapBackend_->fetchLedgerBySequence(startingSequence);
     if (ledger)
     {
         BOOST_LOG_TRIVIAL(fatal) << __func__ << " : "
@@ -128,9 +129,9 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     {
         for (auto& data : accountTxData)
         {
-            flatMapBackend_.writeAccountTransactions(std::move(data));
+            flatMapBackend_->writeAccountTransactions(std::move(data));
         }
-        bool success = flatMapBackend_.writeLedger(
+        bool success = flatMapBackend_->writeLedger(
             lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     }
     auto end = std::chrono::system_clock::now();
@@ -155,7 +156,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto ledger = flatMapBackend_.fetchLedgerBySequence(ledgerSequence);
+        auto ledger = flatMapBackend_->fetchLedgerBySequence(ledgerSequence);
 
         if (!ledger)
         {
@@ -292,7 +293,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         }
 
         assert(not(isCreated and isDeleted));
-        flatMapBackend_.writeLedgerObject(
+        flatMapBackend_->writeLedgerObject(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
             std::move(*obj.mutable_data()),
@@ -302,9 +303,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     }
     for (auto& data : accountTxData)
     {
-        flatMapBackend_.writeAccountTransactions(std::move(data));
+        flatMapBackend_->writeAccountTransactions(std::move(data));
     }
-    bool success = flatMapBackend_.writeLedger(
+    bool success = flatMapBackend_->writeLedger(
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -347,7 +348,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
                              << "Starting etl pipeline";
     writing_ = true;
 
-    auto parent = flatMapBackend_.fetchLedgerBySequence(startSequence - 1);
+    auto parent = flatMapBackend_->fetchLedgerBySequence(startSequence - 1);
     if (!parent)
     {
         assert(false);
@@ -482,7 +483,7 @@ void
 ReportingETL::monitor()
 {
     std::optional<uint32_t> latestSequence =
-        flatMapBackend_.fetchLatestLedgerSequence();
+        flatMapBackend_->fetchLatestLedgerSequence();
     if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
@@ -637,17 +638,16 @@ ReportingETL::ReportingETL(
     boost::asio::io_context& ioc)
     : publishStrand_(ioc)
     , ioContext_(ioc)
-    , flatMapBackend_(
-          config.at("database").as_object().at("cassandra").as_object())
+    , flatMapBackend_(makeBackend(config))
     , pgPool_(make_PgPool(
           config.at("database").as_object().at("postgres").as_object()))
     , loadBalancer_(
           config.at("etl_sources").as_array(),
-          flatMapBackend_,
+          *flatMapBackend_,
           networkValidatedLedgers_,
           ioc)
 {
-    flatMapBackend_.open();
+    flatMapBackend_->open();
     initSchema(pgPool_);
 }
 

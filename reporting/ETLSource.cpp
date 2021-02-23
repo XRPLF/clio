@@ -31,7 +31,7 @@
 // Primarly used in read-only mode, to monitor when ledgers are validated
 ETLSource::ETLSource(
     boost::json::object const& config,
-    CassandraFlatMapBackend& backend,
+    BackendInterface& backend,
     NetworkValidatedLedgers& networkValidatedLedgers,
     boost::asio::io_context& ioContext)
     : ioc_(ioContext)
@@ -400,7 +400,7 @@ public:
     process(
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq,
-        CassandraFlatMapBackend& backend,
+        BackendInterface& backend,
         bool abort = false)
     {
         BOOST_LOG_TRIVIAL(info) << "Processing response. "
@@ -582,7 +582,7 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 }
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
-    CassandraFlatMapBackend& backend,
+    BackendInterface& backend,
     NetworkValidatedLedgers& nwvl,
     boost::asio::io_context& ioContext)
 {

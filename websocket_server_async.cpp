@@ -54,32 +54,32 @@ std::unordered_map<std::string, RPCCommand> commandMap{
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& postgres);
 boost::json::object
 doTx(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& pgPool);
 boost::json::object
 doAccountTx(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& pgPool);
 boost::json::object
 doLedgerData(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend);
+    BackendInterface const& backend);
 boost::json::object
 doBookOffers(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& pgPool);
 
 boost::json::object
 buildResponse(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& pgPool)
 {
     std::string command = request.at("command").as_string().c_str();
@@ -122,14 +122,14 @@ class session : public std::enable_shared_from_this<session>
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
     std::string response_;
-    CassandraFlatMapBackend const& backend_;
+    BackendInterface const& backend_;
     std::shared_ptr<PgPool>& pgPool_;
 
 public:
     // Take ownership of the socket
     explicit session(
         boost::asio::ip::tcp::socket&& socket,
-        CassandraFlatMapBackend const& backend,
+        BackendInterface const& backend,
         std::shared_ptr<PgPool>& pgPool)
         : ws_(std::move(socket)), backend_(backend), pgPool_(pgPool)
     {
@@ -242,14 +242,14 @@ class listener : public std::enable_shared_from_this<listener>
 {
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    CassandraFlatMapBackend const& backend_;
+    BackendInterface const& backend_;
     std::shared_ptr<PgPool>& pgPool_;
 
 public:
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
-        CassandraFlatMapBackend const& backend,
+        BackendInterface const& backend,
         std::shared_ptr<PgPool>& pgPool)
         : ioc_(ioc), acceptor_(ioc), backend_(backend), pgPool_(pgPool)
     {

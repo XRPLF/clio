@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include <handlers/RPCHelpers.h>
+#include <reporting/BackendInterface.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 // {
 //   transaction: <hex>
@@ -28,7 +28,7 @@
 boost::json::object
 doTx(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& postgres)
 {
     boost::json::object response;

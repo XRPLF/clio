@@ -21,8 +21,8 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
+#include <reporting/BackendInterface.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 // {
 //   account: <ident>,
@@ -43,7 +43,7 @@
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
+    BackendInterface const& backend,
     std::shared_ptr<PgPool>& postgres)
 {
     boost::json::object response;

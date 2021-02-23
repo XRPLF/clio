@@ -25,10 +25,10 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
+#include <reporting/BackendInterface.h>
 #include <reporting/ETLHelpers.h>
 #include <reporting/ETLSource.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -59,7 +59,7 @@ struct AccountTransactionsData;
 class ReportingETL
 {
 private:
-    CassandraFlatMapBackend flatMapBackend_;
+    std::unique_ptr<BackendInterface> flatMapBackend_;
     std::shared_ptr<PgPool> pgPool_;
 
     std::thread worker_;
@@ -321,10 +321,10 @@ public:
         return loadBalancer_;
     }
 
-    CassandraFlatMapBackend&
+    BackendInterface&
     getFlatMapBackend()
     {
-        return flatMapBackend_;
+        return *flatMapBackend_;
     }
 
     std::shared_ptr<PgPool>&

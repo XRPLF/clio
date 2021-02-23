@@ -55,7 +55,7 @@ flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
 void
 flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 
-class CassandraFlatMapBackend : BackendInterface
+class CassandraFlatMapBackend : public BackendInterface
 {
 private:
     // convenience function for one-off queries. For normal reads and writes,
@@ -141,7 +141,7 @@ public:
     {
     }
 
-    ~CassandraFlatMapBackend()
+    ~CassandraFlatMapBackend() override
     {
         if (open_)
             close();
@@ -915,16 +915,23 @@ public:
     }
     BackendInterface::LedgerPage
     fetchLedgerPage(
-        std::optional<BackendInterface::LedgerCursor> const& cursor,
+        std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doUpperBound";
         CassStatement* statement = cass_prepared_bind(upperBound_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        int64_t cursorVal = cursor.has_value() ? cursor.value() : INT64_MIN;
 
-        CassError rc = cass_statement_bind_int64(statement, 0, cursorVal);
+        int64_t intCursor = INT64_MIN;
+        if (cursor)
+        {
+            auto token = getToken(cursor->data());
+            if (token)
+                intCursor = *token;
+        }
+
+        CassError rc = cass_statement_bind_int64(statement, 0, intCursor);
         if (rc != CASS_OK)
         {
             cass_statement_free(statement);
@@ -1017,9 +1024,7 @@ public:
             {
                 results.push_back({keys[i], objs[i]});
             }
-            auto token = getToken(results[results.size() - 1].key.data());
-            assert(token);
-            return {results, token};
+            return {results, keys[keys.size() - 1]};
         }
 
         return {{}, {}};

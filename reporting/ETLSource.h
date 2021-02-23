@@ -25,7 +25,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
-#include <reporting/ReportingBackend.h>
+#include <reporting/BackendInterface.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -85,7 +85,7 @@ class ETLSource
     // used for retrying connections
     boost::asio::steady_timer timer_;
 
-    CassandraFlatMapBackend& backend_;
+    BackendInterface& backend_;
 
 public:
     bool
@@ -113,7 +113,7 @@ public:
     /// Primarly used in read-only mode, to monitor when ledgers are validated
     ETLSource(
         boost::json::object const& config,
-        CassandraFlatMapBackend& backend,
+        BackendInterface& backend,
         NetworkValidatedLedgers& networkValidatedLedgers,
         boost::asio::io_context& ioContext);
 
@@ -285,7 +285,7 @@ private:
 public:
     ETLLoadBalancer(
         boost::json::array const& config,
-        CassandraFlatMapBackend& backend,
+        BackendInterface& backend,
         NetworkValidatedLedgers& nwvl,
         boost::asio::io_context& ioContext);
 

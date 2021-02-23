@@ -7,9 +7,9 @@
 #include <boost/json.hpp>
 #include <algorithm>
 #include <handlers/RPCHelpers.h>
+#include <reporting/BackendInterface.h>
 #include <reporting/DBHelpers.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 std::optional<std::uint32_t>
 ledgerSequenceFromRequest(
