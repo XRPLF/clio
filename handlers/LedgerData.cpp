@@ -52,7 +52,7 @@ doLedgerData(
         request.contains("binary") ? request.at("binary").as_bool() : false;
     size_t limit = request.contains("limit") ? request.at("limit").as_int64()
                                              : (binary ? 2048 : 256);
-    BackendInterface::LedgerPage page;
+    Backend::LedgerPage page;
     auto start = std::chrono::system_clock::now();
     page = backend.fetchLedgerPage(cursor, ledger, limit);
 
@@ -62,7 +62,7 @@ doLedgerData(
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
     boost::json::array objects;
-    std::vector<BackendInterface::LedgerObject>& results = page.objects;
+    std::vector<Backend::LedgerObject>& results = page.objects;
     std::optional<ripple::uint256> const& returnedCursor = page.cursor;
     BOOST_LOG_TRIVIAL(debug)
         << "doUpperBound returned " << results.size() << " results";

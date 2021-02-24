@@ -22,7 +22,7 @@ accountFromStringStrict(std::string const& account)
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::STObject const>>
-deserializeTxPlusMeta(BackendInterface::TransactionAndMetadata const& blobs)
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
 {
     std::pair<
         std::shared_ptr<ripple::STTx const>,

@@ -308,7 +308,7 @@ doBookOffers(
 
     auto start = std::chrono::system_clock::now();
     ripple::uint256 bookBase = getBookBase(book);
-    std::vector<BackendInterface::LedgerObject> offers;
+    std::vector<Backend::LedgerObject> offers;
     if (!cursor.isZero())
     {
         offers = backend.fetchBookOffers(bookBase, *sequence, cursor);

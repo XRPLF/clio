@@ -57,6 +57,7 @@ include(Postgres)
 target_sources(reporting PRIVATE
     reporting/ETLSource.cpp
     reporting/ReportingBackend.cpp
+    reporting/PostgresBackend.cpp
     reporting/Pg.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp

@@ -34,6 +34,8 @@
 #include <reporting/BackendInterface.h>
 #include <reporting/DBHelpers.h>
 
+namespace Backend {
+
 void
 flatMapWriteCallback(CassFuture* fut, void* cbData);
 void
@@ -259,12 +261,11 @@ public:
     }
 
     std::pair<
-        std::vector<BackendInterface::TransactionAndMetadata>,
-        std::optional<BackendInterface::AccountTransactionsCursor>>
+        std::vector<TransactionAndMetadata>,
+        std::optional<AccountTransactionsCursor>>
     fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::optional<BackendInterface::AccountTransactionsCursor> const&
-            cursor) const override
+        std::optional<AccountTransactionsCursor> const& cursor) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doAccountTx";
         CassStatement* statement = cass_prepared_bind(selectAccountTx_);
@@ -707,7 +708,7 @@ public:
     // @param key the key of the object
     // @param pno object in which to store the result
     // @return result status of query
-    std::optional<BackendInterface::Blob>
+    std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
         const override
     {
@@ -837,7 +838,7 @@ public:
         return token + 1;
     }
 
-    std::optional<BackendInterface::TransactionAndMetadata>
+    std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash) const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
@@ -913,7 +914,7 @@ public:
             << " microseconds";
         return {{txResult, metaResult}};
     }
-    BackendInterface::LedgerPage
+    LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
@@ -1018,8 +1019,7 @@ public:
         if (keys.size())
         {
             std::vector<LedgerObject> results;
-            std::vector<BackendInterface::Blob> objs =
-                fetchLedgerObjects(keys, ledgerSequence);
+            std::vector<Blob> objs = fetchLedgerObjects(keys, ledgerSequence);
             for (size_t i = 0; i < objs.size(); ++i)
             {
                 results.push_back({keys[i], objs[i]});
@@ -1030,7 +1030,7 @@ public:
         return {{}, {}};
     }
 
-    std::vector<BackendInterface::LedgerObject>
+    std::vector<LedgerObject>
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t sequence,
@@ -1139,8 +1139,7 @@ public:
         if (keys.size())
         {
             std::vector<LedgerObject> results;
-            std::vector<BackendInterface::Blob> objs =
-                fetchLedgerObjects(keys, sequence);
+            std::vector<Blob> objs = fetchLedgerObjects(keys, sequence);
             for (size_t i = 0; i < objs.size(); ++i)
             {
                 results.push_back({keys[i], objs[i]});
@@ -1160,7 +1159,7 @@ public:
     {
         CassandraFlatMapBackend const& backend;
         ripple::uint256 const& hash;
-        BackendInterface::TransactionAndMetadata& result;
+        TransactionAndMetadata& result;
         std::condition_variable& cv;
 
         std::atomic_uint32_t& numFinished;
@@ -1169,7 +1168,7 @@ public:
         ReadCallbackData(
             CassandraFlatMapBackend const& backend,
             ripple::uint256 const& hash,
-            BackendInterface::TransactionAndMetadata& result,
+            TransactionAndMetadata& result,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
             size_t batchSize)
@@ -1185,7 +1184,7 @@ public:
         ReadCallbackData(ReadCallbackData const& other) = default;
     };
 
-    std::vector<BackendInterface::TransactionAndMetadata>
+    std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes) const override
     {
         std::size_t const numHashes = hashes.size();
@@ -1194,8 +1193,7 @@ public:
         std::atomic_uint32_t numFinished = 0;
         std::condition_variable cv;
         std::mutex mtx;
-        std::vector<BackendInterface::TransactionAndMetadata> results{
-            numHashes};
+        std::vector<TransactionAndMetadata> results{numHashes};
         std::vector<std::shared_ptr<ReadCallbackData>> cbs;
         cbs.reserve(numHashes);
         for (std::size_t i = 0; i < hashes.size(); ++i)
@@ -1251,7 +1249,7 @@ public:
         CassandraFlatMapBackend const& backend;
         ripple::uint256 const& key;
         uint32_t sequence;
-        BackendInterface::Blob& result;
+        Blob& result;
         std::condition_variable& cv;
 
         std::atomic_uint32_t& numFinished;
@@ -1261,7 +1259,7 @@ public:
             CassandraFlatMapBackend const& backend,
             ripple::uint256 const& key,
             uint32_t sequence,
-            BackendInterface::Blob& result,
+            Blob& result,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
             size_t batchSize)
@@ -1277,7 +1275,7 @@ public:
 
         ReadObjectCallbackData(ReadObjectCallbackData const& other) = default;
     };
-    std::vector<BackendInterface::Blob>
+    std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const override
@@ -1288,7 +1286,7 @@ public:
         std::atomic_uint32_t numFinished = 0;
         std::condition_variable cv;
         std::mutex mtx;
-        std::vector<BackendInterface::Blob> results{numKeys};
+        std::vector<Blob> results{numKeys};
         std::vector<std::shared_ptr<ReadObjectCallbackData>> cbs;
         cbs.reserve(numKeys);
         for (std::size_t i = 0; i < keys.size(); ++i)
@@ -1743,12 +1741,16 @@ public:
     }
 
     void
-    writeAccountTransactions(AccountTransactionsData&& data) const override
+    writeAccountTransactions(
+        std::vector<AccountTransactionsData>&& data) const override
     {
-        numRequestsOutstanding_ += data.accounts.size();
-        WriteAccountTxCallbackData* cbData =
-            new WriteAccountTxCallbackData(this, std::move(data));
-        writeAccountTx(*cbData, false);
+        for (auto& record : data)
+        {
+            numRequestsOutstanding_ += record.accounts.size();
+            WriteAccountTxCallbackData* cbData =
+                new WriteAccountTxCallbackData(this, std::move(record));
+            writeAccountTx(*cbData, false);
+        }
     }
 
     void
@@ -1778,6 +1780,7 @@ public:
                 static_cast<cass_byte_t const*>(accountData),
                 account.size());
             if (rc != CASS_OK)
+
             {
                 cass_statement_free(statement);
                 std::stringstream ss;
@@ -1985,4 +1988,5 @@ public:
     flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
 };
 
+}  // namespace Backend
 #endif

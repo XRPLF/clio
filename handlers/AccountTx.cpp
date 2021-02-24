@@ -148,7 +148,7 @@ doAccountTx(
         return response;
     }
 
-    std::optional<BackendInterface::AccountTransactionsCursor> cursor;
+    std::optional<Backend::AccountTransactionsCursor> cursor;
     if (request.contains("cursor"))
     {
         auto const& obj = request.at("cursor").as_object();

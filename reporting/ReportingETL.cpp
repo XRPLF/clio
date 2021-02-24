@@ -127,10 +127,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
     if (!stopping_)
     {
-        for (auto& data : accountTxData)
-        {
-            flatMapBackend_->writeAccountTransactions(std::move(data));
-        }
+        flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
         bool success = flatMapBackend_->writeLedger(
             lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     }
@@ -301,10 +298,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted,
             std::move(bookDir));
     }
-    for (auto& data : accountTxData)
-    {
-        flatMapBackend_->writeAccountTransactions(std::move(data));
-    }
+    flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
     bool success = flatMapBackend_->writeLedger(
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug)
@@ -638,7 +632,7 @@ ReportingETL::ReportingETL(
     boost::asio::io_context& ioc)
     : publishStrand_(ioc)
     , ioContext_(ioc)
-    , flatMapBackend_(makeBackend(config))
+    , flatMapBackend_(Backend::makeBackend(config))
     , pgPool_(make_PgPool(
           config.at("database").as_object().at("postgres").as_object()))
     , loadBalancer_(

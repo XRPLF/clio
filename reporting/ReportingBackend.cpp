@@ -1,4 +1,5 @@
 #include <reporting/ReportingBackend.h>
+namespace Backend {
 // Process the result of an asynchronous write. Retry on error
 // @param fut cassandra future associated with the write
 // @param cbData struct that holds the request parameters
@@ -1529,3 +1530,4 @@ CassandraFlatMapBackend::open()
     }
     BOOST_LOG_TRIVIAL(info) << "Opened database successfully";
 }
+}  // namespace Backend
