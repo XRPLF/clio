@@ -114,6 +114,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
+    flatMapBackend_->startWrites();
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
 
@@ -128,9 +129,10 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     if (!stopping_)
     {
         flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
-        bool success = flatMapBackend_->writeLedger(
+        flatMapBackend_->writeLedger(
             lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     }
+    flatMapBackend_->finishWrites();
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
                              << ((end - start).count()) / 1000000000.0;
@@ -254,6 +256,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
+    flatMapBackend_->startWrites();
 
     std::vector<AccountTransactionsData> accountTxData{
         insertTransactions(lgrInfo, rawData)};
@@ -299,8 +302,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             std::move(bookDir));
     }
     flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
-    bool success = flatMapBackend_->writeLedger(
+    flatMapBackend_->writeLedger(
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
+    bool success = flatMapBackend_->finishWrites();
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "

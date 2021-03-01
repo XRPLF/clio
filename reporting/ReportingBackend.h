@@ -138,6 +138,9 @@ private:
 
     boost::json::object config_;
 
+    mutable uint32_t ledgerSequence_ = 0;
+    mutable bool isFirstLedger_ = false;
+
 public:
     CassandraFlatMapBackend(boost::json::object const& config) : config_(config)
     {
@@ -410,33 +413,22 @@ public:
         {
         }
     };
+
     bool
-    writeLedger(
-        ripple::LedgerInfo const& ledgerInfo,
-        std::string&& header,
-        bool isFirst = false) const override
+    finishWrites() const override
     {
-        WriteLedgerHeaderCallbackData* headerCb =
-            new WriteLedgerHeaderCallbackData(
-                this, ledgerInfo.seq, std::move(header));
-        WriteLedgerHashCallbackData* hashCb = new WriteLedgerHashCallbackData(
-            this, ledgerInfo.hash, ledgerInfo.seq);
-        ++numRequestsOutstanding_;
-        ++numRequestsOutstanding_;
-        writeLedgerHeader(*headerCb, false);
-        writeLedgerHash(*hashCb, false);
         // wait for all other writes to finish
         sync();
         // write range
-        if (isFirst)
+        if (isFirstLedger_)
         {
             CassStatement* statement = cass_prepared_bind(updateLedgerRange_);
             cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
             CassError rc =
-                cass_statement_bind_int64(statement, 0, ledgerInfo.seq);
+                cass_statement_bind_int64(statement, 0, ledgerSequence_);
             rc = cass_statement_bind_bool(statement, 1, cass_false);
 
-            rc = cass_statement_bind_int64(statement, 2, ledgerInfo.seq);
+            rc = cass_statement_bind_int64(statement, 2, ledgerSequence_);
             CassFuture* fut;
             do
             {
@@ -456,11 +448,11 @@ public:
         CassStatement* statement = cass_prepared_bind(updateLedgerRange_);
         cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
         // TODO check rc
-        CassError rc = cass_statement_bind_int64(statement, 0, ledgerInfo.seq);
+        CassError rc = cass_statement_bind_int64(statement, 0, ledgerSequence_);
         assert(rc == CASS_OK);
         rc = cass_statement_bind_bool(statement, 1, cass_true);
         assert(rc == CASS_OK);
-        rc = cass_statement_bind_int64(statement, 2, ledgerInfo.seq);
+        rc = cass_statement_bind_int64(statement, 2, ledgerSequence_);
         assert(rc == CASS_OK);
         CassFuture* fut;
         do
@@ -498,6 +490,22 @@ public:
         }
         cass_result_free(res);
         return success == cass_true;
+    }
+    void
+    writeLedger(
+        ripple::LedgerInfo const& ledgerInfo,
+        std::string&& header,
+        bool isFirst = false) const override
+    {
+        WriteLedgerHeaderCallbackData* headerCb =
+            new WriteLedgerHeaderCallbackData(
+                this, ledgerInfo.seq, std::move(header));
+        WriteLedgerHashCallbackData* hashCb = new WriteLedgerHashCallbackData(
+            this, ledgerInfo.hash, ledgerInfo.seq);
+        ++numRequestsOutstanding_;
+        ++numRequestsOutstanding_;
+        writeLedgerHeader(*headerCb, false);
+        writeLedgerHash(*hashCb, false);
     }
     void
     writeLedgerHash(WriteLedgerHashCallbackData& cb, bool isRetry) const
@@ -1958,7 +1966,12 @@ public:
     }
 
     void
-    sync() const override
+    startWrites() const override
+    {
+    }
+
+    void
+    sync() const
     {
         std::unique_lock<std::mutex> lck(syncMutex_);
 

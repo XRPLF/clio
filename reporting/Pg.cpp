@@ -743,9 +743,10 @@ CREATE TABLE IF NOT EXISTS ledgers (
 
 
 CREATE TABLE IF NOT EXISTS objects (
-    key bytea PRIMARY KEY,
+    key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
-    object bytea NOT NULL
+    object bytea NOT NULL,
+    PRIMARY KEY(key, ledger_seq)
 );
 
 -- Index for lookups by ledger hash.
@@ -759,11 +760,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     ledger_seq bigint,
     transaction bytea,
     metadata bytea,
-    transaction_index bigint NOT NULL,
-    trans_id bytea NOT NULL,
-    nodestore_hash bytea NOT NULL,
-    constraint transactions_pkey PRIMARY KEY (ledger_seq, transaction_index),
-    constraint transactions_fkey FOREIGN KEY (ledger_seq)
+    FOREIGN KEY (ledger_seq)
         REFERENCES ledgers (ledger_seq) ON DELETE CASCADE
 );
 
