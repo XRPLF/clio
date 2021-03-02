@@ -637,8 +637,6 @@ ReportingETL::ReportingETL(
     : publishStrand_(ioc)
     , ioContext_(ioc)
     , flatMapBackend_(Backend::makeBackend(config))
-    , pgPool_(make_PgPool(
-          config.at("database").as_object().at("postgres").as_object()))
     , loadBalancer_(
           config.at("etl_sources").as_array(),
           *flatMapBackend_,
@@ -646,6 +644,5 @@ ReportingETL::ReportingETL(
           ioc)
 {
     flatMapBackend_->open();
-    initSchema(pgPool_);
 }
 

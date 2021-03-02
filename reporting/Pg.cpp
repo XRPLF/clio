@@ -745,7 +745,7 @@ CREATE TABLE IF NOT EXISTS ledgers (
 CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
-    object bytea NOT NULL,
+    object bytea,
     PRIMARY KEY(key, ledger_seq)
 );
 
@@ -757,33 +757,29 @@ CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS transactions (
     hash bytea PRIMARY KEY,
-    ledger_seq bigint,
-    transaction bytea,
-    metadata bytea,
-    FOREIGN KEY (ledger_seq)
-        REFERENCES ledgers (ledger_seq) ON DELETE CASCADE
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    transaction bytea NOT NULL,
+    metadata bytea NOT NULL
 );
-
--- Index for lookups by transaction hash.
-CREATE INDEX IF NOT EXISTS transactions_trans_id_idx ON transactions
-    USING hash (trans_id);
 
 -- Table that maps accounts to transactions affecting them. Deletes from the
--- ledger table by way of transactions table cascade here based on ledger_seq.
+-- ledger table cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS account_transactions (
     account           bytea  NOT NULL,
-    ledger_seq        bigint NOT NULL,
+    ledger_seq        bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     transaction_index bigint NOT NULL,
-    constraint account_transactions_pkey PRIMARY KEY (account, ledger_seq,
-        transaction_index),
-    constraint account_transactions_fkey FOREIGN KEY (ledger_seq,
-        transaction_index) REFERENCES transactions (
-        ledger_seq, transaction_index) ON DELETE CASCADE
+    hash bytea NOT NULL,
+    PRIMARY KEY (account, ledger_seq, transaction_index),
 );
-
--- Index to allow for fast cascading deletions and referential integrity.
-CREATE INDEX IF NOT EXISTS fki_account_transactions_idx ON
-    account_transactions USING btree (ledger_seq, transaction_index);
+-- Table that maps a book to a list of offers in that book. Deletes from the ledger table
+-- cascade here based on ledger_seq.
+CREATE TABLE IF NOT EXISTS books (
+    book bytea NOT NULL,
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    deleted boolean NOT NULL,
+    offer_key bytea NOT NULL,
+    PRIMARY KEY(book, offer_key, deleted)
+);
 
 -- Avoid inadvertent administrative tampering with committed data.
 CREATE OR REPLACE RULE ledgers_update_protect AS ON UPDATE TO
@@ -792,44 +788,11 @@ CREATE OR REPLACE RULE transactions_update_protect AS ON UPDATE TO
     transactions DO INSTEAD NOTHING;
 CREATE OR REPLACE RULE account_transactions_update_protect AS ON UPDATE TO
     account_transactions DO INSTEAD NOTHING;
+CREATE OR REPLACE RULE objects_update_protect AS ON UPDATE TO
+    objects DO INSTEAD NOTHING;
+CREATE OR REPLACE RULE books_update_protect AS ON UPDATE TO
+    books DO INSTEAD NOTHING;
 
--- Stored procedure to assist with the tx() RPC call. Takes transaction hash
--- as input. If found, returns the ledger sequence in which it was applied.
--- If not, returns the range of ledgers searched.
-CREATE OR REPLACE FUNCTION tx (
-    _in_trans_id bytea
-) RETURNS jsonb AS $$
-DECLARE
-    _min_ledger        bigint := min_ledger();
-    _min_seq           bigint := (SELECT ledger_seq
-                                    FROM ledgers
-                                   WHERE ledger_seq = _min_ledger
-                                     FOR SHARE);
-    _max_seq           bigint := max_ledger();
-    _ledger_seq        bigint;
-    _nodestore_hash    bytea;
-BEGIN
-
-    IF _min_seq IS NULL THEN
-        RETURN jsonb_build_object('error', 'empty database');
-    END IF;
-    IF length(_in_trans_id) != 32 THEN
-        RETURN jsonb_build_object('error', '_in_trans_id size: '
-            || to_char(length(_in_trans_id), '999'));
-    END IF;
-
-    EXECUTE 'SELECT nodestore_hash, ledger_seq
-               FROM transactions
-              WHERE trans_id = $1
-                AND ledger_seq BETWEEN $2 AND $3
-    ' INTO _nodestore_hash, _ledger_seq USING _in_trans_id, _min_seq, _max_seq;
-    IF _nodestore_hash IS NULL THEN
-        RETURN jsonb_build_object('min_seq', _min_seq, 'max_seq', _max_seq);
-    END IF;
-    RETURN jsonb_build_object('nodestore_hash', _nodestore_hash, 'ledger_seq',
-        _ledger_seq);
-END;
-$$ LANGUAGE plpgsql;
 
 -- Return the earliest ledger sequence intended for range operations
 -- that protect the bottom of the range from deletion. Return NULL if empty.
@@ -852,195 +815,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- account_tx() RPC helper. From the rippled reporting process, only the
--- parameters without defaults are required. For the parameters with
--- defaults, validation should be done by rippled, such as:
--- _in_account_id should be a valid xrp base58 address.
--- _in_forward either true or false according to the published api
--- _in_limit should be validated and not simply passed through from
--- client.
---
--- For _in_ledger_index_min and _in_ledger_index_max, if passed in the
--- request, verify that their type is int and pass through as is.
--- For _ledger_hash, verify and convert from hex length 32 bytes and
--- prepend with \x (\\x C++).
---
--- For _in_ledger_index, if the input type is integer, then pass through
--- as is. If the type is string and contents = validated, then do not
--- set _in_ledger_index. Instead set _in_invalidated to TRUE.
---
--- There is no need for rippled to do any type of lookup on max/min
--- ledger range, lookup of hash, or the like. This functions does those
--- things, including error responses if bad input. Only the above must
--- be done to set the correct search range.
---
--- If a marker is present in the request, verify the members 'ledger'
--- and 'seq' are integers and they correspond to _in_marker_seq
--- _in_marker_index.
--- To reiterate:
--- JSON input field 'ledger' corresponds to _in_marker_seq
--- JSON input field 'seq' corresponds to _in_marker_index
-CREATE OR REPLACE FUNCTION account_tx (
-    _in_account_id bytea,
-    _in_forward bool,
-    _in_limit bigint,
-    _in_ledger_index_min bigint = NULL,
-    _in_ledger_index_max bigint = NULL,
-    _in_ledger_hash      bytea  = NULL,
-    _in_ledger_index     bigint = NULL,
-    _in_validated bool   = NULL,
-    _in_marker_seq       bigint = NULL,
-    _in_marker_index     bigint = NULL
-) RETURNS jsonb AS $$
-DECLARE
-    _min          bigint;
-    _max          bigint;
-    _sort_order   text       := (SELECT CASE WHEN _in_forward IS TRUE THEN
-                                 'ASC' ELSE 'DESC' END);
-    _marker       bool;
-    _between_min  bigint;
-    _between_max  bigint;
-    _sql          text;
-    _cursor       refcursor;
-    _result       jsonb;
-    _record       record;
-    _tally        bigint     := 0;
-    _ret_marker   jsonb;
-    _transactions jsonb[]    := '{}';
-BEGIN
-    IF _in_ledger_index_min IS NOT NULL OR
-            _in_ledger_index_max IS NOT NULL THEN
-        _min := (SELECT CASE WHEN _in_ledger_index_min IS NULL
-            THEN min_ledger() ELSE greatest(
-            _in_ledger_index_min, min_ledger()) END);
-        _max := (SELECT CASE WHEN _in_ledger_index_max IS NULL OR
-            _in_ledger_index_max = -1 THEN max_ledger() ELSE
-           least(_in_ledger_index_max, max_ledger()) END);
-
-        IF _max < _min THEN
-            RETURN jsonb_build_object('error', 'max is less than min ledger');
-        END IF;
-
-    ELSIF _in_ledger_hash IS NOT NULL OR _in_ledger_index IS NOT NULL
-            OR _in_validated IS TRUE THEN
-        IF _in_ledger_hash IS NOT NULL THEN
-            IF length(_in_ledger_hash) != 32 THEN
-                RETURN jsonb_build_object('error', '_in_ledger_hash size: '
-                    || to_char(length(_in_ledger_hash), '999'));
-            END IF;
-            EXECUTE 'SELECT ledger_seq
-                       FROM ledgers
-                      WHERE ledger_hash = $1'
-                INTO _min USING _in_ledger_hash::bytea;
-        ELSE
-            IF _in_ledger_index IS NOT NULL AND _in_validated IS TRUE THEN
-                RETURN jsonb_build_object('error',
-                    '_in_ledger_index cannot be set and _in_validated true');
-            END IF;
-            IF _in_validated IS TRUE THEN
-                _in_ledger_index := max_ledger();
-            END IF;
-            _min := (SELECT ledger_seq
-                       FROM ledgers
-                      WHERE ledger_seq = _in_ledger_index);
-        END IF;
-        IF _min IS NULL THEN
-            RETURN jsonb_build_object('error', 'ledger not found');
-        END IF;
-        _max := _min;
-    ELSE
-        _min := min_ledger();
-        _max := max_ledger();
-    END IF;
-
-    IF _in_marker_seq IS NOT NULL OR _in_marker_index IS NOT NULL THEN
-        _marker := TRUE;
-        IF _in_marker_seq IS NULL OR _in_marker_index IS NULL THEN
-            -- The rippled implementation returns no transaction results
-            -- if either of these values are missing.
-            _between_min := 0;
-            _between_max := 0;
-        ELSE
-            IF _in_forward IS TRUE THEN
-                _between_min := _in_marker_seq;
-                _between_max := _max;
-            ELSE
-                _between_min := _min;
-                _between_max := _in_marker_seq;
-            END IF;
-        END IF;
-    ELSE
-        _marker := FALSE;
-        _between_min := _min;
-        _between_max := _max;
-    END IF;
-    IF _between_max < _between_min THEN
-        RETURN jsonb_build_object('error', 'ledger search range is '
-            || to_char(_between_min, '999') || '-'
-            || to_char(_between_max, '999'));
-    END IF;
-
-    _sql := format('
-        SELECT transactions.ledger_seq, transactions.transaction_index,
-               transactions.trans_id, transactions.nodestore_hash
-          FROM transactions
-               INNER JOIN account_transactions
-                       ON transactions.ledger_seq =
-                          account_transactions.ledger_seq
-                          AND transactions.transaction_index =
-                              account_transactions.transaction_index
-         WHERE account_transactions.account = $1
-           AND account_transactions.ledger_seq BETWEEN $2 AND $3
-         ORDER BY transactions.ledger_seq %s, transactions.transaction_index %s
-        ', _sort_order, _sort_order);
-
-    OPEN _cursor FOR EXECUTE _sql USING _in_account_id, _between_min,
-            _between_max;
-    LOOP
-        FETCH _cursor INTO _record;
-        IF _record IS NULL THEN EXIT; END IF;
-        IF _marker IS TRUE THEN
-            IF _in_marker_seq = _record.ledger_seq THEN
-                IF _in_forward IS TRUE THEN
-                    IF _in_marker_index > _record.transaction_index THEN
-                        CONTINUE;
-                    END IF;
-                ELSE
-                    IF _in_marker_index < _record.transaction_index THEN
-                        CONTINUE;
-                    END IF;
-                END IF;
-            END IF;
-            _marker := FALSE;
-        END IF;
-
-        _tally := _tally + 1;
-        IF _tally > _in_limit THEN
-            _ret_marker := jsonb_build_object(
-                'ledger', _record.ledger_seq,
-                'seq', _record.transaction_index);
-            EXIT;
-        END IF;
-
-        -- Is the transaction index in the tx object?
-        _transactions := _transactions || jsonb_build_object(
-            'ledger_seq', _record.ledger_seq,
-            'transaction_index', _record.transaction_index,
-            'trans_id', _record.trans_id,
-            'nodestore_hash', _record.nodestore_hash);
-
-    END LOOP;
-    CLOSE _cursor;
-
-    _result := jsonb_build_object('ledger_index_min', _min,
-        'ledger_index_max', _max,
-        'transactions', _transactions);
-    IF _ret_marker IS NOT NULL THEN
-        _result := _result || jsonb_build_object('marker', _ret_marker);
-    END IF;
-    RETURN _result;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Trigger prior to insert on ledgers table. Validates length of hash fields.
 -- Verifies ancestry based on ledger_hash & prev_hash as follows:
@@ -1542,36 +1316,3 @@ getLedger(
     return info;
 }
 
-std::optional<LedgerRange>
-getLedgerRange(std::shared_ptr<PgPool>& pgPool)
-{
-    auto range = PgQuery(pgPool)("SELECT complete_ledgers()");
-    if (!range)
-        return {};
-
-    std::string res{range.c_str()};
-    try
-    {
-        size_t minVal = 0;
-        size_t maxVal = 0;
-        if (res == "empty" || res == "error" || res.empty())
-            return {};
-        else if (size_t delim = res.find('-'); delim != std::string::npos)
-        {
-            minVal = std::stol(res.substr(0, delim));
-            maxVal = std::stol(res.substr(delim + 1));
-        }
-        else
-        {
-            minVal = maxVal = std::stol(res);
-        }
-        return LedgerRange{minVal, maxVal};
-    }
-    catch (std::exception&)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " : "
-            << "Error parsing result of getCompleteLedgers()";
-    }
-    return {};
-}

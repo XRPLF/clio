@@ -60,7 +60,6 @@ class ReportingETL
 {
 private:
     std::unique_ptr<BackendInterface> flatMapBackend_;
-    std::shared_ptr<PgPool> pgPool_;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -325,12 +324,6 @@ public:
     getFlatMapBackend()
     {
         return *flatMapBackend_;
-    }
-
-    std::shared_ptr<PgPool>&
-    getPgPool()
-    {
-        return pgPool_;
     }
 
 private:

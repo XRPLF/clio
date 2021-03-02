@@ -57,6 +57,192 @@ flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
 void
 flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 
+class CassandraPreparedStatement
+{
+private:
+    CassPrepared const* prepared_ = nullptr;
+    CassStatement* statement_ = nullptr;
+
+public:
+    CassPrepared const*
+    get()
+    {
+        return statement_;
+    }
+
+    bool
+    prepareStatement(std::stringstream const& query)
+    {
+        return prepareStatement(query.str().c_str());
+    }
+
+    bool
+    prepareStatement(std::string const& query)
+    {
+        return prepareStatement(query.c_str());
+    }
+
+    bool
+    prepareStatement(char const* query, CassSession* session)
+    {
+        if (!query)
+            throw std::runtime_error("prepareStatement: null query");
+        if (!session)
+            throw std::runtime_error("prepareStatement: null sesssion");
+        CassFuture* prepareFuture = cass_session_prepare(session, query);
+        /* Wait for the statement to prepare and get the result */
+        CassError rc = cass_future_error_code(prepareFuture);
+        if (rc == CASS_OK)
+        {
+            prepared_ = cass_future_get_prepared(prepareFuture);
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << "nodestore: Error preparing statement : " << rc << ", "
+               << cass_error_desc(rc) << ". query : " << query;
+            BOOST_LOG_TRIVIAL(error) << ss.str();
+        }
+        cass_future_free(prepareFuture);
+        return rc == CASS_OK;
+    }
+
+    ~CassandraPreparedStatement()
+    {
+        if (prepared_)
+        {
+            cass_prepared_free(prepared_);
+            prepared_ = nullptr;
+        }
+    }
+};
+
+class CassandraStatement
+{
+    CassStatement* statement_ = nullptr;
+    size_t curBindingIndex_ = 0;
+
+    CassandraStatement(CassandraPreparedStatement const& prepared)
+    {
+        statement_ = cass_prepared_bind(prepared.get());
+        cass_statement_set_consistency(statement_, CASS_CONSISTENCY_QUORUM);
+    }
+
+    CassStatement*
+    get() const
+    {
+        return statement_;
+    }
+
+    bool
+    bindBytes(const char* data, uint32_t size)
+    {
+        return bindBytes((unsigned char*)data, size);
+    }
+
+    template <std::size_t Bits>
+    bool
+    bindBytes(ripple::base_uint<Bits> const& data)
+    {
+        return bindBytes(data.data(), data.size());
+    }
+
+    bool
+    bindBytes(std::string const& data)
+    {
+        return bindBytes(data.data(), data.size());
+    }
+
+    bool
+    bindBytes(const unsigned char* data, uint32_t size)
+    {
+        if (!statement_)
+            throw std::runtime_error(
+                "CassandraStatement::bindBytes - statement_ is null");
+        CassError rc = cass_statement_bind_bytes(
+            statement_,
+            curBindingIndex_,
+            static_cast<cass_byte_t const*>(data),
+            size);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding bytes to statement: " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            return false;
+        }
+        curBindingIndex_++;
+        return true;
+    }
+
+    bool
+    bindInt(uint32_t value)
+    {
+        return bindInt((int64_t)value);
+    }
+
+    bool
+    bindInt(int64_t value)
+    {
+        if (!statement_)
+            throw std::runtime_error(
+                "CassandraStatement::bindInt - statement_ is null");
+        CassError rc =
+            cass_statement_bind_int64(statement_, curBindingIndex_, value);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding int to statement: " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            return false;
+        }
+        curBindingIndex_++;
+        return true;
+    }
+
+    bool
+    bindIntTuple(uint32_t first, uint32_t second)
+    {
+        CassTuple* tuple = cass_tuple_new(2);
+        rc = cass_tuple_set_int64(tuple, 0, first);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding int to tuple: " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            return false;
+        }
+        rc = cass_tuple_set_int64(tuple, 1, second);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding int to tuple: " << rc << ", "
+               << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            return false;
+        }
+        rc = cass_statement_bind_tuple(statement_, curBindingIndex_, tuple);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Binding tuple: " << rc << ", " << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            return false;
+        }
+        curBindingIndex_++;
+        return true;
+    }
+
+    CassandraStatement()
+    {
+        if (statement_)
+            cass_statement_free(statement_);
+    }
+};
+
 class CassandraBackend : public BackendInterface
 {
 private:
@@ -95,26 +281,27 @@ private:
 
     // Database statements cached server side. Using these is more efficient
     // than making a new statement
-    const CassPrepared* insertObject_ = nullptr;
-    const CassPrepared* insertTransaction_ = nullptr;
-    const CassPrepared* selectTransaction_ = nullptr;
-    const CassPrepared* selectObject_ = nullptr;
-    const CassPrepared* upperBound_ = nullptr;
-    const CassPrepared* upperBound2_ = nullptr;
-    const CassPrepared* getToken_ = nullptr;
-    const CassPrepared* insertKey_ = nullptr;
-    const CassPrepared* getCreated_ = nullptr;
-    const CassPrepared* getBook_ = nullptr;
-    const CassPrepared* insertBook_ = nullptr;
-    const CassPrepared* deleteBook_ = nullptr;
-    const CassPrepared* insertAccountTx_ = nullptr;
-    const CassPrepared* selectAccountTx_ = nullptr;
-    const CassPrepared* insertLedgerHeader_ = nullptr;
-    const CassPrepared* insertLedgerHash_ = nullptr;
-    const CassPrepared* updateLedgerRange_ = nullptr;
-    const CassPrepared* updateLedgerHeader_ = nullptr;
-    const CassPrepared* selectLedgerBySeq_ = nullptr;
-    const CassPrepared* selectLatestLedger_ = nullptr;
+    CassandraPreparedStatement insertObject_;
+    CassandraPreparedStatement insertTransaction_;
+    CassandraPreparedStatement selectTransaction_;
+    CassandraPreparedStatement selectObject_;
+    CassandraPreparedStatement selectLedgerPage_;
+    CassandraPreparedStatement upperBound2_;
+    CassandraPreparedStatement getToken_;
+    CassandraPreparedStatement insertKey_;
+    CassandraPreparedStatement getCreated_;
+    CassandraPreparedStatement getBook_;
+    CassandraPreparedStatement insertBook_;
+    CassandraPreparedStatement deleteBook_;
+    CassandraPreparedStatement insertAccountTx_;
+    CassandraPreparedStatement selectAccountTx_;
+    CassandraPreparedStatement insertLedgerHeader_;
+    CassandraPreparedStatement insertLedgerHash_;
+    CassandraPreparedStatement updateLedgerRange_;
+    CassandraPreparedStatement updateLedgerHeader_;
+    CassandraPreparedStatement selectLedgerBySeq_;
+    CassandraPreparedStatement selectLatestLedger_;
+    CassandraPreparedStatement selectLedgerRange_;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
@@ -176,87 +363,6 @@ public:
     {
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            if (insertTransaction_)
-            {
-                cass_prepared_free(insertTransaction_);
-                insertTransaction_ = nullptr;
-            }
-            if (insertObject_)
-            {
-                cass_prepared_free(insertObject_);
-                insertObject_ = nullptr;
-            }
-            if (insertKey_)
-            {
-                cass_prepared_free(insertKey_);
-                insertKey_ = nullptr;
-            }
-            if (selectTransaction_)
-            {
-                cass_prepared_free(selectTransaction_);
-                selectTransaction_ = nullptr;
-            }
-            if (selectObject_)
-            {
-                cass_prepared_free(selectObject_);
-                selectObject_ = nullptr;
-            }
-            if (upperBound_)
-            {
-                cass_prepared_free(upperBound_);
-                upperBound_ = nullptr;
-            }
-            if (getToken_)
-            {
-                cass_prepared_free(getToken_);
-                getToken_ = nullptr;
-            }
-            if (getCreated_)
-            {
-                cass_prepared_free(getCreated_);
-                getCreated_ = nullptr;
-            }
-            if (getBook_)
-            {
-                cass_prepared_free(getBook_);
-                getBook_ = nullptr;
-            }
-            if (insertBook_)
-            {
-                cass_prepared_free(insertBook_);
-                insertBook_ = nullptr;
-            }
-            if (deleteBook_)
-            {
-                cass_prepared_free(deleteBook_);
-                deleteBook_ = nullptr;
-            }
-            if (insertAccountTx_)
-            {
-                cass_prepared_free(insertAccountTx_);
-                insertAccountTx_ = nullptr;
-            }
-
-            if (selectAccountTx_)
-            {
-                cass_prepared_free(selectAccountTx_);
-                selectAccountTx_ = nullptr;
-            }
-            if (insertLedgerHeader_)
-            {
-                cass_prepared_free(insertLedgerHeader_);
-                insertLedgerHeader_ = nullptr;
-            }
-            if (insertLedgerHash_)
-            {
-                cass_prepared_free(insertLedgerHash_);
-                insertLedgerHash_ = nullptr;
-            }
-            if (updateLedgerRange_)
-            {
-                cass_prepared_free(updateLedgerRange_);
-                updateLedgerRange_ = nullptr;
-            }
             work_.reset();
             ioThread_.join();
         }
@@ -389,7 +495,6 @@ public:
         {
             return {fetchTransactions(hashes), retCursor};
         }
-
         return {{}, {}};
     }
 
@@ -720,6 +825,8 @@ public:
             << " microseconds";
         return lgrInfo;
     }
+    std::optional<LedgerRange>
+    fetchLedgerRange() const override;
 
     // Synchronously fetch the object with key key and store the result in
     // pno
@@ -1434,218 +1541,42 @@ public:
     write(WriteCallbackData& data, bool isRetry) const
     {
         {
-            std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
-            {
-                BOOST_LOG_TRIVIAL(info)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
-            }
-        }
-        {
-            CassStatement* statement = cass_prepared_bind(insertObject_);
-            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-            const unsigned char* keyData = (unsigned char*)data.key.data();
-            CassError rc = cass_statement_bind_bytes(
-                statement,
-                0,
-                static_cast<cass_byte_t const*>(keyData),
-                data.key.size());
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding cassandra insert hash: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            rc = cass_statement_bind_int64(statement, 1, data.sequence);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding cassandra insert object: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            const unsigned char* blobData = (unsigned char*)data.blob.data();
-            rc = cass_statement_bind_bytes(
-                statement,
-                2,
-                static_cast<cass_byte_t const*>(blobData),
-                data.blob.size());
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding cassandra insert hash: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            CassFuture* fut = cass_session_execute(session_.get(), statement);
-            cass_statement_free(statement);
+            CassandraStatement statement{insertObject_};
+            statement.bindBytes(data.key);
+            statement.bindInt(data.sequence);
+            statement.bindBytes(data.blob);
 
-            cass_future_set_callback(
-                fut, flatMapWriteCallback, static_cast<void*>(&data));
-            cass_future_free(fut);
+            executeAsync(statement, flatMapWriteCallback, data, isRetry);
         }
     }
 
     void
     writeDeletedKey(WriteCallbackData& data, bool isRetry) const
     {
-        {
-            std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
-            {
-                BOOST_LOG_TRIVIAL(info)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
-            }
-        }
-        CassStatement* statement = cass_prepared_bind(insertKey_);
-        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        const unsigned char* keyData = (unsigned char*)data.key.data();
-        CassError rc = cass_statement_bind_bytes(
-            statement,
-            0,
-            static_cast<cass_byte_t const*>(keyData),
-            data.key.size());
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert hash: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        rc = cass_statement_bind_int64(statement, 1, data.createdSequence);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "binding cassandra insert object: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        rc = cass_statement_bind_int64(statement, 2, data.sequence);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "binding cassandra insert object: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        CassFuture* fut = cass_session_execute(session_.get(), statement);
-        cass_statement_free(statement);
-
-        cass_future_set_callback(
-            fut, flatMapWriteKeyCallback, static_cast<void*>(&data));
-        cass_future_free(fut);
+        CassandraStatement statement{insertKey_};
+        statement.bindBytes(data.key);
+        statement.bindInt(data.createdSequence);
+        statement.bindInt(data.sequence);
+        executeAsync(statement, flatMapWriteKeyCallback, data, isRetry);
     }
 
     void
     writeKey(WriteCallbackData& data, bool isRetry) const
     {
-        {
-            std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
-            {
-                BOOST_LOG_TRIVIAL(info)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
-            }
-        }
         if (data.isCreated)
         {
-            CassStatement* statement = cass_prepared_bind(insertKey_);
-            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-            const unsigned char* keyData = (unsigned char*)data.key.data();
-            CassError rc = cass_statement_bind_bytes(
-                statement,
-                0,
-                static_cast<cass_byte_t const*>(keyData),
-                data.key.size());
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding cassandra insert hash: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            rc = cass_statement_bind_int64(statement, 1, data.sequence);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "binding cassandra insert object: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            rc = cass_statement_bind_int64(statement, 2, INT64_MAX);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "binding cassandra insert object: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            CassFuture* fut = cass_session_execute(session_.get(), statement);
-            cass_statement_free(statement);
+            CassandraStatement statement{insertKey_};
+            statement.bindBytes(data.key);
+            statement.bindInt(data.sequence);
+            statement.bindInt(INT64_MAX);
 
-            cass_future_set_callback(
-                fut, flatMapWriteKeyCallback, static_cast<void*>(&data));
-            cass_future_free(fut);
+            executeAsync(statement, flatMapWriteKeyCallback, data, isRetry);
         }
         else if (data.isDeleted)
         {
-            CassStatement* statement = cass_prepared_bind(getCreated_);
-            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-            const unsigned char* keyData = (unsigned char*)data.key.data();
-            CassError rc = cass_statement_bind_bytes(
-                statement,
-                0,
-                static_cast<cass_byte_t const*>(keyData),
-                data.key.size());
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding cassandra insert hash: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            CassFuture* fut = cass_session_execute(session_.get(), statement);
-            cass_statement_free(statement);
+            CassandraStatement statement{getCreated_};
 
-            cass_future_set_callback(
-                fut, flatMapGetCreatedCallback, static_cast<void*>(&data));
-            cass_future_free(fut);
+            executeAsync(statement, flatMapGetCreatedCallback, data, isRetry);
         }
     }
 
@@ -1653,88 +1584,19 @@ public:
     writeBook(WriteCallbackData& data, bool isRetry) const
     {
         assert(data.isCreated or data.isDeleted);
-        if (!data.isCreated and !data.isDeleted)
-            throw std::runtime_error(
-                "writing book that's neither created or deleted");
-        {
-            std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
-            {
-                BOOST_LOG_TRIVIAL(info)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
-            }
-        }
-        CassStatement* statement = nullptr;
+        assert(data.book);
+        CassandraStatement statement{
+            (data.isCreated ? insertBook_ : deleteBook_)};
+        if (!statement.bindBytes(*data.book))
+            throw std::runtime_error("writeBook: bind error");
+        if (!statement.bindBytes(data.key))
+            throw std::runtime_error("writeBook: bind error");
+        if (!statement.bindInt(data.sequence))
+            throw std::runtime_error("writeBook: bind error");
         if (data.isCreated)
-            statement = cass_prepared_bind(insertBook_);
-        else if (data.isDeleted)
-            statement = cass_prepared_bind(deleteBook_);
-        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        const unsigned char* bookData = (unsigned char*)data.book->data();
-        CassError rc = cass_statement_bind_bytes(
-            statement,
-            0,
-            static_cast<cass_byte_t const*>(bookData),
-            data.book->size());
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert hash: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        const unsigned char* keyData = (unsigned char*)data.key.data();
-        rc = cass_statement_bind_bytes(
-            statement,
-            1,
-            static_cast<cass_byte_t const*>(keyData),
-            data.key.size());
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert hash: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        rc = cass_statement_bind_int64(statement, 2, data.sequence);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "binding cassandra insert object: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        if (data.isCreated)
-        {
-            rc = cass_statement_bind_int64(statement, 3, INT64_MAX);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-
-                ss << "binding cassandra insert object: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-        }
-        CassFuture* fut = cass_session_execute(session_.get(), statement);
-        cass_statement_free(statement);
-
-        cass_future_set_callback(
-            fut, flatMapWriteBookCallback, static_cast<void*>(&data));
-        cass_future_free(fut);
+            if (!statement.bindInt(INT64_MAX))
+                throw std::runtime_error("writeBook: bind error");
+        executeAsync(statement, flatMapWriteBookCallback, data, isRetry);
     }
     void
     writeLedgerObject(
@@ -1784,75 +1646,22 @@ public:
     void
     writeAccountTx(WriteAccountTxCallbackData& data, bool isRetry) const
     {
-        {
-            std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
-            {
-                BOOST_LOG_TRIVIAL(trace)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
-            }
-        }
         for (auto const& account : data.data.accounts)
         {
-            CassStatement* statement = cass_prepared_bind(insertAccountTx_);
-            cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-            const unsigned char* accountData = (unsigned char*)account.data();
-            CassError rc = cass_statement_bind_bytes(
+            CassandraStatement statement(insertAccountTx_);
+            if (!statement.bindBytes(account))
+                throw std::runtime_error(
+                    "writeAccountTx : error binding account");
+            if (!statement.bindTuple(
+                    data.data.ledgerSequence, data.data.transactionIndex))
+                throw std::runtime_error(
+                    "writeAccountTx: error binding ledger seq and txn idx");
+
+            executeAsync(
                 statement,
-                0,
-                static_cast<cass_byte_t const*>(accountData),
-                account.size());
-            if (rc != CASS_OK)
-
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding cassandra insert account: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            CassTuple* idx = cass_tuple_new(2);
-            rc = cass_tuple_set_int64(idx, 0, data.data.ledgerSequence);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding ledger sequence to tuple: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            rc = cass_tuple_set_int64(idx, 1, data.data.transactionIndex);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding tx idx to tuple: " << rc << ", "
-                   << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            rc = cass_statement_bind_tuple(statement, 1, idx);
-            if (rc != CASS_OK)
-            {
-                cass_statement_free(statement);
-                std::stringstream ss;
-                ss << "Binding tuple: " << rc << ", " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-                throw std::runtime_error(ss.str());
-            }
-            CassFuture* fut = cass_session_execute(session_.get(), statement);
-            cass_statement_free(statement);
-
-            cass_future_set_callback(
-                fut, flatMapWriteAccountTxCallback, static_cast<void*>(&data));
-            cass_future_free(fut);
+                flatMapWriteAccountTxCallback,
+                static_cast<void*>(&data),
+                isRetry);
         }
     }
 
@@ -1887,84 +1696,20 @@ public:
     void
     writeTransaction(WriteTransactionCallbackData& data, bool isRetry) const
     {
-        {
-            std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
-            {
-                BOOST_LOG_TRIVIAL(trace)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
-            }
-        }
+        CassandraStatement statement{insertTransaction_};
+        if (!statement.bindBytes(data.hash))
+            throw std::runtime_error("writeTransaction: error binding hash");
+        if (!statement.bindInt(data.sequence))
+            throw std::runtime_error(
+                "writeTransaction: error binding sequence");
+        if (!statement.bindBytes(data.transaction))
+            throw std::runtime_error(
+                "writeTransaction: error binding transaction");
+        if (!statement.bindBytes(data.metadata))
+            throw std::runtime_error(
+                "writeTransaction: error binding transaction");
 
-        CassStatement* statement = cass_prepared_bind(insertTransaction_);
-        cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
-        const unsigned char* hashData = (unsigned char*)data.hash.data();
-        CassError rc = cass_statement_bind_bytes(
-            statement,
-            0,
-            static_cast<cass_byte_t const*>(hashData),
-            data.hash.size());
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert hash: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        rc = cass_statement_bind_int64(statement, 1, data.sequence);
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert object: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        const unsigned char* transactionData =
-            (unsigned char*)data.transaction.data();
-        rc = cass_statement_bind_bytes(
-            statement,
-            2,
-            static_cast<cass_byte_t const*>(transactionData),
-            data.transaction.size());
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert hash: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        const unsigned char* metadata = (unsigned char*)data.metadata.data();
-        rc = cass_statement_bind_bytes(
-            statement,
-            3,
-            static_cast<cass_byte_t const*>(metadata),
-            data.metadata.size());
-        if (rc != CASS_OK)
-        {
-            cass_statement_free(statement);
-            std::stringstream ss;
-            ss << "Binding cassandra insert hash: " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
-            throw std::runtime_error(ss.str());
-        }
-        CassFuture* fut = cass_session_execute(session_.get(), statement);
-        cass_statement_free(statement);
-
-        cass_future_set_callback(
-            fut, flatMapWriteTransactionCallback, static_cast<void*>(&data));
-        cass_future_free(fut);
+        executeAsync(statement, flatMapWriteTransactionCallback, data, isRetry);
     }
     void
     writeTransaction(
@@ -2019,6 +1764,34 @@ public:
     flatMapReadObjectCallback(CassFuture* fut, void* cbData);
     friend void
     flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
+
+    template <class T, class S>
+    void
+    executeAsync(
+        CassandraStatement const& statement,
+        T callback,
+        S& callbackData,
+        bool isRetry) const
+    {
+        {
+            std::unique_lock<std::mutex> lck(throttleMutex_);
+            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
+            {
+                BOOST_LOG_TRIVIAL(trace)
+                    << __func__ << " : "
+                    << "Max outstanding requests reached. "
+                    << "Waiting for other requests to finish";
+                throttleCv_.wait(lck, [this]() {
+                    return numRequestsOutstanding_ < maxRequestsOutstanding;
+                });
+            }
+        }
+        CassFuture* fut = cass_session_execute(session_.get(), statement.get());
+
+        cass_future_set_callback(
+            fut, callback, static_cast<void*>(&callbackData));
+        cass_future_free(fut);
+    }
 };
 
 }  // namespace Backend

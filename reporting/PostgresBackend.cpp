@@ -195,6 +195,40 @@ PostgresBackend::fetchLedgerBySequence(uint32_t sequence) const
     return {};
 }
 
+std::optional<LedgerRange>
+PostgresBackend::fetchLedgerRange() const
+{
+    auto range = PgQuery(pgPool_)("SELECT complete_ledgers()");
+    if (!range)
+        return {};
+
+    std::string res{range.c_str()};
+    try
+    {
+        size_t minVal = 0;
+        size_t maxVal = 0;
+        if (res == "empty" || res == "error" || res.empty())
+            return {};
+        else if (size_t delim = res.find('-'); delim != std::string::npos)
+        {
+            minVal = std::stol(res.substr(0, delim));
+            maxVal = std::stol(res.substr(delim + 1));
+        }
+        else
+        {
+            minVal = maxVal = std::stol(res);
+        }
+        return LedgerRange{minVal, maxVal};
+    }
+    catch (std::exception&)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " : "
+            << "Error parsing result of getCompleteLedgers()";
+    }
+    return {};
+}
+
 std::optional<Blob>
 PostgresBackend::fetchLedgerObject(
     ripple::uint256 const& key,
@@ -449,6 +483,7 @@ PostgresBackend::fetchAccountTransactions(
 void
 PostgresBackend::open()
 {
+    initSchema(pgPool_);
 }
 
 void

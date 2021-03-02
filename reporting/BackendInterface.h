@@ -27,6 +27,12 @@ struct AccountTransactionsCursor
     uint32_t transactionIndex;
 };
 
+struct LedgerRange
+{
+    uint32_t minSequence;
+    uint32_t maxSequence;
+};
+
 class BackendInterface
 {
 public:
@@ -37,6 +43,9 @@ public:
 
     virtual std::optional<ripple::LedgerInfo>
     fetchLedgerBySequence(uint32_t sequence) const = 0;
+
+    virtual std::optional<LedgerRange>
+    fetchLedgerRange() const = 0;
 
     virtual std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence) const = 0;

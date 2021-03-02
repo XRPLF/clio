@@ -452,6 +452,74 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
     }
 }
 
+std::optional<LedgerRange>
+CassandraBackend::fetchLedgerRange() const
+{
+    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+    auto start = std::chrono::system_clock::now();
+    CassStatement* statement = cass_prepared_bind(selectLedgerRange_);
+    cass_statement_set_consistency(statement, CASS_CONSISTENCY_QUORUM);
+    CassFuture* fut;
+    CassError rc;
+    do
+    {
+        fut = cass_session_execute(session_.get(), statement);
+        rc = cass_future_error_code(fut);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Cassandra fetch error";
+            ss << ", retrying";
+            ss << ": " << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(warning) << ss.str();
+        }
+    } while (rc != CASS_OK);
+
+    CassResult const* res = cass_future_get_result(fut);
+    cass_statement_free(statement);
+    cass_future_free(fut);
+    CassIterator* iter = cass_iterator_from_result(res);
+    std::optional<uint32_t> min;
+    std::optional<uint32_t> max;
+    if (cass_iterator_next(iter))
+    {
+        cass_int64_t sequence;
+        rc = cass_value_get_int64(
+            cass_row_get_column(cass_iterator_get_row(iter), 0), &sequence);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch result error: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        LedgerRange range;
+        range.minSequence = sequence;
+        if (!cass_iterator_next(iter))
+        {
+            cass_result_free(res);
+            return range;
+        }
+        rc = cass_value_get_int64(
+            cass_row_get_column(cass_iterator_get_row(iter), 0), &sequence);
+        if (rc != CASS_OK)
+        {
+            cass_result_free(res);
+            BOOST_LOG_TRIVIAL(error) << "Cassandra fetch result error: " << rc
+                                     << ", " << cass_error_desc(rc);
+            return {};
+        }
+        cass_result_free(res);
+        range.maxSequence = sequence;
+        if (range.minSequence > range.maxSequence)
+        {
+            std::swap(range.minSequence, range.maxSequence);
+        }
+        return range;
+    }
+    return {};
+}
+
 void
 CassandraBackend::open()
 {
@@ -1023,217 +1091,53 @@ CassandraBackend::open()
         std::stringstream query;
         query << "INSERT INTO " << tableName << "flat"
               << " (key, sequence, object) VALUES (?, ?, ?)";
-        CassFuture* prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing insert : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertObject_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        insertObject_ = cass_future_get_prepared(prepare_future);
-
-        /* The future can be freed immediately after getting the prepared
-         * object
-         */
-        cass_future_free(prepare_future);
 
         query = {};
         query << "INSERT INTO " << tableName << "flattransactions"
               << " (hash, sequence, transaction, metadata) VALUES (?, ?, "
                  "?, ?)";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing insert : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertTransaction_.prepare(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        insertTransaction_ = cass_future_get_prepared(prepare_future);
-        cass_future_free(prepare_future);
 
         query = {};
         query << "INSERT INTO " << tableName << "keys"
               << " (key, created, deleted) VALUES (?, ?, ?)";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing insert : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertKey_.prepare(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        insertKey_ = cass_future_get_prepared(prepare_future);
-        cass_future_free(prepare_future);
 
         query = {};
         query << "INSERT INTO " << tableName << "books"
               << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing insert : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertBook_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        insertBook_ = cass_future_get_prepared(prepare_future);
-        cass_future_free(prepare_future);
         query = {};
-
         query << "INSERT INTO " << tableName << "books"
               << " (book, key, deleted_at) VALUES (?, ?, ?)";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing insert : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!deleteBook_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        deleteBook_ = cass_future_get_prepared(prepare_future);
-        cass_future_free(prepare_future);
 
         query = {};
         query << "SELECT created FROM " << tableName << "keys"
               << " WHERE key = ? ORDER BY created desc LIMIT 1";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing insert : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!getCreated_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        getCreated_ = cass_future_get_prepared(prepare_future);
-        cass_future_free(prepare_future);
 
         query = {};
         query << "SELECT object, sequence FROM " << tableName << "flat"
               << " WHERE key = ? AND sequence <= ? ORDER BY sequence DESC "
                  "LIMIT 1";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
 
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing select : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!selectObject_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        selectObject_ = cass_future_get_prepared(prepare_future);
-
-        /* The future can be freed immediately after getting the prepared
-         * object
-         */
-        cass_future_free(prepare_future);
 
         query = {};
         query << "SELECT transaction,metadata FROM " << tableName
               << "flattransactions"
               << " WHERE hash = ?";
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        /* Wait for the statement to prepare and get the result */
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            /* Handle error */
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing select : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!selectTransaction_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        /* Get the prepared object from the future */
-        selectTransaction_ = cass_future_get_prepared(prepare_future);
-
-        /* The future can be freed immediately after getting the prepared
-         * object
-         */
-        cass_future_free(prepare_future);
 
         query = {};
         query << "SELECT key FROM " << tableName << "keys "
@@ -1241,111 +1145,32 @@ CassandraBackend::open()
               << " and deleted > ?"
               << " PER PARTITION LIMIT 1 LIMIT ?"
               << " ALLOW FILTERING";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing upperBound : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str() << " : " << query.str();
+        if (!selectLedgerPage_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        // Get the prepared object from the future
-        upperBound_ = cass_future_get_prepared(prepare_future);
-
-        // The future can be freed immediately after getting the prepared
-        // object
-        //
-        cass_future_free(prepare_future);
-
+        /*
         query = {};
         query << "SELECT filterempty(key,object) FROM " << tableName << "flat "
               << " WHERE TOKEN(key) >= ? and sequence <= ?"
               << " PER PARTITION LIMIT 1 LIMIT ?"
               << " ALLOW FILTERING";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing upperBound : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str() << " : " << query.str();
+        if (!upperBound2_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        // Get the prepared object from the future
-        upperBound2_ = cass_future_get_prepared(prepare_future);
-
-        // The future can be freed immediately after getting the prepared
-        // object
-        //
-        cass_future_free(prepare_future);
+*/
         query = {};
         query << "SELECT TOKEN(key) FROM " << tableName << "flat "
               << " WHERE key = ? LIMIT 1";
 
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!getToken_.prepareStatement(query, session_.get()))
             continue;
-        }
-
-        getToken_ = cass_future_get_prepared(prepare_future);
 
         query = {};
         query << "SELECT key FROM " << tableName << "books "
               << " WHERE book = ? AND sequence <= ? AND deleted_at > ? AND"
                  " key > ? "
                  " ORDER BY key ASC LIMIT ? ALLOW FILTERING";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!getBook_.prepareStatement(query, session_.get()))
             continue;
-        }
 
         getBook_ = cass_future_get_prepared(prepare_future);
 
@@ -1353,165 +1178,53 @@ CassandraBackend::open()
         query << " INSERT INTO " << tableName << "account_tx"
               << " (account, seq_idx, hash) "
               << " VALUES (?,?,?)";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertAccountTx_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        insertAccountTx_ = cass_future_get_prepared(prepare_future);
         query = {};
         query << " SELECT hash,seq_idx FROM " << tableName << "account_tx"
               << " WHERE account = ? "
               << " AND seq_idx < ? LIMIT ?";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!selectAccountTx_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        selectAccountTx_ = cass_future_get_prepared(prepare_future);
         query = {};
         query << " INSERT INTO " << tableName << "ledgers "
               << " (sequence, header) VALUES(?,?)";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertLedgerHeader_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        insertLedgerHeader_ = cass_future_get_prepared(prepare_future);
         query = {};
         query << " INSERT INTO " << tableName << "ledger_hashes"
               << " (hash, sequence) VALUES(?,?)";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // Wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // Handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: Error preparing getToken : " << rc << ", "
-               << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!insertLedgerHash_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        insertLedgerHash_ = cass_future_get_prepared(prepare_future);
         query = {};
         query << " update " << tableName << "ledger_range"
               << " set sequence = ? where is_latest = ? if sequence != ?";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: error preparing updateLedgerRange : " << rc
-               << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        updateLedgerRange_ = cass_future_get_prepared(prepare_future);
         query = {};
         query << " select header from " << tableName
               << "ledgers where sequence = ?";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: error preparing selectLedgerBySeq : " << rc
-               << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!selectLedgerBySeq_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        selectLedgerBySeq_ = cass_future_get_prepared(prepare_future);
         query = {};
         query << " select sequence from " << tableName
               << "ledger_range where is_latest = true";
-
-        prepare_future =
-            cass_session_prepare(session_.get(), query.str().c_str());
-
-        // wait for the statement to prepare and get the result
-        rc = cass_future_error_code(prepare_future);
-
-        if (rc != CASS_OK)
-        {
-            // handle error
-            cass_future_free(prepare_future);
-
-            std::stringstream ss;
-            ss << "nodestore: error preparing selectLatestLedger : " << rc
-               << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+        if (!selectLatestLedger_.prepareStatement(query, session_.get()))
             continue;
-        }
 
-        selectLatestLedger_ = cass_future_get_prepared(prepare_future);
+        query = {};
+        query << " SELECT sequence FROM " << tableName << "ledger_range WHERE "
+              << " is_latest IN (true, false)";
+        if (!selectLedgerRange_.prepareStatement(query, session_.get()))
+            continue;
+
+        selectLedgerRange_ = cass_future_get_prepared(prepare_future);
 
         setupPreparedStatements = true;
     }

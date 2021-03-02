@@ -26,10 +26,7 @@
 // }
 
 boost::json::object
-doTx(
-    boost::json::object const& request,
-    BackendInterface const& backend,
-    std::shared_ptr<PgPool>& postgres)
+doTx(boost::json::object const& request, BackendInterface const& backend)
 {
     boost::json::object response;
     if (!request.contains("transaction"))
@@ -44,7 +41,7 @@ doTx(
         return response;
     }
 
-    auto range = getLedgerRange(postgres);
+    auto range = backend.fetchLedgerRange();
     if (!range)
     {
         response["error"] = "Database is empty";
@@ -55,8 +52,8 @@ doTx(
     if (!dbResponse)
     {
         response["error"] = "Transaction not found in Cassandra";
-        response["ledger_range"] = std::to_string(range->lower()) + " - " +
-            std::to_string(range->upper());
+        response["ledger_range"] = std::to_string(range->minSequence) + " - " +
+            std::to_string(range->maxSequence);
 
         return response;
     }

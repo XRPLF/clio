@@ -43,8 +43,7 @@
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    BackendInterface const& backend,
-    std::shared_ptr<PgPool>& postgres)
+    BackendInterface const& backend)
 {
     boost::json::object response;
     std::string strIdent;
@@ -60,7 +59,7 @@ doAccountInfo(
     size_t ledgerSequence = 0;
     if (not request.contains("ledger_index"))
     {
-        std::optional<ripple::LedgerInfo> latest = getLedger({}, postgres);
+        auto latest = backend.fetchLatestLedgerSequence();
 
         if (not latest)
         {
@@ -69,7 +68,7 @@ doAccountInfo(
         }
         else
         {
-            ledgerSequence = latest->seq;
+            ledgerSequence = *latest;
         }
     }
     else

@@ -127,10 +127,7 @@ doAccountTxStoredProcedure(
 //   resume previous query
 // }
 boost::json::object
-doAccountTx(
-    boost::json::object const& request,
-    BackendInterface const& backend,
-    std::shared_ptr<PgPool>& pgPool)
+doAccountTx(boost::json::object const& request, BackendInterface const& backend)
 {
     boost::json::object response;
 

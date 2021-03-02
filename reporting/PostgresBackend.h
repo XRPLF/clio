@@ -23,6 +23,9 @@ public:
     std::optional<ripple::LedgerInfo>
     fetchLedgerBySequence(uint32_t sequence) const override;
 
+    std::optional<LedgerRange>
+    fetchLedgerRange() const override;
+
     std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
         const override;

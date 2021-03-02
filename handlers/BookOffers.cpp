@@ -90,15 +90,11 @@ loadBookOfferIndexes(
 boost::json::object
 doBookOffers(
     boost::json::object const& request,
-    BackendInterface const& backend,
-    std::shared_ptr<PgPool>& pool)
+    BackendInterface const& backend)
 {
     std::cout << "enter" << std::endl;
     boost::json::object response;
-    auto sequence = ledgerSequenceFromRequest(request, pool);
-
-    if (!sequence)
-        return response;
+    uint32_t sequence = request.at("ledger_index").as_int64();
 
     if (!request.contains("taker_pays"))
     {
@@ -310,7 +306,7 @@ doBookOffers(
     ripple::uint256 bookBase = getBookBase(book);
     auto start = std::chrono::system_clock::now();
     auto [offers, retCursor] =
-        backend.fetchBookOffers(bookBase, *sequence, limit, cursor);
+        backend.fetchBookOffers(bookBase, sequence, limit, cursor);
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning) << "Time loading books from Postgres: "
