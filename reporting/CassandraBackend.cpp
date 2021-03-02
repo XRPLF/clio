@@ -1,4 +1,4 @@
-#include <reporting/ReportingBackend.h>
+#include <reporting/CassandraBackend.h>
 namespace Backend {
 // Process the result of an asynchronous write. Retry on error
 // @param fut cassandra future associated with the write
@@ -6,9 +6,9 @@ namespace Backend {
 void
 flatMapWriteCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteCallbackData*>(cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -42,9 +42,9 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
 void
 flatMapWriteBookCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteCallbackData*>(cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -79,9 +79,9 @@ flatMapWriteBookCallback(CassFuture* fut, void* cbData)
 void
 flatMapWriteKeyCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteCallbackData*>(cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -118,9 +118,9 @@ flatMapWriteKeyCallback(CassFuture* fut, void* cbData)
 void
 flatMapGetCreatedCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteCallbackData*>(cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -178,10 +178,9 @@ flatMapGetCreatedCallback(CassFuture* fut, void* cbData)
 void
 flatMapWriteTransactionCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteTransactionCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteTransactionCallbackData*>(
-            cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteTransactionCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteTransactionCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -213,10 +212,9 @@ flatMapWriteTransactionCallback(CassFuture* fut, void* cbData)
 void
 flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteAccountTxCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteAccountTxCallbackData*>(
-            cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteAccountTxCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteAccountTxCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -250,10 +248,9 @@ flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData)
 void
 flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteLedgerHeaderCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteLedgerHeaderCallbackData*>(
-            cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteLedgerHeaderCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteLedgerHeaderCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -285,10 +282,9 @@ flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData)
 void
 flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::WriteLedgerHashCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::WriteLedgerHashCallbackData*>(
-            cbData);
-    CassandraFlatMapBackend const& backend = *requestParams.backend;
+    CassandraBackend::WriteLedgerHashCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteLedgerHashCallbackData*>(cbData);
+    CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
@@ -324,8 +320,8 @@ flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData)
 void
 flatMapReadCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::ReadCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::ReadCallbackData*>(cbData);
+    CassandraBackend::ReadCallbackData& requestParams =
+        *static_cast<CassandraBackend::ReadCallbackData*>(cbData);
 
     CassError rc = cass_future_error_code(fut);
 
@@ -398,8 +394,8 @@ flatMapReadCallback(CassFuture* fut, void* cbData)
 void
 flatMapReadObjectCallback(CassFuture* fut, void* cbData)
 {
-    CassandraFlatMapBackend::ReadObjectCallbackData& requestParams =
-        *static_cast<CassandraFlatMapBackend::ReadObjectCallbackData*>(cbData);
+    CassandraBackend::ReadObjectCallbackData& requestParams =
+        *static_cast<CassandraBackend::ReadObjectCallbackData*>(cbData);
 
     CassError rc = cass_future_error_code(fut);
 
@@ -457,7 +453,7 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
 }
 
 void
-CassandraFlatMapBackend::open()
+CassandraBackend::open()
 {
     std::cout << config_ << std::endl;
     auto getString = [this](std::string const& field) -> std::string {

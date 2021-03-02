@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#ifndef RIPPLE_APP_REPORTING_REPORTINGBACKEND_H_INCLUDED
-#define RIPPLE_APP_REPORTING_REPORTINGBACKEND_H_INCLUDED
+#ifndef RIPPLE_APP_REPORTING_CASSANDRABACKEND_H_INCLUDED
+#define RIPPLE_APP_REPORTING_CASSANDRABACKEND_H_INCLUDED
 
 #include <ripple/basics/base_uint.h>
 #include <boost/asio.hpp>
@@ -57,7 +57,7 @@ flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
 void
 flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 
-class CassandraFlatMapBackend : public BackendInterface
+class CassandraBackend : public BackendInterface
 {
 private:
     // convenience function for one-off queries. For normal reads and writes,
@@ -142,11 +142,11 @@ private:
     mutable bool isFirstLedger_ = false;
 
 public:
-    CassandraFlatMapBackend(boost::json::object const& config) : config_(config)
+    CassandraBackend(boost::json::object const& config) : config_(config)
     {
     }
 
-    ~CassandraFlatMapBackend() override
+    ~CassandraBackend() override
     {
         if (open_)
             close();
@@ -395,13 +395,13 @@ public:
 
     struct WriteLedgerHeaderCallbackData
     {
-        CassandraFlatMapBackend const* backend;
+        CassandraBackend const* backend;
         uint32_t sequence;
         std::string header;
         uint32_t currentRetries = 0;
 
         WriteLedgerHeaderCallbackData(
-            CassandraFlatMapBackend const* f,
+            CassandraBackend const* f,
             uint32_t sequence,
             std::string&& header)
             : backend(f), sequence(sequence), header(std::move(header))
@@ -410,13 +410,13 @@ public:
     };
     struct WriteLedgerHashCallbackData
     {
-        CassandraFlatMapBackend const* backend;
+        CassandraBackend const* backend;
         ripple::uint256 hash;
         uint32_t sequence;
         uint32_t currentRetries = 0;
 
         WriteLedgerHashCallbackData(
-            CassandraFlatMapBackend const* f,
+            CassandraBackend const* f,
             ripple::uint256 hash,
             uint32_t sequence)
             : backend(f), hash(hash), sequence(sequence)
@@ -1185,7 +1185,7 @@ public:
 
     struct ReadCallbackData
     {
-        CassandraFlatMapBackend const& backend;
+        CassandraBackend const& backend;
         ripple::uint256 const& hash;
         TransactionAndMetadata& result;
         std::condition_variable& cv;
@@ -1194,7 +1194,7 @@ public:
         size_t batchSize;
 
         ReadCallbackData(
-            CassandraFlatMapBackend const& backend,
+            CassandraBackend const& backend,
             ripple::uint256 const& hash,
             TransactionAndMetadata& result,
             std::condition_variable& cv,
@@ -1274,7 +1274,7 @@ public:
 
     struct ReadObjectCallbackData
     {
-        CassandraFlatMapBackend const& backend;
+        CassandraBackend const& backend;
         ripple::uint256 const& key;
         uint32_t sequence;
         Blob& result;
@@ -1284,7 +1284,7 @@ public:
         size_t batchSize;
 
         ReadObjectCallbackData(
-            CassandraFlatMapBackend const& backend,
+            CassandraBackend const& backend,
             ripple::uint256 const& key,
             uint32_t sequence,
             Blob& result,
@@ -1380,7 +1380,7 @@ public:
 
     struct WriteCallbackData
     {
-        CassandraFlatMapBackend const* backend;
+        CassandraBackend const* backend;
         std::string key;
         uint32_t sequence;
         uint32_t createdSequence = 0;
@@ -1393,7 +1393,7 @@ public:
         std::atomic<int> refs = 1;
 
         WriteCallbackData(
-            CassandraFlatMapBackend const* f,
+            CassandraBackend const* f,
             std::string&& key,
             uint32_t sequence,
             std::string&& blob,
@@ -1416,14 +1416,14 @@ public:
     };
     struct WriteAccountTxCallbackData
     {
-        CassandraFlatMapBackend const* backend;
+        CassandraBackend const* backend;
         AccountTransactionsData data;
 
         uint32_t currentRetries = 0;
         std::atomic<int> refs;
 
         WriteAccountTxCallbackData(
-            CassandraFlatMapBackend const* f,
+            CassandraBackend const* f,
             AccountTransactionsData&& data)
             : backend(f), data(std::move(data)), refs(data.accounts.size())
         {
@@ -1858,7 +1858,7 @@ public:
 
     struct WriteTransactionCallbackData
     {
-        CassandraFlatMapBackend const* backend;
+        CassandraBackend const* backend;
         // The shared pointer to the node object must exist until it's
         // confirmed persisted. Otherwise, it can become deleted
         // prematurely if other copies are removed from caches.
@@ -1870,7 +1870,7 @@ public:
         uint32_t currentRetries = 0;
 
         WriteTransactionCallbackData(
-            CassandraFlatMapBackend const* f,
+            CassandraBackend const* f,
             std::string&& hash,
             uint32_t sequence,
             std::string&& transaction,
