@@ -268,6 +268,7 @@ public:
         std::optional<AccountTransactionsCursor>>
     fetchAccountTransactions(
         ripple::AccountID const& account,
+        std::uint32_t limit,
         std::optional<AccountTransactionsCursor> const& cursor) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doAccountTx";
@@ -301,6 +302,15 @@ public:
             cass_statement_free(statement);
             BOOST_LOG_TRIVIAL(error)
                 << "Binding Cassandra tuple to account_tx: " << rc << ", "
+                << cass_error_desc(rc);
+            return {};
+        }
+        rc = cass_statement_bind_int64(statement, 2, limit);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding limit to account_tx query: " << rc << ", "
                 << cass_error_desc(rc);
             return {};
         }
@@ -1038,10 +1048,11 @@ public:
         return {{}, {}};
     }
 
-    std::vector<LedgerObject>
+    std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t sequence,
+        std::uint32_t limit,
         std::optional<ripple::uint256> const& cursor) const override
     {
         BOOST_LOG_TRIVIAL(debug) << "Starting doBookOffers";
@@ -1095,6 +1106,15 @@ public:
             cass_statement_free(statement);
             BOOST_LOG_TRIVIAL(error)
                 << "Binding Cassandra book to doBookOffers query: " << rc
+                << ", " << cass_error_desc(rc);
+            return {};
+        }
+        rc = cass_statement_bind_int64(statement, 4, limit);
+        if (rc != CASS_OK)
+        {
+            cass_statement_free(statement);
+            BOOST_LOG_TRIVIAL(error)
+                << "Binding Cassandra limit to doBookOffers query: " << rc
                 << ", " << cass_error_desc(rc);
             return {};
         }
@@ -1152,10 +1172,10 @@ public:
             {
                 results.push_back({keys[i], objs[i]});
             }
-            return results;
+            return {results, results[results.size() - 1].key};
         }
 
-        return {};
+        return {{}, {}};
     }
     bool
     canFetchBatch()

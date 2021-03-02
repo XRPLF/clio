@@ -292,31 +292,25 @@ doBookOffers(
         return response;
     }
 
-    std::uint32_t limit = 2048;
+    std::uint32_t limit = 500;
     if (request.contains("limit") and
         request.at("limit").kind() == boost::json::kind::int64)
         limit = request.at("limit").as_int64();
 
-    ripple::uint256 cursor;
+    std::optional<ripple::uint256> cursor;
     if (request.contains("cursor"))
     {
-        cursor.parseHex(request.at("cursor").as_string().c_str());
+        cursor = {};
+        cursor->parseHex(request.at("cursor").as_string().c_str());
     }
 
     ripple::Book book = {
         {pay_currency, pay_issuer}, {get_currency, get_issuer}};
 
-    auto start = std::chrono::system_clock::now();
     ripple::uint256 bookBase = getBookBase(book);
-    std::vector<Backend::LedgerObject> offers;
-    if (!cursor.isZero())
-    {
-        offers = backend.fetchBookOffers(bookBase, *sequence, cursor);
-    }
-    else
-    {
-        offers = backend.fetchBookOffers(bookBase, *sequence);
-    }
+    auto start = std::chrono::system_clock::now();
+    auto [offers, retCursor] =
+        backend.fetchBookOffers(bookBase, *sequence, limit, cursor);
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning) << "Time loading books from Postgres: "

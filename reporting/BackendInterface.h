@@ -51,11 +51,11 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const = 0;
 
-    // TODO needs to take in a limit, and return a cursor
-    virtual std::vector<LedgerObject>
+    virtual std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,
+        std::uint32_t limit,
         std::optional<ripple::uint256> const& cursor = {}) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
@@ -66,12 +66,12 @@ public:
         std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const = 0;
 
-    // TODO needs to take in a limit
     virtual std::pair<
         std::vector<TransactionAndMetadata>,
         std::optional<AccountTransactionsCursor>>
     fetchAccountTransactions(
         ripple::AccountID const& account,
+        std::uint32_t limit,
         std::optional<AccountTransactionsCursor> const& cursor = {}) const = 0;
 
     // write methods

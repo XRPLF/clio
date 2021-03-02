@@ -172,9 +172,10 @@ doAccountTx(
         cursor = {*ledgerSequence, *transactionIndex};
     }
 
+    constexpr uint32_t limit = 500;
     boost::json::array txns;
     auto [blobs, retCursor] =
-        backend.fetchAccountTransactions(*account, cursor);
+        backend.fetchAccountTransactions(*account, limit, cursor);
     for (auto const& txnPlusMeta : blobs)
     {
         boost::json::object obj;

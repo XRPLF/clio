@@ -279,10 +279,11 @@ PostgresBackend::fetchLedgerPage(
     return {};
 }
 
-std::vector<LedgerObject>
+std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
 PostgresBackend::fetchBookOffers(
     ripple::uint256 const& book,
     uint32_t ledgerSequence,
+    std::uint32_t limit,
     std::optional<ripple::uint256> const& cursor) const
 {
     PgQuery pgQuery(pgPool_);
@@ -294,7 +295,8 @@ PostgresBackend::fetchBookOffers(
     if (cursor)
         sql << " AND key > \'" << ripple::strHex(*cursor) << "\'";
     sql << " ORDER BY key DESC, sequence DESC)"
-        << " sub WHERE NOT deleted";
+        << " sub WHERE NOT deleted"
+        << " LIMIT " << std::to_string(limit);
     auto res = pgQuery(sql.str().data());
     if (size_t numRows = checkResult(res, 1))
     {
@@ -316,9 +318,9 @@ PostgresBackend::fetchBookOffers(
             [](auto& blob, auto& key) {
                 return LedgerObject{std::move(key), std::move(blob)};
             });
-        return results;
+        return {results, results[results.size() - 1].key};
     }
-    return {};
+    return {{}, {}};
 }
 
 std::vector<TransactionAndMetadata>
@@ -405,6 +407,7 @@ std::pair<
     std::optional<AccountTransactionsCursor>>
 PostgresBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
+    std::uint32_t limit,
     std::optional<AccountTransactionsCursor> const& cursor) const
 {
     PgQuery pgQuery(pgPool_);
@@ -415,7 +418,6 @@ PostgresBackend::fetchAccountTransactions(
     if (cursor)
         sql << " AND ledger_sequence < " << cursor->ledgerSequence
             << " AND transaction_index < " << cursor->transactionIndex;
-    uint32_t limit = 300;
     sql << " LIMIT " << std::to_string(limit);
     auto res = pgQuery(sql.str().data());
     if (size_t numRows = checkResult(res, 3))

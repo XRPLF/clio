@@ -1331,7 +1331,7 @@ CassandraFlatMapBackend::open()
         query << "SELECT key FROM " << tableName << "books "
               << " WHERE book = ? AND sequence <= ? AND deleted_at > ? AND"
                  " key > ? "
-                 " ORDER BY key ASC LIMIT 300 ALLOW FILTERING";
+                 " ORDER BY key ASC LIMIT ? ALLOW FILTERING";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());
@@ -1380,7 +1380,7 @@ CassandraFlatMapBackend::open()
         query = {};
         query << " SELECT hash,seq_idx FROM " << tableName << "account_tx"
               << " WHERE account = ? "
-              << " AND seq_idx < ? LIMIT 300";
+              << " AND seq_idx < ? LIMIT ?";
 
         prepare_future =
             cass_session_prepare(session_.get(), query.str().c_str());

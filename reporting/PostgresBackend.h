@@ -37,10 +37,11 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
 
-    std::vector<LedgerObject>
+    std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,
+        std::uint32_t limit,
         std::optional<ripple::uint256> const& cursor) const override;
 
     std::vector<TransactionAndMetadata>
@@ -57,6 +58,7 @@ public:
         std::optional<AccountTransactionsCursor>>
     fetchAccountTransactions(
         ripple::AccountID const& account,
+        std::uint32_t limit,
         std::optional<AccountTransactionsCursor> const& cursor) const override;
 
     void
