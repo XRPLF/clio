@@ -851,6 +851,15 @@ CassandraBackend::open()
               << " and deleted > ?"
               << " PER PARTITION LIMIT 1 LIMIT ?"
               << " ALLOW FILTERING";
+        if (!selectLedgerPageKeys_.prepareStatement(query, session_.get()))
+            continue;
+
+        query = {};
+        query << "SELECT key,object FROM " << tableName << "flat "
+              << " WHERE TOKEN(key) >= ? and sequence <= ? ORDER BY sequence "
+                 "DESC "
+              << " PER PARTITION LIMIT 1 LIMIT ? ALLOW FILTERING";
+
         if (!selectLedgerPage_.prepareStatement(query, session_.get()))
             continue;
 

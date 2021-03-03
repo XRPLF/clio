@@ -504,6 +504,7 @@ private:
     CassandraPreparedStatement insertTransaction_;
     CassandraPreparedStatement selectTransaction_;
     CassandraPreparedStatement selectObject_;
+    CassandraPreparedStatement selectLedgerPageKeys_;
     CassandraPreparedStatement selectLedgerPage_;
     CassandraPreparedStatement upperBound2_;
     CassandraPreparedStatement getToken_;
@@ -803,7 +804,7 @@ public:
     std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash) const override
     {
-        BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+        BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectTransaction_};
         statement.bindBytes(hash);
         CassandraResult result = executeSyncRead(statement);
@@ -820,8 +821,8 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override
     {
-        BOOST_LOG_TRIVIAL(debug) << "Starting doUpperBound";
-        CassandraStatement statement{selectLedgerPage_};
+        BOOST_LOG_TRIVIAL(trace) << __func__;
+        CassandraStatement statement{selectLedgerPageKeys_};
 
         int64_t intCursor = INT64_MIN;
         if (cursor)
@@ -857,6 +858,60 @@ public:
             }
             return {results, keys[keys.size() - 1]};
         }
+
+        return {{}, {}};
+    }
+    LedgerPage
+    fetchLedgerPage2(
+        std::optional<ripple::uint256> cursor,
+        std::uint32_t ledgerSequence,
+        std::uint32_t limit) const
+    {
+        BOOST_LOG_TRIVIAL(trace) << __func__;
+        std::vector<LedgerObject> objects;
+        while (objects.size() < limit)
+        {
+            CassandraStatement statement{selectLedgerPage_};
+
+            int64_t intCursor = INT64_MIN;
+            if (cursor)
+            {
+                auto token = getToken(cursor->data());
+                if (token)
+                    intCursor = *token;
+            }
+            BOOST_LOG_TRIVIAL(trace)
+                << __func__ << " - cursor = " << std::to_string(intCursor)
+                << " , sequence = " << std::to_string(ledgerSequence)
+                << ", - limit = " << std::to_string(limit);
+            statement.bindInt(intCursor);
+            statement.bindInt(ledgerSequence);
+            statement.bindInt(limit);
+
+            CassandraResult result = executeSyncRead(statement);
+
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
+            if (!!result)
+            {
+                do
+                {
+                    objects.push_back({result.getUInt256(), result.getBytes()});
+                } while (result.nextRow());
+                if (objects.size() < limit)
+                {
+                    double sparsity = limit / objects.size();
+                    limit = (limit - objects.size()) * sparsity;
+                    BOOST_LOG_TRIVIAL(debug)
+                        << __func__
+                        << " - sparsity = " << std::to_string(sparsity)
+                        << " , limit = " << std::to_string(limit);
+                }
+                assert(objects.size());
+                cursor = objects[objects.size() - 1].key;
+            }
+        }
+        if (objects.size())
+            return {objects, cursor};
 
         return {{}, {}};
     }
