@@ -831,6 +831,7 @@ public:
             if (token)
                 intCursor = *token;
         }
+
         statement.bindInt(intCursor);
         statement.bindInt(ledgerSequence);
         statement.bindInt(ledgerSequence);
@@ -1240,16 +1241,15 @@ public:
             std::move(book));
 
         ++numRequestsOutstanding_;
-        if (isCreated || isDeleted)
-            ++numRequestsOutstanding_;
+        // if (isCreated || isDeleted)
+        //    ++numRequestsOutstanding_;
         if (book)
             ++numRequestsOutstanding_;
         write(*data, false);
-        if (isCreated || isDeleted)
-            writeKey(*data, false);
+        // if (isCreated || isDeleted)
+        //    writeKey(*data, false);
         if (book)
             writeBook(*data, false);
-        // handle book
     }
 
     void
