@@ -48,6 +48,26 @@ struct AccountTransactionsData
     }
 };
 
+inline bool
+isOffer(std::string const& object)
+{
+    short offer_bytes = (object[1] << 8) | object[2];
+    return offer_bytes == 0x006f;
+}
+
+inline ripple::uint256
+getBook(std::string const& offer)
+{
+    ripple::SerialIter it{offer.data(), offer.size()};
+    ripple::SLE sle{it, {}};
+    ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
+    for (size_t i = 0; i < 8; ++i)
+    {
+        book.data()[book.size() - 1 - i] = 0x00;
+    }
+    return book;
+}
+
 /// Write new ledger and transaction data to Postgres
 /// @param info Ledger Info to write
 /// @param accountTxData transaction data to write
@@ -60,4 +80,27 @@ writeToPostgres(
     std::vector<AccountTransactionsData> const& accountTxData,
     std::shared_ptr<PgPool> const& pgPool);
 
+inline ripple::LedgerInfo
+deserializeHeader(ripple::Slice data)
+{
+    ripple::SerialIter sit(data.data(), data.size());
+
+    ripple::LedgerInfo info;
+
+    info.seq = sit.get32();
+    info.drops = sit.get64();
+    info.parentHash = sit.get256();
+    info.txHash = sit.get256();
+    info.accountHash = sit.get256();
+    info.parentCloseTime =
+        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
+    info.closeTime =
+        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
+    info.closeTimeResolution = ripple::NetClock::duration{sit.get8()};
+    info.closeFlags = sit.get8();
+
+    info.hash = sit.get256();
+
+    return info;
+}
 #endif

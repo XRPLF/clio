@@ -45,6 +45,44 @@ writeToLedgersDB(ripple::LedgerInfo const& info, PgQuery& pgQuery)
     return res;
 }
 
+/*
+bool
+writeBooks(std::vector<BookDirectoryData> const& bookDirData, PgQuery& pg)
+{
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " : "
+        << "Writing " << bookDirData.size() << "books to Postgres";
+
+    try
+    {
+        std::stringstream booksCopyBuffer;
+        for (auto const& data : bookDirData)
+        {
+            std::string directoryIndex = ripple::strHex(data.directoryIndex);
+            std::string bookIndex = ripple::strHex(data.bookIndex);
+            auto ledgerSeq = data.ledgerSequence;
+
+            booksCopyBuffer << "\\\\x" << directoryIndex << '\t'
+                            << std::to_string(ledgerSeq) << '\t' << "\\\\x"
+                            << bookIndex << '\n';
+        }
+
+        pg.bulkInsert("books", booksCopyBuffer.str());
+
+        BOOST_LOG_TRIVIAL(info) << __func__ << " : "
+                                << "Successfully inserted  books";
+        return true;
+    }
+    catch (std::exception& e)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << "Caught exception inserting books : " << e.what();
+        assert(false);
+        return false;
+    }
+}
+*/
+
 bool
 writeToPostgres(
     ripple::LedgerInfo const& info,
@@ -56,8 +94,8 @@ writeToPostgres(
 
     try
     {
-        // Create a PgQuery object to run multiple commands over the same
-        // connection in a single transaction block.
+        // Create a PgQuery object to run multiple commands over the
+        // same connection in a single transaction block.
         PgQuery pg(pgPool);
         auto res = pg("BEGIN");
         if (!res || res.status() != PGRES_COMMAND_OK)
@@ -67,9 +105,10 @@ writeToPostgres(
             throw std::runtime_error(msg.str());
         }
 
-        // Writing to the ledgers db fails if the ledger already exists in the
-        // db. In this situation, the ETL process has detected there is another
-        // writer, and falls back to only publishing
+        // Writing to the ledgers db fails if the ledger already
+        // exists in the db. In this situation, the ETL process has
+        // detected there is another writer, and falls back to only
+        // publishing
         if (!writeToLedgersDB(info, pg))
         {
             BOOST_LOG_TRIVIAL(warning)

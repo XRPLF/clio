@@ -19,6 +19,7 @@
 */
 //==============================================================================
 
+#include <ripple/protocol/STLedgerEntry.h>
 #include <boost/asio/strand.hpp>
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
@@ -30,7 +31,7 @@
 // Primarly used in read-only mode, to monitor when ledgers are validated
 ETLSource::ETLSource(
     boost::json::object const& config,
-    CassandraFlatMapBackend& backend,
+    BackendInterface& backend,
     NetworkValidatedLedgers& networkValidatedLedgers,
     boost::asio::io_context& ioContext)
     : ioc_(ioContext)
@@ -399,18 +400,19 @@ public:
     process(
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq,
-        CassandraFlatMapBackend& backend,
+        BackendInterface& backend,
         bool abort = false)
     {
-        std::cout << "Processing calldata" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "Processing response. "
+                                << "Marker prefix = " << getMarkerPrefix();
         if (abort)
         {
-            std::cout << "AsyncCallData aborted";
+            BOOST_LOG_TRIVIAL(error) << "AsyncCallData aborted";
             return CallStatus::ERRORED;
         }
         if (!status_.ok())
         {
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(error)
                 << "AsyncCallData status_ not ok: "
                 << " code = " << status_.error_code()
                 << " message = " << status_.error_message();
@@ -439,13 +441,31 @@ public:
             call(stub, cq);
         }
 
+        BOOST_LOG_TRIVIAL(info) << "Writing objects";
         for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
-            backend.store(
+            std::optional<ripple::uint256> book;
+
+            short offer_bytes = (obj.data()[1] << 8) | obj.data()[2];
+            if (offer_bytes == 0x006f)
+            {
+                ripple::SerialIter it{obj.data().data(), obj.data().size()};
+                ripple::SLE sle{it, {}};
+                book = sle.getFieldH256(ripple::sfBookDirectory);
+                for (size_t i = 0; i < 8; ++i)
+                {
+                    book->data()[book->size() - 1 - i] = 0x00;
+                }
+            }
+            backend.writeLedgerObject(
                 std::move(*obj.mutable_key()),
                 request_.ledger().sequence(),
-                std::move(*obj.mutable_data()));
+                std::move(*obj.mutable_data()),
+                true,
+                false,
+                std::move(book));
         }
+        BOOST_LOG_TRIVIAL(info) << "Wrote objects";
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
@@ -455,6 +475,7 @@ public:
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq)
     {
+        BOOST_LOG_TRIVIAL(info) << "Making next request. " << getMarkerPrefix();
         context_ = std::make_unique<grpc::ClientContext>();
 
         std::unique_ptr<grpc::ClientAsyncResponseReader<
@@ -472,7 +493,7 @@ public:
         if (next_->marker().size() == 0)
             return "";
         else
-            return std::string{next_->marker().data()[0]};
+            return ripple::strHex(std::string{next_->marker().data()[0]});
     }
 };
 
@@ -491,8 +512,8 @@ ETLSource::loadInitialLedger(uint32_t sequence)
     std::vector<AsyncCallData> calls;
     calls.emplace_back(sequence);
 
-    BOOST_LOG_TRIVIAL(debug) << "Starting data download for ledger " << sequence
-                             << ". Using source = " << toString();
+    BOOST_LOG_TRIVIAL(info) << "Starting data download for ledger " << sequence
+                            << ". Using source = " << toString();
 
     for (auto& c : calls)
         c.call(stub_, cq);
@@ -513,13 +534,13 @@ ETLSource::loadInitialLedger(uint32_t sequence)
         }
         else
         {
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(info)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
             auto result = ptr->process(stub_, cq, backend_, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
-                BOOST_LOG_TRIVIAL(debug)
+                BOOST_LOG_TRIVIAL(info)
                     << "Finished a marker. "
                     << "Current number of finished = " << numFinished;
             }
@@ -554,15 +575,14 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
             << "ETLSource::fetchLedger - is_unlimited is "
                "false. Make sure secure_gateway is set "
                "correctly on the ETL source. source = "
-            << toString() << " response = " << response.DebugString()
-            << " status = " << status.error_message();
+            << toString() << " status = " << status.error_message();
         assert(false);
     }
     return {status, std::move(response)};
 }
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
-    CassandraFlatMapBackend& backend,
+    BackendInterface& backend,
     NetworkValidatedLedgers& nwvl,
     boost::asio::io_context& ioContext)
 {

@@ -35,49 +35,56 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-enum RPCCommand { tx, account_tx, ledger, account_info, ledger_data };
+enum RPCCommand {
+    tx,
+    account_tx,
+    ledger,
+    account_info,
+    ledger_data,
+    book_offers
+};
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
     {"account_tx", account_tx},
     {"ledger", ledger},
     {"account_info", account_info},
-    {"ledger_data", ledger_data}};
+    {"ledger_data", ledger_data},
+    {"book_offers", book_offers}};
 
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
-    std::shared_ptr<PgPool>& postgres);
+    BackendInterface const& backend);
 boost::json::object
-doTx(
-    boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
-    std::shared_ptr<PgPool>& pgPool);
+doTx(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doAccountTx(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
-    std::shared_ptr<PgPool>& pgPool);
+    BackendInterface const& backend);
 boost::json::object
 doLedgerData(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend);
+    BackendInterface const& backend);
+boost::json::object
+doBookOffers(
+    boost::json::object const& request,
+    BackendInterface const& backend);
 
 boost::json::object
 buildResponse(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
-    std::shared_ptr<PgPool>& pgPool)
+    BackendInterface const& backend)
 {
     std::string command = request.at("command").as_string().c_str();
+    BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
     switch (commandMap[command])
     {
         case tx:
-            return doTx(request, backend, pgPool);
+            return doTx(request, backend);
             break;
         case account_tx:
-            return doAccountTx(request, backend, pgPool);
+            return doAccountTx(request, backend);
             break;
         case ledger:
             break;
@@ -85,7 +92,10 @@ buildResponse(
             return doLedgerData(request, backend);
             break;
         case account_info:
-            return doAccountInfo(request, backend, pgPool);
+            return doAccountInfo(request, backend);
+            break;
+        case book_offers:
+            return doBookOffers(request, backend);
             break;
         default:
             BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;
@@ -105,16 +115,14 @@ class session : public std::enable_shared_from_this<session>
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
     std::string response_;
-    CassandraFlatMapBackend const& backend_;
-    std::shared_ptr<PgPool>& pgPool_;
+    BackendInterface const& backend_;
 
 public:
     // Take ownership of the socket
     explicit session(
         boost::asio::ip::tcp::socket&& socket,
-        CassandraFlatMapBackend const& backend,
-        std::shared_ptr<PgPool>& pgPool)
-        : ws_(std::move(socket)), backend_(backend), pgPool_(pgPool)
+        BackendInterface const& backend)
+        : ws_(std::move(socket)), backend_(backend)
     {
     }
 
@@ -190,7 +198,7 @@ public:
         boost::json::value raw = boost::json::parse(msg);
         // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
         boost::json::object request = raw.as_object();
-        auto response = buildResponse(request, backend_, pgPool_);
+        auto response = buildResponse(request, backend_);
         BOOST_LOG_TRIVIAL(debug) << __func__ << response;
         response_ = boost::json::serialize(response);
 
@@ -225,16 +233,14 @@ class listener : public std::enable_shared_from_this<listener>
 {
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    CassandraFlatMapBackend const& backend_;
-    std::shared_ptr<PgPool>& pgPool_;
+    BackendInterface const& backend_;
 
 public:
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
-        CassandraFlatMapBackend const& backend,
-        std::shared_ptr<PgPool>& pgPool)
-        : ioc_(ioc), acceptor_(ioc), backend_(backend), pgPool_(pgPool)
+        BackendInterface const& backend)
+        : ioc_(ioc), acceptor_(ioc), backend_(backend)
     {
         boost::beast::error_code ec;
 
@@ -299,8 +305,7 @@ private:
         else
         {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket), backend_, pgPool_)
-                ->run();
+            std::make_shared<session>(std::move(socket), backend_)->run();
         }
 
         // Accept another connection
@@ -406,8 +411,7 @@ main(int argc, char* argv[])
     std::make_shared<listener>(
         ioc,
         boost::asio::ip::tcp::endpoint{address, port},
-        etl.getFlatMapBackend(),
-        etl.getPgPool())
+        etl.getFlatMapBackend())
         ->run();
 
     // Run the I/O service on the requested number of threads

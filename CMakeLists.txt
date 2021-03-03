@@ -56,7 +56,8 @@ include(Postgres)
 
 target_sources(reporting PRIVATE
     reporting/ETLSource.cpp
-    reporting/ReportingBackend.cpp
+    reporting/CassandraBackend.cpp
+    reporting/PostgresBackend.cpp
     reporting/Pg.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp
@@ -64,7 +65,8 @@ target_sources(reporting PRIVATE
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp
     handlers/AccountTx.cpp
-    handlers/LedgerData.cpp)
+    handlers/LedgerData.cpp
+    handlers/BookOffers.cpp)
 
 
 message(${Boost_LIBRARIES})

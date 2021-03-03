@@ -21,7 +21,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
-#include <reporting/ReportingBackend.h>
+#include <reporting/BackendInterface.h>
 // Get state nodes from a ledger
 //   Inputs:
 //     limit:        integer, maximum number of entries
@@ -38,21 +38,23 @@
 boost::json::object
 doLedgerData(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend)
+    BackendInterface const& backend)
 {
     boost::json::object response;
     uint32_t ledger = request.at("ledger_index").as_int64();
 
-    std::optional<int64_t> marker = request.contains("marker")
-        ? request.at("marker").as_int64()
-        : std::optional<int64_t>{};
+    ripple::uint256 cursor;
+    if (request.contains("cursor"))
+    {
+        cursor.parseHex(request.at("cursor").as_string().c_str());
+    }
     bool binary =
         request.contains("binary") ? request.at("binary").as_bool() : false;
     size_t limit = request.contains("limit") ? request.at("limit").as_int64()
                                              : (binary ? 2048 : 256);
+    Backend::LedgerPage page;
     auto start = std::chrono::system_clock::now();
-    auto [results, returnedMarker] =
-        backend.doUpperBound(marker, ledger, limit);
+    page = backend.fetchLedgerPage(cursor, ledger, limit);
 
     auto end = std::chrono::system_clock::now();
 
@@ -60,6 +62,10 @@ doLedgerData(
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
     boost::json::array objects;
+    std::vector<Backend::LedgerObject>& results = page.objects;
+    std::optional<ripple::uint256> const& returnedCursor = page.cursor;
+    BOOST_LOG_TRIVIAL(debug)
+        << "doUpperBound returned " << results.size() << " results";
     for (auto const& [key, object] : results)
     {
         ripple::STLedgerEntry sle{
@@ -75,12 +81,12 @@ doLedgerData(
             objects.push_back(getJson(sle));
     }
     response["objects"] = objects;
-    if (returnedMarker)
-        response["marker"] = returnedMarker.value();
+    if (returnedCursor)
+        response["marker"] = ripple::strHex(*returnedCursor);
 
     response["num_results"] = results.size();
     response["db_time"] = time;
-
+    response["time_per_result"] = time / results.size();
     return response;
 }
 

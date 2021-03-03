@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include <handlers/RPCHelpers.h>
+#include <reporting/BackendInterface.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 std::vector<std::pair<
     std::shared_ptr<ripple::STTx const>,
@@ -27,7 +27,7 @@ std::vector<std::pair<
 doAccountTxStoredProcedure(
     ripple::AccountID const& account,
     std::shared_ptr<PgPool>& pgPool,
-    CassandraFlatMapBackend const& backend)
+    BackendInterface const& backend)
 {
     pg_params dbParams;
 
@@ -105,10 +105,10 @@ doAccountTxStoredProcedure(
             std::shared_ptr<ripple::STTx const>,
             std::shared_ptr<ripple::STObject const>>>
             results;
-        auto dbResults = backend.fetchBatch(nodestoreHashes);
+        auto dbResults = backend.fetchTransactions(nodestoreHashes);
         for (auto const& res : dbResults)
         {
-            if (res.first.size() && res.second.size())
+            if (res.transaction.size() && res.metadata.size())
                 results.push_back(deserializeTxPlusMeta(res));
         }
         return results;
@@ -127,10 +127,7 @@ doAccountTxStoredProcedure(
 //   resume previous query
 // }
 boost::json::object
-doAccountTx(
-    boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
-    std::shared_ptr<PgPool>& pgPool)
+doAccountTx(boost::json::object const& request, BackendInterface const& backend)
 {
     boost::json::object response;
 
@@ -148,16 +145,44 @@ doAccountTx(
         return response;
     }
 
+    std::optional<Backend::AccountTransactionsCursor> cursor;
+    if (request.contains("cursor"))
+    {
+        auto const& obj = request.at("cursor").as_object();
+        std::optional<uint32_t> ledgerSequence;
+        if (obj.contains("ledger_sequence"))
+        {
+            ledgerSequence = (uint32_t)obj.at("ledger_sequence").as_int64();
+        }
+        std::optional<uint32_t> transactionIndex;
+        if (obj.contains("transaction_index"))
+        {
+            transactionIndex = (uint32_t)obj.at("transaction_index").as_int64();
+        }
+        if (!ledgerSequence || !transactionIndex)
+        {
+            response["error"] =
+                "malformed cursor. include transaction_index and "
+                "ledger_sequence in an object named \"cursor\"";
+            return response;
+        }
+        cursor = {*ledgerSequence, *transactionIndex};
+    }
+
+    constexpr uint32_t limit = 500;
     boost::json::array txns;
-    auto res = doAccountTxStoredProcedure(*account, pgPool, backend);
-    for (auto const& [sttx, meta] : res)
+    auto [blobs, retCursor] =
+        backend.fetchAccountTransactions(*account, limit, cursor);
+    for (auto const& txnPlusMeta : blobs)
     {
         boost::json::object obj;
-        obj["transaction"] = getJson(*sttx);
+        auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
+        obj["transaction"] = getJson(*txn);
         obj["metadata"] = getJson(*meta);
         txns.push_back(obj);
     }
     response["transactions"] = txns;
+    response["cursor"] = {};
     return response;
 }
 

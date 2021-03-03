@@ -1,4 +1,5 @@
 #include <handlers/RPCHelpers.h>
+#include <reporting/BackendInterface.h>
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account)
@@ -21,20 +22,19 @@ accountFromStringStrict(std::string const& account)
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::STObject const>>
-deserializeTxPlusMeta(
-    std::pair<std::vector<unsigned char>, std::vector<unsigned char>> const&
-        blobs)
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
 {
     std::pair<
         std::shared_ptr<ripple::STTx const>,
         std::shared_ptr<ripple::STObject const>>
         result;
     {
-        ripple::SerialIter s{blobs.first.data(), blobs.first.size()};
+        ripple::SerialIter s{
+            blobs.transaction.data(), blobs.transaction.size()};
         result.first = std::make_shared<ripple::STTx const>(s);
     }
     {
-        ripple::SerialIter s{blobs.second.data(), blobs.second.size()};
+        ripple::SerialIter s{blobs.metadata.data(), blobs.metadata.size()};
         result.second =
             std::make_shared<ripple::STObject const>(s, ripple::sfMetadata);
     }

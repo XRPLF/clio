@@ -52,7 +52,7 @@ async def ledger_data(ip, port, ledger, limit):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"limit":int(limit)}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"limit":int(limit),"binary":True}))
             res = json.loads(await ws.recv())
             print(res)
     except websockets.exceptions.connectionclosederror as e:
@@ -66,7 +66,7 @@ async def ledger_data_full(ip, port, ledger):
             marker = None
             while True:
                 if marker is None:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":True}))
                     res = json.loads(await ws.recv())
                     print(res)
                     
@@ -87,15 +87,40 @@ async def ledger_data_full(ip, port, ledger):
         print(e)
 
 
+async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, get_issuer):
+
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        
+        async with websockets.connect(address) as ws:
+            taker_gets = json.loads("{\"currency\":\"" + get_currency+"\"}")
+            if get_issuer is not None:
+                taker_gets["issuer"] = get_issuer
+            taker_pays = json.loads("{\"currency\":\"" + pay_currency + "\"}")
+            if pay_issuer is not None:
+                taker_pays["issuer"] = pay_issuer 
+
+            await ws.send(json.dumps({"command":"book_offers","ledger_index":int(ledger), "taker_pays":taker_pays, "taker_gets":taker_gets}))
+            res = json.loads(await ws.recv())
+            print(res)
+                    
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
+
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full", "book_offers"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
 parser.add_argument('--account', default="rLC64xxNif3GiY9FQnbaM4kcE6VvDhwRod")
 parser.add_argument('--ledger')
 parser.add_argument('--limit', default='200')
+parser.add_argument('--taker_pays_issuer')
+parser.add_argument('--taker_pays_currency')
+parser.add_argument('--taker_gets_issuer')
+parser.add_argument('--taker_gets_currency')
+
 
 
 
@@ -118,6 +143,9 @@ def run(args):
     elif args.action == "ledger_data_full":
         asyncio.get_event_loop().run_until_complete(
                 ledger_data_full(args.ip, args.port, args.ledger))
+    elif args.action == "book_offers":
+        asyncio.get_event_loop().run_until_complete(
+                book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer))
     else:
         print("incorrect arguments")
 

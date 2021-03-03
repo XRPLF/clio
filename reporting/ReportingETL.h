@@ -25,10 +25,10 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
+#include <reporting/BackendInterface.h>
 #include <reporting/ETLHelpers.h>
 #include <reporting/ETLSource.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -59,8 +59,7 @@ struct AccountTransactionsData;
 class ReportingETL
 {
 private:
-    CassandraFlatMapBackend flatMapBackend_;
-    std::shared_ptr<PgPool> pgPool_;
+    std::unique_ptr<BackendInterface> flatMapBackend_;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -213,6 +212,7 @@ private:
         ripple::LedgerInfo const& ledger,
         org::xrpl::rpc::v1::GetLedgerResponse& data);
 
+    // TODO update this documentation
     /// Build the next ledger using the previous ledger and the extracted data.
     /// This function calls insertTransactions()
     /// @note rawData should be data that corresponds to the ledger immediately
@@ -220,7 +220,7 @@ private:
     /// @param parent the previous ledger
     /// @param rawData data extracted from an ETL source
     /// @return the newly built ledger and data to write to Postgres
-    std::pair<ripple::LedgerInfo, std::vector<AccountTransactionsData>>
+    std::pair<ripple::LedgerInfo, bool>
     buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData);
 
     /// Attempt to read the specified ledger from the database, and then publish
@@ -320,16 +320,10 @@ public:
         return loadBalancer_;
     }
 
-    CassandraFlatMapBackend&
+    BackendInterface&
     getFlatMapBackend()
     {
-        return flatMapBackend_;
-    }
-
-    std::shared_ptr<PgPool>&
-    getPgPool()
-    {
-        return pgPool_;
+        return *flatMapBackend_;
     }
 
 private:

@@ -21,8 +21,8 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
+#include <reporting/BackendInterface.h>
 #include <reporting/Pg.h>
-#include <reporting/ReportingBackend.h>
 
 // {
 //   account: <ident>,
@@ -43,8 +43,7 @@
 boost::json::object
 doAccountInfo(
     boost::json::object const& request,
-    CassandraFlatMapBackend const& backend,
-    std::shared_ptr<PgPool>& postgres)
+    BackendInterface const& backend)
 {
     boost::json::object response;
     std::string strIdent;
@@ -60,7 +59,7 @@ doAccountInfo(
     size_t ledgerSequence = 0;
     if (not request.contains("ledger_index"))
     {
-        std::optional<ripple::LedgerInfo> latest = getLedger({}, postgres);
+        auto latest = backend.fetchLatestLedgerSequence();
 
         if (not latest)
         {
@@ -69,7 +68,7 @@ doAccountInfo(
         }
         else
         {
-            ledgerSequence = latest->seq;
+            ledgerSequence = *latest;
         }
     }
     else
@@ -93,7 +92,7 @@ doAccountInfo(
 
     auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
-        backend.fetch(key.key.data(), ledgerSequence);
+        backend.fetchLedgerObject(key.key, ledgerSequence);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
