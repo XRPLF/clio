@@ -744,7 +744,7 @@ CREATE TABLE IF NOT EXISTS ledgers (
 
 CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
-    ledger_seq bigint NOT NULL,
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     object bytea,
     PRIMARY KEY(key, ledger_seq)
 );
@@ -769,7 +769,7 @@ CREATE TABLE IF NOT EXISTS account_transactions (
     ledger_seq        bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     transaction_index bigint NOT NULL,
     hash bytea NOT NULL,
-    PRIMARY KEY (account, ledger_seq, transaction_index),
+    PRIMARY KEY (account, ledger_seq, transaction_index)
 );
 -- Table that maps a book to a list of offers in that book. Deletes from the ledger table
 -- cascade here based on ledger_seq.

@@ -258,6 +258,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
     flatMapBackend_->startWrites();
 
+    flatMapBackend_->writeLedger(
+        lgrInfo, std::move(*rawData.mutable_ledger_header()));
     std::vector<AccountTransactionsData> accountTxData{
         insertTransactions(lgrInfo, rawData)};
 
@@ -302,8 +304,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             std::move(bookDir));
     }
     flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
-    flatMapBackend_->writeLedger(
-        lgrInfo, std::move(*rawData.mutable_ledger_header()));
     bool success = flatMapBackend_->finishWrites();
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
