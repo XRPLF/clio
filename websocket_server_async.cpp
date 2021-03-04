@@ -69,6 +69,8 @@ boost::json::object
 doBookOffers(
     boost::json::object const& request,
     BackendInterface const& backend);
+boost::json::object
+doLedger(boost::json::object const& request, BackendInterface const& backend);
 
 boost::json::object
 buildResponse(
@@ -87,6 +89,7 @@ buildResponse(
             return doAccountTx(request, backend);
             break;
         case ledger:
+            return doLedgerData(request, backend);
             break;
         case ledger_data:
             return doLedgerData(request, backend);

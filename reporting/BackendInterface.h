@@ -54,6 +54,9 @@ public:
     virtual std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash) const = 0;
 
+    virtual std::vector<TransactionAndMetadata>
+    fetchAllTransactionsInLedger(uint32_t ledgerSequence) const = 0;
+
     virtual LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,

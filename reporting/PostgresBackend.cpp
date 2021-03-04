@@ -285,6 +285,31 @@ PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
 
     return {};
 }
+std::vector<TransactionAndMetadata>
+PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
+{
+    PgQuery pgQuery(pgPool_);
+    std::stringstream sql;
+    sql << "SELECT transaction, metadata, ledger_seq FROM transactions WHERE "
+        << "ledger_seq = " << std::to_string(ledgerSequence);
+    auto res = pgQuery(sql.str().data());
+    if (size_t numRows = checkResult(res, 3))
+    {
+        std::vector<TransactionAndMetadata> txns;
+        for (size_t i = 0; i < numRows; ++i)
+        {
+            char const* txn = res.c_str(0, 0);
+            char const* metadata = res.c_str(0, 1);
+            std::string_view txnView{txn};
+            std::string_view metadataView{metadata};
+            txns.push_back(
+                {{txnView.front(), txnView.back()},
+                 {metadataView.front(), metadataView.back()}});
+        }
+        return txns;
+    }
+    return {};
+}
 
 LedgerPage
 PostgresBackend::fetchLedgerPage(

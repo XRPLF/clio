@@ -225,6 +225,23 @@ CassandraBackend::fetchLedgerRange() const
     }
     return range;
 }
+std::vector<TransactionAndMetadata>
+CassandraBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
+{
+    CassandraStatement statement{selectAllTransactionsInLedger_};
+    CassandraResult result = executeSyncRead(statement);
+    if (!result)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+        return {};
+    }
+    std::vector<TransactionAndMetadata> txns;
+    do
+    {
+        txns.push_back({result.getBytes(), result.getBytes()});
+    } while (result.nextRow());
+    return txns;
+}
 
 void
 CassandraBackend::open()
@@ -455,9 +472,16 @@ CassandraBackend::open()
         if (!executeSimpleStatement(query.str()))
             continue;
         query = {};
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
-              << " ( hash blob PRIMARY KEY, sequence bigint, transaction "
-                 "blob, metadata blob)";
+        query
+            << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
+            << " ( hash blob PRIMARY KEY, ledger_sequence bigint, transaction "
+               "blob, metadata blob)";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query = {};
+        query << "CREATE INDEX ON " << tablePrefix
+              << "transactions(ledger_sequence)";
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -558,9 +582,10 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "INSERT INTO " << tablePrefix << "transactions"
-              << " (hash, sequence, transaction, metadata) VALUES (?, ?, "
-                 "?, ?)";
+        query
+            << "INSERT INTO " << tablePrefix << "transactions"
+            << " (hash, ledger_sequence, transaction, metadata) VALUES (?, ?, "
+               "?, ?)";
         if (!insertTransaction_.prepareStatement(query, session_.get()))
             continue;
 
@@ -600,6 +625,14 @@ CassandraBackend::open()
               << "transactions"
               << " WHERE hash = ?";
         if (!selectTransaction_.prepareStatement(query, session_.get()))
+            continue;
+
+        query = {};
+        query << "SELECT transaction,metadata FROM " << tablePrefix
+              << "transactions"
+              << " WHERE ledger_sequence = ?";
+        if (!selectAllTransactionsInLedger_.prepareStatement(
+                query, session_.get()))
             continue;
 
         query = {};

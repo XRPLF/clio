@@ -761,6 +761,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     transaction bytea NOT NULL,
     metadata bytea NOT NULL
 );
+-- Index for lookups by ledger hash.
+CREATE INDEX IF NOT EXISTS ledgers_ledger_seq_idx ON transactions
+    USING hash (ledger_seq);
 
 -- Table that maps accounts to transactions affecting them. Deletes from the
 -- ledger table cascade here based on ledger_seq.

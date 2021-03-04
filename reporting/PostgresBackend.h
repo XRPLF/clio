@@ -34,6 +34,9 @@ public:
     std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash) const override;
 
+    std::vector<TransactionAndMetadata>
+    fetchAllTransactionsInLedger(uint32_t ledgerSequence) const override;
+
     LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,

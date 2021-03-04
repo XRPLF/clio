@@ -503,6 +503,7 @@ private:
     CassandraPreparedStatement insertObject_;
     CassandraPreparedStatement insertTransaction_;
     CassandraPreparedStatement selectTransaction_;
+    CassandraPreparedStatement selectAllTransactionsInLedger_;
     CassandraPreparedStatement selectObject_;
     CassandraPreparedStatement selectLedgerPageKeys_;
     CassandraPreparedStatement selectLedgerPage_;
@@ -759,6 +760,9 @@ public:
     }
     std::optional<LedgerRange>
     fetchLedgerRange() const override;
+
+    std::vector<TransactionAndMetadata>
+    fetchAllTransactionsInLedger(uint32_t ledgerSequence) const override;
 
     // Synchronously fetch the object with key key and store the result in
     // pno
