@@ -41,7 +41,12 @@ doLedgerData(
     BackendInterface const& backend)
 {
     boost::json::object response;
-    uint32_t ledger = request.at("ledger_index").as_int64();
+    auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
+    if (!ledgerSequence)
+    {
+        response["error"] = "Empty database";
+        return response;
+    }
 
     ripple::uint256 cursor;
     if (request.contains("cursor"))
@@ -54,7 +59,7 @@ doLedgerData(
                                              : (binary ? 2048 : 256);
     Backend::LedgerPage page;
     auto start = std::chrono::system_clock::now();
-    page = backend.fetchLedgerPage(cursor, ledger, limit);
+    page = backend.fetchLedgerPage(cursor, *ledgerSequence, limit);
 
     auto end = std::chrono::system_clock::now();
 
@@ -82,7 +87,7 @@ doLedgerData(
     }
     response["objects"] = objects;
     if (returnedCursor)
-        response["marker"] = ripple::strHex(*returnedCursor);
+        response["cursor"] = ripple::strHex(*returnedCursor);
 
     response["num_results"] = results.size();
     response["db_time"] = time;

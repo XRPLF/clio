@@ -83,6 +83,7 @@ writeBooks(std::vector<BookDirectoryData> const& bookDirData, PgQuery& pg)
 }
 */
 
+/*
 bool
 writeToPostgres(
     ripple::LedgerInfo const& info,
@@ -166,4 +167,4 @@ writeToPostgres(
         return false;
     }
 }
-
+*/

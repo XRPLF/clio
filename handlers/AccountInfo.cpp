@@ -56,24 +56,11 @@ doAccountInfo(
         response["error"] = "missing account field";
         return response;
     }
-    size_t ledgerSequence = 0;
-    if (not request.contains("ledger_index"))
+    auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
+    if (!ledgerSequence)
     {
-        auto latest = backend.fetchLatestLedgerSequence();
-
-        if (not latest)
-        {
-            response["error"] = "database is empty";
-            return response;
-        }
-        else
-        {
-            ledgerSequence = *latest;
-        }
-    }
-    else
-    {
-        ledgerSequence = request.at("ledger_index").as_int64();
+        response["error"] = "Empty database";
+        return response;
     }
 
     // bool bStrict = request.contains("strict") &&
@@ -92,7 +79,7 @@ doAccountInfo(
 
     auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
-        backend.fetchLedgerObject(key.key, ledgerSequence);
+        backend.fetchLedgerObject(key.key, *ledgerSequence);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)

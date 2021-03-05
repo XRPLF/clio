@@ -66,3 +66,17 @@ getJson(ripple::SLE const& sle)
             .count();
     return value.as_object();
 }
+std::optional<uint32_t>
+ledgerSequenceFromRequest(
+    boost::json::object const& request,
+    BackendInterface const& backend)
+{
+    if (not request.contains("ledger_index"))
+    {
+        return backend.fetchLatestLedgerSequence();
+    }
+    else
+    {
+        return request.at("ledger_index").as_int64();
+    }
+}

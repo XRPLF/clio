@@ -26,9 +26,9 @@ PostgresBackend::writeLedger(
         ledgerInfo.closeTimeResolution.count() % ledgerInfo.closeFlags %
         ripple::strHex(ledgerInfo.accountHash) %
         ripple::strHex(ledgerInfo.txHash));
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
-                             << " : "
-                             << "query string = " << ledgerInsert;
+    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
+                            << " : "
+                            << "query string = " << ledgerInsert;
 
     auto res = pgQuery(ledgerInsert.data());
 
@@ -44,17 +44,14 @@ PostgresBackend::writeAccountTransactions(
     PgQuery pg(pgPool_);
     for (auto const& record : data)
     {
-        std::string txHash = ripple::strHex(record.txHash);
-        auto idx = record.transactionIndex;
-        auto ledgerSeq = record.ledgerSequence;
-
         for (auto const& a : record.accounts)
         {
             std::string acct = ripple::strHex(a);
             accountTxBuffer_ << "\\\\x" << acct << '\t'
-                             << std::to_string(ledgerSeq) << '\t'
-                             << std::to_string(idx) << '\t' << "\\\\x"
-                             << ripple::strHex(txHash) << '\n';
+                             << std::to_string(record.ledgerSequence) << '\t'
+                             << std::to_string(record.transactionIndex) << '\t'
+                             << "\\\\x" << ripple::strHex(record.txHash)
+                             << '\n';
         }
     }
 }
@@ -149,35 +146,30 @@ ripple::LedgerInfo
 parseLedgerInfo(PgResult const& res)
 {
     std::int64_t ledgerSeq = res.asBigInt(0, 0);
-    char const* hash = res.c_str(0, 1);
-    char const* prevHash = res.c_str(0, 2);
+    ripple::uint256 hash = res.asUInt256(0, 1);
+    ripple::uint256 prevHash = res.asUInt256(0, 2);
     std::int64_t totalCoins = res.asBigInt(0, 3);
     std::int64_t closeTime = res.asBigInt(0, 4);
     std::int64_t parentCloseTime = res.asBigInt(0, 5);
     std::int64_t closeTimeRes = res.asBigInt(0, 6);
     std::int64_t closeFlags = res.asBigInt(0, 7);
-    char const* accountHash = res.c_str(0, 8);
-    char const* txHash = res.c_str(0, 9);
+    ripple::uint256 accountHash = res.asUInt256(0, 8);
+    ripple::uint256 txHash = res.asUInt256(0, 9);
 
     using time_point = ripple::NetClock::time_point;
     using duration = ripple::NetClock::duration;
 
     ripple::LedgerInfo info;
-    if (!info.parentHash.parseHex(prevHash + 2))
-        throw std::runtime_error("parseLedgerInfo - error parsing parent hash");
-    if (!info.txHash.parseHex(txHash + 2))
-        throw std::runtime_error("parseLedgerInfo - error parsing tx map hash");
-    if (!info.accountHash.parseHex(accountHash + 2))
-        throw std::runtime_error(
-            "parseLedgerInfo - error parsing state map hash");
+    info.seq = ledgerSeq;
+    info.hash = hash;
+    info.parentHash = prevHash;
     info.drops = totalCoins;
     info.closeTime = time_point{duration{closeTime}};
     info.parentCloseTime = time_point{duration{parentCloseTime}};
     info.closeFlags = closeFlags;
     info.closeTimeResolution = duration{closeTimeRes};
-    info.seq = ledgerSeq;
-    if (!info.hash.parseHex(hash + 2))
-        throw std::runtime_error("parseLedgerInfo - error parsing ledger hash");
+    info.accountHash = accountHash;
+    info.txHash = txHash;
     info.validated = true;
     return info;
 }
@@ -253,10 +245,7 @@ PostgresBackend::fetchLedgerObject(
     auto res = pgQuery(sql.str().data());
     if (checkResult(res, 1))
     {
-        char const* object = res.c_str(0, 0);
-        std::string_view view{object};
-        std::vector<unsigned char> blob{view.front(), view.back()};
-        return blob;
+        return res.asUnHexedBlob(0, 0);
     }
 
     return {};
@@ -274,13 +263,7 @@ PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
     auto res = pgQuery(sql.str().data());
     if (checkResult(res, 3))
     {
-        char const* txn = res.c_str(0, 0);
-        char const* metadata = res.c_str(0, 1);
-        std::string_view txnView{txn};
-        std::string_view metadataView{metadata};
-        return {
-            {{txnView.front(), txnView.back()},
-             {metadataView.front(), metadataView.back()}}};
+        return {{res.asUnHexedBlob(0, 0), res.asUnHexedBlob(0, 1)}};
     }
 
     return {};
@@ -298,13 +281,7 @@ PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
         std::vector<TransactionAndMetadata> txns;
         for (size_t i = 0; i < numRows; ++i)
         {
-            char const* txn = res.c_str(0, 0);
-            char const* metadata = res.c_str(0, 1);
-            std::string_view txnView{txn};
-            std::string_view metadataView{metadata};
-            txns.push_back(
-                {{txnView.front(), txnView.back()},
-                 {metadataView.front(), metadataView.back()}});
+            txns.push_back({res.asUnHexedBlob(i, 0), res.asUnHexedBlob(i, 1)});
         }
         return txns;
     }
@@ -333,12 +310,7 @@ PostgresBackend::fetchLedgerPage(
         std::vector<LedgerObject> objects;
         for (size_t i = 0; i < numRows; ++i)
         {
-            ripple::uint256 key;
-            if (!key.parseHex(res.c_str(i, 0)))
-                throw std::runtime_error("Error parsing key from postgres");
-            char const* object = res.c_str(i, 1);
-            std::string_view view{object};
-            objects.push_back({std::move(key), {view.front(), view.back()}});
+            objects.push_back({res.asUInt256(i, 0), res.asUnHexedBlob(i, 1)});
         }
         if (numRows == limit)
             return {objects, objects[objects.size() - 1].key};
@@ -357,13 +329,13 @@ PostgresBackend::fetchBookOffers(
 {
     PgQuery pgQuery(pgPool_);
     std::stringstream sql;
-    sql << "SELECT key FROM"
-        << " (SELECT DISTINCT ON (key) * FROM books WHERE book = "
+    sql << "SELECT offer_key FROM"
+        << " (SELECT DISTINCT ON (offer_key) * FROM books WHERE book = "
         << "\'\\x" << ripple::strHex(book)
         << "\' AND ledger_seq <= " << std::to_string(ledgerSequence);
     if (cursor)
-        sql << " AND key > \'" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY key DESC, ledger_seq DESC)"
+        sql << " AND offer_key > \'" << ripple::strHex(*cursor) << "\'";
+    sql << " ORDER BY offer_key DESC, ledger_seq DESC)"
         << " sub WHERE NOT deleted"
         << " LIMIT " << std::to_string(limit);
     auto res = pgQuery(sql.str().data());
@@ -372,10 +344,7 @@ PostgresBackend::fetchBookOffers(
         std::vector<ripple::uint256> keys;
         for (size_t i = 0; i < numRows; ++i)
         {
-            ripple::uint256 key;
-            if (!key.parseHex(res.c_str(i, 0)))
-                throw std::runtime_error("Error parsing key from postgres");
-            keys.push_back(std::move(key));
+            keys.push_back(res.asUInt256(i, 0));
         }
         std::vector<Blob> blobs = fetchLedgerObjects(keys, ledgerSequence);
         std::vector<LedgerObject> results;
@@ -414,14 +383,8 @@ PostgresBackend::fetchTransactions(
         std::vector<TransactionAndMetadata> results;
         for (size_t i = 0; i < numRows; ++i)
         {
-            char const* txn = res.c_str(i, 0);
-            char const* metadata = res.c_str(i, 1);
-            std::string_view txnView{txn};
-            std::string_view metadataView{metadata};
-
             results.push_back(
-                {{txnView.front(), txnView.back()},
-                 {metadataView.front(), metadataView.back()}});
+                {res.asUnHexedBlob(i, 0), res.asUnHexedBlob(i, 1)});
         }
         return results;
     }
@@ -436,7 +399,7 @@ PostgresBackend::fetchLedgerObjects(
 {
     PgQuery pgQuery(pgPool_);
     std::stringstream sql;
-    sql << "SELECT object FROM objects WHERE";
+    sql << "SELECT DISTINCT ON(key) object FROM objects WHERE";
 
     bool first = true;
     for (auto const& key : keys)
@@ -444,27 +407,27 @@ PostgresBackend::fetchLedgerObjects(
         if (!first)
         {
             sql << " OR ";
-            first = false;
         }
         else
         {
             sql << " ( ";
+            first = false;
         }
         sql << " key = "
             << "\'\\x" << ripple::strHex(key) << "\'";
     }
     sql << " ) "
         << " AND ledger_seq <= " << std::to_string(sequence)
-        << " ORDER BY ledger_seq DESC LIMIT 1";
+        << " ORDER BY key, ledger_seq DESC";
+
+    BOOST_LOG_TRIVIAL(info) << sql.str();
     auto res = pgQuery(sql.str().data());
     if (size_t numRows = checkResult(res, 1))
     {
         std::vector<Blob> results;
         for (size_t i = 0; i < numRows; ++i)
         {
-            char const* object = res.c_str(i, 0);
-            std::string_view view{object};
-            results.push_back({view.front(), view.back()});
+            results.push_back(res.asUnHexedBlob(i, 0));
         }
         return results;
     }
@@ -483,7 +446,7 @@ PostgresBackend::fetchAccountTransactions(
     std::stringstream sql;
     sql << "SELECT hash, ledger_seq, transaction_index FROM "
            "account_transactions WHERE account = "
-        << ripple::strHex(account);
+        << "\'\\x" << ripple::strHex(account) << "\'";
     if (cursor)
         sql << " AND ledger_seq < " << cursor->ledgerSequence
             << " AND transaction_index < " << cursor->transactionIndex;
@@ -494,11 +457,7 @@ PostgresBackend::fetchAccountTransactions(
         std::vector<ripple::uint256> hashes;
         for (size_t i = 0; i < numRows; ++i)
         {
-            ripple::uint256 hash;
-            if (!hash.parseHex(res.c_str(i, 0)))
-                throw std::runtime_error(
-                    "Error parsing transaction hash from Postgres");
-            hashes.push_back(std::move(hash));
+            hashes.push_back(res.asUInt256(i, 0));
         }
 
         if (numRows == limit)
@@ -545,12 +504,12 @@ PostgresBackend::finishWrites() const
     if (abortWrite_)
         return false;
     PgQuery pg(pgPool_);
-    std::string objectsStr = objectsBuffer_.str();
-    if (objectsStr.size())
-        pg.bulkInsert("objects", objectsStr);
     pg.bulkInsert("transactions", transactionsBuffer_.str());
     pg.bulkInsert("books", booksBuffer_.str());
     pg.bulkInsert("account_transactions", accountTxBuffer_.str());
+    std::string objectsStr = objectsBuffer_.str();
+    if (objectsStr.size())
+        pg.bulkInsert("objects", objectsStr);
     auto res = pg("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
     {

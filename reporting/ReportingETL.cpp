@@ -72,10 +72,9 @@ ReportingETL::insertTransactions(
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : "
             << "Inserting transaction = " << sttx.getTransactionID();
-        ripple::uint256 nodestoreHash = sttx.getTransactionID();
 
         auto journal = ripple::debugLog();
-        accountTxData.emplace_back(txMeta, std::move(nodestoreHash), journal);
+        accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
         flatMapBackend_->writeTransaction(
             std::move(keyStr),
@@ -115,6 +114,8 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
     flatMapBackend_->startWrites();
+    flatMapBackend_->writeLedger(
+        lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
 
@@ -129,8 +130,6 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     if (!stopping_)
     {
         flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
-        flatMapBackend_->writeLedger(
-            lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     }
     flatMapBackend_->finishWrites();
     auto end = std::chrono::system_clock::now();

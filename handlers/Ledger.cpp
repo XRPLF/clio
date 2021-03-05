@@ -10,9 +10,14 @@ doLedger(boost::json::object const& request, BackendInterface const& backend)
         response["error"] = "Please specify a ledger index";
         return response;
     }
-    uint32_t ledgerSequence = request.at("ledger_index").as_int64();
+    auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
+    if (!ledgerSequence)
+    {
+        response["error"] = "Empty database";
+        return response;
+    }
 
-    auto lgrInfo = backend.fetchLedgerBySequence(ledgerSequence);
+    auto lgrInfo = backend.fetchLedgerBySequence(*ledgerSequence);
     if (!lgrInfo)
     {
         response["error"] = "ledger not found";
@@ -32,7 +37,7 @@ doLedger(boost::json::object const& request, BackendInterface const& backend)
         lgrInfo->parentCloseTime.time_since_epoch().count();
     header["close_time"] = lgrInfo->closeTime.time_since_epoch().count();
     header["close_time_resolution"] = lgrInfo->closeTimeResolution.count();
-    auto txns = backend.fetchAllTransactionsInLedger(ledgerSequence);
+    auto txns = backend.fetchAllTransactionsInLedger(*ledgerSequence);
     response["transactions"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonTransactions =
         response.at("transactions").as_array();

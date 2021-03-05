@@ -20,4 +20,9 @@ getJson(ripple::STBase const& obj);
 boost::json::object
 getJson(ripple::SLE const& sle);
 
+std::optional<uint32_t>
+ledgerSequenceFromRequest(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+
 #endif

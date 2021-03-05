@@ -19,11 +19,11 @@ async def account_info(ip, port, account, ledger):
             if ledger is None:
                 await ws.send(json.dumps({"command":"account_info","account":account}))
                 res = json.loads(await ws.recv())
-                print(res)
+                print(json.dumps(res,indent=4,sort_keys=True))
             else:
                 await ws.send(json.dumps({"command":"account_info","account":account, "ledger_index":int(ledger)}))
                 res = json.loads(await ws.recv())
-                print(res)
+                print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
@@ -33,7 +33,7 @@ async def account_tx(ip, port, account):
         async with websockets.connect(address) as ws:
             await ws.send(json.dumps({"command":"account_tx","account":account}))
             res = json.loads(await ws.recv())
-            print(res)
+            print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
@@ -43,7 +43,7 @@ async def tx(ip, port, tx_hash):
         async with websockets.connect(address) as ws:
             await ws.send(json.dumps({"command":"tx","transaction":tx_hash}))
             res = json.loads(await ws.recv())
-            print(res)
+            print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
@@ -54,7 +54,7 @@ async def ledger_data(ip, port, ledger, limit):
         async with websockets.connect(address) as ws:
             await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"limit":int(limit),"binary":True}))
             res = json.loads(await ws.recv())
-            print(res)
+            print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
@@ -102,14 +102,23 @@ async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, 
 
             await ws.send(json.dumps({"command":"book_offers","ledger_index":int(ledger), "taker_pays":taker_pays, "taker_gets":taker_gets}))
             res = json.loads(await ws.recv())
-            print(res)
+            print(json.dumps(res,indent=4,sort_keys=True))
                     
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+async def ledger(ip, port, ledger):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger)}))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res,indent=4,sort_keys=True))
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full", "book_offers"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full", "book_offers","ledger"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
@@ -143,6 +152,9 @@ def run(args):
     elif args.action == "ledger_data_full":
         asyncio.get_event_loop().run_until_complete(
                 ledger_data_full(args.ip, args.port, args.ledger))
+    elif args.action == "ledger":
+        asyncio.get_event_loop().run_until_complete(
+                ledger(args.ip, args.port, args.ledger))
     elif args.action == "book_offers":
         asyncio.get_event_loop().run_until_complete(
                 book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer))

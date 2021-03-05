@@ -731,14 +731,14 @@ CassandraBackend::open()
         setupPreparedStatements = true;
     }
 
-    work_.emplace(ioContext_);
-    ioThread_ = std::thread{[this]() { ioContext_.run(); }};
-    open_ = true;
-
     if (config_.contains("max_requests_outstanding"))
     {
         maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
     }
+    work_.emplace(ioContext_);
+    ioThread_ = std::thread{[this]() { ioContext_.run(); }};
+    open_ = true;
+
     BOOST_LOG_TRIVIAL(info) << "Opened database successfully";
 }
 }  // namespace Backend

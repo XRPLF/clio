@@ -89,7 +89,7 @@ buildResponse(
             return doAccountTx(request, backend);
             break;
         case ledger:
-            return doLedgerData(request, backend);
+            return doLedger(request, backend);
             break;
         case ledger_data:
             return doLedgerData(request, backend);
@@ -201,8 +201,9 @@ public:
         boost::json::value raw = boost::json::parse(msg);
         // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
         boost::json::object request = raw.as_object();
+        BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
         auto response = buildResponse(request, backend_);
-        BOOST_LOG_TRIVIAL(debug) << __func__ << response;
+        BOOST_LOG_TRIVIAL(trace) << __func__ << response;
         response_ = boost::json::serialize(response);
 
         // Echo the message

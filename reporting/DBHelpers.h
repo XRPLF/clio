@@ -33,17 +33,15 @@ struct AccountTransactionsData
     uint32_t ledgerSequence;
     uint32_t transactionIndex;
     ripple::uint256 txHash;
-    ripple::uint256 nodestoreHash;
 
     AccountTransactionsData(
         ripple::TxMeta& meta,
-        ripple::uint256&& nodestoreHash,
+        ripple::uint256 const& txHash,
         beast::Journal& j)
         : accounts(meta.getAffectedAccounts(j))
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
-        , txHash(meta.getTxID())
-        , nodestoreHash(std::move(nodestoreHash))
+        , txHash(txHash)
     {
     }
 };
@@ -67,18 +65,6 @@ getBook(std::string const& offer)
     }
     return book;
 }
-
-/// Write new ledger and transaction data to Postgres
-/// @param info Ledger Info to write
-/// @param accountTxData transaction data to write
-/// @param pgPool pool of Postgres connections
-/// @param j journal (for logging)
-/// @return whether the write succeeded
-bool
-writeToPostgres(
-    ripple::LedgerInfo const& info,
-    std::vector<AccountTransactionsData> const& accountTxData,
-    std::shared_ptr<PgPool> const& pgPool);
 
 inline ripple::LedgerInfo
 deserializeHeader(ripple::Slice data)

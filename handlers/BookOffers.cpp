@@ -94,8 +94,13 @@ doBookOffers(
 {
     std::cout << "enter" << std::endl;
     boost::json::object response;
-    uint32_t sequence = request.at("ledger_index").as_int64();
 
+    auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
+    if (!ledgerSequence)
+    {
+        response["error"] = "Empty database";
+        return response;
+    }
     if (!request.contains("taker_pays"))
     {
         response["error"] = "Missing field taker_pays";
@@ -306,7 +311,7 @@ doBookOffers(
     ripple::uint256 bookBase = getBookBase(book);
     auto start = std::chrono::system_clock::now();
     auto [offers, retCursor] =
-        backend.fetchBookOffers(bookBase, sequence, limit, cursor);
+        backend.fetchBookOffers(bookBase, *ledgerSequence, limit, cursor);
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning) << "Time loading books from Postgres: "

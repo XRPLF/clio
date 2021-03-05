@@ -20,6 +20,7 @@
 #ifndef RIPPLE_CORE_PG_H_INCLUDED
 #define RIPPLE_CORE_PG_H_INCLUDED
 
+#include <ripple/basics/StringUtilities.h>
 #include <ripple/basics/chrono.h>
 #include <ripple/ledger/ReadView.h>
 #include <boost/icl/closed_interval.hpp>
@@ -35,6 +36,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -135,7 +137,26 @@ public:
     char const*
     c_str(int ntuple = 0, int nfield = 0) const
     {
-        return PQgetvalue(result_.get(), ntuple, nfield);
+        return PQgetvalue(result_.get(), ntuple, nfield) + 2;
+    }
+
+    std::vector<unsigned char>
+    asUnHexedBlob(int ntuple = 0, int nfield = 0) const
+    {
+        std::string_view view{c_str(ntuple, nfield)};
+        auto res = ripple::strUnHex(view.size(), view.cbegin(), view.cend());
+        if (res)
+            return *res;
+        return {};
+    }
+
+    ripple::uint256
+    asUInt256(int ntuple = 0, int nfield = 0) const
+    {
+        ripple::uint256 val;
+        if (!val.parseHex(c_str(ntuple, nfield)))
+            throw std::runtime_error("Pg - failed to parse hex into uint256");
+        return val;
     }
 
     /** Return field as equivalent to Postgres' INT type (32 bit signed).
