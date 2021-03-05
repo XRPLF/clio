@@ -115,7 +115,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
     flatMapBackend_->startWrites();
     flatMapBackend_->writeLedger(
-        lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
+        lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
 

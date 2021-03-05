@@ -52,7 +52,7 @@ async def ledger_data(ip, port, ledger, limit):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"limit":int(limit),"binary":True}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":True}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
@@ -68,14 +68,14 @@ async def ledger_data_full(ip, port, ledger):
                 if marker is None:
                     await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":True}))
                     res = json.loads(await ws.recv())
-                    print(res)
                     
                 else:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"marker":marker}))
+
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "binary":True}))
                     res = json.loads(await ws.recv())
                     
-                if "marker" in res:
-                    marker = int(res["marker"])
+                if "cursor" in res:
+                    marker = res["cursor"]
                     print(marker)
                 elif "result" in res and "marker" in res["result"]:
                     marker = res["result"]["marker"]
@@ -108,6 +108,7 @@ async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, 
         print(e)
 
 async def ledger(ip, port, ledger):
+
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
@@ -116,19 +117,29 @@ async def ledger(ip, port, ledger):
             print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
         print(e)
+async def ledger_range(ip, port):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({"command":"ledger_range"}))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res,indent=4,sort_keys=True))
+            return res["ledger_index_max"]
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full", "book_offers","ledger"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
 parser.add_argument('--account', default="rLC64xxNif3GiY9FQnbaM4kcE6VvDhwRod")
 parser.add_argument('--ledger')
 parser.add_argument('--limit', default='200')
-parser.add_argument('--taker_pays_issuer')
-parser.add_argument('--taker_pays_currency')
+parser.add_argument('--taker_pays_issuer',default='rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B')
+parser.add_argument('--taker_pays_currency',default='USD')
 parser.add_argument('--taker_gets_issuer')
-parser.add_argument('--taker_gets_currency')
+parser.add_argument('--taker_gets_currency',default='XRP')
 
 
 
@@ -136,6 +147,8 @@ parser.add_argument('--taker_gets_currency')
 args = parser.parse_args()
 
 def run(args):
+    if(args.ledger is None):
+        args.ledger = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port));
     asyncio.set_event_loop(asyncio.new_event_loop())
     if args.action == "account_info":
         asyncio.get_event_loop().run_until_complete(
@@ -155,6 +168,9 @@ def run(args):
     elif args.action == "ledger":
         asyncio.get_event_loop().run_until_complete(
                 ledger(args.ip, args.port, args.ledger))
+    elif args.action == "ledger_range":
+        asyncio.get_event_loop().run_until_complete(
+                ledger_range(args.ip, args.port))
     elif args.action == "book_offers":
         asyncio.get_event_loop().run_until_complete(
                 book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer))

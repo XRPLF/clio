@@ -70,7 +70,7 @@ doLedgerData(
     std::vector<Backend::LedgerObject>& results = page.objects;
     std::optional<ripple::uint256> const& returnedCursor = page.cursor;
     BOOST_LOG_TRIVIAL(debug)
-        << "doUpperBound returned " << results.size() << " results";
+        << __func__ << " number of results = " << results.size();
     for (auto const& [key, object] : results)
     {
         ripple::STLedgerEntry sle{

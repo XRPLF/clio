@@ -229,6 +229,7 @@ std::vector<TransactionAndMetadata>
 CassandraBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
 {
     CassandraStatement statement{selectAllTransactionsInLedger_};
+    statement.bindInt(ledgerSequence);
     CassandraResult result = executeSyncRead(statement);
     if (!result)
     {
@@ -351,7 +352,7 @@ CassandraBackend::open()
         throw std::runtime_error(ss.str());
     }
 
-    cass_cluster_set_request_timeout(cluster, 2000);
+    cass_cluster_set_request_timeout(cluster, 10000);
 
     rc = cass_cluster_set_queue_size_io(
         cluster,

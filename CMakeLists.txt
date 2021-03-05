@@ -67,6 +67,7 @@ target_sources(reporting PRIVATE
     handlers/AccountTx.cpp
     handlers/LedgerData.cpp
     handlers/BookOffers.cpp
+    handlers/LedgerRange.cpp
     handlers/Ledger.cpp)
 
 

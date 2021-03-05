@@ -41,12 +41,14 @@ enum RPCCommand {
     ledger,
     account_info,
     ledger_data,
-    book_offers
+    book_offers,
+    ledger_range
 };
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
     {"account_tx", account_tx},
     {"ledger", ledger},
+    {"ledger_range", ledger_range},
     {"account_info", account_info},
     {"ledger_data", ledger_data},
     {"book_offers", book_offers}};
@@ -71,6 +73,10 @@ doBookOffers(
     BackendInterface const& backend);
 boost::json::object
 doLedger(boost::json::object const& request, BackendInterface const& backend);
+boost::json::object
+doLedgerRange(
+    boost::json::object const& request,
+    BackendInterface const& backend);
 
 boost::json::object
 buildResponse(
@@ -90,6 +96,9 @@ buildResponse(
             break;
         case ledger:
             return doLedger(request, backend);
+            break;
+        case ledger_range:
+            return doLedgerRange(request, backend);
             break;
         case ledger_data:
             return doLedgerData(request, backend);

@@ -293,7 +293,7 @@ doBookOffers(
         return response;
     }
 
-    std::uint32_t limit = 500;
+    std::uint32_t limit = 200;
     if (request.contains("limit") and
         request.at("limit").kind() == boost::json::kind::int64)
         limit = request.at("limit").as_int64();

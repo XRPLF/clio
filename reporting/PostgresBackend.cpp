@@ -66,14 +66,13 @@ PostgresBackend::writeLedgerObject(
 {
     if (abortWrite_)
         return;
-    static int numRows = 0;
-    numRows++;
     objectsBuffer_ << "\\\\x" << ripple::strHex(key) << '\t'
                    << std::to_string(seq) << '\t' << "\\\\x"
                    << ripple::strHex(blob) << '\n';
+    numRowsInObjectsBuffer_++;
     // If the buffer gets too large, the insert fails. Not sure why. So we
     // insert after 1 million records
-    if (numRows % 1000000 == 0)
+    if (numRowsInObjectsBuffer_ % 1000000 == 0)
     {
         PgQuery pgQuery(pgPool_);
         pgQuery.bulkInsert("objects", objectsBuffer_.str());
@@ -205,6 +204,7 @@ PostgresBackend::fetchLedgerRange() const
         return {};
 
     std::string res{range.c_str()};
+    BOOST_LOG_TRIVIAL(debug) << "range is = " << res;
     try
     {
         size_t minVal = 0;
@@ -300,7 +300,7 @@ PostgresBackend::fetchLedgerPage(
         << " (SELECT DISTINCT ON (key) * FROM objects"
         << " WHERE ledger_seq <= " << std::to_string(ledgerSequence);
     if (cursor)
-        sql << " AND key > \'x\\" << ripple::strHex(*cursor) << "\'";
+        sql << " AND key > \'\\x" << ripple::strHex(*cursor) << "\'";
     sql << " ORDER BY key, ledger_seq DESC) sub"
         << " WHERE object != \'\\x\'"
         << " LIMIT " << std::to_string(limit);
@@ -496,6 +496,7 @@ PostgresBackend::startWrites() const
         msg << "Postgres error creating transaction: " << res.msg();
         throw std::runtime_error(msg.str());
     }
+    numRowsInObjectsBuffer_ = 0;
 }
 
 bool
@@ -525,6 +526,7 @@ PostgresBackend::finishWrites() const
     booksBuffer_.clear();
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
+    numRowsInObjectsBuffer_ = 0;
     return true;
 }
 

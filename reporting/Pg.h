@@ -137,13 +137,13 @@ public:
     char const*
     c_str(int ntuple = 0, int nfield = 0) const
     {
-        return PQgetvalue(result_.get(), ntuple, nfield) + 2;
+        return PQgetvalue(result_.get(), ntuple, nfield);
     }
 
     std::vector<unsigned char>
     asUnHexedBlob(int ntuple = 0, int nfield = 0) const
     {
-        std::string_view view{c_str(ntuple, nfield)};
+        std::string_view view{c_str(ntuple, nfield) + 2};
         auto res = ripple::strUnHex(view.size(), view.cbegin(), view.cend());
         if (res)
             return *res;
@@ -154,7 +154,7 @@ public:
     asUInt256(int ntuple = 0, int nfield = 0) const
     {
         ripple::uint256 val;
-        if (!val.parseHex(c_str(ntuple, nfield)))
+        if (!val.parseHex(c_str(ntuple, nfield) + 2))
             throw std::runtime_error("Pg - failed to parse hex into uint256");
         return val;
     }
