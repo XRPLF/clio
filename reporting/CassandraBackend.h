@@ -542,6 +542,7 @@ private:
     CassandraPreparedStatement insertTransaction_;
     CassandraPreparedStatement selectTransaction_;
     CassandraPreparedStatement selectAllTransactionsInLedger_;
+    CassandraPreparedStatement selectAllTransactionHashesInLedger_;
     CassandraPreparedStatement selectObject_;
     CassandraPreparedStatement selectLedgerPageKeys_;
     CassandraPreparedStatement selectLedgerPage_;
@@ -806,6 +807,9 @@ public:
     std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(uint32_t ledgerSequence) const override;
 
+    std::vector<ripple::uint256>
+    fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
+
     // Synchronously fetch the object with key key and store the result in
     // pno
     // @param key the key of the object
@@ -859,7 +863,7 @@ public:
             BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
             return {};
         }
-        return {{result.getBytes(), result.getBytes()}};
+        return {{result.getBytes(), result.getBytes(), result.getUInt32()}};
     }
     LedgerPage
     fetchLedgerPage2(
@@ -1212,8 +1216,8 @@ public:
             , isDeleted(isDeleted)
             , book(std::move(book))
         {
-            if (isCreated or isDeleted)
-                ++refs;
+            // if (isCreated or isDeleted)
+            //    ++refs;
             if (book)
                 ++refs;
         }

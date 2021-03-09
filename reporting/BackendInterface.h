@@ -19,6 +19,7 @@ struct TransactionAndMetadata
 {
     Blob transaction;
     Blob metadata;
+    uint32_t ledgerSequence;
 };
 
 struct AccountTransactionsCursor
@@ -56,6 +57,9 @@ public:
 
     virtual std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(uint32_t ledgerSequence) const = 0;
+
+    virtual std::vector<ripple::uint256>
+    fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const = 0;
 
     virtual LedgerPage
     fetchLedgerPage(

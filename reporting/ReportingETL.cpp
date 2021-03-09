@@ -643,5 +643,7 @@ ReportingETL::ReportingETL(
           ioc)
 {
     flatMapBackend_->open();
+    if (config.contains("start_sequence"))
+        startSequence_ = config.at("start_sequence").as_int64();
 }
 

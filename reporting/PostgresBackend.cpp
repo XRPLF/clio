@@ -263,7 +263,10 @@ PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
     auto res = pgQuery(sql.str().data());
     if (checkResult(res, 3))
     {
-        return {{res.asUnHexedBlob(0, 0), res.asUnHexedBlob(0, 1)}};
+        return {
+            {res.asUnHexedBlob(0, 0),
+             res.asUnHexedBlob(0, 1),
+             res.asBigInt(0, 2)}};
     }
 
     return {};
@@ -281,9 +284,32 @@ PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
         std::vector<TransactionAndMetadata> txns;
         for (size_t i = 0; i < numRows; ++i)
         {
-            txns.push_back({res.asUnHexedBlob(i, 0), res.asUnHexedBlob(i, 1)});
+            txns.push_back(
+                {res.asUnHexedBlob(i, 0),
+                 res.asUnHexedBlob(i, 1),
+                 res.asBigInt(i, 2)});
         }
         return txns;
+    }
+    return {};
+}
+std::vector<ripple::uint256>
+PostgresBackend::fetchAllTransactionHashesInLedger(
+    uint32_t ledgerSequence) const
+{
+    PgQuery pgQuery(pgPool_);
+    std::stringstream sql;
+    sql << "SELECT hash FROM transactions WHERE "
+        << "ledger_seq = " << std::to_string(ledgerSequence);
+    auto res = pgQuery(sql.str().data());
+    if (size_t numRows = checkResult(res, 3))
+    {
+        std::vector<ripple::uint256> hashes;
+        for (size_t i = 0; i < numRows; ++i)
+        {
+            hashes.push_back(res.asUInt256(i, 0));
+        }
+        return hashes;
     }
     return {};
 }
@@ -384,7 +410,9 @@ PostgresBackend::fetchTransactions(
         for (size_t i = 0; i < numRows; ++i)
         {
             results.push_back(
-                {res.asUnHexedBlob(i, 0), res.asUnHexedBlob(i, 1)});
+                {res.asUnHexedBlob(i, 0),
+                 res.asUnHexedBlob(i, 1),
+                 res.asBigInt(i, 2)});
         }
         return results;
     }

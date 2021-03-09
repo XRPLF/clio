@@ -178,7 +178,8 @@ flatMapReadCallback(CassFuture* fut, void* cbData)
 
     if (!!result)
     {
-        requestParams.result = {result.getBytes(), result.getBytes()};
+        requestParams.result = {
+            result.getBytes(), result.getBytes(), result.getUInt32()};
     }
 }
 
@@ -239,9 +240,29 @@ CassandraBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
     std::vector<TransactionAndMetadata> txns;
     do
     {
-        txns.push_back({result.getBytes(), result.getBytes()});
+        txns.push_back(
+            {result.getBytes(), result.getBytes(), result.getUInt32()});
     } while (result.nextRow());
     return txns;
+}
+std::vector<ripple::uint256>
+CassandraBackend::fetchAllTransactionHashesInLedger(
+    uint32_t ledgerSequence) const
+{
+    CassandraStatement statement{selectAllTransactionHashesInLedger_};
+    statement.bindInt(ledgerSequence);
+    CassandraResult result = executeSyncRead(statement);
+    if (!result)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+        return {};
+    }
+    std::vector<ripple::uint256> hashes;
+    do
+    {
+        hashes.push_back(result.getUInt256());
+    } while (result.nextRow());
+    return hashes;
 }
 
 void
@@ -622,17 +643,23 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "SELECT transaction,metadata FROM " << tablePrefix
-              << "transactions"
+        query << "SELECT transaction, metadata, ledger_sequence FROM "
+              << tablePrefix << "transactions"
               << " WHERE hash = ?";
         if (!selectTransaction_.prepareStatement(query, session_.get()))
             continue;
 
         query = {};
-        query << "SELECT transaction,metadata FROM " << tablePrefix
-              << "transactions"
+        query << "SELECT transaction, metadata, ledger_sequence FROM "
+              << tablePrefix << "transactions"
               << " WHERE ledger_sequence = ?";
         if (!selectAllTransactionsInLedger_.prepareStatement(
+                query, session_.get()))
+            continue;
+        query = {};
+        query << "SELECT hash FROM " << tablePrefix << "transactions"
+              << " WHERE ledger_sequence = ?";
+        if (!selectAllTransactionHashesInLedger_.prepareStatement(
                 query, session_.get()))
             continue;
 

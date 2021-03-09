@@ -56,6 +56,8 @@ doAccountInfo(
         response["error"] = "missing account field";
         return response;
     }
+    bool binary =
+        request.contains("binary") ? request.at("binary").as_bool() : false;
     auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
     if (!ledgerSequence)
     {
@@ -98,7 +100,10 @@ doAccountInfo(
     else
     {
         response["success"] = "fetched successfully!";
-        response["object"] = getJson(sle);
+        if (!binary)
+            response["object"] = getJson(sle);
+        else
+            response["object"] = ripple::strHex(*dbResponse);
         response["db_time"] = time;
         return response;
     }

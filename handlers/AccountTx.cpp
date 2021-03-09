@@ -144,6 +144,8 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         response["error"] = "account malformed";
         return response;
     }
+    bool binary =
+        request.contains("binary") ? request.at("binary").as_bool() : false;
 
     std::optional<Backend::AccountTransactionsCursor> cursor;
     if (request.contains("cursor"))
@@ -179,9 +181,18 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
     for (auto const& txnPlusMeta : blobs)
     {
         boost::json::object obj;
-        auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
-        obj["transaction"] = getJson(*txn);
-        obj["metadata"] = getJson(*meta);
+        if (!binary)
+        {
+            auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
+            obj["transaction"] = getJson(*txn);
+            obj["metadata"] = getJson(*meta);
+        }
+        else
+        {
+            obj["transaction"] = ripple::strHex(txnPlusMeta.transaction);
+            obj["metadata"] = ripple::strHex(txnPlusMeta.metadata);
+        }
+        obj["ledger_sequence"] = txnPlusMeta.ledgerSequence;
         txns.push_back(obj);
     }
     response["transactions"] = txns;

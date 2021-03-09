@@ -58,9 +58,20 @@ doTx(boost::json::object const& request, BackendInterface const& backend)
         return response;
     }
 
-    auto [sttx, meta] = deserializeTxPlusMeta(dbResponse.value());
-    response["transaction"] = getJson(*sttx);
-    response["meta"] = getJson(*meta);
+    bool binary =
+        request.contains("binary") ? request.at("binary").as_bool() : false;
+    if (!binary)
+    {
+        auto [sttx, meta] = deserializeTxPlusMeta(dbResponse.value());
+        response["transaction"] = getJson(*sttx);
+        response["metadata"] = getJson(*meta);
+    }
+    else
+    {
+        response["transaction"] = ripple::strHex(dbResponse->transaction);
+        response["metadata"] = ripple::strHex(dbResponse->metadata);
+    }
+    response["ledger_sequence"] = dbResponse->ledgerSequence;
     return response;
 }
 
