@@ -34,6 +34,78 @@ def compareAccountInfo(aldous, p2p):
         print(aldous)
         print(p2p)
 
+def compareTx(aldous, p2p):
+    p2p = p2p["result"]
+    if aldous["transaction"] != p2p["tx"]:
+        print("Transaction mismatch")
+        print(aldous["transaction"])
+        print(p2p["tx"])
+        return False
+    if aldous["metadata"] != p2p["meta"]:
+        print("Metadata mismatch")
+        print(aldous["metadata"])
+        print(p2p["metadata"])
+        return False
+    if aldous["ledger_sequence"] != p2p["ledger_sequence"]:
+        print("ledger sequence mismatch")
+        print(aldous["ledger_sequence"])
+        print(p2p["ledger_sequence"])
+    print("Responses match!!")
+    return True
+    
+def compareAccountTx(aldous, p2p):
+    p2p = p2p["result"]
+    p2pTxns = []
+    p2pMetas = []
+    p2pLedgerSequences = []
+    for x in p2p["transactions"]:
+        p2pTxns.append(x["tx_blob"])
+        p2pMetas.append(x["meta"])
+        p2pLedgerSequences.append(x["ledger_sequence"])
+    aldousTxns = []
+    aldousMetas = []
+    aldousLedgerSequences = []
+    for x in aldous["transactions"]:
+        aldousTxns.append(x["transaction"])
+        aldousMetas.append(x["metadata"])
+        aldousLedgerSequences.append(x["ledger_sequence"])
+
+    p2pTxns.sort()
+    p2pMetas.sort()
+    p2pLedgerSequences.sort()
+    aldousTxns.sort()
+    aldousMetas.sort()
+    aldousLedgerSequences.sort()
+    if p2pTxns == aldousTxns and p2pMetas == aldousMetas and p2pLedgerSequences == aldousLedgerSequences:
+        print("Responses match!!!")
+    else:
+        print("Mismatch responses")
+        print(aldous)
+        print(p2p)
+
+def compareLedgerData(aldous, p2p):
+    aldous[0].sort()
+    aldous[1].sort()
+    p2p[0].sort()
+    p2p[1].sort()
+    if aldous[0] != p2p[0]:
+        print("Keys mismatch :(")
+        print(len(aldous[0]))
+        print(len(p2p[0]))
+        return False
+    if aldous[1] != p2p[1]:
+        print("Objects mismatch :(")
+        print(len(aldous[1]))
+        print(len(p2p[1]))
+        return False
+    print("Responses match!!!!")
+
+
+
+    
+
+
+
 
 
 async def account_info(ip, port, account, ledger, binary):
@@ -53,13 +125,26 @@ async def account_info(ip, port, account, ledger, binary):
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
-async def account_tx(ip, port, account, binary):
+def getMinAndMax(res):
+    minSeq = None
+    maxSeq = None
+    for x in res["transactions"]:
+        seq = int(x["ledger_sequence"])
+        if minSeq is None or seq < minSeq:
+            minSeq = seq
+        if maxSeq is None or seq > maxSeq:
+            maxSeq = seq
+    return (minSeq,maxSeq)
+    
+
+async def account_tx(ip, port, account, binary, minLedger,maxLedger):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary)}))
+            await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"ledger_index_min":int(minLedger),"ledger_index_max":int(maxLedger)}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            return res
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
@@ -84,10 +169,13 @@ async def ledger_data(ip, port, ledger, limit, binary):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+
+
 async def ledger_data_full(ip, port, ledger, binary):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
-        
+        blobs = []
+        keys = []
         async with websockets.connect(address) as ws:
             marker = None
             while True:
@@ -100,6 +188,15 @@ async def ledger_data_full(ip, port, ledger, binary):
                     await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "binary":bool(binary)}))
                     res = json.loads(await ws.recv())
                     
+
+                objects = []
+                if "result" in res:
+                    objects = res["result"]["state"]
+                else:
+                    objects = res["objects"]
+                for x in objects:
+                    blobs.append(x["data"])
+                    keys.append(x["index"])
                 if "cursor" in res:
                     marker = res["cursor"]
                     print(marker)
@@ -108,7 +205,9 @@ async def ledger_data_full(ip, port, ledger, binary):
                     print(marker)
                 else:
                     print("done")
-                    break
+                    return (keys, blobs)
+
+
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
@@ -171,6 +270,7 @@ def compareLedger(aldous, p2p):
 
 
 def getHashes(res):
+    print(json.dumps(res,indent=4,sort_keys=True))
     if "result" in res:
         res = res["result"]["ledger"]
 
@@ -180,23 +280,24 @@ def getHashes(res):
             hashes.append(x["hash"])
         elif "transaction" in x and "hash" in x["transaction"]:
             hashes.append(x["transaction"]["hash"])
+        else:
+            hashes.append(x)
     return hashes
 
 
 async def ledger(ip, port, ledger, binary, transactions, expand):
 
     address = 'ws://' + str(ip) + ':' + str(port)
-    hashes = []
     try:
         async with websockets.connect(address) as ws:
             await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":bool(binary), "transactions":bool(transactions),"expand":bool(expand)}))
             res = json.loads(await ws.recv())
-            print(res)
+            print(json.dumps(res,indent=4,sort_keys=True))
             return res
 
     except websockets.exceptions.connectionclosederror as e:
         print(e)
-    return hashes
+
 async def ledger_range(ip, port):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
@@ -207,7 +308,7 @@ async def ledger_range(ip, port):
             if "error" in res:
                 await ws.send(json.dumps({"command":"server_info"}))
                 res = json.loads(await ws.recv())
-                print(res)
+                print(json.dumps(res,indent=4,sort_keys=True))
                 return res["result"]["info"]["validated_ledger"]["seq"]
             return res["ledger_index_max"]
     except websockets.exceptions.connectionclosederror as e:
@@ -254,8 +355,14 @@ def run(args):
         asyncio.get_event_loop().run_until_complete(
                 tx(args.ip, args.port, args.hash, args.binary))
     elif args.action == "account_tx":
-        asyncio.get_event_loop().run_until_complete(
+        res = asyncio.get_event_loop().run_until_complete(
                 account_tx(args.ip, args.port, args.account, args.binary))
+        if args.verify:
+            minMax = getMinAndMax(res)
+            res2 = asyncio.get_event_loop().run_until_complete(
+                    account_tx(args.ip, args.port, args.account, args.binary, minMax[0],minMax[1]))
+            print(compareAccountTx(res,res2))
+
     elif args.action == "ledger_data":
         asyncio.get_event_loop().run_until_complete(
                 ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary))

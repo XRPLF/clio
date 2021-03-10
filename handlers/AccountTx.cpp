@@ -144,6 +144,12 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         response["error"] = "account malformed";
         return response;
     }
+    auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
+    if (!ledgerSequence)
+    {
+        response["error"] = "Empty database";
+        return response;
+    }
     bool binary =
         request.contains("binary") ? request.at("binary").as_bool() : false;
 
@@ -180,6 +186,13 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         backend.fetchAccountTransactions(*account, limit, cursor);
     for (auto const& txnPlusMeta : blobs)
     {
+        if (txnPlusMeta.ledgerSequence > ledgerSequence)
+        {
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__
+                << " skipping over transactions from incomplete ledger";
+            continue;
+        }
         boost::json::object obj;
         if (!binary)
         {
