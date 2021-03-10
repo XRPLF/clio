@@ -46,6 +46,7 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
 
     processAsyncWriteResponse(std::move(requestParams), fut, func);
 }
+
 void
 flatMapWriteBookCallback(CassFuture* fut, void* cbData)
 {
@@ -56,6 +57,7 @@ flatMapWriteBookCallback(CassFuture* fut, void* cbData)
     };
     processAsyncWriteResponse(std::move(requestParams), fut, func);
 }
+/*
 
 void
 retryWriteKey(CassandraBackend::WriteCallbackData& requestParams, bool isRetry)
@@ -74,6 +76,7 @@ flatMapWriteKeyCallback(CassFuture* fut, void* cbData)
         *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
     processAsyncWriteResponse(std::move(requestParams), fut, retryWriteKey);
 }
+
 void
 flatMapGetCreatedCallback(CassFuture* fut, void* cbData)
 {
@@ -120,6 +123,7 @@ flatMapGetCreatedCallback(CassFuture* fut, void* cbData)
         backend.writeDeletedKey(requestParams, false);
     }
 }
+*/
 void
 flatMapWriteTransactionCallback(CassFuture* fut, void* cbData)
 {

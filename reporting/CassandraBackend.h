@@ -743,8 +743,6 @@ public:
                 this, ledgerInfo.seq, std::move(header));
         WriteLedgerHashCallbackData* hashCb = new WriteLedgerHashCallbackData(
             this, ledgerInfo.hash, ledgerInfo.seq);
-        ++numRequestsOutstanding_;
-        ++numRequestsOutstanding_;
         writeLedgerHeader(*headerCb, false);
         writeLedgerHash(*hashCb, false);
         ledgerSequence_ = ledgerInfo.seq;
@@ -1207,17 +1205,15 @@ public:
             std::string&& blob,
             bool isCreated,
             bool isDeleted,
-            std::optional<ripple::uint256>&& book)
+            std::optional<ripple::uint256>&& inBook)
             : backend(f)
             , key(std::move(key))
             , sequence(sequence)
             , blob(std::move(blob))
             , isCreated(isCreated)
             , isDeleted(isDeleted)
-            , book(std::move(book))
+            , book(std::move(inBook))
         {
-            // if (isCreated or isDeleted)
-            //    ++refs;
             if (book)
                 ++refs;
         }
@@ -1232,8 +1228,8 @@ public:
 
         WriteAccountTxCallbackData(
             CassandraBackend const* f,
-            AccountTransactionsData&& data)
-            : backend(f), data(std::move(data)), refs(data.accounts.size())
+            AccountTransactionsData&& in)
+            : backend(f), data(std::move(in)), refs(data.accounts.size())
         {
         }
     };
@@ -1251,6 +1247,7 @@ public:
         }
     }
 
+    /*
     void
     writeDeletedKey(WriteCallbackData& data, bool isRetry) const
     {
@@ -1282,6 +1279,7 @@ public:
                 statement, flatMapGetCreatedCallback, data, isRetry);
         }
     }
+    */
 
     void
     writeBook(WriteCallbackData& data, bool isRetry) const
@@ -1307,6 +1305,7 @@ public:
         std::optional<ripple::uint256>&& book) const override
     {
         BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
+        bool hasBook = book.has_value();
         WriteCallbackData* data = new WriteCallbackData(
             this,
             std::move(key),
@@ -1316,15 +1315,8 @@ public:
             isDeleted,
             std::move(book));
 
-        ++numRequestsOutstanding_;
-        // if (isCreated || isDeleted)
-        //    ++numRequestsOutstanding_;
-        if (book)
-            ++numRequestsOutstanding_;
         write(*data, false);
-        // if (isCreated || isDeleted)
-        //    writeKey(*data, false);
-        if (book)
+        if (hasBook)
             writeBook(*data, false);
     }
 
@@ -1334,7 +1326,6 @@ public:
     {
         for (auto& record : data)
         {
-            numRequestsOutstanding_ += record.accounts.size();
             WriteAccountTxCallbackData* cbData =
                 new WriteAccountTxCallbackData(this, std::move(record));
             writeAccountTx(*cbData, false);
@@ -1413,7 +1404,6 @@ public:
             std::move(transaction),
             std::move(metadata));
 
-        ++numRequestsOutstanding_;
         writeTransaction(*data, false);
     }
 
@@ -1427,16 +1417,7 @@ public:
     {
         std::unique_lock<std::mutex> lck(syncMutex_);
 
-        syncCv_.wait(lck, [this]() { return numRequestsOutstanding_ == 0; });
-    }
-
-    void
-    finishAsyncWrite() const
-    {
-        --numRequestsOutstanding_;
-        throttleCv_.notify_all();
-        if (numRequestsOutstanding_ == 0)
-            syncCv_.notify_all();
+        syncCv_.wait(lck, [this]() { return finishedAllRequests(); });
     }
 
     boost::asio::io_context&
@@ -1467,22 +1448,70 @@ public:
     friend void
     flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
 
-    void
-    waitIfNeccessary(bool isRetry) const
+    inline void
+    incremementOutstandingRequestCount() const
     {
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!isRetry && numRequestsOutstanding_ > maxRequestsOutstanding)
+            if (!canAddRequest())
             {
                 BOOST_LOG_TRIVIAL(trace)
                     << __func__ << " : "
                     << "Max outstanding requests reached. "
                     << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() {
-                    return numRequestsOutstanding_ < maxRequestsOutstanding;
-                });
+                throttleCv_.wait(lck, [this]() { return canAddRequest(); });
             }
         }
+        ++numRequestsOutstanding_;
+    }
+
+    inline void
+    decrementOutstandingRequestCount() const
+    {
+        // sanity check
+        if (numRequestsOutstanding_ == 0)
+        {
+            assert(false);
+            throw std::runtime_error("decrementing num outstanding below 0");
+        }
+        size_t cur = (--numRequestsOutstanding_);
+        // sanity check
+        if (!canAddRequest())
+        {
+            assert(false);
+            throw std::runtime_error(
+                "decremented num outstanding but can't add more");
+        }
+        {
+            // mutex lock required to prevent race condition around spurious
+            // wakeup
+            std::lock_guard lck(throttleMutex_);
+            throttleCv_.notify_one();
+        }
+        if (cur == 0)
+        {
+            // mutex lock required to prevent race condition around spurious
+            // wakeup
+            std::lock_guard lck(syncMutex_);
+            syncCv_.notify_one();
+        }
+    }
+
+    inline bool
+    canAddRequest() const
+    {
+        return numRequestsOutstanding_ < maxRequestsOutstanding;
+    }
+    inline bool
+    finishedAllRequests() const
+    {
+        return numRequestsOutstanding_ == 0;
+    }
+
+    void
+    finishAsyncWrite() const
+    {
+        decrementOutstandingRequestCount();
     }
 
     template <class T, class S>
@@ -1506,7 +1535,8 @@ public:
         S& callbackData,
         bool isRetry) const
     {
-        waitIfNeccessary(isRetry);
+        if (!isRetry)
+            incremementOutstandingRequestCount();
         executeAsyncHelper(statement, callback, callbackData);
     }
     template <class T, class S>
