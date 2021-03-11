@@ -209,7 +209,13 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         txns.push_back(obj);
     }
     response["transactions"] = txns;
-    response["cursor"] = {};
+    if (retCursor)
+    {
+        boost::json::object cursorJson;
+        cursorJson["ledger_sequence"] = retCursor->ledgerSequence;
+        cursorJson["transaction_index"] = retCursor->transactionIndex;
+        response["cursor"] = cursorJson;
+    }
     return response;
 }
 

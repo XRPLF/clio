@@ -12,7 +12,7 @@ private:
     mutable std::stringstream transactionsBuffer_;
     mutable std::stringstream booksBuffer_;
     mutable std::stringstream accountTxBuffer_;
-    mutable bool abortWrite_ = false;
+    mutable ripple::LedgerInfo ledgerHeader_;
 
 public:
     std::shared_ptr<PgPool> pgPool_;

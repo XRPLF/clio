@@ -12,35 +12,13 @@ PostgresBackend::writeLedger(
     std::string&& ledgerHeader,
     bool isFirst) const
 {
-    PgQuery pgQuery(pgPool_);
-    BOOST_LOG_TRIVIAL(debug) << __func__;
-    auto cmd = boost::format(
-        R"(INSERT INTO ledgers
-           VALUES (%u,'\x%s', '\x%s',%u,%u,%u,%u,%u,'\x%s','\x%s'))");
-
-    auto ledgerInsert = boost::str(
-        cmd % ledgerInfo.seq % ripple::strHex(ledgerInfo.hash) %
-        ripple::strHex(ledgerInfo.parentHash) % ledgerInfo.drops.drops() %
-        ledgerInfo.closeTime.time_since_epoch().count() %
-        ledgerInfo.parentCloseTime.time_since_epoch().count() %
-        ledgerInfo.closeTimeResolution.count() % ledgerInfo.closeFlags %
-        ripple::strHex(ledgerInfo.accountHash) %
-        ripple::strHex(ledgerInfo.txHash));
-    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
-                            << " : "
-                            << "query string = " << ledgerInsert;
-
-    auto res = pgQuery(ledgerInsert.data());
-
-    abortWrite_ = !res;
+    ledgerHeader_ = ledgerInfo;
 }
 
 void
 PostgresBackend::writeAccountTransactions(
     std::vector<AccountTransactionsData>&& data) const
 {
-    if (abortWrite_)
-        return;
     PgQuery pg(pgPool_);
     for (auto const& record : data)
     {
@@ -64,8 +42,6 @@ PostgresBackend::writeLedgerObject(
     bool isDeleted,
     std::optional<ripple::uint256>&& book) const
 {
-    if (abortWrite_)
-        return;
     objectsBuffer_ << "\\\\x" << ripple::strHex(key) << '\t'
                    << std::to_string(seq) << '\t' << "\\\\x"
                    << ripple::strHex(blob) << '\n';
@@ -94,8 +70,6 @@ PostgresBackend::writeTransaction(
     std::string&& transaction,
     std::string&& metadata) const
 {
-    if (abortWrite_)
-        return;
     transactionsBuffer_ << "\\\\x" << ripple::strHex(hash) << '\t'
                         << std::to_string(seq) << '\t' << "\\\\x"
                         << ripple::strHex(transaction) << '\t' << "\\\\x"
@@ -476,9 +450,12 @@ PostgresBackend::fetchAccountTransactions(
            "account_transactions WHERE account = "
         << "\'\\x" << ripple::strHex(account) << "\'";
     if (cursor)
-        sql << " AND ledger_seq < " << cursor->ledgerSequence
-            << " AND transaction_index < " << cursor->transactionIndex;
+        sql << " AND (ledger_seq < " << cursor->ledgerSequence
+            << " OR (ledger_seq = " << cursor->ledgerSequence
+            << " AND transaction_index < " << cursor->transactionIndex << "))";
+    sql << " ORDER BY ledger_seq DESC, transaction_index DESC";
     sql << " LIMIT " << std::to_string(limit);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : " << sql.str();
     auto res = pgQuery(sql.str().data());
     if (size_t numRows = checkResult(res, 3))
     {
@@ -516,6 +493,12 @@ PostgresBackend::close()
 void
 PostgresBackend::startWrites() const
 {
+    numRowsInObjectsBuffer_ = 0;
+}
+
+bool
+PostgresBackend::finishWrites() const
+{
     PgQuery pg(pgPool_);
     auto res = pg("BEGIN");
     if (!res || res.status() != PGRES_COMMAND_OK)
@@ -524,22 +507,30 @@ PostgresBackend::startWrites() const
         msg << "Postgres error creating transaction: " << res.msg();
         throw std::runtime_error(msg.str());
     }
-    numRowsInObjectsBuffer_ = 0;
-}
+    auto cmd = boost::format(
+        R"(INSERT INTO ledgers
+           VALUES (%u,'\x%s', '\x%s',%u,%u,%u,%u,%u,'\x%s','\x%s'))");
 
-bool
-PostgresBackend::finishWrites() const
-{
-    if (abortWrite_)
-        return false;
-    PgQuery pg(pgPool_);
-    pg.bulkInsert("transactions", transactionsBuffer_.str());
-    pg.bulkInsert("books", booksBuffer_.str());
-    pg.bulkInsert("account_transactions", accountTxBuffer_.str());
-    std::string objectsStr = objectsBuffer_.str();
-    if (objectsStr.size())
-        pg.bulkInsert("objects", objectsStr);
-    auto res = pg("COMMIT");
+    auto ledgerInsert = boost::str(
+        cmd % ledgerHeader_.seq % ripple::strHex(ledgerHeader_.hash) %
+        ripple::strHex(ledgerHeader_.parentHash) % ledgerHeader_.drops.drops() %
+        ledgerHeader_.closeTime.time_since_epoch().count() %
+        ledgerHeader_.parentCloseTime.time_since_epoch().count() %
+        ledgerHeader_.closeTimeResolution.count() % ledgerHeader_.closeFlags %
+        ripple::strHex(ledgerHeader_.accountHash) %
+        ripple::strHex(ledgerHeader_.txHash));
+
+    res = pg(ledgerInsert.data());
+    if (res)
+    {
+        pg.bulkInsert("transactions", transactionsBuffer_.str());
+        pg.bulkInsert("books", booksBuffer_.str());
+        pg.bulkInsert("account_transactions", accountTxBuffer_.str());
+        std::string objectsStr = objectsBuffer_.str();
+        if (objectsStr.size())
+            pg.bulkInsert("objects", objectsStr);
+    }
+    res = pg("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
     {
         std::stringstream msg;

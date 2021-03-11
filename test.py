@@ -54,18 +54,26 @@ def compareTx(aldous, p2p):
     return True
     
 def compareAccountTx(aldous, p2p):
-    p2p = p2p["result"]
+    print(p2p)
+    if "result" in p2p:
+        p2p = p2p["result"]
+    maxLedger = getMinAndMax(aldous)[1]
+    minLedger = getMinAndMax(p2p)[0]
     p2pTxns = []
     p2pMetas = []
     p2pLedgerSequences = []
     for x in p2p["transactions"]:
+        if int(x["ledger_index"]) > maxLedger:
+            continue
         p2pTxns.append(x["tx_blob"])
         p2pMetas.append(x["meta"])
-        p2pLedgerSequences.append(x["ledger_sequence"])
+        p2pLedgerSequences.append(x["ledger_index"])
     aldousTxns = []
     aldousMetas = []
     aldousLedgerSequences = []
     for x in aldous["transactions"]:
+        if int(x["ledger_sequence"]) < minLedger:
+            continue
         aldousTxns.append(x["transaction"])
         aldousMetas.append(x["metadata"])
         aldousLedgerSequences.append(x["ledger_sequence"])
@@ -78,10 +86,13 @@ def compareAccountTx(aldous, p2p):
     aldousLedgerSequences.sort()
     if p2pTxns == aldousTxns and p2pMetas == aldousMetas and p2pLedgerSequences == aldousLedgerSequences:
         print("Responses match!!!")
+        print(len(aldousTxns))
+        print(len(p2pTxns))
     else:
         print("Mismatch responses")
-        print(aldous)
-        print(p2p)
+        print(len(aldousTxns))
+        print(len(p2pTxns))
+        print(maxLedger)
 
 def compareLedgerData(aldous, p2p):
     aldous[0].sort()
@@ -129,22 +140,64 @@ def getMinAndMax(res):
     minSeq = None
     maxSeq = None
     for x in res["transactions"]:
-        seq = int(x["ledger_sequence"])
+        print(x)
+        seq = None
+        if "ledger_sequence" in x:
+            seq = int(x["ledger_sequence"])
+        else:
+            seq = int(x["ledger_index"])
         if minSeq is None or seq < minSeq:
             minSeq = seq
         if maxSeq is None or seq > maxSeq:
             maxSeq = seq
     return (minSeq,maxSeq)
     
+async def account_tx(ip, port, account, binary):
 
-async def account_tx(ip, port, account, binary, minLedger,maxLedger):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"ledger_index_min":int(minLedger),"ledger_index_max":int(maxLedger)}))
+            await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"limit":200}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
             return res
+    except websockets.exceptions.ConnectionClosedError as e:
+        print(e)
+
+async def account_tx_full(ip, port, account, binary):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        cursor = None
+        marker = None
+        req = {"command":"account_tx","account":account, "binary":bool(binary),"limit":200}
+        results = {"transactions":[]}
+        numCalls = 0
+        async with websockets.connect(address) as ws:
+            while True:
+                numCalls = numCalls+1
+                if not cursor is None:
+                    req["cursor"] = cursor
+                if not marker is None:
+                    req["marker"] = marker
+                await ws.send(json.dumps(req))
+                res = json.loads(await ws.recv())
+                #print(json.dumps(res,indent=4,sort_keys=True))
+                if "result" in res:
+                    print(len(res["result"]["transactions"]))
+                else:
+                    print(len(res["transactions"]))
+                if "result" in res:
+                    results["transactions"].extend(res["result"]["transactions"])
+                else:
+                    results["transactions"].extend(res["transactions"])
+                if "cursor" in res:
+                    cursor = {"ledger_sequence":res["cursor"]["ledger_sequence"],"transaction_index":res["cursor"]["transaction_index"]}
+                elif "result" in res and "marker" in res["result"]:
+                    print(res["result"]["marker"])
+                    marker={"ledger":res["result"]["marker"]["ledger"],"seq":res["result"]["marker"]["seq"]}
+                else:
+                    break    
+            return results
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
@@ -315,7 +368,7 @@ async def ledger_range(ip, port):
         print(e)
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
@@ -332,6 +385,8 @@ parser.add_argument('--verify',default=False)
 parser.add_argument('--binary',default=False)
 parser.add_argument('--expand',default=False)
 parser.add_argument('--transactions',default=False)
+parser.add_argument('--minLedger',default=-1)
+parser.add_argument('--maxLedger',default=-1)
 
 
 
@@ -358,11 +413,18 @@ def run(args):
         res = asyncio.get_event_loop().run_until_complete(
                 account_tx(args.ip, args.port, args.account, args.binary))
         if args.verify:
-            minMax = getMinAndMax(res)
             res2 = asyncio.get_event_loop().run_until_complete(
-                    account_tx(args.ip, args.port, args.account, args.binary, minMax[0],minMax[1]))
+                    account_tx(args.p2pIp, args.p2pPort, args.account, args.binary))
             print(compareAccountTx(res,res2))
+    elif args.action == "account_tx_full":
+        res = asyncio.get_event_loop().run_until_complete(
+                account_tx_full(args.ip, args.port, args.account, args.binary))
+        print(len(res["transactions"]))
+        if args.verify:
+            res2 = asyncio.get_event_loop().run_until_complete(
+                    account_tx_full(args.p2pIp, args.p2pPort, args.account, args.binary))
 
+            print(compareAccountTx(res,res2))
     elif args.action == "ledger_data":
         asyncio.get_event_loop().run_until_complete(
                 ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary))
