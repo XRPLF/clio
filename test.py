@@ -224,7 +224,7 @@ async def ledger_data(ip, port, ledger, limit, binary):
 
 
 
-async def ledger_data_full(ip, port, ledger, binary):
+async def ledger_data_full(ip, port, ledger, binary, limit):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         blobs = []
@@ -232,15 +232,19 @@ async def ledger_data_full(ip, port, ledger, binary):
         async with websockets.connect(address) as ws:
             marker = None
             while True:
+                res = {}
                 if marker is None:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary), "limit":int(limit)}))
                     res = json.loads(await ws.recv())
                     
                 else:
 
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "binary":bool(binary)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "binary":bool(binary), "limit":int(limit)}))
                     res = json.loads(await ws.recv())
                     
+                if "error" in res:
+                    print(res)
+                    continue
 
                 objects = []
                 if "result" in res:
@@ -430,7 +434,7 @@ def run(args):
                 ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary))
     elif args.action == "ledger_data_full":
         asyncio.get_event_loop().run_until_complete(
-                ledger_data_full(args.ip, args.port, args.ledger, args.binary))
+                ledger_data_full(args.ip, args.port, args.ledger, args.binary, args.limit))
     elif args.action == "ledger":
         
         res = asyncio.get_event_loop().run_until_complete(

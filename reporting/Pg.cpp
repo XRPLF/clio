@@ -181,6 +181,7 @@ Pg::query(char const* command, std::size_t nParams, char const* const* values)
             BOOST_LOG_TRIVIAL(error) << ss.str();
             PgResult retRes(ret.get(), conn_.get());
             disconnect();
+
             return retRes;
         }
     }

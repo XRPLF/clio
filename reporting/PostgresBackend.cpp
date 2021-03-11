@@ -81,10 +81,14 @@ checkResult(PgResult const& res, uint32_t numFieldsExpected)
 {
     if (!res)
     {
+        auto msg = res.msg();
+        BOOST_LOG_TRIVIAL(debug) << msg;
+        if (msg.find("statement timeout"))
+            throw DatabaseTimeout();
         assert(false);
-        throw std::runtime_error("null postgres response");
+        throw std::runtime_error(msg);
     }
-    else if (res.status() != PGRES_TUPLES_OK)
+    if (res.status() != PGRES_TUPLES_OK)
     {
         std::stringstream msg;
         msg << " : Postgres response should have been "
@@ -150,6 +154,7 @@ std::optional<uint32_t>
 PostgresBackend::fetchLatestLedgerSequence() const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     auto res = pgQuery(
         "SELECT ledger_seq FROM ledgers ORDER BY ledger_seq DESC LIMIT 1");
     if (checkResult(res, 1))
@@ -161,6 +166,7 @@ std::optional<ripple::LedgerInfo>
 PostgresBackend::fetchLedgerBySequence(uint32_t sequence) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT * FROM ledgers WHERE ledger_seq = "
         << std::to_string(sequence);
@@ -211,6 +217,7 @@ PostgresBackend::fetchLedgerObject(
     uint32_t sequence) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT object FROM objects WHERE key = "
         << "\'\\x" << ripple::strHex(key) << "\'"
@@ -230,6 +237,7 @@ std::optional<TransactionAndMetadata>
 PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT transaction,metadata,ledger_seq FROM transactions "
            "WHERE hash = "
@@ -249,6 +257,7 @@ std::vector<TransactionAndMetadata>
 PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT transaction, metadata, ledger_seq FROM transactions WHERE "
         << "ledger_seq = " << std::to_string(ledgerSequence);
@@ -272,6 +281,7 @@ PostgresBackend::fetchAllTransactionHashesInLedger(
     uint32_t ledgerSequence) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT hash FROM transactions WHERE "
         << "ledger_seq = " << std::to_string(ledgerSequence);
@@ -295,15 +305,17 @@ PostgresBackend::fetchLedgerPage(
     std::uint32_t limit) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT key,object FROM"
         << " (SELECT DISTINCT ON (key) * FROM objects"
         << " WHERE ledger_seq <= " << std::to_string(ledgerSequence);
     if (cursor)
-        sql << " AND key > \'\\x" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY key, ledger_seq DESC) sub"
+        sql << " AND key < \'\\x" << ripple::strHex(*cursor) << "\'";
+    sql << " ORDER BY key DESC, ledger_seq DESC) sub"
         << " WHERE object != \'\\x\'"
         << " LIMIT " << std::to_string(limit);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
     auto res = pgQuery(sql.str().data());
     if (size_t numRows = checkResult(res, 2))
     {
@@ -347,6 +359,7 @@ PostgresBackend::fetchBookOffers(
             keys.push_back(res.asUInt256(i, 0));
         }
         std::vector<Blob> blobs = fetchLedgerObjects(keys, ledgerSequence);
+
         std::vector<LedgerObject> results;
         std::transform(
             blobs.begin(),
@@ -366,6 +379,7 @@ PostgresBackend::fetchTransactions(
     std::vector<ripple::uint256> const& hashes) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT transaction,metadata,ledger_seq FROM transactions "
            "WHERE ";
@@ -400,6 +414,7 @@ PostgresBackend::fetchLedgerObjects(
     uint32_t sequence) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT DISTINCT ON(key) object FROM objects WHERE";
 
@@ -445,6 +460,7 @@ PostgresBackend::fetchAccountTransactions(
     std::optional<AccountTransactionsCursor> const& cursor) const
 {
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
     sql << "SELECT hash, ledger_seq, transaction_index FROM "
            "account_transactions WHERE account = "

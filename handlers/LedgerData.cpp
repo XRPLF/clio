@@ -48,10 +48,12 @@ doLedgerData(
         return response;
     }
 
-    ripple::uint256 cursor;
+    std::optional<ripple::uint256> cursor;
     if (request.contains("cursor"))
     {
-        cursor.parseHex(request.at("cursor").as_string().c_str());
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing cursor";
+        cursor = ripple::uint256{};
+        cursor->parseHex(request.at("cursor").as_string().c_str());
     }
     bool binary =
         request.contains("binary") ? request.at("binary").as_bool() : false;

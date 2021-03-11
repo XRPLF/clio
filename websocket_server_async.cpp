@@ -211,7 +211,16 @@ public:
         // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
         boost::json::object request = raw.as_object();
         BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
-        auto response = buildResponse(request, backend_);
+        boost::json::object response;
+        try
+        {
+            response = buildResponse(request, backend_);
+        }
+        catch (Backend::DatabaseTimeout const& t)
+        {
+            response["error"] =
+                "Database read timeout. Please retry the request";
+        }
         BOOST_LOG_TRIVIAL(trace) << __func__ << response;
         response_ = boost::json::serialize(response);
 

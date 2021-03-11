@@ -34,6 +34,15 @@ struct LedgerRange
     uint32_t maxSequence;
 };
 
+class DatabaseTimeout : public std::exception
+{
+    const char*
+    what() const throw() override
+    {
+        return "Database read timed out. Please retry the request";
+    }
+};
+
 class BackendInterface
 {
 public:
