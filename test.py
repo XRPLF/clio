@@ -299,23 +299,60 @@ async def ledger_data_full(ip, port, ledger, binary, limit):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+def compare_offer(aldous, p2p):
+    for k,v in aldous.items():
+        if k == "deserialization_time_microseconds":
+            continue
+        if p2p[k] != v:
+            print("mismatch at field")
+            print(k)
+            return False
+    return True
+
+def compare_book_offers(aldous, p2p):
+    p2pOffers = {}
+    for x in p2p:
+        for y in aldous:
+            if y["index"] == x["index"]:
+                if not compare_offer(y,x):
+                    print("Mismatched offer")
+                    print(y)
+                    print(x)
+                    return False
+    print("offers match!")
+    return True
+                    
+        
 
 async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, get_issuer, binary):
 
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
-        
+        offers = []
+        cursor = None
         async with websockets.connect(address) as ws:
-            taker_gets = json.loads("{\"currency\":\"" + get_currency+"\"}")
-            if get_issuer is not None:
-                taker_gets["issuer"] = get_issuer
-            taker_pays = json.loads("{\"currency\":\"" + pay_currency + "\"}")
-            if pay_issuer is not None:
-                taker_pays["issuer"] = pay_issuer 
-
-            await ws.send(json.dumps({"command":"book_offers","ledger_index":int(ledger), "taker_pays":taker_pays, "taker_gets":taker_gets, "binary":bool(binary)}))
-            res = json.loads(await ws.recv())
-            print(json.dumps(res,indent=4,sort_keys=True))
+            while True:
+                taker_gets = json.loads("{\"currency\":\"" + get_currency+"\"}")
+                if get_issuer is not None:
+                    taker_gets["issuer"] = get_issuer
+                taker_pays = json.loads("{\"currency\":\"" + pay_currency + "\"}")
+                if pay_issuer is not None:
+                    taker_pays["issuer"] = pay_issuer 
+                req = {"command":"book_offers","ledger_index":int(ledger), "taker_pays":taker_pays, "taker_gets":taker_gets, "binary":bool(binary)}
+                if cursor is not None:
+                    req["cursor"] = cursor
+                await ws.send(json.dumps(req))
+                res = json.loads(await ws.recv())
+                print(json.dumps(res,indent=4,sort_keys=True))
+                if "result" in res:
+                    res = res["result"]
+                for x in res["offers"]:
+                    offers.append(x)
+                if "cursor" in res:
+                    cursor = res["cursor"]
+                else:
+                    print(len(offers))
+                    return offers
                     
     except websockets.exceptions.connectionclosederror as e:
         print(e)
@@ -489,8 +526,13 @@ def run(args):
         asyncio.get_event_loop().run_until_complete(
                 ledger_range(args.ip, args.port))
     elif args.action == "book_offers":
-        asyncio.get_event_loop().run_until_complete(
+        res = asyncio.get_event_loop().run_until_complete(
                 book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer, args.binary))
+        if args.verify:
+            res2 = asyncio.get_event_loop().run_until_complete(
+                    book_offers(args.p2pIp, args.p2pPort, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer, args.binary))
+            print(compare_book_offers(res,res2))
+            
     else:
         print("incorrect arguments")
 

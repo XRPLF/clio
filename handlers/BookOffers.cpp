@@ -301,7 +301,7 @@ doBookOffers(
     std::optional<ripple::uint256> cursor;
     if (request.contains("cursor"))
     {
-        cursor = {};
+        cursor = ripple::uint256{};
         cursor->parseHex(request.at("cursor").as_string().c_str());
     }
 
@@ -345,6 +345,8 @@ doBookOffers(
 
     BOOST_LOG_TRIVIAL(warning) << "Time transforming to json: "
                                << ((end - start).count() / 1000000000.0);
+    if (retCursor)
+        response["cursor"] = ripple::strHex(*retCursor);
 
     return response;
 }
