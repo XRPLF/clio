@@ -461,11 +461,23 @@ public:
             cass_result_free(result_);
     }
 };
+inline bool
+isTimeout(CassError rc)
+{
+    if (rc == CASS_ERROR_LIB_NO_HOSTS_AVAILABLE or
+        rc == CASS_ERROR_LIB_REQUEST_TIMED_OUT or
+        rc == CASS_ERROR_SERVER_UNAVAILABLE or
+        rc == CASS_ERROR_SERVER_OVERLOADED or
+        rc == CASS_ERROR_SERVER_READ_TIMEOUT)
+        return true;
+    return false;
+}
 template <class T, class F>
 class CassandraAsyncResult
 {
     T& requestParams_;
     CassandraResult result_;
+    bool timedOut_ = false;
 
 public:
     CassandraAsyncResult(T& requestParams, CassFuture* fut, F retry)
@@ -474,7 +486,14 @@ public:
         CassError rc = cass_future_error_code(fut);
         if (rc != CASS_OK)
         {
-            retry(requestParams_);
+            // TODO - should we ever be retrying requests? These are reads,
+            // and they usually only fail when the db is under heavy load. Seems
+            // best to just return an error to the client and have the client
+            // try again
+            if (isTimeout(rc))
+                timedOut_ = true;
+            else
+                retry(requestParams_);
         }
         else
         {
@@ -484,7 +503,7 @@ public:
 
     ~CassandraAsyncResult()
     {
-        if (!!result_)
+        if (!!result_ or timedOut_)
         {
             BOOST_LOG_TRIVIAL(trace) << "finished a request";
             size_t batchSize = requestParams_.batchSize;
@@ -497,6 +516,12 @@ public:
     getResult()
     {
         return result_;
+    }
+
+    bool
+    timedOut()
+    {
+        return timedOut_;
     }
 };
 
@@ -1093,6 +1118,11 @@ public:
         cv.wait(lck, [&numFinished, &numHashes]() {
             return numFinished == numHashes;
         });
+        for (auto const& res : results)
+        {
+            if (res.transaction.size() == 0)
+                throw DatabaseTimeout();
+        }
 
         BOOST_LOG_TRIVIAL(debug)
             << "Fetched " << numHashes << " transactions from Cassandra";
@@ -1169,6 +1199,11 @@ public:
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(
             lck, [&numFinished, &numKeys]() { return numFinished == numKeys; });
+        for (auto const& res : results)
+        {
+            if (res.size() == 0)
+                throw DatabaseTimeout();
+        }
 
         BOOST_LOG_TRIVIAL(trace)
             << "Fetched " << numKeys << " records from Cassandra";
@@ -1564,6 +1599,7 @@ public:
                 ss << ", retrying";
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } while (rc != CASS_OK);
         cass_future_free(fut);
@@ -1585,6 +1621,7 @@ public:
                 ss << ", retrying";
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } while (rc != CASS_OK);
         CassResult const* res = cass_future_get_result(fut);
@@ -1628,6 +1665,12 @@ public:
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
             }
+            if (isTimeout(rc))
+            {
+                cass_future_free(fut);
+                throw DatabaseTimeout();
+            }
+
             if (rc == CASS_ERROR_SERVER_INVALID_QUERY)
             {
                 throw std::runtime_error("invalid query");

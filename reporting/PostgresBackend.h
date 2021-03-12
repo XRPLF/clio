@@ -12,10 +12,11 @@ private:
     mutable std::stringstream transactionsBuffer_;
     mutable std::stringstream booksBuffer_;
     mutable std::stringstream accountTxBuffer_;
-    mutable ripple::LedgerInfo ledgerHeader_;
+    std::shared_ptr<PgPool> pgPool_;
+    mutable PgQuery writeConnection_;
+    mutable bool abortWrite_ = false;
 
 public:
-    std::shared_ptr<PgPool> pgPool_;
     PostgresBackend(boost::json::object const& config);
 
     std::optional<uint32_t>

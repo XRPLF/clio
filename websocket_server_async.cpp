@@ -42,13 +42,15 @@ enum RPCCommand {
     account_info,
     ledger_data,
     book_offers,
-    ledger_range
+    ledger_range,
+    ledger_entry
 };
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
     {"account_tx", account_tx},
     {"ledger", ledger},
     {"ledger_range", ledger_range},
+    {"ledger_entry", ledger_entry},
     {"account_info", account_info},
     {"ledger_data", ledger_data},
     {"book_offers", book_offers}};
@@ -65,6 +67,10 @@ doAccountTx(
     BackendInterface const& backend);
 boost::json::object
 doLedgerData(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doLedgerEntry(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
@@ -96,6 +102,9 @@ buildResponse(
             break;
         case ledger:
             return doLedger(request, backend);
+            break;
+        case ledger_entry:
+            return doLedgerEntry(request, backend);
             break;
         case ledger_range:
             return doLedgerRange(request, backend);
@@ -207,19 +216,27 @@ public:
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
-        boost::json::value raw = boost::json::parse(msg);
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
-        boost::json::object request = raw.as_object();
-        BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
         boost::json::object response;
         try
         {
-            response = buildResponse(request, backend_);
+            boost::json::value raw = boost::json::parse(msg);
+            boost::json::object request = raw.as_object();
+            BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
+            try
+            {
+                response = buildResponse(request, backend_);
+            }
+            catch (Backend::DatabaseTimeout const& t)
+            {
+                BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+                response["error"] =
+                    "Database read timeout. Please retry the request";
+            }
         }
-        catch (Backend::DatabaseTimeout const& t)
+        catch (std::exception const& e)
         {
-            response["error"] =
-                "Database read timeout. Please retry the request";
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << "caught exception : " << e.what();
         }
         BOOST_LOG_TRIVIAL(trace) << __func__ << response;
         response_ = boost::json::serialize(response);

@@ -445,6 +445,22 @@ CassandraBackend::open()
 
     cass_cluster_set_connect_timeout(cluster, 10000);
 
+    auto executeSimpleStatement = [this](std::string const& query) {
+        CassStatement* statement = makeStatement(query.c_str(), 0);
+        CassFuture* fut = cass_session_execute(session_.get(), statement);
+        CassError rc = cass_future_error_code(fut);
+        cass_future_free(fut);
+        cass_statement_free(statement);
+        if (rc != CASS_OK && rc != CASS_ERROR_SERVER_INVALID_QUERY)
+        {
+            std::stringstream ss;
+            ss << "nodestore: Error executing simple statement: " << rc << ", "
+               << cass_error_desc(rc) << " - " << query;
+            BOOST_LOG_TRIVIAL(error) << ss.str();
+            return false;
+        }
+        return true;
+    };
     CassStatement* statement;
     CassFuture* fut;
     bool setupSessionAndTable = false;
@@ -467,23 +483,6 @@ CassandraBackend::open()
             continue;
         }
 
-        auto executeSimpleStatement = [this](std::string const& query) {
-            CassStatement* statement = makeStatement(query.c_str(), 0);
-            CassFuture* fut = cass_session_execute(session_.get(), statement);
-            CassError rc = cass_future_error_code(fut);
-            cass_future_free(fut);
-            cass_statement_free(statement);
-            if (rc != CASS_OK && rc != CASS_ERROR_SERVER_INVALID_QUERY)
-            {
-                std::stringstream ss;
-                ss << "nodestore: Error executing simple statement: " << rc
-                   << ", " << cass_error_desc(rc) << " - " << query;
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-                return false;
-            }
-            return true;
-        };
-
         std::stringstream query;
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "objects"
               << " ( key blob, sequence bigint, object blob, PRIMARY "
@@ -497,6 +496,18 @@ CassandraBackend::open()
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
+
+        query = {};
+        query << "CREATE INDEX ON " << tablePrefix << "objects(sequence)";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query = {};
+        query << "SELECT * FROM " << tablePrefix << "objects WHERE sequence=1"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
         query = {};
         query
             << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
@@ -506,16 +517,23 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "CREATE INDEX ON " << tablePrefix
-              << "transactions(ledger_sequence)";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query = {};
         query << "SELECT * FROM " << tablePrefix << "transactions"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
+
+        query = {};
+        query << "CREATE INDEX ON " << tablePrefix
+              << "transactions(ledger_sequence)";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+        query = {};
+        query << "SELECT * FROM " << tablePrefix
+              << "transactions WHERE ledger_sequence = 1"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
         query = {};
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
               << " ( key blob, created bigint, deleted bigint, PRIMARY KEY "
@@ -761,6 +779,43 @@ CassandraBackend::open()
             continue;
 
         setupPreparedStatements = true;
+    }
+
+    while (true)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (!fetchLatestLedgerSequence())
+        {
+            std::stringstream query;
+            query << "TRUNCATE TABLE " << tablePrefix << "ledger_range";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+            query = {};
+            query << "TRUNCATE TABLE " << tablePrefix << "ledgers";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+            query = {};
+            query << "TRUNCATE TABLE " << tablePrefix << "ledger_hashes";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+            query = {};
+            query << "TRUNCATE TABLE " << tablePrefix << "objects";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+            query = {};
+            query << "TRUNCATE TABLE " << tablePrefix << "transactions";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+            query = {};
+            query << "TRUNCATE TABLE " << tablePrefix << "account_tx";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+            query = {};
+            query << "TRUNCATE TABLE " << tablePrefix << "books";
+            if (!executeSimpleStatement(query.str()))
+                continue;
+        }
+        break;
     }
 
     if (config_.contains("max_requests_outstanding"))

@@ -22,7 +22,6 @@
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
 #include <reporting/BackendInterface.h>
-#include <reporting/Pg.h>
 
 // {
 //   account: <ident>,

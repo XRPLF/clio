@@ -211,6 +211,16 @@ async def tx(ip, port, tx_hash, binary):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+async def ledger_entry(ip, port, index, ledger, binary):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({"command":"ledger_entry","index":index,"binary":bool(binary),"ledger_index":int(ledger)}))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res,indent=4,sort_keys=True))
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
+
 
 async def ledger_data(ip, port, ledger, limit, binary):
     address = 'ws://' + str(ip) + ':' + str(port)
@@ -219,9 +229,30 @@ async def ledger_data(ip, port, ledger, limit, binary):
             await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary)}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            objects = []
+            blobs = []
+            keys = []
+            if "result" in res:
+                objects = res["result"]["state"]
+            else:
+                objects = res["objects"]
+            for x in objects:
+                blobs.append(x["data"])
+                keys.append(x["index"])
+            return (keys,blobs)
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+def writeLedgerData(data,filename):
+    print(len(data[0]))
+    with open(filename,'w') as f:
+        data[0].sort()
+        data[1].sort()
+        for k,v in zip(data[0],data[1]):
+            f.write(k)
+            f.write('\n')
+            f.write(v)
+            f.write('\n')
 
 
 async def ledger_data_full(ip, port, ledger, binary, limit):
@@ -239,7 +270,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit):
                     
                 else:
 
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "binary":bool(binary), "limit":int(limit)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "marker":marker,"binary":bool(binary), "limit":int(limit)}))
                     res = json.loads(await ws.recv())
                     
                 if "error" in res:
@@ -372,7 +403,7 @@ async def ledger_range(ip, port):
         print(e)
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
@@ -391,6 +422,8 @@ parser.add_argument('--expand',default=False)
 parser.add_argument('--transactions',default=False)
 parser.add_argument('--minLedger',default=-1)
 parser.add_argument('--maxLedger',default=-1)
+parser.add_argument('--filename')
+parser.add_argument('--index')
 
 
 
@@ -408,6 +441,9 @@ def run(args):
             res2 = asyncio.get_event_loop().run_until_complete(
                     account_info(args.p2pIp, args.p2pPort, args.account, args.ledger, args.binary))
             print(compareAccountInfo(res1,res2))
+    elif args.action == "ledger_entry":
+        asyncio.get_event_loop().run_until_complete(
+                ledger_entry(args.ip, args.port, args.index, args.ledger, args.binary))
     elif args.action == "tx":
         if args.hash is None:
             args.hash = getHashes(asyncio.get_event_loop().run_until_complete(ledger(args.ip,args.port,args.ledger,False,True,False)))[0]
@@ -430,11 +466,16 @@ def run(args):
 
             print(compareAccountTx(res,res2))
     elif args.action == "ledger_data":
-        asyncio.get_event_loop().run_until_complete(
+        res = asyncio.get_event_loop().run_until_complete(
                 ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary))
+        if args.verify:
+            writeLedgerData(res,args.filename)
     elif args.action == "ledger_data_full":
-        asyncio.get_event_loop().run_until_complete(
+        res = asyncio.get_event_loop().run_until_complete(
                 ledger_data_full(args.ip, args.port, args.ledger, args.binary, args.limit))
+        if args.verify:
+            writeLedgerData(res,args.filename)
+
     elif args.action == "ledger":
         
         res = asyncio.get_event_loop().run_until_complete(
