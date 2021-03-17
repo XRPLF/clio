@@ -369,6 +369,7 @@ PostgresBackend::fetchBookOffers(
     if (cursor)
         sql << " AND offer_key < \'\\x" << ripple::strHex(*cursor) << "\'";
     sql << " ORDER BY offer_key DESC, ledger_seq DESC)"
+        << " sub WHERE NOT deleted"
         << " ORDER BY offer_key DESC "
         << " LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << sql.str();
@@ -466,7 +467,7 @@ PostgresBackend::fetchLedgerObjects(
     }
     sql << " ) "
         << " AND ledger_seq <= " << std::to_string(sequence)
-        << " ORDER BY key, ledger_seq DESC";
+        << " ORDER BY key DESC, ledger_seq DESC";
 
     BOOST_LOG_TRIVIAL(trace) << sql.str();
     auto res = pgQuery(sql.str().data());
