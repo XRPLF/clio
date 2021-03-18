@@ -108,6 +108,7 @@ public:
 
     ~CassandraPreparedStatement()
     {
+        BOOST_LOG_TRIVIAL(info) << __func__;
         if (prepared_)
         {
             cass_prepared_free(prepared_);
@@ -288,6 +289,7 @@ public:
     {
         if (statement_)
             cass_statement_free(statement_);
+        BOOST_LOG_TRIVIAL(info) << __func__;
     }
 };
 
@@ -620,6 +622,7 @@ public:
 
     ~CassandraBackend() override
     {
+        BOOST_LOG_TRIVIAL(info) << __func__;
         if (open_)
             close();
     }

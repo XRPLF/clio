@@ -2,7 +2,7 @@
 namespace Backend {
 template <class T, class F>
 void
-processAsyncWriteResponse(T&& requestParams, CassFuture* fut, F func)
+processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
 {
     CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
@@ -40,11 +40,11 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params, bool retry) {
-        requestParams.backend->write(params, retry);
+    auto func = [](auto& params, bool retry) {
+        params.backend->write(params, retry);
     };
 
-    processAsyncWriteResponse(std::move(requestParams), fut, func);
+    processAsyncWriteResponse(requestParams, fut, func);
 }
 
 void
@@ -52,10 +52,10 @@ flatMapWriteBookCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params, bool retry) {
-        requestParams.backend->writeBook(params, retry);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeBook(params, retry);
     };
-    processAsyncWriteResponse(std::move(requestParams), fut, func);
+    processAsyncWriteResponse(requestParams, fut, func);
 }
 /*
 
@@ -74,7 +74,7 @@ flatMapWriteKeyCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
-    processAsyncWriteResponse(std::move(requestParams), fut, retryWriteKey);
+    processAsyncWriteResponse(requestParams, fut, retryWriteKey);
 }
 
 void
@@ -85,6 +85,7 @@ flatMapGetCreatedCallback(CassFuture* fut, void* cbData)
     CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
+        BOOST_LOG_TRIVIAL(info) << __func__;
     {
         BOOST_LOG_TRIVIAL(error)
             << "ERROR!!! Cassandra insert error: " << rc << ", "
@@ -129,30 +130,30 @@ flatMapWriteTransactionCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteTransactionCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteTransactionCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params, bool retry) {
-        requestParams.backend->writeTransaction(params, retry);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeTransaction(params, retry);
     };
-    processAsyncWriteResponse(std::move(requestParams), fut, func);
+    processAsyncWriteResponse(requestParams, fut, func);
 }
 void
 flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteAccountTxCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteAccountTxCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params, bool retry) {
-        requestParams.backend->writeAccountTx(params, retry);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeAccountTx(params, retry);
     };
-    processAsyncWriteResponse(std::move(requestParams), fut, func);
+    processAsyncWriteResponse(requestParams, fut, func);
 }
 void
 flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteLedgerHeaderCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteLedgerHeaderCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params, bool retry) {
-        requestParams.backend->writeLedgerHeader(params, retry);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeLedgerHeader(params, retry);
     };
-    processAsyncWriteResponse(std::move(requestParams), fut, func);
+    processAsyncWriteResponse(requestParams, fut, func);
 }
 
 void
@@ -160,10 +161,10 @@ flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::WriteLedgerHashCallbackData& requestParams =
         *static_cast<CassandraBackend::WriteLedgerHashCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params, bool retry) {
-        requestParams.backend->writeLedgerHash(params, retry);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeLedgerHash(params, retry);
     };
-    processAsyncWriteResponse(std::move(requestParams), fut, func);
+    processAsyncWriteResponse(requestParams, fut, func);
 }
 
 // Process the result of an asynchronous read. Retry on error
@@ -174,9 +175,7 @@ flatMapReadCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::ReadCallbackData& requestParams =
         *static_cast<CassandraBackend::ReadCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params) {
-        requestParams.backend.read(params);
-    };
+    auto func = [](auto& params) { params.backend.read(params); };
     CassandraAsyncResult asyncResult{requestParams, fut, func};
     CassandraResult& result = asyncResult.getResult();
 
@@ -195,9 +194,7 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
 {
     CassandraBackend::ReadObjectCallbackData& requestParams =
         *static_cast<CassandraBackend::ReadObjectCallbackData*>(cbData);
-    auto func = [&requestParams](auto& params) {
-        requestParams.backend.readObject(params);
-    };
+    auto func = [](auto& params) { params.backend.readObject(params); };
     CassandraAsyncResult asyncResult{requestParams, fut, func};
     CassandraResult& result = asyncResult.getResult();
 
