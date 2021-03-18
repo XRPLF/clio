@@ -645,5 +645,7 @@ ReportingETL::ReportingETL(
     flatMapBackend_->open();
     if (config.contains("start_sequence"))
         startSequence_ = config.at("start_sequence").as_int64();
+    if (config.contains("read_only"))
+        readOnly_ = config.at("read_only").as_bool();
 }
 

@@ -47,6 +47,12 @@ doLedgerData(
         response["error"] = "Empty database";
         return response;
     }
+    auto ledger = backend.fetchLedgerBySequence(*ledgerSequence);
+    if (!ledger)
+    {
+        response["error"] = "Ledger not found";
+        return response;
+    }
 
     std::optional<ripple::uint256> cursor;
     if (request.contains("cursor"))
