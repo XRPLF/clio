@@ -745,7 +745,7 @@ CREATE TABLE IF NOT EXISTS ledgers (
 
 CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
-    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    ledger_seq bigint NOT NULL,
     object bytea,
     PRIMARY KEY(key, ledger_seq)
 );
@@ -779,7 +779,7 @@ CREATE TABLE IF NOT EXISTS account_transactions (
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS books (
     book bytea NOT NULL,
-    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    ledger_seq bigint NOT NULL,
     deleted boolean NOT NULL,
     offer_key bytea NOT NULL,
     PRIMARY KEY(book, offer_key, deleted)
