@@ -1,17 +1,36 @@
 #!/usr/bin/python3
 import argparse
 
-def parseLogs(filename):
+from datetime import datetime
+
+def getTime(line):
+    bracketOpen = line.find("[")
+    bracketClose = line.find("]")
+    timestampSub = line[bracketOpen+1:bracketClose]
+    timestamp = datetime.strptime(timestampSub, '%Y-%m-%d %H:%M:%S.%f')
+    return timestamp.timestamp()
+
+
+def parseLogs(filename, interval):
 
     with open(filename) as f:
 
         totalTime = 0
         totalTxns = 0
         totalObjs = 0
-        
-        milTime = 0
-        milTxns = 0
-        milObjs = 0
+
+
+        start = 0
+        end = 0
+        totalLedgers = 0
+
+        intervalTime = 0
+        intervalTxns = 0
+        intervalObjs = 0
+
+        intervalStart = 0
+        intervalEnd = 0
+        intervalLedgers = 0
 
         for line in f:
             if "Load phase" in line:
@@ -36,34 +55,73 @@ def parseLogs(filename):
                 totalTime += float(loadTime);
                 totalTxns += float(txnCount)
                 totalObjs += float(objCount)
-                milTime += float(loadTime)
-                milTxns += float(txnCount)
-                milObjs += float(objCount)
-                if int(sequence) % 1000000 == 0:
-                    print("This million: ")
-                    print(str(milTxns/milTime) + " : " + str(milObjs/milTime))
-                    milTime = 0
-                    milTxns = 0
-                    milObjs - 0
+                intervalTime += float(loadTime)
+                intervalTxns += float(txnCount)
+                intervalObjs += float(objCount)
+
+                
+
+                if start == 0:
+                    start = getTime(line)
+
+
+                prevEnd = end
+                end = getTime(line)
+                if end - prevEnd > 3 and prevEnd != 0:
+                    print("Caught up!")
+
+                if intervalStart == 0:
+                    intervalStart = getTime(line)
+
+                intervalEnd = getTime(line)
+
+                totalLedgers+=1
+                intervalLedgers+=1
+                ledgersPerSecond = 0
+                if end != start:
+                    ledgersPerSecond = float(totalLedgers) / float((end - start))
+                intervalLedgersPerSecond = 0
+                if intervalEnd != intervalStart:
+                    intervalLedgersPerSecond = float(intervalLedgers) / float((intervalEnd - intervalStart))
+
+
 
                 print("Sequence = " + sequence + " : [time, txCount, objCount, txPerSec, objsPerSec]")
-                print(loadTime + " : " + txnCount + " : " + objCount + " : " + txnsPerSecond + " : " + objsPerSecond)
-                print("Aggregate: [txPerSec, objsPerSec]")
-                print(str(totalTxns/totalTime) + " : " + str(totalObjs/totalTime))
+                print(loadTime + " : " 
+                    + txnCount + " : " 
+                    + objCount + " : " 
+                    + txnsPerSecond + " : " 
+                    + objsPerSecond)
+                print("Interval Aggregate ( " + str(interval) + " ) [ledgers, elapsedTime, ledgersPerSec, txPerSec, objsPerSec]: ")
+                print(str(intervalLedgers) + " : " 
+                    + str(intervalEnd - intervalStart) + " : " 
+                    + str(intervalLedgersPerSecond) + " : " 
+                    + str(intervalTxns/intervalTime) + " : " 
+                    + str(intervalObjs/intervalTime))
+                print("Total Aggregate: [ledgers, elapsedTime, ledgersPerSec, txPerSec, objsPerSec]")
+                print(str(totalLedgers) + " : " 
+                    + str(end-start) + " : " 
+                    + str(ledgersPerSecond) + " : " 
+                    + str(totalTxns/totalTime) + " : " 
+                    + str(totalObjs/totalTime))
+                if int(sequence) % interval == 0:
+                    intervalTime = 0
+                    intervalTxns = 0
+                    intervalObjs = 0
+                    intervalStart = 0
+                    intervalEnd = 0
+                    intervalLedgers = 0
 
 
-        print("Last million: [txPerSec, objPerSec]")
-        print(str(milTxns/milTime) + " : " + str(milObjs/milTime))
-        print("Totals : [txnPerSec, objPerSec]")
-        print(str(totalTxns/totalTime) + " : " + str(totalObjs/totalTime))
     
 
 parser = argparse.ArgumentParser(description='parses logs')
 parser.add_argument("--filename")
+parser.add_argument("--interval",default=100000)
 
 args = parser.parse_args()
 
 def run(args):
-    parseLogs(args.filename)
+    parseLogs(args.filename, int(args.interval))
 
 run(args)

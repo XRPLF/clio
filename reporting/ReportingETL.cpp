@@ -246,8 +246,8 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
 std::pair<ripple::LedgerInfo, bool>
 ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 {
-    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
-                            << "Beginning ledger update";
+    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
+                             << "Beginning ledger update";
 
     ripple::LedgerInfo lgrInfo =
         deserializeHeader(ripple::makeSlice(rawData.ledger_header()));

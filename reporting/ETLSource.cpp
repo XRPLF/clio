@@ -441,7 +441,7 @@ public:
             call(stub, cq);
         }
 
-        BOOST_LOG_TRIVIAL(info) << "Writing objects";
+        BOOST_LOG_TRIVIAL(trace) << "Writing objects";
         for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
             std::optional<ripple::uint256> book;
@@ -465,7 +465,7 @@ public:
                 false,
                 std::move(book));
         }
-        BOOST_LOG_TRIVIAL(info) << "Wrote objects";
+        BOOST_LOG_TRIVIAL(trace) << "Wrote objects";
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
