@@ -386,8 +386,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
             auto tps =
                 fetchResponse->transactions_list().transactions_size() / time;
 
-            BOOST_LOG_TRIVIAL(debug) << "Extract phase time = " << time
-                                     << " . Extract phase tps = " << tps;
+            BOOST_LOG_TRIVIAL(info) << "Extract phase time = " << time
+                                    << " . Extract phase tps = " << tps;
             // if the fetch is unsuccessful, stop. fetchLedger only returns
             // false if the server is shutting down, or if the ledger was
             // found in the database (which means another process already
