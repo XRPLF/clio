@@ -52,9 +52,22 @@ isOffer(std::string const& object)
     short offer_bytes = (object[1] << 8) | object[2];
     return offer_bytes == 0x006f;
 }
+template <class T>
+inline bool
+isOfferHex(T const& object)
+{
+    auto blob = ripple::strUnHex(4, object.begin(), object.begin() + 4);
+    if (blob)
+    {
+        short offer_bytes = ((*blob)[1] << 8) | (*blob)[2];
+        return offer_bytes == 0x006f;
+    }
+    return false;
+}
 
+template <class T>
 inline ripple::uint256
-getBook(std::string const& offer)
+getBook(T const& offer)
 {
     ripple::SerialIter it{offer.data(), offer.size()};
     ripple::SLE sle{it, {}};

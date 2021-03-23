@@ -60,6 +60,7 @@ class ReportingETL
 {
 private:
     std::unique_ptr<BackendInterface> flatMapBackend_;
+    std::optional<uint32_t> onlineDeleteInterval_;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -89,6 +90,10 @@ private:
 
     /// Whether the software is stopping
     std::atomic_bool stopping_ = false;
+    /// Whether the software is performing online delete
+    // TODO this needs to live in the database, so diff servers can coordinate
+    // deletion
+    std::atomic_bool deleting_ = false;
 
     /// Used to determine when to write to the database during the initial
     /// ledger download. By default, the software downloads an entire ledger and

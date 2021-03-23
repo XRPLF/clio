@@ -448,6 +448,20 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
                 publishLedger(lgrInfo);
                 lastPublishedSequence = lgrInfo.seq;
             }
+            auto range = flatMapBackend_->fetchLedgerRange();
+            if (onlineDeleteInterval_ && !deleting_ &&
+                range->maxSequence - range->minSequence >
+                    *onlineDeleteInterval_)
+            {
+                deleting_ = true;
+                ioContext_.post([this, &range]() {
+                    BOOST_LOG_TRIVIAL(info) << "Running online delete";
+                    flatMapBackend_->doOnlineDelete(
+                        range->maxSequence - *onlineDeleteInterval_);
+                    BOOST_LOG_TRIVIAL(info) << "Finished online delete";
+                    deleting_ = false;
+                });
+            }
         }
     }};
 
@@ -647,5 +661,7 @@ ReportingETL::ReportingETL(
         startSequence_ = config.at("start_sequence").as_int64();
     if (config.contains("read_only"))
         readOnly_ = config.at("read_only").as_bool();
+    if (config.contains("online_delete"))
+        onlineDeleteInterval_ = config.at("online_delete").as_int64();
 }
 

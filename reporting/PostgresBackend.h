@@ -109,6 +109,9 @@ public:
 
     bool
     finishWrites() const override;
+
+    bool
+    doOnlineDelete(uint32_t minLedgerToKeep) const override;
 };
 }  // namespace Backend
 #endif

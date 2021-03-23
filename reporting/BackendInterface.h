@@ -144,6 +144,9 @@ public:
     virtual bool
     finishWrites() const = 0;
 
+    virtual bool
+    doOnlineDelete(uint32_t minLedgerToKeep) const = 0;
+
     virtual ~BackendInterface()
     {
     }

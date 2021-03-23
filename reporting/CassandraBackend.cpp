@@ -265,6 +265,12 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     } while (result.nextRow());
     return hashes;
 }
+bool
+CassandraBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
+{
+    throw std::runtime_error("doOnlineDelete : unimplemented");
+    return false;
+}
 
 void
 CassandraBackend::open()

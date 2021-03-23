@@ -1457,6 +1457,8 @@ public:
 
         syncCv_.wait(lck, [this]() { return finishedAllRequests(); });
     }
+    bool
+    doOnlineDelete(uint32_t minLedgerToKeep) const override;
 
     boost::asio::io_context&
     getIOContext() const
