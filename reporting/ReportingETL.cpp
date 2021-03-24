@@ -443,6 +443,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         {
             std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{
                 getNext(currentSequence)->pop()};
+            ++currentSequence;
             // if fetchResponse is an empty optional, the extracter thread
             // has stopped and the transformer should stop as well
             if (!fetchResponse)
