@@ -120,6 +120,13 @@ def parseLogs(filename, interval):
                         intervalEnd = 0
                         intervalLedgers = 0
                         intervalLoadTime = 0
+            print("Total Aggregate: [ledgers, elapsedTime, ledgersPerSec, avgLoadTime, txPerSec, objsPerSec]")
+            print(str(totalLedgers) + " : " 
+                + str(end-start) + " : " 
+                + str(ledgersPerSecond) + " : " 
+                + str(totalLoadTime/totalLedgers) + " : " 
+                + str(totalTxns/totalTime) + " : " 
+                + str(totalObjs/totalTime))
 
 
     
