@@ -317,7 +317,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 
 // Database must be populated when this starts
 std::optional<uint32_t>
-ReportingETL::runETLPipeline(uint32_t startSequence)
+ReportingETL::runETLPipeline(uint32_t startSequence, int offset)
 {
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
@@ -363,9 +363,10 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
     std::thread extracter{[this,
                            &startSequence,
                            &writeConflict,
-                           &transformQueue]() {
+                           &transformQueue,
+                           &offset]() {
         beast::setCurrentThreadName("rippled: ReportingETL extract");
-        uint32_t currentSequence = startSequence;
+        uint32_t currentSequence = startSequence + offset;
 
         // there are two stopping conditions here.
         // First, if there is a write conflict in the load thread, the ETL
@@ -401,7 +402,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
             }
 
             transformQueue.push(std::move(fetchResponse));
-            ++currentSequence;
+            currentSequence += offset;
         }
         // empty optional tells the transformer to shut down
         transformQueue.push({});
@@ -598,8 +599,11 @@ ReportingETL::monitor()
                 << " . Beginning ETL";
             // doContinousETLPipelined returns the most recent sequence
             // published empty optional if no sequence was published
-            std::optional<uint32_t> lastPublished =
-                runETLPipeline(nextSequence);
+            std::optional<uint32_t> lastPublished = nextSequence;
+            for (size_t i = 0; i < 10; ++i)
+            {
+                runETLPipeline(nextSequence, i);
+            }
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
                 << "Aborting ETL. Falling back to publishing";

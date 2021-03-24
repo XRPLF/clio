@@ -166,7 +166,7 @@ private:
     /// @param startSequence the first ledger to extract
     /// @return the last ledger written to the database, if any
     std::optional<uint32_t>
-    runETLPipeline(uint32_t startSequence);
+    runETLPipeline(uint32_t startSequence, int offset);
 
     /// Monitor the network for newly validated ledgers. Also monitor the
     /// database to see if any process is writing those ledgers. This function

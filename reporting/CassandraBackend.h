@@ -1515,13 +1515,6 @@ public:
             throw std::runtime_error("decrementing num outstanding below 0");
         }
         size_t cur = (--numRequestsOutstanding_);
-        // sanity check
-        if (!canAddRequest())
-        {
-            assert(false);
-            throw std::runtime_error(
-                "decremented num outstanding but can't add more");
-        }
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
