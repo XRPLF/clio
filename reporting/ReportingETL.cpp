@@ -461,20 +461,25 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             auto end = std::chrono::system_clock::now();
 
             auto duration = ((end - start).count()) / 1000000000.0;
-            BOOST_LOG_TRIVIAL(info)
-                << "Load phase of etl : "
-                << "Successfully published ledger! Ledger info: "
-                << detail::toString(lgrInfo) << ". txn count = " << numTxns
-                << ". object count = " << numObjects
-                << ". load time = " << duration
-                << ". load txns per second = " << numTxns / duration
-                << ". load objs per second = " << numObjects / duration;
+            if (success)
+                BOOST_LOG_TRIVIAL(info)
+                    << "Load phase of etl : "
+                    << "Successfully published ledger! Ledger info: "
+                    << detail::toString(lgrInfo) << ". txn count = " << numTxns
+                    << ". object count = " << numObjects
+                    << ". load time = " << duration
+                    << ". load txns per second = " << numTxns / duration
+                    << ". load objs per second = " << numObjects / duration;
+            else
+                BOOST_LOG_TRIVIAL(error)
+                    << "Error writing ledger. " << detail::toString(lgrInfo);
             // success is false if the ledger was already written
             if (success)
             {
                 publishLedger(lgrInfo);
                 lastPublishedSequence = lgrInfo.seq;
             }
+            writeConflict = !success;
             auto range = flatMapBackend_->fetchLedgerRange();
             if (onlineDeleteInterval_ && !deleting_ &&
                 range->maxSequence - range->minSequence >
@@ -626,8 +631,8 @@ ReportingETL::monitor()
                 << " . Beginning ETL";
             // doContinousETLPipelined returns the most recent sequence
             // published empty optional if no sequence was published
-            std::optional<uint32_t> lastPublished = nextSequence;
-            runETLPipeline(nextSequence, extractorThreads_);
+            std::optional<uint32_t> lastPublished =
+                runETLPipeline(nextSequence, extractorThreads_);
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
                 << "Aborting ETL. Falling back to publishing";

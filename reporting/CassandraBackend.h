@@ -751,11 +751,13 @@ public:
             CassandraStatement statement{updateLedgerRange_};
             statement.bindInt(ledgerSequence_);
             statement.bindBoolean(false);
+            statement.bindInt(ledgerSequence_);
             executeSyncWrite(statement);
         }
         CassandraStatement statement{updateLedgerRange_};
         statement.bindInt(ledgerSequence_);
         statement.bindBoolean(true);
+        statement.bindInt(ledgerSequence_ - 1);
         return executeSyncUpdate(statement);
     }
     void

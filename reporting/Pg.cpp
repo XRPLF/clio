@@ -863,6 +863,8 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+CREATE TRIGGER verify_ancestry BEFORE INSERT OR UPDATE on ledgers
+    FOR EACH ROW EXECUTE PROCEDURE insert_ancestry();
 
 -- Trigger function prior to delete on ledgers table. Disallow gaps from
 -- forming. Do not allow deletions if both the previous and next ledgers
