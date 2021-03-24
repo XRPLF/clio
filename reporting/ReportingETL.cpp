@@ -154,9 +154,9 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto ledger = flatMapBackend_->fetchLedgerBySequence(ledgerSequence);
+        auto range = flatMapBackend_->fetchLedgerRange();
 
-        if (!ledger)
+        if (!range || range->maxSequence < ledgerSequence)
         {
             BOOST_LOG_TRIVIAL(warning)
                 << __func__ << " : "
