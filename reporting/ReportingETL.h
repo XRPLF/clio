@@ -61,6 +61,7 @@ class ReportingETL
 private:
     std::unique_ptr<BackendInterface> flatMapBackend_;
     std::optional<uint32_t> onlineDeleteInterval_;
+    uint32_t extractorThreads_ = 1;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
