@@ -758,7 +758,7 @@ CassandraBackend::open()
 
         query = {};
         query << " update " << tablePrefix << "ledger_range"
-              << " set sequence = ? where is_latest = ? if sequence != ?";
+              << " set sequence = ? where is_latest = ?";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
 
