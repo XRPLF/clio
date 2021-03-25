@@ -108,7 +108,7 @@ public:
 
     ~CassandraPreparedStatement()
     {
-        BOOST_LOG_TRIVIAL(info) << __func__;
+        BOOST_LOG_TRIVIAL(trace) << __func__;
         if (prepared_)
         {
             cass_prepared_free(prepared_);
@@ -211,7 +211,7 @@ public:
         if (!statement_)
             throw std::runtime_error(
                 "CassandraStatement::bindUInt - statement_ is null");
-        BOOST_LOG_TRIVIAL(info)
+        BOOST_LOG_TRIVIAL(trace)
             << std::to_string(curBindingIndex_) << " " << std::to_string(value);
         CassError rc =
             cass_statement_bind_int32(statement_, curBindingIndex_, value);
@@ -332,6 +332,12 @@ public:
         {
             row_ = cass_iterator_get_row(iter_);
         }
+    }
+
+    bool
+    isOk()
+    {
+        return result_ != nullptr;
     }
 
     bool
@@ -525,7 +531,7 @@ public:
 
     ~CassandraAsyncResult()
     {
-        if (!!result_ or timedOut_)
+        if (result_.isOk() or timedOut_)
         {
             BOOST_LOG_TRIVIAL(trace) << "finished a request";
             size_t batchSize = requestParams_.batchSize;
@@ -596,7 +602,7 @@ private:
     CassandraPreparedStatement upperBound2_;
     CassandraPreparedStatement getToken_;
     CassandraPreparedStatement insertKey_;
-    CassandraPreparedStatement getCreated_;
+    CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement getBook_;
     CassandraPreparedStatement insertBook_;
     CassandraPreparedStatement deleteBook_;
@@ -609,11 +615,15 @@ private:
     CassandraPreparedStatement selectLedgerBySeq_;
     CassandraPreparedStatement selectLatestLedger_;
     CassandraPreparedStatement selectLedgerRange_;
+    CassandraPreparedStatement selectLedgerDiff_;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
+
+    std::thread indexer_;
+    static constexpr uint32_t indexerShift_ = 8;
 
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
@@ -673,8 +683,15 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
             work_.reset();
             ioThread_.join();
+            if (indexer_.joinable())
+                indexer_.join();
         }
         open_ = false;
+    }
+    CassandraPreparedStatement const&
+    getInsertKeyPreparedStatement() const
+    {
+        return insertKey_;
     }
 
     std::pair<
@@ -915,117 +932,17 @@ public:
     fetchLedgerPage2(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
-        std::uint32_t limit) const
-    {
-        BOOST_LOG_TRIVIAL(trace) << __func__;
-        CassandraStatement statement{selectLedgerPageKeys_};
-
-        int64_t intCursor = INT64_MIN;
-        if (cursor)
-        {
-            auto token = getToken(cursor->data());
-            if (token)
-                intCursor = *token;
-        }
-
-        statement.bindInt(intCursor);
-        statement.bindInt(ledgerSequence);
-        statement.bindInt(ledgerSequence);
-        statement.bindUInt(limit);
-
-        CassandraResult result = executeSyncRead(statement);
-
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
-        std::vector<ripple::uint256> keys;
-
-        do
-        {
-            keys.push_back(result.getUInt256());
-        } while (result.nextRow());
-
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - populated keys. num keys = " << keys.size();
-        if (keys.size())
-        {
-            std::vector<LedgerObject> results;
-            std::vector<Blob> objs = fetchLedgerObjects(keys, ledgerSequence);
-            for (size_t i = 0; i < objs.size(); ++i)
-            {
-                results.push_back({keys[i], objs[i]});
-            }
-            return {results, keys[keys.size() - 1]};
-        }
-
-        return {{}, {}};
-    }
+        std::uint32_t limit) const;
     LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
-        std::uint32_t limit) const override
-    {
-        BOOST_LOG_TRIVIAL(trace) << __func__;
-        std::optional<ripple::uint256> currentCursor = cursor;
-        std::vector<LedgerObject> objects;
-        uint32_t curLimit = limit;
-        while (objects.size() < limit)
-        {
-            CassandraStatement statement{selectLedgerPage_};
+        std::uint32_t limit) const override;
+    std::vector<LedgerObject>
+    fetchLedgerDiff(uint32_t ledgerSequence) const;
 
-            int64_t intCursor = INT64_MIN;
-            if (currentCursor)
-            {
-                auto token = getToken(currentCursor->data());
-                if (token)
-                    intCursor = *token;
-            }
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " - cursor = " << std::to_string(intCursor)
-                << " , sequence = " << std::to_string(ledgerSequence)
-                << ", - limit = " << std::to_string(limit);
-            statement.bindInt(intCursor);
-            statement.bindInt(ledgerSequence);
-            statement.bindUInt(curLimit);
-
-            CassandraResult result = executeSyncRead(statement);
-
-            if (!!result)
-            {
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__ << " - got keys - size = " << result.numRows();
-
-                size_t prevSize = objects.size();
-                do
-                {
-                    std::vector<unsigned char> object = result.getBytes();
-                    if (object.size())
-                    {
-                        objects.push_back(
-                            {result.getUInt256(), std::move(object)});
-                    }
-                } while (result.nextRow());
-                size_t prevBatchSize = objects.size() - prevSize;
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__
-                    << " - added to objects. size = " << objects.size();
-                if (result.numRows() < curLimit)
-                {
-                    currentCursor = {};
-                    break;
-                }
-                if (objects.size() < limit)
-                {
-                    curLimit = 2048;
-                }
-                assert(objects.size());
-                currentCursor = objects[objects.size() - 1].key;
-            }
-        }
-        if (objects.size())
-            return {objects, currentCursor};
-
-        return {{}, {}};
-    }
+    bool
+    writeKeys(uint32_t ledgerSequence) const;
 
     std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(
@@ -1133,7 +1050,7 @@ public:
         });
         for (auto const& res : results)
         {
-            if (res.transaction.size() == 0)
+            if (res.transaction.size() == 1 && res.transaction[0] == 0)
                 throw DatabaseTimeout();
         }
 
@@ -1184,44 +1101,8 @@ public:
     std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const override
-    {
-        std::size_t const numKeys = keys.size();
-        BOOST_LOG_TRIVIAL(trace)
-            << "Fetching " << numKeys << " records from Cassandra";
-        std::atomic_uint32_t numFinished = 0;
-        std::condition_variable cv;
-        std::mutex mtx;
-        std::vector<Blob> results{numKeys};
-        std::vector<std::shared_ptr<ReadObjectCallbackData>> cbs;
-        cbs.reserve(numKeys);
-        for (std::size_t i = 0; i < keys.size(); ++i)
-        {
-            cbs.push_back(std::make_shared<ReadObjectCallbackData>(
-                *this,
-                keys[i],
-                sequence,
-                results[i],
-                cv,
-                numFinished,
-                numKeys));
-            readObject(*cbs[i]);
-        }
-        assert(results.size() == cbs.size());
+        uint32_t sequence) const override;
 
-        std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(
-            lck, [&numFinished, &numKeys]() { return numFinished == numKeys; });
-        for (auto const& res : results)
-        {
-            if (res.size() == 0)
-                throw DatabaseTimeout();
-        }
-
-        BOOST_LOG_TRIVIAL(trace)
-            << "Fetched " << numKeys << " records from Cassandra";
-        return results;
-    }
     void
     readObject(ReadObjectCallbackData& data) const
     {

@@ -158,7 +158,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
 
         if (!range || range->maxSequence < ledgerSequence)
         {
-            BOOST_LOG_TRIVIAL(warning)
+            BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " : "
                 << "Trying to publish. Could not find ledger with sequence = "
                 << ledgerSequence;
@@ -173,7 +173,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
             // publish failed
             if (numAttempts >= maxAttempts)
             {
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : "
+                BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                                          << "Failed to publish ledger after "
                                          << numAttempts << " attempts.";
                 if (!readOnly_)
@@ -183,21 +183,9 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                         << "Attempting to become ETL writer";
                     return false;
                 }
-                else
-                {
-                    BOOST_LOG_TRIVIAL(debug)
-                        << __func__ << " : "
-                        << "In strict read-only mode. "
-                        << "Skipping publishing this ledger. "
-                        << "Beginning fast forward.";
-                    return false;
-                }
             }
-            else
-            {
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                ++numAttempts;
-            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ++numAttempts;
             continue;
         }
 
@@ -660,7 +648,7 @@ ReportingETL::monitorReadOnly()
     while (!stopping_ &&
            networkValidatedLedgers_.waitUntilValidatedByNetwork(sequence))
     {
-        success = publishLedger(sequence, success ? 30 : 1);
+        publishLedger(sequence, 30);
         ++sequence;
     }
 }

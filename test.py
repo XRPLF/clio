@@ -233,11 +233,11 @@ async def ledger_entry(ip, port, index, ledger, binary):
         print(e)
 
 
-async def ledger_data(ip, port, ledger, limit, binary):
+async def ledger_data(ip, port, ledger, limit, binary, cursor):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary)}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"cursor":cursor}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
             objects = []
@@ -478,6 +478,7 @@ parser.add_argument('--minLedger',default=-1)
 parser.add_argument('--maxLedger',default=-1)
 parser.add_argument('--filename',default=None)
 parser.add_argument('--index')
+parser.add_argument('--cursor',"0000000000000000000000000000000000000000000000000000000000000000")
 
 
 

@@ -99,7 +99,7 @@ doLedgerData(
 
     response["num_results"] = results.size();
     response["db_time"] = time;
-    response["time_per_result"] = time / results.size();
+    response["time_per_result"] = time / (results.size() ? results.size() : 1);
     return response;
 }
 
