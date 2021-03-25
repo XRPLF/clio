@@ -33,24 +33,23 @@ def compareAccountInfo(aldous, p2p):
         print("Response mismatch")
         print(aldous)
         print(p2p)
-
 def compareTx(aldous, p2p):
     p2p = p2p["result"]
     if aldous["transaction"] != p2p["tx"]:
-        print("Transaction mismatch")
+        print("transaction mismatch")
         print(aldous["transaction"])
         print(p2p["tx"])
         return False
-    if aldous["metadata"] != p2p["meta"]:
-        print("Metadata mismatch")
-        print(aldous["metadata"])
-        print(p2p["metadata"])
+    if aldous["metadata"] != p2p["meta"] and not isinstance(p2p["meta"],dict):
+        print("metadata mismatch")
+        print("aldous : " + aldous["metadata"])
+        print("p2p : " + str(p2p["meta"]))
         return False
-    if aldous["ledger_sequence"] != p2p["ledger_sequence"]:
+    if aldous["ledger_sequence"] != p2p["ledger_index"]:
         print("ledger sequence mismatch")
         print(aldous["ledger_sequence"])
-        print(p2p["ledger_sequence"])
-    print("Responses match!!")
+        print(p2p["ledger_index"])
+    print("responses match!!")
     return True
     
 def compareAccountTx(aldous, p2p):
@@ -202,9 +201,10 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                     results["transactions"].extend(res["transactions"])
                 if "cursor" in res:
                     cursor = {"ledger_sequence":res["cursor"]["ledger_sequence"],"transaction_index":res["cursor"]["transaction_index"]}
+                    print(cursor)
                 elif "result" in res and "marker" in res["result"]:
-                    print(res["result"]["marker"])
                     marker={"ledger":res["result"]["marker"]["ledger"],"seq":res["result"]["marker"]["seq"]}
+                    print(marker)
                 else:
                     break    
             return results
@@ -218,6 +218,7 @@ async def tx(ip, port, tx_hash, binary):
             await ws.send(json.dumps({"command":"tx","transaction":tx_hash,"binary":bool(binary)}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            return res
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
@@ -246,10 +247,12 @@ async def ledger_data(ip, port, ledger, limit, binary):
                 objects = res["result"]["state"]
             else:
                 objects = res["objects"]
-            for x in objects:
-                blobs.append(x["data"])
-                keys.append(x["index"])
-            return (keys,blobs)
+            if binary:
+                for x in objects:
+                    blobs.append(x["data"])
+                    keys.append(x["index"])
+                return (keys,blobs)
+
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
@@ -271,11 +274,13 @@ async def ledger_data_full(ip, port, ledger, binary, limit):
         blobs = []
         keys = []
         async with websockets.connect(address) as ws:
+            if int(limit) < 2048:
+                limit = 2048
             marker = None
             while True:
                 res = {}
                 if marker is None:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary), "limit":int(limit)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":binary, "limit":int(limit)}))
                     res = json.loads(await ws.recv())
                     
                 else:
@@ -456,17 +461,17 @@ parser.add_argument('action', choices=["account_info", "tx", "account_tx", "acco
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
-parser.add_argument('--account', default="rw2ciyaNshpHe7bCHo4bRWq6pqqynnWKQg")
+parser.add_argument('--account')
 parser.add_argument('--ledger')
 parser.add_argument('--limit', default='200')
 parser.add_argument('--taker_pays_issuer',default='rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B')
 parser.add_argument('--taker_pays_currency',default='USD')
 parser.add_argument('--taker_gets_issuer')
 parser.add_argument('--taker_gets_currency',default='XRP')
-parser.add_argument('--p2pIp', default='127.0.0.1')
-parser.add_argument('--p2pPort', default='6005')
+parser.add_argument('--p2pIp', default='s2.ripple.com')
+parser.add_argument('--p2pPort', default='51233')
 parser.add_argument('--verify',default=False)
-parser.add_argument('--binary',default=False)
+parser.add_argument('--binary',default=True)
 parser.add_argument('--expand',default=False)
 parser.add_argument('--transactions',default=False)
 parser.add_argument('--minLedger',default=-1)
@@ -494,13 +499,24 @@ def run(args):
         asyncio.get_event_loop().run_until_complete(
                 ledger_entry(args.ip, args.port, args.index, args.ledger, args.binary))
     elif args.action == "tx":
+        if args.verify:
+            args.binary = True
         if args.hash is None:
             args.hash = getHashes(asyncio.get_event_loop().run_until_complete(ledger(args.ip,args.port,args.ledger,False,True,False)))[0]
-        asyncio.get_event_loop().run_until_complete(
+        res = asyncio.get_event_loop().run_until_complete(
                 tx(args.ip, args.port, args.hash, args.binary))
+        if args.verify:
+            res2 = asyncio.get_event_loop().run_until_complete(
+                    tx(args.p2pIp, args.p2pPort, args.hash, args.binary))
+            print(compareTx(res,res2))
     elif args.action == "account_tx":
         if args.verify:
             args.binary=True
+        if args.account is None:
+            args.hash = getHashes(asyncio.get_event_loop().run_until_complete(ledger(args.ip,args.port,args.ledger,False,True,False)))[0]
+        
+            res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
+            args.account = res["transaction"]["Account"]
         
         rng = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
         res = asyncio.get_event_loop().run_until_complete(
@@ -513,6 +529,11 @@ def run(args):
     elif args.action == "account_tx_full":
         if args.verify:
             args.binary=True
+        if args.account is None:
+            args.hash = getHashes(asyncio.get_event_loop().run_until_complete(ledger(args.ip,args.port,args.ledger,False,True,False)))[0]
+        
+            res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
+            args.account = res["transaction"]["Account"]
         rng = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
         res = asyncio.get_event_loop().run_until_complete(
                 account_tx_full(args.ip, args.port, args.account, args.binary))
