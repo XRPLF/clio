@@ -995,17 +995,7 @@ public:
                 }
                 if (objects.size() < limit)
                 {
-                    BOOST_LOG_TRIVIAL(debug)
-                        << __func__
-                        << " cur limit = " << std::to_string(curLimit)
-                        << " , numRows = " << std::to_string(prevBatchSize);
-                    double sparsity =
-                        (double)(curLimit + 1) / (double)(prevBatchSize + 1);
-                    curLimit = (limit - objects.size()) * sparsity;
-                    BOOST_LOG_TRIVIAL(debug)
-                        << __func__
-                        << " - sparsity = " << std::to_string(sparsity)
-                        << " , curLimit = " << std::to_string(curLimit);
+                    curLimit = 2048;
                 }
                 assert(objects.size());
                 currentCursor = objects[objects.size() - 1].key;
