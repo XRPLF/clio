@@ -698,7 +698,7 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "SELECT key,object FROM " << tablePrefix << "objects "
+        query << "SELECT object,key FROM " << tablePrefix << "objects "
               << " WHERE TOKEN(key) >= ? and sequence <= ? "
               << " PER PARTITION LIMIT 1 LIMIT ? ALLOW FILTERING";
 

@@ -385,6 +385,26 @@ public:
         curGetIndex_++;
         return {buf, buf + bufSize};
     }
+    /*
+    uint32_t
+    getNumBytes()
+    {
+        if (!row_)
+            throw std::runtime_error("CassandraResult::getBytes - no result");
+        cass_byte_t const* buf;
+        std::size_t bufSize;
+        CassError rc = cass_value_get_bytes(
+            cass_row_get_column(row_, curGetIndex_), &buf, &bufSize);
+        if (rc != CASS_OK)
+        {
+            std::stringstream msg;
+            msg << "CassandraResult::getBytes - error getting value: " << rc
+                << ", " << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << msg.str();
+            throw std::runtime_error(msg.str());
+        }
+        return bufSize;
+    }*/
 
     ripple::uint256
     getUInt256()
@@ -977,11 +997,11 @@ public:
                 size_t prevSize = objects.size();
                 do
                 {
-                    ripple::uint256 key = result.getUInt256();
                     std::vector<unsigned char> object = result.getBytes();
                     if (object.size())
                     {
-                        objects.push_back({std::move(key), std::move(object)});
+                        objects.push_back(
+                            {result.getUInt256(), std::move(object)});
                     }
                 } while (result.nextRow());
                 size_t prevBatchSize = objects.size() - prevSize;
