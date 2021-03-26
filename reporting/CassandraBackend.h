@@ -282,14 +282,14 @@ public:
             BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
             throw std::runtime_error(ss.str());
         }
+        cass_tuple_free(tuple);
         curBindingIndex_++;
     }
 
-    CassandraStatement()
+    ~CassandraStatement()
     {
         if (statement_)
             cass_statement_free(statement_);
-        BOOST_LOG_TRIVIAL(info) << __func__;
     }
 };
 
@@ -481,6 +481,8 @@ public:
     {
         if (result_ != nullptr)
             cass_result_free(result_);
+        if (iter_ != nullptr)
+            cass_iterator_free(iter_);
     }
 };
 inline bool
