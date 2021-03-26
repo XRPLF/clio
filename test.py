@@ -62,8 +62,6 @@ def compareAccountTx(aldous, p2p):
     p2pMetas = []
     p2pLedgerSequences = []
     for x in p2p["transactions"]:
-        if int(x["ledger_index"]) > maxLedger:
-            continue
         p2pTxns.append(x["tx_blob"])
         p2pMetas.append(x["meta"])
         p2pLedgerSequences.append(x["ledger_index"])
@@ -71,8 +69,6 @@ def compareAccountTx(aldous, p2p):
     aldousMetas = []
     aldousLedgerSequences = []
     for x in aldous["transactions"]:
-        if int(x["ledger_sequence"]) < minLedger:
-            continue
         aldousTxns.append(x["transaction"])
         aldousMetas.append(x["metadata"])
         aldousLedgerSequences.append(x["ledger_sequence"])
@@ -170,7 +166,7 @@ async def account_tx(ip, port, account, binary, minLedger=None, maxLedger=None):
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
 
-async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=None):
+async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=None,numPages=10):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         cursor = None
@@ -207,6 +203,8 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                     print(marker)
                 else:
                     break    
+                if numCalls > numPages:
+                    break
             return results
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -229,17 +227,41 @@ async def ledger_entry(ip, port, index, ledger, binary):
             await ws.send(json.dumps({"command":"ledger_entry","index":index,"binary":bool(binary),"ledger_index":int(ledger)}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            if "result" in res:
+                res = res["result"]
+            if "object" in res:
+                return (index,res["object"])
+            else:
+                return (index,res["node_binary"])
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+async def ledger_entries(ip, port,ledger):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    entries = await ledger_data(ip, port, ledger, 200, True)
+
+    try:
+        async with websockets.connect(address) as ws:
+            objects = []
+            for x,y in zip(entries[0],entries[1]):
+                await ws.send(json.dumps({"command":"ledger_entry","index":x,"binary":True,"ledger_index":int(ledger)}))
+                res = json.loads(await ws.recv())
+                objects.append((x,res["object"]))
+                if res["object"] != y:
+                    print("data mismatch")
+                    return None
+            print("Data matches!")
+            return objects
+
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
 
 async def ledger_data(ip, port, ledger, limit, binary):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary)}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit)}))
             res = json.loads(await ws.recv())
-            print(json.dumps(res,indent=4,sort_keys=True))
             objects = []
             blobs = []
             keys = []
@@ -251,6 +273,8 @@ async def ledger_data(ip, port, ledger, limit, binary):
                 for x in objects:
                     blobs.append(x["data"])
                     keys.append(x["index"])
+                    if len(x["index"]) != 64:
+                        print("bad key")
                 return (keys,blobs)
 
     except websockets.exceptions.connectionclosederror as e:
@@ -339,7 +363,7 @@ def compare_book_offers(aldous, p2p):
                     
         
 
-async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, get_issuer, binary):
+async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, get_issuer, binary, limit):
 
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
@@ -353,7 +377,7 @@ async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, 
                 taker_pays = json.loads("{\"currency\":\"" + pay_currency + "\"}")
                 if pay_issuer is not None:
                     taker_pays["issuer"] = pay_issuer 
-                req = {"command":"book_offers","ledger_index":int(ledger), "taker_pays":taker_pays, "taker_gets":taker_gets, "binary":bool(binary)}
+                req = {"command":"book_offers","ledger_index":int(ledger), "taker_pays":taker_pays, "taker_gets":taker_gets, "binary":bool(binary), "limit":int(limit)}
                 if cursor is not None:
                     req["cursor"] = cursor
                 await ws.send(json.dumps(req))
@@ -365,6 +389,7 @@ async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, 
                     offers.append(x)
                 if "cursor" in res:
                     cursor = res["cursor"]
+                    print(cursor)
                 else:
                     print(len(offers))
                     return offers
@@ -456,8 +481,15 @@ async def ledger_range(ip, port):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+async def perf(ip, port):
+    res = await ledger_range(ip,port)
+    time.sleep(10)
+    res2 = await ledger_range(ip,port)
+    lps = ((int(res2[1]) - int(res[1])) / 10.0)
+    print(lps)
+
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry","ledger_entries","perf"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
@@ -478,6 +510,7 @@ parser.add_argument('--minLedger',default=-1)
 parser.add_argument('--maxLedger',default=-1)
 parser.add_argument('--filename',default=None)
 parser.add_argument('--index')
+parser.add_argument('--numPages',default=3)
 
 
 
@@ -488,7 +521,10 @@ def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
     if(args.ledger is None):
         args.ledger = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))[1]
-    if args.action == "account_info":
+    if args.action == "perf":
+        asyncio.get_event_loop().run_until_complete(
+                perf(args.ip,args.port))
+    elif args.action == "account_info":
         res1 = asyncio.get_event_loop().run_until_complete(
                 account_info(args.ip, args.port, args.account, args.ledger, args.binary))
         if args.verify:
@@ -498,6 +534,20 @@ def run(args):
     elif args.action == "ledger_entry":
         asyncio.get_event_loop().run_until_complete(
                 ledger_entry(args.ip, args.port, args.index, args.ledger, args.binary))
+    elif args.action == "ledger_entries":
+        res = asyncio.get_event_loop().run_until_complete(
+                ledger_entries(args.ip, args.port, args.ledger))
+        if args.verify:
+            objects = []
+            for x in res:
+                res2 = asyncio.get_event_loop().run_until_complete(
+                        ledger_entry(args.p2pIp, args.p2pPort,x[0] , args.ledger, True))
+                if res2[1] != x[1]:
+                    print("mismatch!")
+                    return
+            print("Data matches!")
+
+
     elif args.action == "tx":
         if args.verify:
             args.binary = True
@@ -518,9 +568,11 @@ def run(args):
             res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
             args.account = res["transaction"]["Account"]
         
-        rng = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
         res = asyncio.get_event_loop().run_until_complete(
                 account_tx(args.ip, args.port, args.account, args.binary))
+        rng = getMinAndMax(res)
+
+
         
         if args.verify:
             res2 = asyncio.get_event_loop().run_until_complete(
@@ -534,13 +586,14 @@ def run(args):
         
             res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
             args.account = res["transaction"]["Account"]
-        rng = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
         res = asyncio.get_event_loop().run_until_complete(
-                account_tx_full(args.ip, args.port, args.account, args.binary))
+                account_tx_full(args.ip, args.port, args.account, args.binary,None,None,int(args.numPages)))
+        rng = getMinAndMax(res)
         print(len(res["transactions"]))
         if args.verify:
+            print("requesting p2p node")
             res2 = asyncio.get_event_loop().run_until_complete(
-                    account_tx_full(args.p2pIp, args.p2pPort, args.account, args.binary, rng[0],rng[1]))
+                    account_tx_full(args.p2pIp, args.p2pPort, args.account, args.binary, rng[0],rng[1],int(args.numPages)))
 
             print(compareAccountTx(res,res2))
     elif args.action == "ledger_data":
@@ -580,10 +633,10 @@ def run(args):
         if args.verify:
             args.binary=True
         res = asyncio.get_event_loop().run_until_complete(
-                book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer, args.binary))
+                book_offers(args.ip, args.port, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer, args.binary,args.limit))
         if args.verify:
             res2 = asyncio.get_event_loop().run_until_complete(
-                    book_offers(args.p2pIp, args.p2pPort, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer, args.binary))
+                    book_offers(args.p2pIp, args.p2pPort, args.ledger, args.taker_pays_currency, args.taker_pays_issuer, args.taker_gets_currency, args.taker_gets_issuer, args.binary, args.limit))
             print(compare_book_offers(res,res2))
             
     else:
