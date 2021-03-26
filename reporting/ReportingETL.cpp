@@ -354,7 +354,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 
     std::atomic_bool writeConflict = false;
     std::optional<uint32_t> lastPublishedSequence;
-    constexpr uint32_t maxQueueSize = 1000;
+    uint32_t maxQueueSize = 1000 / numExtractors;
     auto begin = std::chrono::system_clock::now();
     using QueueType =
         ThreadSafeQueue<std::optional<org::xrpl::rpc::v1::GetLedgerResponse>>;
