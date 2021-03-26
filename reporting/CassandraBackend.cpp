@@ -369,13 +369,15 @@ CassandraBackend::open()
         cass_cluster_set_credentials(
             cluster, username.c_str(), getString("password").c_str());
     }
+    int threads = config_.contains("threads")
+        ? config_["threads"].as_int64()
+        : std::thread::hardware_concurrency();
 
-    unsigned int const workers = std::thread::hardware_concurrency();
-    rc = cass_cluster_set_num_threads_io(cluster, workers);
+    rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
-        ss << "nodestore: Error setting Cassandra io threads to " << workers
+        ss << "nodestore: Error setting Cassandra io threads to " << threads
            << ", result: " << rc << ", " << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
