@@ -605,6 +605,7 @@ private:
     CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement getBook_;
     CassandraPreparedStatement insertBook_;
+    CassandraPreparedStatement insertBook2_;
     CassandraPreparedStatement deleteBook_;
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
@@ -623,7 +624,7 @@ private:
     std::thread ioThread_;
 
     std::thread indexer_;
-    static constexpr uint32_t indexerShift_ = 8;
+    uint32_t indexerShift_ = 8;
 
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
@@ -942,7 +943,18 @@ public:
     fetchLedgerDiff(uint32_t ledgerSequence) const;
 
     bool
-    writeKeys(uint32_t ledgerSequence) const;
+    runIndexer(uint32_t ledgerSequence) const;
+
+    bool
+    writeKeys(
+        std::unordered_set<ripple::uint256>& keys,
+        uint32_t ledgerSequence) const;
+    bool
+    writeBooks(
+        std::unordered_map<
+            ripple::uint256,
+            std::unordered_set<ripple::uint256>>& books,
+        uint32_t ledgerSequence) const;
 
     std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(

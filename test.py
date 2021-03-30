@@ -433,6 +433,7 @@ async def ledger(ip, port, ledger, binary, transactions, expand):
             await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":bool(binary), "transactions":bool(transactions),"expand":bool(expand)}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            print(bool(binary))
             return res
 
     except websockets.exceptions.connectionclosederror as e:
@@ -478,7 +479,7 @@ parser.add_argument('--minLedger',default=-1)
 parser.add_argument('--maxLedger',default=-1)
 parser.add_argument('--filename',default=None)
 parser.add_argument('--index')
-parser.add_argument('--cursor',"0000000000000000000000000000000000000000000000000000000000000000")
+parser.add_argument('--cursor',default='0000000000000000000000000000000000000000000000000000000000000000')
 
 
 
