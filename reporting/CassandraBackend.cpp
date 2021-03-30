@@ -543,13 +543,13 @@ struct WriteKeyCallbackData
     uint32_t currentRetries = 0;
     WriteKeyCallbackData(
         CassandraBackend const& backend,
-        ripple::uint256&& key,
+        ripple::uint256 const& key,
         uint32_t ledgerSequence,
         std::condition_variable& cv,
         std::mutex& mtx,
         std::atomic_uint32_t& numRemaining)
         : backend(backend)
-        , key(std::move(key))
+        , key(key)
         , ledgerSequence(ledgerSequence)
         , cv(cv)
         , mtx(mtx)
@@ -614,43 +614,43 @@ CassandraBackend::writeKeys(
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
         << " . num keys = " << std::to_string(keys.size());
-    return true;
-    /*
     std::atomic_uint32_t numRemaining = keys.size();
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
     uint32_t concurrentLimit = maxRequestsOutstanding / 2;
-    for (std::size_t i = 0; i < keys.size(); ++i)
+    uint32_t numSubmitted = 0;
+    for (auto& key : keys)
     {
         cbs.push_back(std::make_shared<WriteKeyCallbackData>(
-            *this, std::move(keys[i]), ledgerSequence, cv, mtx, numRemaining));
-        writeKey(*cbs[i]);
+            *this, key, ledgerSequence, cv, mtx, numRemaining));
+        writeKey(*cbs.back());
+	++numSubmitted;
         BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
         std::unique_lock<std::mutex> lck(mtx);
         BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
-        cv.wait(lck, [&numRemaining, i, concurrentLimit, &keys]() {
+        cv.wait(lck, [&numRemaining, numSubmitted, concurrentLimit, &keys]() {
             BOOST_LOG_TRIVIAL(trace)
-                << std::to_string(i) << " " << std::to_string(numRemaining)
+                << std::to_string(numSubmitted) << " " << std::to_string(numRemaining)
                 << " " << std::to_string(keys.size()) << " "
                 << std::to_string(concurrentLimit);
             // keys.size() - i is number submitted. keys.size() -
             // numRemaining is number completed Difference is num
             // outstanding
-            return (i + 1 - (keys.size() - numRemaining)) < concurrentLimit;
+            return (numSubmitted - (keys.size() - numRemaining)) < concurrentLimit;
         });
-        if (i % 100000 == 0)
+        if (numSubmitted % 100000 == 0)
             BOOST_LOG_TRIVIAL(info)
-                << __func__ << " Submitted " << std::to_string(i)
+                << __func__ << " Submitted " << std::to_string(numSubmitted)
                 << " write requests. Completed "
                 << (keys.size() - numRemaining);
     }
 
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
-*/
-    }
+    return true;
+}
 
 bool
 CassandraBackend::writeBooks(
