@@ -11,7 +11,7 @@ def getTime(line):
     return timestamp.timestamp()
 
 
-def parseLogs(filename, interval):
+def parseLogs(filename, interval, minTxnCount = 0):
 
     with open(filename) as f:
 
@@ -54,12 +54,13 @@ def parseLogs(filename, interval):
                 loadTime = line[loadTimeIdx + len(loadTimeSubstr):txnsIdx]
                 txnsPerSecond = line[txnsIdx + len(txnsSubstr):objsIdx]
                 objsPerSecond = line[objsIdx + len(objsSubstr):-1]
-                totalTime += float(loadTime);
-                totalTxns += float(txnCount)
-                totalObjs += float(objCount)
-                intervalTime += float(loadTime)
-                intervalTxns += float(txnCount)
-                intervalObjs += float(objCount)
+                if int(txnCount) >= minTxnCount:
+                    totalTime += float(loadTime);
+                    totalTxns += float(txnCount)
+                    totalObjs += float(objCount)
+                    intervalTime += float(loadTime)
+                    intervalTxns += float(txnCount)
+                    intervalObjs += float(objCount)
 
                 totalLoadTime += float(loadTime)
                 intervalLoadTime += float(loadTime)
@@ -127,10 +128,11 @@ def parseLogs(filename, interval):
 parser = argparse.ArgumentParser(description='parses logs')
 parser.add_argument("--filename")
 parser.add_argument("--interval",default=100000)
+parser.add_argument("--minTxnCount",default=0)
 
 args = parser.parse_args()
 
 def run(args):
-    parseLogs(args.filename, int(args.interval))
+    parseLogs(args.filename, int(args.interval), int(args.minTxnCount))
 
 run(args)

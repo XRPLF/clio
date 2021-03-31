@@ -473,13 +473,36 @@ async def ledger_range(ip, port):
             if "error" in res:
                 await ws.send(json.dumps({"command":"server_info"}))
                 res = json.loads(await ws.recv())
+                print(res)
                 rng = res["result"]["info"]["complete_ledgers"]
+                if rng == "empty":
+                    return (0,0)
                 idx = rng.find("-")
                 return (int(rng[0:idx]),int(rng[idx+1:-1]))
                 
             return (res["ledger_index_min"],res["ledger_index_max"])
     except websockets.exceptions.connectionclosederror as e:
         print(e)
+async def fee(ip, port):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({"command":"fee"}))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res,indent=4,sort_keys=True))
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
+
+async def ledger_diff(ip, port, base, desired, includeBlobs):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({"command":"ledger_diff","base_ledger":int(base),"desired_ledger":int(desired),"include_blobs":bool(includeBlobs)}))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res,indent=4,sort_keys=True))
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
+    
 
 async def perf(ip, port):
     res = await ledger_range(ip,port)
@@ -489,7 +512,7 @@ async def perf(ip, port):
     print(lps)
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry","ledger_entries","perf"])
+parser.add_argument('action', choices=["account_info", "tx", "account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry","ledger_diff","ledger_entries","perf","fee"])
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
 parser.add_argument('--hash')
@@ -511,6 +534,9 @@ parser.add_argument('--maxLedger',default=-1)
 parser.add_argument('--filename',default=None)
 parser.add_argument('--index')
 parser.add_argument('--numPages',default=3)
+parser.add_argument('--base')
+parser.add_argument('--desired')
+parser.add_argument('--includeBlobs',default=False)
 
 
 
@@ -521,7 +547,9 @@ def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
     if(args.ledger is None):
         args.ledger = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))[1]
-    if args.action == "perf":
+    if args.action == "fee":
+        asyncio.get_event_loop().run_until_complete(fee(args.ip, args.port))
+    elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))
     elif args.action == "account_info":
@@ -546,8 +574,9 @@ def run(args):
                     print("mismatch!")
                     return
             print("Data matches!")
-
-
+    elif args.action == "ledger_diff":
+        asyncio.get_event_loop().run_until_complete(
+                ledger_diff(args.ip, args.port, args.base, args.desired, args.includeBlobs))
     elif args.action == "tx":
         if args.verify:
             args.binary = True
