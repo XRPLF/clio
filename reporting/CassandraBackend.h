@@ -604,6 +604,7 @@ private:
     CassandraPreparedStatement insertKey_;
     CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement getBook_;
+    CassandraPreparedStatement selectBook_;
     CassandraPreparedStatement insertBook_;
     CassandraPreparedStatement insertBook2_;
     CassandraPreparedStatement deleteBook_;
@@ -693,6 +694,11 @@ public:
     getInsertKeyPreparedStatement() const
     {
         return insertKey_;
+    }
+    CassandraPreparedStatement const&
+    getInsertBookPreparedStatement() const
+    {
+        return insertBook2_;
     }
 
     std::pair<
@@ -954,14 +960,21 @@ public:
         std::unordered_map<
             ripple::uint256,
             std::unordered_set<ripple::uint256>>& books,
-        uint32_t ledgerSequence) const;
-
+        uint32_t ledgerSequence,
+        uint32_t numOffers) const;
     std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t sequence,
         std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor) const override
+        std::optional<ripple::uint256> const& cursor) const override;
+
+    std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+    fetchBookOffers2(
+        ripple::uint256 const& book,
+        uint32_t sequence,
+        std::uint32_t limit,
+        std::optional<ripple::uint256> const& cursor) const
     {
         CassandraStatement statement{getBook_};
         statement.bindBytes(book);

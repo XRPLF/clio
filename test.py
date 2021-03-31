@@ -547,7 +547,7 @@ def run(args):
             print(compareAccountTx(res,res2))
     elif args.action == "ledger_data":
         res = asyncio.get_event_loop().run_until_complete(
-                ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary))
+                ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary, args.cursor))
         if args.verify:
             writeLedgerData(res,args.filename)
     elif args.action == "ledger_data_full":
