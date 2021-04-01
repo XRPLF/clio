@@ -625,7 +625,7 @@ private:
     std::thread ioThread_;
 
     std::thread indexer_;
-    uint32_t indexerShift_ = 8;
+    uint32_t indexerShift_ = 16;
 
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
@@ -950,6 +950,11 @@ public:
 
     bool
     runIndexer(uint32_t ledgerSequence) const;
+    bool
+    isIndexed(uint32_t ledgerSequence) const;
+
+    std::optional<uint32_t>
+    getNextToIndex() const;
 
     bool
     writeKeys(
