@@ -154,38 +154,45 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto range = flatMapBackend_->fetchLedgerRange();
-
-        if (!range || range->maxSequence < ledgerSequence)
+        try
         {
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " : "
-                << "Trying to publish. Could not find ledger with sequence = "
-                << ledgerSequence;
-            // We try maxAttempts times to publish the ledger, waiting one
-            // second in between each attempt.
-            // If the ledger is not present in the database after maxAttempts,
-            // we attempt to take over as the writer. If the takeover fails,
-            // doContinuousETL will return, and this node will go back to
-            // publishing.
-            // If the node is in strict read only mode, we simply
-            // skip publishing this ledger and return false indicating the
-            // publish failed
-            if (numAttempts >= maxAttempts)
+            auto range = flatMapBackend_->fetchLedgerRange();
+
+            if (!range || range->maxSequence < ledgerSequence)
             {
                 BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
-                                         << "Failed to publish ledger after "
-                                         << numAttempts << " attempts.";
-                if (!readOnly_)
+                                         << "Trying to publish. Could not find "
+                                            "ledger with sequence = "
+                                         << ledgerSequence;
+                // We try maxAttempts times to publish the ledger, waiting one
+                // second in between each attempt.
+                // If the ledger is not present in the database after
+                // maxAttempts, we attempt to take over as the writer. If the
+                // takeover fails, doContinuousETL will return, and this node
+                // will go back to publishing. If the node is in strict read
+                // only mode, we simply skip publishing this ledger and return
+                // false indicating the publish failed
+                if (numAttempts >= maxAttempts)
                 {
-                    BOOST_LOG_TRIVIAL(info)
+                    BOOST_LOG_TRIVIAL(debug)
                         << __func__ << " : "
-                        << "Attempting to become ETL writer";
-                    return false;
+                        << "Failed to publish ledger after " << numAttempts
+                        << " attempts.";
+                    if (!readOnly_)
+                    {
+                        BOOST_LOG_TRIVIAL(info)
+                            << __func__ << " : "
+                            << "Attempting to become ETL writer";
+                        return false;
+                    }
                 }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                ++numAttempts;
+                continue;
             }
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            ++numAttempts;
+        }
+        catch (Backend::DatabaseTimeout const& e)
+        {
             continue;
         }
 

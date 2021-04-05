@@ -327,6 +327,7 @@ def compare_offer(aldous, p2p):
 def compare_book_offers(aldous, p2p):
     p2pOffers = {}
     for x in p2p:
+        matched = False
         for y in aldous:
             if y["index"] == x["index"]:
                 if not compare_offer(y,x):
@@ -334,6 +335,12 @@ def compare_book_offers(aldous, p2p):
                     print(y)
                     print(x)
                     return False
+                else:
+                    matched = True
+        if not matched:
+            print("offer not found")
+            print(x)
+            return False
     print("offers match!")
     return True
                     

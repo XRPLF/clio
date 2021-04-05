@@ -508,10 +508,15 @@ class CassandraAsyncResult
     T& requestParams_;
     CassandraResult result_;
     bool timedOut_ = false;
+    bool retryOnTimeout_ = false;
 
 public:
-    CassandraAsyncResult(T& requestParams, CassFuture* fut, F retry)
-        : requestParams_(requestParams)
+    CassandraAsyncResult(
+        T& requestParams,
+        CassFuture* fut,
+        F retry,
+        bool retryOnTimeout = false)
+        : requestParams_(requestParams), retryOnTimeout_(retryOnTimeout)
     {
         CassError rc = cass_future_error_code(fut);
         if (rc != CASS_OK)
@@ -522,7 +527,7 @@ public:
             // try again
             if (isTimeout(rc))
                 timedOut_ = true;
-            else
+            if (!timedOut_ || retryOnTimeout_)
                 retry(requestParams_);
         }
         else
@@ -701,6 +706,12 @@ public:
     getInsertBookPreparedStatement() const
     {
         return insertBook2_;
+    }
+
+    CassandraPreparedStatement const&
+    getSelectLedgerDiffPreparedStatement() const
+    {
+        return selectLedgerDiff_;
     }
 
     std::pair<
@@ -949,6 +960,8 @@ public:
         std::uint32_t limit) const override;
     std::vector<LedgerObject>
     fetchLedgerDiff(uint32_t ledgerSequence) const;
+    std::map<uint32_t, std::vector<LedgerObject>>
+    fetchLedgerDiffs(std::vector<uint32_t> const& sequences) const;
 
     bool
     runIndexer(uint32_t ledgerSequence) const;
@@ -1130,10 +1143,6 @@ public:
 
         ReadObjectCallbackData(ReadObjectCallbackData const& other) = default;
     };
-    std::vector<Blob>
-    fetchLedgerObjects(
-        std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const override;
 
     void
     readObject(ReadObjectCallbackData& data) const
@@ -1144,6 +1153,10 @@ public:
 
         executeAsyncRead(statement, flatMapReadObjectCallback, data);
     }
+    std::vector<Blob>
+    fetchLedgerObjects(
+        std::vector<ripple::uint256> const& keys,
+        uint32_t sequence) const override;
 
     struct WriteCallbackData
     {
