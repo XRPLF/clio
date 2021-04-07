@@ -319,6 +319,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 std::optional<uint32_t>
 ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 {
+    if (startSequence > finishSequence_)
+        return {};
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
      * to each other via 2 different thread safe queues and 1 atomic variable.
@@ -388,7 +390,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // ETL mechanism should stop. The other stopping condition is if
             // the entire server is shutting down. This can be detected in a
             // variety of ways. See the comment at the top of the function
-            while (networkValidatedLedgers_.waitUntilValidatedByNetwork(
+            while (currentSequence <= finishSequence_ &&
+                   networkValidatedLedgers_.waitUntilValidatedByNetwork(
                        currentSequence) &&
                    !writeConflict && !isStopping())
             {
@@ -425,6 +428,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 
                 transformQueue->push(std::move(fetchResponse));
                 currentSequence += numExtractors;
+                if (currentSequence > finishSequence_)
+                    break;
             }
             // empty optional tells the transformer to shut down
             transformQueue->push({});
@@ -692,6 +697,8 @@ ReportingETL::ReportingETL(
     flatMapBackend_->open();
     if (config.contains("start_sequence"))
         startSequence_ = config.at("start_sequence").as_int64();
+    if (config.contains("finish_sequence"))
+        finishSequence_ = config.at("finish_sequence").as_int64();
     if (config.contains("read_only"))
         readOnly_ = config.at("read_only").as_bool();
     if (config.contains("online_delete"))

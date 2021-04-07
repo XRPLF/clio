@@ -131,6 +131,7 @@ private:
     /// the next ledger validated by the network. If this is set, and the
     /// database is already populated, an error is thrown.
     std::optional<uint32_t> startSequence_;
+    std::optional<uint32_t> finishSequence_;
 
     /// The time that the most recently published ledger was published. Used by
     /// server_info
