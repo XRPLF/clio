@@ -1,7 +1,19 @@
 #ifndef RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 #define RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 #include <ripple/ledger/ReadView.h>
+#include <boost/asio.hpp>
 #include <reporting/DBHelpers.h>
+namespace std {
+template <>
+struct hash<ripple::uint256>
+{
+    std::size_t
+    operator()(const ripple::uint256& k) const noexcept
+    {
+        return boost::hash_range(k.begin(), k.end());
+    }
+};
+}  // namespace std
 namespace Backend {
 using Blob = std::vector<unsigned char>;
 struct LedgerObject
@@ -42,11 +54,51 @@ class DatabaseTimeout : public std::exception
         return "Database read timed out. Please retry the request";
     }
 };
+class BackendInterface;
+class BackendIndexer
+{
+    boost::asio::io_context ioc_;
+    std::mutex mutex_;
+    std::optional<boost::asio::io_context::work> work_;
+    std::thread ioThread_;
+    uint32_t keyShift_ = 16;
+    uint32_t bookShift_ = 16;
+    std::unordered_set<ripple::uint256> keys;
+    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
+        booksToOffers;
+    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
+        booksToDeletedOffers;
+
+public:
+    BackendIndexer(boost::json::object const& config);
+    ~BackendIndexer();
+
+    void
+    addKey(ripple::uint256 const& key);
+    void
+    deleteKey(ripple::uint256 const& key);
+
+    void
+    addBookOffer(ripple::uint256 const& book, ripple::uint256 const& offerKey);
+    void
+    deleteBookOffer(
+        ripple::uint256 const& book,
+        ripple::uint256 const& offerKey);
+
+    void
+    finish(uint32_t ledgerSequence, BackendInterface const& backend);
+};
 
 class BackendInterface
 {
+private:
+    mutable BackendIndexer indexer_;
+
 public:
     // read methods
+    BackendInterface(boost::json::object const& config) : indexer_(config)
+    {
+    }
 
     virtual std::optional<uint32_t>
     fetchLatestLedgerSequence() const = 0;
@@ -107,8 +159,37 @@ public:
         std::string&& ledgerHeader,
         bool isFirst = false) const = 0;
 
-    virtual void
+    void
     writeLedgerObject(
+        std::string&& key,
+        uint32_t seq,
+        std::string&& blob,
+        bool isCreated,
+        bool isDeleted,
+        std::optional<ripple::uint256>&& book) const
+    {
+        ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
+        if (isCreated)
+            indexer_.addKey(key256);
+        if (isDeleted)
+            indexer_.deleteKey(key256);
+        if (book)
+        {
+            if (isCreated)
+                indexer_.addBookOffer(*book, key256);
+            if (isDeleted)
+                indexer_.deleteBookOffer(*book, key256);
+        }
+        doWriteLedgerObject(
+            std::move(key),
+            seq,
+            std::move(blob),
+            isCreated,
+            isDeleted,
+            std::move(book));
+    }
+    virtual void
+    doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
         std::string&& blob,
@@ -141,11 +222,27 @@ public:
     virtual void
     startWrites() const = 0;
 
+    bool
+    finishWrites(uint32_t ledgerSequence) const
+    {
+        indexer_.finish(ledgerSequence, *this);
+        return doFinishWrites();
+    }
     virtual bool
-    finishWrites() const = 0;
+    doFinishWrites() const = 0;
 
     virtual bool
     doOnlineDelete(uint32_t minLedgerToKeep) const = 0;
+    virtual bool
+    writeKeys(
+        std::unordered_set<ripple::uint256> const& keys,
+        uint32_t ledgerSequence) const = 0;
+    virtual bool
+    writeBooks(
+        std::unordered_map<
+            ripple::uint256,
+            std::unordered_set<ripple::uint256>> const& books,
+        uint32_t ledgerSequence) const = 0;
 
     virtual ~BackendInterface()
     {

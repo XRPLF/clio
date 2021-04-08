@@ -655,7 +655,8 @@ private:
     mutable bool isFirstLedger_ = false;
 
 public:
-    CassandraBackend(boost::json::object const& config) : config_(config)
+    CassandraBackend(boost::json::object const& config)
+        : BackendInterface(config), config_(config)
     {
     }
 
@@ -798,7 +799,7 @@ public:
     };
 
     bool
-    finishWrites() const override
+    doFinishWrites() const override
     {
         // wait for all other writes to finish
         sync();
@@ -973,15 +974,14 @@ public:
 
     bool
     writeKeys(
-        std::unordered_set<ripple::uint256>& keys,
+        std::unordered_set<ripple::uint256> const& keys,
         uint32_t ledgerSequence) const;
     bool
     writeBooks(
         std::unordered_map<
             ripple::uint256,
-            std::unordered_set<ripple::uint256>>& books,
-        uint32_t ledgerSequence,
-        uint32_t numOffers) const;
+            std::unordered_set<ripple::uint256>> const& books,
+        uint32_t ledgerSequence) const override;
     std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
     fetchBookOffers(
         ripple::uint256 const& book,
@@ -1270,7 +1270,7 @@ public:
         executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
     }
     void
-    writeLedgerObject(
+    doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
         std::string&& blob,

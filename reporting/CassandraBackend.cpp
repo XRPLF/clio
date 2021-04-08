@@ -2,6 +2,7 @@
 #include <reporting/CassandraBackend.h>
 #include <reporting/DBHelpers.h>
 #include <unordered_map>
+/*
 namespace std {
 template <>
 struct hash<ripple::uint256>
@@ -13,6 +14,7 @@ struct hash<ripple::uint256>
     }
 };
 }  // namespace std
+*/
 namespace Backend {
 template <class T, class F>
 void
@@ -842,7 +844,7 @@ writeKeyCallback(CassFuture* fut, void* cbData)
 
 bool
 CassandraBackend::writeKeys(
-    std::unordered_set<ripple::uint256>& keys,
+    std::unordered_set<ripple::uint256> const& keys,
     uint32_t ledgerSequence) const
 {
     BOOST_LOG_TRIVIAL(info)
@@ -889,26 +891,27 @@ CassandraBackend::writeKeys(
 
 bool
 CassandraBackend::writeBooks(
-    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>&
-        books,
-    uint32_t ledgerSequence,
-    uint32_t numOffers) const
+    std::unordered_map<
+        ripple::uint256,
+        std::unordered_set<ripple::uint256>> const& books,
+    uint32_t ledgerSequence) const
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
-        << " . num books = " << std::to_string(books.size())
-        << " . num offers = " << std::to_string(numOffers);
-    std::atomic_uint32_t numRemaining = numOffers;
+        << " . num books = " << std::to_string(books.size());
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteBookCallbackData>> cbs;
     uint32_t concurrentLimit = maxRequestsOutstanding / 2;
-    uint32_t numSubmitted = 0;
+    std::atomic_uint32_t numOutstanding = 0;
+    size_t count = 0;
     auto start = std::chrono::system_clock::now();
     for (auto& book : books)
     {
         for (auto& offer : book.second)
         {
+            ++numOutstanding;
+            ++count;
             cbs.push_back(std::make_shared<WriteBookCallbackData>(
                 *this,
                 book.first,
@@ -916,40 +919,25 @@ CassandraBackend::writeBooks(
                 ledgerSequence,
                 cv,
                 mtx,
-                numRemaining));
+                numOutstanding));
             writeBook2(*cbs.back());
-            ++numSubmitted;
             BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
             std::unique_lock<std::mutex> lck(mtx);
             BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
-            cv.wait(
-                lck,
-                [&numRemaining, numSubmitted, concurrentLimit, numOffers]() {
-                    BOOST_LOG_TRIVIAL(trace)
-                        << std::to_string(numSubmitted) << " "
-                        << std::to_string(numRemaining) << " "
-                        << std::to_string(numOffers) << " "
-                        << std::to_string(concurrentLimit);
-                    return (numSubmitted - (numOffers - numRemaining)) <
-                        concurrentLimit;
-                });
-            if (numSubmitted % 1000 == 0)
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__ << " Submitted " << std::to_string(numSubmitted)
-                    << " write requests. Completed "
-                    << (numOffers - numRemaining);
+            cv.wait(lck, [&numOutstanding, concurrentLimit]() {
+                return numOutstanding < concurrentLimit;
+            });
         }
     }
     BOOST_LOG_TRIVIAL(info) << __func__
                             << "Submitted all book writes. Waiting for them to "
                                "finish. num submitted = "
-                            << std::to_string(numSubmitted);
+                            << std::to_string(count);
     std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
+    cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });
     BOOST_LOG_TRIVIAL(info) << __func__ << "Finished writing books";
     return true;
 }
-
 bool
 CassandraBackend::isIndexed(uint32_t ledgerSequence) const
 {
@@ -986,6 +974,8 @@ CassandraBackend::getNextToIndex() const
 bool
 CassandraBackend::runIndexer(uint32_t ledgerSequence) const
 {
+    return false;
+    /*
     auto start = std::chrono::system_clock::now();
     constexpr uint32_t limit = 2048;
     std::unordered_set<ripple::uint256> keys;
@@ -1091,7 +1081,6 @@ CassandraBackend::runIndexer(uint32_t ledgerSequence) const
             size_t numOffersDeleted = 0;
             // Get the diff and update keys
             std::vector<LedgerObject> objs;
-            std::unordered_set<ripple::uint256> deleted;
             std::vector<uint32_t> sequences(256, 0);
             std::iota(sequences.begin(), sequences.end(), i + 1);
 
@@ -1104,7 +1093,6 @@ CassandraBackend::runIndexer(uint32_t ledgerSequence) const
                     if (obj.blob.size() == 0)
                     {
                         keys.erase(obj.key);
-                        deleted.insert(obj.key);
                         if (offers.count(obj.key) > 0)
                         {
                             auto book = offers[obj.key];
@@ -1115,8 +1103,8 @@ CassandraBackend::runIndexer(uint32_t ledgerSequence) const
                     }
                     else
                     {
-                        // insert other keys. keys is a set, so this is a noop
-                        // if obj.key is already in keys
+                        // insert other keys. keys is a set, so this is a
+                        // noop if obj.key is already in keys
                         keys.insert(obj.key);
                         // if the object is an offer, add to books
                         if (isOffer(obj.blob))
@@ -1167,8 +1155,8 @@ CassandraBackend::runIndexer(uint32_t ledgerSequence) const
         nextLedgerSequence = prevLedgerSequence + (1 << indexerShift_);
     }
     return true;
+*/
 }
-
 bool
 CassandraBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
 {
@@ -1469,7 +1457,8 @@ CassandraBackend::open()
         query = {};
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books2"
               << " ( book blob, sequence bigint, key blob, PRIMARY KEY "
-                 "((book, sequence), key)) WITH CLUSTERING ORDER BY (key ASC)";
+                 "((book, sequence), key)) WITH CLUSTERING ORDER BY (key "
+                 "ASC)";
         if (!executeSimpleStatement(query.str()))
             continue;
         query = {};
@@ -1633,7 +1622,7 @@ CassandraBackend::open()
               << " ALLOW FILTERING";
         if (!upperBound2_.prepareStatement(query, session_.get()))
             continue;
-*/
+    */
         query = {};
         query << "SELECT TOKEN(key) FROM " << tablePrefix << "objects "
               << " WHERE key = ? LIMIT 1";
@@ -1783,5 +1772,5 @@ CassandraBackend::open()
     open_ = true;
 
     BOOST_LOG_TRIVIAL(info) << "Opened database successfully";
-}
+}  // namespace Backend
 }  // namespace Backend

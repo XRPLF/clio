@@ -131,7 +131,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     {
         flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
     }
-    flatMapBackend_->finishWrites();
+    flatMapBackend_->finishWrites(startingSequence);
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
                              << ((end - start).count()) / 1000000000.0;
@@ -298,7 +298,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             std::move(bookDir));
     }
     flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
-    bool success = flatMapBackend_->finishWrites();
+    bool success = flatMapBackend_->finishWrites(lgrInfo.seq);
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "
