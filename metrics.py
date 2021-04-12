@@ -99,15 +99,19 @@ def parseLogs(filename, interval, minTxnCount = 0):
                         + objCount + " : " 
                         + txnsPerSecond + " : " 
                         + objsPerSecond)
-                    print("Interval Aggregate ( " + str(interval) + " ) [ledgers, elapsedTime, ledgersPerSec, avgLoadTime, txPerSec, objsPerSec]: ")
+                    print("Interval Aggregate ( " + str(interval) + " ) [ledgers, txns, objects, elapsedTime, ledgersPerSec, avgLoadTime, txPerSec, objsPerSec]: ")
                     print(str(intervalLedgers) + " : " 
+                            + str(intervalTxns) + " : "
+                        + str(intervalObjs) + " : "
                         + str(intervalEnd - intervalStart) + " : " 
                         + str(intervalLedgersPerSecond) + " : " 
                         + str(intervalLoadTime/intervalLedgers) + " : " 
                         + str(intervalTxns/intervalTime) + " : " 
                         + str(intervalObjs/intervalTime))
-                    print("Total Aggregate: [ledgers, elapsedTime, ledgersPerSec, avgLoadTime, txPerSec, objsPerSec]")
+                    print("Total Aggregate: [ledgers, txns, objects, elapsedTime, ledgersPerSec, avgLoadTime, txPerSec, objsPerSec]")
                     print(str(totalLedgers) + " : " 
+                            str(totalTxns) + " : "
+                            + str(totalObjs) + " : "
                         + str(end-start) + " : " 
                         + str(ledgersPerSecond) + " : " 
                         + str(totalLoadTime/totalLedgers) + " : " 
