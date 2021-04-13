@@ -413,17 +413,19 @@ PostgresBackend::fetchTransactions(
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
-    sql << "SELECT transaction,metadata,ledger_seq FROM transactions "
-           "WHERE ";
     bool first = true;
     for (auto const& hash : hashes)
     {
         if (!first)
-            sql << " OR ";
+            sql << " UNION ALL ";
+        sql << "SELECT transaction,metadata,ledger_seq FROM transactions "
+               "WHERE ";
         sql << "HASH = \'\\x" << ripple::strHex(hash) << "\'";
         first = false;
     }
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : fetching. sql = " << sql.str();
     auto res = pgQuery(sql.str().data());
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : fetched";
     if (size_t numRows = checkResult(res, 3))
     {
         std::vector<TransactionAndMetadata> results;
@@ -498,32 +500,52 @@ PostgresBackend::fetchAccountTransactions(
            "account_transactions WHERE account = "
         << "\'\\x" << ripple::strHex(account) << "\'";
     if (cursor)
-        sql << " AND (ledger_seq < " << cursor->ledgerSequence
-            << " OR (ledger_seq = " << cursor->ledgerSequence
-            << " AND transaction_index < " << cursor->transactionIndex << "))";
+        sql << " AND ledger_seq = " << cursor->ledgerSequence
+            << " AND transaction_index < " << cursor->transactionIndex;
     sql << " ORDER BY ledger_seq DESC, transaction_index DESC";
     sql << " LIMIT " << std::to_string(limit);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " : " << sql.str();
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : fetching " << sql.str();
     auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 3))
-    {
-        std::vector<ripple::uint256> hashes;
-        for (size_t i = 0; i < numRows; ++i)
-        {
-            hashes.push_back(res.asUInt256(i, 0));
-        }
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : fetched " << sql.str();
+    size_t numRows = checkResult(res, 3);
 
-        if (numRows == limit)
+    std::vector<ripple::uint256> hashes;
+    for (size_t i = 0; i < numRows; ++i)
+    {
+        hashes.push_back(res.asUInt256(i, 0));
+    }
+
+    uint32_t newLimit = limit - numRows;
+    if (newLimit > 0)
+    {
+        std::stringstream sql2;
+        sql2 << "SELECT hash, ledger_seq, transaction_index FROM "
+                "account_transactions WHERE account = "
+             << "\'\\x" << ripple::strHex(account) << "\'";
+        if (cursor)
+            sql2 << " AND ledger_seq < " << cursor->ledgerSequence
+                 << " ORDER BY ledger_seq DESC, transaction_index DESC";
+        sql2 << " LIMIT " << std::to_string(newLimit);
+        res = pgQuery(sql2.str().data());
+        if (numRows = checkResult(res, 3))
         {
-            AccountTransactionsCursor retCursor{
-                res.asBigInt(numRows - 1, 1), res.asBigInt(numRows - 1, 2)};
-            return {fetchTransactions(hashes), {retCursor}};
-        }
-        else
-        {
-            return {fetchTransactions(hashes), {}};
+            for (size_t i = 0; i < numRows; ++i)
+            {
+                hashes.push_back(res.asUInt256(i, 0));
+            }
         }
     }
+    if (hashes.size() == limit)
+    {
+        AccountTransactionsCursor retCursor{
+            res.asBigInt(numRows - 1, 1), res.asBigInt(numRows - 1, 2)};
+        return {fetchTransactions(hashes), {retCursor}};
+    }
+    else
+    {
+        return {fetchTransactions(hashes), {}};
+    }
+
     return {};
 }
 
@@ -641,12 +663,13 @@ PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
                 }
                 else
                 {
-                    // This is rather unelegant. For a deleted object, we don't
-                    // know its type just from the key (or do we?). So, we just
-                    // assume it is an offer and try to delete it. The
-                    // alternative is to read the actual object out of the db
-                    // from before it was deleted. This could result in a lot of
-                    // individual reads though, so we chose to just delete
+                    // This is rather unelegant. For a deleted object, we
+                    // don't know its type just from the key (or do we?).
+                    // So, we just assume it is an offer and try to delete
+                    // it. The alternative is to read the actual object out
+                    // of the db from before it was deleted. This could
+                    // result in a lot of individual reads though, so we
+                    // chose to just delete
                     deleteOffer = true;
                 }
                 if (deleteOffer)
