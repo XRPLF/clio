@@ -787,9 +787,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     metadata bytea NOT NULL,
     PRIMARY KEY(ledger_seq, hash)
 ) PARTITION BY RANGE(ledger_seq);
--- Index for lookups by hash
-CREATE INDEX IF NOT EXISTS tx_by_hash ON transactions
-    USING hash (hash);
 create table if not exists transactions1 partition of transactions for values from (0) to (10000000);
 create table if not exists transactions2 partition of transactions for values from (10000000) to (20000000);
 create table if not exists transactions3 partition of transactions for values from (20000000) to (30000000);
