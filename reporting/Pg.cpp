@@ -758,21 +758,8 @@ create table if not exists objects5 partition of objects for values from (400000
 create table if not exists objects6 partition of objects for values from (50000000) to (60000000);
 create table if not exists objects7 partition of objects for values from (60000000) to (70000000);
 
-create index if not exists objects1idx on objects1 (key,ledger_seq);
-create index if not exists objects2idx on objects2 (key,ledger_seq);
-create index if not exists objects3idx on objects3 (key,ledger_seq);
-create index if not exists objects4idx on objects4 (key,ledger_seq);
-create index if not exists objects5idx on objects5 (key,ledger_seq);
-create index if not exists objects6idx on objects6 (key,ledger_seq);
-create index if not exists objects7idx on objects7 (key,ledger_seq);
 
-create index if not exists lgr_diff_objects1 on objects1 (ledger_seq);
-create index if not exists lgr_diff_objects2 on objects2 (ledger_seq);
-create index if not exists lgr_diff_objects3 on objects3 (ledger_seq);
-create index if not exists lgr_diff_objects4 on objects4 (ledger_seq);
-create index if not exists lgr_diff_objects5 on objects5 (ledger_seq);
-create index if not exists lgr_diff_objects6 on objects6 (ledger_seq);
-create index if not exists lgr_diff_objects7 on objects7 (ledger_seq);
+create index if not exists lgr_diff on objects using hash (ledger_seq);
 
 -- Index for lookups by ledger hash.
 CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
@@ -784,8 +771,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     hash bytea NOT NULL,
     ledger_seq bigint NOT NULL ,
     transaction bytea NOT NULL,
-    metadata bytea NOT NULL,
-    PRIMARY KEY(ledger_seq, hash)
+    metadata bytea NOT NULL
 ) PARTITION BY RANGE(ledger_seq);
 create table if not exists transactions1 partition of transactions for values from (0) to (10000000);
 create table if not exists transactions2 partition of transactions for values from (10000000) to (20000000);
@@ -795,21 +781,8 @@ create table if not exists transactions5 partition of transactions for values fr
 create table if not exists transactions6 partition of transactions for values from (50000000) to (60000000);
 create table if not exists transactions7 partition of transactions for values from (60000000) to (70000000);
 
--- create index if not exists tx_by_hash_1 on transactions1 (hash);
--- create index if not exists tx_by_hash_2 on transactions2 (hash);
--- create index if not exists tx_by_hash_3 on transactions3 (hash);
--- create index if not exists tx_by_hash_4 on transactions4 (hash);
--- create index if not exists tx_by_hash_5 on transactions5 (hash);
--- create index if not exists tx_by_hash_6 on transactions6 (hash);
--- create index if not exists tx_by_hash_7 on transactions7 (hash);
--- 
--- create index if not exists tx_by_lgr_seq_1 on transactions1 (ledger_seq, hash);
--- create index if not exists tx_by_lgr_seq_2 on transactions2 (ledger_seq, hash);
--- create index if not exists tx_by_lgr_seq_3 on transactions3 (ledger_seq, hash);
--- create index if not exists tx_by_lgr_seq_4 on transactions4 (ledger_seq, hash);
--- create index if not exists tx_by_lgr_seq_5 on transactions5 (ledger_seq, hash);
--- create index if not exists tx_by_lgr_seq_6 on transactions6 (ledger_seq, hash);
--- create index if not exists tx_by_lgr_seq_7 on transactions7 (ledger_seq, hash);
+-- create index if not exists tx_by_hash on transactions using hash (hash);
+-- create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq);
 
 -- Table that maps accounts to transactions affecting them. Deletes from the
 -- ledger table cascade here based on ledger_seq.
@@ -828,13 +801,6 @@ create table if not exists account_transactions5 partition of account_transactio
 create table if not exists account_transactions6 partition of account_transactions for values from (50000000) to (60000000);
 create table if not exists account_transactions7 partition of account_transactions for values from (60000000) to (70000000);
 
-create index if not exists account_transactions1idx on account_transactions1 (account,ledger_seq,transaction_index);
-create index if not exists account_transactions2idx on account_transactions2 (account,ledger_seq,transaction_index);
-create index if not exists account_transactions3idx on account_transactions3 (account,ledger_seq,transaction_index);
-create index if not exists account_transactions4idx on account_transactions4 (account,ledger_seq,transaction_index);
-create index if not exists account_transactions5idx on account_transactions5 (account,ledger_seq,transaction_index);
-create index if not exists account_transactions6idx on account_transactions6 (account,ledger_seq,transaction_index);
-create index if not exists account_transactions7idx on account_transactions7 (account,ledger_seq,transaction_index);
 -- Table that maps a book to a list of offers in that book. Deletes from the ledger table
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS books (
