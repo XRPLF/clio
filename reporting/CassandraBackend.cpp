@@ -540,19 +540,6 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
-              << " ( key blob, created bigint, deleted bigint, PRIMARY KEY "
-                 "(key, created)) with clustering order by (created "
-                 "desc) ";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query = {};
-        query << "SELECT * FROM " << tablePrefix << "keys"
-              << " LIMIT 1";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-        query = {};
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
               << " ( book blob, sequence bigint, key blob, deleted_at "
                  "bigint, PRIMARY KEY "
@@ -639,12 +626,6 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "INSERT INTO " << tablePrefix << "keys"
-              << " (key, created, deleted) VALUES (?, ?, ?)";
-        if (!insertKey_.prepareStatement(query, session_.get()))
-            continue;
-
-        query = {};
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
         if (!insertBook_.prepareStatement(query, session_.get()))
@@ -653,12 +634,6 @@ CassandraBackend::open()
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, deleted_at) VALUES (?, ?, ?)";
         if (!deleteBook_.prepareStatement(query, session_.get()))
-            continue;
-
-        query = {};
-        query << "SELECT created FROM " << tablePrefix << "keys"
-              << " WHERE key = ? ORDER BY created desc LIMIT 1";
-        if (!getCreated_.prepareStatement(query, session_.get()))
             continue;
 
         query = {};
@@ -688,15 +663,6 @@ CassandraBackend::open()
               << " WHERE ledger_sequence = ?";
         if (!selectAllTransactionHashesInLedger_.prepareStatement(
                 query, session_.get()))
-            continue;
-
-        query = {};
-        query << "SELECT key FROM " << tablePrefix << "keys "
-              << " WHERE TOKEN(key) >= ? and created <= ?"
-              << " and deleted > ?"
-              << " PER PARTITION LIMIT 1 LIMIT ?"
-              << " ALLOW FILTERING";
-        if (!selectLedgerPageKeys_.prepareStatement(query, session_.get()))
             continue;
 
         query = {};
@@ -787,6 +753,7 @@ CassandraBackend::open()
         setupPreparedStatements = true;
     }
 
+    /*
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -823,6 +790,7 @@ CassandraBackend::open()
         }
         break;
     }
+    */
 
     if (config_.contains("max_requests_outstanding"))
     {
