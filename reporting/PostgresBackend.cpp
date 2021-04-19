@@ -520,73 +520,61 @@ PostgresBackend::fetchAccountTransactions(
 {
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
-    std::stringstream sql;
-    sql << "SELECT hash, ledger_seq, transaction_index FROM "
-           "account_transactions WHERE account = "
-        << "\'\\x" << ripple::strHex(account) << "\'";
+    pg_params dbParams;
+
+    char const*& command = dbParams.first;
+    std::vector<std::optional<std::string>>& values = dbParams.second;
+    command =
+        "SELECT account_tx($1::bytea, $2::bigint, "
+        "$3::bigint, $4::bigint)";
+    values.resize(4);
+    values[0] = "\\x" + strHex(account);
+
+    values[1] = std::to_string(limit);
+
     if (cursor)
-        sql << " AND ledger_seq = " << cursor->ledgerSequence
-            << " AND transaction_index < " << cursor->transactionIndex;
-    sql << " ORDER BY ledger_seq DESC, transaction_index DESC";
-    sql << " LIMIT " << std::to_string(limit);
+    {
+        values[2] = std::to_string(cursor->ledgerSequence);
+        values[3] = std::to_string(cursor->transactionIndex);
+    }
+    for (size_t i = 0; i < values.size(); ++i)
+    {
+        BOOST_LOG_TRIVIAL(debug) << "value " << std::to_string(i) << " = "
+                                 << (values[i] ? values[i].value() : "null");
+    }
+
     auto start = std::chrono::system_clock::now();
-    auto res = pgQuery(sql.str().data());
+    auto res = pgQuery(dbParams);
     auto end = std::chrono::system_clock::now();
 
     auto duration = ((end - start).count()) / 1000000000.0;
     BOOST_LOG_TRIVIAL(info)
-        << __func__ << " : executed first query in " << std::to_string(duration)
-        << " num records = " << std::to_string(checkResult(res, 3))
-        << " query = " << sql.str();
-    size_t numRows = checkResult(res, 3);
+        << __func__ << " : executed stored_procedure in "
+        << std::to_string(duration)
+        << " num records = " << std::to_string(checkResult(res, 1));
+    checkResult(res, 1);
 
-    std::vector<ripple::uint256> hashes;
-    for (size_t i = 0; i < numRows; ++i)
+    char const* resultStr = res.c_str();
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "postgres result = " << resultStr
+                             << " : account = " << strHex(account);
+
+    boost::json::value raw = boost::json::parse(resultStr);
+    boost::json::object responseObj = raw.as_object();
+    BOOST_LOG_TRIVIAL(debug) << " parsed = " << responseObj;
+    if (responseObj.contains("transactions"))
     {
-        hashes.push_back(res.asUInt256(i, 0));
-    }
-
-    uint32_t newLimit = limit - numRows;
-    if (newLimit > 0)
-    {
-        std::stringstream sql2;
-        sql2 << "SELECT hash, ledger_seq, transaction_index FROM "
-                "account_transactions WHERE account = "
-             << "\'\\x" << ripple::strHex(account) << "\'";
-        if (cursor)
-            sql2 << " AND ledger_seq < " << cursor->ledgerSequence
-                 << " ORDER BY ledger_seq DESC, transaction_index DESC";
-        sql2 << " LIMIT " << std::to_string(newLimit);
-        start = std::chrono::system_clock::now();
-        res = pgQuery(sql2.str().data());
-        end = std::chrono::system_clock::now();
-
-        duration = ((end - start).count()) / 1000000000.0;
-        BOOST_LOG_TRIVIAL(info)
-            << __func__ << " : executed second query in "
-            << std::to_string(duration)
-            << " num records = " << std::to_string(checkResult(res, 3))
-            << " query = " << sql2.str();
-        if (numRows = checkResult(res, 3))
+        auto txns = responseObj.at("transactions").as_array();
+        std::vector<ripple::uint256> hashes;
+        for (auto& hashHex : txns)
         {
-            for (size_t i = 0; i < numRows; ++i)
-            {
-                hashes.push_back(res.asUInt256(i, 0));
-            }
+            ripple::uint256 hash;
+            if (hash.parseHex(hashHex.at("hash").as_string().c_str() + 2))
+                hashes.push_back(hash);
         }
-    }
-    if (hashes.size() == limit)
-    {
-        AccountTransactionsCursor retCursor{
-            res.asBigInt(numRows - 1, 1), res.asBigInt(numRows - 1, 2)};
-        return {fetchTransactions(hashes), {retCursor}};
-    }
-    else
-    {
         return {fetchTransactions(hashes), {}};
     }
-
-    return {};
+    return {{}, {}};
 }
 
 void
