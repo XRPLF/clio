@@ -901,8 +901,8 @@ BEGIN
         _tally := _tally + 1;
         IF _tally > _in_limit THEN
             _ret_marker := jsonb_build_object(
-                'ledger', _record.ledger_seq,
-                'seq', _record.transaction_index);
+                'ledger_sequence', _record.ledger_seq,
+                'transaction_index', _record.transaction_index);
             EXIT;
         END IF;
 

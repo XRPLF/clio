@@ -572,10 +572,19 @@ PostgresBackend::fetchAccountTransactions(
             if (hash.parseHex(hashHex.at("hash").as_string().c_str() + 2))
                 hashes.push_back(hash);
         }
+        if (responseObj.contains("cursor"))
+        {
+            return {
+                fetchTransactions(hashes),
+                {{responseObj.at("cursor").at("ledger_sequence").as_int64(),
+                  responseObj.at("cursor")
+                      .at("transaction_index")
+                      .as_int64()}}};
+        }
         return {fetchTransactions(hashes), {}};
     }
     return {{}, {}};
-}
+}  // namespace Backend
 
 void
 PostgresBackend::open()

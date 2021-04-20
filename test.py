@@ -137,7 +137,6 @@ def getMinAndMax(res):
     minSeq = None
     maxSeq = None
     for x in res["transactions"]:
-        print(x)
         seq = None
         if "ledger_sequence" in x:
             seq = int(x["ledger_sequence"])
@@ -162,6 +161,7 @@ async def account_tx(ip, port, account, binary, minLedger=None, maxLedger=None):
 
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            print(res["cursor"])
             return res
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -184,6 +184,7 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                 if minLedger is not None and maxLedger is not None:
                     req["ledger_index_min"] = minLedger
                     req["ledger_index_max"] = maxLedger
+                print(req)
                 await ws.send(json.dumps(req))
                 res = json.loads(await ws.recv())
                 #print(json.dumps(res,indent=4,sort_keys=True))
@@ -202,8 +203,10 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                     marker={"ledger":res["result"]["marker"]["ledger"],"seq":res["result"]["marker"]["seq"]}
                     print(marker)
                 else:
+                    print(res)
                     break    
                 if numCalls > numPages:
+                    print("breaking")
                     break
             return results
     except websockets.exceptions.ConnectionClosedError as e:
@@ -615,10 +618,17 @@ def run(args):
         
             res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
             args.account = res["transaction"]["Account"]
+        print("starting")
         res = asyncio.get_event_loop().run_until_complete(
                 account_tx_full(args.ip, args.port, args.account, args.binary,None,None,int(args.numPages)))
         rng = getMinAndMax(res)
         print(len(res["transactions"]))
+        print(args.account)
+        txs = set()
+        for x in res["transactions"]:
+            txs.add((x["transaction"],x["ledger_sequence"]))
+        print(len(txs))
+
         if args.verify:
             print("requesting p2p node")
             res2 = asyncio.get_event_loop().run_until_complete(
