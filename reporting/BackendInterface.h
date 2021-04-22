@@ -78,6 +78,9 @@ public:
     void
     deleteKey(ripple::uint256 const& key);
 
+    std::vector<ripple::uint256>
+    getCurrentOffers(ripple::uint256 const& book);
+
     void
     addBookOffer(ripple::uint256 const& book, ripple::uint256 const& offerKey);
     void
@@ -91,7 +94,7 @@ public:
 
 class BackendInterface
 {
-private:
+protected:
     mutable BackendIndexer indexer_;
 
 public:

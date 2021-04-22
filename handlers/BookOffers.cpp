@@ -43,50 +43,6 @@ ledgerSequenceFromRequest(
     return std::optional<std::uint32_t>{index.asInt()};
 }
 
-std::vector<ripple::uint256>
-loadBookOfferIndexes(
-    ripple::Book const& book,
-    std::uint32_t seq,
-    std::uint32_t limit,
-    std::shared_ptr<PgPool> const& pool)
-{
-    std::vector<ripple::uint256> hashes = {};
-
-    ripple::uint256 bookBase = getBookBase(book);
-    ripple::uint256 bookEnd = getQualityNext(bookBase);
-
-    pg_params dbParams;
-
-    char const*& command = dbParams.first;
-    std::vector<std::optional<std::string>>& values = dbParams.second;
-
-    command =
-        "SELECT offer_indexes FROM books "
-        "WHERE book_directory >= $1::bytea "
-        "AND book_directory < $2::bytea "
-        "AND ledger_index <= $3::bigint "
-        "LIMIT $4::bigint";
-
-    values.resize(4);
-    values[0] = "\\x" + ripple::strHex(bookBase);
-    values[1] = "\\x" + ripple::strHex(bookEnd);
-    values[2] = std::to_string(seq);
-    values[3] = std::to_string(limit);
-
-    auto indexes = PgQuery(pool)(dbParams);
-    if (!indexes || indexes.isNull())
-        return {};
-
-    for (auto i = 0; i < indexes.ntuples(); ++i)
-    {
-        auto unHexed = ripple::strUnHex(indexes.c_str(i) + 2);
-        if (unHexed)
-            hashes.push_back(ripple::uint256::fromVoid(unHexed->data()));
-    }
-
-    return hashes;
-}
-
 boost::json::object
 doBookOffers(
     boost::json::object const& request,
@@ -330,7 +286,11 @@ doBookOffers(
             {
                 ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
                 ripple::SLE offer{it, obj.key};
-                return getJson(offer);
+                ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+
+                boost::json::object offerJson = getJson(offer);
+                offerJson["quality"] = ripple::amountFromQuality(getQuality(bookDir)).getText();
+                return offerJson;
             }
             catch (std::exception const& e)
             {

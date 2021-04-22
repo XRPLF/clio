@@ -282,10 +282,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         {
             bookDir =
                 ripple::uint256::fromVoid(obj.book_of_deleted_offer().data());
-            for (size_t i = 0; i < 8; ++i)
-            {
-                bookDir->data()[bookDir->size() - 1 - i] = 0x00;
-            }
         }
 
         assert(not(isCreated and isDeleted));

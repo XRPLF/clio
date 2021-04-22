@@ -483,6 +483,34 @@ public:
         return {first, second};
     }
 
+    std::pair<Blob, Blob>
+    getBytesTuple()
+    {
+        cass_byte_t const* buf;
+        std::size_t bufSize;
+
+        if (!row_)
+            throw std::runtime_error(
+                "CassandraResult::getBytesTuple - no result");
+        CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
+        CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
+        if (!cass_iterator_next(tupleIter))
+            throw std::runtime_error(
+                "CassandraResult::getBytesTuple - failed to iterate tuple");
+        CassValue const* value = cass_iterator_get_value(tupleIter);
+        cass_value_get_bytes(value, &buf, &bufSize);
+        Blob first{buf, buf + bufSize};
+
+        if (!cass_iterator_next(tupleIter))
+            throw std::runtime_error(
+                "CassandraResult::getBytesTuple - failed to iterate tuple");
+        value = cass_iterator_get_value(tupleIter);
+        cass_value_get_bytes(value, &buf, &bufSize);
+        Blob second{buf, buf + bufSize};
+        ++curGetIndex_;
+        return {first, second};
+    }
+
     ~CassandraResult()
     {
         if (result_ != nullptr)
@@ -631,7 +659,7 @@ private:
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
-    std::thread indexer_;
+    // std::thread indexer_;
     uint32_t indexerShift_ = 16;
 
     // maximum number of concurrent in flight requests. New requests will wait
@@ -693,8 +721,8 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
             work_.reset();
             ioThread_.join();
-            if (indexer_.joinable())
-                indexer_.join();
+            // if (indexer_.joinable())
+            //     indexer_.join();
         }
         open_ = false;
     }
@@ -975,7 +1003,7 @@ public:
     bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence) const;
+        uint32_t ledgerSequence) const override;
     bool
     writeBooks(
         std::unordered_map<
@@ -1255,20 +1283,21 @@ public:
     }
     */
 
-    void
-    writeBook(WriteCallbackData& data, bool isRetry) const
-    {
-        assert(data.isCreated or data.isDeleted);
-        assert(data.book);
-        CassandraStatement statement{
-            (data.isCreated ? insertBook_ : deleteBook_)};
-        statement.bindBytes(*data.book);
-        statement.bindBytes(data.key);
-        statement.bindInt(data.sequence);
-        if (data.isCreated)
-            statement.bindInt(INT64_MAX);
-        executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
-    }
+    // void
+    // writeBook(WriteCallbackData& data, bool isRetry) const
+    // {
+    //     assert(data.isCreated or data.isDeleted);
+    //     assert(data.book);
+    //     CassandraStatement statement{
+    //         (data.isCreated ? insertBook_ : deleteBook_)};
+    //     statement.bindBytes(*data.book);
+    //     statement.bindBytes(data.key);
+    //     statement.bindInt(data.sequence);
+    //     if (data.isCreated)
+    //         statement.bindInt(INT64_MAX);
+    //     executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
+    // }
+
     void
     doWriteLedgerObject(
         std::string&& key,
@@ -1290,8 +1319,6 @@ public:
             std::move(book));
 
         write(*data, false);
-        if (hasBook)
-            writeBook(*data, false);
     }
 
     void

@@ -444,7 +444,7 @@ public:
         BOOST_LOG_TRIVIAL(trace) << "Writing objects";
         for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
-            std::optional<ripple::uint256> book;
+            std::optional<ripple::uint256> book = {};
 
             short offer_bytes = (obj.data()[1] << 8) | obj.data()[2];
             if (offer_bytes == 0x006f)
@@ -452,10 +452,6 @@ public:
                 ripple::SerialIter it{obj.data().data(), obj.data().size()};
                 ripple::SLE sle{it, {}};
                 book = sle.getFieldH256(ripple::sfBookDirectory);
-                for (size_t i = 0; i < 8; ++i)
-                {
-                    book->data()[book->size() - 1 - i] = 0x00;
-                }
             }
             backend.writeLedgerObject(
                 std::move(*obj.mutable_key()),

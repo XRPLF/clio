@@ -5,6 +5,12 @@ BackendIndexer::BackendIndexer(boost::json::object const& config)
     : keyShift_(config.at("keyshift").as_int64())
     , bookShift_(config.at("bookshift").as_int64())
 {
+    BOOST_LOG_TRIVIAL(info) << "Indexer - starting with keyShift_ = "
+                                    << std::to_string(keyShift_);   
+
+    BOOST_LOG_TRIVIAL(info) << "Indexer - starting with keyShift_ = "
+                                    << std::to_string(bookShift_);  
+
     work_.emplace(ioc_);
     ioThread_ = std::thread{[this]() { ioc_.run(); }};
 };
@@ -40,6 +46,25 @@ BackendIndexer::deleteBookOffer(
 {
     booksToOffers[book].erase(offerKey);
     booksToDeletedOffers[book].insert(offerKey);
+}
+
+std::vector<ripple::uint256>
+BackendIndexer::getCurrentOffers(ripple::uint256 const& book)
+{
+    std::vector<ripple::uint256> offers;
+    offers.reserve(booksToOffers[book].size() + booksToOffers[book].size());
+
+    for (auto const& offer : booksToOffers[book])
+    {
+        offers.push_back(offer);
+    }
+
+    for(auto const& offer : booksToDeletedOffers[book])
+    {
+        offers.push_back(offer);
+    }
+
+    return offers;
 }
 
 void

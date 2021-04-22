@@ -71,7 +71,7 @@ PostgresBackend::doWriteLedgerObject(
     if (numRowsInObjectsBuffer_ % 1000000 == 0)
     {
         writeConnection_.bulkInsert("objects", objectsBuffer_.str());
-        objectsBuffer_ = {};
+        objectsBuffer_.str("");
     }
 
     if (book)
@@ -603,7 +603,7 @@ PostgresBackend::writeKeys(
         if (numRows == 1000000)
         {
             pgQuery.bulkInsert("keys", keysBuffer.str());
-            keysBuffer = {};
+            keysBuffer.str("");
             numRows = 0;
         }
     }
@@ -635,7 +635,7 @@ PostgresBackend::writeBooks(
             if (numRows == 1000000)
             {
                 pgQuery.bulkInsert("books", booksBuffer.str());
-                booksBuffer = {};
+                booksBuffer.str("");
                 numRows = 0;
             }
         }
