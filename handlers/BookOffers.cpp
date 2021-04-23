@@ -11,38 +11,6 @@
 #include <reporting/DBHelpers.h>
 #include <reporting/Pg.h>
 
-std::optional<std::uint32_t>
-ledgerSequenceFromRequest(
-    boost::json::object const& request,
-    std::shared_ptr<PgPool> const& pool)
-{
-    std::stringstream sql;
-    sql << "SELECT ledger_seq FROM ledgers WHERE ";
-
-    if (request.contains("ledger_index"))
-    {
-        sql << "ledger_seq = "
-            << std::to_string(request.at("ledger_index").as_int64());
-    }
-    else if (request.contains("ledger_hash"))
-    {
-        sql << "ledger_hash = \\\\x" << request.at("ledger_hash").as_string();
-    }
-    else
-    {
-        sql.str("");
-        sql << "SELECT max_ledger()";
-    }
-
-    sql << ";";
-
-    auto index = PgQuery(pool)(sql.str().c_str());
-    if (!index || index.isNull())
-        return {};
-
-    return std::optional<std::uint32_t>{index.asInt()};
-}
-
 boost::json::object
 doBookOffers(
     boost::json::object const& request,
