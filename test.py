@@ -165,7 +165,7 @@ async def account_tx(ip, port, account, binary, minLedger=None, maxLedger=None):
             return res
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
-
+import datetime
 async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=None,numPages=10):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
@@ -185,8 +185,11 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                     req["ledger_index_min"] = minLedger
                     req["ledger_index_max"] = maxLedger
                 print(req)
+                start = datetime.datetime.now().timestamp()
                 await ws.send(json.dumps(req))
                 res = json.loads(await ws.recv())
+                end = datetime.datetime.now().timestamp()
+                print(end - start)
                 #print(json.dumps(res,indent=4,sort_keys=True))
                 if "result" in res:
                     print(len(res["result"]["transactions"]))
