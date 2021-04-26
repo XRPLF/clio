@@ -1,3 +1,4 @@
+#include <ripple/app/paths/RippleState.h>
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -9,38 +10,56 @@
 #include <handlers/RPCHelpers.h>
 #include <reporting/BackendInterface.h>
 #include <reporting/DBHelpers.h>
-#include <reporting/Pg.h>
 
 void
-addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
+addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
 {
-    boost::json::object jDst;
-    jDst["channel_id"] = ripple::to_string(line.key());
-    jDst["account"] = ripple::to_string(line.getAccountID(ripple::sfAccount));
-    jDst["destination_account"] = ripple::to_string(line.getAccountID(ripple::sfDestination));
-    jDst["amount"] = line[ripple::sfAmount].getText();
-    jDst["balance"] = line[ripple::sfBalance].getText();
-    if (publicKeyType(line[ripple::sfPublicKey]))
+    auto quality = getQuality(offer.getFieldH256(ripple::sfBookDirectory));
+    ripple::STAmount rate = ripple::amountFromQuality(quality);
+
+    ripple::STAmount takerPays = offer.getFieldAmount(ripple::sfTakerPays);
+    ripple::STAmount takerGets = offer.getFieldAmount(ripple::sfTakerGets);
+    
+    boost::json::object obj;
+
+    if (!takerPays.native())
     {
-        ripple::PublicKey const pk(line[ripple::sfPublicKey]);
-        jDst["public_key"] = toBase58(ripple::TokenType::AccountPublic, pk);
-        jDst["public_key_hex"] = strHex(pk);
+        obj["taker_pays"] = boost::json::value(boost::json::object_kind);
+        boost::json::object& takerPaysJson = obj.at("taker_pays").as_object();
+
+        takerPaysJson["value"] = takerPays.getText();
+        takerPaysJson["currency"] = ripple::to_string(takerPays.getCurrency());
+        takerPaysJson["issuer"] = ripple::to_string(takerPays.getIssuer());
     }
-    jDst["settle_delay"] = line[ripple::sfSettleDelay];
-    if (auto const& v = line[~ripple::sfExpiration])
-        jDst["expiration"] = *v;
-    if (auto const& v = line[~ripple::sfCancelAfter])
-        jDst["cancel_after"] = *v;
-    if (auto const& v = line[~ripple::sfSourceTag])
-        jDst["source_tag"] = *v;
-    if (auto const& v = line[~ripple::sfDestinationTag])
-        jDst["destination_tag"] = *v;
+    else
+    {
+        obj["taker_pays"] = takerPays.getText();
+    }
 
-    jsonLines.push_back(jDst);
-}
+    if (!takerGets.native())
+    {
+        obj["taker_gets"] = boost::json::value(boost::json::object_kind);
+        boost::json::object& takerGetsJson = obj.at("taker_gets").as_object();
 
+        takerGetsJson["value"] = takerGets.getText();
+        takerGetsJson["currency"] = ripple::to_string(takerGets.getCurrency());
+        takerGetsJson["issuer"] = ripple::to_string(takerGets.getIssuer());
+    }
+    else
+    {
+        obj["taker_gets"] = takerGets.getText();
+    }
+
+    obj["seq"] = offer.getFieldU32(ripple::sfSequence);
+    obj["flags"] = offer.getFieldU32(ripple::sfFlags);
+    obj["quality"] = rate.getText();
+    if (offer.isFieldPresent(ripple::sfExpiration))
+        obj["expiration"] = offer.getFieldU32(ripple::sfExpiration);
+    
+    offersJson.push_back(obj);
+};
 boost::json::object
-doAccountChannels(
+doAccountOffers(
     boost::json::object const& request,
     BackendInterface const& backend)
 {
@@ -77,24 +96,6 @@ doAccountChannels(
 
     accountID = *parsed;
 
-    boost::optional<ripple::AccountID> destAccount;
-    if (request.contains("destination_account"))
-    {
-        if (!request.at("destination_account").is_string())
-        {
-            response["error"] = "destination_account should be a string";
-            return response;
-        }
-
-        destAccount = ripple::parseBase58<ripple::AccountID>(
-            request.at("destination_account").as_string().c_str());
-        if (!destAccount)
-        {
-            response["error"] = "Invalid destination account";
-            return response;
-        }
-    }
-
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
@@ -122,7 +123,7 @@ doAccountChannels(
         }
 
         auto bytes = ripple::strUnHex(request.at("cursor").as_string().c_str());
-        if (bytes and bytes->size() == 32)
+        if (bytes and bytes->size() != 32)
         {
             response["error"] = "invalid cursor";
             return response;
@@ -130,27 +131,24 @@ doAccountChannels(
 
         cursor = ripple::uint256::fromVoid(bytes->data());
     }
-
-    response["channels"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonChannels = response.at("channels").as_array();
+        
+    response["offers"] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonLines = response.at("offers").as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
-        if (sle.getType() == ripple::ltPAYCHAN &&
-            sle.getAccountID(ripple::sfAccount) == accountID &&
-            (!destAccount ||
-                *destAccount == sle.getAccountID(ripple::sfDestination)))
+        if (sle.getType() == ripple::ltOFFER)
         {
             if (limit-- == 0)
             {
                 return false;
             }
             
-            addChannel(jsonChannels, sle);
+            addOffer(jsonLines, sle);
         }
 
         return true;
     };
-
+    
     auto nextCursor = 
         traverseOwnedNodes(
             backend,

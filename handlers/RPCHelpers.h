@@ -25,4 +25,12 @@ ledgerSequenceFromRequest(
     boost::json::object const& request,
     BackendInterface const& backend);
 
+std::optional<ripple::uint256>
+traverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::AccountID const& accountID,
+    std::uint32_t sequence,
+    ripple::uint256 const& cursor,
+    std::function<bool(ripple::SLE)> atOwnedNode);
+
 #endif
