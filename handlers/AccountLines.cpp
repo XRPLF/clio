@@ -131,43 +131,70 @@ doAccountLines(
         }
     }
 
-    auto const rootIndex = ripple::keylet::ownerDir(accountID);
-    auto currentIndex = rootIndex;
-
-    std::vector<ripple::uint256> keys;
-
-    for (;;)
+    std::uint32_t limit = 200;
+    if (request.contains("limit"))
     {
-        auto ownedNode =
-            backend.fetchLedgerObject(currentIndex.key, *ledgerSequence);
+        if(!request.at("limit").is_int64())
+        {
+            response["error"] = "limit must be integer";
+            return response;
+        }
 
-        ripple::SerialIter it{ownedNode->data(), ownedNode->size()};
-        ripple::SLE dir{it, currentIndex.key};
-        for (auto const& key : dir.getFieldV256(ripple::sfIndexes))
-            keys.push_back(key);
-
-        auto const uNodeNext = dir.getFieldU64(ripple::sfIndexNext);
-        if (uNodeNext == 0)
-            break;
-
-        currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
+        limit = request.at("limit").as_int64();
+        if (limit <= 0)
+        {
+            response["error"] = "limit must be positive";
+            return response;
+        }
     }
 
-    auto objects = backend.fetchLedgerObjects(keys, *ledgerSequence);
+    ripple::uint256 cursor = beast::zero;
+    if (request.contains("cursor"))
+    {
+        if(!request.at("cursor").is_string())
+        {
+            response["error"] = "limit must be string";
+            return response;
+        }
+
+        auto bytes = ripple::strUnHex(request.at("cursor").as_string().c_str());
+        if (bytes and bytes->size() != 32)
+        {
+            response["error"] = "invalid cursor";
+            return response;
+        }
+
+        cursor = ripple::uint256::fromVoid(bytes->data());
+    }
+        
 
     response["lines"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at("lines").as_array();
 
-    for (auto i = 0; i < objects.size(); ++i)
-    {
-        ripple::SerialIter it{objects[i].data(), objects[i].size()};
-        ripple::SLE sle(it, keys[i]);
-
+    auto const addToResponse = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
+            if (limit-- == 0)
+            {
+                return false;
+            }
+            
             addLine(jsonLines, sle, accountID, peerAccount);
         }
-    }
+
+        return true;
+    };
+
+    auto nextCursor = 
+        traverseOwnedNodes(
+            backend,
+            accountID,
+            *ledgerSequence,
+            cursor,
+            addToResponse);
+
+    if (nextCursor)
+        response["next_cursor"] = ripple::strHex(*nextCursor);
 
     return response;
 }
