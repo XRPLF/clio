@@ -266,8 +266,11 @@ doBookOffers(
 
     ripple::uint256 bookBase = getBookBase(book);
     auto start = std::chrono::system_clock::now();
+    std::cout << "getting Book Offers" << std::endl;
     auto [offers, retCursor] =
         backend.fetchBookOffers(bookBase, *ledgerSequence, limit, cursor);
+    std::cout << "got Book Offers" << std::endl;
+
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning) << "Time loading books from Postgres: "
@@ -281,7 +284,7 @@ doBookOffers(
         std::move_iterator(offers.begin()),
         std::move_iterator(offers.end()),
         std::back_inserter(jsonOffers),
-        [](auto obj) {
+        [](auto&& obj) {
             try
             {
                 ripple::SerialIter it{obj.blob.data(), obj.blob.size()};

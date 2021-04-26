@@ -666,14 +666,26 @@ CassandraBackend::fetchBookOffers(
         BOOST_LOG_TRIVIAL(info) << __func__ << " upper = " << std::to_string(upper)
                                 << " book = " << ripple::strHex(std::string((char*)book.data(), 24));
 
-        // ripple::uint256 zero = {};
-        // statement.bindBytes(zero.data(), 8);
-        // if (cursor)
-        //     statement.bindBytes(*cursor);
-        // else
-        // {
-        //     statement.bindBytes(zero);
-        // }
+        if (cursor)
+        {
+            auto object = fetchLedgerObject(*cursor, sequence);
+
+            if(!object)
+                return {{}, {}};
+
+            ripple::SerialIter it{object->data(), object->size()};
+            ripple::SLE offer{it, *cursor};
+            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+
+            statement.bindBytes(bookDir.data() + 24, 8);
+            statement.bindBytes(*cursor);
+        }
+        else
+        {
+            ripple::uint256 zero = beast::zero;
+            statement.bindBytes(zero.data(), 8);
+            statement.bindBytes(zero);
+        }
 
         // statement.bindUInt(limit);
         CassandraResult result = executeSyncRead(statement);
@@ -681,6 +693,7 @@ CassandraBackend::fetchBookOffers(
         BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
         if (!result)
         {
+            std::cout << "could not sync read" << std::endl;
             return {{}, {}};
         }
 
@@ -694,6 +707,7 @@ CassandraBackend::fetchBookOffers(
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " - populated keys. num keys = " << keys.size();
 
+    std::cout << keys.size() << std::endl;
     if (!keys.size())
         return {{}, {}};
 
@@ -701,11 +715,13 @@ CassandraBackend::fetchBookOffers(
     std::vector<Blob> objs = fetchLedgerObjects(keys, sequence);
     for (size_t i = 0; i < objs.size(); ++i)
     {
-        if (results.size() == limit)
-            return {results, keys[i]}; 
-
         if (objs[i].size() != 0)
+        {
+            if (results.size() == limit)
+                return {results, keys[i]}; 
+
             results.push_back({keys[i], objs[i]});
+        }
     }
 
     return {results, {}}; 
@@ -1634,6 +1650,7 @@ CassandraBackend::open()
         query.str("");
         query << "SELECT quality_key FROM " << tablePrefix << "books2 "
               << " WHERE book = ? AND sequence = ?"
+              << " AND quality_key >= (?, ?)"
                  " ORDER BY quality_key ASC";
         if (!selectBook_.prepareStatement(query, session_.get()))
             continue;
