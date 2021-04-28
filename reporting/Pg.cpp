@@ -781,8 +781,8 @@ create table if not exists transactions5 partition of transactions for values fr
 create table if not exists transactions6 partition of transactions for values from (50000000) to (60000000);
 create table if not exists transactions7 partition of transactions for values from (60000000) to (70000000);
 
--- create index if not exists tx_by_hash on transactions using hash (hash);
--- create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq);
+create index if not exists tx_by_hash on transactions using hash (hash);
+create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq);
 
 -- Table that maps accounts to transactions affecting them. Deletes from the
 -- ledger table cascade here based on ledger_seq.
@@ -791,7 +791,7 @@ CREATE TABLE IF NOT EXISTS account_transactions (
     ledger_seq        bigint NOT NULL ,
     transaction_index bigint NOT NULL,
     hash bytea NOT NULL,
-    PRIMARY KEY (account, ledger_seq, transaction_index)
+    PRIMARY KEY (account, ledger_seq, transaction_index, hash)
 ) PARTITION BY RANGE (ledger_seq);
 create table if not exists account_transactions1 partition of account_transactions for values from (0) to (10000000);
 create table if not exists account_transactions2 partition of account_transactions for values from (10000000) to (20000000);
@@ -839,10 +839,13 @@ CREATE TABLE IF NOT EXISTS books (
 -- To reiterate:
 -- JSON input field 'ledger' corresponds to _in_marker_seq
 -- JSON input field 'seq' corresponds to _in_marker_index
-CREATE OR REPLACE FUNCTION account_tx(_in_account_id bytea, _in_limit bigint, _in_marker_seq bigint DEFAULT NULL::bigint, _in_marker_index bigint DEFAULT NULL::bigint)
- RETURNS jsonb
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION account_tx(
+        _in_account_id bytea,
+        _in_limit bigint,
+        _in_marker_seq bigint DEFAULT NULL::bigint,
+        _in_marker_index bigint DEFAULT NULL::bigint)
+RETURNS jsonb
+AS $$
 DECLARE
     _min          bigint;
     _max          bigint;
@@ -878,7 +881,7 @@ BEGIN
 
 
     _sql := format('SELECT hash, ledger_seq, transaction_index FROM account_transactions WHERE account = $1
-        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq, transaction_index');
+        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq DESC, transaction_index DESC');
 
     OPEN _cursor FOR EXECUTE _sql USING _in_account_id, _between_min, _between_max;
     LOOP
@@ -886,14 +889,8 @@ BEGIN
         IF _record IS NULL THEN EXIT; END IF;
         IF _marker IS TRUE THEN
             IF _in_marker_seq = _record.ledger_seq THEN
-                IF _in_forward IS TRUE THEN
-                    IF _in_marker_index > _record.transaction_index THEN
-                        CONTINUE;
-                    END IF;
-                ELSE
-                    IF _in_marker_index < _record.transaction_index THEN
-                        CONTINUE;
-                    END IF;
+                IF _in_marker_index < _record.transaction_index THEN
+                    CONTINUE;
                 END IF;
             END IF;
             _marker := FALSE;
