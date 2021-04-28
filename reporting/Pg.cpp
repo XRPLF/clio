@@ -747,8 +747,17 @@ CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
     object bytea,
-    PRIMARY KEY(key, ledger_seq)
-);
+    PRIMARY KEY(ledger_seq, key)
+) PARTITION BY RANGE (ledger_seq);
+
+create table if not exists objects1 partition of objects for values from (0) to (10000000);
+create table if not exists objects2 partition of objects for values from (10000000) to (20000000);
+create table if not exists objects3 partition of objects for values from (20000000) to (30000000);
+create table if not exists objects4 partition of objects for values from (30000000) to (40000000);
+create table if not exists objects5 partition of objects for values from (40000000) to (50000000);
+create table if not exists objects6 partition of objects for values from (50000000) to (60000000);
+create table if not exists objects7 partition of objects for values from (60000000) to (70000000);
+
 
 -- Index for lookups by ledger hash.
 CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
@@ -757,24 +766,39 @@ CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
 -- Transactions table. Deletes from the ledger table
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS transactions (
-    hash bytea PRIMARY KEY,
-    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    hash bytea NOT NULL,
+    ledger_seq bigint NOT NULL ,
     transaction bytea NOT NULL,
     metadata bytea NOT NULL
-);
--- Index for lookups by ledger hash.
-CREATE INDEX IF NOT EXISTS ledgers_ledger_seq_idx ON transactions
-    USING hash (ledger_seq);
+) PARTITION BY RANGE(ledger_seq);
+create table if not exists transactions1 partition of transactions for values from (0) to (10000000);
+create table if not exists transactions2 partition of transactions for values from (10000000) to (20000000);
+create table if not exists transactions3 partition of transactions for values from (20000000) to (30000000);
+create table if not exists transactions4 partition of transactions for values from (30000000) to (40000000);
+create table if not exists transactions5 partition of transactions for values from (40000000) to (50000000);
+create table if not exists transactions6 partition of transactions for values from (50000000) to (60000000);
+create table if not exists transactions7 partition of transactions for values from (60000000) to (70000000);
+
+create index if not exists tx_by_hash on transactions using hash (hash);
+create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq);
 
 -- Table that maps accounts to transactions affecting them. Deletes from the
 -- ledger table cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS account_transactions (
     account           bytea  NOT NULL,
-    ledger_seq        bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    ledger_seq        bigint NOT NULL ,
     transaction_index bigint NOT NULL,
     hash bytea NOT NULL,
-    PRIMARY KEY (account, ledger_seq, transaction_index)
-);
+    PRIMARY KEY (account, ledger_seq, transaction_index, hash)
+) PARTITION BY RANGE (ledger_seq);
+create table if not exists account_transactions1 partition of account_transactions for values from (0) to (10000000);
+create table if not exists account_transactions2 partition of account_transactions for values from (10000000) to (20000000);
+create table if not exists account_transactions3 partition of account_transactions for values from (20000000) to (30000000);
+create table if not exists account_transactions4 partition of account_transactions for values from (30000000) to (40000000);
+create table if not exists account_transactions5 partition of account_transactions for values from (40000000) to (50000000);
+create table if not exists account_transactions6 partition of account_transactions for values from (50000000) to (60000000);
+create table if not exists account_transactions7 partition of account_transactions for values from (60000000) to (70000000);
+
 -- Table that maps a book to a list of offers in that book. Deletes from the ledger table
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS books (
@@ -784,6 +808,113 @@ CREATE TABLE IF NOT EXISTS books (
     offer_key bytea NOT NULL,
     PRIMARY KEY(book, offer_key, deleted)
 );
+
+-- account_tx() RPC helper. From the rippled reporting process, only the
+-- parameters without defaults are required. For the parameters with
+-- defaults, validation should be done by rippled, such as:
+-- _in_account_id should be a valid xrp base58 address.
+-- _in_forward either true or false according to the published api
+-- _in_limit should be validated and not simply passed through from
+-- client.
+--
+-- For _in_ledger_index_min and _in_ledger_index_max, if passed in the
+-- request, verify that their type is int and pass through as is.
+-- For _ledger_hash, verify and convert from hex length 32 bytes and
+-- prepend with \x (\\x C++).
+--
+-- For _in_ledger_index, if the input type is integer, then pass through
+-- as is. If the type is string and contents = validated, then do not
+-- set _in_ledger_index. Instead set _in_invalidated to TRUE.
+--
+-- There is no need for rippled to do any type of lookup on max/min
+-- ledger range, lookup of hash, or the like. This functions does those
+-- things, including error responses if bad input. Only the above must
+-- be done to set the correct search range.
+--
+-- If a marker is present in the request, verify the members 'ledger'
+-- and 'seq' are integers and they correspond to _in_marker_seq
+-- _in_marker_index.
+-- To reiterate:
+-- JSON input field 'ledger' corresponds to _in_marker_seq
+-- JSON input field 'seq' corresponds to _in_marker_index
+CREATE OR REPLACE FUNCTION account_tx(
+        _in_account_id bytea,
+        _in_limit bigint,
+        _in_marker_seq bigint DEFAULT NULL::bigint,
+        _in_marker_index bigint DEFAULT NULL::bigint)
+RETURNS jsonb
+AS $$
+DECLARE
+    _min          bigint;
+    _max          bigint;
+    _marker       bool;
+    _between_min  bigint;
+    _between_max  bigint;
+    _sql          text;
+    _cursor       refcursor;
+    _result       jsonb;
+    _record       record;
+    _tally        bigint     := 0;
+    _ret_marker   jsonb;
+    _transactions jsonb[]    := '{}';
+BEGIN
+    _min := min_ledger();
+    _max := max_ledger();
+    IF _in_marker_seq IS NOT NULL OR _in_marker_index IS NOT NULL THEN
+        _marker := TRUE;
+        IF _in_marker_seq IS NULL OR _in_marker_index IS NULL THEN
+            -- The rippled implementation returns no transaction results
+            -- if either of these values are missing.
+            _between_min := 0;
+            _between_max := 0;
+        ELSE
+            _between_min := _min;
+            _between_max := _in_marker_seq;
+        END IF;
+    ELSE
+        _marker := FALSE;
+        _between_min := _min;
+        _between_max := _max;
+    END IF;
+
+
+    _sql := format('SELECT hash, ledger_seq, transaction_index FROM account_transactions WHERE account = $1
+        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq DESC, transaction_index DESC');
+
+    OPEN _cursor FOR EXECUTE _sql USING _in_account_id, _between_min, _between_max;
+    LOOP
+        FETCH _cursor INTO _record;
+        IF _record IS NULL THEN EXIT; END IF;
+        IF _marker IS TRUE THEN
+            IF _in_marker_seq = _record.ledger_seq THEN
+                IF _in_marker_index < _record.transaction_index THEN
+                    CONTINUE;
+                END IF;
+            END IF;
+            _marker := FALSE;
+        END IF;
+        _tally := _tally + 1;
+        IF _tally > _in_limit THEN
+            _ret_marker := jsonb_build_object(
+                'ledger_sequence', _record.ledger_seq,
+                'transaction_index', _record.transaction_index);
+            EXIT;
+        END IF;
+
+        -- Is the transaction index in the tx object?
+        _transactions := _transactions || jsonb_build_object('hash',_record.hash);
+    END LOOP;
+    CLOSE _cursor;
+
+    _result := jsonb_build_object('ledger_index_min', _min,
+        'ledger_index_max', _max,
+        'transactions', _transactions);
+    IF _ret_marker IS NOT NULL THEN
+        _result := _result || jsonb_build_object('cursor', _ret_marker);
+    END IF;
+    RETURN _result;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Avoid inadvertent administrative tampering with committed data.
 CREATE OR REPLACE RULE ledgers_update_protect AS ON UPDATE TO

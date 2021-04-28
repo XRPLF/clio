@@ -133,6 +133,9 @@ private:
     std::optional<uint32_t> startSequence_;
     std::optional<uint32_t> finishSequence_;
 
+    size_t accumTxns_ = 0;
+    size_t txnThreshold_ = 0;
+
     /// The time that the most recently published ledger was published. Used by
     /// server_info
     std::chrono::time_point<std::chrono::system_clock> lastPublish_;
