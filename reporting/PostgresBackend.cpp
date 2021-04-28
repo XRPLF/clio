@@ -6,6 +6,10 @@ namespace Backend {
 PostgresBackend::PostgresBackend(boost::json::object const& config)
     : pgPool_(make_PgPool(config)), writeConnection_(pgPool_)
 {
+    if (config.contains("write_interval"))
+    {
+        writeInterval_ = config.at("write_interval").as_int64();
+    }
 }
 void
 PostgresBackend::writeLedger(
@@ -67,9 +71,13 @@ PostgresBackend::writeLedgerObject(
     numRowsInObjectsBuffer_++;
     // If the buffer gets too large, the insert fails. Not sure why. So we
     // insert after 1 million records
-    if (numRowsInObjectsBuffer_ % 1000000 == 0)
+    if (numRowsInObjectsBuffer_ % writeInterval_ == 0)
     {
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " Flushing large buffer. num objects = "
+            << numRowsInObjectsBuffer_;
         writeConnection_.bulkInsert("objects", objectsBuffer_.str());
+        BOOST_LOG_TRIVIAL(info) << __func__ << " Flushed large buffer";
         objectsBuffer_ = {};
     }
 

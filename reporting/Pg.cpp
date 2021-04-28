@@ -759,8 +759,6 @@ create table if not exists objects6 partition of objects for values from (500000
 create table if not exists objects7 partition of objects for values from (60000000) to (70000000);
 
 
-create index if not exists lgr_diff on objects using hash (ledger_seq);
-
 -- Index for lookups by ledger hash.
 CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
     USING hash (ledger_hash);
