@@ -137,12 +137,16 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         return response;
     }
 
-    auto const account = ripple::parseBase58<ripple::AccountID>(
+    auto account = ripple::parseBase58<ripple::AccountID>(
         request.at("account").as_string().c_str());
     if (!account)
     {
-        response["error"] = "account malformed";
-        return response;
+        account = ripple::AccountID();
+        if (!account->parseHex(request.at("account").as_string().c_str()))
+        {
+            response["error"] = "account malformed";
+            return response;
+        }
     }
     auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
     if (!ledgerSequence)
@@ -182,8 +186,11 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         request.at("limit").kind() == boost::json::kind::int64)
         limit = request.at("limit").as_int64();
     boost::json::array txns;
+    auto start = std::chrono::system_clock::now();
     auto [blobs, retCursor] =
         backend.fetchAccountTransactions(*account, limit, cursor);
+    auto end = std::chrono::system_clock::now();
+    BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took " << ((end - start).count() / 1000000000.0) << " num blobs = " << blobs.size();
     for (auto const& txnPlusMeta : blobs)
     {
         if (txnPlusMeta.ledgerSequence > ledgerSequence)
@@ -216,6 +223,8 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         cursorJson["transaction_index"] = retCursor->transactionIndex;
         response["cursor"] = cursorJson;
     }
+    auto end2 = std::chrono::system_clock::now();
+    BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took " << ((end2 - end).count() / 1000000000.0);
     return response;
 }
 
