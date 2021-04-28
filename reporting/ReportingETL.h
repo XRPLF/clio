@@ -61,6 +61,7 @@ class ReportingETL
 private:
     std::unique_ptr<BackendInterface> flatMapBackend_;
     std::optional<uint32_t> onlineDeleteInterval_;
+    uint32_t extractorThreads_ = 1;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -130,6 +131,7 @@ private:
     /// the next ledger validated by the network. If this is set, and the
     /// database is already populated, an error is thrown.
     std::optional<uint32_t> startSequence_;
+    std::optional<uint32_t> finishSequence_;
 
     /// The time that the most recently published ledger was published. Used by
     /// server_info
@@ -166,7 +168,7 @@ private:
     /// @param startSequence the first ledger to extract
     /// @return the last ledger written to the database, if any
     std::optional<uint32_t>
-    runETLPipeline(uint32_t startSequence);
+    runETLPipeline(uint32_t startSequence, int offset);
 
     /// Monitor the network for newly validated ledgers. Also monitor the
     /// database to see if any process is writing those ledgers. This function

@@ -369,13 +369,15 @@ CassandraBackend::open()
         cass_cluster_set_credentials(
             cluster, username.c_str(), getString("password").c_str());
     }
+    int threads = config_.contains("threads")
+        ? config_["threads"].as_int64()
+        : std::thread::hardware_concurrency();
 
-    unsigned int const workers = std::thread::hardware_concurrency();
-    rc = cass_cluster_set_num_threads_io(cluster, workers);
+    rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
-        ss << "nodestore: Error setting Cassandra io threads to " << workers
+        ss << "nodestore: Error setting Cassandra io threads to " << threads
            << ", result: " << rc << ", " << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
@@ -538,19 +540,6 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
-              << " ( key blob, created bigint, deleted bigint, PRIMARY KEY "
-                 "(key, created)) with clustering order by (created "
-                 "desc) ";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query = {};
-        query << "SELECT * FROM " << tablePrefix << "keys"
-              << " LIMIT 1";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-        query = {};
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
               << " ( book blob, sequence bigint, key blob, deleted_at "
                  "bigint, PRIMARY KEY "
@@ -637,12 +626,6 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "INSERT INTO " << tablePrefix << "keys"
-              << " (key, created, deleted) VALUES (?, ?, ?)";
-        if (!insertKey_.prepareStatement(query, session_.get()))
-            continue;
-
-        query = {};
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
         if (!insertBook_.prepareStatement(query, session_.get()))
@@ -651,12 +634,6 @@ CassandraBackend::open()
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, deleted_at) VALUES (?, ?, ?)";
         if (!deleteBook_.prepareStatement(query, session_.get()))
-            continue;
-
-        query = {};
-        query << "SELECT created FROM " << tablePrefix << "keys"
-              << " WHERE key = ? ORDER BY created desc LIMIT 1";
-        if (!getCreated_.prepareStatement(query, session_.get()))
             continue;
 
         query = {};
@@ -689,16 +666,7 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << "SELECT key FROM " << tablePrefix << "keys "
-              << " WHERE TOKEN(key) >= ? and created <= ?"
-              << " and deleted > ?"
-              << " PER PARTITION LIMIT 1 LIMIT ?"
-              << " ALLOW FILTERING";
-        if (!selectLedgerPageKeys_.prepareStatement(query, session_.get()))
-            continue;
-
-        query = {};
-        query << "SELECT key,object FROM " << tablePrefix << "objects "
+        query << "SELECT object,key FROM " << tablePrefix << "objects "
               << " WHERE TOKEN(key) >= ? and sequence <= ? "
               << " PER PARTITION LIMIT 1 LIMIT ? ALLOW FILTERING";
 
@@ -757,8 +725,9 @@ CassandraBackend::open()
             continue;
 
         query = {};
-        query << " update " << tablePrefix << "ledger_range"
-              << " set sequence = ? where is_latest = ? if sequence != ?";
+        query
+            << " update " << tablePrefix << "ledger_range"
+            << " set sequence = ? where is_latest = ? if sequence in (?,null)";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
 
@@ -784,6 +753,7 @@ CassandraBackend::open()
         setupPreparedStatements = true;
     }
 
+    /*
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -820,6 +790,7 @@ CassandraBackend::open()
         }
         break;
     }
+    */
 
     if (config_.contains("max_requests_outstanding"))
     {

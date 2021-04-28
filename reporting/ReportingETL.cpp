@@ -154,9 +154,9 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto ledger = flatMapBackend_->fetchLedgerBySequence(ledgerSequence);
+        auto range = flatMapBackend_->fetchLedgerRange();
 
-        if (!ledger)
+        if (!range || range->maxSequence < ledgerSequence)
         {
             BOOST_LOG_TRIVIAL(warning)
                 << __func__ << " : "
@@ -317,8 +317,10 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 
 // Database must be populated when this starts
 std::optional<uint32_t>
-ReportingETL::runETLPipeline(uint32_t startSequence)
+ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 {
+    if (startSequence > finishSequence_)
+        return {};
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
      * to each other via 2 different thread safe queues and 1 atomic variable.
@@ -354,69 +356,99 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
 
     std::atomic_bool writeConflict = false;
     std::optional<uint32_t> lastPublishedSequence;
-    constexpr uint32_t maxQueueSize = 1000;
+    uint32_t maxQueueSize = 1000 / numExtractors;
     auto begin = std::chrono::system_clock::now();
+    using QueueType =
+        ThreadSafeQueue<std::optional<org::xrpl::rpc::v1::GetLedgerResponse>>;
+    std::vector<std::shared_ptr<QueueType>> queues;
 
-    ThreadSafeQueue<std::optional<org::xrpl::rpc::v1::GetLedgerResponse>>
-        transformQueue{maxQueueSize};
+    auto getNext = [&queues, &startSequence, &numExtractors](
+                       uint32_t sequence) -> std::shared_ptr<QueueType> {
+        std::cout << std::to_string((sequence - startSequence) % numExtractors);
+        return queues[(sequence - startSequence) % numExtractors];
+    };
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < numExtractors; ++i)
+    {
+        auto transformQueue = std::make_shared<QueueType>(maxQueueSize);
+        queues.push_back(transformQueue);
+        std::cout << "added to queues";
 
-    std::thread extracter{[this,
-                           &startSequence,
-                           &writeConflict,
-                           &transformQueue]() {
-        beast::setCurrentThreadName("rippled: ReportingETL extract");
-        uint32_t currentSequence = startSequence;
+        threads.emplace_back([this,
+                              &startSequence,
+                              &writeConflict,
+                              transformQueue,
+                              i,
+                              numExtractors]() {
+            beast::setCurrentThreadName("rippled: ReportingETL extract");
+            uint32_t currentSequence = startSequence + i;
 
-        // there are two stopping conditions here.
-        // First, if there is a write conflict in the load thread, the ETL
-        // mechanism should stop.
-        // The other stopping condition is if the entire server is shutting
-        // down. This can be detected in a variety of ways. See the comment
-        // at the top of the function
-        while (networkValidatedLedgers_.waitUntilValidatedByNetwork(
-                   currentSequence) &&
-               !writeConflict && !isStopping())
-        {
-            auto start = std::chrono::system_clock::now();
-            std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{
-                fetchLedgerDataAndDiff(currentSequence)};
-            auto end = std::chrono::system_clock::now();
+            double totalTime = 0;
 
-            auto time = ((end - start).count()) / 1000000000.0;
-            auto tps =
-                fetchResponse->transactions_list().transactions_size() / time;
-
-            BOOST_LOG_TRIVIAL(info) << "Extract phase time = " << time
-                                    << " . Extract phase tps = " << tps;
-            // if the fetch is unsuccessful, stop. fetchLedger only returns
-            // false if the server is shutting down, or if the ledger was
-            // found in the database (which means another process already
-            // wrote the ledger that this process was trying to extract;
-            // this is a form of a write conflict). Otherwise,
-            // fetchLedgerDataAndDiff will keep trying to fetch the
-            // specified ledger until successful
-            if (!fetchResponse)
+            // there are two stopping conditions here.
+            // First, if there is a write conflict in the load thread, the
+            // ETL mechanism should stop. The other stopping condition is if
+            // the entire server is shutting down. This can be detected in a
+            // variety of ways. See the comment at the top of the function
+            while (currentSequence <= finishSequence_ &&
+                   networkValidatedLedgers_.waitUntilValidatedByNetwork(
+                       currentSequence) &&
+                   !writeConflict && !isStopping())
             {
-                break;
-            }
+                auto start = std::chrono::system_clock::now();
+                std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
+                    fetchResponse{fetchLedgerDataAndDiff(currentSequence)};
+                auto end = std::chrono::system_clock::now();
 
-            transformQueue.push(std::move(fetchResponse));
-            ++currentSequence;
-        }
-        // empty optional tells the transformer to shut down
-        transformQueue.push({});
-    }};
+                auto time = ((end - start).count()) / 1000000000.0;
+                totalTime += time;
+
+                auto tps =
+                    fetchResponse->transactions_list().transactions_size() /
+                    time;
+
+                BOOST_LOG_TRIVIAL(info)
+                    << "Extract phase time = " << time
+                    << " . Extract phase tps = " << tps
+                    << " . Avg extract time = "
+                    << totalTime / (currentSequence - startSequence + 1)
+                    << " . thread num = " << i
+                    << " . seq = " << currentSequence;
+                // if the fetch is unsuccessful, stop. fetchLedger only
+                // returns false if the server is shutting down, or if the
+                // ledger was found in the database (which means another
+                // process already wrote the ledger that this process was
+                // trying to extract; this is a form of a write conflict).
+                // Otherwise, fetchLedgerDataAndDiff will keep trying to
+                // fetch the specified ledger until successful
+                if (!fetchResponse)
+                {
+                    break;
+                }
+
+                transformQueue->push(std::move(fetchResponse));
+                currentSequence += numExtractors;
+                if (currentSequence > finishSequence_)
+                    break;
+            }
+            // empty optional tells the transformer to shut down
+            transformQueue->push({});
+        });
+    }
 
     std::thread transformer{[this,
                              &writeConflict,
-                             &transformQueue,
+                             &startSequence,
+                             &getNext,
                              &lastPublishedSequence]() {
         beast::setCurrentThreadName("rippled: ReportingETL transform");
+        uint32_t currentSequence = startSequence;
 
         while (!writeConflict)
         {
             std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{
-                transformQueue.pop()};
+                getNext(currentSequence)->pop()};
+            ++currentSequence;
             // if fetchResponse is an empty optional, the extracter thread
             // has stopped and the transformer should stop as well
             if (!fetchResponse)
@@ -434,20 +466,25 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
             auto end = std::chrono::system_clock::now();
 
             auto duration = ((end - start).count()) / 1000000000.0;
-            BOOST_LOG_TRIVIAL(info)
-                << "Load phase of etl : "
-                << "Successfully published ledger! Ledger info: "
-                << detail::toString(lgrInfo) << ". txn count = " << numTxns
-                << ". object count = " << numObjects
-                << ". load time = " << duration
-                << ". load txns per second = " << numTxns / duration
-                << ". load objs per second = " << numObjects / duration;
+            if (success)
+                BOOST_LOG_TRIVIAL(info)
+                    << "Load phase of etl : "
+                    << "Successfully published ledger! Ledger info: "
+                    << detail::toString(lgrInfo) << ". txn count = " << numTxns
+                    << ". object count = " << numObjects
+                    << ". load time = " << duration
+                    << ". load txns per second = " << numTxns / duration
+                    << ". load objs per second = " << numObjects / duration;
+            else
+                BOOST_LOG_TRIVIAL(error)
+                    << "Error writing ledger. " << detail::toString(lgrInfo);
             // success is false if the ledger was already written
             if (success)
             {
                 publishLedger(lgrInfo);
                 lastPublishedSequence = lgrInfo.seq;
             }
+            writeConflict = !success;
             auto range = flatMapBackend_->fetchLedgerRange();
             if (onlineDeleteInterval_ && !deleting_ &&
                 range->maxSequence - range->minSequence >
@@ -466,7 +503,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence)
     }};
 
     // wait for all of the threads to stop
-    extracter.join();
+    for (auto& t : threads)
+        t.join();
     transformer.join();
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug)
@@ -599,7 +637,7 @@ ReportingETL::monitor()
             // doContinousETLPipelined returns the most recent sequence
             // published empty optional if no sequence was published
             std::optional<uint32_t> lastPublished =
-                runETLPipeline(nextSequence);
+                runETLPipeline(nextSequence, extractorThreads_);
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
                 << "Aborting ETL. Falling back to publishing";
@@ -659,9 +697,13 @@ ReportingETL::ReportingETL(
     flatMapBackend_->open();
     if (config.contains("start_sequence"))
         startSequence_ = config.at("start_sequence").as_int64();
+    if (config.contains("finish_sequence"))
+        finishSequence_ = config.at("finish_sequence").as_int64();
     if (config.contains("read_only"))
         readOnly_ = config.at("read_only").as_bool();
     if (config.contains("online_delete"))
         onlineDeleteInterval_ = config.at("online_delete").as_int64();
+    if (config.contains("extractor_threads"))
+        extractorThreads_ = config.at("extractor_threads").as_int64();
 }
 

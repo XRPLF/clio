@@ -581,7 +581,7 @@ PostgresBackend::finishWrites() const
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
-    return true;
+    return !abortWrite_;
 }
 bool
 PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
