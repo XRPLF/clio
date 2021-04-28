@@ -711,7 +711,6 @@ ReportingETL::ReportingETL(
           networkValidatedLedgers_,
           ioc)
 {
-    flatMapBackend_->open();
     if (config.contains("start_sequence"))
         startSequence_ = config.at("start_sequence").as_int64();
     if (config.contains("finish_sequence"))
@@ -724,5 +723,6 @@ ReportingETL::ReportingETL(
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
+    flatMapBackend_->open(readOnly_);
 }
 

@@ -101,7 +101,7 @@ public:
         std::vector<AccountTransactionsData>&& data) const override;
 
     void
-    open() override;
+    open(bool readOnly) override;
 
     void
     close() override;

@@ -665,7 +665,7 @@ public:
     // Create the table if it doesn't exist already
     // @param createIfMissing ignored
     void
-    open() override;
+    open(bool readOnly) override;
 
     // Close the connection to the database
     void

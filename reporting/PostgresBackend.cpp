@@ -625,9 +625,10 @@ PostgresBackend::fetchAccountTransactions(
 }  // namespace Backend
 
 void
-PostgresBackend::open()
+PostgresBackend::open(bool readOnly)
 {
-    initSchema(pgPool_);
+    if (!readOnly)
+        initSchema(pgPool_);
 }
 
 void

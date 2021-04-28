@@ -273,7 +273,7 @@ CassandraBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
 }
 
 void
-CassandraBackend::open()
+CassandraBackend::open(bool readOnly)
 {
     std::cout << config_ << std::endl;
     auto getString = [this](std::string const& field) -> std::string {

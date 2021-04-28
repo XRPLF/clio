@@ -132,7 +132,7 @@ public:
     // Open the database. Set up all of the necessary objects and
     // datastructures. After this call completes, the database is ready for use.
     virtual void
-    open() = 0;
+    open(bool readOnly) = 0;
 
     // Close the database, releasing any resources
     virtual void
