@@ -303,7 +303,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     if (accumTxns_ > txnThreshold_)
     {
         auto start = std::chrono::system_clock::now();
-        success = flatMapBackend_->finishWrites();
+        success = flatMapBackend_->finishWrites(lgrInfo.seq);
         auto end = std::chrono::system_clock::now();
 
         auto duration = ((end - start).count()) / 1000000000.0;
