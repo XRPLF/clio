@@ -131,7 +131,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     {
         flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
     }
-    flatMapBackend_->finishWrites();
+    flatMapBackend_->finishWrites(startingSequence);
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
                              << ((end - start).count()) / 1000000000.0;
@@ -154,50 +154,45 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        auto range = flatMapBackend_->fetchLedgerRange();
-
-        if (!range || range->maxSequence < ledgerSequence)
+        try
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " : "
-                << "Trying to publish. Could not find ledger with sequence = "
-                << ledgerSequence;
-            // We try maxAttempts times to publish the ledger, waiting one
-            // second in between each attempt.
-            // If the ledger is not present in the database after maxAttempts,
-            // we attempt to take over as the writer. If the takeover fails,
-            // doContinuousETL will return, and this node will go back to
-            // publishing.
-            // If the node is in strict read only mode, we simply
-            // skip publishing this ledger and return false indicating the
-            // publish failed
-            if (numAttempts >= maxAttempts)
+            auto range = flatMapBackend_->fetchLedgerRange();
+
+            if (!range || range->maxSequence < ledgerSequence)
             {
-                BOOST_LOG_TRIVIAL(error) << __func__ << " : "
-                                         << "Failed to publish ledger after "
-                                         << numAttempts << " attempts.";
-                if (!readOnly_)
-                {
-                    BOOST_LOG_TRIVIAL(info)
-                        << __func__ << " : "
-                        << "Attempting to become ETL writer";
-                    return false;
-                }
-                else
+                BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                                         << "Trying to publish. Could not find "
+                                            "ledger with sequence = "
+                                         << ledgerSequence;
+                // We try maxAttempts times to publish the ledger, waiting one
+                // second in between each attempt.
+                // If the ledger is not present in the database after
+                // maxAttempts, we attempt to take over as the writer. If the
+                // takeover fails, doContinuousETL will return, and this node
+                // will go back to publishing. If the node is in strict read
+                // only mode, we simply skip publishing this ledger and return
+                // false indicating the publish failed
+                if (numAttempts >= maxAttempts)
                 {
                     BOOST_LOG_TRIVIAL(debug)
                         << __func__ << " : "
-                        << "In strict read-only mode. "
-                        << "Skipping publishing this ledger. "
-                        << "Beginning fast forward.";
-                    return false;
+                        << "Failed to publish ledger after " << numAttempts
+                        << " attempts.";
+                    if (!readOnly_)
+                    {
+                        BOOST_LOG_TRIVIAL(info)
+                            << __func__ << " : "
+                            << "Attempting to become ETL writer";
+                        return false;
+                    }
                 }
-            }
-            else
-            {
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 ++numAttempts;
+                continue;
             }
+        }
+        catch (Backend::DatabaseTimeout const& e)
+        {
             continue;
         }
 
@@ -682,7 +677,7 @@ ReportingETL::monitorReadOnly()
     while (!stopping_ &&
            networkValidatedLedgers_.waitUntilValidatedByNetwork(sequence))
     {
-        success = publishLedger(sequence, success ? 30 : 1);
+        publishLedger(sequence, 30);
         ++sequence;
     }
 }

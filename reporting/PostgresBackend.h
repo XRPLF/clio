@@ -81,7 +81,7 @@ public:
         bool isFirst) const override;
 
     void
-    writeLedgerObject(
+    doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
         std::string&& blob,
@@ -110,10 +110,20 @@ public:
     startWrites() const override;
 
     bool
-    finishWrites() const override;
+    doFinishWrites() const override;
 
     bool
     doOnlineDelete(uint32_t minLedgerToKeep) const override;
+    bool
+    writeKeys(
+        std::unordered_set<ripple::uint256> const& keys,
+        uint32_t ledgerSequence) const override;
+    bool
+    writeBooks(
+        std::unordered_map<
+            ripple::uint256,
+            std::unordered_set<ripple::uint256>> const& books,
+        uint32_t ledgerSequence) const override;
 };
 }  // namespace Backend
 #endif

@@ -4,7 +4,9 @@
 namespace Backend {
 
 PostgresBackend::PostgresBackend(boost::json::object const& config)
-    : pgPool_(make_PgPool(config)), writeConnection_(pgPool_)
+    : BackendInterface(config)
+    , pgPool_(make_PgPool(config))
+    , writeConnection_(pgPool_)
 {
     if (config.contains("write_interval"))
     {
@@ -55,7 +57,7 @@ PostgresBackend::writeAccountTransactions(
     }
 }
 void
-PostgresBackend::writeLedgerObject(
+PostgresBackend::doWriteLedgerObject(
     std::string&& key,
     uint32_t seq,
     std::string&& blob,
@@ -651,7 +653,7 @@ PostgresBackend::startWrites() const
 }
 
 bool
-PostgresBackend::finishWrites() const
+PostgresBackend::doFinishWrites() const
 {
     if (!abortWrite_)
     {
@@ -680,6 +682,66 @@ PostgresBackend::finishWrites() const
     accountTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
     return !abortWrite_;
+}
+bool
+PostgresBackend::writeKeys(
+    std::unordered_set<ripple::uint256> const& keys,
+    uint32_t ledgerSequence) const
+{
+    PgQuery pgQuery(pgPool_);
+    std::stringstream keysBuffer;
+    size_t numRows = 0;
+    for (auto& key : keys)
+    {
+        keysBuffer << std::to_string(ledgerSequence) << '\t' << "\\\\x"
+                   << ripple::strHex(key) << '\n';
+        numRows++;
+        // If the buffer gets too large, the insert fails. Not sure why. So we
+        // insert after 1 million records
+        if (numRows == 1000000)
+        {
+            pgQuery.bulkInsert("keys", keysBuffer.str());
+            keysBuffer = {};
+            numRows = 0;
+        }
+    }
+    if (numRows > 0)
+    {
+        pgQuery.bulkInsert("keys", keysBuffer.str());
+    }
+}
+bool
+PostgresBackend::writeBooks(
+    std::unordered_map<
+        ripple::uint256,
+        std::unordered_set<ripple::uint256>> const& books,
+    uint32_t ledgerSequence) const
+{
+    PgQuery pgQuery(pgPool_);
+    std::stringstream booksBuffer;
+    size_t numRows = 0;
+    for (auto& book : books)
+    {
+        for (auto& offer : book.second)
+        {
+            booksBuffer << "\\\\x" << ripple::strHex(book.first) << '\t'
+                        << std::to_string(ledgerSequence) << '\t' << "\\\\x"
+                        << ripple::strHex(offer) << '\n';
+            numRows++;
+            // If the buffer gets too large, the insert fails. Not sure why. So
+            // we insert after 1 million records
+            if (numRows == 1000000)
+            {
+                pgQuery.bulkInsert("books", booksBuffer.str());
+                booksBuffer = {};
+                numRows = 0;
+            }
+        }
+    }
+    if (numRows > 0)
+    {
+        pgQuery.bulkInsert("books", booksBuffer.str());
+    }
 }
 bool
 PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const

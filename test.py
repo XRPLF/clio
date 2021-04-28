@@ -262,11 +262,12 @@ async def ledger_entries(ip, port,ledger):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
-async def ledger_data(ip, port, ledger, limit, binary):
+async def ledger_data(ip, port, ledger, limit, binary, cursor):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit)}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit),"cursor"cursor}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"cursor":cursor}))
             res = json.loads(await ws.recv())
             objects = []
             blobs = []
@@ -357,6 +358,7 @@ def compare_offer(aldous, p2p):
 def compare_book_offers(aldous, p2p):
     p2pOffers = {}
     for x in p2p:
+        matched = False
         for y in aldous:
             if y["index"] == x["index"]:
                 if not compare_offer(y,x):
@@ -364,6 +366,12 @@ def compare_book_offers(aldous, p2p):
                     print(y)
                     print(x)
                     return False
+                else:
+                    matched = True
+        if not matched:
+            print("offer not found")
+            print(x)
+            return False
     print("offers match!")
     return True
                     
@@ -464,6 +472,7 @@ async def ledger(ip, port, ledger, binary, transactions, expand):
             await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":bool(binary), "transactions":bool(transactions),"expand":bool(expand)}))
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
+            print(bool(binary))
             return res
 
     except websockets.exceptions.connectionclosederror as e:
@@ -543,6 +552,7 @@ parser.add_argument('--numPages',default=3)
 parser.add_argument('--base')
 parser.add_argument('--desired')
 parser.add_argument('--includeBlobs',default=False)
+parser.add_argument('--cursor',default='0000000000000000000000000000000000000000000000000000000000000000')
 
 
 
@@ -640,7 +650,7 @@ def run(args):
             print(compareAccountTx(res,res2))
     elif args.action == "ledger_data":
         res = asyncio.get_event_loop().run_until_complete(
-                ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary))
+                ledger_data(args.ip, args.port, args.ledger, args.limit, args.binary, args.cursor))
         if args.verify:
             writeLedgerData(res,args.filename)
     elif args.action == "ledger_data_full":
