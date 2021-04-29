@@ -28,6 +28,7 @@
 #include <reporting/BackendInterface.h>
 #include <reporting/ETLHelpers.h>
 #include <reporting/ETLSource.h>
+#include <reporting/server/SubscriptionManager.h>
 #include <reporting/Pg.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
@@ -40,6 +41,7 @@
 #include <chrono>
 
 struct AccountTransactionsData;
+class SubscriptionManager;
 
 /**
  * This class is responsible for continuously extracting data from a
@@ -60,7 +62,9 @@ class ReportingETL
 {
 private:
     std::unique_ptr<BackendInterface> flatMapBackend_;
+    std::unique_ptr<SubscriptionManager> subscriptions_;
     std::optional<uint32_t> onlineDeleteInterval_;
+
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -242,6 +246,12 @@ private:
     void
     publishLedger(ripple::LedgerInfo const& lgrInfo);
 
+    /// Get fees at a current ledger_index
+    /// @param seq the ledger index
+    /// @return nullopt if not found, fees if found.
+    std::optional<ripple::Fees>
+    getFees(std::uint32_t seq);
+
 public:
     ReportingETL(
         boost::json::object const& config,
@@ -329,6 +339,12 @@ public:
     getFlatMapBackend()
     {
         return *flatMapBackend_;
+    }
+
+    SubscriptionManager&
+    getSubscriptionManager()
+    {
+        return *subscriptions_;
     }
 
 private:

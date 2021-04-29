@@ -69,7 +69,7 @@ PostgresBackend::writeLedgerObject(
     if (numRowsInObjectsBuffer_ % 1000000 == 0)
     {
         writeConnection_.bulkInsert("objects", objectsBuffer_.str());
-        objectsBuffer_ = {};
+        objectsBuffer_.str("");
     }
 
     if (book)

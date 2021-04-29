@@ -11,7 +11,7 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 project(reporting)
 cmake_minimum_required(VERSION 3.16)
 set (CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-narrowing")
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
@@ -36,16 +36,16 @@ add_dependencies(reporting xrpl_core)
 add_dependencies(reporting grpc_pbufs)
 get_target_property(grpc_includes grpc_pbufs INCLUDE_DIRECTORIES)
 #get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
-get_target_property(proto_includes protobuf_src INCLUDE_DIRECTORIES)
+# get_target_property(proto_includes protobuf_src INCLUDE_DIRECTORIES)
 message("hi")
 message("${grpc_includes}")
 message("${proto_includes}")
-ExternalProject_Get_Property(protobuf_src SOURCE_DIR)
+# ExternalProject_Get_Property(protobuf_src SOURCE_DIR)
 message("${SOURCE_DIR}")
 INCLUDE_DIRECTORIES(${grpc_includes})
 #INCLUDE_DIRECTORIES(${xrpl_core_includes})
 INCLUDE_DIRECTORIES(${SOURCE_DIR}/src)
-ExternalProject_Get_Property(grpc_src SOURCE_DIR)
+# ExternalProject_Get_Property(grpc_src SOURCE_DIR)
 INCLUDE_DIRECTORIES(${SOURCE_DIR}/include)
 get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
 message("${xrpl_core_includes}")
@@ -61,6 +61,8 @@ target_sources(reporting PRIVATE
     reporting/Pg.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp
+    reporting/server/session.cpp
+    reporting/server/SubscriptionManager.cpp
     handlers/AccountInfo.cpp
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp
@@ -69,7 +71,8 @@ target_sources(reporting PRIVATE
     handlers/BookOffers.cpp
     handlers/LedgerRange.cpp
     handlers/Ledger.cpp
-    handlers/LedgerEntry.cpp)
+    handlers/LedgerEntry.cpp
+    handlers/Subscribe.cpp)
 
 
 message(${Boost_LIBRARIES})

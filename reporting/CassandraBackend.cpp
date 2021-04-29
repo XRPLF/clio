@@ -494,24 +494,24 @@ CassandraBackend::open()
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "objects"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "CREATE INDEX ON " << tablePrefix << "objects(sequence)";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "objects WHERE sequence=1"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query
             << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
             << " ( hash blob PRIMARY KEY, ledger_sequence bigint, transaction "
@@ -519,25 +519,25 @@ CassandraBackend::open()
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "transactions"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "CREATE INDEX ON " << tablePrefix
               << "transactions(ledger_sequence)";
         if (!executeSimpleStatement(query.str()))
             continue;
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix
               << "transactions WHERE ledger_sequence = 1"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
               << " ( key blob, created bigint, deleted bigint, PRIMARY KEY "
                  "(key, created)) with clustering order by (created "
@@ -545,24 +545,24 @@ CassandraBackend::open()
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "keys"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
-        query = {};
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
               << " ( book blob, sequence bigint, key blob, deleted_at "
                  "bigint, PRIMARY KEY "
                  "(book, key)) WITH CLUSTERING ORDER BY (key ASC)";
         if (!executeSimpleStatement(query.str()))
             continue;
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "books"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
-        query = {};
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "account_tx"
               << " ( account blob, seq_idx tuple<bigint, bigint>, "
                  " hash blob, "
@@ -572,43 +572,43 @@ CassandraBackend::open()
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "account_tx"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledgers"
               << " ( sequence bigint PRIMARY KEY, header blob )";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "ledgers"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledger_hashes"
               << " (hash blob PRIMARY KEY, sequence bigint)";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "ledger_hashes"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledger_range"
               << " (is_latest boolean PRIMARY KEY, sequence bigint)";
         if (!executeSimpleStatement(query.str()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT * FROM " << tablePrefix << "ledger_range"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
@@ -628,7 +628,7 @@ CassandraBackend::open()
         if (!insertObject_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query
             << "INSERT INTO " << tablePrefix << "transactions"
             << " (hash, ledger_sequence, transaction, metadata) VALUES (?, ?, "
@@ -636,30 +636,30 @@ CassandraBackend::open()
         if (!insertTransaction_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "INSERT INTO " << tablePrefix << "keys"
               << " (key, created, deleted) VALUES (?, ?, ?)";
         if (!insertKey_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
         if (!insertBook_.prepareStatement(query, session_.get()))
             continue;
-        query = {};
+        query.str("");
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, deleted_at) VALUES (?, ?, ?)";
         if (!deleteBook_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT created FROM " << tablePrefix << "keys"
               << " WHERE key = ? ORDER BY created desc LIMIT 1";
         if (!getCreated_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT object, sequence FROM " << tablePrefix << "objects"
               << " WHERE key = ? AND sequence <= ? ORDER BY sequence DESC "
                  "LIMIT 1";
@@ -667,28 +667,28 @@ CassandraBackend::open()
         if (!selectObject_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT transaction, metadata, ledger_sequence FROM "
               << tablePrefix << "transactions"
               << " WHERE hash = ?";
         if (!selectTransaction_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT transaction, metadata, ledger_sequence FROM "
               << tablePrefix << "transactions"
               << " WHERE ledger_sequence = ?";
         if (!selectAllTransactionsInLedger_.prepareStatement(
                 query, session_.get()))
             continue;
-        query = {};
+        query.str("");
         query << "SELECT hash FROM " << tablePrefix << "transactions"
               << " WHERE ledger_sequence = ?";
         if (!selectAllTransactionHashesInLedger_.prepareStatement(
                 query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT key FROM " << tablePrefix << "keys "
               << " WHERE TOKEN(key) >= ? and created <= ?"
               << " and deleted > ?"
@@ -697,7 +697,7 @@ CassandraBackend::open()
         if (!selectLedgerPageKeys_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT key,object FROM " << tablePrefix << "objects "
               << " WHERE TOKEN(key) >= ? and sequence <= ? "
               << " PER PARTITION LIMIT 1 LIMIT ? ALLOW FILTERING";
@@ -706,7 +706,7 @@ CassandraBackend::open()
             continue;
 
         /*
-        query = {};
+        query.str("");
         query << "SELECT filterempty(key,object) FROM " << tablePrefix <<
         "objects "
               << " WHERE TOKEN(key) >= ? and sequence <= ?"
@@ -715,14 +715,14 @@ CassandraBackend::open()
         if (!upperBound2_.prepareStatement(query, session_.get()))
             continue;
 */
-        query = {};
+        query.str("");
         query << "SELECT TOKEN(key) FROM " << tablePrefix << "objects "
               << " WHERE key = ? LIMIT 1";
 
         if (!getToken_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << "SELECT key FROM " << tablePrefix << "books "
               << " WHERE book = ? AND sequence <= ? AND deleted_at > ? AND"
                  " key > ? "
@@ -730,51 +730,51 @@ CassandraBackend::open()
         if (!getBook_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " INSERT INTO " << tablePrefix << "account_tx"
               << " (account, seq_idx, hash) "
               << " VALUES (?,?,?)";
         if (!insertAccountTx_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " SELECT hash,seq_idx FROM " << tablePrefix << "account_tx"
               << " WHERE account = ? "
               << " AND seq_idx < ? LIMIT ?";
         if (!selectAccountTx_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " INSERT INTO " << tablePrefix << "ledgers "
               << " (sequence, header) VALUES(?,?)";
         if (!insertLedgerHeader_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " INSERT INTO " << tablePrefix << "ledger_hashes"
               << " (hash, sequence) VALUES(?,?)";
         if (!insertLedgerHash_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " update " << tablePrefix << "ledger_range"
               << " set sequence = ? where is_latest = ? if sequence != ?";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " select header from " << tablePrefix
               << "ledgers where sequence = ?";
         if (!selectLedgerBySeq_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " select sequence from " << tablePrefix
               << "ledger_range where is_latest = true";
         if (!selectLatestLedger_.prepareStatement(query, session_.get()))
             continue;
 
-        query = {};
+        query.str("");
         query << " SELECT sequence FROM " << tablePrefix
               << "ledger_range WHERE "
               << " is_latest IN (true, false)";
@@ -793,27 +793,27 @@ CassandraBackend::open()
             query << "TRUNCATE TABLE " << tablePrefix << "ledger_range";
             if (!executeSimpleStatement(query.str()))
                 continue;
-            query = {};
+            query.str("");
             query << "TRUNCATE TABLE " << tablePrefix << "ledgers";
             if (!executeSimpleStatement(query.str()))
                 continue;
-            query = {};
+            query.str("");
             query << "TRUNCATE TABLE " << tablePrefix << "ledger_hashes";
             if (!executeSimpleStatement(query.str()))
                 continue;
-            query = {};
+            query.str("");
             query << "TRUNCATE TABLE " << tablePrefix << "objects";
             if (!executeSimpleStatement(query.str()))
                 continue;
-            query = {};
+            query.str("");
             query << "TRUNCATE TABLE " << tablePrefix << "transactions";
             if (!executeSimpleStatement(query.str()))
                 continue;
-            query = {};
+            query.str("");
             query << "TRUNCATE TABLE " << tablePrefix << "account_tx";
             if (!executeSimpleStatement(query.str()))
                 continue;
-            query = {};
+            query.str("");
             query << "TRUNCATE TABLE " << tablePrefix << "books";
             if (!executeSimpleStatement(query.str()))
                 continue;

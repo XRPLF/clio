@@ -20,6 +20,9 @@ getJson(ripple::STBase const& obj);
 boost::json::object
 getJson(ripple::SLE const& sle);
 
+boost::json::value
+getJson(Json::Value const& value);
+
 std::optional<uint32_t>
 ledgerSequenceFromRequest(
     boost::json::object const& request,
