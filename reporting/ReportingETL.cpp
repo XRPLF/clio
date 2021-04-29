@@ -365,6 +365,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
     }
+    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
+                            << "Populating caches";
+    flatMapBackend_->getIndexer().populateCaches(*flatMapBackend_);
+    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
+                            << "Populated caches";
 
     std::atomic_bool writeConflict = false;
     std::optional<uint32_t> lastPublishedSequence;
@@ -523,6 +528,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         << "Extracted and wrote " << *lastPublishedSequence - startSequence
         << " in " << ((end - begin).count()) / 1000000000.0;
     writing_ = false;
+    flatMapBackend_->getIndexer().clearCaches();
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Stopping etl pipeline";
@@ -607,7 +613,6 @@ ReportingETL::monitor()
     }
     else
     {
-        // publishLedger(ledger);
     }
     uint32_t nextSequence = latestSequence.value() + 1;
 

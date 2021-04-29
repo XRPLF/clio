@@ -748,7 +748,7 @@ CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
     object bytea,
-    PRIMARY KEY(ledger_seq, key)
+    PRIMARY KEY(key, ledger_seq)
 ) PARTITION BY RANGE (ledger_seq);
 
 create table if not exists objects1 partition of objects for values from (0) to (10000000);
@@ -805,15 +805,17 @@ create table if not exists account_transactions7 partition of account_transactio
 CREATE TABLE IF NOT EXISTS books (
     ledger_seq bigint NOT NULL,
     book bytea NOT NULL,
-    offer_key bytea NOT NULL,
-    PRIMARY KEY(ledger_seq, book, offer_key)
+    offer_key bytea NOT NULL
 );
+
+CREATE INDEX book_idx ON books using btree(ledger_seq, book, offer_key);
 
 CREATE TABLE IF NOT EXISTS keys (
     ledger_seq bigint NOT NULL,
-    key bytea NOT NULL,
-    PRIMARY KEY(ledger_seq, key)
+    key bytea NOT NULL
 );
+
+CREATE INDEX key_idx ON keys USING btree(ledger_seq, key);
 
 -- account_tx() RPC helper. From the rippled reporting process, only the
 -- parameters without defaults are required. For the parameters with

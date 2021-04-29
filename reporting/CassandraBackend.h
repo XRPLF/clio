@@ -631,9 +631,6 @@ private:
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
-    std::thread indexer_;
-    uint32_t indexerShift_ = 16;
-
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
     uint32_t maxRequestsOutstanding = 10000;
@@ -693,8 +690,6 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
             work_.reset();
             ioThread_.join();
-            if (indexer_.joinable())
-                indexer_.join();
         }
         open_ = false;
     }

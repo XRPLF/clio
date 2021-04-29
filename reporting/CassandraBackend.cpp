@@ -473,129 +473,61 @@ CassandraBackend::fetchLedgerPage(
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
-    auto rng = fetchLedgerRange();
-    if (!rng)
-        return {{}, {}};
-    if (!isIndexed(ledgerSequence))
-    {
-        return fetchLedgerPage2(cursor, ledgerSequence, limit);
-    }
+    auto index = getIndexOfSeq(ledgerSequence);
+    if (!index)
+        return {};
     LedgerPage page;
-    bool cursorIsInt = false;
-    if (cursor && !cursor->isZero())
-    {
-        bool foundNonZero = false;
-        for (size_t i = 0; i < 28 && !foundNonZero; ++i)
-        {
-            if (cursor->data()[i] != 0)
-                foundNonZero = true;
-        }
-        cursorIsInt = !foundNonZero;
-    }
     if (cursor)
         BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - Cursor = " << ripple::strHex(*cursor)
-            << " : cursorIsInt = " << std::to_string(cursorIsInt);
-    if (!cursor || !cursorIsInt)
-    {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger";
-        CassandraStatement statement{selectKeys_};
-        uint32_t upper = ledgerSequence;
-        if (upper != rng->minSequence)
-            upper = (ledgerSequence >> indexerShift_) << indexerShift_;
-        if (upper != ledgerSequence)
-            upper += (1 << indexerShift_);
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " upper is " << std::to_string(upper);
-        statement.bindInt(upper);
-        if (cursor)
-            statement.bindBytes(*cursor);
-        else
-        {
-            ripple::uint256 zero;
-            statement.bindBytes(zero);
-        }
-        statement.bindUInt(limit);
-        CassandraResult result = executeSyncRead(statement);
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Got keys";
-        if (!!result)
-        {
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " - got keys - size = " << result.numRows();
-            std::vector<ripple::uint256> keys;
-
-            do
-            {
-                keys.push_back(result.getUInt256());
-            } while (result.nextRow());
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " Using base ledger. Read keys";
-            auto objects = fetchLedgerObjects(keys, ledgerSequence);
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " Using base ledger. Got objects";
-            if (objects.size() != keys.size())
-                throw std::runtime_error(
-                    "Mismatch in size of objects and keys");
-            if (keys.size() == limit)
-                page.cursor = keys[keys.size() - 1];
-            else if (ledgerSequence < upper)
-                page.cursor = upper - 1;
-
-            if (cursor)
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__ << " Cursor = " << ripple::strHex(*page.cursor);
-
-            for (size_t i = 0; i < objects.size(); ++i)
-            {
-                auto& obj = objects[i];
-                auto& key = keys[i];
-                if (obj.size())
-                {
-                    page.objects.push_back({std::move(key), std::move(obj)});
-                }
-            }
-            return page;
-        }
-    }
+            << __func__ << " - Cursor = " << ripple::strHex(*cursor);
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " ledgerSequence = " << std::to_string(ledgerSequence)
+        << " index = " << std::to_string(*index);
+    CassandraStatement statement{selectKeys_};
+    statement.bindInt(*index);
+    if (cursor)
+        statement.bindBytes(*cursor);
     else
     {
-        uint32_t curSequence = 0;
-        for (size_t i = 28; i < 32; ++i)
-        {
-            uint32_t digit = cursor->data()[i];
-            digit = digit << (8 * (31 - i));
-            curSequence += digit;
-        }
+        ripple::uint256 zero;
+        statement.bindBytes(zero);
+    }
+    statement.bindUInt(limit);
+    CassandraResult result = executeSyncRead(statement);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Got keys";
+    if (!!result)
+    {
         BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " Using ledger diffs. Sequence = " << curSequence
-            << " size_of uint32_t " << std::to_string(sizeof(uint32_t))
-            << " cursor = " << ripple::strHex(*cursor);
-        auto diff = fetchLedgerDiff(curSequence);
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " diff size = " << diff.size();
-        std::vector<ripple::uint256> deletedKeys;
-        for (auto& obj : diff)
+            << __func__ << " - got keys - size = " << result.numRows();
+        std::vector<ripple::uint256> keys;
+
+        do
         {
-            if (obj.blob.size() == 0)
-                deletedKeys.push_back(std::move(obj.key));
-        }
-        auto objects = fetchLedgerObjects(deletedKeys, ledgerSequence);
-        if (objects.size() != deletedKeys.size())
+            keys.push_back(result.getUInt256());
+        } while (result.nextRow());
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Read keys";
+        auto objects = fetchLedgerObjects(keys, ledgerSequence);
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " Using base ledger. Got objects";
+        if (objects.size() != keys.size())
             throw std::runtime_error("Mismatch in size of objects and keys");
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " deleted keys size = " << deletedKeys.size();
+        if (keys.size() == limit)
+            page.cursor = keys[keys.size() - 1];
+
+        if (cursor)
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " Cursor = " << ripple::strHex(*page.cursor);
+
         for (size_t i = 0; i < objects.size(); ++i)
         {
             auto& obj = objects[i];
-            auto& key = deletedKeys[i];
+            auto& key = keys[i];
             if (obj.size())
             {
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
-        if (curSequence - 1 >= ledgerSequence)
-            page.cursor = curSequence - 1;
         return page;
-        // do the diff algorithm
     }
     return {{}, {}};
 }
@@ -642,17 +574,12 @@ CassandraBackend::fetchBookOffers(
 {
     CassandraStatement statement{selectBook_};
     statement.bindBytes(book);
-    uint32_t upper = sequence;
-    auto rng = fetchLedgerRange();
-    if (rng && sequence != rng->minSequence)
-    {
-        upper = (sequence >> 8) << 8;
-        if (upper != sequence)
-            upper += (1 << 8);
-    }
-    BOOST_LOG_TRIVIAL(info) << __func__ << " upper = " << std::to_string(upper)
+    auto index = getIndexOfSeq(sequence);
+    if (!index)
+        return {};
+    BOOST_LOG_TRIVIAL(info) << __func__ << " index = " << std::to_string(*index)
                             << " book = " << ripple::strHex(book);
-    statement.bindInt(upper);
+    statement.bindInt(*index);
     if (cursor)
         statement.bindBytes(*cursor);
     else
@@ -855,7 +782,7 @@ CassandraBackend::writeKeys(
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
-    uint32_t concurrentLimit = maxRequestsOutstanding / 2;
+    uint32_t concurrentLimit = maxRequestsOutstanding;
     uint32_t numSubmitted = 0;
     for (auto& key : keys)
     {
@@ -941,6 +868,8 @@ CassandraBackend::writeBooks(
 bool
 CassandraBackend::isIndexed(uint32_t ledgerSequence) const
 {
+    return false;
+    /*
     auto rng = fetchLedgerRange();
     if (!rng)
         return false;
@@ -955,11 +884,14 @@ CassandraBackend::isIndexed(uint32_t ledgerSequence) const
     statement.bindUInt(1);
     CassandraResult result = executeSyncRead(statement);
     return !!result;
+    */
 }
 
 std::optional<uint32_t>
 CassandraBackend::getNextToIndex() const
 {
+    return {};
+    /*
     auto rng = fetchLedgerRange();
     if (!rng)
         return {};
@@ -969,6 +901,7 @@ CassandraBackend::getNextToIndex() const
         cur = ((cur >> indexerShift_) << indexerShift_) + (1 << indexerShift_);
     }
     return cur;
+    */
 }
 
 bool
@@ -1748,6 +1681,7 @@ CassandraBackend::open(bool readOnly)
     {
         maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
     }
+    /*
     if (config_.contains("run_indexer"))
     {
         if (config_["run_indexer"].as_bool())
@@ -1768,6 +1702,7 @@ CassandraBackend::open(bool readOnly)
             }};
         }
     }
+    */
 
     work_.emplace(ioContext_);
     ioThread_ = std::thread{[this]() { ioContext_.run(); }};

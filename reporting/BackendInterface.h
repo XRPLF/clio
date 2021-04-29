@@ -61,17 +61,22 @@ class BackendIndexer
     std::mutex mutex_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
-    uint32_t keyShift_ = 16;
-    uint32_t bookShift_ = 16;
+    uint32_t shift_ = 16;
     std::unordered_set<ripple::uint256> keys;
     std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        booksToOffers;
+        books;
+    std::unordered_set<ripple::uint256> keysCumulative;
     std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        booksToDeletedOffers;
+        booksCumulative;
 
 public:
     BackendIndexer(boost::json::object const& config);
     ~BackendIndexer();
+
+    void
+    populateCaches(BackendInterface const& backend);
+    void
+    clearCaches();
 
     void
     addKey(ripple::uint256 const& key);
@@ -87,17 +92,44 @@ public:
 
     void
     finish(uint32_t ledgerSequence, BackendInterface const& backend);
+    void
+    writeNext(uint32_t ledgerSequence, BackendInterface const& backend);
+    uint32_t
+    getShift()
+    {
+        return shift_;
+    }
 };
 
 class BackendInterface
 {
-private:
+protected:
     mutable BackendIndexer indexer_;
 
 public:
     // read methods
     BackendInterface(boost::json::object const& config) : indexer_(config)
     {
+    }
+
+    BackendIndexer&
+    getIndexer() const
+    {
+        return indexer_;
+    }
+
+    std::optional<uint32_t>
+    getIndexOfSeq(uint32_t seq) const
+    {
+        if (!fetchLedgerRange())
+            return {};
+        if (fetchLedgerRange()->minSequence == seq)
+            return seq;
+        uint32_t shift = indexer_.getShift();
+        uint32_t incr = (1 << shift);
+        if ((seq % incr) == 0)
+            return seq;
+        return (seq >> shift << shift) + incr;
     }
 
     virtual std::optional<uint32_t>
@@ -226,6 +258,7 @@ public:
     finishWrites(uint32_t ledgerSequence) const
     {
         indexer_.finish(ledgerSequence, *this);
+        indexer_.writeNext(ledgerSequence, *this);
         return doFinishWrites();
     }
     virtual bool
