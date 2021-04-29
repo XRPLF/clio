@@ -82,13 +82,6 @@ PostgresBackend::doWriteLedgerObject(
         BOOST_LOG_TRIVIAL(info) << __func__ << " Flushed large buffer";
         objectsBuffer_ = {};
     }
-
-    if (book)
-    {
-        booksBuffer_ << "\\\\x" << ripple::strHex(*book) << '\t'
-                     << std::to_string(seq) << '\t' << isDeleted << '\t'
-                     << "\\\\x" << ripple::strHex(key) << '\n';
-    }
 }
 
 void
@@ -658,7 +651,6 @@ PostgresBackend::doFinishWrites() const
     if (!abortWrite_)
     {
         writeConnection_.bulkInsert("transactions", transactionsBuffer_.str());
-        writeConnection_.bulkInsert("books", booksBuffer_.str());
         writeConnection_.bulkInsert(
             "account_transactions", accountTxBuffer_.str());
         std::string objectsStr = objectsBuffer_.str();
@@ -688,7 +680,9 @@ PostgresBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
     uint32_t ledgerSequence) const
 {
+    BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
+    pgQuery("BEGIN");
     std::stringstream keysBuffer;
     size_t numRows = 0;
     for (auto& key : keys)
@@ -701,7 +695,8 @@ PostgresBackend::writeKeys(
         if (numRows == 1000000)
         {
             pgQuery.bulkInsert("keys", keysBuffer.str());
-            keysBuffer = {};
+            std::stringstream temp;
+            keysBuffer.swap(temp);
             numRows = 0;
         }
     }
@@ -709,6 +704,8 @@ PostgresBackend::writeKeys(
     {
         pgQuery.bulkInsert("keys", keysBuffer.str());
     }
+    pgQuery("COMMIT");
+    return true;
 }
 bool
 PostgresBackend::writeBooks(
@@ -717,15 +714,17 @@ PostgresBackend::writeBooks(
         std::unordered_set<ripple::uint256>> const& books,
     uint32_t ledgerSequence) const
 {
+    BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
+    pgQuery("BEGIN");
     std::stringstream booksBuffer;
     size_t numRows = 0;
     for (auto& book : books)
     {
         for (auto& offer : book.second)
         {
-            booksBuffer << "\\\\x" << ripple::strHex(book.first) << '\t'
-                        << std::to_string(ledgerSequence) << '\t' << "\\\\x"
+            booksBuffer << std::to_string(ledgerSequence) << '\t' << "\\\\x"
+                        << ripple::strHex(book.first) << '\t' << "\\\\x"
                         << ripple::strHex(offer) << '\n';
             numRows++;
             // If the buffer gets too large, the insert fails. Not sure why. So
@@ -733,7 +732,8 @@ PostgresBackend::writeBooks(
             if (numRows == 1000000)
             {
                 pgQuery.bulkInsert("books", booksBuffer.str());
-                booksBuffer = {};
+                std::stringstream temp;
+                booksBuffer.swap(temp);
                 numRows = 0;
             }
         }
@@ -742,6 +742,8 @@ PostgresBackend::writeBooks(
     {
         pgQuery.bulkInsert("books", booksBuffer.str());
     }
+    pgQuery("COMMIT");
+    return true;
 }
 bool
 PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const

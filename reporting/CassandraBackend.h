@@ -1188,8 +1188,6 @@ public:
             , isDeleted(isDeleted)
             , book(std::move(inBook))
         {
-            if (book)
-                ++refs;
         }
     };
     struct WriteAccountTxCallbackData
@@ -1290,8 +1288,6 @@ public:
             std::move(book));
 
         write(*data, false);
-        if (hasBook)
-            writeBook(*data, false);
     }
 
     void

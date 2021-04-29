@@ -282,6 +282,7 @@ Pg::bulkInsert(char const* table, std::string const& records)
         ss << "bulkInsert to " << table
            << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status;
         disconnect();
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 }
@@ -802,11 +803,16 @@ create table if not exists account_transactions7 partition of account_transactio
 -- Table that maps a book to a list of offers in that book. Deletes from the ledger table
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS books (
-    book bytea NOT NULL,
     ledger_seq bigint NOT NULL,
-    deleted boolean NOT NULL,
+    book bytea NOT NULL,
     offer_key bytea NOT NULL,
-    PRIMARY KEY(book, offer_key, deleted)
+    PRIMARY KEY(ledger_seq, book, offer_key)
+);
+
+CREATE TABLE IF NOT EXISTS keys (
+    ledger_seq bigint NOT NULL,
+    key bytea NOT NULL,
+    PRIMARY KEY(ledger_seq, key)
 );
 
 -- account_tx() RPC helper. From the rippled reporting process, only the

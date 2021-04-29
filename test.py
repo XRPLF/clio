@@ -436,7 +436,7 @@ async def ledger_data(ip, port, ledger, limit, binary, cursor):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit),"cursor"cursor}))
+            await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit),"cursor":cursor}))
             await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"cursor":cursor}))
             res = json.loads(await ws.recv())
             objects = []
