@@ -945,11 +945,6 @@ public:
         return {{result.getBytes(), result.getBytes(), result.getUInt32()}};
     }
     LedgerPage
-    fetchLedgerPage2(
-        std::optional<ripple::uint256> const& cursor,
-        std::uint32_t ledgerSequence,
-        std::uint32_t limit) const;
-    LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,

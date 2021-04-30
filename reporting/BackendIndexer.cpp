@@ -17,13 +17,23 @@ BackendIndexer::~BackendIndexer()
 void
 BackendIndexer::addKey(ripple::uint256 const& key)
 {
+    std::unique_lock lck(mtx);
     keys.insert(key);
+    keysCumulative.insert(key);
+}
+void
+BackendIndexer::addKeyAsync(ripple::uint256 const& key)
+{
+    std::unique_lock lck(mtx);
     keysCumulative.insert(key);
 }
 void
 BackendIndexer::deleteKey(ripple::uint256 const& key)
 {
+    std::unique_lock lck(mtx);
     keysCumulative.erase(key);
+    if (populatingCacheAsync)
+        deletedKeys.insert(key);
 }
 
 void
@@ -31,7 +41,16 @@ BackendIndexer::addBookOffer(
     ripple::uint256 const& book,
     ripple::uint256 const& offerKey)
 {
+    std::unique_lock lck(mtx);
     books[book].insert(offerKey);
+    booksCumulative[book].insert(offerKey);
+}
+void
+BackendIndexer::addBookOfferAsync(
+    ripple::uint256 const& book,
+    ripple::uint256 const& offerKey)
+{
+    std::unique_lock lck(mtx);
     booksCumulative[book].insert(offerKey);
 }
 void
@@ -39,7 +58,10 @@ BackendIndexer::deleteBookOffer(
     ripple::uint256 const& book,
     ripple::uint256 const& offerKey)
 {
+    std::unique_lock lck(mtx);
     booksCumulative[book].erase(offerKey);
+    if (populatingCacheAsync)
+        deletedBooks[book].insert(offerKey);
 }
 
 void
@@ -48,21 +70,18 @@ BackendIndexer::clearCaches()
     keysCumulative = {};
     booksCumulative = {};
 }
+
 void
 BackendIndexer::populateCaches(
     BackendInterface const& backend,
     std::optional<uint32_t> sequence)
 {
-    if (keysCumulative.size() > 0)
-    {
-        BOOST_LOG_TRIVIAL(info)
-            << __func__ << " caches already populated. returning";
-        return;
-    }
     if (!sequence)
         sequence = backend.fetchLatestLedgerSequence();
     if (!sequence)
         return;
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " sequence = " << std::to_string(*sequence);
     std::optional<ripple::uint256> cursor;
     while (true)
     {
@@ -84,11 +103,11 @@ BackendIndexer::populateCaches(
             cursor = curCursor;
             for (auto& obj : objects)
             {
-                keysCumulative.insert(obj.key);
+                addKeyAsync(obj.key);
                 if (isOffer(obj.blob))
                 {
                     auto book = getBook(obj.blob);
-                    booksCumulative[book].insert(obj.key);
+                    addBookOfferAsync(book, obj.key);
                 }
             }
             if (!cursor)
@@ -101,6 +120,62 @@ BackendIndexer::populateCaches(
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }
+    // Do reconcilation. Remove anything from keys or books that shouldn't be
+    // there
+    {
+        std::unique_lock lck(mtx);
+        populatingCacheAsync = false;
+    }
+    auto tip = backend.fetchLatestLedgerSequence();
+    for (auto& key : deletedKeys)
+    {
+        deleteKey(key);
+    }
+    for (auto& book : deletedBooks)
+    {
+        for (auto& offer : book.second)
+        {
+            deleteBookOffer(book.first, offer);
+        }
+    }
+    {
+        std::unique_lock lck(mtx);
+        deletedKeys = {};
+        deletedBooks = {};
+        cv_.notify_one();
+    }
+    BOOST_LOG_TRIVIAL(info)
+        << __func__
+        << " finished. keys.size() = " << std::to_string(keysCumulative.size());
+}
+void
+BackendIndexer::populateCachesAsync(
+    BackendInterface const& backend,
+    std::optional<uint32_t> sequence)
+{
+    if (keysCumulative.size() > 0)
+    {
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " caches already populated. returning";
+        return;
+    }
+    {
+        std::unique_lock lck(mtx);
+        populatingCacheAsync = true;
+    }
+    BOOST_LOG_TRIVIAL(info) << __func__;
+    boost::asio::post(ioc_, [this, sequence, &backend]() {
+        populateCaches(backend, sequence);
+    });
+}
+
+void
+BackendIndexer::waitForCaches()
+{
+    std::unique_lock lck(mtx);
+    cv_.wait(lck, [this]() {
+        return !populatingCacheAsync && deletedKeys.size() == 0;
+    });
 }
 
 void
@@ -119,6 +194,7 @@ BackendIndexer::writeNext(
 
     if (isFlag)
     {
+        waitForCaches();
         auto booksCopy = booksCumulative;
         auto keysCopy = keysCumulative;
         boost::asio::post(ioc_, [=, &backend]() {

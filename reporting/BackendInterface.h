@@ -70,30 +70,51 @@ class BackendIndexer
     std::thread ioThread_;
     uint32_t shift_ = 16;
     std::unordered_set<ripple::uint256> keys;
-    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        books;
     std::unordered_set<ripple::uint256> keysCumulative;
     std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
+        books;
+    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
         booksCumulative;
+    bool populatingCacheAsync = false;
+    // These are only used when the cache is being populated asynchronously
+    std::unordered_set<ripple::uint256> deletedKeys;
+    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
+        deletedBooks;
+    std::mutex mtx;
+    std::condition_variable cv_;
+
+    void
+    addKeyAsync(ripple::uint256 const& key);
+    void
+    addBookOfferAsync(
+        ripple::uint256 const& book,
+        ripple::uint256 const& offerKey);
 
 public:
     BackendIndexer(boost::json::object const& config);
     ~BackendIndexer();
 
     void
+    populateCachesAsync(
+        BackendInterface const& backend,
+        std::optional<uint32_t> sequence = {});
+    void
     populateCaches(
         BackendInterface const& backend,
         std::optional<uint32_t> sequence = {});
     void
     clearCaches();
+    // Blocking, possibly for minutes
+    void
+    waitForCaches();
 
     void
     addKey(ripple::uint256 const& key);
     void
     deleteKey(ripple::uint256 const& key);
-
     void
     addBookOffer(ripple::uint256 const& book, ripple::uint256 const& offerKey);
+
     void
     deleteBookOffer(
         ripple::uint256 const& book,
@@ -253,7 +274,8 @@ public:
     // other database methods
 
     // Open the database. Set up all of the necessary objects and
-    // datastructures. After this call completes, the database is ready for use.
+    // datastructures. After this call completes, the database is ready for
+    // use.
     virtual void
     open(bool readOnly) = 0;
 

@@ -367,7 +367,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     }
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populating caches";
-    flatMapBackend_->getIndexer().populateCaches(*flatMapBackend_);
+
+    flatMapBackend_->getIndexer().populateCachesAsync(*flatMapBackend_);
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populated caches";
 

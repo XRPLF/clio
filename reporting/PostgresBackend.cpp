@@ -362,7 +362,7 @@ PostgresBackend::fetchLedgerPage(
                 results.push_back({keys[i], objs[i]});
             }
         }
-        if (keys[0].isZero())
+        if (!cursor && !keys[0].isZero())
             return {results, returnCursor, "Data may be incomplete"};
         return {results, returnCursor};
     }

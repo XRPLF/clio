@@ -289,73 +289,6 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     return hashes;
 }
 
-LedgerPage
-CassandraBackend::fetchLedgerPage2(
-    std::optional<ripple::uint256> const& cursor,
-    std::uint32_t ledgerSequence,
-    std::uint32_t limit) const
-{
-    BOOST_LOG_TRIVIAL(trace) << __func__;
-    std::optional<ripple::uint256> currentCursor = cursor;
-    std::vector<LedgerObject> objects;
-    uint32_t curLimit = limit;
-    while (objects.size() < limit)
-    {
-        CassandraStatement statement{selectLedgerPage_};
-
-        int64_t intCursor = INT64_MIN;
-        if (currentCursor)
-        {
-            auto token = getToken(currentCursor->data());
-            if (token)
-                intCursor = *token;
-        }
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - cursor = " << std::to_string(intCursor)
-            << " , sequence = " << std::to_string(ledgerSequence)
-            << ", - limit = " << std::to_string(limit);
-        statement.bindInt(intCursor);
-        statement.bindInt(ledgerSequence);
-        statement.bindUInt(curLimit);
-
-        CassandraResult result = executeSyncRead(statement);
-
-        if (!!result)
-        {
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " - got keys - size = " << result.numRows();
-
-            size_t prevSize = objects.size();
-            do
-            {
-                std::vector<unsigned char> object = result.getBytes();
-                if (object.size())
-                {
-                    objects.push_back({result.getUInt256(), std::move(object)});
-                }
-            } while (result.nextRow());
-            size_t prevBatchSize = objects.size() - prevSize;
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " - added to objects. size = " << objects.size();
-            if (result.numRows() < curLimit)
-            {
-                currentCursor = {};
-                break;
-            }
-            if (objects.size() < limit)
-            {
-                curLimit = 2048;
-            }
-            assert(objects.size());
-            currentCursor = objects[objects.size() - 1].key;
-        }
-    }
-    if (objects.size())
-        return {objects, currentCursor};
-
-    return {{}, {}};
-}
-
 struct ReadDiffCallbackData
 {
     CassandraBackend const& backend;
@@ -480,12 +413,12 @@ CassandraBackend::fetchLedgerPage(
     if (!index)
         return {};
     LedgerPage page;
-    if (cursor)
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - Cursor = " << ripple::strHex(*cursor);
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " ledgerSequence = " << std::to_string(ledgerSequence)
         << " index = " << std::to_string(*index);
+    if (cursor)
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " - Cursor = " << ripple::strHex(*cursor);
     CassandraStatement statement{selectKeys_};
     statement.bindInt(*index);
     if (cursor)
@@ -497,10 +430,9 @@ CassandraBackend::fetchLedgerPage(
     }
     statement.bindUInt(limit);
     CassandraResult result = executeSyncRead(statement);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Got keys";
     if (!!result)
     {
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " - got keys - size = " << result.numRows();
         std::vector<ripple::uint256> keys;
 
@@ -508,17 +440,14 @@ CassandraBackend::fetchLedgerPage(
         {
             keys.push_back(result.getUInt256());
         } while (result.nextRow());
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Read keys";
         auto objects = fetchLedgerObjects(keys, ledgerSequence);
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " Using base ledger. Got objects";
         if (objects.size() != keys.size())
             throw std::runtime_error("Mismatch in size of objects and keys");
         if (keys.size() == limit)
             page.cursor = keys[keys.size() - 1];
 
         if (cursor)
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(trace)
                 << __func__ << " Cursor = " << ripple::strHex(*page.cursor);
 
         for (size_t i = 0; i < objects.size(); ++i)
@@ -530,7 +459,7 @@ CassandraBackend::fetchLedgerPage(
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
-        if (keys.size() && keys[0].isZero())
+        if (keys.size() && !cursor && !keys[0].isZero())
             page.warning = "Data may be incomplete";
         return page;
     }
