@@ -25,196 +25,214 @@ doBookOffers(
         response["error"] = "Empty database";
         return response;
     }
-    if (!request.contains("taker_pays"))
+    ripple::uint256 bookBase;
+    if (request.contains("book"))
     {
-        response["error"] = "Missing field taker_pays";
-        return response;
-    }
-
-    if (!request.contains("taker_gets"))
-    {
-        response["error"] = "Missing field taker_gets";
-        return response;
-    }
-
-    boost::json::object taker_pays;
-    if (request.at("taker_pays").kind() == boost::json::kind::object)
-    {
-        taker_pays = request.at("taker_pays").as_object();
-    }
-    else
-    {
-        response["error"] = "Invalid field taker_pays";
-        return response;
-    }
-
-    boost::json::object taker_gets;
-    if (request.at("taker_gets").kind() == boost::json::kind::object)
-    {
-        taker_gets = request.at("taker_gets").as_object();
-    }
-    else
-    {
-        response["error"] = "Invalid field taker_gets";
-        return response;
-    }
-
-    if (!taker_pays.contains("currency"))
-    {
-        response["error"] = "Missing field taker_pays.currency";
-        return response;
-    }
-
-    if (!taker_pays.at("currency").is_string())
-    {
-        response["error"] = "taker_pays.currency should be string";
-        return response;
-    }
-
-    if (!taker_gets.contains("currency"))
-    {
-        response["error"] = "Missing field taker_gets.currency";
-        return response;
-    }
-
-    if (!taker_gets.at("currency").is_string())
-    {
-        response["error"] = "taker_gets.currency should be string";
-        return response;
-    }
-
-    ripple::Currency pay_currency;
-
-    if (!ripple::to_currency(
-            pay_currency, taker_pays.at("currency").as_string().c_str()))
-    {
-        response["error"] =
-            "Invalid field 'taker_pays.currency', bad currency.";
-        return response;
-    }
-
-    ripple::Currency get_currency;
-
-    if (!ripple::to_currency(
-            get_currency, taker_gets["currency"].as_string().c_str()))
-    {
-        response["error"] =
-            "Invalid field 'taker_gets.currency', bad currency.";
-        return response;
-    }
-
-    ripple::AccountID pay_issuer;
-
-    if (taker_pays.contains("issuer"))
-    {
-        if (!taker_pays.at("issuer").is_string())
+        if (!bookBase.parseHex(request.at("book").as_string().c_str()))
         {
-            response["error"] = "taker_pays.issuer should be string";
-            return response;
-        }
-
-        if (!ripple::to_issuer(
-                pay_issuer, taker_pays.at("issuer").as_string().c_str()))
-        {
-            response["error"] =
-                "Invalid field 'taker_pays.issuer', bad issuer.";
-            return response;
-        }
-
-        if (pay_issuer == ripple::noAccount())
-        {
-            response["error"] =
-                "Invalid field 'taker_pays.issuer', bad issuer account one.";
+            response["error"] = "Error parsing book";
             return response;
         }
     }
     else
     {
-        pay_issuer = ripple::xrpAccount();
-    }
-
-    if (isXRP(pay_currency) && !isXRP(pay_issuer))
-    {
-        response["error"] =
-            "Unneeded field 'taker_pays.issuer' for XRP currency "
-            "specification.";
-        return response;
-    }
-
-    if (!isXRP(pay_currency) && isXRP(pay_issuer))
-    {
-        response["error"] =
-            "Invalid field 'taker_pays.issuer', expected non-XRP issuer.";
-        return response;
-    }
-
-    ripple::AccountID get_issuer;
-
-    if (taker_gets.contains("issuer"))
-    {
-        if (!taker_gets["issuer"].is_string())
+        if (!request.contains("taker_pays"))
         {
-            response["error"] = "taker_gets.issuer should be string";
+            response["error"] = "Missing field taker_pays";
             return response;
         }
 
-        if (!ripple::to_issuer(
-                get_issuer, taker_gets.at("issuer").as_string().c_str()))
+        if (!request.contains("taker_gets"))
+        {
+            response["error"] = "Missing field taker_gets";
+            return response;
+        }
+
+        boost::json::object taker_pays;
+        if (request.at("taker_pays").kind() == boost::json::kind::object)
+        {
+            taker_pays = request.at("taker_pays").as_object();
+        }
+        else
+        {
+            response["error"] = "Invalid field taker_pays";
+            return response;
+        }
+
+        boost::json::object taker_gets;
+        if (request.at("taker_gets").kind() == boost::json::kind::object)
+        {
+            taker_gets = request.at("taker_gets").as_object();
+        }
+        else
+        {
+            response["error"] = "Invalid field taker_gets";
+            return response;
+        }
+
+        if (!taker_pays.contains("currency"))
+        {
+            response["error"] = "Missing field taker_pays.currency";
+            return response;
+        }
+
+        if (!taker_pays.at("currency").is_string())
+        {
+            response["error"] = "taker_pays.currency should be string";
+            return response;
+        }
+
+        if (!taker_gets.contains("currency"))
+        {
+            response["error"] = "Missing field taker_gets.currency";
+            return response;
+        }
+
+        if (!taker_gets.at("currency").is_string())
+        {
+            response["error"] = "taker_gets.currency should be string";
+            return response;
+        }
+
+        ripple::Currency pay_currency;
+
+        if (!ripple::to_currency(
+                pay_currency, taker_pays.at("currency").as_string().c_str()))
         {
             response["error"] =
-                "Invalid field 'taker_gets.issuer', bad issuer.";
+                "Invalid field 'taker_pays.currency', bad currency.";
             return response;
         }
 
-        if (get_issuer == ripple::noAccount())
+        ripple::Currency get_currency;
+
+        if (!ripple::to_currency(
+                get_currency, taker_gets["currency"].as_string().c_str()))
         {
             response["error"] =
-                "Invalid field 'taker_gets.issuer', bad issuer account one.";
+                "Invalid field 'taker_gets.currency', bad currency.";
             return response;
         }
-    }
-    else
-    {
-        get_issuer = ripple::xrpAccount();
-    }
 
-    if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
-    {
-        response["error"] =
-            "Unneeded field 'taker_gets.issuer' for XRP currency "
-            "specification.";
-        return response;
-    }
+        ripple::AccountID pay_issuer;
 
-    if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
-    {
-        response["error"] =
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer.";
-        return response;
-    }
-
-    boost::optional<ripple::AccountID> takerID;
-    if (request.contains("taker"))
-    {
-        if (!request.at("taker").is_string())
+        if (taker_pays.contains("issuer"))
         {
-            response["error"] = "taker should be string";
-            return response;
-        }
+            if (!taker_pays.at("issuer").is_string())
+            {
+                response["error"] = "taker_pays.issuer should be string";
+                return response;
+            }
 
-        takerID = ripple::parseBase58<ripple::AccountID>(
-            request.at("taker").as_string().c_str());
-        if (!takerID)
+            if (!ripple::to_issuer(
+                    pay_issuer, taker_pays.at("issuer").as_string().c_str()))
+            {
+                response["error"] =
+                    "Invalid field 'taker_pays.issuer', bad issuer.";
+                return response;
+            }
+
+            if (pay_issuer == ripple::noAccount())
+            {
+                response["error"] =
+                    "Invalid field 'taker_pays.issuer', bad issuer account "
+                    "one.";
+                return response;
+            }
+        }
+        else
         {
-            response["error"] = "Invalid taker";
+            pay_issuer = ripple::xrpAccount();
+        }
+
+        if (isXRP(pay_currency) && !isXRP(pay_issuer))
+        {
+            response["error"] =
+                "Unneeded field 'taker_pays.issuer' for XRP currency "
+                "specification.";
             return response;
         }
-    }
 
-    if (pay_currency == get_currency && pay_issuer == get_issuer)
-    {
-        response["error"] = "Bad market";
-        return response;
+        if (!isXRP(pay_currency) && isXRP(pay_issuer))
+        {
+            response["error"] =
+                "Invalid field 'taker_pays.issuer', expected non-XRP issuer.";
+            return response;
+        }
+
+        ripple::AccountID get_issuer;
+
+        if (taker_gets.contains("issuer"))
+        {
+            if (!taker_gets["issuer"].is_string())
+            {
+                response["error"] = "taker_gets.issuer should be string";
+                return response;
+            }
+
+            if (!ripple::to_issuer(
+                    get_issuer, taker_gets.at("issuer").as_string().c_str()))
+            {
+                response["error"] =
+                    "Invalid field 'taker_gets.issuer', bad issuer.";
+                return response;
+            }
+
+            if (get_issuer == ripple::noAccount())
+            {
+                response["error"] =
+                    "Invalid field 'taker_gets.issuer', bad issuer account "
+                    "one.";
+                return response;
+            }
+        }
+        else
+        {
+            get_issuer = ripple::xrpAccount();
+        }
+
+        if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
+        {
+            response["error"] =
+                "Unneeded field 'taker_gets.issuer' for XRP currency "
+                "specification.";
+            return response;
+        }
+
+        if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
+        {
+            response["error"] =
+                "Invalid field 'taker_gets.issuer', expected non-XRP issuer.";
+            return response;
+        }
+
+        boost::optional<ripple::AccountID> takerID;
+        if (request.contains("taker"))
+        {
+            if (!request.at("taker").is_string())
+            {
+                response["error"] = "taker should be string";
+                return response;
+            }
+
+            takerID = ripple::parseBase58<ripple::AccountID>(
+                request.at("taker").as_string().c_str());
+            if (!takerID)
+            {
+                response["error"] = "Invalid taker";
+                return response;
+            }
+        }
+
+        if (pay_currency == get_currency && pay_issuer == get_issuer)
+        {
+            response["error"] = "Bad market";
+            return response;
+        }
+        ripple::Book book = {
+            {pay_currency, pay_issuer}, {get_currency, get_issuer}};
+
+        bookBase = getBookBase(book);
     }
 
     std::uint32_t limit = 200;
@@ -229,10 +247,6 @@ doBookOffers(
         cursor->parseHex(request.at("cursor").as_string().c_str());
     }
 
-    ripple::Book book = {
-        {pay_currency, pay_issuer}, {get_currency, get_issuer}};
-
-    ripple::uint256 bookBase = getBookBase(book);
     auto start = std::chrono::system_clock::now();
     auto [offers, retCursor] =
         backend.fetchBookOffers(bookBase, *ledgerSequence, limit, cursor);

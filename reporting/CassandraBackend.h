@@ -711,7 +711,7 @@ public:
     // Create the table if it doesn't exist already
     // @param createIfMissing ignored
     void
-    open() override;
+    open(bool readOnly) override;
 
     // Close the connection to the database
     void
@@ -721,8 +721,6 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
             work_.reset();
             ioThread_.join();
-            // if (indexer_.joinable())
-            //     indexer_.join();
         }
         open_ = false;
     }
@@ -1216,8 +1214,6 @@ public:
             , isDeleted(isDeleted)
             , book(std::move(inBook))
         {
-            if (book)
-                ++refs;
         }
     };
     struct WriteAccountTxCallbackData
