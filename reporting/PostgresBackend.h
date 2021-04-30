@@ -15,6 +15,8 @@ private:
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
+    mutable boost::asio::thread_pool pool_{200};
+    uint32_t writeInterval_ = 1000000;
 
 public:
     PostgresBackend(boost::json::object const& config);
@@ -79,7 +81,7 @@ public:
         bool isFirst) const override;
 
     void
-    writeLedgerObject(
+    doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
         std::string&& blob,
@@ -99,7 +101,7 @@ public:
         std::vector<AccountTransactionsData>&& data) const override;
 
     void
-    open() override;
+    open(bool readOnly) override;
 
     void
     close() override;
@@ -108,10 +110,20 @@ public:
     startWrites() const override;
 
     bool
-    finishWrites() const override;
+    doFinishWrites() const override;
 
     bool
     doOnlineDelete(uint32_t minLedgerToKeep) const override;
+    bool
+    writeKeys(
+        std::unordered_set<ripple::uint256> const& keys,
+        uint32_t ledgerSequence) const override;
+    bool
+    writeBooks(
+        std::unordered_map<
+            ripple::uint256,
+            std::unordered_set<ripple::uint256>> const& books,
+        uint32_t ledgerSequence) const override;
 };
 }  // namespace Backend
 #endif

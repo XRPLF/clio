@@ -58,6 +58,7 @@ target_sources(reporting PRIVATE
     reporting/ETLSource.cpp
     reporting/CassandraBackend.cpp
     reporting/PostgresBackend.cpp
+    reporting/BackendIndexer.cpp
     reporting/Pg.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp

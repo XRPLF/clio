@@ -110,7 +110,7 @@ class ThreadSafeQueue
 public:
     /// @param maxSize maximum size of the queue. Calls that would cause the
     /// queue to exceed this size will block until free space is available
-    explicit ThreadSafeQueue(uint32_t maxSize) : maxSize_(maxSize)
+    ThreadSafeQueue(uint32_t maxSize) : maxSize_(maxSize)
     {
     }
 

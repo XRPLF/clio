@@ -1,4 +1,20 @@
+#include <functional>
 #include <reporting/CassandraBackend.h>
+#include <reporting/DBHelpers.h>
+#include <unordered_map>
+/*
+namespace std {
+template <>
+struct hash<ripple::uint256>
+{
+    std::size_t
+    operator()(const ripple::uint256& k) const noexcept
+    {
+        return boost::hash_range(k.begin(), k.end());
+    }
+};
+}  // namespace std
+*/
 namespace Backend {
 template <class T, class F>
 void
@@ -177,6 +193,8 @@ flatMapReadCallback(CassFuture* fut, void* cbData)
         *static_cast<CassandraBackend::ReadCallbackData*>(cbData);
     auto func = [](auto& params) { params.backend.read(params); };
     CassandraAsyncResult asyncResult{requestParams, fut, func};
+    if (asyncResult.timedOut())
+        requestParams.result.transaction = {0};
     CassandraResult& result = asyncResult.getResult();
 
     if (!!result)
@@ -196,6 +214,8 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
         *static_cast<CassandraBackend::ReadObjectCallbackData*>(cbData);
     auto func = [](auto& params) { params.backend.readObject(params); };
     CassandraAsyncResult asyncResult{requestParams, fut, func};
+    if (asyncResult.timedOut())
+        requestParams.result = {0};
     CassandraResult& result = asyncResult.getResult();
 
     if (!!result)
@@ -265,6 +285,811 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     } while (result.nextRow());
     return hashes;
 }
+
+LedgerPage
+CassandraBackend::fetchLedgerPage2(
+    std::optional<ripple::uint256> const& cursor,
+    std::uint32_t ledgerSequence,
+    std::uint32_t limit) const
+{
+    BOOST_LOG_TRIVIAL(trace) << __func__;
+    std::optional<ripple::uint256> currentCursor = cursor;
+    std::vector<LedgerObject> objects;
+    uint32_t curLimit = limit;
+    while (objects.size() < limit)
+    {
+        CassandraStatement statement{selectLedgerPage_};
+
+        int64_t intCursor = INT64_MIN;
+        if (currentCursor)
+        {
+            auto token = getToken(currentCursor->data());
+            if (token)
+                intCursor = *token;
+        }
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " - cursor = " << std::to_string(intCursor)
+            << " , sequence = " << std::to_string(ledgerSequence)
+            << ", - limit = " << std::to_string(limit);
+        statement.bindInt(intCursor);
+        statement.bindInt(ledgerSequence);
+        statement.bindUInt(curLimit);
+
+        CassandraResult result = executeSyncRead(statement);
+
+        if (!!result)
+        {
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " - got keys - size = " << result.numRows();
+
+            size_t prevSize = objects.size();
+            do
+            {
+                std::vector<unsigned char> object = result.getBytes();
+                if (object.size())
+                {
+                    objects.push_back({result.getUInt256(), std::move(object)});
+                }
+            } while (result.nextRow());
+            size_t prevBatchSize = objects.size() - prevSize;
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " - added to objects. size = " << objects.size();
+            if (result.numRows() < curLimit)
+            {
+                currentCursor = {};
+                break;
+            }
+            if (objects.size() < limit)
+            {
+                curLimit = 2048;
+            }
+            assert(objects.size());
+            currentCursor = objects[objects.size() - 1].key;
+        }
+    }
+    if (objects.size())
+        return {objects, currentCursor};
+
+    return {{}, {}};
+}
+
+struct ReadDiffCallbackData
+{
+    CassandraBackend const& backend;
+    uint32_t sequence;
+    std::vector<LedgerObject>& result;
+    std::condition_variable& cv;
+
+    std::atomic_uint32_t& numFinished;
+    size_t batchSize;
+
+    ReadDiffCallbackData(
+        CassandraBackend const& backend,
+        uint32_t sequence,
+        std::vector<LedgerObject>& result,
+        std::condition_variable& cv,
+        std::atomic_uint32_t& numFinished,
+        size_t batchSize)
+        : backend(backend)
+        , sequence(sequence)
+        , result(result)
+        , cv(cv)
+        , numFinished(numFinished)
+        , batchSize(batchSize)
+    {
+    }
+};
+
+void
+flatMapReadDiffCallback(CassFuture* fut, void* cbData);
+void
+readDiff(ReadDiffCallbackData& data)
+{
+    CassandraStatement statement{
+        data.backend.getSelectLedgerDiffPreparedStatement()};
+    statement.bindInt(data.sequence);
+
+    data.backend.executeAsyncRead(statement, flatMapReadDiffCallback, data);
+}
+// Process the result of an asynchronous read. Retry on error
+// @param fut cassandra future associated with the read
+// @param cbData struct that holds the request parameters
+void
+flatMapReadDiffCallback(CassFuture* fut, void* cbData)
+{
+    ReadDiffCallbackData& requestParams =
+        *static_cast<ReadDiffCallbackData*>(cbData);
+    auto func = [](auto& params) { readDiff(params); };
+    CassandraAsyncResult asyncResult{requestParams, fut, func, true};
+    CassandraResult& result = asyncResult.getResult();
+
+    if (!!result)
+    {
+        do
+        {
+            requestParams.result.push_back(
+                {result.getUInt256(), result.getBytes()});
+        } while (result.nextRow());
+    }
+}
+std::map<uint32_t, std::vector<LedgerObject>>
+CassandraBackend::fetchLedgerDiffs(std::vector<uint32_t> const& sequences) const
+{
+    std::atomic_uint32_t numFinished = 0;
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::map<uint32_t, std::vector<LedgerObject>> results;
+    std::vector<std::shared_ptr<ReadDiffCallbackData>> cbs;
+    cbs.reserve(sequences.size());
+    for (std::size_t i = 0; i < sequences.size(); ++i)
+    {
+        cbs.push_back(std::make_shared<ReadDiffCallbackData>(
+            *this,
+            sequences[i],
+            results[sequences[i]],
+            cv,
+            numFinished,
+            sequences.size()));
+        readDiff(*cbs[i]);
+    }
+    assert(results.size() == cbs.size());
+
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&numFinished, &sequences]() {
+        return numFinished == sequences.size();
+    });
+
+    return results;
+}
+
+std::vector<LedgerObject>
+CassandraBackend::fetchLedgerDiff(uint32_t ledgerSequence) const
+{
+    CassandraStatement statement{selectLedgerDiff_};
+    statement.bindInt(ledgerSequence);
+
+    auto start = std::chrono::system_clock::now();
+    CassandraResult result = executeSyncRead(statement);
+
+    auto mid = std::chrono::system_clock::now();
+    if (!result)
+        return {};
+    std::vector<LedgerObject> objects;
+    do
+    {
+        objects.push_back({result.getUInt256(), result.getBytes()});
+    } while (result.nextRow());
+    auto end = std::chrono::system_clock::now();
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " Fetched diff. Fetch time = "
+        << std::to_string((mid - start).count() / 1000000000.0)
+        << " . total time = "
+        << std::to_string((end - start).count() / 1000000000.0);
+    return objects;
+}
+LedgerPage
+CassandraBackend::fetchLedgerPage(
+    std::optional<ripple::uint256> const& cursor,
+    std::uint32_t ledgerSequence,
+    std::uint32_t limit) const
+{
+    auto index = getIndexOfSeq(ledgerSequence);
+    if (!index)
+        return {};
+    LedgerPage page;
+    if (cursor)
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " - Cursor = " << ripple::strHex(*cursor);
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " ledgerSequence = " << std::to_string(ledgerSequence)
+        << " index = " << std::to_string(*index);
+    CassandraStatement statement{selectKeys_};
+    statement.bindInt(*index);
+    if (cursor)
+        statement.bindBytes(*cursor);
+    else
+    {
+        ripple::uint256 zero;
+        statement.bindBytes(zero);
+    }
+    statement.bindUInt(limit);
+    CassandraResult result = executeSyncRead(statement);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Got keys";
+    if (!!result)
+    {
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " - got keys - size = " << result.numRows();
+        std::vector<ripple::uint256> keys;
+
+        do
+        {
+            keys.push_back(result.getUInt256());
+        } while (result.nextRow());
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " Using base ledger. Read keys";
+        auto objects = fetchLedgerObjects(keys, ledgerSequence);
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " Using base ledger. Got objects";
+        if (objects.size() != keys.size())
+            throw std::runtime_error("Mismatch in size of objects and keys");
+        if (keys.size() == limit)
+            page.cursor = keys[keys.size() - 1];
+
+        if (cursor)
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " Cursor = " << ripple::strHex(*page.cursor);
+
+        for (size_t i = 0; i < objects.size(); ++i)
+        {
+            auto& obj = objects[i];
+            auto& key = keys[i];
+            if (obj.size())
+            {
+                page.objects.push_back({std::move(key), std::move(obj)});
+            }
+        }
+        return page;
+    }
+    return {{}, {}};
+}
+std::vector<Blob>
+CassandraBackend::fetchLedgerObjects(
+    std::vector<ripple::uint256> const& keys,
+    uint32_t sequence) const
+{
+    std::size_t const numKeys = keys.size();
+    BOOST_LOG_TRIVIAL(trace)
+        << "Fetching " << numKeys << " records from Cassandra";
+    std::atomic_uint32_t numFinished = 0;
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::vector<Blob> results{numKeys};
+    std::vector<std::shared_ptr<ReadObjectCallbackData>> cbs;
+    cbs.reserve(numKeys);
+    for (std::size_t i = 0; i < keys.size(); ++i)
+    {
+        cbs.push_back(std::make_shared<ReadObjectCallbackData>(
+            *this, keys[i], sequence, results[i], cv, numFinished, numKeys));
+        readObject(*cbs[i]);
+    }
+    assert(results.size() == cbs.size());
+
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&numFinished, &numKeys]() { return numFinished == numKeys; });
+    for (auto const& res : results)
+    {
+        if (res.size() == 1 && res[0] == 0)
+            throw DatabaseTimeout();
+    }
+
+    BOOST_LOG_TRIVIAL(trace)
+        << "Fetched " << numKeys << " records from Cassandra";
+    return results;
+}
+std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+CassandraBackend::fetchBookOffers(
+    ripple::uint256 const& book,
+    uint32_t sequence,
+    std::uint32_t limit,
+    std::optional<ripple::uint256> const& cursor) const
+{
+    CassandraStatement statement{selectBook_};
+    statement.bindBytes(book);
+    auto index = getIndexOfSeq(sequence);
+    if (!index)
+        return {};
+    BOOST_LOG_TRIVIAL(info) << __func__ << " index = " << std::to_string(*index)
+                            << " book = " << ripple::strHex(book);
+    statement.bindInt(*index);
+    if (cursor)
+        statement.bindBytes(*cursor);
+    else
+    {
+        ripple::uint256 zero = {};
+        statement.bindBytes(zero);
+    }
+    statement.bindUInt(limit);
+    CassandraResult result = executeSyncRead(statement);
+
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
+    std::vector<ripple::uint256> keys;
+    if (!result)
+        return {{}, {}};
+    do
+    {
+        keys.push_back(result.getUInt256());
+    } while (result.nextRow());
+
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " - populated keys. num keys = " << keys.size();
+    if (keys.size())
+    {
+        std::vector<LedgerObject> results;
+        std::vector<Blob> objs = fetchLedgerObjects(keys, sequence);
+        for (size_t i = 0; i < objs.size(); ++i)
+        {
+            if (objs[i].size() != 0)
+                results.push_back({keys[i], objs[i]});
+        }
+        if (keys.size())
+            return {results, keys[keys.size() - 1]};
+        return {{}, {}};
+    }
+
+    return {{}, {}};
+}
+struct WriteBookCallbackData
+{
+    CassandraBackend const& backend;
+    ripple::uint256 book;
+    ripple::uint256 offerKey;
+    uint32_t ledgerSequence;
+    std::condition_variable& cv;
+    std::atomic_uint32_t& numRemaining;
+    std::mutex& mtx;
+    uint32_t currentRetries = 0;
+    WriteBookCallbackData(
+        CassandraBackend const& backend,
+        ripple::uint256 const& book,
+        ripple::uint256 const& offerKey,
+        uint32_t ledgerSequence,
+        std::condition_variable& cv,
+        std::mutex& mtx,
+        std::atomic_uint32_t& numRemaining)
+        : backend(backend)
+        , book(book)
+        , offerKey(offerKey)
+        , ledgerSequence(ledgerSequence)
+        , cv(cv)
+        , mtx(mtx)
+        , numRemaining(numRemaining)
+
+    {
+    }
+};
+void
+writeBookCallback(CassFuture* fut, void* cbData);
+void
+writeBook2(WriteBookCallbackData& cb)
+{
+    CassandraStatement statement{cb.backend.getInsertBookPreparedStatement()};
+    statement.bindBytes(cb.book);
+    statement.bindInt(cb.ledgerSequence);
+    statement.bindBytes(cb.offerKey);
+    // Passing isRetry as true bypasses incrementing numOutstanding
+    cb.backend.executeAsyncWrite(statement, writeBookCallback, cb, true);
+}
+void
+writeBookCallback(CassFuture* fut, void* cbData)
+{
+    WriteBookCallbackData& requestParams =
+        *static_cast<WriteBookCallbackData*>(cbData);
+
+    CassandraBackend const& backend = requestParams.backend;
+    auto rc = cass_future_error_code(fut);
+    if (rc != CASS_OK)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert key error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying ";
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
+        auto wait = std::chrono::milliseconds(
+            lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        ++requestParams.currentRetries;
+        std::shared_ptr<boost::asio::steady_timer> timer =
+            std::make_shared<boost::asio::steady_timer>(
+                backend.getIOContext(),
+                std::chrono::steady_clock::now() + wait);
+        timer->async_wait(
+            [timer, &requestParams](const boost::system::error_code& error) {
+                writeBook2(requestParams);
+            });
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Finished a write request";
+        {
+            std::lock_guard lck(requestParams.mtx);
+            --requestParams.numRemaining;
+            requestParams.cv.notify_one();
+        }
+    }
+}
+
+struct WriteKeyCallbackData
+{
+    CassandraBackend const& backend;
+    ripple::uint256 key;
+    uint32_t ledgerSequence;
+    std::condition_variable& cv;
+    std::atomic_uint32_t& numRemaining;
+    std::mutex& mtx;
+    uint32_t currentRetries = 0;
+    WriteKeyCallbackData(
+        CassandraBackend const& backend,
+        ripple::uint256 const& key,
+        uint32_t ledgerSequence,
+        std::condition_variable& cv,
+        std::mutex& mtx,
+        std::atomic_uint32_t& numRemaining)
+        : backend(backend)
+        , key(key)
+        , ledgerSequence(ledgerSequence)
+        , cv(cv)
+        , mtx(mtx)
+        , numRemaining(numRemaining)
+
+    {
+    }
+};
+void
+writeKeyCallback(CassFuture* fut, void* cbData);
+void
+writeKey(WriteKeyCallbackData& cb)
+{
+    CassandraStatement statement{cb.backend.getInsertKeyPreparedStatement()};
+    statement.bindInt(cb.ledgerSequence);
+    statement.bindBytes(cb.key);
+    // Passing isRetry as true bypasses incrementing numOutstanding
+    cb.backend.executeAsyncWrite(statement, writeKeyCallback, cb, true);
+}
+void
+writeKeyCallback(CassFuture* fut, void* cbData)
+{
+    WriteKeyCallbackData& requestParams =
+        *static_cast<WriteKeyCallbackData*>(cbData);
+
+    CassandraBackend const& backend = requestParams.backend;
+    auto rc = cass_future_error_code(fut);
+    if (rc != CASS_OK)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert key error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying ";
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
+        auto wait = std::chrono::milliseconds(
+            lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        ++requestParams.currentRetries;
+        std::shared_ptr<boost::asio::steady_timer> timer =
+            std::make_shared<boost::asio::steady_timer>(
+                backend.getIOContext(),
+                std::chrono::steady_clock::now() + wait);
+        timer->async_wait(
+            [timer, &requestParams](const boost::system::error_code& error) {
+                writeKey(requestParams);
+            });
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Finished a write request";
+        {
+            std::lock_guard lck(requestParams.mtx);
+            --requestParams.numRemaining;
+            requestParams.cv.notify_one();
+        }
+    }
+}
+
+bool
+CassandraBackend::writeKeys(
+    std::unordered_set<ripple::uint256> const& keys,
+    uint32_t ledgerSequence) const
+{
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " Ledger = " << std::to_string(ledgerSequence)
+        << " . num keys = " << std::to_string(keys.size());
+    std::atomic_uint32_t numRemaining = keys.size();
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
+    cbs.reserve(keys.size());
+    uint32_t concurrentLimit = maxRequestsOutstanding;
+    uint32_t numSubmitted = 0;
+    for (auto& key : keys)
+    {
+        cbs.push_back(std::make_shared<WriteKeyCallbackData>(
+            *this, key, ledgerSequence, cv, mtx, numRemaining));
+        writeKey(*cbs.back());
+        ++numSubmitted;
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
+        std::unique_lock<std::mutex> lck(mtx);
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
+        cv.wait(lck, [&numRemaining, numSubmitted, concurrentLimit, &keys]() {
+            BOOST_LOG_TRIVIAL(trace) << std::to_string(numSubmitted) << " "
+                                     << std::to_string(numRemaining) << " "
+                                     << std::to_string(keys.size()) << " "
+                                     << std::to_string(concurrentLimit);
+            // keys.size() - i is number submitted. keys.size() -
+            // numRemaining is number completed Difference is num
+            // outstanding
+            return (numSubmitted - (keys.size() - numRemaining)) <
+                concurrentLimit;
+        });
+        if (numSubmitted % 100000 == 0)
+            BOOST_LOG_TRIVIAL(info)
+                << __func__ << " Submitted " << std::to_string(numSubmitted)
+                << " write requests. Completed "
+                << (keys.size() - numRemaining);
+    }
+
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
+    return true;
+}
+
+bool
+CassandraBackend::writeBooks(
+    std::unordered_map<
+        ripple::uint256,
+        std::unordered_set<ripple::uint256>> const& books,
+    uint32_t ledgerSequence) const
+{
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " Ledger = " << std::to_string(ledgerSequence)
+        << " . num books = " << std::to_string(books.size());
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::vector<std::shared_ptr<WriteBookCallbackData>> cbs;
+    uint32_t concurrentLimit = maxRequestsOutstanding / 2;
+    std::atomic_uint32_t numOutstanding = 0;
+    size_t count = 0;
+    auto start = std::chrono::system_clock::now();
+    for (auto& book : books)
+    {
+        for (auto& offer : book.second)
+        {
+            ++numOutstanding;
+            ++count;
+            cbs.push_back(std::make_shared<WriteBookCallbackData>(
+                *this,
+                book.first,
+                offer,
+                ledgerSequence,
+                cv,
+                mtx,
+                numOutstanding));
+            writeBook2(*cbs.back());
+            BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
+            std::unique_lock<std::mutex> lck(mtx);
+            BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
+            cv.wait(lck, [&numOutstanding, concurrentLimit]() {
+                return numOutstanding < concurrentLimit;
+            });
+        }
+    }
+    BOOST_LOG_TRIVIAL(info) << __func__
+                            << "Submitted all book writes. Waiting for them to "
+                               "finish. num submitted = "
+                            << std::to_string(count);
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });
+    BOOST_LOG_TRIVIAL(info) << __func__ << "Finished writing books";
+    return true;
+}
+bool
+CassandraBackend::isIndexed(uint32_t ledgerSequence) const
+{
+    return false;
+    /*
+    auto rng = fetchLedgerRange();
+    if (!rng)
+        return false;
+    if (ledgerSequence != rng->minSequence &&
+        ledgerSequence != (ledgerSequence >> indexerShift_ << indexerShift_))
+        ledgerSequence = ((ledgerSequence >> indexerShift_) << indexerShift_) +
+            (1 << indexerShift_);
+    CassandraStatement statement{selectKeys_};
+    statement.bindInt(ledgerSequence);
+    ripple::uint256 zero;
+    statement.bindBytes(zero);
+    statement.bindUInt(1);
+    CassandraResult result = executeSyncRead(statement);
+    return !!result;
+    */
+}
+
+std::optional<uint32_t>
+CassandraBackend::getNextToIndex() const
+{
+    return {};
+    /*
+    auto rng = fetchLedgerRange();
+    if (!rng)
+        return {};
+    uint32_t cur = rng->minSequence;
+    while (isIndexed(cur))
+    {
+        cur = ((cur >> indexerShift_) << indexerShift_) + (1 << indexerShift_);
+    }
+    return cur;
+    */
+}
+
+bool
+CassandraBackend::runIndexer(uint32_t ledgerSequence) const
+{
+    return false;
+    /*
+    auto start = std::chrono::system_clock::now();
+    constexpr uint32_t limit = 2048;
+    std::unordered_set<ripple::uint256> keys;
+    std::unordered_map<ripple::uint256, ripple::uint256> offers;
+    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
+        books;
+    std::optional<ripple::uint256> cursor;
+    size_t numOffers = 0;
+    uint32_t base = ledgerSequence;
+    auto rng = fetchLedgerRange();
+    if (base != rng->minSequence)
+    {
+        base = (base >> indexerShift_) << indexerShift_;
+        base -= (1 << indexerShift_);
+        if (base < rng->minSequence)
+            base = rng->minSequence;
+    }
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " base = " << std::to_string(base)
+        << " next to index = " << std::to_string(ledgerSequence);
+    while (true)
+    {
+        try
+        {
+            auto [objects, curCursor] = fetchLedgerPage(cursor, base, limit);
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+            cursor = curCursor;
+            for (auto& obj : objects)
+            {
+                if (isOffer(obj.blob))
+                {
+                    auto bookDir = getBook(obj.blob);
+                    books[bookDir].insert(obj.key);
+                    offers[obj.key] = bookDir;
+                    ++numOffers;
+                }
+                keys.insert(std::move(obj.key));
+                if (keys.size() % 100000 == 0)
+                    BOOST_LOG_TRIVIAL(info)
+                        << __func__ << " Fetched "
+                        << std::to_string(keys.size()) << "keys";
+            }
+            if (!cursor)
+                break;
+        }
+        catch (DatabaseTimeout const& e)
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Database timeout fetching keys";
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }
+    auto mid = std::chrono::system_clock::now();
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << "Fetched all keys from ledger " << std::to_string(base)
+        << " . num keys = " << keys.size() << " num books = " << books.size()
+        << " num offers = " << numOffers << " . Took "
+        << (mid - start).count() / 1000000000.0;
+    if (base == ledgerSequence)
+    {
+        BOOST_LOG_TRIVIAL(info) << __func__ << "Writing keys";
+        writeKeys(keys, ledgerSequence);
+        writeBooks(books, ledgerSequence, numOffers);
+        auto end = std::chrono::system_clock::now();
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << "Wrote all keys from ledger "
+            << std::to_string(ledgerSequence) << " . num keys = " << keys.size()
+            << " . Took " << (end - mid).count() / 1000000000.0
+            << ". Entire operation took "
+            << (end - start).count() / 1000000000.0;
+    }
+    else
+    {
+        writeBooks(books, base, numOffers);
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << "Wrote books. Skipping writing keys";
+    }
+
+    uint32_t prevLedgerSequence = base;
+    uint32_t nextLedgerSequence =
+        ((prevLedgerSequence >> indexerShift_) << indexerShift_);
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " next base = " << std::to_string(nextLedgerSequence);
+    nextLedgerSequence += (1 << indexerShift_);
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " next = " << std::to_string(nextLedgerSequence);
+    while (true)
+    {
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " Processing diffs. nextLedger = "
+            << std::to_string(nextLedgerSequence);
+        auto rng = fetchLedgerRange();
+        if (rng->maxSequence < nextLedgerSequence)
+            break;
+        start = std::chrono::system_clock::now();
+        for (size_t i = prevLedgerSequence; i <= nextLedgerSequence; i += 256)
+        {
+            auto start2 = std::chrono::system_clock::now();
+            std::unordered_map<
+                ripple::uint256,
+                std::unordered_set<ripple::uint256>>
+                booksDeleted;
+            size_t numOffersDeleted = 0;
+            // Get the diff and update keys
+            std::vector<LedgerObject> objs;
+            std::vector<uint32_t> sequences(256, 0);
+            std::iota(sequences.begin(), sequences.end(), i + 1);
+
+            auto diffs = fetchLedgerDiffs(sequences);
+            for (auto const& diff : diffs)
+            {
+                for (auto const& obj : diff.second)
+                {
+                    // remove deleted keys
+                    if (obj.blob.size() == 0)
+                    {
+                        keys.erase(obj.key);
+                        if (offers.count(obj.key) > 0)
+                        {
+                            auto book = offers[obj.key];
+                            if (booksDeleted[book].insert(obj.key).second)
+                                ++numOffersDeleted;
+                            offers.erase(obj.key);
+                        }
+                    }
+                    else
+                    {
+                        // insert other keys. keys is a set, so this is a
+                        // noop if obj.key is already in keys
+                        keys.insert(obj.key);
+                        // if the object is an offer, add to books
+                        if (isOffer(obj.blob))
+                        {
+                            auto book = getBook(obj.blob);
+                            if (books[book].insert(obj.key).second)
+                                ++numOffers;
+                            offers[obj.key] = book;
+                        }
+                    }
+                }
+            }
+            if (sequences.back() % 256 != 0)
+            {
+                BOOST_LOG_TRIVIAL(error)
+                    << __func__
+                    << " back : " << std::to_string(sequences.back())
+                    << " front : " << std::to_string(sequences.front())
+                    << " size : " << std::to_string(sequences.size());
+                throw std::runtime_error(
+                    "Last sequence is not divisible by 256");
+            }
+
+            for (auto& book : booksDeleted)
+            {
+                for (auto& offerKey : book.second)
+                {
+                    if (books[book.first].erase(offerKey))
+                        --numOffers;
+                }
+            }
+            writeBooks(books, sequences.back(), numOffers);
+            writeBooks(booksDeleted, sequences.back(), numOffersDeleted);
+            auto mid = std::chrono::system_clock::now();
+            BOOST_LOG_TRIVIAL(info) << __func__ << " Fetched 256 diffs. Took "
+                                    << (mid - start2).count() / 1000000000.0;
+        }
+        auto end = std::chrono::system_clock::now();
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << "Fetched all from diffs "
+            << std::to_string(nextLedgerSequence)
+            << " shift width = " << std::to_string(indexerShift_)
+            << ". num keys = " << keys.size() << " . Took "
+            << (end - start).count() / 1000000000.0
+            << " prev ledger = " << std::to_string(prevLedgerSequence);
+        writeKeys(keys, nextLedgerSequence);
+        prevLedgerSequence = nextLedgerSequence;
+        nextLedgerSequence = prevLedgerSequence + (1 << indexerShift_);
+    }
+    return true;
+*/
+}
 bool
 CassandraBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
 {
@@ -273,7 +1098,7 @@ CassandraBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
 }
 
 void
-CassandraBackend::open()
+CassandraBackend::open(bool readOnly)
 {
     std::cout << config_ << std::endl;
     auto getString = [this](std::string const& field) -> std::string {
@@ -369,13 +1194,15 @@ CassandraBackend::open()
         cass_cluster_set_credentials(
             cluster, username.c_str(), getString("password").c_str());
     }
+    int threads = config_.contains("threads")
+        ? config_["threads"].as_int64()
+        : std::thread::hardware_concurrency();
 
-    unsigned int const workers = std::thread::hardware_concurrency();
-    rc = cass_cluster_set_num_threads_io(cluster, workers);
+    rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
-        ss << "nodestore: Error setting Cassandra io threads to " << workers
+        ss << "nodestore: Error setting Cassandra io threads to " << threads
            << ", result: " << rc << ", " << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
@@ -442,8 +1269,7 @@ CassandraBackend::open()
     std::string tablePrefix = getString("table_prefix");
     if (tablePrefix.empty())
     {
-        throw std::runtime_error(
-            "nodestore: Missing table name in Cassandra config");
+        BOOST_LOG_TRIVIAL(warning) << "Table prefix is empty";
     }
 
     cass_cluster_set_connect_timeout(cluster, 10000);
@@ -539,9 +1365,8 @@ CassandraBackend::open()
 
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
-              << " ( key blob, created bigint, deleted bigint, PRIMARY KEY "
-                 "(key, created)) with clustering order by (created "
-                 "desc) ";
+              << " ( sequence bigint, key blob, PRIMARY KEY "
+                 "(sequence, key))";
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -559,6 +1384,18 @@ CassandraBackend::open()
             continue;
         query.str("");
         query << "SELECT * FROM " << tablePrefix << "books"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books2"
+              << " ( book blob, sequence bigint, key blob, PRIMARY KEY "
+                 "((book, sequence), key)) WITH CLUSTERING ORDER BY (key "
+                 "ASC)";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "books2"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -638,7 +1475,7 @@ CassandraBackend::open()
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "keys"
-              << " (key, created, deleted) VALUES (?, ?, ?)";
+              << " (sequence, key) VALUES (?, ?)";
         if (!insertKey_.prepareStatement(query, session_.get()))
             continue;
 
@@ -647,6 +1484,13 @@ CassandraBackend::open()
               << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
         if (!insertBook_.prepareStatement(query, session_.get()))
             continue;
+
+        query.str("");
+        query << "INSERT INTO " << tablePrefix << "books2"
+              << " (book, sequence, key) VALUES (?, ?, ?)";
+        if (!insertBook2_.prepareStatement(query, session_.get()))
+            continue;
+
         query.str("");
         query << "INSERT INTO " << tablePrefix << "books"
               << " (book, key, deleted_at) VALUES (?, ?, ?)";
@@ -654,9 +1498,9 @@ CassandraBackend::open()
             continue;
 
         query.str("");
-        query << "SELECT created FROM " << tablePrefix << "keys"
-              << " WHERE key = ? ORDER BY created desc LIMIT 1";
-        if (!getCreated_.prepareStatement(query, session_.get()))
+        query << "SELECT key FROM " << tablePrefix << "keys"
+              << " WHERE sequence = ? AND key > ? ORDER BY key ASC LIMIT ?";
+        if (!selectKeys_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");
@@ -689,9 +1533,8 @@ CassandraBackend::open()
             continue;
 
         query.str("");
-        query << "SELECT key FROM " << tablePrefix << "keys "
-              << " WHERE TOKEN(key) >= ? and created <= ?"
-              << " and deleted > ?"
+        query << "SELECT key FROM " << tablePrefix << "objects "
+              << " WHERE TOKEN(key) >= ? and sequence <= ? "
               << " PER PARTITION LIMIT 1 LIMIT ?"
               << " ALLOW FILTERING";
         if (!selectLedgerPageKeys_.prepareStatement(query, session_.get()))
@@ -729,6 +1572,13 @@ CassandraBackend::open()
                  " ORDER BY key ASC LIMIT ? ALLOW FILTERING";
         if (!getBook_.prepareStatement(query, session_.get()))
             continue;
+        query.str("");
+        query << "SELECT key FROM " << tablePrefix << "books2 "
+              << " WHERE book = ? AND sequence = ? AND "
+                 " key > ? "
+                 " ORDER BY key ASC LIMIT ?";
+        if (!selectBook_.prepareStatement(query, session_.get()))
+            continue;
 
         query.str("");
         query << " INSERT INTO " << tablePrefix << "account_tx"
@@ -758,7 +1608,8 @@ CassandraBackend::open()
 
         query.str("");
         query << " update " << tablePrefix << "ledger_range"
-              << " set sequence = ? where is_latest = ? if sequence != ?";
+              << " set sequence = ? where is_latest = ? if sequence in "
+                 "(?,null)";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
 
@@ -780,10 +1631,16 @@ CassandraBackend::open()
               << " is_latest IN (true, false)";
         if (!selectLedgerRange_.prepareStatement(query, session_.get()))
             continue;
+        query.str("");
+        query << " SELECT key,object FROM " << tablePrefix
+              << "objects WHERE sequence = ?";
+        if (!selectLedgerDiff_.prepareStatement(query, session_.get()))
+            continue;
 
         setupPreparedStatements = true;
     }
 
+    /*
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -820,15 +1677,39 @@ CassandraBackend::open()
         }
         break;
     }
+    */
 
     if (config_.contains("max_requests_outstanding"))
     {
         maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
     }
+    /*
+    if (config_.contains("run_indexer"))
+    {
+        if (config_["run_indexer"].as_bool())
+        {
+            if (config_.contains("indexer_shift"))
+            {
+                indexerShift_ = config_["indexer_shift"].as_int64();
+            }
+            indexer_ = std::thread{[this]() {
+                auto seq = getNextToIndex();
+                if (seq)
+                {
+                    BOOST_LOG_TRIVIAL(info)
+                        << "Running indexer. Ledger = " << std::to_string(*seq);
+                    runIndexer(*seq);
+                    BOOST_LOG_TRIVIAL(info) << "Ran indexer";
+                }
+            }};
+        }
+    }
+    */
+
     work_.emplace(ioContext_);
     ioThread_ = std::thread{[this]() { ioContext_.run(); }};
     open_ = true;
 
     BOOST_LOG_TRIVIAL(info) << "Opened database successfully";
-}
+}  // namespace Backend
 }  // namespace Backend

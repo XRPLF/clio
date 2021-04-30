@@ -73,8 +73,12 @@ doAccountInfo(
 
     if (!accountID)
     {
-        response["error"] = "couldnt decode account";
-        return response;
+        accountID = ripple::AccountID();
+        if (!accountID->parseHex(request.at("account").as_string().c_str()))
+        {
+            response["error"] = "account malformed";
+            return response;
+        }
     }
     auto key = ripple::keylet::account(accountID.value());
 

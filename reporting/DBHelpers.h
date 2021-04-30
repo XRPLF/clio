@@ -46,8 +46,9 @@ struct AccountTransactionsData
     }
 };
 
+template <class T>
 inline bool
-isOffer(std::string const& object)
+isOffer(T const& object)
 {
     short offer_bytes = (object[1] << 8) | object[2];
     return offer_bytes == 0x006f;

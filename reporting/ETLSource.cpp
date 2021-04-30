@@ -622,7 +622,7 @@ ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects)
             auto [status, data] =
                 source->fetchLedger(ledgerSequence, getObjects);
             response = std::move(data);
-            if (status.ok() && response.validated())
+            if (status.ok() && (response.validated()|| true))
             {
                 BOOST_LOG_TRIVIAL(info)
                     << "Successfully fetched ledger = " << ledgerSequence
@@ -819,7 +819,7 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
             << __func__ << " : "
             << "Attempting to execute func. ledger sequence = "
             << ledgerSequence << " - source = " << source->toString();
-        if (source->hasLedger(ledgerSequence))
+        if (source->hasLedger(ledgerSequence)|| true)
         {
             bool res = f(source);
             if (res)
