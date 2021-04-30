@@ -41,12 +41,52 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
     return result;
 }
 
+
+std::pair<
+    std::shared_ptr<ripple::STTx const>,
+    std::shared_ptr<ripple::TxMeta const>>
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
+{
+    std::pair<
+        std::shared_ptr<ripple::STTx const>,
+        std::shared_ptr<ripple::TxMeta const>>
+        result;
+    {
+        ripple::SerialIter s{
+            blobs.transaction.data(), blobs.transaction.size()};
+        result.first = std::make_shared<ripple::STTx const>(s);
+    }
+    {
+        // ripple::Blob{blobs.metadata.data(), blobs.metadata.size()};
+
+        result.second =
+            std::make_shared<ripple::TxMeta const>(
+                result.first->getTransactionID(),
+                seq,
+                blobs.metadata);
+    }
+    return result;
+}
+
 boost::json::object
 getJson(ripple::STBase const& obj)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
         obj.getJson(ripple::JsonOptions::none).toStyledString());
+    auto end = std::chrono::system_clock::now();
+    value.as_object()["deserialization_time_microseconds"] =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+    return value.as_object();
+}
+
+boost::json::object
+getJson(ripple::TxMeta const& meta)
+{
+    auto start = std::chrono::system_clock::now();
+    boost::json::value value = boost::json::parse(
+        meta.getJson(ripple::JsonOptions::none).toStyledString());
     auto end = std::chrono::system_clock::now();
     value.as_object()["deserialization_time_microseconds"] =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)

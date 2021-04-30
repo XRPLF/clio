@@ -38,9 +38,11 @@ class SubscriptionManager
         finalEntry
     };
 
-    std::array<subscriptions, finalEntry> subscribers_;
+    std::array<subscriptions, finalEntry> streamSubscribers_;
+    std::unordered_map<ripple::AccountID, subscriptions> accountSubscribers_;
 
 public:
+
     void
     subLedger(std::shared_ptr<session>& session);
 
@@ -61,8 +63,13 @@ public:
     unsubTransactions(std::shared_ptr<session>& session);
 
     void
-    pubTransaction(Backend::TransactionAndMetadata const& blob);
+    pubTransaction(Backend::TransactionAndMetadata const& blob, std::uint32_t seq);
 
+    void
+    subAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+
+    void
+    unsubAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
 };
 
 #endif //SUBSCRIPTION_MANAGER_H

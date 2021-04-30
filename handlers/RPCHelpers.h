@@ -14,11 +14,19 @@ std::pair<
     std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs);
 
+std::pair<
+    std::shared_ptr<ripple::STTx const>,
+    std::shared_ptr<ripple::TxMeta const>>
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq);
+
 boost::json::object
 getJson(ripple::STBase const& obj);
 
 boost::json::object
 getJson(ripple::SLE const& sle);
+
+boost::json::object
+getJson(ripple::TxMeta const& meta);
 
 boost::json::value
 getJson(Json::Value const& value);
