@@ -530,6 +530,8 @@ CassandraBackend::fetchLedgerPage(
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
+        if (keys.size() && keys[0].isZero())
+            page.warning = "Data may be incomplete";
         return page;
     }
     return {{}, {}};
@@ -568,7 +570,7 @@ CassandraBackend::fetchLedgerObjects(
         << "Fetched " << numKeys << " records from Cassandra";
     return results;
 }
-std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+BookOffersPage
 CassandraBackend::fetchBookOffers(
     ripple::uint256 const& book,
     uint32_t sequence,
@@ -613,8 +615,14 @@ CassandraBackend::fetchBookOffers(
             if (objs[i].size() != 0)
                 results.push_back({keys[i], objs[i]});
         }
-        if (keys.size())
-            return {results, keys[keys.size() - 1]};
+        std::optional<std::string> warning;
+        if (keys[0].isZero())
+            warning = "Data may be incomplete";
+        if (keys.size() == limit)
+            return {results, keys[keys.size() - 1], warning};
+        else
+            return {results, {}, warning};
+
         return {{}, {}};
     }
 

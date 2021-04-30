@@ -977,7 +977,7 @@ public:
             ripple::uint256,
             std::unordered_set<ripple::uint256>> const& books,
         uint32_t ledgerSequence) const override;
-    std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+    BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t sequence,

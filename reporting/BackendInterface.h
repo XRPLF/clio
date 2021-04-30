@@ -26,6 +26,13 @@ struct LedgerPage
 {
     std::vector<LedgerObject> objects;
     std::optional<ripple::uint256> cursor;
+    std::optional<std::string> warning;
+};
+struct BookOffersPage
+{
+    std::vector<LedgerObject> offers;
+    std::optional<ripple::uint256> cursor;
+    std::optional<std::string> warning;
 };
 struct TransactionAndMetadata
 {
@@ -74,7 +81,9 @@ public:
     ~BackendIndexer();
 
     void
-    populateCaches(BackendInterface const& backend);
+    populateCaches(
+        BackendInterface const& backend,
+        std::optional<uint32_t> sequence = {});
     void
     clearCaches();
 
@@ -160,7 +169,8 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const = 0;
 
-    virtual std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+    // TODO add warning for incomplete data
+    virtual BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,

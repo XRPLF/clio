@@ -50,7 +50,7 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
 
-    std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+    BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,

@@ -49,7 +49,9 @@ BackendIndexer::clearCaches()
     booksCumulative = {};
 }
 void
-BackendIndexer::populateCaches(BackendInterface const& backend)
+BackendIndexer::populateCaches(
+    BackendInterface const& backend,
+    std::optional<uint32_t> sequence)
 {
     if (keysCumulative.size() > 0)
     {
@@ -57,16 +59,27 @@ BackendIndexer::populateCaches(BackendInterface const& backend)
             << __func__ << " caches already populated. returning";
         return;
     }
-    auto tip = backend.fetchLatestLedgerSequence();
-    if (!tip)
+    if (!sequence)
+        sequence = backend.fetchLatestLedgerSequence();
+    if (!sequence)
         return;
     std::optional<ripple::uint256> cursor;
     while (true)
     {
         try
         {
-            auto [objects, curCursor] =
-                backend.fetchLedgerPage(cursor, *tip, 2048);
+            auto [objects, curCursor, warning] =
+                backend.fetchLedgerPage(cursor, *sequence, 2048);
+            if (warning)
+            {
+                BOOST_LOG_TRIVIAL(warning)
+                    << __func__ << " performing index repair";
+                uint32_t lower = (*sequence - 1) >> shift_ << shift_;
+                populateCaches(backend, lower);
+                writeNext(lower, backend);
+                clearCaches();
+                continue;
+            }
             BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
             cursor = curCursor;
             for (auto& obj : objects)
@@ -106,16 +119,23 @@ BackendIndexer::writeNext(
 
     if (isFlag)
     {
-        uint32_t nextSeq =
-            ((ledgerSequence >> shift_ << shift_) + (1 << shift_));
-        BOOST_LOG_TRIVIAL(info)
-            << __func__ << " actually doing the write. keysCumulative.size() = "
-            << std::to_string(keysCumulative.size());
-        backend.writeKeys(keysCumulative, nextSeq);
-        BOOST_LOG_TRIVIAL(info) << __func__ << " wrote keys";
-
-        backend.writeBooks(booksCumulative, nextSeq);
-        BOOST_LOG_TRIVIAL(info) << __func__ << " wrote books";
+        auto booksCopy = booksCumulative;
+        auto keysCopy = keysCumulative;
+        boost::asio::post(ioc_, [=, &backend]() {
+            uint32_t nextSeq =
+                ((ledgerSequence >> shift_ << shift_) + (1 << shift_));
+            ripple::uint256 zero = {};
+            BOOST_LOG_TRIVIAL(info) << __func__ << " booksCumulative.size() = "
+                                    << std::to_string(booksCumulative.size());
+            backend.writeBooks(booksCopy, nextSeq);
+            backend.writeBooks({{zero, {zero}}}, nextSeq);
+            BOOST_LOG_TRIVIAL(info) << __func__ << " wrote books";
+            BOOST_LOG_TRIVIAL(info) << __func__ << " keysCumulative.size() = "
+                                    << std::to_string(keysCumulative.size());
+            backend.writeKeys(keysCopy, nextSeq);
+            backend.writeKeys({zero}, nextSeq);
+            BOOST_LOG_TRIVIAL(info) << __func__ << " wrote keys";
+        });
     }
 }
 

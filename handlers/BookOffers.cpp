@@ -324,7 +324,7 @@ doBookOffers(
     }
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, retCursor] =
+    auto [offers, retCursor, warning] =
         backend.fetchBookOffers(bookBase, *ledgerSequence, limit, cursor);
     auto end = std::chrono::system_clock::now();
 
@@ -361,6 +361,11 @@ doBookOffers(
                                << ((end - start).count() / 1000000000.0);
     if (retCursor)
         response["cursor"] = ripple::strHex(*retCursor);
+    if (warning)
+        response["warning"] =
+            "Periodic database update in progress. Data for this book as of "
+            "this ledger "
+            "may be incomplete. Data should be complete within one minute";
 
     return response;
 }
