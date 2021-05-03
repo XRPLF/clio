@@ -1185,18 +1185,29 @@ public:
         {
         }
     };
+
     struct WriteAccountTxCallbackData
     {
         CassandraBackend const* backend;
-        AccountTransactionsData data;
+        ripple::AccountID account;
+        uint32_t ledgerSequence;
+        uint32_t transactionIndex;
+        ripple::uint256 txHash;
 
         uint32_t currentRetries = 0;
-        std::atomic<int> refs;
+        std::atomic<int> refs = 1;
 
         WriteAccountTxCallbackData(
             CassandraBackend const* f,
-            AccountTransactionsData&& in)
-            : backend(f), data(std::move(in)), refs(data.accounts.size())
+            ripple::AccountID&& account,
+            uint32_t lgrSeq,
+            uint32_t txIdx,
+            ripple::uint256&& hash)
+            : backend(f)
+            , account(std::move(account))
+            , ledgerSequence(lgrSeq)
+            , transactionIndex(txIdx)
+            , txHash(std::move(hash))
         {
         }
     };
@@ -1291,26 +1302,30 @@ public:
     {
         for (auto& record : data)
         {
-            WriteAccountTxCallbackData* cbData =
-                new WriteAccountTxCallbackData(this, std::move(record));
-            writeAccountTx(*cbData, false);
+            for (auto& account : record.accounts)
+            {
+                WriteAccountTxCallbackData* cbData =
+                    new WriteAccountTxCallbackData(
+                        this,
+                        std::move(account),
+                        record.ledgerSequence,
+                        record.transactionIndex,
+                        std::move(record.txHash));
+                writeAccountTx(*cbData, false);
+            }
         }
     }
 
     void
     writeAccountTx(WriteAccountTxCallbackData& data, bool isRetry) const
     {
-        for (auto const& account : data.data.accounts)
-        {
-            CassandraStatement statement(insertAccountTx_);
-            statement.bindBytes(account);
-            statement.bindIntTuple(
-                data.data.ledgerSequence, data.data.transactionIndex);
-            statement.bindBytes(data.data.txHash);
+        CassandraStatement statement(insertAccountTx_);
+        statement.bindBytes(data.account);
+        statement.bindIntTuple(data.ledgerSequence, data.transactionIndex);
+        statement.bindBytes(data.txHash);
 
-            executeAsyncWrite(
-                statement, flatMapWriteAccountTxCallback, data, isRetry);
-        }
+        executeAsyncWrite(
+            statement, flatMapWriteAccountTxCallback, data, isRetry);
     }
 
     struct WriteTransactionCallbackData

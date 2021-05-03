@@ -24,12 +24,13 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << "ERROR!!! Cassandra insert error: " << rc << ", "
-            << cass_error_desc(rc) << ", retrying ";
         // exponential backoff with a max wait of 2^10 ms (about 1 second)
         auto wait = std::chrono::milliseconds(
             lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra ETL insert error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying in " << wait.count()
+            << " milliseconds";
         ++requestParams.currentRetries;
         std::shared_ptr<boost::asio::steady_timer> timer =
             std::make_shared<boost::asio::steady_timer>(
@@ -42,6 +43,8 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
     }
     else
     {
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " Succesfully inserted a record";
         backend.finishAsyncWrite();
         int remaining = --requestParams.refs;
         if (remaining == 0)
@@ -668,12 +671,13 @@ writeBookCallback(CassFuture* fut, void* cbData)
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << "ERROR!!! Cassandra insert key error: " << rc << ", "
-            << cass_error_desc(rc) << ", retrying ";
         // exponential backoff with a max wait of 2^10 ms (about 1 second)
         auto wait = std::chrono::milliseconds(
             lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert book error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying in " << wait.count()
+            << " milliseconds";
         ++requestParams.currentRetries;
         std::shared_ptr<boost::asio::steady_timer> timer =
             std::make_shared<boost::asio::steady_timer>(
@@ -686,7 +690,7 @@ writeBookCallback(CassFuture* fut, void* cbData)
     }
     else
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__ << "Finished a write request";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << " Successfully inserted a book";
         {
             std::lock_guard lck(requestParams.mtx);
             --requestParams.numRemaining;
@@ -742,12 +746,13 @@ writeKeyCallback(CassFuture* fut, void* cbData)
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << "ERROR!!! Cassandra insert key error: " << rc << ", "
-            << cass_error_desc(rc) << ", retrying ";
-        // exponential backoff with a max wait of 2^10 ms (about 1 second)
         auto wait = std::chrono::milliseconds(
             lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert key error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying in " << wait.count()
+            << " milliseconds";
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
         ++requestParams.currentRetries;
         std::shared_ptr<boost::asio::steady_timer> timer =
             std::make_shared<boost::asio::steady_timer>(
@@ -760,7 +765,7 @@ writeKeyCallback(CassFuture* fut, void* cbData)
     }
     else
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__ << "Finished a write request";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << " Successfully inserted a key";
         {
             std::lock_guard lck(requestParams.mtx);
             --requestParams.numRemaining;
