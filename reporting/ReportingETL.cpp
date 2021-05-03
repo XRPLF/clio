@@ -252,7 +252,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
         }
 
         publishStrand_.post([this, &ledger]() {
-            publishLedger(*ledger);
+            this->publishLedger(*ledger);
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
                 << "Published ledger. " << ledger->seq;
@@ -384,8 +384,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 std::optional<uint32_t>
 ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 {
-    if (startSequence > finishSequence_)
+    if (finishSequence_ && startSequence > *finishSequence_)
         return {};
+    
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
      * to each other via 2 different thread safe queues and 1 atomic variable.
@@ -442,7 +443,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     {
         auto transformQueue = std::make_shared<QueueType>(maxQueueSize);
         queues.push_back(transformQueue);
-        std::cout << "added to queues";
+        std::cout << "added to queues" << std::endl;
 
         threads.emplace_back([this,
                               &startSequence,
@@ -460,7 +461,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // ETL mechanism should stop. The other stopping condition is if
             // the entire server is shutting down. This can be detected in a
             // variety of ways. See the comment at the top of the function
-            while (currentSequence <= finishSequence_ &&
+            while ((!finishSequence_ || currentSequence <= *finishSequence_) &&
                    networkValidatedLedgers_.waitUntilValidatedByNetwork(
                        currentSequence) &&
                    !writeConflict && !isStopping())
@@ -498,7 +499,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 
                 transformQueue->push(std::move(fetchResponse));
                 currentSequence += numExtractors;
-                if (currentSequence > finishSequence_)
+                if (finishSequence_ && currentSequence > *finishSequence_)
                     break;
             }
             // empty optional tells the transformer to shut down
