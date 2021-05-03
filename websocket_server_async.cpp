@@ -224,7 +224,10 @@ public:
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
+		    auto start = std::chrono::system_clock::now();
                 response = buildResponse(request, backend_);
+		auto end = std::chrono::system_clock::now();
+		BOOST_LOG_TRIVIAL(info) << __func__ << " RPC call took " << ((end - start).count() / 1000000000.0) << " . request = " << request;
             }
             catch (Backend::DatabaseTimeout const& t)
             {

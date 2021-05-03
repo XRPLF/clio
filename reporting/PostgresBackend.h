@@ -15,6 +15,8 @@ private:
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
+    mutable boost::asio::thread_pool pool_{200};
+    uint32_t writeInterval_ = 1000000;
 
 public:
     PostgresBackend(boost::json::object const& config);
@@ -99,7 +101,7 @@ public:
         std::vector<AccountTransactionsData>&& data) const override;
 
     void
-    open() override;
+    open(bool readOnly) override;
 
     void
     close() override;

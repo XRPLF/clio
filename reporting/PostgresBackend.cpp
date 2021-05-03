@@ -1,3 +1,4 @@
+#include <boost/asio.hpp>
 #include <boost/format.hpp>
 #include <reporting/PostgresBackend.h>
 namespace Backend {
@@ -7,6 +8,10 @@ PostgresBackend::PostgresBackend(boost::json::object const& config)
     , pgPool_(make_PgPool(config))
     , writeConnection_(pgPool_)
 {
+    if (config.contains("write_interval"))
+    {
+        writeInterval_ = config.at("write_interval").as_int64();
+    }
 }
 void
 PostgresBackend::writeLedger(
@@ -68,17 +73,14 @@ PostgresBackend::doWriteLedgerObject(
     numRowsInObjectsBuffer_++;
     // If the buffer gets too large, the insert fails. Not sure why. So we
     // insert after 1 million records
-    if (numRowsInObjectsBuffer_ % 1000000 == 0)
+    if (numRowsInObjectsBuffer_ % writeInterval_ == 0)
     {
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " Flushing large buffer. num objects = "
+            << numRowsInObjectsBuffer_;
         writeConnection_.bulkInsert("objects", objectsBuffer_.str());
+        BOOST_LOG_TRIVIAL(info) << __func__ << " Flushed large buffer";
         objectsBuffer_.str("");
-    }
-
-    if (book)
-    {
-        booksBuffer_ << "\\\\x" << ripple::strHex(*book) << '\t'
-                     << std::to_string(seq) << '\t' << isDeleted << '\t'
-                     << "\\\\x" << ripple::strHex(key) << '\n';
     }
 }
 
@@ -327,30 +329,40 @@ PostgresBackend::fetchLedgerPage(
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
+    auto index = getIndexOfSeq(ledgerSequence);
+    if (!index)
+        return {};
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
-    sql << "SELECT key,object FROM"
-        << " (SELECT DISTINCT ON (key) * FROM objects"
-        << " WHERE ledger_seq <= " << std::to_string(ledgerSequence);
+    sql << "SELECT key FROM keys WHERE ledger_seq = " << std::to_string(*index);
     if (cursor)
         sql << " AND key < \'\\x" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY key DESC, ledger_seq DESC) sub"
-        << " WHERE object != \'\\x\'"
-        << " LIMIT " << std::to_string(limit);
+    sql << " ORDER BY key DESC LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
     auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 2))
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched keys";
+    std::optional<ripple::uint256> returnCursor;
+    if (size_t numRows = checkResult(res, 1))
     {
-        std::vector<LedgerObject> objects;
+        std::vector<ripple::uint256> keys;
         for (size_t i = 0; i < numRows; ++i)
         {
-            objects.push_back({res.asUInt256(i, 0), res.asUnHexedBlob(i, 1)});
+            keys.push_back({res.asUInt256(i, 0)});
         }
         if (numRows == limit)
-            return {objects, objects[objects.size() - 1].key};
-        else
-            return {objects, {}};
+            returnCursor = keys.back();
+
+        auto objs = fetchLedgerObjects(keys, ledgerSequence);
+        std::vector<LedgerObject> results;
+        for (size_t i = 0; i < objs.size(); ++i)
+        {
+            if (objs[i].size())
+            {
+                results.push_back({keys[i], objs[i]});
+            }
+        }
+        return {results, returnCursor};
     }
     return {};
 }
@@ -364,15 +376,12 @@ PostgresBackend::fetchBookOffers(
 {
     PgQuery pgQuery(pgPool_);
     std::stringstream sql;
-    sql << "SELECT offer_key FROM"
-        << " (SELECT DISTINCT ON (offer_key) * FROM books WHERE book = "
+    sql << "SELECT offer_key FROM books WHERE book = "
         << "\'\\x" << ripple::strHex(book)
-        << "\' AND ledger_seq <= " << std::to_string(ledgerSequence);
+        << "\' AND ledger_seq = " << std::to_string(ledgerSequence);
     if (cursor)
         sql << " AND offer_key < \'\\x" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY offer_key DESC, ledger_seq DESC)"
-        << " sub WHERE NOT deleted"
-        << " ORDER BY offer_key DESC "
+    sql << " ORDER BY offer_key DESC, ledger_seq DESC"
         << " LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << sql.str();
     auto res = pgQuery(sql.str().data());
@@ -412,34 +421,88 @@ std::vector<TransactionAndMetadata>
 PostgresBackend::fetchTransactions(
     std::vector<ripple::uint256> const& hashes) const
 {
-    PgQuery pgQuery(pgPool_);
-    pgQuery("SET statement_timeout TO 10000");
-    std::stringstream sql;
-    sql << "SELECT transaction,metadata,ledger_seq FROM transactions "
-           "WHERE ";
-    bool first = true;
-    for (auto const& hash : hashes)
+    std::vector<TransactionAndMetadata> results;
+    constexpr bool doAsync = true;
+    if (doAsync)
     {
-        if (!first)
-            sql << " OR ";
-        sql << "HASH = \'\\x" << ripple::strHex(hash) << "\'";
-        first = false;
-    }
-    auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 3))
-    {
-        std::vector<TransactionAndMetadata> results;
-        for (size_t i = 0; i < numRows; ++i)
+        auto start = std::chrono::system_clock::now();
+        auto end = std::chrono::system_clock::now();
+        auto duration = ((end - start).count()) / 1000000000.0;
+        results.resize(hashes.size());
+        std::condition_variable cv;
+        std::mutex mtx;
+        std::atomic_uint numRemaining = hashes.size();
+        for (size_t i = 0; i < hashes.size(); ++i)
         {
-            results.push_back(
-                {res.asUnHexedBlob(i, 0),
-                 res.asUnHexedBlob(i, 1),
-                 res.asBigInt(i, 2)});
-        }
-        return results;
-    }
+            auto const& hash = hashes[i];
+            boost::asio::post(
+                pool_, [this, &hash, &results, &numRemaining, &cv, &mtx, i]() {
+                    BOOST_LOG_TRIVIAL(debug)
+                        << __func__ << " getting txn = " << i;
+                    PgQuery pgQuery(pgPool_);
+                    std::stringstream sql;
+                    sql << "SELECT transaction,metadata,ledger_seq FROM "
+                           "transactions "
+                           "WHERE HASH = \'\\x"
+                        << ripple::strHex(hash) << "\'";
 
-    return {};
+                    auto res = pgQuery(sql.str().data());
+                    if (size_t numRows = checkResult(res, 3))
+                    {
+                        results[i] = {
+                            res.asUnHexedBlob(0, 0),
+                            res.asUnHexedBlob(0, 1),
+                            res.asBigInt(0, 2)};
+                    }
+                    if (--numRemaining == 0)
+                    {
+                        std::unique_lock lck(mtx);
+                        cv.notify_one();
+                    }
+                });
+        }
+        std::unique_lock lck(mtx);
+        cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
+        auto end2 = std::chrono::system_clock::now();
+        duration = ((end2 - end).count()) / 1000000000.0;
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " fetched " << std::to_string(hashes.size())
+            << " transactions with threadpool. took "
+            << std::to_string(duration);
+    }
+    else
+    {
+        PgQuery pgQuery(pgPool_);
+        pgQuery("SET statement_timeout TO 10000");
+        std::stringstream sql;
+        for (size_t i = 0; i < hashes.size(); ++i)
+        {
+            auto const& hash = hashes[i];
+            sql << "SELECT transaction,metadata,ledger_seq FROM "
+                   "transactions "
+                   "WHERE HASH = \'\\x"
+                << ripple::strHex(hash) << "\'";
+            if (i + 1 < hashes.size())
+                sql << " UNION ALL ";
+        }
+        auto start = std::chrono::system_clock::now();
+        auto res = pgQuery(sql.str().data());
+        auto end = std::chrono::system_clock::now();
+        auto duration = ((end - start).count()) / 1000000000.0;
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " fetched " << std::to_string(hashes.size())
+            << " transactions with union all. took "
+            << std::to_string(duration);
+        if (size_t numRows = checkResult(res, 3))
+        {
+            for (size_t i = 0; i < numRows; ++i)
+                results.push_back(
+                    {res.asUnHexedBlob(i, 0),
+                     res.asUnHexedBlob(i, 1),
+                     res.asBigInt(i, 2)});
+        }
+    }
+    return results;
 }
 
 std::vector<Blob>
@@ -449,40 +512,47 @@ PostgresBackend::fetchLedgerObjects(
 {
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
-    std::stringstream sql;
-    sql << "SELECT DISTINCT ON(key) object FROM objects WHERE";
-
-    bool first = true;
-    for (auto const& key : keys)
+    std::vector<Blob> results;
+    results.resize(keys.size());
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::atomic_uint numRemaining = keys.size();
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < keys.size(); ++i)
     {
-        if (!first)
-        {
-            sql << " OR ";
-        }
-        else
-        {
-            sql << " ( ";
-            first = false;
-        }
-        sql << " key = "
-            << "\'\\x" << ripple::strHex(key) << "\'";
-    }
-    sql << " ) "
-        << " AND ledger_seq <= " << std::to_string(sequence)
-        << " ORDER BY key DESC, ledger_seq DESC";
+        auto const& key = keys[i];
+        boost::asio::post(
+            pool_,
+            [this, &key, &results, &numRemaining, &cv, &mtx, i, sequence]() {
+                PgQuery pgQuery(pgPool_);
+                std::stringstream sql;
+                sql << "SELECT object FROM "
+                       "objects "
+                       "WHERE key = \'\\x"
+                    << ripple::strHex(key) << "\'"
+                    << " AND ledger_seq <= " << std::to_string(sequence)
+                    << " ORDER BY ledger_seq DESC LIMIT 1";
 
-    BOOST_LOG_TRIVIAL(trace) << sql.str();
-    auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 1))
-    {
-        std::vector<Blob> results;
-        for (size_t i = 0; i < numRows; ++i)
-        {
-            results.push_back(res.asUnHexedBlob(i, 0));
-        }
-        return results;
+                auto res = pgQuery(sql.str().data());
+                if (size_t numRows = checkResult(res, 1))
+                {
+                    results[i] = res.asUnHexedBlob(0, 0);
+                }
+                if (--numRemaining == 0)
+                {
+                    std::unique_lock lck(mtx);
+                    cv.notify_one();
+                }
+            });
     }
-    return {};
+    std::unique_lock lck(mtx);
+    cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
+    auto end = std::chrono::system_clock::now();
+    auto duration = ((end - start).count()) / 1000000000.0;
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " fetched " << std::to_string(keys.size())
+        << " objects with threadpool. took " << std::to_string(duration);
+    return results;
 }
 
 std::pair<
@@ -495,44 +565,77 @@ PostgresBackend::fetchAccountTransactions(
 {
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
-    std::stringstream sql;
-    sql << "SELECT hash, ledger_seq, transaction_index FROM "
-           "account_transactions WHERE account = "
-        << "\'\\x" << ripple::strHex(account) << "\'";
-    if (cursor)
-        sql << " AND (ledger_seq < " << cursor->ledgerSequence
-            << " OR (ledger_seq = " << cursor->ledgerSequence
-            << " AND transaction_index < " << cursor->transactionIndex << "))";
-    sql << " ORDER BY ledger_seq DESC, transaction_index DESC";
-    sql << " LIMIT " << std::to_string(limit);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " : " << sql.str();
-    auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 3))
-    {
-        std::vector<ripple::uint256> hashes;
-        for (size_t i = 0; i < numRows; ++i)
-        {
-            hashes.push_back(res.asUInt256(i, 0));
-        }
+    pg_params dbParams;
 
-        if (numRows == limit)
-        {
-            AccountTransactionsCursor retCursor{
-                res.asBigInt(numRows - 1, 1), res.asBigInt(numRows - 1, 2)};
-            return {fetchTransactions(hashes), {retCursor}};
-        }
-        else
-        {
-            return {fetchTransactions(hashes), {}};
-        }
+    char const*& command = dbParams.first;
+    std::vector<std::optional<std::string>>& values = dbParams.second;
+    command =
+        "SELECT account_tx($1::bytea, $2::bigint, "
+        "$3::bigint, $4::bigint)";
+    values.resize(4);
+    values[0] = "\\x" + strHex(account);
+
+    values[1] = std::to_string(limit);
+
+    if (cursor)
+    {
+        values[2] = std::to_string(cursor->ledgerSequence);
+        values[3] = std::to_string(cursor->transactionIndex);
     }
-    return {};
-}
+    for (size_t i = 0; i < values.size(); ++i)
+    {
+        BOOST_LOG_TRIVIAL(debug) << "value " << std::to_string(i) << " = "
+                                 << (values[i] ? values[i].value() : "null");
+    }
+
+    auto start = std::chrono::system_clock::now();
+    auto res = pgQuery(dbParams);
+    auto end = std::chrono::system_clock::now();
+
+    auto duration = ((end - start).count()) / 1000000000.0;
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " : executed stored_procedure in "
+        << std::to_string(duration)
+        << " num records = " << std::to_string(checkResult(res, 1));
+    checkResult(res, 1);
+
+    char const* resultStr = res.c_str();
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "postgres result = " << resultStr
+                             << " : account = " << strHex(account);
+
+    boost::json::value raw = boost::json::parse(resultStr);
+    boost::json::object responseObj = raw.as_object();
+    BOOST_LOG_TRIVIAL(debug) << " parsed = " << responseObj;
+    if (responseObj.contains("transactions"))
+    {
+        auto txns = responseObj.at("transactions").as_array();
+        std::vector<ripple::uint256> hashes;
+        for (auto& hashHex : txns)
+        {
+            ripple::uint256 hash;
+            if (hash.parseHex(hashHex.at("hash").as_string().c_str() + 2))
+                hashes.push_back(hash);
+        }
+        if (responseObj.contains("cursor"))
+        {
+            return {
+                fetchTransactions(hashes),
+                {{responseObj.at("cursor").at("ledger_sequence").as_int64(),
+                  responseObj.at("cursor")
+                      .at("transaction_index")
+                      .as_int64()}}};
+        }
+        return {fetchTransactions(hashes), {}};
+    }
+    return {{}, {}};
+}  // namespace Backend
 
 void
-PostgresBackend::open()
+PostgresBackend::open(bool readOnly)
 {
-    initSchema(pgPool_);
+    if (!readOnly)
+        initSchema(pgPool_);
 }
 
 void
@@ -560,7 +663,6 @@ PostgresBackend::doFinishWrites() const
     if (!abortWrite_)
     {
         writeConnection_.bulkInsert("transactions", transactionsBuffer_.str());
-        writeConnection_.bulkInsert("books", booksBuffer_.str());
         writeConnection_.bulkInsert(
             "account_transactions", accountTxBuffer_.str());
         std::string objectsStr = objectsBuffer_.str();
@@ -590,7 +692,9 @@ PostgresBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
     uint32_t ledgerSequence) const
 {
+    BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
+    pgQuery("BEGIN");
     std::stringstream keysBuffer;
     size_t numRows = 0;
     for (auto& key : keys)
@@ -603,7 +707,8 @@ PostgresBackend::writeKeys(
         if (numRows == 1000000)
         {
             pgQuery.bulkInsert("keys", keysBuffer.str());
-            keysBuffer.str("");
+            std::stringstream temp;
+            keysBuffer.swap(temp);
             numRows = 0;
         }
     }
@@ -611,6 +716,8 @@ PostgresBackend::writeKeys(
     {
         pgQuery.bulkInsert("keys", keysBuffer.str());
     }
+    pgQuery("COMMIT");
+    return true;
 }
 bool
 PostgresBackend::writeBooks(
@@ -619,15 +726,17 @@ PostgresBackend::writeBooks(
         std::unordered_set<ripple::uint256>> const& books,
     uint32_t ledgerSequence) const
 {
+    BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
+    pgQuery("BEGIN");
     std::stringstream booksBuffer;
     size_t numRows = 0;
     for (auto& book : books)
     {
         for (auto& offer : book.second)
         {
-            booksBuffer << "\\\\x" << ripple::strHex(book.first) << '\t'
-                        << std::to_string(ledgerSequence) << '\t' << "\\\\x"
+            booksBuffer << std::to_string(ledgerSequence) << '\t' << "\\\\x"
+                        << ripple::strHex(book.first) << '\t' << "\\\\x"
                         << ripple::strHex(offer) << '\n';
             numRows++;
             // If the buffer gets too large, the insert fails. Not sure why. So
@@ -635,7 +744,8 @@ PostgresBackend::writeBooks(
             if (numRows == 1000000)
             {
                 pgQuery.bulkInsert("books", booksBuffer.str());
-                booksBuffer.str("");
+                std::stringstream temp;
+                booksBuffer.swap(temp);
                 numRows = 0;
             }
         }
@@ -644,6 +754,8 @@ PostgresBackend::writeBooks(
     {
         pgQuery.bulkInsert("books", booksBuffer.str());
     }
+    pgQuery("COMMIT");
+    return true;
 }
 bool
 PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
@@ -703,12 +815,13 @@ PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
                 }
                 else
                 {
-                    // This is rather unelegant. For a deleted object, we don't
-                    // know its type just from the key (or do we?). So, we just
-                    // assume it is an offer and try to delete it. The
-                    // alternative is to read the actual object out of the db
-                    // from before it was deleted. This could result in a lot of
-                    // individual reads though, so we chose to just delete
+                    // This is rather unelegant. For a deleted object, we
+                    // don't know its type just from the key (or do we?).
+                    // So, we just assume it is an offer and try to delete
+                    // it. The alternative is to read the actual object out
+                    // of the db from before it was deleted. This could
+                    // result in a lot of individual reads though, so we
+                    // chose to just delete
                     deleteOffer = true;
                 }
                 if (deleteOffer)
