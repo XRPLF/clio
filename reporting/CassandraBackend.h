@@ -1220,54 +1220,6 @@ public:
         }
     }
 
-    /*
-    void
-    writeDeletedKey(WriteCallbackData& data, bool isRetry) const
-    {
-        CassandraStatement statement{insertKey_};
-        statement.bindBytes(data.key);
-        statement.bindInt(data.createdSequence);
-        statement.bindInt(data.sequence);
-        executeAsyncWrite(statement, flatMapWriteKeyCallback, data, isRetry);
-    }
-
-    void
-    writeKey(WriteCallbackData& data, bool isRetry) const
-    {
-        if (data.isCreated)
-        {
-            CassandraStatement statement{insertKey_};
-            statement.bindBytes(data.key);
-            statement.bindInt(data.sequence);
-            statement.bindInt(INT64_MAX);
-
-            executeAsyncWrite(
-                statement, flatMapWriteKeyCallback, data, isRetry);
-        }
-        else if (data.isDeleted)
-        {
-            CassandraStatement statement{getCreated_};
-
-            executeAsyncWrite(
-                statement, flatMapGetCreatedCallback, data, isRetry);
-        }
-    }
-    */
-
-    void
-    writeBook(WriteCallbackData& data, bool isRetry) const
-    {
-        assert(data.isCreated or data.isDeleted);
-        assert(data.book);
-        CassandraStatement statement{
-            (data.isCreated ? insertBook_ : deleteBook_)};
-        statement.bindBytes(*data.book);
-        statement.bindBytes(data.key);
-        statement.bindInt(data.sequence);
-        if (data.isCreated)
-            statement.bindInt(INT64_MAX);
-        executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
-    }
     void
     doWriteLedgerObject(
         std::string&& key,

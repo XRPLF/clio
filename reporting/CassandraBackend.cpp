@@ -36,7 +36,7 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
             std::make_shared<boost::asio::steady_timer>(
                 backend.getIOContext(),
                 std::chrono::steady_clock::now() + wait);
-        timer->async_wait([timer, &requestParams, &func](
+        timer->async_wait([timer, &requestParams, func](
                               const boost::system::error_code& error) {
             func(requestParams, true);
         });
@@ -66,16 +66,6 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
     processAsyncWriteResponse(requestParams, fut, func);
 }
 
-void
-flatMapWriteBookCallback(CassFuture* fut, void* cbData)
-{
-    CassandraBackend::WriteCallbackData& requestParams =
-        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
-    auto func = [](auto& params, bool retry) {
-        params.backend->writeBook(params, retry);
-    };
-    processAsyncWriteResponse(requestParams, fut, func);
-}
 /*
 
 void
@@ -564,7 +554,7 @@ struct WriteBookCallbackData
     ripple::uint256 offerKey;
     uint32_t ledgerSequence;
     std::condition_variable& cv;
-    std::atomic_uint32_t& numRemaining;
+    std::atomic_uint32_t& numOutstanding;
     std::mutex& mtx;
     uint32_t currentRetries = 0;
     WriteBookCallbackData(
@@ -574,14 +564,14 @@ struct WriteBookCallbackData
         uint32_t ledgerSequence,
         std::condition_variable& cv,
         std::mutex& mtx,
-        std::atomic_uint32_t& numRemaining)
+        std::atomic_uint32_t& numOutstanding)
         : backend(backend)
         , book(book)
         , offerKey(offerKey)
         , ledgerSequence(ledgerSequence)
         , cv(cv)
         , mtx(mtx)
-        , numRemaining(numRemaining)
+        , numOutstanding(numOutstanding)
 
     {
     }
@@ -589,7 +579,7 @@ struct WriteBookCallbackData
 void
 writeBookCallback(CassFuture* fut, void* cbData);
 void
-writeBook2(WriteBookCallbackData& cb)
+writeBook(WriteBookCallbackData& cb)
 {
     CassandraStatement statement{cb.backend.getInsertBookPreparedStatement()};
     statement.bindBytes(cb.book);
@@ -622,7 +612,7 @@ writeBookCallback(CassFuture* fut, void* cbData)
                 std::chrono::steady_clock::now() + wait);
         timer->async_wait(
             [timer, &requestParams](const boost::system::error_code& error) {
-                writeBook2(requestParams);
+                writeBook(requestParams);
             });
     }
     else
@@ -630,7 +620,7 @@ writeBookCallback(CassFuture* fut, void* cbData)
         BOOST_LOG_TRIVIAL(trace) << __func__ << " Successfully inserted a book";
         {
             std::lock_guard lck(requestParams.mtx);
-            --requestParams.numRemaining;
+            --requestParams.numOutstanding;
             requestParams.cv.notify_one();
         }
     }
@@ -789,7 +779,7 @@ CassandraBackend::writeBooks(
                 cv,
                 mtx,
                 numOutstanding));
-            writeBook2(*cbs.back());
+            writeBook(*cbs.back());
             BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
             std::unique_lock<std::mutex> lck(mtx);
             BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
