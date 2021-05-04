@@ -95,6 +95,7 @@ traverseOwnedNodes(
     std::vector<ripple::uint256> keys;
     std::optional<ripple::uint256> nextCursor = {};
 
+    auto start = std::chrono::system_clock::now();
     for (;;)
     {
         auto ownedNode =
@@ -120,8 +121,18 @@ traverseOwnedNodes(
 
         currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
     }
+    auto end = std::chrono::system_clock::now();
 
+    BOOST_LOG_TRIVIAL(debug) << "Time loading owned directories: "
+                               << ((end - start).count() / 1000000000.0);
+
+
+    start = std::chrono::system_clock::now();
     auto objects = backend.fetchLedgerObjects(keys, sequence);
+    end = std::chrono::system_clock::now();
+
+    BOOST_LOG_TRIVIAL(debug) << "Time loading owned entries: "
+                               << ((end - start).count() / 1000000000.0);
 
     for (auto i = 0; i < objects.size(); ++i)
     {
