@@ -483,34 +483,6 @@ public:
         return {first, second};
     }
 
-    std::pair<Blob, Blob>
-    getBytesTuple()
-    {
-        cass_byte_t const* buf;
-        std::size_t bufSize;
-
-        if (!row_)
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - no result");
-        CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
-        CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
-        if (!cass_iterator_next(tupleIter))
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - failed to iterate tuple");
-        CassValue const* value = cass_iterator_get_value(tupleIter);
-        cass_value_get_bytes(value, &buf, &bufSize);
-        Blob first{buf, buf + bufSize};
-
-        if (!cass_iterator_next(tupleIter))
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - failed to iterate tuple");
-        value = cass_iterator_get_value(tupleIter);
-        cass_value_get_bytes(value, &buf, &bufSize);
-        Blob second{buf, buf + bufSize};
-        ++curGetIndex_;
-        return {first, second};
-    }
-
     ~CassandraResult()
     {
         if (result_ != nullptr)
@@ -1226,6 +1198,58 @@ public:
         }
     }
 
+<<<<<<< HEAD
+=======
+    /*
+    void
+    writeDeletedKey(WriteCallbackData& data, bool isRetry) const
+    {
+        CassandraStatement statement{insertKey_};
+        statement.bindBytes(data.key);
+        statement.bindInt(data.createdSequence);
+        statement.bindInt(data.sequence);
+        executeAsyncWrite(statement, flatMapWriteKeyCallback, data, isRetry);
+    }
+
+    void
+    writeKey(WriteCallbackData& data, bool isRetry) const
+    {
+        if (data.isCreated)
+        {
+            CassandraStatement statement{insertKey_};
+            statement.bindBytes(data.key);
+            statement.bindInt(data.sequence);
+            statement.bindInt(INT64_MAX);
+
+            executeAsyncWrite(
+                statement, flatMapWriteKeyCallback, data, isRetry);
+        }
+        else if (data.isDeleted)
+        {
+            CassandraStatement statement{getCreated_};
+
+            executeAsyncWrite(
+                statement, flatMapGetCreatedCallback, data, isRetry);
+        }
+    }
+    */
+
+    void
+    writeBook(WriteCallbackData& data, bool isRetry) const
+    {
+        assert(data.isCreated or data.isDeleted);
+        assert(data.book);
+        CassandraStatement statement{
+            (data.isCreated ? insertBook_ : deleteBook_)};
+        statement.bindBytes(*data.book);
+        statement.bindBytes(data.key);
+        statement.bindInt(data.sequence);
+        if (data.isCreated)
+            statement.bindInt(INT64_MAX);
+        executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
+    }
+
+>>>>>>> 068f7b2 (cleans up PR)
     void
     doWriteLedgerObject(
         std::string&& key,

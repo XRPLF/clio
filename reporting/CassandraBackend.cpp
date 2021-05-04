@@ -66,6 +66,16 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
     processAsyncWriteResponse(requestParams, fut, func);
 }
 
+void
+flatMapWriteBookCallback(CassFuture* fut, void* cbData)
+{
+    CassandraBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeBook(params, retry);
+    };
+    processAsyncWriteResponse(requestParams, fut, func);
+}
 /*
 
 void
@@ -652,9 +662,8 @@ void
 writeBook(WriteBookCallbackData& cb)
 {
     CassandraStatement statement{cb.backend.getInsertBookPreparedStatement()};
-    statement.bindBytes(cb.book.data(), 24);
+    statement.bindBytes(cb.book);
     statement.bindInt(cb.ledgerSequence);
-    statement.bindBytes(cb.book.data()+24, 8);
     statement.bindBytes(cb.offerKey);
     // Passing isRetry as true bypasses incrementing numOutstanding
     cb.backend.executeAsyncWrite(statement, writeBookCallback, cb, true);
@@ -1559,6 +1568,11 @@ CassandraBackend::open(bool readOnly)
                  " LIMIT ?";
         if (!selectBook_.prepareStatement(query, session_.get()))
             continue;
+        query.str("");
+        query << "SELECT key FROM " << tablePrefix << "books2 "
+              << " WHERE book = ? AND sequence = ? AND "
+                 " key > ? "
+                 " ORDER BY key ASC LIMIT ?";
 
         query.str("");
         query << "SELECT * FROM " << tablePrefix << "books "

@@ -112,6 +112,7 @@ public:
     addKey(ripple::uint256 const& key);
     void
     deleteKey(ripple::uint256 const& key);
+    
     void
     addBookOffer(ripple::uint256 const& book, ripple::uint256 const& offerKey);
 
