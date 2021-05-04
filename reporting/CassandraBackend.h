@@ -483,34 +483,6 @@ public:
         return {first, second};
     }
 
-    std::pair<Blob, Blob>
-    getBytesTuple()
-    {
-        cass_byte_t const* buf;
-        std::size_t bufSize;
-
-        if (!row_)
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - no result");
-        CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
-        CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
-        if (!cass_iterator_next(tupleIter))
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - failed to iterate tuple");
-        CassValue const* value = cass_iterator_get_value(tupleIter);
-        cass_value_get_bytes(value, &buf, &bufSize);
-        Blob first{buf, buf + bufSize};
-
-        if (!cass_iterator_next(tupleIter))
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - failed to iterate tuple");
-        value = cass_iterator_get_value(tupleIter);
-        cass_value_get_bytes(value, &buf, &bufSize);
-        Blob second{buf, buf + bufSize};
-        ++curGetIndex_;
-        return {first, second};
-    }
-
     ~CassandraResult()
     {
         if (result_ != nullptr)
@@ -658,9 +630,6 @@ private:
     mutable boost::asio::io_context ioContext_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
-
-    // std::thread indexer_;
-    uint32_t indexerShift_ = 16;
 
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
@@ -1279,20 +1248,20 @@ public:
     }
     */
 
-    // void
-    // writeBook(WriteCallbackData& data, bool isRetry) const
-    // {
-    //     assert(data.isCreated or data.isDeleted);
-    //     assert(data.book);
-    //     CassandraStatement statement{
-    //         (data.isCreated ? insertBook_ : deleteBook_)};
-    //     statement.bindBytes(*data.book);
-    //     statement.bindBytes(data.key);
-    //     statement.bindInt(data.sequence);
-    //     if (data.isCreated)
-    //         statement.bindInt(INT64_MAX);
-    //     executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
-    // }
+    void
+    writeBook(WriteCallbackData& data, bool isRetry) const
+    {
+        assert(data.isCreated or data.isDeleted);
+        assert(data.book);
+        CassandraStatement statement{
+            (data.isCreated ? insertBook_ : deleteBook_)};
+        statement.bindBytes(*data.book);
+        statement.bindBytes(data.key);
+        statement.bindInt(data.sequence);
+        if (data.isCreated)
+            statement.bindInt(INT64_MAX);
+        executeAsyncWrite(statement, flatMapWriteBookCallback, data, isRetry);
+    }
 
     void
     doWriteLedgerObject(

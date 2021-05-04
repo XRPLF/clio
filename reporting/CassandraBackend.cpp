@@ -63,16 +63,16 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
     processAsyncWriteResponse(requestParams, fut, func);
 }
 
-// void
-// flatMapWriteBookCallback(CassFuture* fut, void* cbData)
-// {
-//     CassandraBackend::WriteCallbackData& requestParams =
-//         *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
-//     auto func = [](auto& params, bool retry) {
-//         params.backend->writeBook(params, retry);
-//     };
-//     processAsyncWriteResponse(requestParams, fut, func);
-// }
+void
+flatMapWriteBookCallback(CassFuture* fut, void* cbData)
+{
+    CassandraBackend::WriteCallbackData& requestParams =
+        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
+    auto func = [](auto& params, bool retry) {
+        params.backend->writeBook(params, retry);
+    };
+    processAsyncWriteResponse(requestParams, fut, func);
+}
 /*
 
 void
@@ -652,9 +652,8 @@ void
 writeBook2(WriteBookCallbackData& cb)
 {
     CassandraStatement statement{cb.backend.getInsertBookPreparedStatement()};
-    statement.bindBytes(cb.book.data(), 24);
+    statement.bindBytes(cb.book);
     statement.bindInt(cb.ledgerSequence);
-    statement.bindBytes(cb.book.data()+24, 8);
     statement.bindBytes(cb.offerKey);
     // Passing isRetry as true bypasses incrementing numOutstanding
     cb.backend.executeAsyncWrite(statement, writeBookCallback, cb, true);
@@ -1378,6 +1377,24 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
+              << " ( book blob, sequence bigint, key blob, deleted_at "
+                 "bigint, PRIMARY KEY "
+                 "(book, key)) WITH CLUSTERING ORDER BY (key ASC)";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "books"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books2"
+              << " ( book blob, sequence bigint, key blob, PRIMARY KEY "
+                 "((book, sequence), key)) WITH CLUSTERING ORDER BY (key "
+                 "ASC)";
+
+        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books2"
               << " ( book blob, sequence bigint, quality_key tuple<blob, blob>, PRIMARY KEY "
                  "((book, sequence), quality_key)) WITH CLUSTERING ORDER BY (quality_key "
@@ -1545,11 +1562,17 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "SELECT quality_key FROM " << tablePrefix << "books2 "
-              << " WHERE book = ? AND sequence = ?"
-                 " ORDER BY quality_key ASC";
-        if (!selectBook_.prepareStatement(query, session_.get()))
+        query << "SELECT key FROM " << tablePrefix << "books "
+              << " WHERE book = ? AND sequence <= ? AND deleted_at > ? AND"
+                 " key > ? "
+                 " ORDER BY key ASC LIMIT ? ALLOW FILTERING";
+        if (!getBook_.prepareStatement(query, session_.get()))
             continue;
+        query.str("");
+        query << "SELECT key FROM " << tablePrefix << "books2 "
+              << " WHERE book = ? AND sequence = ? AND "
+                 " key > ? "
+                 " ORDER BY key ASC LIMIT ?";
 
         query.str("");
         query << " INSERT INTO " << tablePrefix << "account_tx"
