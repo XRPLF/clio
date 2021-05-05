@@ -634,6 +634,9 @@ private:
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
     uint32_t maxRequestsOutstanding = 10000;
+    // we keep this small because the indexer runs in the background, and we
+    // don't want the database to be swamped when the indexer is running
+    uint32_t indexerMaxRequestsOutstanding = 10;
     mutable std::atomic_uint32_t numRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
@@ -798,6 +801,14 @@ public:
     {
         // wait for all other writes to finish
         sync();
+        auto rng = fetchLedgerRangeNoThrow();
+        if (rng && rng->maxSequence >= ledgerSequence_)
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Ledger " << std::to_string(ledgerSequence_)
+                << " already written. Returning";
+            return false;
+        }
         // write range
         if (isFirstLedger_)
         {
@@ -811,7 +822,16 @@ public:
         statement.bindInt(ledgerSequence_);
         statement.bindBoolean(true);
         statement.bindInt(ledgerSequence_ - 1);
-        return executeSyncUpdate(statement);
+        if (!executeSyncUpdate(statement))
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Update failed for ledger "
+                << std::to_string(ledgerSequence_) << ". Returning";
+            return false;
+        }
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " Committed ledger "
+                                 << std::to_string(ledgerSequence_);
+        return true;
     }
     void
     writeLedger(
@@ -1495,6 +1515,7 @@ public:
     bool
     executeSyncUpdate(CassandraStatement const& statement) const
     {
+        bool timedOut = false;
         CassFuture* fut;
         CassError rc;
         do
@@ -1503,8 +1524,9 @@ public:
             rc = cass_future_error_code(fut);
             if (rc != CASS_OK)
             {
+                timedOut = true;
                 std::stringstream ss;
-                ss << "Cassandra sync write error";
+                ss << "Cassandra sync update error";
                 ss << ", retrying";
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(warning) << ss.str();
@@ -1532,7 +1554,15 @@ public:
             return false;
         }
         cass_result_free(res);
-        return success == cass_true;
+        if (success != cass_true && timedOut)
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Update failed, but timedOut is true";
+        }
+        // if there was a timeout, the update may have succeeded in the
+        // background. We can't differentiate between an async success and
+        // another writer, so we just return true here
+        return success == cass_true || timedOut;
     }
 
     CassandraResult

@@ -89,8 +89,8 @@ std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
     // check that database is actually empty
-    auto ledger = flatMapBackend_->fetchLedgerBySequence(startingSequence);
-    if (ledger)
+    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+    if (rng)
     {
         BOOST_LOG_TRIVIAL(fatal) << __func__ << " : "
                                  << "Database is not empty";
@@ -156,7 +156,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     {
         try
         {
-            auto range = flatMapBackend_->fetchLedgerRange();
+            auto range = flatMapBackend_->fetchLedgerRangeNoThrow();
 
             if (!range || range->maxSequence < ledgerSequence)
             {
@@ -359,8 +359,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                              << "Starting etl pipeline";
     writing_ = true;
 
-    auto parent = flatMapBackend_->fetchLedgerBySequence(startSequence - 1);
-    if (!parent)
+    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+    if (!rng || rng->maxSequence != startSequence - 1)
     {
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
@@ -385,19 +385,19 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         std::cout << std::to_string((sequence - startSequence) % numExtractors);
         return queues[(sequence - startSequence) % numExtractors];
     };
-    std::vector<std::thread> threads;
+    std::vector<std::thread> extractors;
     for (size_t i = 0; i < numExtractors; ++i)
     {
         auto transformQueue = std::make_shared<QueueType>(maxQueueSize);
         queues.push_back(transformQueue);
         std::cout << "added to queues";
 
-        threads.emplace_back([this,
-                              &startSequence,
-                              &writeConflict,
-                              transformQueue,
-                              i,
-                              numExtractors]() {
+        extractors.emplace_back([this,
+                                 &startSequence,
+                                 &writeConflict,
+                                 transformQueue,
+                                 i,
+                                 numExtractors]() {
             beast::setCurrentThreadName("rippled: ReportingETL extract");
             uint32_t currentSequence = startSequence + i;
 
@@ -503,7 +503,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
-            auto range = flatMapBackend_->fetchLedgerRange();
+            auto range = flatMapBackend_->fetchLedgerRangeNoThrow();
             if (onlineDeleteInterval_ && !deleting_ &&
                 range->maxSequence - range->minSequence >
                     *onlineDeleteInterval_)
@@ -520,10 +520,15 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         }
     }};
 
-    // wait for all of the threads to stop
-    for (auto& t : threads)
-        t.join();
     transformer.join();
+    for (size_t i = 0; i < numExtractors; ++i)
+    {
+        // pop from each queue that might be blocked on a push
+        getNext(i)->tryPop();
+    }
+    // wait for all of the extractors to stop
+    for (auto& t : extractors)
+        t.join();
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug)
         << "Extracted and wrote " << *lastPublishedSequence - startSequence
@@ -598,8 +603,8 @@ ReportingETL::monitor()
     {
         if (startSequence_)
         {
-            throw std::runtime_error(
-                "start sequence specified but db is already populated");
+            BOOST_LOG_TRIVIAL(warning)
+                << "start sequence specified but db is already populated";
         }
         BOOST_LOG_TRIVIAL(info)
             << __func__ << " : "

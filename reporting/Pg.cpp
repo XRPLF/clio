@@ -250,6 +250,7 @@ Pg::bulkInsert(char const* table, std::string const& records)
            << ". Postgres insert error: " << res.msg();
         if (res)
             ss << ". Query status not PGRES_COPY_IN: " << res.status();
+        BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 
@@ -259,6 +260,7 @@ Pg::bulkInsert(char const* table, std::string const& records)
         ss << "bulkInsert to " << table
            << ". PQputCopyData error: " << PQerrorMessage(conn_.get());
         disconnect();
+        BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 
@@ -268,6 +270,7 @@ Pg::bulkInsert(char const* table, std::string const& records)
         ss << "bulkInsert to " << table
            << ". PQputCopyEnd error: " << PQerrorMessage(conn_.get());
         disconnect();
+        BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 
@@ -282,7 +285,7 @@ Pg::bulkInsert(char const* table, std::string const& records)
         ss << "bulkInsert to " << table
            << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status;
         disconnect();
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " " << records;
+        BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 }

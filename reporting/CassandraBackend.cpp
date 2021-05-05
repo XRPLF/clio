@@ -708,13 +708,15 @@ CassandraBackend::writeKeys(
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
-        << " . num keys = " << std::to_string(keys.size());
+        << " . num keys = " << std::to_string(keys.size())
+        << " . concurrentLimit = "
+        << std::to_string(indexerMaxRequestsOutstanding);
     std::atomic_uint32_t numRemaining = keys.size();
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
-    uint32_t concurrentLimit = maxRequestsOutstanding;
+    uint32_t concurrentLimit = indexerMaxRequestsOutstanding;
     uint32_t numSubmitted = 0;
     for (auto& key : keys)
     {
@@ -761,7 +763,7 @@ CassandraBackend::writeBooks(
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteBookCallbackData>> cbs;
-    uint32_t concurrentLimit = maxRequestsOutstanding / 2;
+    uint32_t concurrentLimit = indexerMaxRequestsOutstanding;
     std::atomic_uint32_t numOutstanding = 0;
     size_t count = 0;
     auto start = std::chrono::system_clock::now();
@@ -1429,7 +1431,7 @@ CassandraBackend::open(bool readOnly)
 
         query = {};
         query << "SELECT key FROM " << tablePrefix << "keys"
-              << " WHERE sequence = ? AND key > ? ORDER BY key ASC LIMIT ?";
+              << " WHERE sequence = ? AND key >= ? ORDER BY key ASC LIMIT ?";
         if (!selectKeys_.prepareStatement(query, session_.get()))
             continue;
 
@@ -1612,6 +1614,11 @@ CassandraBackend::open(bool readOnly)
     if (config_.contains("max_requests_outstanding"))
     {
         maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
+    }
+    if (config_.contains("indexer_max_requests_outstanding"))
+    {
+        indexerMaxRequestsOutstanding =
+            config_["indexer_max_requests_outstanding"].as_int64();
     }
     /*
     if (config_.contains("run_indexer"))
