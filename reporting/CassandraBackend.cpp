@@ -399,7 +399,7 @@ CassandraBackend::fetchLedgerPage(
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
-    auto index = getIndexOfSeq(ledgerSequence);
+    auto index = getKeyIndexOfSeq(ledgerSequence);
     if (!index)
         return {};
     LedgerPage page;
@@ -449,11 +449,11 @@ CassandraBackend::fetchLedgerPage(
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
-        if (keys.size() && !cursor && !keys[0].isZero())
+        if (!keys.size() || (!cursor && !keys[0].isZero()))
             page.warning = "Data may be incomplete";
         return page;
     }
-    return {{}, {}};
+    return {{}, {}, "Data may be incomplete"};
 }
 std::vector<Blob>
 CassandraBackend::fetchLedgerObjects(
@@ -498,7 +498,7 @@ CassandraBackend::fetchBookOffers(
 {
     CassandraStatement statement{selectBook_};
     statement.bindBytes(book);
-    auto index = getIndexOfSeq(sequence);
+    auto index = getBookIndexOfSeq(sequence);
     if (!index)
         return {};
     BOOST_LOG_TRIVIAL(info) << __func__ << " index = " << std::to_string(*index)
@@ -517,7 +517,7 @@ CassandraBackend::fetchBookOffers(
     BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
     std::vector<ripple::uint256> keys;
     if (!result)
-        return {{}, {}};
+        return {{}, {}, "Data may be incomplete"};
     do
     {
         keys.push_back(result.getUInt256());
@@ -535,17 +535,17 @@ CassandraBackend::fetchBookOffers(
                 results.push_back({keys[i], objs[i]});
         }
         std::optional<std::string> warning;
-        if (keys[0].isZero())
+        if (!cursor && !keys[0].isZero())
             warning = "Data may be incomplete";
         if (keys.size() == limit)
             return {results, keys[keys.size() - 1], warning};
         else
             return {results, {}, warning};
-
-        return {{}, {}};
     }
+    else if (!cursor)
+        return {{}, {}, "Data may be incomplete"};
 
-    return {{}, {}};
+    return {};
 }
 struct WriteBookCallbackData
 {

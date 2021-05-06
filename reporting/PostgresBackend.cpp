@@ -329,7 +329,7 @@ PostgresBackend::fetchLedgerPage(
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
-    auto index = getIndexOfSeq(ledgerSequence);
+    auto index = getKeyIndexOfSeq(ledgerSequence);
     if (!index)
         return {};
     PgQuery pgQuery(pgPool_);
@@ -366,6 +366,8 @@ PostgresBackend::fetchLedgerPage(
             return {results, returnCursor, "Data may be incomplete"};
         return {results, returnCursor};
     }
+    if (!cursor)
+        return {{}, {}, "Data may be incomplete"};
     return {};
 }
 

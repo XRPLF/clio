@@ -300,7 +300,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
     accumTxns_ += rawData.transactions_list().transactions_size();
     bool success = true;
-    if (accumTxns_ > txnThreshold_)
+    if (accumTxns_ >= txnThreshold_)
     {
         auto start = std::chrono::system_clock::now();
         success = flatMapBackend_->finishWrites(lgrInfo.seq);
