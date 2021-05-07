@@ -337,7 +337,7 @@ PostgresBackend::fetchLedgerPage(
     std::stringstream sql;
     sql << "SELECT key FROM keys WHERE ledger_seq = " << std::to_string(*index);
     if (cursor)
-        sql << " AND key < \'\\x" << ripple::strHex(*cursor) << "\'";
+        sql << " AND key > \'\\x" << ripple::strHex(*cursor) << "\'";
     sql << " ORDER BY key ASC LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
     auto res = pgQuery(sql.str().data());
@@ -378,14 +378,37 @@ PostgresBackend::fetchBookOffers(
     std::uint32_t limit,
     std::optional<ripple::uint256> const& cursor) const
 {
+    auto index = getBookIndexOfSeq(ledgerSequence);
+    if (!index)
+        return {};
     PgQuery pgQuery(pgPool_);
+    ripple::uint256 zero = {};
+    std::optional<std::string> warning;
+    {
+        std::stringstream sql;
+        sql << "SELECT offer_key FROM books WHERE book = "
+            << "\'\\x" << ripple::strHex(zero)
+            << "\' AND ledger_seq = " << std::to_string(*index);
+        auto res = pgQuery(sql.str().data());
+        sql << " ORDER BY offer_key ASC"
+            << " LIMIT " << std::to_string(limit);
+        if (size_t numRows = checkResult(res, 1))
+        {
+            auto key = res.asUInt256(0, 0);
+            if (!key.isZero())
+                warning = "Data may be incomplete";
+        }
+        else
+            warning = "Data may be incomplete";
+    }
+
     std::stringstream sql;
     sql << "SELECT offer_key FROM books WHERE book = "
         << "\'\\x" << ripple::strHex(book)
-        << "\' AND ledger_seq = " << std::to_string(ledgerSequence);
+        << "\' AND ledger_seq = " << std::to_string(*index);
     if (cursor)
-        sql << " AND offer_key < \'\\x" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY offer_key DESC, ledger_seq DESC"
+        sql << " AND offer_key > \'\\x" << ripple::strHex(*cursor) << "\'";
+    sql << " ORDER BY offer_key ASC"
         << " LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << sql.str();
     auto res = pgQuery(sql.str().data());
@@ -396,9 +419,6 @@ PostgresBackend::fetchBookOffers(
         {
             keys.push_back(res.asUInt256(i, 0));
         }
-        std::optional<std::string> warning;
-        if (keys[0].isZero())
-            warning = "Data may be incomplete";
         std::vector<Blob> blobs = fetchLedgerObjects(keys, ledgerSequence);
 
         std::vector<LedgerObject> results;
@@ -421,7 +441,7 @@ PostgresBackend::fetchBookOffers(
         else
             return {results, {}, warning};
     }
-    return {{}, {}};
+    return {{}, {}, warning};
 }
 
 std::vector<TransactionAndMetadata>
@@ -697,7 +717,8 @@ PostgresBackend::doFinishWrites() const
 bool
 PostgresBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
@@ -731,7 +752,8 @@ PostgresBackend::writeBooks(
     std::unordered_map<
         ripple::uint256,
         std::unordered_set<ripple::uint256>> const& books,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);

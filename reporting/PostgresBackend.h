@@ -117,13 +117,15 @@ public:
     bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence) const override;
+        uint32_t ledgerSequence,
+        bool isAsync = false) const override;
     bool
     writeBooks(
         std::unordered_map<
             ripple::uint256,
             std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence) const override;
+        uint32_t ledgerSequence,
+        bool isAsync = false) const override;
 };
 }  // namespace Backend
 #endif

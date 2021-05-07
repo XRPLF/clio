@@ -2,9 +2,11 @@
 
 namespace Backend {
 BackendIndexer::BackendIndexer(boost::json::object const& config)
-    : keyShift_(config.at("indexer_key_shift").as_int64())
-    , bookShift_(config.at("indexer_book_shift").as_int64())
 {
+    if (config.contains("indexer_key_shift"))
+        keyShift_ = config.at("indexer_key_shift").as_int64();
+    if (config.contains("indexer_book_shift"))
+        bookShift_ = config.at("indexer_book_shift").as_int64();
     work_.emplace(ioc_);
     ioThread_ = std::thread{[this]() { ioc_.run(); }};
 };
@@ -103,8 +105,8 @@ writeKeyFlagLedger(
     }
     auto start = std::chrono::system_clock::now();
 
-    backend.writeKeys(keys, nextFlag);
-    backend.writeKeys({zero}, nextFlag);
+    backend.writeKeys(keys, nextFlag, true);
+    backend.writeKeys({zero}, nextFlag, true);
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info)
         << __func__
@@ -154,8 +156,8 @@ writeBookFlagLedger(
         }
     }
     auto start = std::chrono::system_clock::now();
-    backend.writeBooks(books, nextFlag);
-    backend.writeBooks({{zero, {zero}}}, nextFlag);
+    backend.writeBooks(books, nextFlag, true);
+    backend.writeBooks({{zero, {zero}}}, nextFlag, true);
 
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info)

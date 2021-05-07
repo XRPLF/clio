@@ -381,13 +381,15 @@ public:
     virtual bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence) const = 0;
+        uint32_t ledgerSequence,
+        bool isAsync = false) const = 0;
     virtual bool
     writeBooks(
         std::unordered_map<
             ripple::uint256,
             std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence) const = 0;
+        uint32_t ledgerSequence,
+        bool isAsync = false) const = 0;
 
     virtual ~BackendInterface()
     {

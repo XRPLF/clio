@@ -418,7 +418,7 @@ CassandraBackend::fetchLedgerPage(
         ripple::uint256 zero;
         statement.bindBytes(zero);
     }
-    statement.bindUInt(limit);
+    statement.bindUInt(limit + 1);
     CassandraResult result = executeSyncRead(statement);
     if (!!result)
     {
@@ -430,11 +430,14 @@ CassandraBackend::fetchLedgerPage(
         {
             keys.push_back(result.getUInt256());
         } while (result.nextRow());
+        if (keys.size() && keys.size() == limit)
+        {
+            page.cursor = keys.back();
+            keys.pop_back();
+        }
         auto objects = fetchLedgerObjects(keys, ledgerSequence);
         if (objects.size() != keys.size())
             throw std::runtime_error("Mismatch in size of objects and keys");
-        if (keys.size() == limit)
-            page.cursor = keys[keys.size() - 1];
 
         if (cursor)
             BOOST_LOG_TRIVIAL(trace)
@@ -449,11 +452,13 @@ CassandraBackend::fetchLedgerPage(
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
-        if (!keys.size() || (!cursor && !keys[0].isZero()))
+        if (!cursor && (!keys.size() || !keys[0].isZero()))
             page.warning = "Data may be incomplete";
         return page;
     }
-    return {{}, {}, "Data may be incomplete"};
+    if (!cursor)
+        return {{}, {}, "Data may be incomplete"};
+    return {};
 }
 std::vector<Blob>
 CassandraBackend::fetchLedgerObjects(
@@ -496,19 +501,36 @@ CassandraBackend::fetchBookOffers(
     std::uint32_t limit,
     std::optional<ripple::uint256> const& cursor) const
 {
-    CassandraStatement statement{selectBook_};
-    statement.bindBytes(book);
     auto index = getBookIndexOfSeq(sequence);
     if (!index)
         return {};
     BOOST_LOG_TRIVIAL(info) << __func__ << " index = " << std::to_string(*index)
                             << " book = " << ripple::strHex(book);
+    BookOffersPage page;
+    ripple::uint256 zero = {};
+    {
+        CassandraStatement statement{selectBook_};
+        statement.bindBytes(zero);
+        statement.bindInt(*index);
+        statement.bindBytes(zero);
+        statement.bindUInt(1);
+        CassandraResult result = executeSyncRead(statement);
+        if (!result)
+            page.warning = "Data may be incomplete";
+        else
+        {
+            auto key = result.getUInt256();
+            if (!key.isZero())
+                page.warning = "Data may be incomplete";
+        }
+    }
+    CassandraStatement statement{selectBook_};
+    statement.bindBytes(book);
     statement.bindInt(*index);
     if (cursor)
         statement.bindBytes(*cursor);
     else
     {
-        ripple::uint256 zero = {};
         statement.bindBytes(zero);
     }
     statement.bindUInt(limit);
@@ -517,11 +539,16 @@ CassandraBackend::fetchBookOffers(
     BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
     std::vector<ripple::uint256> keys;
     if (!result)
-        return {{}, {}, "Data may be incomplete"};
+        return page;
     do
     {
         keys.push_back(result.getUInt256());
     } while (result.nextRow());
+    if (keys.size() && keys.size() == limit)
+    {
+        page.cursor = keys.back();
+        keys.pop_back();
+    }
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " - populated keys. num keys = " << keys.size();
@@ -532,20 +559,10 @@ CassandraBackend::fetchBookOffers(
         for (size_t i = 0; i < objs.size(); ++i)
         {
             if (objs[i].size() != 0)
-                results.push_back({keys[i], objs[i]});
+                page.offers.push_back({keys[i], objs[i]});
         }
-        std::optional<std::string> warning;
-        if (!cursor && !keys[0].isZero())
-            warning = "Data may be incomplete";
-        if (keys.size() == limit)
-            return {results, keys[keys.size() - 1], warning};
-        else
-            return {results, {}, warning};
     }
-    else if (!cursor)
-        return {{}, {}, "Data may be incomplete"};
-
-    return {};
+    return page;
 }
 struct WriteBookCallbackData
 {
@@ -704,7 +721,8 @@ writeKeyCallback(CassFuture* fut, void* cbData)
 bool
 CassandraBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
@@ -716,7 +734,8 @@ CassandraBackend::writeKeys(
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
-    uint32_t concurrentLimit = indexerMaxRequestsOutstanding;
+    uint32_t concurrentLimit =
+        isAsync ? indexerMaxRequestsOutstanding : keys.size();
     uint32_t numSubmitted = 0;
     for (auto& key : keys)
     {
@@ -755,7 +774,8 @@ CassandraBackend::writeBooks(
     std::unordered_map<
         ripple::uint256,
         std::unordered_set<ripple::uint256>> const& books,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
@@ -763,7 +783,8 @@ CassandraBackend::writeBooks(
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteBookCallbackData>> cbs;
-    uint32_t concurrentLimit = indexerMaxRequestsOutstanding;
+    uint32_t concurrentLimit =
+        isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
     std::atomic_uint32_t numOutstanding = 0;
     size_t count = 0;
     auto start = std::chrono::system_clock::now();
@@ -1507,7 +1528,7 @@ CassandraBackend::open(bool readOnly)
         query = {};
         query << "SELECT key FROM " << tablePrefix << "books2 "
               << " WHERE book = ? AND sequence = ? AND "
-                 " key > ? "
+                 " key >= ? "
                  " ORDER BY key ASC LIMIT ?";
         if (!selectBook_.prepareStatement(query, session_.get()))
             continue;
