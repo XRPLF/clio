@@ -338,7 +338,7 @@ PostgresBackend::fetchLedgerPage(
     sql << "SELECT key FROM keys WHERE ledger_seq = " << std::to_string(*index);
     if (cursor)
         sql << " AND key < \'\\x" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY key DESC LIMIT " << std::to_string(limit);
+    sql << " ORDER BY key ASC LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
     auto res = pgQuery(sql.str().data());
     BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched keys";
@@ -362,12 +362,14 @@ PostgresBackend::fetchLedgerPage(
                 results.push_back({keys[i], objs[i]});
             }
         }
+        if (!cursor && !keys[0].isZero())
+            return {results, returnCursor, "Data may be incomplete"};
         return {results, returnCursor};
     }
     return {};
 }
 
-std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
+BookOffersPage
 PostgresBackend::fetchBookOffers(
     ripple::uint256 const& book,
     uint32_t ledgerSequence,
@@ -392,6 +394,9 @@ PostgresBackend::fetchBookOffers(
         {
             keys.push_back(res.asUInt256(i, 0));
         }
+        std::optional<std::string> warning;
+        if (keys[0].isZero())
+            warning = "Data may be incomplete";
         std::vector<Blob> blobs = fetchLedgerObjects(keys, ledgerSequence);
 
         std::vector<LedgerObject> results;
@@ -409,10 +414,10 @@ PostgresBackend::fetchBookOffers(
             BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " : " << ripple::strHex(results[0].key) << " : "
                 << ripple::strHex(results[results.size() - 1].key);
-            return {results, results[results.size() - 1].key};
+            return {results, results[results.size() - 1].key, warning};
         }
         else
-            return {results, {}};
+            return {results, {}, warning};
     }
     return {{}, {}};
 }

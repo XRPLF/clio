@@ -156,6 +156,20 @@ public:
             cv_.notify_all();
         return ret;
     }
+    /// @return element popped from queue. Will block until queue is non-empty
+    std::optional<T>
+    tryPop()
+    {
+        std::unique_lock lck(m_);
+        if (queue_.empty())
+            return {};
+        T ret = std::move(queue_.front());
+        queue_.pop();
+        // if queue has a max size, unblock any possible pushers
+        if (maxSize_)
+            cv_.notify_all();
+        return ret;
+    }
 };
 
 /// Parititions the uint256 keyspace into numMarkers partitions, each of equal

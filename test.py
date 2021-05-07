@@ -510,7 +510,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
                             print(json.dumps(x))
                             blobs.append(x)
                             keys.append(x["index"])
-                if limit != -1 and len(keys) > count:
+                if count != -1 and len(keys) > count:
                     print("stopping early")
                     print(len(keys))
                     print("done")
@@ -598,7 +598,7 @@ async def book_offers(ip, port, ledger, pay_currency, pay_issuer, get_currency, 
                     req["cursor"] = cursor
                 await ws.send(json.dumps(req))
                 res = json.loads(await ws.recv())
-                print(json.dumps(res,indent=4,sort_keys=True))
+                #print(json.dumps(res,indent=4,sort_keys=True))
                 if "result" in res:
                     res = res["result"]
                 for x in res["offers"]:

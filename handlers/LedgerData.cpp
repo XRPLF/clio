@@ -100,6 +100,16 @@ doLedgerData(
     response["num_results"] = results.size();
     response["db_time"] = time;
     response["time_per_result"] = time / (results.size() ? results.size() : 1);
+    if (page.warning)
+    {
+        response["warning"] =
+            "Periodic database update in progress. Data for this ledger may be "
+            "incomplete. Data should be complete "
+            "within a few minutes. Other RPC calls are not affected, "
+            "regardless of ledger. This "
+            "warning is only present on the first "
+            "page of the ledger";
+    }
     return response;
 }
 
