@@ -329,7 +329,7 @@ PostgresBackend::fetchLedgerPage(
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
-    auto index = getIndexOfSeq(ledgerSequence);
+    auto index = getKeyIndexOfSeq(ledgerSequence);
     if (!index)
         return {};
     PgQuery pgQuery(pgPool_);
@@ -337,7 +337,7 @@ PostgresBackend::fetchLedgerPage(
     std::stringstream sql;
     sql << "SELECT key FROM keys WHERE ledger_seq = " << std::to_string(*index);
     if (cursor)
-        sql << " AND key < \'\\x" << ripple::strHex(*cursor) << "\'";
+        sql << " AND key > \'\\x" << ripple::strHex(*cursor) << "\'";
     sql << " ORDER BY key ASC LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
     auto res = pgQuery(sql.str().data());
@@ -366,6 +366,8 @@ PostgresBackend::fetchLedgerPage(
             return {results, returnCursor, "Data may be incomplete"};
         return {results, returnCursor};
     }
+    if (!cursor)
+        return {{}, {}, "Data may be incomplete"};
     return {};
 }
 
@@ -436,6 +438,7 @@ PostgresBackend::fetchBookOffers(
 
             return {complete, results};
         }
+        std::vector<Blob> blobs = fetchLedgerObjects(keys, ledgerSequence);
 
         return {true, {}};
     };
@@ -748,7 +751,8 @@ PostgresBackend::doFinishWrites() const
 bool
 PostgresBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
@@ -782,7 +786,8 @@ PostgresBackend::writeBooks(
     std::unordered_map<
         ripple::uint256,
         std::unordered_set<ripple::uint256>> const& books,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);

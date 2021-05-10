@@ -68,7 +68,8 @@ class BackendIndexer
     std::mutex mutex_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
-    uint32_t shift_ = 16;
+    uint32_t keyShift_ = 20;
+    uint32_t bookShift_ = 10;
     std::unordered_set<ripple::uint256> keys;
     std::unordered_set<ripple::uint256> keysCumulative;
     std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
@@ -80,6 +81,9 @@ class BackendIndexer
     std::unordered_set<ripple::uint256> deletedKeys;
     std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
         deletedBooks;
+    std::unordered_set<ripple::uint256> keysRepair;
+    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
+        booksRepair;
     std::mutex mtx;
     std::condition_variable cv_;
 
@@ -95,13 +99,9 @@ public:
     ~BackendIndexer();
 
     void
-    populateCachesAsync(
-        BackendInterface const& backend,
-        std::optional<uint32_t> sequence = {});
+    populateCachesAsync(BackendInterface const& backend);
     void
-    populateCaches(
-        BackendInterface const& backend,
-        std::optional<uint32_t> sequence = {});
+    populateCaches(BackendInterface const& backend);
     void
     clearCaches();
     // Blocking, possibly for minutes
@@ -123,26 +123,56 @@ public:
     void
     finish(uint32_t ledgerSequence, BackendInterface const& backend);
     void
-    writeFlagLedgerAsync(
+    writeKeyFlagLedgerAsync(
         uint32_t ledgerSequence,
         BackendInterface const& backend);
+    void
+    writeBookFlagLedgerAsync(
+        uint32_t ledgerSequence,
+        BackendInterface const& backend);
+    void
+    doKeysRepair(
+        BackendInterface const& backend,
+        std::optional<uint32_t> sequence);
+    void
+    doBooksRepair(
+        BackendInterface const& backend,
+        std::optional<uint32_t> sequence);
     uint32_t
-    getShift()
+    getBookShift()
     {
-        return shift_;
+        return bookShift_;
     }
     uint32_t
-    getIndexOfSeq(uint32_t seq) const
+    getKeyShift()
     {
-        if (isFlagLedger(seq))
+        return keyShift_;
+    }
+    uint32_t
+    getKeyIndexOfSeq(uint32_t seq) const
+    {
+        if (isKeyFlagLedger(seq))
             return seq;
-        auto incr = (1 << shift_);
-        return (seq >> shift_ << shift_) + incr;
+        auto incr = (1 << keyShift_);
+        return (seq >> keyShift_ << keyShift_) + incr;
     }
     bool
-    isFlagLedger(uint32_t ledgerSequence) const
+    isKeyFlagLedger(uint32_t ledgerSequence) const
     {
-        return (ledgerSequence % (1 << shift_)) == 0;
+        return (ledgerSequence % (1 << keyShift_)) == 0;
+    }
+    uint32_t
+    getBookIndexOfSeq(uint32_t seq) const
+    {
+        if (isBookFlagLedger(seq))
+            return seq;
+        auto incr = (1 << bookShift_);
+        return (seq >> bookShift_ << bookShift_) + incr;
+    }
+    bool
+    isBookFlagLedger(uint32_t ledgerSequence) const
+    {
+        return (ledgerSequence % (1 << bookShift_)) == 0;
     }
 };
 
@@ -164,16 +194,28 @@ public:
     }
 
     std::optional<uint32_t>
-    getIndexOfSeq(uint32_t seq) const
+    getKeyIndexOfSeq(uint32_t seq) const
     {
-        if (indexer_.isFlagLedger(seq))
+        if (indexer_.isKeyFlagLedger(seq))
             return seq;
         auto rng = fetchLedgerRange();
         if (!rng)
             return {};
         if (rng->minSequence == seq)
             return seq;
-        return indexer_.getIndexOfSeq(seq);
+        return indexer_.getKeyIndexOfSeq(seq);
+    }
+    std::optional<uint32_t>
+    getBookIndexOfSeq(uint32_t seq) const
+    {
+        if (indexer_.isBookFlagLedger(seq))
+            return seq;
+        auto rng = fetchLedgerRange();
+        if (!rng)
+            return {};
+        if (rng->minSequence == seq)
+            return seq;
+        return indexer_.getBookIndexOfSeq(seq);
     }
 
     bool
@@ -183,8 +225,10 @@ public:
         auto commitRes = doFinishWrites();
         if (commitRes)
         {
-            if (indexer_.isFlagLedger(ledgerSequence))
-                indexer_.writeFlagLedgerAsync(ledgerSequence, *this);
+            if (indexer_.isBookFlagLedger(ledgerSequence))
+                indexer_.writeBookFlagLedgerAsync(ledgerSequence, *this);
+            if (indexer_.isKeyFlagLedger(ledgerSequence))
+                indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
         }
         return commitRes;
     }
@@ -337,13 +381,15 @@ public:
     virtual bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence) const = 0;
+        uint32_t ledgerSequence,
+        bool isAsync = false) const = 0;
     virtual bool
     writeBooks(
         std::unordered_map<
             ripple::uint256,
             std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence) const = 0;
+        uint32_t ledgerSequence,
+        bool isAsync = false) const = 0;
 
     virtual ~BackendInterface()
     {

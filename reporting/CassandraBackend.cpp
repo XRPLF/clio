@@ -399,7 +399,7 @@ CassandraBackend::fetchLedgerPage(
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
-    auto index = getIndexOfSeq(ledgerSequence);
+    auto index = getKeyIndexOfSeq(ledgerSequence);
     if (!index)
         return {};
     LedgerPage page;
@@ -418,7 +418,7 @@ CassandraBackend::fetchLedgerPage(
         ripple::uint256 zero;
         statement.bindBytes(zero);
     }
-    statement.bindUInt(limit);
+    statement.bindUInt(limit + 1);
     CassandraResult result = executeSyncRead(statement);
     if (!!result)
     {
@@ -430,11 +430,14 @@ CassandraBackend::fetchLedgerPage(
         {
             keys.push_back(result.getUInt256());
         } while (result.nextRow());
+        if (keys.size() && keys.size() == limit)
+        {
+            page.cursor = keys.back();
+            keys.pop_back();
+        }
         auto objects = fetchLedgerObjects(keys, ledgerSequence);
         if (objects.size() != keys.size())
             throw std::runtime_error("Mismatch in size of objects and keys");
-        if (keys.size() == limit)
-            page.cursor = keys[keys.size() - 1];
 
         if (cursor)
             BOOST_LOG_TRIVIAL(trace)
@@ -449,11 +452,13 @@ CassandraBackend::fetchLedgerPage(
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
-        if (keys.size() && !cursor && !keys[0].isZero())
+        if (!cursor && (!keys.size() || !keys[0].isZero()))
             page.warning = "Data may be incomplete";
         return page;
     }
-    return {{}, {}};
+    if (!cursor)
+        return {{}, {}, "Data may be incomplete"};
+    return {};
 }
 std::vector<Blob>
 CassandraBackend::fetchLedgerObjects(
@@ -777,7 +782,8 @@ writeKeyCallback(CassFuture* fut, void* cbData)
 bool
 CassandraBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
@@ -789,7 +795,8 @@ CassandraBackend::writeKeys(
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
-    uint32_t concurrentLimit = indexerMaxRequestsOutstanding;
+    uint32_t concurrentLimit =
+        isAsync ? indexerMaxRequestsOutstanding : keys.size();
     uint32_t numSubmitted = 0;
     for (auto& key : keys)
     {
@@ -828,7 +835,8 @@ CassandraBackend::writeBooks(
     std::unordered_map<
         ripple::uint256,
         std::unordered_set<ripple::uint256>> const& books,
-    uint32_t ledgerSequence) const
+    uint32_t ledgerSequence,
+    bool isAsync) const
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " Ledger = " << std::to_string(ledgerSequence)
@@ -836,7 +844,8 @@ CassandraBackend::writeBooks(
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<WriteBookCallbackData>> cbs;
-    uint32_t concurrentLimit = indexerMaxRequestsOutstanding;
+    uint32_t concurrentLimit =
+        isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
     std::atomic_uint32_t numOutstanding = 0;
     size_t count = 0;
     auto start = std::chrono::system_clock::now();
