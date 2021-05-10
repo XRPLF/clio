@@ -431,14 +431,11 @@ PostgresBackend::fetchBookOffers(
                     continue;
                 }
 
-                auto blob = res.asUnHexedBlob(i, 2);
-
                 results.push_back({std::move(book), std::move(key)});
             }
 
             return {complete, results};
         }
-        std::vector<Blob> blobs = fetchLedgerObjects(keys, ledgerSequence);
 
         return {true, {}};
     };
@@ -476,6 +473,22 @@ PostgresBackend::fetchBookOffers(
     if (upperComplete)
         return fetchObjects(upperResults, ledgerSequence, limit);
 
+    auto lower = (ledgerSequence >> 8) << 8;
+    auto [lowerComplete, lowerResults] = getBooks(lower);
+
+    assert(lowerComplete);
+
+    std::vector<bookKeyPair> pairs;
+    pairs.reserve(upperResults.size() + lowerResults.size());
+    std::merge(upperResults.begin(), upperResults.end(),
+               lowerResults.begin(), lowerResults.end(),
+               std::back_inserter(pairs), 
+               [](bookKeyPair pair1, bookKeyPair pair2) -> bool
+               {
+                   return pair1.first < pair2.first;
+               });
+
+    return fetchObjects(pairs, ledgerSequence, limit);
 }
 
 std::vector<TransactionAndMetadata>
