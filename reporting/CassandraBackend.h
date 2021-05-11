@@ -1014,14 +1014,14 @@ public:
     bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence,
+        KeyIndex const& index,
         bool isAsync = false) const;
     bool
     writeBooks(
         std::unordered_map<
             ripple::uint256,
             std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence,
+        BookIndex const& index,
         bool isAsync = false) const override;
     BookOffersPage
     fetchBookOffers(

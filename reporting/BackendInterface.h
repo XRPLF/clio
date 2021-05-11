@@ -53,6 +53,19 @@ struct LedgerRange
     uint32_t maxSequence;
 };
 
+// The below two structs exist to prevent developers from accidentally mixing up
+// the two indexes.
+struct BookIndex
+{
+    uint32_t bookIndex;
+    explicit BookIndex(uint32_t v) : bookIndex(v){};
+};
+struct KeyIndex
+{
+    uint32_t keyIndex;
+    explicit KeyIndex(uint32_t v) : keyIndex(v){};
+};
+
 class DatabaseTimeout : public std::exception
 {
     const char*
@@ -148,26 +161,33 @@ public:
     {
         return keyShift_;
     }
-    uint32_t
+    KeyIndex
     getKeyIndexOfSeq(uint32_t seq) const
     {
         if (isKeyFlagLedger(seq))
-            return seq;
+            return KeyIndex{seq};
         auto incr = (1 << keyShift_);
-        return (seq >> keyShift_ << keyShift_) + incr;
+        KeyIndex index{(seq >> keyShift_ << keyShift_) + incr};
+        assert(isKeyFlagLedger(index.keyIndex));
+        return index;
     }
     bool
     isKeyFlagLedger(uint32_t ledgerSequence) const
     {
         return (ledgerSequence % (1 << keyShift_)) == 0;
     }
-    uint32_t
+    BookIndex
     getBookIndexOfSeq(uint32_t seq) const
     {
         if (isBookFlagLedger(seq))
-            return seq;
+            return BookIndex{seq};
         auto incr = (1 << bookShift_);
-        return (seq >> bookShift_ << bookShift_) + incr;
+        BookIndex index{(seq >> bookShift_ << bookShift_) + incr};
+        assert(isBookFlagLedger(index.bookIndex));
+        assert(
+            bookShift_ == keyShift_ || !isKeyFlagLedger(index.bookIndex) ||
+            !isKeyFlagLedger(index.bookIndex + incr));
+        return index;
     }
     bool
     isBookFlagLedger(uint32_t ledgerSequence) const
@@ -193,28 +213,28 @@ public:
         return indexer_;
     }
 
-    std::optional<uint32_t>
+    std::optional<KeyIndex>
     getKeyIndexOfSeq(uint32_t seq) const
     {
         if (indexer_.isKeyFlagLedger(seq))
-            return seq;
+            return KeyIndex{seq};
         auto rng = fetchLedgerRange();
         if (!rng)
             return {};
         if (rng->minSequence == seq)
-            return seq;
+            return KeyIndex{seq};
         return indexer_.getKeyIndexOfSeq(seq);
     }
-    std::optional<uint32_t>
+    std::optional<BookIndex>
     getBookIndexOfSeq(uint32_t seq) const
     {
         if (indexer_.isBookFlagLedger(seq))
-            return seq;
+            return BookIndex{seq};
         auto rng = fetchLedgerRange();
         if (!rng)
             return {};
         if (rng->minSequence == seq)
-            return seq;
+            return BookIndex{seq};
         return indexer_.getBookIndexOfSeq(seq);
     }
 
@@ -225,9 +245,11 @@ public:
         auto commitRes = doFinishWrites();
         if (commitRes)
         {
-            if (indexer_.isBookFlagLedger(ledgerSequence))
+            bool isFirst =
+                fetchLedgerRangeNoThrow()->minSequence == ledgerSequence;
+            if (indexer_.isBookFlagLedger(ledgerSequence) || isFirst)
                 indexer_.writeBookFlagLedgerAsync(ledgerSequence, *this);
-            if (indexer_.isKeyFlagLedger(ledgerSequence))
+            if (indexer_.isKeyFlagLedger(ledgerSequence) || isFirst)
                 indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
         }
         return commitRes;
@@ -381,14 +403,14 @@ public:
     virtual bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence,
+        KeyIndex const& index,
         bool isAsync = false) const = 0;
     virtual bool
     writeBooks(
         std::unordered_map<
             ripple::uint256,
             std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence,
+        BookIndex const& index,
         bool isAsync = false) const = 0;
 
     virtual ~BackendInterface()
