@@ -124,7 +124,6 @@ writeBookFlagLedger(
     std::unordered_map<
         ripple::uint256,
         std::unordered_set<ripple::uint256>> const& books)
-
 {
     uint32_t nextFlag = ((ledgerSequence >> shift << shift) + (1 << shift));
     ripple::uint256 zero = {};
@@ -133,33 +132,12 @@ writeBookFlagLedger(
         << " starting. ledgerSequence = " << std::to_string(ledgerSequence)
         << " nextFlag = " << std::to_string(nextFlag)
         << " books.size() = " << std::to_string(books.size());
-    while (true)
-    {
-        try
-        {
-            auto [objects, curCursor, warning] =
-                backend.fetchBookOffers(zero, nextFlag, 1);
-            if (!warning)
-            {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__ << " flag ledger already written. sequence = "
-                    << std::to_string(ledgerSequence)
-                    << " next flag = " << std::to_string(nextFlag)
-                    << "returning";
-                return;
-            }
-            break;
-        }
-        catch (DatabaseTimeout& t)
-        {
-            ;
-        }
-    }
+
     auto start = std::chrono::system_clock::now();
     backend.writeBooks(books, nextFlag, true);
     backend.writeBooks({{zero, {zero}}}, nextFlag, true);
-
     auto end = std::chrono::system_clock::now();
+
     BOOST_LOG_TRIVIAL(info)
         << __func__
         << " finished. ledgerSequence = " << std::to_string(ledgerSequence)
@@ -448,7 +426,7 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
         << " starting. sequence = " << std::to_string(ledgerSequence);
     bool isFirst = false;
     uint32_t keyIndex = getKeyIndexOfSeq(ledgerSequence);
-    uint32_t bookIndex = getKeyIndexOfSeq(ledgerSequence);
+    uint32_t bookIndex = getBookIndexOfSeq(ledgerSequence);
     auto rng = backend.fetchLedgerRangeNoThrow();
     if (!rng || rng->minSequence == ledgerSequence)
     {
@@ -464,6 +442,7 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
         backend.writeKeys({zero}, ledgerSequence);
         writeBookFlagLedgerAsync(ledgerSequence, backend);
         writeKeyFlagLedgerAsync(ledgerSequence, backend);
+
     }
     keys = {};
     books = {};
@@ -471,5 +450,5 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
         << __func__
         << " finished. sequence = " << std::to_string(ledgerSequence);
 
-}  // namespace Backend
+}  
 }  // namespace Backend
