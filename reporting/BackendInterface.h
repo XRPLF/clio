@@ -399,7 +399,7 @@ public:
     doFinishWrites() const = 0;
 
     virtual bool
-    doOnlineDelete(uint32_t minLedgerToKeep) const = 0;
+    doOnlineDelete(uint32_t numLedgersToKeep) const = 0;
     virtual bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,

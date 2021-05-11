@@ -507,8 +507,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 deleting_ = true;
                 ioContext_.post([this, &range]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
-                    flatMapBackend_->doOnlineDelete(
-                        range->maxSequence - *onlineDeleteInterval_);
+                    flatMapBackend_->doOnlineDelete(*onlineDeleteInterval_);
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
                     deleting_ = false;
                 });

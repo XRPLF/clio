@@ -726,6 +726,87 @@ struct WriteKeyCallbackData
     {
     }
 };
+struct OnlineDeleteCallbackData
+{
+    CassandraBackend const& backend;
+    ripple::uint256 key;
+    uint32_t ledgerSequence;
+    std::vector<unsigned char> object;
+    std::condition_variable& cv;
+    std::atomic_uint32_t& numOutstanding;
+    std::mutex& mtx;
+    uint32_t currentRetries = 0;
+    OnlineDeleteCallbackData(
+        CassandraBackend const& backend,
+        ripple::uint256&& key,
+        uint32_t ledgerSequence,
+        std::vector<unsigned char>&& object,
+        std::condition_variable& cv,
+        std::mutex& mtx,
+        std::atomic_uint32_t& numOutstanding)
+        : backend(backend)
+        , key(std::move(key))
+        , ledgerSequence(ledgerSequence)
+        , object(std::move(object))
+        , cv(cv)
+        , mtx(mtx)
+        , numOutstanding(numOutstanding)
+
+    {
+    }
+};
+void
+onlineDeleteCallback(CassFuture* fut, void* cbData);
+void
+onlineDelete(OnlineDeleteCallbackData& cb)
+{
+    {
+        CassandraStatement statement{
+            cb.backend.getInsertObjectPreparedStatement()};
+        statement.bindBytes(cb.key);
+        statement.bindInt(cb.ledgerSequence);
+        statement.bindBytes(cb.object);
+
+        cb.backend.executeAsyncWrite(statement, onlineDeleteCallback, cb, true);
+    }
+}
+void
+onlineDeleteCallback(CassFuture* fut, void* cbData)
+{
+    OnlineDeleteCallbackData& requestParams =
+        *static_cast<OnlineDeleteCallbackData*>(cbData);
+
+    CassandraBackend const& backend = requestParams.backend;
+    auto rc = cass_future_error_code(fut);
+    if (rc != CASS_OK)
+    {
+        // exponential backoff with a max wait of 2^10 ms (about 1 second)
+        auto wait = std::chrono::milliseconds(
+            lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
+        BOOST_LOG_TRIVIAL(error)
+            << "ERROR!!! Cassandra insert book error: " << rc << ", "
+            << cass_error_desc(rc) << ", retrying in " << wait.count()
+            << " milliseconds";
+        ++requestParams.currentRetries;
+        std::shared_ptr<boost::asio::steady_timer> timer =
+            std::make_shared<boost::asio::steady_timer>(
+                backend.getIOContext(),
+                std::chrono::steady_clock::now() + wait);
+        timer->async_wait(
+            [timer, &requestParams](const boost::system::error_code& error) {
+                onlineDelete(requestParams);
+            });
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(trace) << __func__ << " Successfully inserted a book";
+        {
+            std::lock_guard lck(requestParams.mtx);
+            --requestParams.numOutstanding;
+            requestParams.cv.notify_one();
+        }
+    }
+}
 void
 writeKeyCallback(CassFuture* fut, void* cbData);
 void
@@ -1105,8 +1186,77 @@ CassandraBackend::runIndexer(uint32_t ledgerSequence) const
 bool
 CassandraBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
 {
-    throw std::runtime_error("doOnlineDelete : unimplemented");
-    return false;
+    // calculate TTL
+    // ledgers close roughly every 4 seconds. We double the TTL so that way
+    // there is a window of time to update the database, to prevent unchanging
+    // records from being deleted.
+    auto rng = fetchLedgerRangeNoThrow();
+    if (!rng)
+        return false;
+    uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
+    if (minLedger <= rng->minSequence)
+        return false;
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::vector<std::shared_ptr<OnlineDeleteCallbackData>> cbs;
+    uint32_t concurrentLimit = 10;
+    std::atomic_uint32_t numOutstanding = 0;
+
+    // iterate through latest ledger, updating TTL
+    std::optional<ripple::uint256> cursor;
+    while (true)
+    {
+        try
+        {
+            auto [objects, curCursor, warning] =
+                fetchLedgerPage(cursor, minLedger, 256);
+            if (warning)
+            {
+                BOOST_LOG_TRIVIAL(warning)
+                    << __func__
+                    << " online delete running but flag ledger is not complete";
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                continue;
+            }
+
+            for (auto& obj : objects)
+            {
+                ++numOutstanding;
+                cbs.push_back(std::make_shared<OnlineDeleteCallbackData>(
+                    *this,
+                    std::move(obj.key),
+                    minLedger,
+                    std::move(obj.blob),
+                    cv,
+                    mtx,
+                    numOutstanding));
+
+                onlineDelete(*cbs.back());
+                std::unique_lock<std::mutex> lck(mtx);
+                BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
+                cv.wait(lck, [&numOutstanding, concurrentLimit]() {
+                    return numOutstanding < concurrentLimit;
+                });
+            }
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+            cursor = curCursor;
+            if (!cursor)
+                break;
+        }
+        catch (DatabaseTimeout const& e)
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Database timeout fetching keys";
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });
+    CassandraStatement statement{deleteLedgerRange_};
+    statement.bindInt(minLedger);
+    executeSyncWrite(statement);
+    // update ledger_range
+    return true;
 }
 
 void
@@ -1208,6 +1358,7 @@ CassandraBackend::open(bool readOnly)
     int threads = config_.contains("threads")
         ? config_["threads"].as_int64()
         : std::thread::hardware_concurrency();
+    int ttl = config_.contains("ttl") ? config_["ttl"].as_int64() * 2 : 0;
 
     rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)
@@ -1327,7 +1478,8 @@ CassandraBackend::open(bool readOnly)
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "objects"
               << " ( key blob, sequence bigint, object blob, PRIMARY "
                  "KEY(key, "
-                 "sequence)) WITH CLUSTERING ORDER BY (sequence DESC)";
+                 "sequence)) WITH CLUSTERING ORDER BY (sequence DESC) AND"
+              << " default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1352,7 +1504,8 @@ CassandraBackend::open(bool readOnly)
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
               << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
                  "transaction "
-                 "blob, metadata blob)";
+                 "blob, metadata blob)"
+              << " WITH default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1407,7 +1560,9 @@ CassandraBackend::open(bool readOnly)
                  " hash blob, "
                  "PRIMARY KEY "
                  "(account, seq_idx)) WITH "
-                 "CLUSTERING ORDER BY (seq_idx desc)";
+                 "CLUSTERING ORDER BY (seq_idx desc)"
+              << " AND default_time_to_live = " << ttl;
+
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1419,7 +1574,8 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledgers"
-              << " ( sequence bigint PRIMARY KEY, header blob )";
+              << " ( sequence bigint PRIMARY KEY, header blob )"
+              << " WITH default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1431,7 +1587,8 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledger_hashes"
-              << " (hash blob PRIMARY KEY, sequence bigint)";
+              << " (hash blob PRIMARY KEY, sequence bigint)"
+              << " WITH default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1604,6 +1761,11 @@ CassandraBackend::open(bool readOnly)
               << " set sequence = ? where is_latest = ? if sequence in "
                  "(?,null)";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
+            continue;
+        query = {};
+        query << " update " << tablePrefix << "ledger_range"
+              << " set sequence = ? where is_latest = false";
+        if (!deleteLedgerRange_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

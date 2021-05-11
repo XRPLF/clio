@@ -113,7 +113,7 @@ public:
     doFinishWrites() const override;
 
     bool
-    doOnlineDelete(uint32_t minLedgerToKeep) const override;
+    doOnlineDelete(uint32_t numLedgersToKeep) const override;
     bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,

@@ -874,14 +874,20 @@ PostgresBackend::writeBooks(
     return true;
 }
 bool
-PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
+PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
 {
+    auto rng = fetchLedgerRangeNoThrow();
+    if (!rng)
+        return false;
+    uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
+    if (minLedger <= rng->minSequence)
+        return false;
     uint32_t limit = 2048;
     PgQuery pgQuery(pgPool_);
     {
         std::stringstream sql;
         sql << "DELETE FROM ledgers WHERE ledger_seq < "
-            << std::to_string(minLedgerToKeep);
+            << std::to_string(minLedger);
         auto res = pgQuery(sql.str().data());
         if (res.msg() != "ok")
             throw std::runtime_error("Error deleting from ledgers table");
@@ -892,7 +898,7 @@ PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
     {
         std::stringstream sql;
         sql << "SELECT DISTINCT ON (key) key,ledger_seq,object FROM objects"
-            << " WHERE ledger_seq <= " << std::to_string(minLedgerToKeep);
+            << " WHERE ledger_seq <= " << std::to_string(minLedger);
         if (cursor.size())
             sql << " AND key < \'\\x" << cursor << "\'";
         sql << " ORDER BY key DESC, ledger_seq DESC"
