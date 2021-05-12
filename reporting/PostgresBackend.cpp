@@ -452,7 +452,8 @@ PostgresBackend::fetchBookOffers(
         [this]
         (std::vector<bookKeyPair> const& pairs,
          std::uint32_t sequence,
-         std::uint32_t limit)
+         std::uint32_t limit,
+         std::optional<std::string> warning)
             -> BookOffersPage
     {
         std::vector<ripple::uint256> keys(pairs.size());
@@ -479,13 +480,13 @@ PostgresBackend::fetchBookOffers(
             if(ledgerEntries[i].size() != 0)
             {
                 if (objects.size() == limit)
-                    return {objects, keys[i]};
+                    return {objects, keys[i], warning};
 
                 objects.push_back(LedgerObject{keys[i], ledgerEntries[i]});                    
             }
         }
 
-        return {objects, {}};
+        return {objects, {}, warning};
     };
 
     std::uint32_t bookShift = indexer_.getBookShift();
@@ -499,7 +500,7 @@ PostgresBackend::fetchBookOffers(
     if (upperComplete)
     {
         BOOST_LOG_TRIVIAL(info) << "Upper book page is complete";
-        return fetchObjects(upperResults, ledgerSequence, limit);
+        return fetchObjects(upperResults, ledgerSequence, limit, {});
     }
 
     BOOST_LOG_TRIVIAL(info) << "Upper book page is not complete "
@@ -526,7 +527,8 @@ PostgresBackend::fetchBookOffers(
                    return pair1.first < pair2.first;
                });
 
-    return fetchObjects(pairs, ledgerSequence, limit);
+    std::optional<std::string> warning = "book data may be incomplete";
+    return fetchObjects(pairs, ledgerSequence, limit, warning);
 }
 
 std::vector<TransactionAndMetadata>
