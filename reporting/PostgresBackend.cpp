@@ -884,6 +884,44 @@ PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
         return false;
     uint32_t limit = 2048;
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 0");
+    std::optional<ripple::uint256> cursor;
+    while (true)
+    {
+        try
+        {
+            auto [objects, curCursor, warning] =
+                fetchLedgerPage(cursor, minLedger, 256);
+            if (warning)
+            {
+                BOOST_LOG_TRIVIAL(warning) << __func__
+                                           << " online delete running but "
+                                              "flag ledger is not complete";
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                continue;
+            }
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+            std::stringstream objectsBuffer;
+
+            for (auto& obj : objects)
+            {
+                objectsBuffer << "\\\\x" << ripple::strHex(obj.key) << '\t'
+                              << std::to_string(minLedger) << '\t' << "\\\\x"
+                              << ripple::strHex(obj.blob) << '\n';
+            }
+            pgQuery.bulkInsert("objects", objectsBuffer.str());
+            cursor = curCursor;
+            if (!cursor)
+                break;
+        }
+        catch (DatabaseTimeout const& e)
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Database timeout fetching keys";
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }
+    BOOST_LOG_TRIVIAL(info) << __func__ << " finished inserting into objects";
     {
         std::stringstream sql;
         sql << "DELETE FROM ledgers WHERE ledger_seq < "
@@ -892,90 +930,22 @@ PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
         if (res.msg() != "ok")
             throw std::runtime_error("Error deleting from ledgers table");
     }
-
-    std::string cursor;
-    do
     {
         std::stringstream sql;
-        sql << "SELECT DISTINCT ON (key) key,ledger_seq,object FROM objects"
-            << " WHERE ledger_seq <= " << std::to_string(minLedger);
-        if (cursor.size())
-            sql << " AND key < \'\\x" << cursor << "\'";
-        sql << " ORDER BY key DESC, ledger_seq DESC"
-            << " LIMIT " << std::to_string(limit);
-        BOOST_LOG_TRIVIAL(trace) << __func__ << sql.str();
+        sql << "DELETE FROM keys WHERE ledger_seq < "
+            << std::to_string(minLedger);
         auto res = pgQuery(sql.str().data());
-        BOOST_LOG_TRIVIAL(debug) << __func__ << "Fetched a page";
-        if (size_t numRows = checkResult(res, 3))
-        {
-            std::stringstream deleteSql;
-            std::stringstream deleteOffersSql;
-            deleteSql << "DELETE FROM objects WHERE (";
-            deleteOffersSql << "DELETE FROM books WHERE (";
-            bool firstOffer = true;
-            for (size_t i = 0; i < numRows; ++i)
-            {
-                std::string_view keyView{res.c_str(i, 0) + 2};
-                int64_t sequence = res.asBigInt(i, 1);
-                std::string_view objView{res.c_str(i, 2) + 2};
-                if (i != 0)
-                    deleteSql << " OR ";
-
-                deleteSql << "(key = "
-                          << "\'\\x" << keyView << "\'";
-                if (objView.size() == 0)
-                    deleteSql << " AND ledger_seq <= "
-                              << std::to_string(sequence);
-                else
-                    deleteSql << " AND ledger_seq < "
-                              << std::to_string(sequence);
-                deleteSql << ")";
-                bool deleteOffer = false;
-                if (objView.size())
-                {
-                    deleteOffer = isOfferHex(objView);
-                }
-                else
-                {
-                    // This is rather unelegant. For a deleted object, we
-                    // don't know its type just from the key (or do we?).
-                    // So, we just assume it is an offer and try to delete
-                    // it. The alternative is to read the actual object out
-                    // of the db from before it was deleted. This could
-                    // result in a lot of individual reads though, so we
-                    // chose to just delete
-                    deleteOffer = true;
-                }
-                if (deleteOffer)
-                {
-                    if (!firstOffer)
-                        deleteOffersSql << " OR ";
-                    deleteOffersSql << "( offer_key = "
-                                    << "\'\\x" << keyView << "\')";
-                    firstOffer = false;
-                }
-            }
-            if (numRows == limit)
-                cursor = res.c_str(numRows - 1, 0) + 2;
-            else
-                cursor = {};
-            deleteSql << ")";
-            deleteOffersSql << ")";
-            BOOST_LOG_TRIVIAL(trace) << __func__ << deleteSql.str();
-            res = pgQuery(deleteSql.str().data());
-            if (res.msg() != "ok")
-                throw std::runtime_error("Error deleting from objects table");
-            if (!firstOffer)
-            {
-                BOOST_LOG_TRIVIAL(trace) << __func__ << deleteOffersSql.str();
-                res = pgQuery(deleteOffersSql.str().data());
-                if (res.msg() != "ok")
-                    throw std::runtime_error("Error deleting from books table");
-            }
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << "Deleted a page. Cursor = " << cursor;
-        }
-    } while (cursor.size());
+        if (res.msg() != "ok")
+            throw std::runtime_error("Error deleting from keys table");
+    }
+    {
+        std::stringstream sql;
+        sql << "DELETE FROM books WHERE ledger_seq < "
+            << std::to_string(minLedger);
+        auto res = pgQuery(sql.str().data());
+        if (res.msg() != "ok")
+            throw std::runtime_error("Error deleting from books table");
+    }
     return true;
 }
 

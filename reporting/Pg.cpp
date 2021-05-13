@@ -242,8 +242,10 @@ Pg::bulkInsert(char const* table, std::string const& records)
 {
     // https://www.postgresql.org/docs/12/libpq-copy.html#LIBPQ-COPY-SEND
     assert(conn_.get());
-    static auto copyCmd = boost::format(R"(COPY %s FROM stdin)");
-    auto res = query(boost::str(copyCmd % table).c_str());
+    auto copyCmd = boost::format(R"(COPY %s FROM stdin)");
+    auto formattedCmd = boost::str(copyCmd % table);
+    BOOST_LOG_TRIVIAL(info) << __func__ << " " << formattedCmd;
+    auto res = query(formattedCmd.c_str());
     if (!res || res.status() != PGRES_COPY_IN)
     {
         std::stringstream ss;
@@ -284,7 +286,8 @@ Pg::bulkInsert(char const* table, std::string const& records)
     {
         std::stringstream ss;
         ss << "bulkInsert to " << table
-           << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status;
+           << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status
+           << " message = " << PQerrorMessage(conn_.get());
         disconnect();
         BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
@@ -750,10 +753,11 @@ CREATE TABLE IF NOT EXISTS ledgers (
 
 CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
-    ledger_seq bigint NOT NULL,
-    object bytea,
-    PRIMARY KEY(key, ledger_seq)
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    object bytea
 ) PARTITION BY RANGE (ledger_seq);
+
+CREATE INDEX objects_idx ON objects USING btree(key, ledger_seq);
 
 create table if not exists objects1 partition of objects for values from (0) to (10000000);
 create table if not exists objects2 partition of objects for values from (10000000) to (20000000);
@@ -772,7 +776,7 @@ CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS transactions (
     hash bytea NOT NULL,
-    ledger_seq bigint NOT NULL ,
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     transaction bytea NOT NULL,
     metadata bytea NOT NULL
 ) PARTITION BY RANGE(ledger_seq);
@@ -791,7 +795,7 @@ create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq)
 -- ledger table cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS account_transactions (
     account           bytea  NOT NULL,
-    ledger_seq        bigint NOT NULL ,
+    ledger_seq        bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     transaction_index bigint NOT NULL,
     hash bytea NOT NULL,
     PRIMARY KEY (account, ledger_seq, transaction_index, hash)
@@ -815,7 +819,7 @@ CREATE TABLE IF NOT EXISTS books (
 CREATE INDEX book_idx ON books using btree(ledger_seq, book, offer_key);
 
 CREATE TABLE IF NOT EXISTS keys (
-    ledger_seq bigint NOT NULL,
+    ledger_seq bigint NOT NULL, 
     key bytea NOT NULL
 );
 
