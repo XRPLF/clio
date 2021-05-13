@@ -598,7 +598,7 @@ CassandraBackend::fetchBookOffers(
     auto end = std::chrono::system_clock::now();
     auto duration = ((end - start).count()) / 1000000000.0;
 
-    BOOST_LOG_TRIVIAL(info) << "Book directory fetch took "
+    BOOST_LOG_TRIVIAL(info) << "Book object fetch took "
                             << std::to_string(duration) << " seconds.";
 
     for (size_t i = 0; i < objs.size(); ++i)
