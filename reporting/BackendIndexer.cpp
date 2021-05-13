@@ -159,15 +159,20 @@ BackendIndexer::doBooksRepair(
     BackendInterface const& backend,
     std::optional<uint32_t> sequence)
 {
+    auto rng = backend.fetchLedgerRangeNoThrow();
+
+    if (!rng)
+        return;
+
     if (!sequence)
-    {
-        auto rng = backend.fetchLedgerRangeNoThrow();
-        if (!rng)
-            return;
         sequence = rng->maxSequence;
-    }
+
+    if(sequence < rng->minSequence)
+        sequence = rng->minSequence;
+
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " sequence = " << std::to_string(*sequence);
+        
     ripple::uint256 zero = {};
     while (true)
     {
@@ -232,13 +237,16 @@ BackendIndexer::doKeysRepair(
     BackendInterface const& backend,
     std::optional<uint32_t> sequence)
 {
+    auto rng = backend.fetchLedgerRangeNoThrow();
+
+    if (!rng)
+        return;
+
     if (!sequence)
-    {
-        auto rng = backend.fetchLedgerRangeNoThrow();
-        if (!rng)
-            return;
         sequence = rng->maxSequence;
-    }
+
+    if(sequence < rng->minSequence)
+        sequence = rng->minSequence;
 
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " sequence = " << std::to_string(*sequence);
