@@ -20,93 +20,12 @@
 #ifndef RIPPLE_APP_REPORTING_P2PPROXY_H_INCLUDED
 #define RIPPLE_APP_REPORTING_P2PPROXY_H_INCLUDED
 
-#include <boost/beast/websocket.hpp>
-
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
-
-namespace ripple {
-/// Forward a JSON request to a p2p node and return the response
-/// @param context context of the request
-/// @return response from p2p node
-Json::Value
-forwardToP2p(RPC::JsonContext& context);
+#include <boost/json.hpp>
 
 /// Whether a request should be forwarded, based on request parameters
-/// @param context context of the request
+/// @param request request json
 /// @return true if should be forwarded
 bool
-shouldForwardToP2p(RPC::JsonContext& context);
+shouldForwardToP2p(boost::json::object const& request);
 
-template <class Request>
-bool
-needCurrentOrClosed(Request& request)
-{
-    // These are the only gRPC requests that specify a ledger
-    if constexpr (
-        std::is_same<Request, org::xrpl::rpc::v1::GetAccountInfoRequest>::
-            value ||
-        std::is_same<Request, org::xrpl::rpc::v1::GetLedgerRequest>::value ||
-        std::is_same<Request, org::xrpl::rpc::v1::GetLedgerDataRequest>::
-            value ||
-        std::is_same<Request, org::xrpl::rpc::v1::GetLedgerEntryRequest>::value)
-    {
-        if (request.ledger().ledger_case() ==
-            org::xrpl::rpc::v1::LedgerSpecifier::LedgerCase::kShortcut)
-        {
-            if (request.ledger().shortcut() !=
-                    org::xrpl::rpc::v1::LedgerSpecifier::SHORTCUT_VALIDATED &&
-                request.ledger().shortcut() !=
-                    org::xrpl::rpc::v1::LedgerSpecifier::SHORTCUT_UNSPECIFIED)
-                return true;
-        }
-    }
-    // GetLedgerDiff specifies two ledgers
-    else if constexpr (std::is_same<
-                           Request,
-                           org::xrpl::rpc::v1::GetLedgerDiffRequest>::value)
-    {
-        auto help = [](auto specifier) {
-            if (specifier.ledger_case() ==
-                org::xrpl::rpc::v1::LedgerSpecifier::LedgerCase::kShortcut)
-            {
-                if (specifier.shortcut() !=
-                        org::xrpl::rpc::v1::LedgerSpecifier::
-                            SHORTCUT_VALIDATED &&
-                    specifier.shortcut() !=
-                        org::xrpl::rpc::v1::LedgerSpecifier::
-                            SHORTCUT_UNSPECIFIED)
-                    return true;
-            }
-            return false;
-        };
-        return help(request.base_ledger()) || help(request.desired_ledger());
-    }
-    return false;
-}
-
-/// Whether a request should be forwarded, based on request parameters
-/// @param context context of the request
-/// @condition required condition for the request
-/// @return true if should be forwarded
-template <class Request>
-bool
-shouldForwardToP2p(RPC::GRPCContext<Request>& context, RPC::Condition condition)
-{
-    if (!context.app.config().reporting())
-        return false;
-    if (condition == RPC::NEEDS_CURRENT_LEDGER ||
-        condition == RPC::NEEDS_CLOSED_LEDGER)
-        return true;
-
-    return needCurrentOrClosed(context.params);
-}
-
-/// Get stub used to forward gRPC requests to a p2p node
-/// @param context context of the request
-/// @return stub to forward requests
-std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-getP2pForwardingStub(RPC::Context& context);
-
-}  // namespace ripple
 #endif

@@ -18,43 +18,22 @@
 //==============================================================================
 
 #include <boost/json.hpp>
-#include <reporting/ReportingETL.h>
-
-namespace ripple {
-
-boost::json::object
-forwardToP2p(boost::json::object const& request, ReportingETL& etl)
-{
-    return etl.getETLLoadBalancer().forwardToP2p(request);
-}
-
-std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-getP2pForwardingStub(ReportingETL& etl)
-{
-    return etl
-        .getETLLoadBalancer()
-        .getP2pForwardingStub();
-}
+#include <reporting/server/session.h>
 
 // We only forward requests where ledger_index is "current" or "closed"
 // otherwise, attempt to handle here
 bool
 shouldForwardToP2p(boost::json::object const& request)
 {
+    if(request.contains("forward") && request.at("forward").is_bool())
+        return request.at("forward").as_bool();
+
     std::string strCommand = request.contains("command")
         ? request.at("command").as_string().c_str()
         : request.at("method").as_string().c_str();
 
-    BOOST_LOG_TRIVIAL(info) << "COMMAND:" << strCommand;
-    BOOST_LOG_TRIVIAL(info) << "REQUEST:" << request;
-
-    auto handler = forwardCommands.find(strCommand) != forwardCommands.end();
-    if (!handler)
-    {
-        BOOST_LOG_TRIVIAL(error) 
-            << "Error getting handler. command = " << strCommand;
-        return false;
-    }
+    if (forwardCommands.find(strCommand) != forwardCommands.end())
+        return true;
 
     if (request.contains("ledger_index"))
     {
@@ -66,7 +45,5 @@ shouldForwardToP2p(boost::json::object const& request)
         }
     }
 
-    return true;
+    return false;
 }
-
-}  // namespace ripple

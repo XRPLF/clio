@@ -1,4 +1,5 @@
 #include <reporting/server/session.h>
+#include <reporting/P2pProxy.h>
 
 void
 fail(boost::beast::error_code ec, char const* what)
@@ -17,7 +18,7 @@ buildResponse(
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
 
-    if (forwardCommands.find(command) != forwardCommands.end())
+    if (shouldForwardToP2p(request))
         return etl.getETLLoadBalancer().forwardToP2p(request);
 
     switch (commandMap[command])
