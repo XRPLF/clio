@@ -252,7 +252,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
         }
 
         publishStrand_.post([this, &ledger]() {
-            this->publishLedger(*ledger);
+            publishLedger(*ledger);
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
                 << "Published ledger. " << ledger->seq;

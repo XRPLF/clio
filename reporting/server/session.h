@@ -63,6 +63,10 @@ doLedgerData(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
+doLedger(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
 doSubscribe(
     boost::json::object const& request,
     std::shared_ptr<session>& session,

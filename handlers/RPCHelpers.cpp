@@ -47,25 +47,15 @@ std::pair<
     std::shared_ptr<ripple::TxMeta const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
 {
-    std::pair<
-        std::shared_ptr<ripple::STTx const>,
-        std::shared_ptr<ripple::TxMeta const>>
-        result;
-    {
-        ripple::SerialIter s{
-            blobs.transaction.data(), blobs.transaction.size()};
-        result.first = std::make_shared<ripple::STTx const>(s);
-    }
-    {
-        // ripple::Blob{blobs.metadata.data(), blobs.metadata.size()};
+    auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
-        result.second =
-            std::make_shared<ripple::TxMeta const>(
-                result.first->getTransactionID(),
-                seq,
-                blobs.metadata);
-    }
-    return result;
+    std::shared_ptr<ripple::TxMeta> m = 
+        std::make_shared<ripple::TxMeta>(
+            tx->getTransactionID(),
+            seq,
+            *meta);
+
+    return {tx, m};
 }
 
 boost::json::object

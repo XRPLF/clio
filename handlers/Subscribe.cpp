@@ -1,5 +1,6 @@
 #include <boost/json.hpp>
 #include <reporting/server/session.h>
+#include <handlers/RPCHelpers.h>
 
 static std::unordered_set<std::string> validStreams { 
     "ledger",
@@ -93,12 +94,12 @@ validateAccounts(boost::json::object const& request)
         }
 
         std::string s = account.as_string().c_str();
-        auto id = ripple::parseBase58<ripple::AccountID>(s);
+        auto id = accountFromStringStrict(s);
 
         if (!id)
         {
             return boost::json::string("invalid account " + s);
-        }
+        }   
     }
 
     return nullptr;
@@ -116,7 +117,7 @@ subscribeToAccounts(
     {
         std::string s = account.as_string().c_str();
 
-        auto accountID = ripple::parseBase58<ripple::AccountID>(s);
+        auto accountID = accountFromStringStrict(s);
 
         if(!accountID)
         {
@@ -140,7 +141,7 @@ unsubscribeToAccounts(
     {
         std::string s = account.as_string().c_str();
 
-        auto accountID = ripple::parseBase58<ripple::AccountID>(s);
+        auto accountID = accountFromStringStrict(s);
 
         if(!accountID)
         {

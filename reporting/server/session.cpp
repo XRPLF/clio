@@ -27,6 +27,7 @@ buildResponse(
             return doBookOffers(request, backend);
             break;
         case ledger:
+            return doLedger(request, backend);
             break;
         case ledger_data:
             return doLedgerData(request, backend);
