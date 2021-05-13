@@ -237,24 +237,6 @@ doBookOffers(
             return response;
         }
 
-        boost::optional<ripple::AccountID> takerID;
-        if (request.contains("taker"))
-        {
-            if (!request.at("taker").is_string())
-            {
-                response["error"] = "taker should be string";
-                return response;
-            }
-
-            takerID = ripple::parseBase58<ripple::AccountID>(
-                request.at("taker").as_string().c_str());
-            if (!takerID)
-            {
-                response["error"] = "Invalid taker";
-                return response;
-            }
-        }
-
         if (pay_currency == get_currency && pay_issuer == get_issuer)
         {
             response["error"] = "Bad market";
@@ -270,6 +252,24 @@ doBookOffers(
     if (request.contains("limit") and
         request.at("limit").kind() == boost::json::kind::int64)
         limit = request.at("limit").as_int64();
+
+    std::optional<ripple::AccountID> takerID = {};
+    if (request.contains("taker"))
+    {
+        if (!request.at("taker").is_string())
+        {
+            response["error"] = "Taker account must be string";
+            return response;
+        }
+
+        takerID = 
+            accountFromStringStrict(request.at("taker").as_string().c_str());
+        if (!takerID)
+        {
+            response["error"] = "Invalid taker account";
+            return response;
+        }
+    }
 
     std::optional<ripple::uint256> cursor;
     if (request.contains("cursor"))
@@ -293,29 +293,23 @@ doBookOffers(
     boost::json::array& jsonOffers = response.at("offers").as_array();
 
     start = std::chrono::system_clock::now();
-    std::transform(
-        std::move_iterator(offers.begin()),
-        std::move_iterator(offers.end()),
-        std::back_inserter(jsonOffers),
-        [](auto&& obj) {
-            try
-            {
-                ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
-                ripple::SLE offer{it, obj.key};
-                ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+    for (auto const& obj : offers)
+    {
+        if (jsonOffers.size() == limit)
+            break;
 
-                boost::json::object offerJson = getJson(offer);
-                offerJson["quality"] = ripple::amountFromQuality(getQuality(bookDir)).getText();
-                return offerJson;
-            }
-            catch (std::exception const& e)
-            {
-                boost::json::object empty;
-                empty["missing_key"] = ripple::strHex(obj.key);
-                empty["data"] = ripple::strHex(obj.blob);
-                return empty;
-            }
-        });
+        try
+        {
+            ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
+            ripple::SLE offer{it, obj.key};
+            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+
+            boost::json::object offerJson = getJson(offer);
+            offerJson["quality"] = ripple::amountFromQuality(getQuality(bookDir)).getText();
+            jsonOffers.push_back(offerJson);
+        }
+        catch (std::exception const& e) {}
+    }
 
     end = std::chrono::system_clock::now();
 

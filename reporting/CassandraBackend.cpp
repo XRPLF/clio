@@ -604,12 +604,7 @@ CassandraBackend::fetchBookOffers(
     for (size_t i = 0; i < objs.size(); ++i)
     {
         if (objs[i].size() != 0)
-        {
-            if (results.size() == limit)
-                return {results, keys[i], warning}; 
-
             results.push_back({keys[i], objs[i]});
-        }
     }
 
     return {results, {}, warning}; 

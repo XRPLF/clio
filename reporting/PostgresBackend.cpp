@@ -478,12 +478,7 @@ PostgresBackend::fetchBookOffers(
         for (auto i = 0; i < ledgerEntries.size(); ++i)
         {
             if(ledgerEntries[i].size() != 0)
-            {
-                if (objects.size() == limit)
-                    return {objects, keys[i], warning};
-
                 objects.push_back(LedgerObject{keys[i], ledgerEntries[i]});                    
-            }
         }
 
         return {objects, {}, warning};
