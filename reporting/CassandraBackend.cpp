@@ -1559,7 +1559,7 @@ CassandraBackend::open(bool readOnly)
         query.str("");
         query << "SELECT * FROM " << tablePrefix << "books "
               << "WHERE book = "
-              << "0x" << ripple::strHex(ripple::uint256(beast::zero))
+              << "0x000000000000000000000000000000000000000000000000"
               << " AND sequence = ?"; 
         if (!completeBook_.prepareStatement(query, session_.get()))
             continue;

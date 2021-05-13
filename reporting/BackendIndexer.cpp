@@ -239,8 +239,10 @@ BackendIndexer::doKeysRepair(
             return;
         sequence = rng->maxSequence;
     }
+
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " sequence = " << std::to_string(*sequence);
+
     std::optional<ripple::uint256> cursor;
     while (true)
     {
