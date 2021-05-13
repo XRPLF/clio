@@ -497,7 +497,7 @@ CassandraBackend::fetchLedgerObjects(
 BookOffersPage
 CassandraBackend::fetchBookOffers(
     ripple::uint256 const& book,
-    uint32_t sequence,
+    uint32_t ledgerSequence,
     std::uint32_t limit,
     std::optional<ripple::uint256> const& cursor) const
 {
@@ -506,53 +506,41 @@ CassandraBackend::fetchBookOffers(
     if(!rng)
         return {{},{}};
 
-    uint32_t upper = sequence;
-    auto lastPage = rng->maxSequence - (rng->maxSequence % 256);
-
-    auto readBooks = [this](
-            ripple::uint256 const& book, 
-            std::uint32_t seq,
-            std::optional<ripple::uint256> const& cursor) 
-            -> std::vector<std::pair<std::uint64_t, ripple::uint256>>
+    auto readBooks = [this, &book](std::uint32_t sequence) 
+            -> std::pair<bool, std::vector<std::pair<std::uint64_t, ripple::uint256>>>
     {
-        CassandraStatement statement{this->selectBook_};
+        CassandraStatement completeQuery{completeBook_};
+        completeQuery.bindInt(sequence);
+        CassandraResult completeResult = executeSyncRead(completeQuery);
+        bool complete = completeResult.hasResult();
+
+        CassandraStatement statement{selectBook_};
         std::vector<std::pair<std::uint64_t, ripple::uint256>> keys = {};
     
         statement.bindBytes(book.data(), 24);
-        statement.bindInt(seq);
+        statement.bindInt(sequence);
 
-        BOOST_LOG_TRIVIAL(info) << __func__ << " upper = " << std::to_string(seq)
+        BOOST_LOG_TRIVIAL(info) << __func__ << " upper = " << std::to_string(sequence)
                                 << " book = " << ripple::strHex(std::string((char*)book.data(), 24));
 
-        if (cursor)
-        {
-            auto object = this->fetchLedgerObject(*cursor, seq);
+        ripple::uint256 zero = beast::zero;
+        statement.bindBytes(zero.data(), 8);
+        statement.bindBytes(zero);
 
-            if(!object)
-                return {{}, {}};
+        auto start = std::chrono::system_clock::now();
 
-            ripple::SerialIter it{object->data(), object->size()};
-            ripple::SLE offer{it, *cursor};
-            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+        CassandraResult result = executeSyncRead(statement);
 
-            statement.bindBytes(bookDir.data() + 24, 8);
-            statement.bindBytes(*cursor);
-        }
-        else
-        {
-            ripple::uint256 zero = beast::zero;
-            statement.bindBytes(zero.data(), 8);
-            statement.bindBytes(zero);
-        }
+        auto end = std::chrono::system_clock::now();
+        auto duration = ((end - start).count()) / 1000000000.0;
 
-        // statement.bindUInt(limit);
-        CassandraResult result = this->executeSyncRead(statement);
+        BOOST_LOG_TRIVIAL(info) << "Book directory fetch took "
+                                << std::to_string(duration) << " seconds.";
 
         BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
         if (!result)
         {
-            std::cout << "could not sync read" << std::endl;
-            return {{}, {}};
+            return {false, {{}, {}}};
         }
 
         do
@@ -564,43 +552,36 @@ CassandraBackend::fetchBookOffers(
 
         } while (result.nextRow());
 
-        return keys;
+        return {complete, keys};
     };
 
-    std::vector<std::pair<std::uint64_t, ripple::uint256>> quality_keys;
-    if (sequence != rng->minSequence)
-    {
-        upper = (sequence >> 8) << 8;
-        if (upper != sequence)
-            upper += (1 << 8);
-
-        quality_keys = readBooks(book, upper, cursor);
-    }
+    auto upper = indexer_.getBookIndexOfSeq(ledgerSequence);
+    auto [complete, quality_keys] = readBooks(upper);
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " - populated keys. num keys = " << quality_keys.size();
 
-    std::cout << "KEYS SIZE: " << quality_keys.size() << std::endl;
-    if (!quality_keys.size())
-        return {{}, {}};
-
     std::optional<std::string> warning = {};
-    if (quality_keys[0].second.isZero())
+    if (!complete)
     {
         warning = "Data may be incomplete";
+        BOOST_LOG_TRIVIAL(info) << "May be incomplete. Fetching other page";
 
-        std::uint32_t lower = (sequence >> 8) << 8;
+        auto bookShift = indexer_.getBookShift();
+        std::uint32_t lower = upper - (1 << bookShift);
         auto originalKeys = std::move(quality_keys);
-        auto otherKeys = readBooks(book, lower, cursor);
-        quality_keys.reserve(originalKeys.size() + otherKeys.size());
+        auto [lowerComplete, otherKeys] = readBooks(lower);
 
+        assert(lowerComplete);
+
+        quality_keys.reserve(originalKeys.size() + otherKeys.size());
         std::merge(originalKeys.begin(), originalKeys.end(),
-                          otherKeys.begin(), otherKeys.end(),
-                          std::back_inserter(quality_keys),
-                          [](auto pair1, auto pair2) 
-                          {
-                              return pair1.first < pair2.first;
-                          });
+                   otherKeys.begin(), otherKeys.end(),
+                   std::back_inserter(quality_keys),
+                   [](auto pair1, auto pair2) 
+                   {
+                        return pair1.first < pair2.first;
+                   });
     }
 
     std::vector<ripple::uint256> keys(quality_keys.size());
@@ -609,7 +590,16 @@ CassandraBackend::fetchBookOffers(
                    [](auto pair) { return pair.second; });
 
     std::vector<LedgerObject> results;
-    std::vector<Blob> objs = fetchLedgerObjects(keys, sequence);
+
+    auto start = std::chrono::system_clock::now();
+
+    std::vector<Blob> objs = fetchLedgerObjects(keys, ledgerSequence);
+
+    auto end = std::chrono::system_clock::now();
+    auto duration = ((end - start).count()) / 1000000000.0;
+
+    BOOST_LOG_TRIVIAL(info) << "Book directory fetch took "
+                            << std::to_string(duration) << " seconds.";
 
     for (size_t i = 0; i < objs.size(); ++i)
     {
@@ -1116,7 +1106,6 @@ CassandraBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
 void
 CassandraBackend::open(bool readOnly)
 {
-    std::cout << config_ << std::endl;
     auto getString = [this](std::string const& field) -> std::string {
         if (config_.contains(field))
         {
@@ -1566,6 +1555,15 @@ CassandraBackend::open(bool readOnly)
                  " ORDER BY quality_key ASC";
         if (!selectBook_.prepareStatement(query, session_.get()))
             continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "books "
+              << "WHERE book = "
+              << "0x" << ripple::strHex(ripple::uint256(beast::zero))
+              << " AND sequence = ?"; 
+        if (!completeBook_.prepareStatement(query, session_.get()))
+            continue;
+
 
         query.str("");
         query << " INSERT INTO " << tablePrefix << "account_tx"

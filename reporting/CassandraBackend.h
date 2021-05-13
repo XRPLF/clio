@@ -640,6 +640,7 @@ private:
     CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement getBook_;
     CassandraPreparedStatement selectBook_;
+    CassandraPreparedStatement completeBook_;
     CassandraPreparedStatement insertBook_;
     CassandraPreparedStatement insertBook2_;
     CassandraPreparedStatement deleteBook_;

@@ -409,7 +409,7 @@ PostgresBackend::fetchBookOffers(
         if (size_t numRows = checkResult(res, 1))
             complete = res.asInt(0, 0) != 0;
         else 
-            return {true, {}};
+            return {false, {}};
 
         sql.str("");
         sql << "SELECT book, offer_key FROM books "
@@ -445,7 +445,7 @@ PostgresBackend::fetchBookOffers(
             return {complete, results};
         }
 
-        return {true, {}};
+        return {complete, {}};
     };
 
     auto fetchObjects = 

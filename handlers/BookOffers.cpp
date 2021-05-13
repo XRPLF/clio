@@ -48,7 +48,6 @@ doBookOffers(
     boost::json::object const& request,
     BackendInterface const& backend)
 {
-    std::cout << "enter" << std::endl;
     boost::json::object response;
 
     auto ledgerSequence = ledgerSequenceFromRequest(request, backend);
