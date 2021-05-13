@@ -456,9 +456,12 @@ PostgresBackend::fetchBookOffers(
          std::optional<std::string> warning)
             -> BookOffersPage
     {
-        std::vector<ripple::uint256> keys(pairs.size());
+        std::vector<ripple::uint256> allKeys(pairs.size());
         for (auto const& pair : pairs)
-            keys.push_back(pair.second);
+            allKeys.push_back(pair.second);
+        
+        auto uniqEnd = std::unique(allKeys.begin(), allKeys.end());
+        std::vector<ripple::uint256> keys{allKeys.begin(), uniqEnd};
 
         auto start = std::chrono::system_clock::now();
 

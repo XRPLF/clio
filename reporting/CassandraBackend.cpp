@@ -574,33 +574,36 @@ CassandraBackend::fetchBookOffers(
 
         assert(lowerComplete);
 
-        quality_keys.reserve(originalKeys.size() + otherKeys.size());
+        std::vector<std::pair<std::uint64_t, ripple::uint256>> merged_keys;
+        merged_keys.reserve(originalKeys.size() + otherKeys.size());
         std::merge(originalKeys.begin(), originalKeys.end(),
                    otherKeys.begin(), otherKeys.end(),
-                   std::back_inserter(quality_keys),
+                   std::back_inserter(merged_keys),
                    [](auto pair1, auto pair2) 
                    {
                         return pair1.first < pair2.first;
                    });
     }
 
-    std::vector<ripple::uint256> keys(quality_keys.size());
+    std::vector<ripple::uint256> merged(quality_keys.size());
     std::transform(quality_keys.begin(), quality_keys.end(),
-                   std::back_inserter(keys),
+                   std::back_inserter(merged),
                    [](auto pair) { return pair.second; });
+    
+    auto uniqEnd = std::unique(merged.begin(), merged.end());
+    std::vector<ripple::uint256> keys{merged.begin(), uniqEnd};
 
-    std::vector<LedgerObject> results;
-
+    std::cout << keys.size() << std::endl;
+    
     auto start = std::chrono::system_clock::now();
-
     std::vector<Blob> objs = fetchLedgerObjects(keys, ledgerSequence);
-
     auto end = std::chrono::system_clock::now();
     auto duration = ((end - start).count()) / 1000000000.0;
 
     BOOST_LOG_TRIVIAL(info) << "Book object fetch took "
                             << std::to_string(duration) << " seconds.";
 
+    std::vector<LedgerObject> results;
     for (size_t i = 0; i < objs.size(); ++i)
     {
         if (objs[i].size() != 0)
