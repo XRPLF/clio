@@ -41,6 +41,23 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
     return result;
 }
 
+
+std::pair<
+    std::shared_ptr<ripple::STTx const>,
+    std::shared_ptr<ripple::TxMeta const>>
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
+{
+    auto [tx, meta] = deserializeTxPlusMeta(blobs);
+
+    std::shared_ptr<ripple::TxMeta> m = 
+        std::make_shared<ripple::TxMeta>(
+            tx->getTransactionID(),
+            seq,
+            *meta);
+
+    return {tx, m};
+}
+
 boost::json::object
 getJson(ripple::STBase const& obj)
 {

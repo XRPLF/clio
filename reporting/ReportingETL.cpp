@@ -196,10 +196,15 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
             continue;
         }
 
+<<<<<<< HEAD
         /*
         publishStrand_.post([this, ledger]() {
             app_.getOPs().pubLedger(ledger);
             setLastPublish();
+=======
+        publishStrand_.post([this, &ledger]() {
+            publishLedger(*ledger);
+>>>>>>> 8e6524b (add doLedger)
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
                 << "Published ledger. " << detail::toString(ledger->info());
