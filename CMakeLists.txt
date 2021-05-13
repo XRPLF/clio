@@ -23,7 +23,7 @@ file (TO_CMAKE_PATH "${BOOST_ROOT}" BOOST_ROOT)
 FIND_PACKAGE( Boost 1.75 COMPONENTS filesystem log log_setup thread system REQUIRED )
 
 add_executable (reporting
-    websocket_server_async.cpp
+    server/websocket_server_async.cpp
 )
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
