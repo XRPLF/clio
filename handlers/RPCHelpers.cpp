@@ -4,11 +4,21 @@
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account)
 {
+    auto blob = ripple::strUnHex(account);
+
+    boost::optional<ripple::PublicKey> publicKey = {};
+    if (blob && ripple::publicKeyType(ripple::makeSlice(*blob)))
+    {
+        publicKey = ripple::PublicKey(
+            ripple::Slice{blob->data(), blob->size()});
+    }
+    else 
+    {
+        publicKey = ripple::parseBase58<ripple::PublicKey>(
+            ripple::TokenType::AccountPublic, account);
+    }
+
     boost::optional<ripple::AccountID> result;
-
-    auto const publicKey = ripple::parseBase58<ripple::PublicKey>(
-        ripple::TokenType::AccountPublic, account);
-
     if (publicKey)
         result = ripple::calcAccountID(*publicKey);
     else
