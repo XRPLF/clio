@@ -44,7 +44,11 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
 
 static std::unordered_set<std::string> forwardCommands{
     "submit",
-    "fee"
+    "submit_multisigned",
+    "fee",
+    "path_find",
+    "ripple_path_find",
+    "manifest"
 };
 
 boost::json::object

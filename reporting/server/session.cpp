@@ -1,4 +1,5 @@
 #include <reporting/server/session.h>
+#include <reporting/P2pProxy.h>
 
 void
 fail(boost::beast::error_code ec, char const* what)
@@ -15,7 +16,7 @@ buildResponse(
     std::string command = request.at("command").as_string().c_str();
     boost::json::object response;
 
-    if (forwardCommands.find(command) != forwardCommands.end())
+    if (shouldForwardToP2p(request))
         return etl.getETLLoadBalancer().forwardToP2p(request);
 
     switch (commandMap[command])
