@@ -47,11 +47,12 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <signal.h>
 
 static void
 noticeReceiver(void* arg, PGresult const* res)
 {
-    BOOST_LOG_TRIVIAL(info) << "server message: " << PQresultErrorMessage(res);
+    BOOST_LOG_TRIVIAL(debug) << "server message: " << PQresultErrorMessage(res);
 }
 
 //-----------------------------------------------------------------------------

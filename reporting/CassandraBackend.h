@@ -483,6 +483,34 @@ public:
         return {first, second};
     }
 
+    std::pair<Blob, Blob>
+    getBytesTuple()
+    {
+        cass_byte_t const* buf;
+        std::size_t bufSize;
+
+        if (!row_)
+            throw std::runtime_error(
+                "CassandraResult::getBytesTuple - no result");
+        CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
+        CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
+        if (!cass_iterator_next(tupleIter))
+            throw std::runtime_error(
+                "CassandraResult::getBytesTuple - failed to iterate tuple");
+        CassValue const* value = cass_iterator_get_value(tupleIter);
+        cass_value_get_bytes(value, &buf, &bufSize);
+        Blob first{buf, buf + bufSize};
+
+        if (!cass_iterator_next(tupleIter))
+            throw std::runtime_error(
+                "CassandraResult::getBytesTuple - failed to iterate tuple");
+        value = cass_iterator_get_value(tupleIter);
+        cass_value_get_bytes(value, &buf, &bufSize);
+        Blob second{buf, buf + bufSize};
+        ++curGetIndex_;
+        return {first, second};
+    }
+
     ~CassandraResult()
     {
         if (result_ != nullptr)
@@ -612,6 +640,7 @@ private:
     CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement getBook_;
     CassandraPreparedStatement selectBook_;
+    CassandraPreparedStatement completeBook_;
     CassandraPreparedStatement insertBook_;
     CassandraPreparedStatement insertBook2_;
     CassandraPreparedStatement deleteBook_;
@@ -1001,51 +1030,6 @@ public:
         std::uint32_t limit,
         std::optional<ripple::uint256> const& cursor) const override;
 
-    std::pair<std::vector<LedgerObject>, std::optional<ripple::uint256>>
-    fetchBookOffers2(
-        ripple::uint256 const& book,
-        uint32_t sequence,
-        std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor) const
-    {
-        CassandraStatement statement{getBook_};
-        statement.bindBytes(book);
-        statement.bindInt(sequence);
-        statement.bindInt(sequence);
-        if (cursor)
-            statement.bindBytes(*cursor);
-        else
-        {
-            ripple::uint256 zero = {};
-            statement.bindBytes(zero);
-        }
-        statement.bindUInt(limit);
-        CassandraResult result = executeSyncRead(statement);
-
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
-        std::vector<ripple::uint256> keys;
-        if (!result)
-            return {{}, {}};
-        do
-        {
-            keys.push_back(result.getUInt256());
-        } while (result.nextRow());
-
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - populated keys. num keys = " << keys.size();
-        if (keys.size())
-        {
-            std::vector<LedgerObject> results;
-            std::vector<Blob> objs = fetchLedgerObjects(keys, sequence);
-            for (size_t i = 0; i < objs.size(); ++i)
-            {
-                results.push_back({keys[i], objs[i]});
-            }
-            return {results, results[results.size() - 1].key};
-        }
-
-        return {{}, {}};
-    }
     bool
     canFetchBatch()
     {

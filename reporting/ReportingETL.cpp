@@ -282,10 +282,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         {
             bookDir =
                 ripple::uint256::fromVoid(obj.book_of_deleted_offer().data());
-            for (size_t i = 0; i < 8; ++i)
-            {
-                bookDir->data()[bookDir->size() - 1 - i] = 0x00;
-            }
         }
 
         assert(not(isCreated and isDeleted));
@@ -331,7 +327,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 std::optional<uint32_t>
 ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 {
-    if (startSequence > finishSequence_)
+    if (finishSequence_ && startSequence > *finishSequence_)
         return {};
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
@@ -408,7 +404,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // ETL mechanism should stop. The other stopping condition is if
             // the entire server is shutting down. This can be detected in a
             // variety of ways. See the comment at the top of the function
-            while (currentSequence <= finishSequence_ &&
+            while ((!finishSequence_ || currentSequence <= *finishSequence_) &&
                    networkValidatedLedgers_.waitUntilValidatedByNetwork(
                        currentSequence) &&
                    !writeConflict && !isStopping())
@@ -446,7 +442,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 
                 transformQueue->push(std::move(fetchResponse));
                 currentSequence += numExtractors;
-                if (currentSequence > finishSequence_)
+                if (finishSequence_ && currentSequence > *finishSequence_)
                     break;
             }
             // empty optional tells the transformer to shut down
