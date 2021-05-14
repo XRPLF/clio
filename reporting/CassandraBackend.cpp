@@ -66,16 +66,6 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
     processAsyncWriteResponse(requestParams, fut, func);
 }
 
-void
-flatMapWriteBookCallback(CassFuture* fut, void* cbData)
-{
-    CassandraBackend::WriteCallbackData& requestParams =
-        *static_cast<CassandraBackend::WriteCallbackData*>(cbData);
-    auto func = [](auto& params, bool retry) {
-        params.backend->writeBook(params, retry);
-    };
-    processAsyncWriteResponse(requestParams, fut, func);
-}
 /*
 
 void
