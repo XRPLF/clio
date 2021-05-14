@@ -502,12 +502,15 @@ CassandraBackend::fetchBookOffers(
     std::optional<ripple::uint256> const& cursor) const
 {
     auto rng = fetchLedgerRange();
+    auto limitTuningFactor = 50;
     
     if(!rng)
         return {{},{}};
 
-    auto readBooks = [this, &book](std::uint32_t sequence) 
-            -> std::pair<bool, std::vector<std::pair<std::uint64_t, ripple::uint256>>>
+    auto readBooks = 
+        [this, &book, &limit, &limitTuningFactor]
+        (std::uint32_t sequence) 
+        -> std::pair<bool, std::vector<std::pair<std::uint64_t, ripple::uint256>>>
     {
         CassandraStatement completeQuery{completeBook_};
         completeQuery.bindInt(sequence);
@@ -526,6 +529,8 @@ CassandraBackend::fetchBookOffers(
         ripple::uint256 zero = beast::zero;
         statement.bindBytes(zero.data(), 8);
         statement.bindBytes(zero);
+
+        statement.bindUInt(limit * limitTuningFactor);
 
         auto start = std::chrono::system_clock::now();
 
@@ -1550,7 +1555,8 @@ CassandraBackend::open(bool readOnly)
         query << "SELECT quality_key FROM " << tablePrefix << "books "
               << " WHERE book = ? AND sequence = ?"
               << " AND quality_key >= (?, ?)"
-                 " ORDER BY quality_key ASC";
+                 " ORDER BY quality_key ASC "
+                 " LIMIT ?";
         if (!selectBook_.prepareStatement(query, session_.get()))
             continue;
 

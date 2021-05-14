@@ -379,6 +379,7 @@ PostgresBackend::fetchBookOffers(
     std::optional<ripple::uint256> const& cursor) const
 {
     auto rng = fetchLedgerRange();
+    auto limitTuningFactor = 50;
 
     if(!rng)
         return {{},{}};
@@ -388,7 +389,9 @@ PostgresBackend::fetchBookOffers(
     ripple::uint256 bookEnd = ripple::getQualityNext(bookBase);
 
     using bookKeyPair = std::pair<ripple::uint256, ripple::uint256>;
-    auto getBooks = [this, &bookBase, &bookEnd, &limit](std::uint32_t sequence)
+    auto getBooks = 
+        [this, &bookBase, &bookEnd, &limit, &limitTuningFactor]
+        (std::uint32_t sequence)
         -> std::pair<bool, std::vector<bookKeyPair>>
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << ": Fetching books between "
@@ -418,7 +421,8 @@ PostgresBackend::fetchBookOffers(
             << "\'\\x" << ripple::strHex(bookBase) << "\' "
             << "AND book < "
             << "\'\\x" << ripple::strHex(bookEnd) << "\' "
-            << "ORDER BY book ASC";
+            << "ORDER BY book ASC "
+            << "LIMIT " << std::to_string(limit * limitTuningFactor);
 
         BOOST_LOG_TRIVIAL(debug) << sql.str();
 
