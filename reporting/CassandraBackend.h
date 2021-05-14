@@ -483,34 +483,6 @@ public:
         return {first, second};
     }
 
-    std::pair<Blob, Blob>
-    getBytesTuple()
-    {
-        cass_byte_t const* buf;
-        std::size_t bufSize;
-
-        if (!row_)
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - no result");
-        CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
-        CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
-        if (!cass_iterator_next(tupleIter))
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - failed to iterate tuple");
-        CassValue const* value = cass_iterator_get_value(tupleIter);
-        cass_value_get_bytes(value, &buf, &bufSize);
-        Blob first{buf, buf + bufSize};
-
-        if (!cass_iterator_next(tupleIter))
-            throw std::runtime_error(
-                "CassandraResult::getBytesTuple - failed to iterate tuple");
-        value = cass_iterator_get_value(tupleIter);
-        cass_value_get_bytes(value, &buf, &bufSize);
-        Blob second{buf, buf + bufSize};
-        ++curGetIndex_;
-        return {first, second};
-    }
-
     ~CassandraResult()
     {
         if (result_ != nullptr)
