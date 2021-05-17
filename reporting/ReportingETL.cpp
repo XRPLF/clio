@@ -719,7 +719,19 @@ ReportingETL::ReportingETL(
     if (config.contains("read_only"))
         readOnly_ = config.at("read_only").as_bool();
     if (config.contains("online_delete"))
-        onlineDeleteInterval_ = config.at("online_delete").as_int64();
+    {
+        int64_t interval = config.at("online_delete").as_int64();
+        uint32_t max = std::numeric_limits<uint32_t>::max();
+        if (interval > max)
+        {
+            std::stringstream msg;
+            msg << "online_delete cannot be greater than "
+                << std::to_string(max);
+            throw std::runtime_error(msg.str());
+        }
+        if (interval > 0)
+            onlineDeleteInterval_ = static_cast<uint32_t>(interval);
+    }
     if (config.contains("extractor_threads"))
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
