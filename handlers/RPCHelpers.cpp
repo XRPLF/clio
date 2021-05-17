@@ -80,3 +80,70 @@ ledgerSequenceFromRequest(
         return request.at("ledger_index").as_int64();
     }
 }
+
+std::optional<ripple::uint256>
+traverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::AccountID const& accountID,
+    std::uint32_t sequence,
+    ripple::uint256 const& cursor,
+    std::function<bool(ripple::SLE)> atOwnedNode)
+{
+    auto const rootIndex = ripple::keylet::ownerDir(accountID);
+    auto currentIndex = rootIndex;
+
+    std::vector<ripple::uint256> keys;
+    std::optional<ripple::uint256> nextCursor = {};
+
+    auto start = std::chrono::system_clock::now();
+    for (;;)
+    {
+        auto ownedNode =
+            backend.fetchLedgerObject(currentIndex.key, sequence);
+        
+        if (!ownedNode)
+        {
+            throw std::runtime_error("Could not find owned node");
+        }
+
+        ripple::SerialIter it{ownedNode->data(), ownedNode->size()};
+        ripple::SLE dir{it, currentIndex.key};
+
+        for (auto const& key : dir.getFieldV256(ripple::sfIndexes))
+        {
+            if (key >= cursor)
+                keys.push_back(key);
+        }
+
+        auto const uNodeNext = dir.getFieldU64(ripple::sfIndexNext);
+        if (uNodeNext == 0)
+            break;
+
+        currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
+    }
+    auto end = std::chrono::system_clock::now();
+
+    BOOST_LOG_TRIVIAL(debug) << "Time loading owned directories: "
+                               << ((end - start).count() / 1000000000.0);
+
+
+    start = std::chrono::system_clock::now();
+    auto objects = backend.fetchLedgerObjects(keys, sequence);
+    end = std::chrono::system_clock::now();
+
+    BOOST_LOG_TRIVIAL(debug) << "Time loading owned entries: "
+                               << ((end - start).count() / 1000000000.0);
+
+    for (auto i = 0; i < objects.size(); ++i)
+    {
+        ripple::SerialIter it{objects[i].data(), objects[i].size()};
+        ripple::SLE sle(it, keys[i]);
+        if (!atOwnedNode(sle))
+        {
+            nextCursor = keys[i+1];
+            break;
+        }
+    }
+
+    return nextCursor;
+}

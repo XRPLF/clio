@@ -43,7 +43,12 @@ enum RPCCommand {
     ledger_data,
     book_offers,
     ledger_range,
-    ledger_entry
+    ledger_entry,
+    account_channels,
+    account_lines,
+    account_currencies,
+    account_offers,
+    account_objects
 };
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
@@ -53,7 +58,12 @@ std::unordered_map<std::string, RPCCommand> commandMap{
     {"ledger_entry", ledger_entry},
     {"account_info", account_info},
     {"ledger_data", ledger_data},
-    {"book_offers", book_offers}};
+    {"book_offers", book_offers},
+    {"account_channels", account_channels},
+    {"account_lines", account_lines},
+    {"account_currencies", account_currencies},
+    {"account_offers", account_offers},
+    {"account_objects", account_objects}};
 
 boost::json::object
 doAccountInfo(
@@ -81,6 +91,26 @@ boost::json::object
 doLedger(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doLedgerRange(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doAccountChannels(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doAccountLines(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doAccountCurrencies(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doAccountOffers(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doAccountObjects(
     boost::json::object const& request,
     BackendInterface const& backend);
 
@@ -117,6 +147,21 @@ buildResponse(
             break;
         case book_offers:
             return doBookOffers(request, backend);
+            break;
+        case account_channels:
+            return doAccountChannels(request, backend);
+            break;
+        case account_lines:
+            return doAccountLines(request, backend);
+            break;
+        case account_currencies:
+            return doAccountCurrencies(request, backend);
+            break;
+        case account_offers:
+            return doAccountOffers(request, backend);
+            break;
+        case account_objects:
+            return doAccountObjects(request, backend);
             break;
         default:
             BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;

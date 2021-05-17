@@ -70,7 +70,12 @@ target_sources(reporting PRIVATE
     handlers/BookOffers.cpp
     handlers/LedgerRange.cpp
     handlers/Ledger.cpp
-    handlers/LedgerEntry.cpp)
+    handlers/LedgerEntry.cpp
+    handlers/AccountChannels.cpp
+    handlers/AccountLines.cpp
+    handlers/AccountCurrencies.cpp
+    handlers/AccountOffers.cpp
+    handlers/AccountObjects.cpp)
 
 
 message(${Boost_LIBRARIES})
