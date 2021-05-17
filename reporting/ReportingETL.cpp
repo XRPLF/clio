@@ -387,7 +387,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     {
         auto transformQueue = std::make_shared<QueueType>(maxQueueSize);
         queues.push_back(transformQueue);
-        std::cout << "added to queues" << std::endl;
 
         extractors.emplace_back([this,
                                  &startSequence,
