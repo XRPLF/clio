@@ -1477,11 +1477,6 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "books"
-              << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
-        if (!insertBook_.prepareStatement(query, session_.get()))
-            continue;
-        query.str("");
-        query << "INSERT INTO " << tablePrefix << "books"
               << " (book, sequence, quality_key) VALUES (?, ?, (?, ?))";
         if (!insertBook2_.prepareStatement(query, session_.get()))
             continue;
@@ -1547,7 +1542,7 @@ CassandraBackend::open(bool readOnly)
               << " ALLOW FILTERING";
         if (!upperBound2_.prepareStatement(query, session_.get()))
             continue;
-        */
+    */
         query.str("");
         query << "SELECT TOKEN(key) FROM " << tablePrefix << "objects "
               << " WHERE key = ? LIMIT 1";
