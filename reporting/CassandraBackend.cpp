@@ -1346,10 +1346,10 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
-              << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
-                 "transaction "
-                 "blob, metadata blob)";
+        query
+            << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
+            << " ( hash blob PRIMARY KEY, ledger_sequence bigint, transaction "
+               "blob, metadata blob)";
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1383,7 +1383,6 @@ CassandraBackend::open(bool readOnly)
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
-
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
               << " ( book blob, sequence bigint, quality_key tuple<blob, blob>, PRIMARY KEY "
@@ -1478,6 +1477,11 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "books"
+              << " (book, key, sequence, deleted_at) VALUES (?, ?, ?, ?)";
+        if (!insertBook_.prepareStatement(query, session_.get()))
+            continue;
+        query.str("");
+        query << "INSERT INTO " << tablePrefix << "books"
               << " (book, sequence, quality_key) VALUES (?, ?, (?, ?))";
         if (!insertBook2_.prepareStatement(query, session_.get()))
             continue;
@@ -1543,7 +1547,7 @@ CassandraBackend::open(bool readOnly)
               << " ALLOW FILTERING";
         if (!upperBound2_.prepareStatement(query, session_.get()))
             continue;
-    */
+        */
         query.str("");
         query << "SELECT TOKEN(key) FROM " << tablePrefix << "objects "
               << " WHERE key = ? LIMIT 1";

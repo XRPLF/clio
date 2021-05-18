@@ -6,6 +6,7 @@
 #include <ripple/protocol/STTx.h>
 #include <boost/json.hpp>
 #include <reporting/BackendInterface.h>
+
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
@@ -32,5 +33,9 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     ripple::uint256 const& cursor,
     std::function<bool(ripple::SLE)> atOwnedNode);
+std::pair<ripple::PublicKey, ripple::SecretKey>
+keypairFromRequst(
+    boost::json::object const& request,
+    boost::json::value& error);
 
 #endif

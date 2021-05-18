@@ -76,6 +76,8 @@ target_sources(reporting PRIVATE
     handlers/AccountCurrencies.cpp
     handlers/AccountOffers.cpp
     handlers/AccountObjects.cpp)
+    handlers/ChannelAuthorize.cpp
+    handlers/ChannelVerify.cpp)
 
 
 message(${Boost_LIBRARIES})
