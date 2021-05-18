@@ -329,6 +329,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 {
     if (finishSequence_ && startSequence > *finishSequence_)
         return {};
+    
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
      * to each other via 2 different thread safe queues and 1 atomic variable.
@@ -386,7 +387,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     {
         auto transformQueue = std::make_shared<QueueType>(maxQueueSize);
         queues.push_back(transformQueue);
-        std::cout << "added to queues";
 
         extractors.emplace_back([this,
                                  &startSequence,
