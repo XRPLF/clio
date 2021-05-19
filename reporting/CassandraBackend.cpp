@@ -1479,8 +1479,36 @@ CassandraBackend::open(bool readOnly)
         {
             std::stringstream ss;
             ss << "nodestore: Error connecting Cassandra session keyspace: "
-               << rc << ", " << cass_error_desc(rc);
+               << rc << ", " << cass_error_desc(rc)
+               << ", trying to create it ourselves";
             BOOST_LOG_TRIVIAL(error) << ss.str();
+            // if the keyspace doesn't exist, try to create it
+            session_.reset(cass_session_new());
+            fut = cass_session_connect(session_.get(), cluster);
+            rc = cass_future_error_code(fut);
+            cass_future_free(fut);
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "nodestore: Error connecting Cassandra session at all: "
+                   << rc << ", " << cass_error_desc(rc);
+                BOOST_LOG_TRIVIAL(error) << ss.str();
+            }
+            else
+            {
+                std::stringstream query;
+                query
+                    << "CREATE KEYSPACE IF NOT EXISTS " << keyspace
+                    << " WITH replication = {'class': 'SimpleStrategy', "
+                       "'replication_factor': '3'}  AND durable_writes = true";
+                if (!executeSimpleStatement(query.str()))
+                    continue;
+                query = {};
+                query << "USE " << keyspace;
+                if (!executeSimpleStatement(query.str()))
+                    continue;
+            }
+
             continue;
         }
 
