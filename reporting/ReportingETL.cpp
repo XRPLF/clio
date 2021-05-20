@@ -762,6 +762,7 @@ ReportingETL::ReportingETL(
     , loadBalancer_(
           config.at("etl_sources").as_array(),
           *flatMapBackend_,
+          *this,
           networkValidatedLedgers_,
           ioc)
 {

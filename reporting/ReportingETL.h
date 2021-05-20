@@ -26,7 +26,6 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
 #include <reporting/BackendInterface.h>
-#include <reporting/ETLHelpers.h>
 #include <reporting/ETLSource.h>
 #include <reporting/server/SubscriptionManager.h>
 #include <reporting/Pg.h>

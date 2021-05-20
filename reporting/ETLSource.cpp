@@ -21,10 +21,13 @@
 
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/asio/strand.hpp>
+#include <boost/beast/http.hpp>
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 #include <boost/log/trivial.hpp>
+#include <ripple/beast/net/IPEndpoint.h>
 #include <reporting/ETLSource.h>
+#include <reporting/ReportingETL.h>
 
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
@@ -32,6 +35,7 @@
 ETLSource::ETLSource(
     boost::json::object const& config,
     BackendInterface& backend,
+    ReportingETL& etl,
     NetworkValidatedLedgers& networkValidatedLedgers,
     boost::asio::io_context& ioContext)
     : ioc_(ioContext)
@@ -39,6 +43,7 @@ ETLSource::ETLSource(
           boost::beast::websocket::stream<boost::beast::tcp_stream>>(
           boost::asio::make_strand(ioc_)))
     , resolver_(boost::asio::make_strand(ioc_))
+    , etl_(etl)
     , timer_(ioc_)
     , networkValidatedLedgers_(networkValidatedLedgers)
     , backend_(backend)
@@ -325,14 +330,10 @@ ETLSource::handleMessage()
         {
             if (response.contains("transaction"))
             {
-                /*
-                if
-                (etl_.getETLLoadBalancer().shouldPropagateTxnStream(this))
+                if (etl_.getETLLoadBalancer().shouldPropagateTxnStream(this))
                 {
-                    etl_.getApplication().getOPs().forwardProposedTransaction(
-                        response);
+                    etl_.getSubscriptionManager().forwardProposedTransaction(response);
                 }
-                */
             }
             else
             {
@@ -579,13 +580,15 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
     BackendInterface& backend,
+    ReportingETL& etl,
     NetworkValidatedLedgers& nwvl,
     boost::asio::io_context& ioContext)
+    : etl_(etl)
 {
     for (auto& entry : config)
     {
         std::unique_ptr<ETLSource> source = std::make_unique<ETLSource>(
-            entry.as_object(), backend, nwvl, ioContext);
+            entry.as_object(), backend, etl, nwvl, ioContext);
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
                                 << sources_.back()->toString();
@@ -643,7 +646,6 @@ ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects)
         return {};
 }
 
-/*
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
 ETLLoadBalancer::getP2pForwardingStub() const
 {
@@ -666,10 +668,10 @@ ETLLoadBalancer::getP2pForwardingStub() const
     return nullptr;
 }
 
-Json::Value
-ETLLoadBalancer::forwardToP2p(RPC::JsonContext& context) const
+boost::json::object
+ETLLoadBalancer::forwardToP2p(boost::json::object const& request) const
 {
-    Json::Value res;
+    boost::json::object res;
     if (sources_.size() == 0)
         return res;
     srand((unsigned)time(0));
@@ -677,8 +679,9 @@ ETLLoadBalancer::forwardToP2p(RPC::JsonContext& context) const
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        res = sources_[sourceIdx]->forwardToP2p(context);
-        if (!res.isMember("forwarded") || res["forwarded"] != true)
+        res = sources_[sourceIdx]->forwardToP2p(request);
+
+        if (!res.contains("forwarded") || res.at("forwarded") != true)
         {
             sourceIdx = (sourceIdx + 1) % sources_.size();
             ++numAttempts;
@@ -686,8 +689,7 @@ ETLLoadBalancer::forwardToP2p(RPC::JsonContext& context) const
         }
         return res;
     }
-    RPC::Status err = {rpcFAILED_TO_FORWARD};
-    err.inject(res);
+    res["error"] = "Failed to forward";
     return res;
 }
 
@@ -712,13 +714,13 @@ ETLSource::getP2pForwardingStub() const
     }
 }
 
-Json::Value
-ETLSource::forwardToP2p(RPC::JsonContext& context) const
+boost::json::object
+ETLSource::forwardToP2p(boost::json::object const& request) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
-                             << "request = " << context.params.toStyledString();
+                             << "request = " << boost::json::serialize(request);
 
-    Json::Value response;
+    boost::json::object response;
     if (!connected_)
     {
         BOOST_LOG_TRIVIAL(error)
@@ -728,9 +730,8 @@ ETLSource::forwardToP2p(RPC::JsonContext& context) const
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
     namespace websocket = beast::websocket;  // from
-    <boost / beast / websocket.hpp> namespace net = boost::asio;  // from
-    <boost / asio.hpp> using tcp = boost::asio::ip::tcp;          // from
-    <boost / asio / ip / tcp.hpp> Json::Value& request = context.params;
+    namespace net = boost::asio;  // from
+    using tcp = boost::asio::ip::tcp;          // from
     try
     {
         // The io_context is required for all I/O
@@ -753,41 +754,45 @@ ETLSource::forwardToP2p(RPC::JsonContext& context) const
         // and to tell rippled to charge the client IP for RPC
         // resources. See "secure_gateway" in
         //
-    https:  // github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
+        // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator(
-            [&context](websocket::request_type& req) {
+            [&request](websocket::request_type& req) {
                 req.set(
                     http::field::user_agent,
                     std::string(BOOST_BEAST_VERSION_STRING) +
                         " websocket-client-coro");
                 req.set(
                     http::field::forwarded,
-                    "for=" + context.consumer.to_string());
+                    "for=" + boost::json::serialize(request));
             }));
         BOOST_LOG_TRIVIAL(debug)
-            << "client ip: " << context.consumer.to_string();
+            << "client ip: " << boost::json::serialize(request);
 
         BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
         // Perform the websocket handshake
         ws->handshake(ip_, "/");
 
-        Json::FastWriter fastWriter;
-
         BOOST_LOG_TRIVIAL(debug) << "Sending request";
         // Send the message
-        ws->write(net::buffer(fastWriter.write(request)));
+        ws->write(net::buffer(boost::json::serialize(request)));
 
         beast::flat_buffer buffer;
         ws->read(buffer);
+        
+        auto begin = static_cast<char const*>(buffer.data().data());
+        auto end = begin + buffer.data().size();
+        auto parsed = 
+            boost::json::parse(std::string(begin, end));
 
-        Json::Reader reader;
-        if (!reader.parse(
-                static_cast<char const*>(buffer.data().data()), response))
+        if (!parsed.is_object())
         {
             BOOST_LOG_TRIVIAL(error) << "Error parsing response";
-            response[jss::error] = "Error parsing response from tx";
+            response["error"] = "Error parsing response from tx";
+            return response;
         }
         BOOST_LOG_TRIVIAL(debug) << "Successfully forward request";
+
+        response = parsed.as_object();
 
         response["forwarded"] = true;
         return response;
@@ -798,7 +803,7 @@ ETLSource::forwardToP2p(RPC::JsonContext& context) const
         return response;
     }
 }
-*/
+
 template <class Func>
 bool
 ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)

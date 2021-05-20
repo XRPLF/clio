@@ -36,19 +36,16 @@ class listener : public std::enable_shared_from_this<listener>
 {
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    BackendInterface const& backend_;
-    SubscriptionManager& subscriptions_;
+    ReportingETL& etl_;
 
 public:
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
-        SubscriptionManager& subs,
-        BackendInterface const& backend)
+        ReportingETL& etl)
         : ioc_(ioc)
         , acceptor_(ioc)
-        , backend_(backend)
-        , subscriptions_(subs)
+        , etl_(etl)
     {
         boost::beast::error_code ec;
 
@@ -113,7 +110,7 @@ private:
         else
         {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket), subscriptions_, backend_)->run();
+            std::make_shared<session>(std::move(socket), etl_)->run();
         }
 
         // Accept another connection

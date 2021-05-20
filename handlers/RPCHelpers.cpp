@@ -57,7 +57,6 @@ std::pair<
     std::shared_ptr<ripple::TxMeta const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
 {
-<<<<<<< HEAD
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
     std::shared_ptr<ripple::TxMeta> m = 
@@ -67,27 +66,6 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_
             *meta);
 
     return {tx, m};
-=======
-    std::pair<
-        std::shared_ptr<ripple::STTx const>,
-        std::shared_ptr<ripple::TxMeta const>>
-        result;
-    {
-        ripple::SerialIter s{
-            blobs.transaction.data(), blobs.transaction.size()};
-        result.first = std::make_shared<ripple::STTx const>(s);
-    }
-    {
-        // ripple::Blob{blobs.metadata.data(), blobs.metadata.size()};
-
-        result.second =
-            std::make_shared<ripple::TxMeta const>(
-                result.first->getTransactionID(),
-                seq,
-                blobs.metadata);
-    }
-    return result;
->>>>>>> 5f429d4 (adds account subscription)
 }
 
 boost::json::object
@@ -218,6 +196,7 @@ traverseOwnedNodes(
 
     return nextCursor;
 }
+
 boost::optional<ripple::Seed>
 parseRippleLibSeed(boost::json::value const& value)
 {
@@ -377,4 +356,28 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
     }
 
     return generateKeyPair(*keyType, *seed);
+}
+
+std::vector<ripple::AccountID>
+getAccountsFromTransaction(boost::json::object const& transaction)
+{
+    std::vector<ripple::AccountID> accounts = {};
+    for (auto const& [key, value] : transaction)
+    {
+        if (value.is_object())
+        {
+            auto inObject = getAccountsFromTransaction(value.as_object());
+            accounts.insert(accounts.end(), inObject.begin(), inObject.end());
+        }
+        else if (value.is_string())
+        {
+            auto account = accountFromStringStrict(value.as_string().c_str());
+            if (account)
+            {
+                accounts.push_back(*account);
+            }
+        }
+    }
+    
+    return accounts;
 }
