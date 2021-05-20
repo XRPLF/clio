@@ -29,6 +29,7 @@
 #include <iostream>
 #include <memory>
 #include <reporting/ReportingETL.h>
+#include <reporting/BackendFactory.h>
 #include <reporting/server/session.h>
 #include <reporting/server/listener.h>
 #include <sstream>
@@ -41,11 +42,9 @@ parse_config(const char* filename)
 {
     try
     {
-        std::cout << "TRYING" << std::endl;
         std::ifstream in(filename, std::ios::in | std::ios::binary);
         if (in)
         {
-            std::cout << "GOT IN" << std::endl;
             std::stringstream contents;
             contents << in.rdbuf();
             in.close();
@@ -97,6 +96,17 @@ initLogLevel(int level)
     }
 }
 
+void
+start(boost::asio::io_context& ioc, std::uint32_t numThreads)
+{
+    std::vector<std::thread> v;
+    v.reserve(numThreads - 1);
+    for (auto i = numThreads - 1; i > 0; --i)
+        v.emplace_back([&ioc] { ioc.run(); });
+
+    ioc.run();
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -131,35 +141,47 @@ main(int argc, char* argv[])
     // The io_context is required for all I/O
     boost::asio::io_context ioc{threads};
     
-    std::shared_ptr<BackendInterface> backend{BackendInterface::makeBackend(config)};
-    std::shared_ptr<SubscriptionManager> subscriptions{SubscriptionManager::makeSubscriptionManager()};
-    std::shared_ptr<NetworkValidatedLedgers> ledgers{NetworkValidatedLedgers::makeValidatedLedgers()};
-    std::shared_ptr<ETLLoadBalancer> = balancer{ETLLoadBalancer::makeETLLoadBalancer(
-        
+    std::shared_ptr<BackendInterface> backend{
+        Backend::make_Backend(*config)
+    };
+
+    std::shared_ptr<SubscriptionManager> subscriptions{
+        SubscriptionManager::make_SubscriptionManager()
+    };
+
+    std::shared_ptr<NetworkValidatedLedgers> ledgers{
+        NetworkValidatedLedgers::make_ValidatedLedgers()
+    };
+
+    std::shared_ptr<ETLLoadBalancer> balancer{ETLLoadBalancer::make_ETLLoadBalancer(
+        *config,
+        ioc,
+        backend,
+        subscriptions,
+        ledgers
     )};
 
-    std::shared_ptr<ReportingETL> etl{ReportingETL::makeReportingETL(
-
+    std::shared_ptr<ReportingETL> etl{ReportingETL::make_ReportingETL(
+        *config,
+        ioc,
+        backend,
+        subscriptions,
+        balancer,
+        ledgers
     )};
 
-
-
-    // Create and launch a listening port
-    std::make_shared<listener>(
+    listener::make_listener(
         ioc,
         boost::asio::ip::tcp::endpoint{address, port},
-        etl)
-        ->run();
+        backend,
+        subscriptions,
+        balancer
+    );
 
-    // Run the I/O service on the requested number of threads
-    std::vector<std::thread> v;
-    v.reserve(threads - 1);
-    for (auto i = threads - 1; i > 0; --i)
-        v.emplace_back([&ioc] { ioc.run(); });
-    std::cout << "created ETL" << std::endl;
-    etl.run();
-    std::cout << "running ETL" << std::endl;
-    ioc.run();
+    // Blocks until stopped.
+    // When stopped, shared_ptrs fall out of scope
+    // Calls destructors on all resources, and destructs in order
+    start(ioc, threads);
 
     return EXIT_SUCCESS;
 }

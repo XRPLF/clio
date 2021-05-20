@@ -46,7 +46,7 @@ class SubscriptionManager
 public:
 
     static std::shared_ptr<SubscriptionManager>
-    makeSubscriptionManager()
+    make_SubscriptionManager()
     {
         return std::make_shared<SubscriptionManager>();
     }

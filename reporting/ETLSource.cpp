@@ -34,11 +34,11 @@
 // Primarly used in read-only mode, to monitor when ledgers are validated
 ETLSource::ETLSource(
     boost::json::object const& config,
+    boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-    boost::asio::io_context& ioContext)
+    ETLLoadBalancer& balancer)
     : ioc_(ioContext)
     , ws_(std::make_unique<
           boost::beast::websocket::stream<boost::beast::tcp_stream>>(
@@ -141,26 +141,14 @@ ETLSource::close(bool startAgain)
                     }
                     closing_ = false;
                     if (startAgain)
-                        start();
+                        run();
                 });
         }
         else if (startAgain)
         {
-            start();
+            run();
         }
     });
-}
-
-void
-ETLSource::start()
-{
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << toString();
-
-    auto const host = ip_;
-    auto const port = wsPort_;
-
-    resolver_.async_resolve(
-        host, port, [this](auto ec, auto results) { onResolve(ec, results); });
 }
 
 void
@@ -332,7 +320,7 @@ ETLSource::handleMessage()
         {
             if (response.contains("transaction"))
             {
-                if (balancer_->shouldPropagateTxnStream(this))
+                if (balancer_.shouldPropagateTxnStream(this))
                 {
                     subscriptions_->forwardProposedTransaction(response);
                 }
@@ -582,14 +570,22 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
+    boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<NetworkValidatedLedgers> nwvl,
-    boost::asio::io_context& ioContext)
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgers> nwvl)
 {
     for (auto& entry : config)
     {
-        std::unique_ptr<ETLSource> source = std::make_unique<ETLSource>(
-            entry.as_object(), backend, nwvl, ioContext);
+        std::unique_ptr<ETLSource> source = ETLSource::make_ETLSource(
+            entry.as_object(),
+            ioContext,
+            backend,
+            subscriptions,
+            nwvl,
+            *this
+        );
+
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
                                 << sources_.back()->toString();
@@ -864,16 +860,3 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
     return true;
 }
 
-void
-ETLLoadBalancer::start()
-{
-    for (auto& source : sources_)
-        source->start();
-}
-
-void
-ETLLoadBalancer::stop()
-{
-    for (auto& source : sources_)
-        source->stop();
-}
