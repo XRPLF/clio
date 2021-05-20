@@ -816,14 +816,16 @@ PostgresBackend::writeKeys(
         keysBuffer << std::to_string(index.keyIndex) << '\t' << "\\\\x"
                    << ripple::strHex(key) << '\n';
         numRows++;
-        // If the buffer gets too large, the insert fails. Not sure why. So we
-        // insert after 1 million records
-        if (numRows == 100000)
+        // If the buffer gets too large, the insert fails. Not sure why.
+        // When writing in the background, we insert after every 10000 rows
+        if ((isAsync && numRows == 10000) || numRows == 100000)
         {
             pgQuery.bulkInsert("keys", keysBuffer.str());
             std::stringstream temp;
             keysBuffer.swap(temp);
             numRows = 0;
+            if (isAsync)
+                std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }
     if (numRows > 0)
@@ -855,14 +857,16 @@ PostgresBackend::writeBooks(
                         << ripple::strHex(book.first) << '\t' << "\\\\x"
                         << ripple::strHex(offer) << '\n';
             numRows++;
-            // If the buffer gets too large, the insert fails. Not sure why. So
-            // we insert after 1 million records
-            if (numRows == 1000000)
+            // If the buffer gets too large, the insert fails. Not sure why.
+            // When writing in the background, we insert after every 10 rows
+            if ((isAsync && numRows == 1000) || numRows == 100000)
             {
                 pgQuery.bulkInsert("books", booksBuffer.str());
                 std::stringstream temp;
                 booksBuffer.swap(temp);
                 numRows = 0;
+                if (isAsync)
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }
     }

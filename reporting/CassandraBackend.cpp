@@ -1528,11 +1528,6 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "CREATE INDEX ON " << tablePrefix << "objects(sequence)";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query.str("");
         query << "SELECT * FROM " << tablePrefix << "objects WHERE sequence=1"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))

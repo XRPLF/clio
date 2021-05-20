@@ -40,6 +40,7 @@
 #include <functional>
 #include <iterator>
 #include <reporting/Pg.h>
+#include <signal.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -47,7 +48,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <signal.h>
 
 static void
 noticeReceiver(void* arg, PGresult const* res)
@@ -350,11 +350,27 @@ PgPool::PgPool(boost::json::object const& config)
     */
     constexpr std::size_t maxFieldSize = 1024;
     constexpr std::size_t maxFields = 1000;
+    std::string conninfo = "postgres://";
+    auto getFieldAsString = [&config](auto field) {
+        if (!config.contains(field))
+            throw std::runtime_error(
+                field + std::string{" missing from postgres config"});
+        if (!config.at(field).is_string())
+            throw std::runtime_error(
+                field + std::string{" in postgres config is not a string"});
+        return std::string{config.at(field).as_string().c_str()};
+    };
+    conninfo += getFieldAsString("username");
+    conninfo += ":";
+    conninfo += getFieldAsString("password");
+    conninfo += "@";
+    conninfo += getFieldAsString("contact_point");
+    conninfo += "/";
+    conninfo += getFieldAsString("database");
 
     // The connection object must be freed using the libpq API PQfinish() call.
     pg_connection_type conn(
-        PQconnectdb(config.at("conninfo").as_string().c_str()),
-        [](PGconn* conn) { PQfinish(conn); });
+        PQconnectdb(conninfo.c_str()), [](PGconn* conn) { PQfinish(conn); });
     if (!conn)
         throw std::runtime_error("Can't create DB connection.");
     if (PQstatus(conn.get()) != CONNECTION_OK)
@@ -605,9 +621,26 @@ PgPool::checkin(std::unique_ptr<Pg>& pg)
 std::shared_ptr<PgPool>
 make_PgPool(boost::json::object const& config)
 {
-    auto ret = std::make_shared<PgPool>(config);
-    ret->setup();
-    return ret;
+    try
+    {
+        auto ret = std::make_shared<PgPool>(config);
+        ret->setup();
+        return ret;
+    }
+    catch (std::runtime_error& e)
+    {
+        boost::json::object configCopy = config;
+        configCopy["database"] = "postgres";
+        auto ret = std::make_shared<PgPool>(configCopy);
+        ret->setup();
+        PgQuery pgQuery{ret};
+        std::string query = "CREATE DATABASE " +
+            std::string{config.at("database").as_string().c_str()};
+        pgQuery(query.c_str());
+        ret = std::make_shared<PgPool>(config);
+        ret->setup();
+        return ret;
+    }
 }
 
 //-----------------------------------------------------------------------------
