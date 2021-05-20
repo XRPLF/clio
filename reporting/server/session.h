@@ -24,12 +24,13 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
-#include <reporting/ReportingETL.h>
-
-#include <iostream>
+#include <reporting/BackendInterface.h>
+#include <reporting/server/SubscriptionManager.h>
+#include <reporting/ETLSource.h>
 
 class session;
 class SubscriptionManager;
+class ETLLoadBalancer;
 
 static enum RPCCommand { tx, account_tx, ledger, account_info, book_offers, ledger_data, subscribe, unsubscribe };
 static std::unordered_map<std::string, RPCCommand> commandMap{
@@ -89,7 +90,9 @@ doUnsubscribe(
 boost::json::object
 buildResponse(
     boost::json::object const& request,
-    ReportingETL& etl,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> manager,
+    std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<session> session);
 
 void
@@ -101,15 +104,22 @@ class session : public std::enable_shared_from_this<session>
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
     std::string response_;
-    ReportingETL& etl_;
+
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
     // Take ownership of the socket
     explicit session(
         boost::asio::ip::tcp::socket&& socket,
-        ReportingETL& etl)
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
         : ws_(std::move(socket))
-        , etl_(etl)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
     {
     }
 
@@ -192,7 +202,9 @@ public:
             {
                 response = buildResponse(
                     request, 
-                    etl_,
+                    backend_,
+                    subscriptions_,
+                    balancer_,
                     shared_from_this());
             }
             catch (Backend::DatabaseTimeout const& t)

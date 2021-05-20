@@ -45,6 +45,12 @@ class SubscriptionManager
 
 public:
 
+    static std::shared_ptr<SubscriptionManager>
+    makeSubscriptionManager()
+    {
+        return std::make_shared<SubscriptionManager>();
+    }
+
     void
     subLedger(std::shared_ptr<session>& session);
 

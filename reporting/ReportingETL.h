@@ -60,8 +60,9 @@ class SubscriptionManager;
 class ReportingETL
 {
 private:
-    std::unique_ptr<BackendInterface> flatMapBackend_;
-    std::unique_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> loadBalancer_;
     std::optional<uint32_t> onlineDeleteInterval_;
     uint32_t extractorThreads_ = 1;
 
@@ -86,11 +87,10 @@ private:
     /// Mechanism for communicating with ETL sources. ETLLoadBalancer wraps an
     /// arbitrary number of ETL sources and load balances ETL requests across
     /// those sources.
-    ETLLoadBalancer loadBalancer_;
 
     /// Mechanism for detecting when the network has validated a new ledger.
     /// This class provides a way to wait for a specific ledger to be validated
-    NetworkValidatedLedgers networkValidatedLedgers_;
+    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
 
     /// Whether the software is stopping
     std::atomic_bool stopping_ = false;
@@ -256,20 +256,45 @@ private:
     std::optional<ripple::Fees>
     getFees(std::uint32_t seq);
 
-public:
-    ReportingETL(
+     ReportingETL(
         boost::json::object const& config,
-        boost::asio::io_context& ioc);
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer);
+
+public:
+   
+    static std::shared_ptr<ReportingETL>
+    makeReportingETL(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
+    {
+        auto etl = std::make_shared<ReportingETL>(
+            config,
+            ioc,
+            backend,
+            subscriptions,
+            balancer);
+
+        etl->run();
+
+        return etl;
+    }
 
     ~ReportingETL()
     {
-        onStop();
-    }
+        BOOST_LOG_TRIVIAL(info) << "onStop called";
+        BOOST_LOG_TRIVIAL(debug) << "Stopping Reporting ETL";
+        stopping_ = true;
 
-    NetworkValidatedLedgers&
-    getNetworkValidatedLedgers()
-    {
-        return networkValidatedLedgers_;
+        if (worker_.joinable())
+            worker_.join();
+
+        BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
     }
 
     bool
@@ -288,22 +313,6 @@ public:
         return numMarkers_;
     }
 
-    /*
-    Json::Value
-    getInfo()
-    {
-        Json::Value result(Json::objectValue);
-
-        result["etl_sources"] = loadBalancer_.toJson();
-        result["is_writer"] = writing_.load();
-        auto last = getLastPublish();
-        if (last.time_since_epoch().count() != 0)
-            result["last_publish_time"] = to_string(
-                date::floor<std::chrono::microseconds>(getLastPublish()));
-        return result;
-    }
-    */
-
     /// start all of the necessary components and begin ETL
     void
     run()
@@ -312,43 +321,14 @@ public:
 
         stopping_ = false;
 
-        loadBalancer_.start();
+        loadBalancer_->start();
         doWork();
     }
 
-    /// Stop all the necessary components
     void
     onStop()
     {
-        BOOST_LOG_TRIVIAL(info) << "onStop called";
-        BOOST_LOG_TRIVIAL(debug) << "Stopping Reporting ETL";
-        stopping_ = true;
-        networkValidatedLedgers_.stop();
-        loadBalancer_.stop();
-
-        BOOST_LOG_TRIVIAL(debug) << "Stopped loadBalancer";
-        if (worker_.joinable())
-            worker_.join();
-
-        BOOST_LOG_TRIVIAL(debug) << "Joined worker thread";
-    }
-
-    ETLLoadBalancer&
-    getETLLoadBalancer()
-    {
-        return loadBalancer_;
-    }
-
-    BackendInterface&
-    getFlatMapBackend()
-    {
-        return *flatMapBackend_;
-    }
-
-    SubscriptionManager&
-    getSubscriptionManager()
-    {
-        return *subscriptions_;
+        
     }
 
 private:

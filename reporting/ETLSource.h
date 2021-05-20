@@ -26,12 +26,14 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
 #include <reporting/BackendInterface.h>
+#include <reporting/server/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 #include <reporting/ETLHelpers.h>
 
-class ReportingETL;
+class ETLLoadBalancer;
+class SubscriptionManager;
 
 /// This class manages a connection to a single ETL source. This is almost
 /// always a p2p node, but really could be another reporting node. This class
@@ -63,9 +65,7 @@ class ETLSource
 
     std::string validatedLedgersRaw_;
 
-    NetworkValidatedLedgers& networkValidatedLedgers_;
-
-    ReportingETL& etl_;
+    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
 
     // beast::Journal journal_;
 
@@ -90,7 +90,11 @@ class ETLSource
     // used for retrying connections
     boost::asio::steady_timer timer_;
 
-    BackendInterface& backend_;
+    std::shared_ptr<BackendInterface> backend_;
+
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
     bool
@@ -118,9 +122,10 @@ public:
     /// Primarly used in read-only mode, to monitor when ledgers are validated
     ETLSource(
         boost::json::object const& config,
-        BackendInterface& backend,
-        ReportingETL& etl,
-        NetworkValidatedLedgers& networkValidatedLedgers,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
         boost::asio::io_context& ioContext);
 
     /// @param sequence ledger sequence to check for
@@ -292,17 +297,28 @@ public:
 class ETLLoadBalancer
 {
 private:
-    ReportingETL& etl_;
-
     std::vector<std::unique_ptr<ETLSource>> sources_;
 
-public:
     ETLLoadBalancer(
         boost::json::array const& config,
-        BackendInterface& backend,
-        ReportingETL& etl,
-        NetworkValidatedLedgers& nwvl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<NetworkValidatedLedgers> nwvl,
         boost::asio::io_context& ioContext);
+
+public:
+    static std::shared_ptr<ETLLoadBalancer>
+    makeETLLoadBalancer(
+        boost::json::object const& config,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+        boost::asio::io_context& ioc)
+    {
+        return std::make_shared<ETLLoadBalancer>(
+            config.at("etl_sources").as_array(),
+            backend,
+            validatedLedgers,
+            ioc);
+    }
 
     /// Load the initial ledger, writing data to the queue
     /// @param sequence sequence of ledger to download
@@ -393,4 +409,5 @@ private:
     bool
     execute(Func f, uint32_t ledgerSequence);
 };
+
 #endif
