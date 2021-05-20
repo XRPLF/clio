@@ -44,7 +44,7 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     ripple::uint256 const& cursor,
     std::function<bool(ripple::SLE)> atOwnedNode);
-    
+
 std::pair<ripple::PublicKey, ripple::SecretKey>
 keypairFromRequst(
     boost::json::object const& request,
