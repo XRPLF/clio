@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include <ripple/basics/StringUtilities.h>
-#include <reporting/BackendFactory.h>
 #include <reporting/DBHelpers.h>
 #include <reporting/ReportingETL.h>
 
@@ -757,12 +756,14 @@ ReportingETL::ReportingETL(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer)
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<NetworkValidatedLedgers> ledgers)
     : publishStrand_(ioc)
     , ioContext_(ioc)
     , backend_(backend)
     , subscriptions_(subscriptions)
     , loadBalancer_(balancer)
+    , networkValidatedLedgers_(ledgers)
 {
     if (config.contains("start_sequence"))
         startSequence_ = config.at("start_sequence").as_int64();
@@ -776,6 +777,5 @@ ReportingETL::ReportingETL(
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
-    backend_->open(readOnly_);
 }
 

@@ -46,7 +46,7 @@ class NetworkValidatedLedgers
 
 public:
     static std::shared_ptr<NetworkValidatedLedgers>
-    makeValidatedLedgers()
+    make_ValidatedLedgers()
     {
         return std::make_shared<NetworkValidatedLedgers>();
     }

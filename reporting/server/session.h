@@ -189,6 +189,35 @@ public:
     {
     }
 
+    static void
+    make_session(
+        boost::asio::ip::tcp::socket&& socket,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
+    {
+        std::make_shared<session>(
+            std::move(socket),
+            backend,
+            subscriptions,
+            balancer
+        )->run();
+    }
+
+    ~session() = default;
+
+    void
+    send(std::string&& msg)
+    {
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+            boost::asio::buffer(msg),
+            boost::beast::bind_front_handler(
+                &session::on_write, shared_from_this()));
+    }
+
+private:
+
     // Get on the correct executor
     void
     run()
@@ -292,16 +321,6 @@ public:
         ws_.text(ws_.got_text());
         ws_.async_write(
             boost::asio::buffer(response_),
-            boost::beast::bind_front_handler(
-                &session::on_write, shared_from_this()));
-    }
-
-    void
-    send(std::string&& msg)
-    {
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-            boost::asio::buffer(msg),
             boost::beast::bind_front_handler(
                 &session::on_write, shared_from_this()));
     }

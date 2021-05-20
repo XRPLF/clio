@@ -36,16 +36,39 @@ class listener : public std::enable_shared_from_this<listener>
 {
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    ReportingETL& etl_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
+    static void
+    make_listener(
+        boost::asio::io_context& ioc,
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
+    {
+        std::make_shared<listener>(
+            ioc,
+            endpoint,
+            backend,
+            subscriptions,
+            balancer
+        )->run();
+    }
+
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
-        ReportingETL& etl)
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
         : ioc_(ioc)
         , acceptor_(ioc)
-        , etl_(etl)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
     {
         boost::beast::error_code ec;
 
@@ -82,14 +105,16 @@ public:
         }
     }
 
-    // Start accepting incoming connections
+    ~listener() = default;
+
+private:
+
     void
     run()
     {
         do_accept();
     }
 
-private:
     void
     do_accept()
     {
@@ -109,8 +134,7 @@ private:
         }
         else
         {
-            // Create the session and run it
-            std::make_shared<session>(std::move(socket), etl_)->run();
+            session::make_session(std::move(socket), backend_, subscriptions_, balancer_);
         }
 
         // Accept another connection

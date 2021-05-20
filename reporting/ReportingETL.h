@@ -66,7 +66,6 @@ private:
     std::optional<uint32_t> onlineDeleteInterval_;
     uint32_t extractorThreads_ = 1;
 
-
     std::thread worker_;
     boost::asio::io_context& ioContext_;
 
@@ -256,29 +255,60 @@ private:
     std::optional<ripple::Fees>
     getFees(std::uint32_t seq);
 
-     ReportingETL(
-        boost::json::object const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer);
+    bool
+    isStopping()
+    {
+        return stopping_;
+    }
+
+    /// Get the number of markers to use during the initial ledger download.
+    /// This is equivelent to the degree of parallelism during the initial
+    /// ledger download
+    /// @return the number of markers
+    uint32_t
+    getNumMarkers()
+    {
+        return numMarkers_;
+    }
+
+    void
+    run()
+    {
+        BOOST_LOG_TRIVIAL(info) << "Starting reporting etl";
+        stopping_ = false;
+
+        doWork();
+    }
+
+    void
+    doWork();
 
 public:
-   
-    static std::shared_ptr<ReportingETL>
-    makeReportingETL(
+
+    ReportingETL(
         boost::json::object const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<NetworkValidatedLedgers> ledgers);
+
+    static std::shared_ptr<ReportingETL>
+    make_ReportingETL(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<NetworkValidatedLedgers> ledgers)
     {
         auto etl = std::make_shared<ReportingETL>(
             config,
             ioc,
             backend,
             subscriptions,
-            balancer);
+            balancer,
+            ledgers);
 
         etl->run();
 
@@ -296,44 +326,6 @@ public:
 
         BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
     }
-
-    bool
-    isStopping()
-    {
-        return stopping_;
-    }
-
-    /// Get the number of markers to use during the initial ledger download.
-    /// This is equivelent to the degree of parallelism during the initial
-    /// ledger download
-    /// @return the number of markers
-    uint32_t
-    getNumMarkers()
-    {
-        return numMarkers_;
-    }
-
-    /// start all of the necessary components and begin ETL
-    void
-    run()
-    {
-        BOOST_LOG_TRIVIAL(info) << "Starting reporting etl";
-
-        stopping_ = false;
-
-        loadBalancer_->start();
-        doWork();
-    }
-
-    void
-    onStop()
-    {
-        
-    }
-
-private:
-    void
-    doWork();
 };
 
 #endif

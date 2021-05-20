@@ -91,12 +91,51 @@ class ETLSource
     boost::asio::steady_timer timer_;
 
     std::shared_ptr<BackendInterface> backend_;
-
     std::shared_ptr<SubscriptionManager> subscriptions_;
+    ETLLoadBalancer& balancer_;
 
-    std::shared_ptr<ETLLoadBalancer> balancer_;
+    void
+    run()
+    {
+        BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << toString();
+
+        auto const host = ip_;
+        auto const port = wsPort_;
+
+        resolver_.async_resolve(
+            host, port, [this](auto ec, auto results) { onResolve(ec, results); });
+    }
 
 public:
+
+    static std::unique_ptr<ETLSource>
+    make_ETLSource(
+        boost::json::object const& config,
+        boost::asio::io_context& ioContext,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
+        ETLLoadBalancer& balancer)
+    {
+        std::unique_ptr<ETLSource> src = std::make_unique<ETLSource>(
+            config,
+            ioContext,
+            backend,
+            subscriptions,
+            networkValidatedLedgers,
+            balancer
+        );
+
+        src->run();
+
+        return src;
+    }
+
+    ~ETLSource()
+    {
+        close(false);
+    }
+
     bool
     isConnected() const
     {
@@ -122,11 +161,11 @@ public:
     /// Primarly used in read-only mode, to monitor when ledgers are validated
     ETLSource(
         boost::json::object const& config,
+        boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-        boost::asio::io_context& ioContext);
+        ETLLoadBalancer& balancer);
 
     /// @param sequence ledger sequence to check for
     /// @return true if this source has the desired ledger
@@ -199,14 +238,6 @@ public:
         return validatedLedgersRaw_;
     }
 
-    /// Close the underlying websocket
-    void
-    stop()
-    {
-        assert(ws_);
-        close(false);
-    }
-
     /// Fetch the specified ledger
     /// @param ledgerSequence sequence of the ledger to fetch
     /// @getObjects whether to get the account state diff between this ledger
@@ -235,11 +266,6 @@ public:
     /// @return true if the download was successful
     bool
     loadInitialLedger(uint32_t ledgerSequence);
-
-    /// Begin sequence of operations to connect to the ETL source and subscribe
-    /// to ledgers and transactions_proposed
-    void
-    start();
 
     /// Attempt to reconnect to the ETL source
     void
@@ -294,30 +320,38 @@ public:
 /// the network, and the range of ledgers each etl source has). This class also
 /// allows requests for ledger data to be load balanced across all possible etl
 /// sources.
-class ETLLoadBalancer
+class ETLLoadBalancer : std::enable_shared_from_this<ETLLoadBalancer>
 {
 private:
     std::vector<std::unique_ptr<ETLSource>> sources_;
 
+public:
     ETLLoadBalancer(
         boost::json::array const& config,
+        boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<NetworkValidatedLedgers> nwvl,
-        boost::asio::io_context& ioContext);
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> nwvl);
 
-public:
     static std::shared_ptr<ETLLoadBalancer>
-    makeETLLoadBalancer(
+    make_ETLLoadBalancer(
         boost::json::object const& config,
+        boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        boost::asio::io_context& ioc)
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
     {
         return std::make_shared<ETLLoadBalancer>(
             config.at("etl_sources").as_array(),
+            ioc,
             backend,
-            validatedLedgers,
-            ioc);
+            subscriptions,
+            validatedLedgers);
+    }
+
+    ~ETLLoadBalancer()
+    {
+        sources_.clear();
     }
 
     /// Load the initial ledger, writing data to the queue
@@ -337,13 +371,6 @@ public:
     /// will be empty
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedger(uint32_t ledgerSequence, bool getObjects);
-
-    /// Setup all of the ETL sources and subscribe to the necessary streams
-    void
-    start();
-
-    void
-    stop();
 
     /// Determine whether messages received on the transactions_proposed stream
     /// should be forwarded to subscribing clients. The server subscribes to

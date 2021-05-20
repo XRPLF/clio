@@ -1124,6 +1124,8 @@ CassandraBackend::open(bool readOnly)
         return;
     }
 
+    BOOST_LOG_TRIVIAL(info) << "Opening Cassandra Backend";
+
     std::lock_guard<std::mutex> lock(mutex_);
     CassCluster* cluster = cass_cluster_new();
     if (!cluster)
@@ -1480,7 +1482,6 @@ CassandraBackend::open(bool readOnly)
               << " (book, sequence, quality_key) VALUES (?, ?, (?, ?))";
         if (!insertBook2_.prepareStatement(query, session_.get()))
             continue;
-        query.str("");
 
         query.str("");
         query << "SELECT key FROM " << tablePrefix << "keys"
@@ -1533,16 +1534,6 @@ CassandraBackend::open(bool readOnly)
         if (!selectLedgerPage_.prepareStatement(query, session_.get()))
             continue;
 
-        /*
-        query.str("");
-        query << "SELECT filterempty(key,object) FROM " << tablePrefix <<
-        "objects "
-              << " WHERE TOKEN(key) >= ? and sequence <= ?"
-              << " PER PARTITION LIMIT 1 LIMIT ?"
-              << " ALLOW FILTERING";
-        if (!upperBound2_.prepareStatement(query, session_.get()))
-            continue;
-    */
         query.str("");
         query << "SELECT TOKEN(key) FROM " << tablePrefix << "objects "
               << " WHERE key = ? LIMIT 1";
@@ -1628,42 +1619,6 @@ CassandraBackend::open(bool readOnly)
         setupPreparedStatements = true;
     }
 
-    /*
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        if (!fetchLatestLedgerSequence())
-        {
-            std::stringstream query;
-            query << "TRUNCATE TABLE " << tablePrefix << "ledger_range";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "ledgers";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "ledger_hashes";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "objects";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "transactions";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "account_tx";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-        }
-        break;
-    }
-    */
-
     if (config_.contains("max_requests_outstanding"))
     {
         maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
@@ -1673,33 +1628,11 @@ CassandraBackend::open(bool readOnly)
         indexerMaxRequestsOutstanding =
             config_["indexer_max_requests_outstanding"].as_int64();
     }
-    /*
-    if (config_.contains("run_indexer"))
-    {
-        if (config_["run_indexer"].as_bool())
-        {
-            if (config_.contains("indexer_shift"))
-            {
-                indexerShift_ = config_["indexer_shift"].as_int64();
-            }
-            indexer_ = std::thread{[this]() {
-                auto seq = getNextToIndex();
-                if (seq)
-                {
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Running indexer. Ledger = " << std::to_string(*seq);
-                    runIndexer(*seq);
-                    BOOST_LOG_TRIVIAL(info) << "Ran indexer";
-                }
-            }};
-        }
-    }
-    */
 
     work_.emplace(ioContext_);
     ioThread_ = std::thread{[this]() { ioContext_.run(); }};
     open_ = true;
 
-    BOOST_LOG_TRIVIAL(info) << "Opened database successfully";
+    BOOST_LOG_TRIVIAL(info) << "Opened CassandraBackend successfully";
 }  // namespace Backend
 }  // namespace Backend
