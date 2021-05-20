@@ -174,3 +174,163 @@ traverseOwnedNodes(
 
     return nextCursor;
 }
+boost::optional<ripple::Seed>
+parseRippleLibSeed(boost::json::value const& value)
+{
+    // ripple-lib encodes seed used to generate an Ed25519 wallet in a
+    // non-standard way. While rippled never encode seeds that way, we
+    // try to detect such keys to avoid user confusion.
+    if (!value.is_string())
+        return {};
+    
+    auto const result = 
+        ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
+
+    if (result.size() == 18 &&
+        static_cast<std::uint8_t>(result[0]) == std::uint8_t(0xE1) &&
+        static_cast<std::uint8_t>(result[1]) == std::uint8_t(0x4B))
+        return ripple::Seed(ripple::makeSlice(result.substr(2)));
+
+    return {};
+}
+
+std::pair<ripple::PublicKey, ripple::SecretKey>
+keypairFromRequst(boost::json::object const& request, boost::json::value& error)
+{
+    bool const has_key_type = request.contains("key_type");
+
+    // All of the secret types we allow, but only one at a time.
+    // The array should be constexpr, but that makes Visual Studio unhappy.
+    static std::string const secretTypes[]{
+        "passphrase",
+        "secret",
+        "seed",
+        "seed_hex"};
+
+    // Identify which secret type is in use.
+    std::string secretType = "";
+    int count = 0;
+    for (auto t : secretTypes)
+    {
+        if (request.contains(t))
+        {
+            ++count;
+            secretType = t;
+        }
+    }
+
+    if (count == 0)
+    {
+        error = "missing field secret";
+        return {};
+    }
+
+    if (count > 1)
+    {
+        error = "Exactly one of the following must be specified: "
+                " passphrase, secret, seed, or seed_hex";
+        return {};
+    }
+
+    boost::optional<ripple::KeyType> keyType;
+    boost::optional<ripple::Seed> seed;
+
+    if (has_key_type)
+    {
+        if (!request.at("key_type").is_string())
+        {
+            error = "key_type must be string";
+            return {};
+        }
+
+        std::string key_type = request.at("key_type").as_string().c_str();
+        keyType = ripple::keyTypeFromString(key_type);
+
+        if (!keyType)
+        {
+            error = "Invalid field key_type";
+            return {};
+        }
+
+        if (secretType == "secret")
+        {
+            error = "The secret field is not allowed if key_type is used.";
+            return {};
+        }
+    }
+
+    // ripple-lib encodes seed used to generate an Ed25519 wallet in a
+    // non-standard way. While we never encode seeds that way, we try
+    // to detect such keys to avoid user confusion.
+    if (secretType != "seed_hex")
+    {
+        seed = parseRippleLibSeed(request.at(secretType));
+
+        if (seed)
+        {
+            // If the user passed in an Ed25519 seed but *explicitly*
+            // requested another key type, return an error.
+            if (keyType.value_or(ripple::KeyType::ed25519) != ripple::KeyType::ed25519)
+            {
+                error = "Specified seed is for an Ed25519 wallet.";
+                return {};
+            }
+
+            keyType = ripple::KeyType::ed25519;
+        }
+    }
+
+    if (!keyType)
+        keyType = ripple::KeyType::secp256k1;
+
+    if (!seed)
+    {
+        if (has_key_type)
+        {
+            if (!request.at(secretType).is_string())
+            {
+                error = "secret value must be string";
+                return {};
+            }
+
+            std::string key = request.at(secretType).as_string().c_str();
+
+            if (secretType == "seed")
+                seed = ripple::parseBase58<ripple::Seed>(key);
+            else if (secretType == "passphrase")
+                seed = ripple::parseGenericSeed(key);
+            else if (secretType == "seed_hex")
+            {
+                ripple::uint128 s;
+                if (s.parseHex(key))
+                    seed.emplace(ripple::Slice(s.data(), s.size()));
+            }
+        }
+        else
+        {
+            if (!request.at("secret").is_string())
+            {
+                error = "field secret should be a string";
+                return {};
+            }
+
+            std::string secret = request.at("secret").as_string().c_str();
+            seed = ripple::parseGenericSeed(secret);
+        }
+    }
+
+    if (!seed)
+    {
+        error = "Bad Seed: invalid field message secretType";
+        return {};
+    }
+
+    if (keyType != ripple::KeyType::secp256k1
+     && keyType != ripple::KeyType::ed25519)
+    {
+        error = "keypairForSignature: invalid key type";
+        return {};
+    }
+
+    return generateKeyPair(*keyType, *seed);
+}

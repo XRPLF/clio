@@ -1346,10 +1346,10 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
-              << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
-                 "transaction "
-                 "blob, metadata blob)";
+        query
+            << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
+            << " ( hash blob PRIMARY KEY, ledger_sequence bigint, transaction "
+               "blob, metadata blob)";
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1383,7 +1383,6 @@ CassandraBackend::open(bool readOnly)
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
-
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
               << " ( book blob, sequence bigint, quality_key tuple<blob, blob>, PRIMARY KEY "

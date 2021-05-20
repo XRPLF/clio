@@ -49,6 +49,8 @@ enum RPCCommand {
     account_currencies,
     account_offers,
     account_objects
+    channel_authorize,
+    channel_verify
 };
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
@@ -63,7 +65,9 @@ std::unordered_map<std::string, RPCCommand> commandMap{
     {"account_lines", account_lines},
     {"account_currencies", account_currencies},
     {"account_offers", account_offers},
-    {"account_objects", account_objects}};
+    {"account_objects", account_objects},
+    {"channel_authorize", channel_authorize},
+    {"channel_verify", channel_verify}};
 
 boost::json::object
 doAccountInfo(
@@ -113,6 +117,9 @@ boost::json::object
 doAccountObjects(
     boost::json::object const& request,
     BackendInterface const& backend);
+doChannelAuthorize(boost::json::object const& request);
+boost::json::object
+doChannelVerify(boost::json::object const& request);
 
 boost::json::object
 buildResponse(
@@ -126,42 +133,34 @@ buildResponse(
     {
         case tx:
             return doTx(request, backend);
-            break;
         case account_tx:
             return doAccountTx(request, backend);
-            break;
         case ledger:
             return doLedger(request, backend);
-            break;
         case ledger_entry:
             return doLedgerEntry(request, backend);
-            break;
         case ledger_range:
             return doLedgerRange(request, backend);
-            break;
         case ledger_data:
             return doLedgerData(request, backend);
-            break;
         case account_info:
             return doAccountInfo(request, backend);
-            break;
         case book_offers:
             return doBookOffers(request, backend);
-            break;
         case account_channels:
             return doAccountChannels(request, backend);
-            break;
         case account_lines:
             return doAccountLines(request, backend);
-            break;
         case account_currencies:
             return doAccountCurrencies(request, backend);
-            break;
         case account_offers:
             return doAccountOffers(request, backend);
-            break;
         case account_objects:
             return doAccountObjects(request, backend);
+        case channel_authorize:
+            return doChannelAuthorize(request);
+        case channel_verify:
+            return doChannelVerify(request);
             break;
         default:
             BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;
