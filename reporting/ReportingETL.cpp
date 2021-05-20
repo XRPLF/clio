@@ -138,13 +138,63 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     return lgrInfo;
 }
 
+std::optional<ripple::Fees>
+ReportingETL::getFees(std::uint32_t seq)
+{
+    ripple::Fees fees;
+
+    auto key = ripple::keylet::fees().key;
+    auto bytes = flatMapBackend_->fetchLedgerObject(key, seq);
+
+    if (!bytes)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " - could not find fees";
+        return {};     
+    }
+
+    ripple::SerialIter it(bytes->data(), bytes->size());
+    ripple::SLE sle{it, key};
+
+    if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
+        fees.base = sle.getFieldU64(ripple::sfBaseFee);
+
+    if (sle.getFieldIndex(ripple::sfReferenceFeeUnits) != -1)
+        fees.units = sle.getFieldU32(ripple::sfReferenceFeeUnits);
+
+    if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
+        fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
+
+    if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
+        fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
+
+    return fees;
+}
+
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
-    // app_.getOPs().pubLedger(ledger);
+    auto ledgerRange = flatMapBackend_->fetchLedgerRange();
+    auto fees = getFees(lgrInfo.seq);
+    auto transactions =
+        flatMapBackend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+
+    if (!fees || !ledgerRange)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ 
+                                 << " - could not fetch from database";
+        return;
+    }
+
+    std::string range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
+
+    subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
+
+    for (auto& txAndMeta : transactions)
+        subscriptions_->pubTransaction(txAndMeta);
 
     setLastPublish();
 }
+
 bool
 ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
 {
@@ -196,15 +246,16 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
             continue;
         }
 
-        /*
-        publishStrand_.post([this, ledger]() {
-            app_.getOPs().pubLedger(ledger);
-            setLastPublish();
-            BOOST_LOG_TRIVIAL(info)
-                << __func__ << " : "
-                << "Published ledger. " << detail::toString(ledger->info());
-        });
-        */
+        // publishStrand_.post([this, &ledger, &fees]() {
+        //     subs_->pubLedger(*ledger, *fees);
+        //     setLastPublish();
+        //     BOOST_LOG_TRIVIAL(info)
+        //         << __func__ << " : "
+        //         << "Published ledger. " << ledger->seq;
+        // });
+        
+        publishLedger(*ledger);
+
         return true;
     }
     return false;
@@ -707,6 +758,7 @@ ReportingETL::ReportingETL(
     : publishStrand_(ioc)
     , ioContext_(ioc)
     , flatMapBackend_(Backend::makeBackend(config))
+    , subscriptions_(std::make_unique<SubscriptionManager>())
     , loadBalancer_(
           config.at("etl_sources").as_array(),
           *flatMapBackend_,
