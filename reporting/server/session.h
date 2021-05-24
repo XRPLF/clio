@@ -107,6 +107,7 @@ boost::json::object
 doLedger(
     boost::json::object const& request,
     BackendInterface const& backend);
+
 boost::json::object
 doLedgerRange(
     boost::json::object const& request,
@@ -204,7 +205,10 @@ public:
         )->run();
     }
 
-    ~session() = default;
+    ~session()
+    {
+        close(1012);
+    }
 
     void
     send(std::string&& msg)
@@ -214,6 +218,15 @@ public:
             boost::asio::buffer(msg),
             boost::beast::bind_front_handler(
                 &session::on_write, shared_from_this()));
+    }
+
+    void
+    close(boost::beast::websocket::close_reason const& cr)
+    {
+        ws_.async_close(
+            cr,
+            boost::beast::bind_front_handler(
+                &session::on_close, shared_from_this()));
     }
 
 private:
@@ -329,7 +342,7 @@ private:
     }
 
     void
-    on_write(boost::beast::error_code ec, std::size_t bytes_transferred)
+    on_write(boost::beast::error_code const& ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
@@ -341,6 +354,13 @@ private:
 
         // Do another read
         do_read();
+    }
+
+    void
+    on_close(boost::beast::error_code const& ec)
+    {
+        if (ec)
+            return fail(ec, "close");
     }
 };
 
