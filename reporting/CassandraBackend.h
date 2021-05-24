@@ -841,14 +841,6 @@ public:
     {
         // wait for all other writes to finish
         sync();
-        auto rng = fetchLedgerRangeNoThrow();
-        if (rng && rng->maxSequence >= ledgerSequence_)
-        {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " Ledger " << std::to_string(ledgerSequence_)
-                << " already written. Returning";
-            return false;
-        }
         // write range
         if (isFirstLedger_)
         {

@@ -69,7 +69,7 @@ ReportingETL::insertTransactions(
         auto metaSerializer = std::make_shared<ripple::Serializer>(
             txMeta.getAsObject().getSerializer());
 
-        BOOST_LOG_TRIVIAL(trace)
+        BOOST_LOG_TRIVIAL(debug)
             << __func__ << " : "
             << "Inserting transaction = " << sttx.getTransactionID();
 
@@ -241,7 +241,7 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
 std::pair<ripple::LedgerInfo, bool>
 ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Beginning ledger update";
 
     ripple::LedgerInfo lgrInfo =
@@ -252,8 +252,12 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
     flatMapBackend_->startWrites();
 
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "started writes";
     flatMapBackend_->writeLedger(
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "wrote ledger header";
     std::vector<AccountTransactionsData> accountTxData{
         insertTransactions(lgrInfo, rawData)};
 
@@ -293,7 +297,13 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted,
             std::move(bookDir));
     }
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " : "
+        << "wrote objects. num objects = "
+        << std::to_string(rawData.ledger_objects().objects_size());
     flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "wrote account_tx";
     accumTxns_ += rawData.transactions_list().transactions_size();
     bool success = true;
     if (accumTxns_ >= txnThreshold_)
@@ -361,6 +371,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
     }
+    std::atomic<uint32_t> minSequence = rng->minSequence;
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populating caches";
 
@@ -451,6 +462,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     }
 
     std::thread transformer{[this,
+                             &minSequence,
                              &writeConflict,
                              &startSequence,
                              &getNext,
@@ -499,16 +511,16 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
-            auto range = flatMapBackend_->fetchLedgerRangeNoThrow();
             if (onlineDeleteInterval_ && !deleting_ &&
-                range->maxSequence - range->minSequence >
-                    *onlineDeleteInterval_)
+                lgrInfo.seq - minSequence > *onlineDeleteInterval_)
             {
                 deleting_ = true;
-                ioContext_.post([this, &range]() {
+                ioContext_.post([this, &minSequence]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
                     flatMapBackend_->doOnlineDelete(*onlineDeleteInterval_);
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
+                    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+                    minSequence = rng->minSequence;
                     deleting_ = false;
                 });
             }

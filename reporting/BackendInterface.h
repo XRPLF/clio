@@ -100,6 +100,8 @@ class BackendIndexer
     std::mutex mtx;
     std::condition_variable cv_;
 
+    mutable bool isFirst_ = true;
+
     void
     addKeyAsync(ripple::uint256 const& key);
     void
@@ -200,6 +202,7 @@ class BackendInterface
 {
 protected:
     mutable BackendIndexer indexer_;
+    mutable bool isFirst_ = true;
 
 public:
     // read methods
@@ -245,12 +248,17 @@ public:
         auto commitRes = doFinishWrites();
         if (commitRes)
         {
-            bool isFirst =
-                fetchLedgerRangeNoThrow()->minSequence == ledgerSequence;
-            if (indexer_.isBookFlagLedger(ledgerSequence) || isFirst)
+            if (isFirst_)
+            {
+                auto rng = fetchLedgerRangeNoThrow();
+                if (rng && rng->minSequence != ledgerSequence)
+                    isFirst_ = false;
+            }
+            if (indexer_.isBookFlagLedger(ledgerSequence) || isFirst_)
                 indexer_.writeBookFlagLedgerAsync(ledgerSequence, *this);
-            if (indexer_.isKeyFlagLedger(ledgerSequence) || isFirst)
+            if (indexer_.isKeyFlagLedger(ledgerSequence) || isFirst_)
                 indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
+            isFirst_ = false;
         }
         return commitRes;
     }
@@ -267,6 +275,7 @@ public:
     std::optional<LedgerRange>
     fetchLedgerRangeNoThrow() const
     {
+        BOOST_LOG_TRIVIAL(warning) << __func__;
         while (true)
         {
             try

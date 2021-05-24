@@ -1528,12 +1528,6 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "SELECT * FROM " << tablePrefix << "objects WHERE sequence=1"
-              << " LIMIT 1";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
               << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
                  "transaction "
@@ -1822,12 +1816,13 @@ CassandraBackend::open(bool readOnly)
               << " is_latest IN (true, false)";
         if (!selectLedgerRange_.prepareStatement(query, session_.get()))
             continue;
+        /*
         query.str("");
         query << " SELECT key,object FROM " << tablePrefix
               << "objects WHERE sequence = ?";
         if (!selectLedgerDiff_.prepareStatement(query, session_.get()))
             continue;
-
+            */
         setupPreparedStatements = true;
     }
 

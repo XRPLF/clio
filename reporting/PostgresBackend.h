@@ -9,8 +9,9 @@ class PostgresBackend : public BackendInterface
 private:
     mutable size_t numRowsInObjectsBuffer_ = 0;
     mutable std::stringstream objectsBuffer_;
-    mutable std::stringstream transactionsBuffer_;
     mutable std::stringstream booksBuffer_;
+    mutable std::stringstream keysBuffer_;
+    mutable std::stringstream transactionsBuffer_;
     mutable std::stringstream accountTxBuffer_;
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;

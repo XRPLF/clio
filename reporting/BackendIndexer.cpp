@@ -438,22 +438,27 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
     bool isFirst = false;
     auto keyIndex = getKeyIndexOfSeq(ledgerSequence);
     auto bookIndex = getBookIndexOfSeq(ledgerSequence);
-    auto rng = backend.fetchLedgerRangeNoThrow();
-    if (!rng || rng->minSequence == ledgerSequence)
+    if (isFirst_)
     {
-        isFirst = true;
-        keyIndex = KeyIndex{ledgerSequence};
-        bookIndex = BookIndex{ledgerSequence};
+        auto rng = backend.fetchLedgerRangeNoThrow();
+        if (rng && rng->minSequence != ledgerSequence)
+            isFirst_ = false;
+        else
+        {
+            keyIndex = KeyIndex{ledgerSequence};
+            bookIndex = BookIndex{ledgerSequence};
+        }
     }
     backend.writeKeys(keys, keyIndex);
     backend.writeBooks(books, bookIndex);
-    if (isFirst)
+    if (isFirst_)
     {
         // write completion record
         ripple::uint256 zero = {};
         backend.writeBooks({{zero, {zero}}}, bookIndex);
         backend.writeKeys({zero}, keyIndex);
     }
+    isFirst_ = false;
     keys = {};
     books = {};
     BOOST_LOG_TRIVIAL(info)

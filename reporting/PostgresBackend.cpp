@@ -775,12 +775,22 @@ PostgresBackend::doFinishWrites() const
 {
     if (!abortWrite_)
     {
-        writeConnection_.bulkInsert("transactions", transactionsBuffer_.str());
+        std::string txStr = transactionsBuffer_.str();
+        writeConnection_.bulkInsert("transactions", txStr);
         writeConnection_.bulkInsert(
             "account_transactions", accountTxBuffer_.str());
         std::string objectsStr = objectsBuffer_.str();
         if (objectsStr.size())
             writeConnection_.bulkInsert("objects", objectsStr);
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " objects size = " << objectsStr.size()
+            << " txns size = " << txStr.size();
+        std::string keysStr = keysBuffer_.str();
+        if (keysStr.size())
+            writeConnection_.bulkInsert("keys", keysStr);
+        std::string booksStr = booksBuffer_.str();
+        if (booksStr.size())
+            writeConnection_.bulkInsert("books", booksStr);
     }
     auto res = writeConnection_("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
@@ -795,6 +805,8 @@ PostgresBackend::doFinishWrites() const
     objectsBuffer_.clear();
     booksBuffer_.str("");
     booksBuffer_.clear();
+    keysBuffer_.str("");
+    keysBuffer_.clear();
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
@@ -806,33 +818,36 @@ PostgresBackend::writeKeys(
     KeyIndex const& index,
     bool isAsync) const
 {
+    return true;
+    if (isAsync)
+        return true;
+    if (abortWrite_)
+        return false;
     BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
-    pgQuery("BEGIN");
-    std::stringstream keysBuffer;
+    PgQuery& conn = isAsync ? pgQuery : writeConnection_;
+    if (isAsync)
+        conn("BEGIN");
     size_t numRows = 0;
     for (auto& key : keys)
     {
-        keysBuffer << std::to_string(index.keyIndex) << '\t' << "\\\\x"
-                   << ripple::strHex(key) << '\n';
+        keysBuffer_ << std::to_string(index.keyIndex) << '\t' << "\\\\x"
+                    << ripple::strHex(key) << '\n';
         numRows++;
         // If the buffer gets too large, the insert fails. Not sure why.
         // When writing in the background, we insert after every 10000 rows
         if ((isAsync && numRows == 10000) || numRows == 100000)
         {
-            pgQuery.bulkInsert("keys", keysBuffer.str());
+            conn.bulkInsert("keys", keysBuffer_.str());
             std::stringstream temp;
-            keysBuffer.swap(temp);
+            keysBuffer_.swap(temp);
             numRows = 0;
             if (isAsync)
                 std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }
-    if (numRows > 0)
-    {
-        pgQuery.bulkInsert("keys", keysBuffer.str());
-    }
-    pgQuery("COMMIT");
+    if (isAsync)
+        conn("COMMIT");
     return true;
 }
 bool
@@ -843,38 +858,41 @@ PostgresBackend::writeBooks(
     BookIndex const& index,
     bool isAsync) const
 {
+    return true;
+    if (isAsync)
+        return true;
+    if (abortWrite_)
+        return false;
     BOOST_LOG_TRIVIAL(debug) << __func__;
 
     PgQuery pgQuery(pgPool_);
-    pgQuery("BEGIN");
-    std::stringstream booksBuffer;
+    PgQuery& conn = isAsync ? pgQuery : writeConnection_;
+    if (isAsync)
+        conn("BEGIN");
     size_t numRows = 0;
     for (auto& book : books)
     {
         for (auto& offer : book.second)
         {
-            booksBuffer << std::to_string(index.bookIndex) << '\t' << "\\\\x"
-                        << ripple::strHex(book.first) << '\t' << "\\\\x"
-                        << ripple::strHex(offer) << '\n';
+            booksBuffer_ << std::to_string(index.bookIndex) << '\t' << "\\\\x"
+                         << ripple::strHex(book.first) << '\t' << "\\\\x"
+                         << ripple::strHex(offer) << '\n';
             numRows++;
             // If the buffer gets too large, the insert fails. Not sure why.
             // When writing in the background, we insert after every 10 rows
             if ((isAsync && numRows == 1000) || numRows == 100000)
             {
-                pgQuery.bulkInsert("books", booksBuffer.str());
+                conn.bulkInsert("books", booksBuffer_.str());
                 std::stringstream temp;
-                booksBuffer.swap(temp);
+                booksBuffer_.swap(temp);
                 numRows = 0;
                 if (isAsync)
                     std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }
     }
-    if (numRows > 0)
-    {
-        pgQuery.bulkInsert("books", booksBuffer.str());
-    }
-    pgQuery("COMMIT");
+    if (isAsync)
+        conn("COMMIT");
     return true;
 }
 bool
