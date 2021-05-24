@@ -24,14 +24,10 @@ buildResponse(
             return doAccountTx(request, backend);
         case ledger:
             return doLedger(request, backend);
-<<<<<<< HEAD
         case ledger_entry:
             return doLedgerEntry(request, backend);
         case ledger_range:
             return doLedgerRange(request, backend);
-=======
-            break;
->>>>>>> 8e6524b (add doLedger)
         case ledger_data:
             return doLedgerData(request, backend);
         case account_info:
