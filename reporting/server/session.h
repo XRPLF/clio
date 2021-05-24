@@ -104,6 +104,7 @@ doAccountChannels(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
+<<<<<<< HEAD
 doAccountLines(
     boost::json::object const& request,
     BackendInterface const& backend);
@@ -124,6 +125,12 @@ doChannelAuthorize(boost::json::object const& request);
 boost::json::object
 doChannelVerify(boost::json::object const& request);
 boost::json::object
+=======
+doLedger(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+>>>>>>> 8e6524b (add doLedger)
 doSubscribe(
     boost::json::object const& request,
     std::shared_ptr<session>& session,
