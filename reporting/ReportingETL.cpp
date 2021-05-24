@@ -190,7 +190,7 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
     for (auto& txAndMeta : transactions)
-        subscriptions_->pubTransaction(txAndMeta);
+        subscriptions_->pubTransaction(txAndMeta, lgrInfo.seq);
 
     setLastPublish();
 }

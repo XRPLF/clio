@@ -4,13 +4,13 @@
 void
 SubscriptionManager::subLedger(std::shared_ptr<session>& session)
 {
-    subscribers_[Ledgers].emplace(std::move(session));
+    streamSubscribers_[Ledgers].emplace(std::move(session));
 }
 
 void
 SubscriptionManager::unsubLedger(std::shared_ptr<session>& session)
 {
-    subscribers_[Ledgers].erase(session);
+    streamSubscribers_[Ledgers].erase(session);
 }
 
 void
@@ -35,33 +35,20 @@ SubscriptionManager::pubLedger(
     pubMsg["validated_ledgers"] = ledgerRange;
     pubMsg["txn_count"] = txnCount;
 
-    for (auto const& session: subscribers_[Ledgers])
+    for (auto const& session: streamSubscribers_[Ledgers])
         session->send(boost::json::serialize(pubMsg));
 }
 
 void
 SubscriptionManager::subTransactions(std::shared_ptr<session>& session)
 {
-    subscribers_[Transactions].emplace(std::move(session));
+    streamSubscribers_[Transactions].emplace(std::move(session));
 }
 
 void
 SubscriptionManager::unsubTransactions(std::shared_ptr<session>& session)
 {
-    subscribers_[Transactions].erase(session);
-}
-
-void
-SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blob)
-{
-    auto [tx, meta] = deserializeTxPlusMeta(blob);
-
-    boost::json::object pubMsg;
-    pubMsg["meta"] = getJson(*tx);
-    pubMsg["transaction"] = getJson(*meta);
-
-    for (auto const& session: subscribers_[Transactions])
-        session->send(boost::json::serialize(pubMsg));
+    streamSubscribers_[Transactions].erase(session);
 }
 
 void
@@ -78,4 +65,26 @@ SubscriptionManager::unsubAccount(
     std::shared_ptr<session>& session)
 {
     accountSubscribers_[account].erase(session);
+}
+
+void
+SubscriptionManager::pubTransaction(
+    Backend::TransactionAndMetadata const& blob,
+    std::uint32_t seq)
+{
+    auto [tx, meta] = deserializeTxPlusMeta(blob, seq);
+
+    boost::json::object pubMsg;
+    pubMsg["transaction"] = getJson(*tx);
+    pubMsg["meta"] = getJson(*meta);
+
+    for (auto const& session: streamSubscribers_[Transactions])
+        session->send(boost::json::serialize(pubMsg));
+
+    auto journal = ripple::debugLog();
+    auto accounts = meta->getAffectedAccounts(journal);
+
+    for (ripple::AccountID const& account : accounts)
+        for (auto const& session: accountSubscribers_[account])
+            session->send(boost::json::serialize(pubMsg));
 }
