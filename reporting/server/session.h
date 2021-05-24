@@ -172,7 +172,7 @@ class session : public std::enable_shared_from_this<session>
     std::string response_;
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
@@ -295,10 +295,13 @@ private:
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
+                if (subscriptions_.expired())
+                    return;
+
                 response = buildResponse(
                     request, 
                     backend_,
-                    subscriptions_,
+                    subscriptions_.lock(),
                     balancer_,
                     shared_from_this());
             }
