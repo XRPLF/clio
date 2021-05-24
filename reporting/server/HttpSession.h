@@ -122,7 +122,10 @@ handle_request(
 
     try 
     {
+        std::cout << "GOT BODY: " << req.body() << std::endl;
         auto request = boost::json::parse(req.body()).as_object();
+
+        std::cout << "GOT REQUEST: " << request << std::endl;
 
         auto builtResponse = buildResponse(request, etl, nullptr);
 
@@ -135,6 +138,7 @@ handle_request(
     }
     catch (std::exception const& e)
     {
+        std::cout << e.what() << std::endl;
         send(response(
             http::status::internal_server_error,
             "text/html",
