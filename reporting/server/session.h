@@ -72,15 +72,19 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
     {"unsubscribe", unsubscribe}};
 
 boost::json::object
-doAccountInfo(
+doTx(
     boost::json::object const& request,
     BackendInterface const& backend);
-boost::json::object
-doTx(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doAccountTx(
     boost::json::object const& request,
     BackendInterface const& backend);
+
+boost::json::object
+doBookOffers(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+
 boost::json::object
 doLedgerData(
     boost::json::object const& request,
@@ -90,13 +94,16 @@ doLedgerEntry(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
-doBookOffers(
+doLedger(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
-doLedger(boost::json::object const& request, BackendInterface const& backend);
-boost::json::object
 doLedgerRange(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+
+boost::json::object
+doAccountInfo(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
@@ -119,14 +126,12 @@ boost::json::object
 doAccountObjects(
     boost::json::object const& request,
     BackendInterface const& backend);
+
 boost::json::object
 doChannelAuthorize(boost::json::object const& request);
 boost::json::object
 doChannelVerify(boost::json::object const& request);
-boost::json::object
-doLedger(
-    boost::json::object const& request,
-    BackendInterface const& backend);
+
 boost::json::object
 doSubscribe(
     boost::json::object const& request,
