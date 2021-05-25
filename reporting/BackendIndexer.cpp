@@ -9,12 +9,46 @@ BackendIndexer::BackendIndexer(boost::json::object const& config)
         bookShift_ = config.at("indexer_book_shift").as_int64();
     work_.emplace(ioc_);
     ioThread_ = std::thread{[this]() { ioc_.run(); }};
+    updateThread_ = std::thread{[this]() { ioc_.run(); }};
 };
 BackendIndexer::~BackendIndexer()
 {
     std::unique_lock lck(mutex_);
     work_.reset();
     ioThread_.join();
+}
+void
+BackendIndexer::writeLedgerObject(
+    ripple::uint256&& key,
+    std::optional<ripple::uint256>&& book,
+    bool isCreated,
+    bool isDeleted)
+{
+    ++updatesOutstanding_;
+    boost::asio::post(
+        ioc_,
+        [this,
+         key = std::move(key),
+         isCreated,
+         isDeleted,
+         book = std::move(book)]() {
+            if (isCreated)
+                addKey(key);
+            if (isDeleted)
+                deleteKey(key);
+            if (book)
+            {
+                if (isCreated)
+                    addBookOffer(*book, key);
+                if (isDeleted)
+                    deleteBookOffer(*book, key);
+            }
+            --updatesOutstanding_;
+            {
+                std::unique_lock lck(mtx);
+                updateCv_.notify_one();
+            }
+        });
 }
 
 void
@@ -360,7 +394,7 @@ BackendIndexer::populateCaches(BackendInterface const& backend)
         std::unique_lock lck(mtx);
         deletedKeys = {};
         deletedBooks = {};
-        cv_.notify_one();
+        cacheCv_.notify_one();
     }
     BOOST_LOG_TRIVIAL(info)
         << __func__
@@ -387,7 +421,7 @@ void
 BackendIndexer::waitForCaches()
 {
     std::unique_lock lck(mtx);
-    cv_.wait(lck, [this]() {
+    cacheCv_.wait(lck, [this]() {
         return !populatingCacheAsync && deletedKeys.size() == 0;
     });
 }
@@ -449,6 +483,11 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
             bookIndex = BookIndex{ledgerSequence};
         }
     }
+    {
+        std::unique_lock lck(mtx);
+        updateCv_.wait(lck, [this]() { return updatesOutstanding_ == 0; });
+    }
+
     backend.writeKeys(keys, keyIndex);
     backend.writeBooks(books, bookIndex);
     if (isFirst_)

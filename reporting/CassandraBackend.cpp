@@ -1359,12 +1359,14 @@ CassandraBackend::open(bool readOnly)
         ? config_["threads"].as_int64()
         : std::thread::hardware_concurrency();
     int ttl = config_.contains("ttl") ? config_["ttl"].as_int64() * 2 : 0;
-    int keysTtl, keysIncr = pow(2, indexer_.getKeyShift()) * 4 * 2;
+    int keysTtl,
+        keysIncr = ttl != 0 ? pow(2, indexer_.getKeyShift()) * 4 * 2 : 0;
     while (keysTtl < ttl)
     {
         keysTtl += keysIncr;
     }
-    int booksTtl, booksIncr = pow(2, indexer_.getBookShift()) * 4 * 2;
+    int booksTtl,
+        booksIncr = ttl != 0 ? pow(2, indexer_.getBookShift()) * 4 * 2 : 0;
     while (booksTtl < ttl)
     {
         booksTtl += booksIncr;

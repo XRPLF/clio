@@ -258,13 +258,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote ledger header";
-    std::vector<AccountTransactionsData> accountTxData{
-        insertTransactions(lgrInfo, rawData)};
-
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " : "
-        << "Inserted all transactions. Number of transactions  = "
-        << rawData.transactions_list().transactions_size();
 
     for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
     {
@@ -301,6 +294,13 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << __func__ << " : "
         << "wrote objects. num objects = "
         << std::to_string(rawData.ledger_objects().objects_size());
+    std::vector<AccountTransactionsData> accountTxData{
+        insertTransactions(lgrInfo, rawData)};
+
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " : "
+        << "Inserted all transactions. Number of transactions  = "
+        << rawData.transactions_list().transactions_size();
     flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote account_tx";

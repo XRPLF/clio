@@ -81,6 +81,10 @@ class BackendIndexer
     std::mutex mutex_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
+    std::thread updateThread_;
+    std::atomic_uint32_t updatesOutstanding_ = 0;
+    std::condition_variable updateCv_;
+
     uint32_t keyShift_ = 20;
     uint32_t bookShift_ = 10;
     std::unordered_set<ripple::uint256> keys;
@@ -98,7 +102,7 @@ class BackendIndexer
     std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
         booksRepair;
     std::mutex mtx;
-    std::condition_variable cv_;
+    std::condition_variable cacheCv_;
 
     mutable bool isFirst_ = true;
 
@@ -122,6 +126,13 @@ public:
     // Blocking, possibly for minutes
     void
     waitForCaches();
+
+    void
+    writeLedgerObject(
+        ripple::uint256&& key,
+        std::optional<ripple::uint256>&& book,
+        bool isCreated,
+        bool isDeleted);
 
     void
     addKey(ripple::uint256 const& key);
@@ -350,17 +361,8 @@ public:
         std::optional<ripple::uint256>&& book) const
     {
         ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
-        if (isCreated)
-            indexer_.addKey(key256);
-        if (isDeleted)
-            indexer_.deleteKey(key256);
-        if (book)
-        {
-            if (isCreated)
-                indexer_.addBookOffer(*book, key256);
-            if (isDeleted)
-                indexer_.deleteBookOffer(*book, key256);
-        }
+        indexer_.writeLedgerObject(
+            std::move(key256), std::move(book), isCreated, isDeleted);
         doWriteLedgerObject(
             std::move(key),
             seq,

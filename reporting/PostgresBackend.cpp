@@ -818,29 +818,28 @@ PostgresBackend::writeKeys(
     KeyIndex const& index,
     bool isAsync) const
 {
-    return true;
-    if (isAsync)
-        return true;
     if (abortWrite_)
         return false;
     BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
     PgQuery& conn = isAsync ? pgQuery : writeConnection_;
+    std::stringstream asyncBuffer;
+    std::stringstream& buffer = isAsync ? asyncBuffer : keysBuffer_;
     if (isAsync)
         conn("BEGIN");
     size_t numRows = 0;
     for (auto& key : keys)
     {
-        keysBuffer_ << std::to_string(index.keyIndex) << '\t' << "\\\\x"
-                    << ripple::strHex(key) << '\n';
+        buffer << std::to_string(index.keyIndex) << '\t' << "\\\\x"
+               << ripple::strHex(key) << '\n';
         numRows++;
         // If the buffer gets too large, the insert fails. Not sure why.
         // When writing in the background, we insert after every 10000 rows
         if ((isAsync && numRows == 10000) || numRows == 100000)
         {
-            conn.bulkInsert("keys", keysBuffer_.str());
+            conn.bulkInsert("keys", buffer.str());
             std::stringstream temp;
-            keysBuffer_.swap(temp);
+            buffer.swap(temp);
             numRows = 0;
             if (isAsync)
                 std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -858,15 +857,14 @@ PostgresBackend::writeBooks(
     BookIndex const& index,
     bool isAsync) const
 {
-    return true;
-    if (isAsync)
-        return true;
     if (abortWrite_)
         return false;
     BOOST_LOG_TRIVIAL(debug) << __func__;
 
     PgQuery pgQuery(pgPool_);
     PgQuery& conn = isAsync ? pgQuery : writeConnection_;
+    std::stringstream asyncBuffer;
+    std::stringstream& buffer = isAsync ? asyncBuffer : booksBuffer_;
     if (isAsync)
         conn("BEGIN");
     size_t numRows = 0;
@@ -874,17 +872,17 @@ PostgresBackend::writeBooks(
     {
         for (auto& offer : book.second)
         {
-            booksBuffer_ << std::to_string(index.bookIndex) << '\t' << "\\\\x"
-                         << ripple::strHex(book.first) << '\t' << "\\\\x"
-                         << ripple::strHex(offer) << '\n';
+            buffer << std::to_string(index.bookIndex) << '\t' << "\\\\x"
+                   << ripple::strHex(book.first) << '\t' << "\\\\x"
+                   << ripple::strHex(offer) << '\n';
             numRows++;
             // If the buffer gets too large, the insert fails. Not sure why.
             // When writing in the background, we insert after every 10 rows
             if ((isAsync && numRows == 1000) || numRows == 100000)
             {
-                conn.bulkInsert("books", booksBuffer_.str());
+                conn.bulkInsert("books", buffer.str());
                 std::stringstream temp;
-                booksBuffer_.swap(temp);
+                buffer.swap(temp);
                 numRows = 0;
                 if (isAsync)
                     std::this_thread::sleep_for(std::chrono::seconds(1));
