@@ -21,10 +21,22 @@ endif ()
 file (TO_CMAKE_PATH "${BOOST_ROOT}" BOOST_ROOT)
 
 FIND_PACKAGE( Boost 1.75 COMPONENTS filesystem log log_setup thread system REQUIRED )
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+FetchContent_MakeAvailable(googletest)
+enable_testing()
+include(GoogleTest)
 
-add_executable (reporting
+add_executable (reporting_main
     server/websocket_server_async.cpp
 )
+add_executable (reporting_tests
+    tests/main.cpp
+)
+add_library(reporting reporting/BackendInterface.h)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
@@ -76,3 +88,9 @@ target_sources(reporting PRIVATE
 message(${Boost_LIBRARIES})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 TARGET_LINK_LIBRARIES(reporting PUBLIC ${Boost_LIBRARIES})
+TARGET_LINK_LIBRARIES(reporting_main PUBLIC reporting)
+TARGET_LINK_LIBRARIES(reporting_tests PUBLIC reporting gtest_main)
+
+
+gtest_discover_tests(reporting_tests)
+
