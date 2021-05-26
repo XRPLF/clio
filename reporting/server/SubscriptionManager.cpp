@@ -131,3 +131,23 @@ SubscriptionManager::unsubProposedTransactions(std::shared_ptr<session>& session
 {
     streamSubscribers_[TransactionsProposed].erase(session);
 }
+
+void
+SubscriptionManager::clearSession(std::shared_ptr<session> const& session)
+{
+    for(auto& stream : streamSubscribers_)
+        stream.erase(session);
+
+    for(auto& [account, subscribers] : accountSubscribers_)
+    {
+        if (subscribers.find(session) != subscribers.end())
+            accountSubscribers_[account].erase(session);
+    }
+
+    
+    for(auto& [account, subscribers] : accountProposedSubscribers_)
+    {
+        if (subscribers.find(session) != subscribers.end())
+            accountProposedSubscribers_[account].erase(session);
+    }
+}

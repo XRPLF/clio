@@ -220,15 +220,6 @@ public:
                 &session::on_write, shared_from_this()));
     }
 
-    void
-    close(boost::beast::websocket::close_reason const& cr)
-    {
-        ws_.async_close(
-            cr,
-            boost::beast::bind_front_handler(
-                &session::on_close, shared_from_this()));
-    }
-
 private:
 
     // Get on the correct executor
@@ -296,7 +287,8 @@ private:
             return;
 
         if (ec)
-            fail(ec, "read");
+            return fail(ec, "read");
+
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
@@ -354,13 +346,6 @@ private:
 
         // Do another read
         do_read();
-    }
-
-    void
-    on_close(boost::beast::error_code const& ec)
-    {
-        if (ec)
-            return fail(ec, "close");
     }
 };
 
