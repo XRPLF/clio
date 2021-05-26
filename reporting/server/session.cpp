@@ -25,39 +25,39 @@ buildResponse(
     switch (commandMap[command])
     {
         case tx:
-            return doTx(request, backend);
+            return doTx(request, *backend);
         case account_tx:
-            return doAccountTx(request, backend);
+            return doAccountTx(request, *backend);
         case ledger:
-            return doLedger(request, backend);
+            return doLedger(request, *backend);
         case ledger_entry:
-            return doLedgerEntry(request, backend);
+            return doLedgerEntry(request, *backend);
         case ledger_range:
-            return doLedgerRange(request, backend);
+            return doLedgerRange(request, *backend);
         case ledger_data:
-            return doLedgerData(request, backend);
+            return doLedgerData(request, *backend);
         case account_info:
-            return doAccountInfo(request, backend);
+            return doAccountInfo(request, *backend);
         case book_offers:
-            return doBookOffers(request, backend);
+            return doBookOffers(request, *backend);
         case account_channels:
-            return doAccountChannels(request, backend);
+            return doAccountChannels(request, *backend);
         case account_lines:
-            return doAccountLines(request, backend);
+            return doAccountLines(request, *backend);
         case account_currencies:
-            return doAccountCurrencies(request, backend);
+            return doAccountCurrencies(request, *backend);
         case account_offers:
-            return doAccountOffers(request, backend);
+            return doAccountOffers(request, *backend);
         case account_objects:
-            return doAccountObjects(request, backend);
+            return doAccountObjects(request, *backend);
         case channel_authorize:
             return doChannelAuthorize(request);
         case channel_verify:
             return doChannelVerify(request);
         case subscribe:
-            return doSubscribe(request, session, manager);
+            return doSubscribe(request, session, *manager);
         case unsubscribe:
-            return doUnsubscribe(request, session, manager);
+            return doUnsubscribe(request, session, *manager);
         default:
             response["error"] = "Unknown command: " + command;
             return response;

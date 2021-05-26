@@ -104,28 +104,6 @@ getJson(Json::Value const& value)
 }
 
 boost::json::object
-getJson(ripple::TxMeta const& meta)
-{
-    auto start = std::chrono::system_clock::now();
-    boost::json::value value = boost::json::parse(
-        meta.getJson(ripple::JsonOptions::none).toStyledString());
-    auto end = std::chrono::system_clock::now();
-    value.as_object()["deserialization_time_microseconds"] =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-    return value.as_object();
-}
-
-boost::json::value
-getJson(Json::Value const& value)
-{
-    boost::json::value boostValue = 
-        boost::json::parse(value.toStyledString());
-    
-    return boostValue;
-}
-
-boost::json::object
 getJson(ripple::SLE const& sle)
 {
     auto start = std::chrono::system_clock::now();
