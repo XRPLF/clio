@@ -24,5 +24,7 @@ std::optional<uint32_t>
 ledgerSequenceFromRequest(
     boost::json::object const& request,
     BackendInterface const& backend);
+std::vector<unsigned char>
+ledgerInfoToBlob(ripple::LedgerInfo const& info);
 
 #endif

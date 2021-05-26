@@ -16,6 +16,7 @@ BackendIndexer::~BackendIndexer()
     std::unique_lock lck(mutex_);
     work_.reset();
     ioThread_.join();
+    updateThread_.join();
 }
 void
 BackendIndexer::writeLedgerObject(

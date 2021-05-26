@@ -1,21 +1,5 @@
 #include <handlers/RPCHelpers.h>
 #include <reporting/BackendInterface.h>
-std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info)
-{
-    ripple::Serializer s;
-    s.add32(info.seq);
-    s.add64(info.drops.drops());
-    s.addBitString(info.parentHash);
-    s.addBitString(info.txHash);
-    s.addBitString(info.accountHash);
-    s.add32(info.parentCloseTime.time_since_epoch().count());
-    s.add32(info.closeTime.time_since_epoch().count());
-    s.add8(info.closeTimeResolution.count());
-    s.add8(info.closeFlags);
-    // s.addBitString(info.hash);
-    return s.peekData();
-}
 
 boost::json::object
 doLedger(boost::json::object const& request, BackendInterface const& backend)

@@ -846,7 +846,11 @@ PostgresBackend::writeKeys(
         }
     }
     if (isAsync)
+    {
+        if (numRows > 0)
+            conn.bulkInsert("keys", buffer.str());
         conn("COMMIT");
+    }
     return true;
 }
 bool
@@ -890,7 +894,11 @@ PostgresBackend::writeBooks(
         }
     }
     if (isAsync)
+    {
+        if (numRows > 0)
+            conn.bulkInsert("books", buffer.str());
         conn("COMMIT");
+    }
     return true;
 }
 bool

@@ -729,7 +729,7 @@ async def ledger(ip, port, ledger, binary, transactions, expand):
         async with websockets.connect(address,max_size=1000000000) as ws:
             await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":bool(binary), "transactions":bool(transactions),"expand":bool(expand)}))
             res = json.loads(await ws.recv())
-            #print(json.dumps(res,indent=4,sort_keys=True))
+            print(json.dumps(res,indent=4,sort_keys=True))
             return res
 
     except websockets.exceptions.connectionclosederror as e:

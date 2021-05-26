@@ -52,7 +52,7 @@
 static void
 noticeReceiver(void* arg, PGresult const* res)
 {
-    BOOST_LOG_TRIVIAL(debug) << "server message: " << PQresultErrorMessage(res);
+    BOOST_LOG_TRIVIAL(trace) << "server message: " << PQresultErrorMessage(res);
 }
 
 //-----------------------------------------------------------------------------
