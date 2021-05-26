@@ -220,6 +220,17 @@ public:
                 &session::on_write, shared_from_this()));
     }
 
+    void
+    close(boost::beast::websocket::close_reason const& cr)
+    {
+        boost::beast::error_code ec;
+
+        ws_.close(cr, ec);
+
+        if (ec)
+            return fail(ec, "close");
+    }
+
 private:
 
     // Get on the correct executor
@@ -287,7 +298,7 @@ private:
             return;
 
         if (ec)
-            return fail(ec, "read");
+            fail(ec, "read");
 
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};

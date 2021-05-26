@@ -93,9 +93,6 @@ public:
 
     void
     unsubProposedTransactions(std::shared_ptr<session>& session);
-
-    void
-    clearSession(std::shared_ptr<session> const& session);
 };
 
 #endif //SUBSCRIPTION_MANAGER_H
