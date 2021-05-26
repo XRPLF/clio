@@ -62,6 +62,8 @@ target_sources(reporting PRIVATE
     reporting/Pg.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp
+    reporting/server/session.cpp
+    reporting/server/SubscriptionManager.cpp
     handlers/AccountInfo.cpp
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp
@@ -75,9 +77,10 @@ target_sources(reporting PRIVATE
     handlers/AccountLines.cpp
     handlers/AccountCurrencies.cpp
     handlers/AccountOffers.cpp
-    handlers/AccountObjects.cpp)
+    handlers/AccountObjects.cpp
     handlers/ChannelAuthorize.cpp
-    handlers/ChannelVerify.cpp)
+    handlers/ChannelVerify.cpp
+    handlers/Subscribe.cpp)
 
 
 message(${Boost_LIBRARIES})
