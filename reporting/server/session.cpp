@@ -16,6 +16,10 @@ buildResponse(
     std::string command = request.at("command").as_string().c_str();
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
+
+    if (forwardCommands.find(command) != forwardCommands.end())
+        return etl.getETLLoadBalancer().forwardToP2p(request);
+
     switch (commandMap[command])
     {
         case tx:
@@ -53,7 +57,7 @@ buildResponse(
         case unsubscribe:
             return doUnsubscribe(request, session, manager);
         default:
-            BOOST_LOG_TRIVIAL(error) << "Unknown command: " << command;
+            response["error"] = "Unknown command: " + command;
+            return response;
     }
-    return response;
 }

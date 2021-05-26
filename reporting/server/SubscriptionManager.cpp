@@ -88,3 +88,46 @@ SubscriptionManager::pubTransaction(
         for (auto const& session: accountSubscribers_[account])
             session->send(boost::json::serialize(pubMsg));
 }
+
+
+void
+SubscriptionManager::forwardProposedTransaction(boost::json::object const& response)
+{
+    for (auto const& session : streamSubscribers_[TransactionsProposed])
+        session->send(boost::json::serialize(response));
+
+    auto transaction = response.at("transaction").as_object();
+    auto accounts = getAccountsFromTransaction(transaction);
+
+    for (ripple::AccountID const& account : accounts)
+        for (auto const& session: accountProposedSubscribers_[account])
+            session->send(boost::json::serialize(response));
+}
+
+void
+SubscriptionManager::subProposedAccount(
+    ripple::AccountID const& account, 
+    std::shared_ptr<session>& session)
+{
+    accountProposedSubscribers_[account].emplace(std::move(session));
+}
+
+void
+SubscriptionManager::unsubProposedAccount(
+    ripple::AccountID const& account,
+    std::shared_ptr<session>& session)
+{
+    accountProposedSubscribers_[account].erase(session);
+}
+
+void
+SubscriptionManager::subProposedTransactions(std::shared_ptr<session>& session)
+{
+    streamSubscribers_[TransactionsProposed].emplace(std::move(session));
+}
+
+void
+SubscriptionManager::unsubProposedTransactions(std::shared_ptr<session>& session)
+{
+    streamSubscribers_[TransactionsProposed].erase(session);
+}

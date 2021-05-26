@@ -17,24 +17,21 @@
 */
 //==============================================================================
 
-#include <ripple/app/reporting/P2pProxy.h>
-#include <ripple/app/reporting/ReportingETL.h>
-#include <ripple/json/json_reader.h>
-#include <ripple/json/json_writer.h>
+#include <boost/json.hpp>
+#include <reporting/ReportingETL.h>
 
 namespace ripple {
 
-Json::Value
-forwardToP2p(RPC::JsonContext& context)
+boost::json::object
+forwardToP2p(boost::json::object const& request, ReportingETL& etl)
 {
-    return context.app.getReportingETL().getETLLoadBalancer().forwardToP2p(
-        context);
+    return etl.getETLLoadBalancer().forwardToP2p(request);
 }
 
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-getP2pForwardingStub(RPC::Context& context)
+getP2pForwardingStub(ReportingETL& etl)
 {
-    return context.app.getReportingETL()
+    return etl
         .getETLLoadBalancer()
         .getP2pForwardingStub();
 }
@@ -42,42 +39,34 @@ getP2pForwardingStub(RPC::Context& context)
 // We only forward requests where ledger_index is "current" or "closed"
 // otherwise, attempt to handle here
 bool
-shouldForwardToP2p(RPC::JsonContext& context)
+shouldForwardToP2p(boost::json::object const& request)
 {
-    if (!context.app.config().reporting())
-        return false;
+    std::string strCommand = request.contains("command")
+        ? request.at("command").as_string().c_str()
+        : request.at("method").as_string().c_str();
 
-    Json::Value& params = context.params;
-    std::string strCommand = params.isMember(jss::command)
-        ? params[jss::command].asString()
-        : params[jss::method].asString();
+    BOOST_LOG_TRIVIAL(info) << "COMMAND:" << strCommand;
+    BOOST_LOG_TRIVIAL(info) << "REQUEST:" << request;
 
-    JLOG(context.j.trace()) << "COMMAND:" << strCommand;
-    JLOG(context.j.trace()) << "REQUEST:" << params;
-    auto handler = RPC::getHandler(context.apiVersion, strCommand);
+    auto handler = forwardCommands.find(strCommand) != forwardCommands.end();
     if (!handler)
     {
-        JLOG(context.j.error())
+        BOOST_LOG_TRIVIAL(error) 
             << "Error getting handler. command = " << strCommand;
         return false;
     }
 
-    if (handler->condition_ == RPC::NEEDS_CURRENT_LEDGER ||
-        handler->condition_ == RPC::NEEDS_CLOSED_LEDGER)
+    if (request.contains("ledger_index"))
     {
-        return true;
-    }
-
-    if (params.isMember(jss::ledger_index))
-    {
-        auto indexValue = params[jss::ledger_index];
-        if (!indexValue.isNumeric())
+        auto indexValue = request.at("ledger_index");
+        if (!indexValue.is_uint64())
         {
-            auto index = indexValue.asString();
+            std::string index = indexValue.as_string().c_str();
             return index == "current" || index == "closed";
         }
     }
-    return false;
+
+    return true;
 }
 
 }  // namespace ripple

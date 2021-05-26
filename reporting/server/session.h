@@ -71,6 +71,11 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
     {"subscribe", subscribe},
     {"unsubscribe", unsubscribe}};
 
+static std::unordered_set<std::string> forwardCommands{
+    "submit",
+    "fee"
+};
+
 boost::json::object
 doTx(
     boost::json::object const& request,
@@ -159,18 +164,15 @@ class session : public std::enable_shared_from_this<session>
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
     std::string response_;
-    BackendInterface const& backend_;
-    SubscriptionManager& subscriptions_;
+    ReportingETL& etl_;
 
 public:
     // Take ownership of the socket
     explicit session(
         boost::asio::ip::tcp::socket&& socket,
-        SubscriptionManager& subs,
-        BackendInterface const& backend)
+        ReportingETL& etl)
         : ws_(std::move(socket))
-        , subscriptions_(subs)
-        , backend_(backend)
+        , etl_(etl)
     {
     }
 
@@ -253,8 +255,7 @@ public:
             {
                 response = buildResponse(
                     request, 
-                    backend_,
-                    subscriptions_,
+                    etl_,
                     shared_from_this());
             }
             catch (Backend::DatabaseTimeout const& t)

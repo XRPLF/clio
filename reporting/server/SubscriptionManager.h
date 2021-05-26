@@ -34,12 +34,14 @@ class SubscriptionManager
     enum SubscriptionType {
         Ledgers,
         Transactions,
+        TransactionsProposed,
         
         finalEntry
     };
 
     std::array<subscriptions, finalEntry> streamSubscribers_;
     std::unordered_map<ripple::AccountID, subscriptions> accountSubscribers_;
+    std::unordered_map<ripple::AccountID, subscriptions> accountProposedSubscribers_;
 
 public:
 
@@ -70,6 +72,21 @@ public:
 
     void
     unsubAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+
+    void
+    forwardProposedTransaction(boost::json::object const& response);
+
+    void
+    subProposedAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+
+    void
+    unsubProposedAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+
+    void
+    subProposedTransactions(std::shared_ptr<session>& session);
+
+    void
+    unsubProposedTransactions(std::shared_ptr<session>& session);
 };
 
 #endif //SUBSCRIPTION_MANAGER_H

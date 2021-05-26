@@ -60,6 +60,7 @@ target_sources(reporting PRIVATE
     reporting/PostgresBackend.cpp
     reporting/BackendIndexer.cpp
     reporting/Pg.cpp
+    reporting/P2pProxy.cpp
     reporting/DBHelpers.cpp
     reporting/ReportingETL.cpp
     reporting/server/session.cpp

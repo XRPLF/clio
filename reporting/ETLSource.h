@@ -31,6 +31,8 @@
 #include <grpcpp/grpcpp.h>
 #include <reporting/ETLHelpers.h>
 
+class ReportingETL;
+
 /// This class manages a connection to a single ETL source. This is almost
 /// always a p2p node, but really could be another reporting node. This class
 /// subscribes to the ledgers and transactions_proposed streams of the
@@ -38,6 +40,7 @@
 /// class also has methods for extracting said ledgers. Lastly this class
 /// forwards transactions received on the transactions_proposed streams to any
 /// subscribers.
+
 class ETLSource
 {
     std::string ip_;
@@ -61,6 +64,8 @@ class ETLSource
     std::string validatedLedgersRaw_;
 
     NetworkValidatedLedgers& networkValidatedLedgers_;
+
+    ReportingETL& etl_;
 
     // beast::Journal journal_;
 
@@ -114,6 +119,7 @@ public:
     ETLSource(
         boost::json::object const& config,
         BackendInterface& backend,
+        ReportingETL& etl,
         NetworkValidatedLedgers& networkValidatedLedgers,
         boost::asio::io_context& ioContext);
 
@@ -212,6 +218,12 @@ public:
             ", grpc port : " + grpcPort_ + " }";
     }
 
+    boost::json::value
+    toJson() const
+    {
+        return boost::json::string(toString());
+    }
+
     /// Download a ledger in full
     /// @param ledgerSequence sequence of the ledger to download
     /// @param writeQueue queue to push downloaded ledger objects
@@ -262,12 +274,14 @@ public:
     void
     close(bool startAgain);
 
-    /*
     /// Get grpc stub to forward requests to p2p node
     /// @return stub to send requests to ETL source
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
     getP2pForwardingStub() const;
-    */
+
+    boost::json::object
+    forwardToP2p(boost::json::object const& request) const;
+    
 };
 /// This class is used to manage connections to transaction processing processes
 /// This class spawns a listener for each etl source, which listens to messages
@@ -278,7 +292,7 @@ public:
 class ETLLoadBalancer
 {
 private:
-    //    ReportingETL& etl_;
+    ReportingETL& etl_;
 
     std::vector<std::unique_ptr<ETLSource>> sources_;
 
@@ -286,6 +300,7 @@ public:
     ETLLoadBalancer(
         boost::json::array const& config,
         BackendInterface& backend,
+        ReportingETL& etl,
         NetworkValidatedLedgers& nwvl,
         boost::asio::io_context& ioContext);
 
@@ -321,47 +336,47 @@ public:
     /// to clients).
     /// @param in ETLSource in question
     /// @return true if messages should be forwarded
-    //    bool
-    //    shouldPropagateTxnStream(ETLSource* in) const
-    //    {
-    //        for (auto& src : sources_)
-    //        {
-    //            assert(src);
-    //            // We pick the first ETLSource encountered that is connected
-    //            if (src->isConnected())
-    //            {
-    //                if (src.get() == in)
-    //                    return true;
-    //                else
-    //                    return false;
-    //            }
-    //        }
-    //
-    //        // If no sources connected, then this stream has not been
-    //        forwarded. return true;
-    //    }
+       bool
+       shouldPropagateTxnStream(ETLSource* in) const
+       {
+           for (auto& src : sources_)
+           {
+               assert(src);
+               // We pick the first ETLSource encountered that is connected
+               if (src->isConnected())
+               {
+                   if (src.get() == in)
+                       return true;
+                   else
+                       return false;
+               }
+           }
+    
+           // If no sources connected, then this stream has not been forwarded
+           return true;
+       }
 
-    //    Json::Value
-    //    toJson() const
-    //    {
-    //        Json::Value ret(Json::arrayValue);
-    //        for (auto& src : sources_)
-    //        {
-    //            ret.append(src->toJson());
-    //        }
-    //        return ret;
-    //    }
-    //
-    //    /// Randomly select a p2p node to forward a gRPC request to
-    //    /// @return gRPC stub to forward requests to p2p node
-    //    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    //    getP2pForwardingStub() const;
-    //
-    //    /// Forward a JSON RPC request to a randomly selected p2p node
-    //    /// @param context context of the request
-    //    /// @return response received from p2p node
-    //    Json::Value
-    //    forwardToP2p(RPC::JsonContext& context) const;
+       boost::json::value
+       toJson() const
+       {
+           boost::json::array ret;
+           for (auto& src : sources_)
+           {
+               ret.push_back(src->toJson());
+           }
+           return ret;
+       }
+    
+       /// Randomly select a p2p node to forward a gRPC request to
+       /// @return gRPC stub to forward requests to p2p node
+       std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
+       getP2pForwardingStub() const;
+    
+       /// Forward a JSON RPC request to a randomly selected p2p node
+       /// @param request JSON-RPC request
+       /// @return response received from p2p node
+       boost::json::object
+       forwardToP2p(boost::json::object const& request) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

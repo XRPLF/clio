@@ -41,9 +41,11 @@ parse_config(const char* filename)
 {
     try
     {
+        std::cout << "TRYING" << std::endl;
         std::ifstream in(filename, std::ios::in | std::ios::binary);
         if (in)
         {
+            std::cout << "GOT IN" << std::endl;
             std::stringstream contents;
             contents << in.rdbuf();
             in.close();
@@ -134,8 +136,7 @@ main(int argc, char* argv[])
     std::make_shared<listener>(
         ioc,
         boost::asio::ip::tcp::endpoint{address, port},
-        etl.getSubscriptionManager(),
-        etl.getFlatMapBackend())
+        etl)
         ->run();
 
     // Run the I/O service on the requested number of threads
