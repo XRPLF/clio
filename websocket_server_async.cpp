@@ -130,7 +130,19 @@ main(int argc, char* argv[])
 
     // The io_context is required for all I/O
     boost::asio::io_context ioc{threads};
-    ReportingETL etl{config.value(), ioc};
+    
+    std::shared_ptr<BackendInterface> backend{BackendInterface::makeBackend(config)};
+    std::shared_ptr<SubscriptionManager> subscriptions{SubscriptionManager::makeSubscriptionManager()};
+    std::shared_ptr<NetworkValidatedLedgers> ledgers{NetworkValidatedLedgers::makeValidatedLedgers()};
+    std::shared_ptr<ETLLoadBalancer> = balancer{ETLLoadBalancer::makeETLLoadBalancer(
+        
+    )};
+
+    std::shared_ptr<ReportingETL> etl{ReportingETL::makeReportingETL(
+
+    )};
+
+
 
     // Create and launch a listening port
     std::make_shared<listener>(

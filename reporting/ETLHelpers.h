@@ -45,6 +45,12 @@ class NetworkValidatedLedgers
     bool stopping_ = false;
 
 public:
+    static std::shared_ptr<NetworkValidatedLedgers>
+    makeValidatedLedgers()
+    {
+        return std::make_shared<NetworkValidatedLedgers>();
+    }
+
     /// Notify the datastructure that idx has been validated by the network
     /// @param idx sequence validated by network
     void

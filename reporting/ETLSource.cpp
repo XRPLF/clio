@@ -34,19 +34,21 @@
 // Primarly used in read-only mode, to monitor when ledgers are validated
 ETLSource::ETLSource(
     boost::json::object const& config,
-    BackendInterface& backend,
-    ReportingETL& etl,
-    NetworkValidatedLedgers& networkValidatedLedgers,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
     boost::asio::io_context& ioContext)
     : ioc_(ioContext)
     , ws_(std::make_unique<
           boost::beast::websocket::stream<boost::beast::tcp_stream>>(
           boost::asio::make_strand(ioc_)))
     , resolver_(boost::asio::make_strand(ioc_))
-    , etl_(etl)
     , timer_(ioc_)
     , networkValidatedLedgers_(networkValidatedLedgers)
     , backend_(backend)
+    , subscriptions_(subscriptions)
+    , balancer_(balancer)
 {
     if (config.contains("ip"))
     {
@@ -330,9 +332,9 @@ ETLSource::handleMessage()
         {
             if (response.contains("transaction"))
             {
-                if (etl_.getETLLoadBalancer().shouldPropagateTxnStream(this))
+                if (balancer_->shouldPropagateTxnStream(this))
                 {
-                    etl_.getSubscriptionManager().forwardProposedTransaction(response);
+                    subscriptions_->forwardProposedTransaction(response);
                 }
             }
             else
@@ -362,7 +364,7 @@ ETLSource::handleMessage()
                 << __func__ << " : "
                 << "Pushing ledger sequence = " << ledgerIndex << " - "
                 << toString();
-            networkValidatedLedgers_.push(ledgerIndex);
+            networkValidatedLedgers_->push(ledgerIndex);
         }
         return true;
     }
@@ -533,7 +535,7 @@ ETLSource::loadInitialLedger(uint32_t sequence)
         {
             BOOST_LOG_TRIVIAL(info)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
-            auto result = ptr->process(stub_, cq, backend_, abort);
+            auto result = ptr->process(stub_, cq, *backend_, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
@@ -577,18 +579,17 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
     }
     return {status, std::move(response)};
 }
+
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
-    BackendInterface& backend,
-    ReportingETL& etl,
-    NetworkValidatedLedgers& nwvl,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<NetworkValidatedLedgers> nwvl,
     boost::asio::io_context& ioContext)
-    : etl_(etl)
 {
     for (auto& entry : config)
     {
         std::unique_ptr<ETLSource> source = std::make_unique<ETLSource>(
-            entry.as_object(), backend, etl, nwvl, ioContext);
+            entry.as_object(), backend, nwvl, ioContext);
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
                                 << sources_.back()->toString();
@@ -852,18 +853,6 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
         numAttempts++;
         if (numAttempts % sources_.size() == 0)
         {
-            /*
-                if (etl_.getApplication().getLedgerMaster().getLedgerBySeq(
-                        ledgerSequence))
-            {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__ << " : "
-                    << "Error executing function. "
-                    << " Tried all sources, but ledger was found in db."
-                    << " Sequence = " << ledgerSequence;
-                break;
-            }
-            */
             BOOST_LOG_TRIVIAL(error)
                 << __func__ << " : "
                 << "Error executing function "

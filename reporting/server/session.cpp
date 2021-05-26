@@ -9,9 +9,10 @@ fail(boost::beast::error_code ec, char const* what)
 
 boost::json::object
 buildResponse(
-    boost::json::object const& request, 
-    BackendInterface const& backend,
-    SubscriptionManager& manager,
+    boost::json::object const& request,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> manager,
+    std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<session> session)
 {
     std::string command = request.at("command").as_string().c_str();
@@ -19,7 +20,7 @@ buildResponse(
     boost::json::object response;
 
     if (shouldForwardToP2p(request))
-        return etl.getETLLoadBalancer().forwardToP2p(request);
+        return balancer->forwardToP2p(request);
 
     switch (commandMap[command])
     {

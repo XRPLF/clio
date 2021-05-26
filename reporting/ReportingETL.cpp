@@ -76,7 +76,7 @@ ReportingETL::insertTransactions(
         auto journal = ripple::debugLog();
         accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
-        flatMapBackend_->writeTransaction(
+        backend_->writeTransaction(
             std::move(keyStr),
             ledger.seq,
             std::move(*raw),
@@ -89,7 +89,7 @@ std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
     // check that database is actually empty
-    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+    auto rng = backend_->fetchLedgerRangeNoThrow();
     if (rng)
     {
         BOOST_LOG_TRIVIAL(fatal) << __func__ << " : "
@@ -113,8 +113,8 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
-    flatMapBackend_->startWrites();
-    flatMapBackend_->writeLedger(
+    backend_->startWrites();
+    backend_->writeLedger(
         lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
@@ -125,13 +125,13 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     // data and pushes the downloaded data into the writeQueue. asyncWriter
     // consumes from the queue and inserts the data into the Ledger object.
     // Once the below call returns, all data has been pushed into the queue
-    loadBalancer_.loadInitialLedger(startingSequence);
+    loadBalancer_->loadInitialLedger(startingSequence);
 
     if (!stopping_)
     {
-        flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
+        backend_->writeAccountTransactions(std::move(accountTxData));
     }
-    flatMapBackend_->finishWrites(startingSequence);
+    backend_->finishWrites(startingSequence);
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
                              << ((end - start).count()) / 1000000000.0;
@@ -144,7 +144,7 @@ ReportingETL::getFees(std::uint32_t seq)
     ripple::Fees fees;
 
     auto key = ripple::keylet::fees().key;
-    auto bytes = flatMapBackend_->fetchLedgerObject(key, seq);
+    auto bytes = backend_->fetchLedgerObject(key, seq);
 
     if (!bytes)
     {
@@ -173,10 +173,10 @@ ReportingETL::getFees(std::uint32_t seq)
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
-    auto ledgerRange = flatMapBackend_->fetchLedgerRange();
+    auto ledgerRange = backend_->fetchLedgerRange();
     auto fees = getFees(lgrInfo.seq);
     auto transactions =
-        flatMapBackend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+        backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
 
     if (!fees || !ledgerRange)
     {
@@ -206,7 +206,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     {
         try
         {
-            auto range = flatMapBackend_->fetchLedgerRangeNoThrow();
+            auto range = backend_->fetchLedgerRangeNoThrow();
 
             if (!range || range->maxSequence < ledgerSequence)
             {
@@ -269,7 +269,7 @@ ReportingETL::fetchLedgerData(uint32_t idx)
         << "Attempting to fetch ledger with sequence = " << idx;
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_.fetchLedger(idx, false);
+        loadBalancer_->fetchLedger(idx, false);
     BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
                              << "GetLedger reply = " << response->DebugString();
     return response;
@@ -283,7 +283,7 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
         << "Attempting to fetch ledger with sequence = " << idx;
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_.fetchLedger(idx, true);
+        loadBalancer_->fetchLedger(idx, true);
     BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
                              << "GetLedger reply = " << response->DebugString();
     return response;
@@ -301,9 +301,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
-    flatMapBackend_->startWrites();
+    backend_->startWrites();
 
-    flatMapBackend_->writeLedger(
+    backend_->writeLedger(
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
     std::vector<AccountTransactionsData> accountTxData{
         insertTransactions(lgrInfo, rawData)};
@@ -336,7 +336,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         }
 
         assert(not(isCreated and isDeleted));
-        flatMapBackend_->writeLedgerObject(
+        backend_->writeLedgerObject(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
             std::move(*obj.mutable_data()),
@@ -344,13 +344,13 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted,
             std::move(bookDir));
     }
-    flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
+    backend_->writeAccountTransactions(std::move(accountTxData));
     accumTxns_ += rawData.transactions_list().transactions_size();
     bool success = true;
     if (accumTxns_ >= txnThreshold_)
     {
         auto start = std::chrono::system_clock::now();
-        success = flatMapBackend_->finishWrites(lgrInfo.seq);
+        success = backend_->finishWrites(lgrInfo.seq);
         auto end = std::chrono::system_clock::now();
 
         auto duration = ((end - start).count()) / 1000000000.0;
@@ -407,7 +407,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                              << "Starting etl pipeline";
     writing_ = true;
 
-    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+    auto rng = backend_->fetchLedgerRangeNoThrow();
     if (!rng || rng->maxSequence != startSequence - 1)
     {
         assert(false);
@@ -416,7 +416,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populating caches";
 
-    flatMapBackend_->getIndexer().populateCachesAsync(*flatMapBackend_);
+    backend_->getIndexer().populateCachesAsync(*backend_);
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populated caches";
 
@@ -456,7 +456,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // the entire server is shutting down. This can be detected in a
             // variety of ways. See the comment at the top of the function
             while ((!finishSequence_ || currentSequence <= *finishSequence_) &&
-                   networkValidatedLedgers_.waitUntilValidatedByNetwork(
+                   networkValidatedLedgers_->waitUntilValidatedByNetwork(
                        currentSequence) &&
                    !writeConflict && !isStopping())
             {
@@ -550,7 +550,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
-            auto range = flatMapBackend_->fetchLedgerRangeNoThrow();
+            auto range = backend_->fetchLedgerRangeNoThrow();
             if (onlineDeleteInterval_ && !deleting_ &&
                 range->maxSequence - range->minSequence >
                     *onlineDeleteInterval_)
@@ -558,7 +558,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 deleting_ = true;
                 ioContext_.post([this, &range]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
-                    flatMapBackend_->doOnlineDelete(
+                    backend_->doOnlineDelete(
                         range->maxSequence - *onlineDeleteInterval_);
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
                     deleting_ = false;
@@ -581,7 +581,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         << "Extracted and wrote " << *lastPublishedSequence - startSequence
         << " in " << ((end - begin).count()) / 1000000000.0;
     writing_ = false;
-    flatMapBackend_->getIndexer().clearCaches();
+    backend_->getIndexer().clearCaches();
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Stopping etl pipeline";
@@ -603,7 +603,7 @@ void
 ReportingETL::monitor()
 {
     std::optional<uint32_t> latestSequence =
-        flatMapBackend_->fetchLatestLedgerSequence();
+        backend_->fetchLatestLedgerSequence();
     if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
@@ -625,7 +625,7 @@ ReportingETL::monitor()
                 << __func__ << " : "
                 << "Waiting for next ledger to be validated by network...";
             std::optional<uint32_t> mostRecentValidated =
-                networkValidatedLedgers_.getMostRecent();
+                networkValidatedLedgers_->getMostRecent();
             if (mostRecentValidated)
             {
                 BOOST_LOG_TRIVIAL(info) << __func__ << " : "
@@ -674,7 +674,7 @@ ReportingETL::monitor()
         << "Database is populated. "
         << "Starting monitor loop. sequence = " << nextSequence;
     while (!stopping_ &&
-           networkValidatedLedgers_.waitUntilValidatedByNetwork(nextSequence))
+           networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence))
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                                 << "Ledger with sequence = " << nextSequence
@@ -727,13 +727,13 @@ ReportingETL::monitorReadOnly()
 {
     BOOST_LOG_TRIVIAL(debug) << "Starting reporting in strict read only mode";
     std::optional<uint32_t> mostRecent =
-        networkValidatedLedgers_.getMostRecent();
+        networkValidatedLedgers_->getMostRecent();
     if (!mostRecent)
         return;
     uint32_t sequence = *mostRecent;
     bool success = true;
     while (!stopping_ &&
-           networkValidatedLedgers_.waitUntilValidatedByNetwork(sequence))
+           networkValidatedLedgers_->waitUntilValidatedByNetwork(sequence))
     {
         publishLedger(sequence, 30);
         ++sequence;
@@ -754,17 +754,15 @@ ReportingETL::doWork()
 
 ReportingETL::ReportingETL(
     boost::json::object const& config,
-    boost::asio::io_context& ioc)
+    boost::asio::io_context& ioc,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer)
     : publishStrand_(ioc)
     , ioContext_(ioc)
-    , flatMapBackend_(Backend::makeBackend(config))
-    , subscriptions_(std::make_unique<SubscriptionManager>())
-    , loadBalancer_(
-          config.at("etl_sources").as_array(),
-          *flatMapBackend_,
-          *this,
-          networkValidatedLedgers_,
-          ioc)
+    , backend_(backend)
+    , subscriptions_(subscriptions)
+    , loadBalancer_(balancer)
 {
     if (config.contains("start_sequence"))
         startSequence_ = config.at("start_sequence").as_int64();
@@ -778,6 +776,6 @@ ReportingETL::ReportingETL(
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
-    flatMapBackend_->open(readOnly_);
+    backend_->open(readOnly_);
 }
 
