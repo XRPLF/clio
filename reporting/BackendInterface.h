@@ -39,6 +39,8 @@ struct TransactionAndMetadata
     Blob transaction;
     Blob metadata;
     uint32_t ledgerSequence;
+    bool
+    operator==(const TransactionAndMetadata&) const = default;
 };
 
 struct AccountTransactionsCursor

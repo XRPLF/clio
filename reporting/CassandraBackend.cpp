@@ -1270,6 +1270,11 @@ CassandraBackend::open(bool readOnly)
         }
         return {""};
     };
+    auto getInt = [this](std::string const& field) -> std::optional<int> {
+        if (config_.contains(field) && config_.at(field).is_int64())
+            return config_[field].as_int64();
+        return {};
+    };
     if (open_)
     {
         assert(false);
@@ -1320,14 +1325,14 @@ CassandraBackend::open(bool readOnly)
             throw std::runtime_error(ss.str());
         }
 
-        int port = config_.contains("port") ? config_["port"].as_int64() : 0;
+        auto port = getInt("port");
         if (port)
         {
-            rc = cass_cluster_set_port(cluster, port);
+            rc = cass_cluster_set_port(cluster, *port);
             if (rc != CASS_OK)
             {
                 std::stringstream ss;
-                ss << "nodestore: Error setting Cassandra port: " << port
+                ss << "nodestore: Error setting Cassandra port: " << *port
                    << ", result: " << rc << ", " << cass_error_desc(rc);
 
                 throw std::runtime_error(ss.str());
@@ -1355,22 +1360,8 @@ CassandraBackend::open(bool readOnly)
         cass_cluster_set_credentials(
             cluster, username.c_str(), getString("password").c_str());
     }
-    int threads = config_.contains("threads")
-        ? config_["threads"].as_int64()
-        : std::thread::hardware_concurrency();
-    int ttl = config_.contains("ttl") ? config_["ttl"].as_int64() * 2 : 0;
-    int keysTtl,
-        keysIncr = ttl != 0 ? pow(2, indexer_.getKeyShift()) * 4 * 2 : 0;
-    while (keysTtl < ttl)
-    {
-        keysTtl += keysIncr;
-    }
-    int booksTtl,
-        booksIncr = ttl != 0 ? pow(2, indexer_.getBookShift()) * 4 * 2 : 0;
-    while (booksTtl < ttl)
-    {
-        booksTtl += booksIncr;
-    }
+    int threads = getInt("threads") ? *getInt("threads")
+                                    : std::thread::hardware_concurrency();
 
     rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)
@@ -1380,6 +1371,8 @@ CassandraBackend::open(bool readOnly)
            << ", result: " << rc << ", " << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
+    if (getInt("max_requests_outstanding"))
+        maxRequestsOutstanding = *getInt("max_requests_outstanding");
 
     cass_cluster_set_request_timeout(cluster, 10000);
 
@@ -1436,9 +1429,12 @@ CassandraBackend::open(bool readOnly)
     std::string keyspace = getString("keyspace");
     if (keyspace.empty())
     {
-        throw std::runtime_error(
-            "nodestore: Missing keyspace in Cassandra config");
+        BOOST_LOG_TRIVIAL(warning)
+            << "No keyspace specified. Using keyspace oceand";
+        keyspace = "oceand";
     }
+
+    int rf = getInt("replication_factor") ? *getInt("replication_factor") : 3;
 
     std::string tablePrefix = getString("table_prefix");
     if (tablePrefix.empty())
@@ -1447,6 +1443,20 @@ CassandraBackend::open(bool readOnly)
     }
 
     cass_cluster_set_connect_timeout(cluster, 10000);
+
+    int ttl = getInt("ttl") ? *getInt("ttl") * 2 : 0;
+    int keysTtl,
+        keysIncr = ttl != 0 ? pow(2, indexer_.getKeyShift()) * 4 * 2 : 0;
+    while (keysTtl < ttl)
+    {
+        keysTtl += keysIncr;
+    }
+    int booksTtl,
+        booksIncr = ttl != 0 ? pow(2, indexer_.getBookShift()) * 4 * 2 : 0;
+    while (booksTtl < ttl)
+    {
+        booksTtl += booksIncr;
+    }
 
     auto executeSimpleStatement = [this](std::string const& query) {
         CassStatement* statement = makeStatement(query.c_str(), 0);
@@ -1499,10 +1509,10 @@ CassandraBackend::open(bool readOnly)
             else
             {
                 std::stringstream query;
-                query
-                    << "CREATE KEYSPACE IF NOT EXISTS " << keyspace
-                    << " WITH replication = {'class': 'SimpleStrategy', "
-                       "'replication_factor': '3'}  AND durable_writes = true";
+                query << "CREATE KEYSPACE IF NOT EXISTS " << keyspace
+                      << " WITH replication = {'class': 'SimpleStrategy', "
+                         "'replication_factor': '"
+                      << std::to_string(rf) << "'}  AND durable_writes = true";
                 if (!executeSimpleStatement(query.str()))
                     continue;
                 query = {};
@@ -1827,74 +1837,6 @@ CassandraBackend::open(bool readOnly)
             */
         setupPreparedStatements = true;
     }
-
-    /*
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        if (!fetchLatestLedgerSequence())
-        {
-            std::stringstream query;
-            query << "TRUNCATE TABLE " << tablePrefix << "ledger_range";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "ledgers";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "ledger_hashes";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "objects";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "transactions";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-            query << "TRUNCATE TABLE " << tablePrefix << "account_tx";
-            if (!executeSimpleStatement(query.str()))
-                continue;
-            query.str("");
-        }
-        break;
-    }
-    */
-
-    if (config_.contains("max_requests_outstanding"))
-    {
-        maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
-    }
-    if (config_.contains("indexer_max_requests_outstanding"))
-    {
-        indexerMaxRequestsOutstanding =
-            config_["indexer_max_requests_outstanding"].as_int64();
-    }
-    /*
-    if (config_.contains("run_indexer"))
-    {
-        if (config_["run_indexer"].as_bool())
-        {
-            if (config_.contains("indexer_shift"))
-            {
-                indexerShift_ = config_["indexer_shift"].as_int64();
-            }
-            indexer_ = std::thread{[this]() {
-                auto seq = getNextToIndex();
-                if (seq)
-                {
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Running indexer. Ledger = " << std::to_string(*seq);
-                    runIndexer(*seq);
-                    BOOST_LOG_TRIVIAL(info) << "Ran indexer";
-                }
-            }};
-        }
-    }
-    */
 
     work_.emplace(ioContext_);
     ioThread_ = std::thread{[this]() { ioContext_.run(); }};

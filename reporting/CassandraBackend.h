@@ -1018,7 +1018,7 @@ public:
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
         KeyIndex const& index,
-        bool isAsync = false) const;
+        bool isAsync = false) const override;
     bool
     writeBooks(
         std::unordered_map<
