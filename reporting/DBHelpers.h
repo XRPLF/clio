@@ -44,6 +44,8 @@ struct AccountTransactionsData
         , txHash(txHash)
     {
     }
+
+    AccountTransactionsData() = default;
 };
 
 template <class T>
