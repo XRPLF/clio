@@ -394,7 +394,7 @@ CassandraBackend::fetchLedgerDiff(uint32_t ledgerSequence) const
     return objects;
 }
 LedgerPage
-CassandraBackend::fetchLedgerPage(
+CassandraBackend::doFetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
@@ -433,7 +433,7 @@ CassandraBackend::fetchLedgerPage(
         if (keys.size() && keys.size() == limit)
         {
             page.cursor = keys.back();
-            keys.pop_back();
+            ++(*page.cursor);
         }
         auto objects = fetchLedgerObjects(keys, ledgerSequence);
         if (objects.size() != keys.size())
@@ -501,124 +501,7 @@ CassandraBackend::fetchBookOffers(
     std::uint32_t limit,
     std::optional<ripple::uint256> const& cursor) const
 {
-    auto rng = fetchLedgerRange();
-    auto limitTuningFactor = 50;
-
-    if (!rng)
-        return {{}, {}};
-
-    auto readBooks =
-        [this, &book, &limit, &limitTuningFactor](std::uint32_t sequence)
-        -> std::pair<
-            bool,
-            std::vector<std::pair<std::uint64_t, ripple::uint256>>> {
-        CassandraStatement completeQuery{completeBook_};
-        completeQuery.bindInt(sequence);
-        CassandraResult completeResult = executeSyncRead(completeQuery);
-        bool complete = completeResult.hasResult();
-
-        CassandraStatement statement{selectBook_};
-        std::vector<std::pair<std::uint64_t, ripple::uint256>> keys = {};
-
-        statement.bindBytes(book.data(), 24);
-        statement.bindInt(sequence);
-
-        BOOST_LOG_TRIVIAL(info)
-            << __func__ << " upper = " << std::to_string(sequence) << " book = "
-            << ripple::strHex(std::string((char*)book.data(), 24));
-
-        ripple::uint256 zero = beast::zero;
-        statement.bindBytes(zero.data(), 8);
-        statement.bindBytes(zero);
-
-        statement.bindUInt(limit * limitTuningFactor);
-
-        auto start = std::chrono::system_clock::now();
-
-        CassandraResult result = executeSyncRead(statement);
-
-        auto end = std::chrono::system_clock::now();
-        auto duration = ((end - start).count()) / 1000000000.0;
-
-        BOOST_LOG_TRIVIAL(info) << "Book directory fetch took "
-                                << std::to_string(duration) << " seconds.";
-
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - got keys";
-        if (!result)
-        {
-            return {false, {{}, {}}};
-        }
-
-        do
-        {
-            auto [quality, index] = result.getBytesTuple();
-            std::uint64_t q = 0;
-            memcpy(&q, quality.data(), 8);
-            keys.push_back({q, ripple::uint256::fromVoid(index.data())});
-
-        } while (result.nextRow());
-
-        return {complete, keys};
-    };
-
-    auto upper = getBookIndexOfSeq(ledgerSequence);
-    auto [complete, quality_keys] = readBooks(upper->bookIndex);
-
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " - populated keys. num keys = " << quality_keys.size();
-
-    std::optional<std::string> warning = {};
-    if (!complete)
-    {
-        warning = "Data may be incomplete";
-        BOOST_LOG_TRIVIAL(info) << "May be incomplete. Fetching other page";
-
-        auto bookShift = indexer_.getBookShift();
-        std::uint32_t lower = upper->bookIndex - (1 << bookShift);
-        auto originalKeys = std::move(quality_keys);
-        auto [lowerComplete, otherKeys] = readBooks(lower);
-
-        assert(lowerComplete);
-
-        std::vector<std::pair<std::uint64_t, ripple::uint256>> merged_keys;
-        merged_keys.reserve(originalKeys.size() + otherKeys.size());
-        std::merge(
-            originalKeys.begin(),
-            originalKeys.end(),
-            otherKeys.begin(),
-            otherKeys.end(),
-            std::back_inserter(merged_keys),
-            [](auto pair1, auto pair2) { return pair1.first < pair2.first; });
-    }
-
-    std::vector<ripple::uint256> merged(quality_keys.size());
-    std::transform(
-        quality_keys.begin(),
-        quality_keys.end(),
-        std::back_inserter(merged),
-        [](auto pair) { return pair.second; });
-
-    auto uniqEnd = std::unique(merged.begin(), merged.end());
-    std::vector<ripple::uint256> keys{merged.begin(), uniqEnd};
-
-    std::cout << keys.size() << std::endl;
-
-    auto start = std::chrono::system_clock::now();
-    std::vector<Blob> objs = fetchLedgerObjects(keys, ledgerSequence);
-    auto end = std::chrono::system_clock::now();
-    auto duration = ((end - start).count()) / 1000000000.0;
-
-    BOOST_LOG_TRIVIAL(info)
-        << "Book object fetch took " << std::to_string(duration) << " seconds.";
-
-    std::vector<LedgerObject> results;
-    for (size_t i = 0; i < objs.size(); ++i)
-    {
-        if (objs[i].size() != 0)
-            results.push_back({keys[i], objs[i]});
-    }
-
-    return {results, {}, warning};
+    return {};
 }  // namespace Backend
 struct WriteBookCallbackData
 {
@@ -907,57 +790,6 @@ CassandraBackend::writeKeys(
     return true;
 }
 
-bool
-CassandraBackend::writeBooks(
-    std::unordered_map<
-        ripple::uint256,
-        std::unordered_set<ripple::uint256>> const& books,
-    BookIndex const& index,
-    bool isAsync) const
-{
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " Ledger = " << std::to_string(index.bookIndex)
-        << " . num books = " << std::to_string(books.size());
-    std::condition_variable cv;
-    std::mutex mtx;
-    std::vector<std::shared_ptr<WriteBookCallbackData>> cbs;
-    uint32_t concurrentLimit =
-        isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
-    std::atomic_uint32_t numOutstanding = 0;
-    size_t count = 0;
-    auto start = std::chrono::system_clock::now();
-    for (auto& book : books)
-    {
-        for (auto& offer : book.second)
-        {
-            ++numOutstanding;
-            ++count;
-            cbs.push_back(std::make_shared<WriteBookCallbackData>(
-                *this,
-                book.first,
-                offer,
-                index.bookIndex,
-                cv,
-                mtx,
-                numOutstanding));
-            writeBook(*cbs.back());
-            BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
-            std::unique_lock<std::mutex> lck(mtx);
-            BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
-            cv.wait(lck, [&numOutstanding, concurrentLimit]() {
-                return numOutstanding < concurrentLimit;
-            });
-        }
-    }
-    BOOST_LOG_TRIVIAL(info) << __func__
-                            << "Submitted all book writes. Waiting for them to "
-                               "finish. num submitted = "
-                            << std::to_string(count);
-    std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });
-    BOOST_LOG_TRIVIAL(info) << __func__ << "Finished writing books";
-    return true;
-}
 bool
 CassandraBackend::isIndexed(uint32_t ledgerSequence) const
 {
@@ -1445,18 +1277,17 @@ CassandraBackend::open(bool readOnly)
     cass_cluster_set_connect_timeout(cluster, 10000);
 
     int ttl = getInt("ttl") ? *getInt("ttl") * 2 : 0;
-    int keysTtl,
-        keysIncr = ttl != 0 ? pow(2, indexer_.getKeyShift()) * 4 * 2 : 0;
+    int keysTtl = (ttl != 0 ? pow(2, indexer_.getKeyShift()) * 4 * 2 : 0);
+    int incr = keysTtl;
     while (keysTtl < ttl)
     {
-        keysTtl += keysIncr;
+        keysTtl += incr;
     }
-    int booksTtl,
-        booksIncr = ttl != 0 ? pow(2, indexer_.getBookShift()) * 4 * 2 : 0;
-    while (booksTtl < ttl)
-    {
-        booksTtl += booksIncr;
-    }
+    int booksTtl = 0;
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " setting ttl to " << std::to_string(ttl)
+        << " , books ttl to " << std::to_string(booksTtl) << " , keys ttl to "
+        << std::to_string(keysTtl);
 
     auto executeSimpleStatement = [this](std::string const& query) {
         CassStatement* statement = makeStatement(query.c_str(), 0);
@@ -1529,7 +1360,7 @@ CassandraBackend::open(bool readOnly)
               << " ( key blob, sequence bigint, object blob, PRIMARY "
                  "KEY(key, "
                  "sequence)) WITH CLUSTERING ORDER BY (sequence DESC) AND"
-              << " default_time_to_live = " << ttl;
+              << " default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1544,7 +1375,7 @@ CassandraBackend::open(bool readOnly)
               << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
                  "transaction "
                  "blob, metadata blob)"
-              << " WITH default_time_to_live = " << ttl;
+              << " WITH default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1571,7 +1402,7 @@ CassandraBackend::open(bool readOnly)
               << " ( sequence bigint, key blob, PRIMARY KEY "
                  "(sequence, key))"
                  " WITH default_time_to_live = "
-              << keysTtl;
+              << std::to_string(keysTtl);
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1582,28 +1413,13 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "books"
-              << " ( book blob, sequence bigint, quality_key tuple<blob, "
-                 "blob>, PRIMARY KEY "
-                 "((book, sequence), quality_key)) WITH CLUSTERING ORDER BY "
-                 "(quality_key "
-                 "ASC) AND default_time_to_live = "
-              << booksTtl;
-        if (!executeSimpleStatement(query.str()))
-            continue;
-        query.str("");
-        query << "SELECT * FROM " << tablePrefix << "books"
-              << " LIMIT 1";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-        query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "account_tx"
               << " ( account blob, seq_idx tuple<bigint, bigint>, "
                  " hash blob, "
                  "PRIMARY KEY "
                  "(account, seq_idx)) WITH "
                  "CLUSTERING ORDER BY (seq_idx desc)"
-              << " AND default_time_to_live = " << ttl;
+              << " AND default_time_to_live = " << std::to_string(ttl);
 
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -1617,7 +1433,7 @@ CassandraBackend::open(bool readOnly)
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledgers"
               << " ( sequence bigint PRIMARY KEY, header blob )"
-              << " WITH default_time_to_live = " << ttl;
+              << " WITH default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1630,7 +1446,7 @@ CassandraBackend::open(bool readOnly)
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "ledger_hashes"
               << " (hash blob PRIMARY KEY, sequence bigint)"
-              << " WITH default_time_to_live = " << ttl;
+              << " WITH default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1679,13 +1495,6 @@ CassandraBackend::open(bool readOnly)
               << " (sequence, key) VALUES (?, ?)";
         if (!insertKey_.prepareStatement(query, session_.get()))
             continue;
-
-        query.str("");
-        query << "INSERT INTO " << tablePrefix << "books"
-              << " (book, sequence, quality_key) VALUES (?, ?, (?, ?))";
-        if (!insertBook2_.prepareStatement(query, session_.get()))
-            continue;
-        query.str("");
 
         query.str("");
         query << "SELECT key FROM " << tablePrefix << "keys"
@@ -1753,23 +1562,6 @@ CassandraBackend::open(bool readOnly)
               << " WHERE key = ? LIMIT 1";
 
         if (!getToken_.prepareStatement(query, session_.get()))
-            continue;
-
-        query.str("");
-        query << "SELECT quality_key FROM " << tablePrefix << "books "
-              << " WHERE book = ? AND sequence = ?"
-              << " AND quality_key >= (?, ?)"
-                 " ORDER BY quality_key ASC "
-                 " LIMIT ?";
-        if (!selectBook_.prepareStatement(query, session_.get()))
-            continue;
-
-        query.str("");
-        query << "SELECT * FROM " << tablePrefix << "books "
-              << "WHERE book = "
-              << "0x000000000000000000000000000000000000000000000000"
-              << " AND sequence = ?";
-        if (!completeBook_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

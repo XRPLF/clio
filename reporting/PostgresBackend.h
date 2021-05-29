@@ -16,7 +16,7 @@ private:
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
-    mutable boost::asio::thread_pool pool_{200};
+    mutable boost::asio::thread_pool pool_{16};
     uint32_t writeInterval_ = 1000000;
 
 public:
@@ -46,7 +46,7 @@ public:
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
 
     LedgerPage
-    fetchLedgerPage(
+    doFetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
@@ -119,13 +119,6 @@ public:
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
         KeyIndex const& index,
-        bool isAsync = false) const override;
-    bool
-    writeBooks(
-        std::unordered_map<
-            ripple::uint256,
-            std::unordered_set<ripple::uint256>> const& books,
-        BookIndex const& index,
         bool isAsync = false) const override;
 };
 }  // namespace Backend

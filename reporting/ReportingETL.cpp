@@ -375,7 +375,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populating caches";
 
-    flatMapBackend_->getIndexer().populateCachesAsync(*flatMapBackend_);
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populated caches";
 
@@ -541,7 +540,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         << "Extracted and wrote " << *lastPublishedSequence - startSequence
         << " in " << ((end - begin).count()) / 1000000000.0;
     writing_ = false;
-    flatMapBackend_->getIndexer().clearCaches();
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Stopping etl pipeline";

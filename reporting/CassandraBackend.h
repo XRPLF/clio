@@ -957,7 +957,7 @@ public:
         CassandraResult result = executeSyncRead(statement);
         if (!result)
         {
-            BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
             return {};
         }
         return result.getBytes();
@@ -997,7 +997,7 @@ public:
         return {{result.getBytes(), result.getBytes(), result.getUInt32()}};
     }
     LedgerPage
-    fetchLedgerPage(
+    doFetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
@@ -1018,13 +1018,6 @@ public:
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
         KeyIndex const& index,
-        bool isAsync = false) const override;
-    bool
-    writeBooks(
-        std::unordered_map<
-            ripple::uint256,
-            std::unordered_set<ripple::uint256>> const& books,
-        BookIndex const& index,
         bool isAsync = false) const override;
     BookOffersPage
     fetchBookOffers(
