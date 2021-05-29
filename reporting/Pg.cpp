@@ -244,7 +244,7 @@ Pg::bulkInsert(char const* table, std::string const& records)
     assert(conn_.get());
     auto copyCmd = boost::format(R"(COPY %s FROM stdin)");
     auto formattedCmd = boost::str(copyCmd % table);
-    BOOST_LOG_TRIVIAL(info) << __func__ << " " << formattedCmd;
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " " << formattedCmd;
     auto res = query(formattedCmd.c_str());
     if (!res || res.status() != PGRES_COPY_IN)
     {

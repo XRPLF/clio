@@ -22,55 +22,6 @@ BackendIndexer::addKey(ripple::uint256&& key)
 }
 
 void
-writeKeyFlagLedger(
-    uint32_t ledgerSequence,
-    uint32_t shift,
-    BackendInterface const& backend,
-    std::unordered_set<ripple::uint256> const& keys)
-{
-    uint32_t nextFlag = ((ledgerSequence >> shift << shift) + (1 << shift));
-    ripple::uint256 zero = {};
-    BOOST_LOG_TRIVIAL(info)
-        << __func__
-        << " starting. ledgerSequence = " << std::to_string(ledgerSequence)
-        << " nextFlag = " << std::to_string(nextFlag)
-        << " keys.size() = " << std::to_string(keys.size());
-    while (true)
-    {
-        try
-        {
-            auto [objects, curCursor, warning] =
-                backend.fetchLedgerPage({}, nextFlag, 1);
-            if (!warning)
-            {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__ << " flag ledger already written. sequence = "
-                    << std::to_string(ledgerSequence)
-                    << " next flag = " << std::to_string(nextFlag)
-                    << "returning";
-                return;
-            }
-            break;
-        }
-        catch (DatabaseTimeout& t)
-        {
-            ;
-        }
-    }
-    auto start = std::chrono::system_clock::now();
-
-    backend.writeKeys(keys, KeyIndex{nextFlag}, true);
-    backend.writeKeys({zero}, KeyIndex{nextFlag}, true);
-    auto end = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(info)
-        << __func__
-        << " finished. ledgerSequence = " << std::to_string(ledgerSequence)
-        << " nextFlag = " << std::to_string(nextFlag)
-        << " keys.size() = " << std::to_string(keys.size())
-        << std::chrono::duration_cast<std::chrono::seconds>(end - start)
-               .count();
-}
-void
 BackendIndexer::doKeysRepair(
     BackendInterface const& backend,
     std::optional<uint32_t> sequence)
@@ -218,7 +169,7 @@ BackendIndexer::writeKeyFlagLedgerAsync(
 void
 BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
 {
-    BOOST_LOG_TRIVIAL(info)
+    BOOST_LOG_TRIVIAL(debug)
         << __func__
         << " starting. sequence = " << std::to_string(ledgerSequence);
     bool isFirst = false;
@@ -243,7 +194,7 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
     }
     isFirst_ = false;
     keys = {};
-    BOOST_LOG_TRIVIAL(info)
+    BOOST_LOG_TRIVIAL(debug)
         << __func__
         << " finished. sequence = " << std::to_string(ledgerSequence);
 }

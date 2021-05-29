@@ -313,7 +313,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         auto end = std::chrono::system_clock::now();
 
         auto duration = ((end - start).count()) / 1000000000.0;
-        BOOST_LOG_TRIVIAL(info)
+        BOOST_LOG_TRIVIAL(debug)
             << __func__ << " Accumulated " << std::to_string(accumTxns_)
             << " transactions. Wrote in " << std::to_string(duration)
             << " transactions per second = "
@@ -321,7 +321,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         accumTxns_ = 0;
     }
     else
-        BOOST_LOG_TRIVIAL(info) << __func__ << " skipping commit";
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " skipping commit";
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "

@@ -752,7 +752,7 @@ CassandraBackend::writeKeys(
     cbs.reserve(keys.size());
     uint32_t concurrentLimit =
         isAsync ? indexerMaxRequestsOutstanding : keys.size();
-    BOOST_LOG_TRIVIAL(info)
+    BOOST_LOG_TRIVIAL(debug)
         << __func__ << " Ledger = " << std::to_string(index.keyIndex)
         << " . num keys = " << std::to_string(keys.size())
         << " . concurrentLimit = "
@@ -779,7 +779,7 @@ CassandraBackend::writeKeys(
                 concurrentLimit;
         });
         if (numSubmitted % 100000 == 0)
-            BOOST_LOG_TRIVIAL(info)
+            BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " Submitted " << std::to_string(numSubmitted)
                 << " write requests. Completed "
                 << (keys.size() - numRemaining);
