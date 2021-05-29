@@ -841,15 +841,6 @@ create table if not exists account_transactions5 partition of account_transactio
 create table if not exists account_transactions6 partition of account_transactions for values from (50000000) to (60000000);
 create table if not exists account_transactions7 partition of account_transactions for values from (60000000) to (70000000);
 
--- Table that maps a book to a list of offers in that book. Deletes from the ledger table
--- cascade here based on ledger_seq.
-CREATE TABLE IF NOT EXISTS books (
-    ledger_seq bigint NOT NULL,
-    book bytea NOT NULL,
-    offer_key bytea NOT NULL
-);
-
-CREATE INDEX book_idx ON books using btree(ledger_seq, book, offer_key);
 
 CREATE TABLE IF NOT EXISTS keys (
     ledger_seq bigint NOT NULL, 

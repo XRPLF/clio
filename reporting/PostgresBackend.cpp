@@ -643,9 +643,6 @@ PostgresBackend::doFinishWrites() const
         std::string keysStr = keysBuffer_.str();
         if (keysStr.size())
             writeConnection_.bulkInsert("keys", keysStr);
-        std::string booksStr = booksBuffer_.str();
-        if (booksStr.size())
-            writeConnection_.bulkInsert("books", booksStr);
     }
     auto res = writeConnection_("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
@@ -658,8 +655,6 @@ PostgresBackend::doFinishWrites() const
     transactionsBuffer_.clear();
     objectsBuffer_.str("");
     objectsBuffer_.clear();
-    booksBuffer_.str("");
-    booksBuffer_.clear();
     keysBuffer_.str("");
     keysBuffer_.clear();
     accountTxBuffer_.str("");
