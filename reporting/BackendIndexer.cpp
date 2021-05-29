@@ -74,6 +74,15 @@ BackendIndexer::doKeysRepair(
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " finished. sequence = " << std::to_string(*sequence);
 }
+void
+BackendIndexer::doKeysRepairAsync(
+    BackendInterface const& backend,
+    std::optional<uint32_t> sequence)
+{
+    boost::asio::post(ioc_, [this, sequence, &backend]() {
+        doKeysRepair(backend, sequence);
+    });
+}
 
 void
 BackendIndexer::writeKeyFlagLedgerAsync(

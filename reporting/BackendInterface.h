@@ -88,6 +88,10 @@ class BackendIndexer
     std::unordered_set<ripple::uint256> keys;
 
     mutable bool isFirst_ = true;
+    void
+    doKeysRepair(
+        BackendInterface const& backend,
+        std::optional<uint32_t> sequence);
 
 public:
     BackendIndexer(boost::json::object const& config);
@@ -103,7 +107,7 @@ public:
         uint32_t ledgerSequence,
         BackendInterface const& backend);
     void
-    doKeysRepair(
+    doKeysRepairAsync(
         BackendInterface const& backend,
         std::optional<uint32_t> sequence);
     uint32_t
@@ -171,7 +175,7 @@ public:
                 auto rng = fetchLedgerRangeNoThrow();
                 if (rng && rng->minSequence != ledgerSequence)
                     isFirst_ = false;
-                indexer_.doKeysRepair(*this, ledgerSequence);
+                indexer_.doKeysRepairAsync(*this, ledgerSequence);
             }
             if (indexer_.isKeyFlagLedger(ledgerSequence) || isFirst_)
                 indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
