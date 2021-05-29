@@ -790,7 +790,7 @@ CREATE TABLE IF NOT EXISTS objects (
     object bytea
 ) PARTITION BY RANGE (ledger_seq);
 
-CREATE INDEX objects_idx ON objects USING btree(ledger_seq,key);
+CREATE INDEX objects_idx ON objects USING btree(key,ledger_seq);
 
 create table if not exists objects1 partition of objects for values from (0) to (10000000);
 create table if not exists objects2 partition of objects for values from (10000000) to (20000000);

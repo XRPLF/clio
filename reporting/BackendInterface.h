@@ -247,9 +247,23 @@ public:
         } while (page.objects.size() < limit && page.cursor);
         if (incomplete)
         {
-            std::cout << "checking lower" << std::endl;
+            auto rng = fetchLedgerRange();
+            if (!rng)
+                return page;
+            if (rng->minSequence == ledgerSequence)
+            {
+                BOOST_LOG_TRIVIAL(fatal)
+                    << __func__
+                    << " Database is populated but first flag ledger is "
+                       "incomplete. This should never happen";
+                assert(false);
+                throw std::runtime_error("Missing base flag ledger");
+            }
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " recursing";
             uint32_t lowerSequence = ledgerSequence >> indexer_.getKeyShift()
                     << indexer_.getKeyShift();
+            if (lowerSequence < rng->minSequence)
+                lowerSequence = rng->minSequence;
             auto lowerPage = fetchLedgerPage(cursor, lowerSequence, limit);
             std::vector<ripple::uint256> keys;
             std::transform(
