@@ -640,9 +640,6 @@ PostgresBackend::doFinishWrites() const
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " objects size = " << objectsStr.size()
             << " txns size = " << txStr.size();
-        std::string keysStr = keysBuffer_.str();
-        if (keysStr.size())
-            writeConnection_.bulkInsert("keys", keysStr);
     }
     auto res = writeConnection_("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
@@ -655,8 +652,6 @@ PostgresBackend::doFinishWrites() const
     transactionsBuffer_.clear();
     objectsBuffer_.str("");
     objectsBuffer_.clear();
-    keysBuffer_.str("");
-    keysBuffer_.clear();
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
@@ -675,8 +670,12 @@ PostgresBackend::writeKeys(
     PgQuery& conn = isAsync ? pgQuery : writeConnection_;
     std::stringstream asyncBuffer;
     std::stringstream& buffer = isAsync ? asyncBuffer : keysBuffer_;
+    std::string tableName = isAsync ? "keys_temp_async" : "keys_temp";
     if (isAsync)
         conn("BEGIN");
+    conn(std::string{
+        "CREATE TABLE " + tableName + " AS SELECT * FROM keys WITH NO DATA"}
+             .c_str());
     size_t numRows = 0;
     for (auto& key : keys)
     {
@@ -687,20 +686,25 @@ PostgresBackend::writeKeys(
         // When writing in the background, we insert after every 10000 rows
         if ((isAsync && numRows == 10000) || numRows == 100000)
         {
-            conn.bulkInsert("keys", buffer.str());
+            conn.bulkInsert(tableName.c_str(), buffer.str());
             std::stringstream temp;
             buffer.swap(temp);
             numRows = 0;
         }
     }
+    if (numRows > 0)
+        conn.bulkInsert(tableName.c_str(), buffer.str());
+    conn(std::string{
+        "INSERT INTO keys SELECT * FROM " + tableName +
+        " ON CONFLICT DO NOTHING"}
+             .c_str());
+    conn(std::string{"DROP TABLE " + tableName}.c_str());
     if (isAsync)
     {
-        if (numRows > 0)
-            conn.bulkInsert("keys", buffer.str());
-        std::stringstream temp;
-        buffer.swap(temp);
         conn("COMMIT");
     }
+    std::stringstream temp;
+    buffer.swap(temp);
     return true;
 }
 bool

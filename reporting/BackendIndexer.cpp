@@ -114,6 +114,8 @@ BackendIndexer::writeKeyFlagLedgerAsync(
             try
             {
                 {
+                    BOOST_LOG_TRIVIAL(info)
+                        << "writeKeyFlagLedger - checking for complete...";
                     auto page =
                         backend.fetchLedgerPage({}, nextFlag.keyIndex, 1);
                     if (!page.warning)
@@ -126,6 +128,8 @@ BackendIndexer::writeKeyFlagLedgerAsync(
                             << std::to_string(ledgerSequence);
                         return;
                     }
+                    BOOST_LOG_TRIVIAL(info)
+                        << "writeKeyFlagLedger - is not complete";
                 }
                 indexing_ = nextFlag.keyIndex;
                 auto start = std::chrono::system_clock::now();

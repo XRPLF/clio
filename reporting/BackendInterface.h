@@ -275,11 +275,14 @@ public:
                 assert(false);
                 throw std::runtime_error("Missing base flag ledger");
             }
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " recursing";
-            uint32_t lowerSequence = ledgerSequence >> indexer_.getKeyShift()
-                    << indexer_.getKeyShift();
+            uint32_t lowerSequence = (ledgerSequence - 1) >>
+                indexer_.getKeyShift() << indexer_.getKeyShift();
             if (lowerSequence < rng->minSequence)
                 lowerSequence = rng->minSequence;
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " recursing. ledgerSequence = "
+                << std::to_string(ledgerSequence)
+                << " , lowerSequence = " << std::to_string(lowerSequence);
             auto lowerPage = fetchLedgerPage(cursor, lowerSequence, limit);
             std::vector<ripple::uint256> keys;
             std::transform(

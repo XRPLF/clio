@@ -764,6 +764,15 @@ async def fee(ip, port):
             print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
         print(e)
+async def server_info(ip, port):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({"command":"server_info"}))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res,indent=4,sort_keys=True))
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
 
 async def ledger_diff(ip, port, base, desired, includeBlobs):
     address = 'ws://' + str(ip) + ':' + str(port)
@@ -785,7 +794,7 @@ async def perf(ip, port):
 
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee"])
+parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info"])
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
@@ -828,6 +837,8 @@ def run(args):
         args.ledger = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))[1]
     if args.action == "fee":
         asyncio.get_event_loop().run_until_complete(fee(args.ip, args.port))
+    elif args.action == "server_info":
+        asyncio.get_event_loop().run_until_complete(server_info(args.ip, args.port))
     elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))

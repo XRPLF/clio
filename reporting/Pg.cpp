@@ -844,10 +844,9 @@ create table if not exists account_transactions7 partition of account_transactio
 
 CREATE TABLE IF NOT EXISTS keys (
     ledger_seq bigint NOT NULL, 
-    key bytea NOT NULL
+    key bytea NOT NULL,
+    PRIMARY KEY(ledger_seq, key)
 );
-
-CREATE INDEX key_idx ON keys USING btree(ledger_seq, key);
 
 -- account_tx() RPC helper. From the rippled reporting process, only the
 -- parameters without defaults are required. For the parameters with
