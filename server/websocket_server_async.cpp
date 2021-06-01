@@ -44,7 +44,8 @@ enum RPCCommand {
     ledger_data,
     book_offers,
     ledger_range,
-    ledger_entry
+    ledger_entry,
+    server_info
 };
 std::unordered_map<std::string, RPCCommand> commandMap{
     {"tx", tx},
@@ -54,7 +55,8 @@ std::unordered_map<std::string, RPCCommand> commandMap{
     {"ledger_entry", ledger_entry},
     {"account_info", account_info},
     {"ledger_data", ledger_data},
-    {"book_offers", book_offers}};
+    {"book_offers", book_offers},
+    {"server_info", server_info}};
 
 boost::json::object
 doAccountInfo(
@@ -82,6 +84,10 @@ boost::json::object
 doLedger(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doLedgerRange(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+boost::json::object
+doServerInfo(
     boost::json::object const& request,
     BackendInterface const& backend);
 
@@ -125,6 +131,10 @@ buildResponse(
             return {res, 1};
         }
         break;
+        case server_info: {
+            return {doServerInfo(request, backend), 1};
+            break;
+        }
         case account_info:
             return {doAccountInfo(request, backend), 1};
             break;
@@ -170,10 +180,10 @@ public:
     void
     run()
     {
-        // We need to be executing within a strand to perform async operations
-        // on the I/O objects in this session. Although not strictly necessary
-        // for single-threaded contexts, this example code is written to be
-        // thread-safe by default.
+        // We need to be executing within a strand to perform async
+        // operations on the I/O objects in this session. Although not
+        // strictly necessary for single-threaded contexts, this example
+        // code is written to be thread-safe by default.
         boost::asio::dispatch(
             ws_.get_executor(),
             boost::beast::bind_front_handler(

@@ -84,6 +84,8 @@ class BackendIndexer
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
+    std::atomic_uint32_t indexing_ = 0;
+
     uint32_t keyShift_ = 20;
     std::unordered_set<ripple::uint256> keys;
 
@@ -114,6 +116,14 @@ public:
     getKeyShift()
     {
         return keyShift_;
+    }
+    std::optional<uint32_t>
+    getCurrentlyIndexing()
+    {
+        uint32_t cur = indexing_.load();
+        if (cur != 0)
+            return cur;
+        return {};
     }
     KeyIndex
     getKeyIndexOfSeq(uint32_t seq) const
@@ -171,15 +181,17 @@ public:
         if (commitRes)
         {
             if (isFirst_)
-            {
-                auto rng = fetchLedgerRangeNoThrow();
-                if (rng && rng->minSequence != ledgerSequence)
-                    isFirst_ = false;
                 indexer_.doKeysRepairAsync(*this, ledgerSequence);
-            }
-            if (indexer_.isKeyFlagLedger(ledgerSequence) || isFirst_)
+            if (indexer_.isKeyFlagLedger(ledgerSequence))
                 indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
             isFirst_ = false;
+        }
+        else
+        {
+            // if commitRes is false, we are relinquishing control of ETL. We
+            // reset isFirst_ to true so that way if we later regain control of
+            // ETL, we trigger the index repair
+            isFirst_ = true;
         }
         return commitRes;
     }

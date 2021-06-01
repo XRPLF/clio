@@ -42,7 +42,7 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
 }
 
 boost::json::object
-getJson(ripple::STBase const& obj)
+toJson(ripple::STBase const& obj)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -55,7 +55,7 @@ getJson(ripple::STBase const& obj)
 }
 
 boost::json::object
-getJson(ripple::SLE const& sle)
+toJson(ripple::SLE const& sle)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -66,6 +66,27 @@ getJson(ripple::SLE const& sle)
             .count();
     return value.as_object();
 }
+
+boost::json::object
+toJson(ripple::LedgerInfo const& lgrInfo)
+{
+    boost::json::object header;
+    header["ledger_sequence"] = lgrInfo.seq;
+    header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    header["txns_hash"] = ripple::strHex(lgrInfo.txHash);
+    header["state_hash"] = ripple::strHex(lgrInfo.accountHash);
+    header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
+    header["total_coins"] = ripple::to_string(lgrInfo.drops);
+    header["close_flags"] = lgrInfo.closeFlags;
+
+    // Always show fields that contribute to the ledger hash
+    header["parent_close_time"] =
+        lgrInfo.parentCloseTime.time_since_epoch().count();
+    header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
+    header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
+    return header;
+}
+
 std::optional<uint32_t>
 ledgerSequenceFromRequest(
     boost::json::object const& request,

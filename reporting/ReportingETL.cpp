@@ -190,6 +190,13 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                 ++numAttempts;
                 continue;
             }
+            else
+            {
+                auto lgr =
+                    flatMapBackend_->fetchLedgerBySequence(ledgerSequence);
+                assert(lgr);
+                publishLedger(*lgr);
+            }
         }
         catch (Backend::DatabaseTimeout const& e)
         {

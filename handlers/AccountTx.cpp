@@ -110,8 +110,8 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         if (!binary)
         {
             auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
-            obj["transaction"] = getJson(*txn);
-            obj["metadata"] = getJson(*meta);
+            obj["transaction"] = toJson(*txn);
+            obj["metadata"] = toJson(*meta);
         }
         else
         {

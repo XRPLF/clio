@@ -304,7 +304,7 @@ doBookOffers(
             ripple::SLE offer{it, obj.key};
             ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
 
-            boost::json::object offerJson = getJson(offer);
+            boost::json::object offerJson = toJson(offer);
             offerJson["quality"] = ripple::amountFromQuality(getQuality(bookDir)).getText();
             jsonOffers.push_back(offerJson);
         }

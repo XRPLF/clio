@@ -63,8 +63,8 @@ doTx(boost::json::object const& request, BackendInterface const& backend)
     if (!binary)
     {
         auto [sttx, meta] = deserializeTxPlusMeta(dbResponse.value());
-        response["transaction"] = getJson(*sttx);
-        response["metadata"] = getJson(*meta);
+        response["transaction"] = toJson(*sttx);
+        response["metadata"] = toJson(*meta);
     }
     else
     {

@@ -82,7 +82,8 @@ target_sources(reporting PRIVATE
     handlers/BookOffers.cpp
     handlers/LedgerRange.cpp
     handlers/Ledger.cpp
-    handlers/LedgerEntry.cpp)
+    handlers/LedgerEntry.cpp
+    handlers/ServerInfo.cpp)
 
 
 message(${Boost_LIBRARIES})

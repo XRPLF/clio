@@ -59,7 +59,12 @@ doLedgerData(
     {
         BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing cursor";
         cursor = ripple::uint256{};
-        cursor->parseHex(request.at("cursor").as_string().c_str());
+        if (!cursor->parseHex(request.at("cursor").as_string().c_str()))
+        {
+            response["error"] = "Invalid cursor";
+            response["request"] = request;
+            return response;
+        }
     }
     bool binary =
         request.contains("binary") ? request.at("binary").as_bool() : false;
@@ -91,7 +96,7 @@ doLedgerData(
             objects.push_back(entry);
         }
         else
-            objects.push_back(getJson(sle));
+            objects.push_back(toJson(sle));
     }
     response["objects"] = objects;
     if (returnedCursor)

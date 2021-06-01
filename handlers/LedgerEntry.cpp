@@ -47,7 +47,7 @@ doLedgerEntry(
     {
         ripple::STLedgerEntry sle{
             ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
-        response["object"] = getJson(sle);
+        response["object"] = toJson(sle);
     }
 
     return response;

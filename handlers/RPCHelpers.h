@@ -15,15 +15,19 @@ std::pair<
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs);
 
 boost::json::object
-getJson(ripple::STBase const& obj);
+toJson(ripple::STBase const& obj);
 
 boost::json::object
-getJson(ripple::SLE const& sle);
+toJson(ripple::SLE const& sle);
+
+boost::json::object
+toJson(ripple::LedgerInfo const& info);
 
 std::optional<uint32_t>
 ledgerSequenceFromRequest(
     boost::json::object const& request,
     BackendInterface const& backend);
+
 std::vector<unsigned char>
 ledgerInfoToBlob(ripple::LedgerInfo const& info);
 

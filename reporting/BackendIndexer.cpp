@@ -10,7 +10,6 @@ BackendIndexer::BackendIndexer(boost::json::object const& config)
 };
 BackendIndexer::~BackendIndexer()
 {
-    std::unique_lock lck(mutex_);
     work_.reset();
     ioThread_.join();
 }
@@ -114,6 +113,21 @@ BackendIndexer::writeKeyFlagLedgerAsync(
         {
             try
             {
+                {
+                    auto page =
+                        backend.fetchLedgerPage({}, nextFlag.keyIndex, 1);
+                    if (!page.warning)
+                    {
+                        BOOST_LOG_TRIVIAL(warning)
+                            << "writeKeyFlagLedger - "
+                            << "flag ledger already written. flag = "
+                            << std::to_string(nextFlag.keyIndex)
+                            << " , ledger sequence = "
+                            << std::to_string(ledgerSequence);
+                        return;
+                    }
+                }
+                indexing_ = nextFlag.keyIndex;
                 auto start = std::chrono::system_clock::now();
                 auto [objects, curCursor, warning] =
                     backend.fetchLedgerPage(cursor, ledgerSequence, 2048);
@@ -121,8 +135,6 @@ BackendIndexer::writeKeyFlagLedgerAsync(
                 // no cursor means this is the first page
                 if (!cursor)
                 {
-                    // if there is no warning, we don't need to do a repair
-                    // warning only shows up on the first page
                     if (warning)
                     {
                         BOOST_LOG_TRIVIAL(error)
@@ -176,6 +188,7 @@ BackendIndexer::writeKeyFlagLedgerAsync(
             << std::chrono::duration_cast<std::chrono::milliseconds>(
                    end - begin)
                    .count();
+        indexing_ = 0;
     });
     BOOST_LOG_TRIVIAL(info)
         << __func__
@@ -206,6 +219,10 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
     {
         // write completion record
         ripple::uint256 zero = {};
+        backend.writeKeys({zero}, keyIndex);
+        // write next flag sychronously
+        keyIndex = getKeyIndexOfSeq(ledgerSequence + 1);
+        backend.writeKeys(keys, keyIndex);
         backend.writeKeys({zero}, keyIndex);
     }
     isFirst_ = false;

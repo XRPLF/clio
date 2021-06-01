@@ -212,6 +212,24 @@ public:
             ", grpc port : " + grpcPort_ + " }";
     }
 
+    boost::json::object
+    toJson() const
+    {
+        boost::json::object res;
+        res["validated_range"] = getValidatedRange();
+        res["is_connected"] = std::to_string(isConnected());
+        res["ip"] = ip_;
+        res["ws_port"] = wsPort_;
+        res["grpc_port"] = grpcPort_;
+        auto last = getLastMsgTime();
+        if (last.time_since_epoch().count() != 0)
+            res["last_msg_arrival_time"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now() - getLastMsgTime())
+                    .count());
+        return res;
+    }
+
     /// Download a ledger in full
     /// @param ledgerSequence sequence of the ledger to download
     /// @param writeQueue queue to push downloaded ledger objects
@@ -341,16 +359,16 @@ public:
     //        forwarded. return true;
     //    }
 
-    //    Json::Value
-    //    toJson() const
-    //    {
-    //        Json::Value ret(Json::arrayValue);
-    //        for (auto& src : sources_)
-    //        {
-    //            ret.append(src->toJson());
-    //        }
-    //        return ret;
-    //    }
+    boost::json::array
+    toJson() const
+    {
+        boost::json::array ret;
+        for (auto& src : sources_)
+        {
+            ret.emplace_back(src->toJson());
+        }
+        return ret;
+    }
     //
     //    /// Randomly select a p2p node to forward a gRPC request to
     //    /// @return gRPC stub to forward requests to p2p node
