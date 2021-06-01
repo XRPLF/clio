@@ -52,15 +52,22 @@ BackendIndexer::doKeysRepair(
             // warning only shows up on the first page
             if (!warning)
             {
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__ << " flag ledger already written. returning";
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " - " << std::to_string(*sequence)
+                    << " flag ledger already written. returning";
                 return;
             }
             else
             {
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " - " << std::to_string(*sequence)
+                    << " flag ledger not written. recursing..";
                 uint32_t lower = (*sequence - 1) >> keyShift_ << keyShift_;
                 doKeysRepair(backend, lower);
-                writeKeyFlagLedgerAsync(lower, backend);
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " - " << std::to_string(*sequence)
+                    << " finished recursing. submitting repair ";
+                writeKeyFlagLedgerAsync(*sequence, backend);
                 return;
             }
         }

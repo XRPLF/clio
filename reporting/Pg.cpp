@@ -965,8 +965,6 @@ CREATE OR REPLACE RULE account_transactions_update_protect AS ON UPDATE TO
     account_transactions DO INSTEAD NOTHING;
 CREATE OR REPLACE RULE objects_update_protect AS ON UPDATE TO
     objects DO INSTEAD NOTHING;
-CREATE OR REPLACE RULE books_update_protect AS ON UPDATE TO
-    books DO INSTEAD NOTHING;
 
 
 -- Return the earliest ledger sequence intended for range operations

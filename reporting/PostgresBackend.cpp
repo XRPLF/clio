@@ -697,6 +697,8 @@ PostgresBackend::writeKeys(
     {
         if (numRows > 0)
             conn.bulkInsert("keys", buffer.str());
+        std::stringstream temp;
+        buffer.swap(temp);
         conn("COMMIT");
     }
     return true;

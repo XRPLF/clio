@@ -69,7 +69,7 @@ ReportingETL::insertTransactions(
         auto metaSerializer = std::make_shared<ripple::Serializer>(
             txMeta.getAsObject().getSerializer());
 
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : "
             << "Inserting transaction = " << sttx.getTransactionID();
 
