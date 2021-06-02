@@ -476,6 +476,10 @@ public:
         pool_->checkin(pg_);
     }
 
+    // TODO. add sendQuery and getResult, for sending the query and getting the
+    // result asynchronously. This could be useful for sending a bunch of
+    // requests concurrently
+
     /** Execute postgres query with parameters.
      *
      * @param dbParams Database command with parameters.

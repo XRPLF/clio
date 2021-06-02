@@ -375,16 +375,6 @@ PostgresBackend::doFetchLedgerPage(
     return {};
 }
 
-BookOffersPage
-PostgresBackend::fetchBookOffers(
-    ripple::uint256 const& book,
-    uint32_t ledgerSequence,
-    std::uint32_t limit,
-    std::optional<ripple::uint256> const& cursor) const
-{
-    return {};
-}
-
 std::vector<TransactionAndMetadata>
 PostgresBackend::fetchTransactions(
     std::vector<ripple::uint256> const& hashes) const
@@ -665,46 +655,61 @@ PostgresBackend::writeKeys(
 {
     if (abortWrite_)
         return false;
-    BOOST_LOG_TRIVIAL(debug) << __func__;
     PgQuery pgQuery(pgPool_);
     PgQuery& conn = isAsync ? pgQuery : writeConnection_;
-    std::stringstream asyncBuffer;
-    std::stringstream& buffer = isAsync ? asyncBuffer : keysBuffer_;
-    std::string tableName = isAsync ? "keys_temp_async" : "keys_temp";
-    if (isAsync)
-        conn("BEGIN");
-    conn(std::string{
-        "CREATE TABLE " + tableName + " AS SELECT * FROM keys WITH NO DATA"}
-             .c_str());
+    std::stringstream sql;
     size_t numRows = 0;
     for (auto& key : keys)
     {
-        buffer << std::to_string(index.keyIndex) << '\t' << "\\\\x"
-               << ripple::strHex(key) << '\n';
         numRows++;
-        // If the buffer gets too large, the insert fails. Not sure why.
-        // When writing in the background, we insert after every 10000 rows
-        if ((isAsync && numRows == 10000) || numRows == 100000)
+        sql << "INSERT INTO keys (ledger_seq, key) VALUES ("
+            << std::to_string(index.keyIndex) << ", \'\\x"
+            << ripple::strHex(key) << "\') ON CONFLICT DO NOTHING; ";
+        if (numRows > 10000)
         {
-            conn.bulkInsert(tableName.c_str(), buffer.str());
-            std::stringstream temp;
-            buffer.swap(temp);
+            conn(sql.str().c_str());
+            sql.str("");
+            sql.clear();
             numRows = 0;
         }
     }
     if (numRows > 0)
-        conn.bulkInsert(tableName.c_str(), buffer.str());
-    conn(std::string{
-        "INSERT INTO keys SELECT * FROM " + tableName +
-        " ON CONFLICT DO NOTHING"}
-             .c_str());
-    conn(std::string{"DROP TABLE " + tableName}.c_str());
-    if (isAsync)
+        conn(sql.str().c_str());
+    return true;
+    /*
+    BOOST_LOG_TRIVIAL(debug) << __func__;
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::atomic_uint numRemaining = keys.size();
+    auto start = std::chrono::system_clock::now();
+    for (auto& key : keys)
     {
-        conn("COMMIT");
+        boost::asio::post(
+            pool_, [this, key, &numRemaining, &cv, &mtx, &index]() {
+                PgQuery pgQuery(pgPool_);
+                std::stringstream sql;
+                sql << "INSERT INTO keys (ledger_seq, key) VALUES ("
+                    << std::to_string(index.keyIndex) << ", \'\\x"
+                    << ripple::strHex(key) << "\') ON CONFLICT DO NOTHING";
+
+                auto res = pgQuery(sql.str().data());
+                if (--numRemaining == 0)
+                {
+                    std::unique_lock lck(mtx);
+                    cv.notify_one();
+                }
+            });
     }
-    std::stringstream temp;
-    buffer.swap(temp);
+    std::unique_lock lck(mtx);
+    cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+            .count();
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " wrote " << std::to_string(keys.size())
+        << " keys with threadpool. took " << std::to_string(duration);
+        */
     return true;
 }
 bool

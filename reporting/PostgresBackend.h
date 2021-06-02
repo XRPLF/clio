@@ -50,13 +50,6 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
 
-    BookOffersPage
-    fetchBookOffers(
-        ripple::uint256 const& book,
-        uint32_t ledgerSequence,
-        std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor) const override;
-
     std::vector<TransactionAndMetadata>
     fetchTransactions(
         std::vector<ripple::uint256> const& hashes) const override;

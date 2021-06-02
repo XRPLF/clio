@@ -35,9 +35,8 @@ doServerInfo(
             auto keyIndex = backend.getKeyIndexOfSeq(cur);
             assert(keyIndex.has_value());
             cur = keyIndex->keyIndex;
-            auto page = backend.fetchLedgerPage({}, cur, 1);
             boost::json::object entry;
-            entry["complete"] = !page.warning.has_value();
+            entry["complete"] = backend.isLedgerIndexed(cur);
             entry["sequence"] = cur;
             indexes.emplace_back(entry);
             cur = cur + 1;

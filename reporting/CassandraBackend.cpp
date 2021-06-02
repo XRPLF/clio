@@ -494,15 +494,6 @@ CassandraBackend::fetchLedgerObjects(
         << "Fetched " << numKeys << " records from Cassandra";
     return results;
 }
-BookOffersPage
-CassandraBackend::fetchBookOffers(
-    ripple::uint256 const& book,
-    uint32_t ledgerSequence,
-    std::uint32_t limit,
-    std::optional<ripple::uint256> const& cursor) const
-{
-    return {};
-}  // namespace Backend
 struct WriteBookCallbackData
 {
     CassandraBackend const& backend;

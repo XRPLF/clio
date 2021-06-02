@@ -80,6 +80,7 @@ class BackendInterface;
 class BackendIndexer
 {
     boost::asio::io_context ioc_;
+    boost::asio::io_context::strand strand_;
     std::mutex mutex_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
@@ -94,6 +95,10 @@ class BackendIndexer
     doKeysRepair(
         BackendInterface const& backend,
         std::optional<uint32_t> sequence);
+    void
+    writeKeyFlagLedger(
+        uint32_t ledgerSequence,
+        BackendInterface const& backend);
 
 public:
     BackendIndexer(boost::json::object const& config);
@@ -160,41 +165,14 @@ public:
         return indexer_;
     }
 
+    void
+    checkFlagLedgers() const;
+
     std::optional<KeyIndex>
-    getKeyIndexOfSeq(uint32_t seq) const
-    {
-        if (indexer_.isKeyFlagLedger(seq))
-            return KeyIndex{seq};
-        auto rng = fetchLedgerRange();
-        if (!rng)
-            return {};
-        if (rng->minSequence == seq)
-            return KeyIndex{seq};
-        return indexer_.getKeyIndexOfSeq(seq);
-    }
+    getKeyIndexOfSeq(uint32_t seq) const;
 
     bool
-    finishWrites(uint32_t ledgerSequence) const
-    {
-        indexer_.finish(ledgerSequence, *this);
-        auto commitRes = doFinishWrites();
-        if (commitRes)
-        {
-            if (isFirst_)
-                indexer_.doKeysRepairAsync(*this, ledgerSequence);
-            if (indexer_.isKeyFlagLedger(ledgerSequence))
-                indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
-            isFirst_ = false;
-        }
-        else
-        {
-            // if commitRes is false, we are relinquishing control of ETL. We
-            // reset isFirst_ to true so that way if we later regain control of
-            // ETL, we trigger the index repair
-            isFirst_ = true;
-        }
-        return commitRes;
-    }
+    finishWrites(uint32_t ledgerSequence) const;
 
     virtual std::optional<uint32_t>
     fetchLatestLedgerSequence() const = 0;
@@ -206,21 +184,7 @@ public:
     fetchLedgerRange() const = 0;
 
     std::optional<LedgerRange>
-    fetchLedgerRangeNoThrow() const
-    {
-        BOOST_LOG_TRIVIAL(warning) << __func__;
-        while (true)
-        {
-            try
-            {
-                return fetchLedgerRange();
-            }
-            catch (DatabaseTimeout& t)
-            {
-                ;
-            }
-        }
-    }
+    fetchLedgerRangeNoThrow() const;
 
     virtual std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence) const = 0;
@@ -239,87 +203,14 @@ public:
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
-        std::uint32_t limit) const
-    {
-        assert(limit != 0);
-        bool incomplete = false;
-        {
-            auto check = doFetchLedgerPage({}, ledgerSequence, 1);
-            incomplete = check.warning.has_value();
-        }
-        uint32_t adjustedLimit = limit;
-        LedgerPage page;
-        page.cursor = cursor;
-        do
-        {
-            adjustedLimit = adjustedLimit > 2048 ? 2048 : adjustedLimit * 2;
-            auto partial =
-                doFetchLedgerPage(page.cursor, ledgerSequence, adjustedLimit);
-            page.objects.insert(
-                page.objects.end(),
-                partial.objects.begin(),
-                partial.objects.end());
-            page.cursor = partial.cursor;
-        } while (page.objects.size() < limit && page.cursor);
-        if (incomplete)
-        {
-            auto rng = fetchLedgerRange();
-            if (!rng)
-                return page;
-            if (rng->minSequence == ledgerSequence)
-            {
-                BOOST_LOG_TRIVIAL(fatal)
-                    << __func__
-                    << " Database is populated but first flag ledger is "
-                       "incomplete. This should never happen";
-                assert(false);
-                throw std::runtime_error("Missing base flag ledger");
-            }
-            uint32_t lowerSequence = (ledgerSequence - 1) >>
-                indexer_.getKeyShift() << indexer_.getKeyShift();
-            if (lowerSequence < rng->minSequence)
-                lowerSequence = rng->minSequence;
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " recursing. ledgerSequence = "
-                << std::to_string(ledgerSequence)
-                << " , lowerSequence = " << std::to_string(lowerSequence);
-            auto lowerPage = fetchLedgerPage(cursor, lowerSequence, limit);
-            std::vector<ripple::uint256> keys;
-            std::transform(
-                std::move_iterator(lowerPage.objects.begin()),
-                std::move_iterator(lowerPage.objects.end()),
-                std::back_inserter(keys),
-                [](auto&& elt) { return std::move(elt.key); });
-            auto objs = fetchLedgerObjects(keys, ledgerSequence);
-            for (size_t i = 0; i < keys.size(); ++i)
-            {
-                auto& obj = objs[i];
-                auto& key = keys[i];
-                if (obj.size())
-                    page.objects.push_back({std::move(key), std::move(obj)});
-            }
-            std::sort(
-                page.objects.begin(), page.objects.end(), [](auto a, auto b) {
-                    return a.key < b.key;
-                });
-            page.warning = "Data may be incomplete";
-        }
-        if (page.objects.size() >= limit)
-        {
-            page.objects.resize(limit);
-            page.cursor = page.objects.back().key;
-        }
-        return page;
-    }
+        std::uint32_t limit) const;
+
+    bool
+    isLedgerIndexed(std::uint32_t ledgerSequence) const;
 
     std::optional<LedgerObject>
-    fetchSuccessor(ripple::uint256 key, uint32_t ledgerSequence)
-    {
-        auto page = fetchLedgerPage({++key}, ledgerSequence, 1);
-        if (page.objects.size())
-            return page.objects[0];
-        return {};
-    }
+    fetchSuccessor(ripple::uint256 key, uint32_t ledgerSequence) const;
+
     virtual LedgerPage
     doFetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
@@ -327,12 +218,12 @@ public:
         std::uint32_t limit) const = 0;
 
     // TODO add warning for incomplete data
-    virtual BookOffersPage
+    BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,
         std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor = {}) const = 0;
+        std::optional<ripple::uint256> const& cursor = {}) const;
 
     virtual std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes) const = 0;
@@ -365,18 +256,8 @@ public:
         std::string&& blob,
         bool isCreated,
         bool isDeleted,
-        std::optional<ripple::uint256>&& book) const
-    {
-        ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
-        indexer_.addKey(std::move(key256));
-        doWriteLedgerObject(
-            std::move(key),
-            seq,
-            std::move(blob),
-            isCreated,
-            isDeleted,
-            std::move(book));
-    }
+        std::optional<ripple::uint256>&& book) const;
+
     virtual void
     doWriteLedgerObject(
         std::string&& key,

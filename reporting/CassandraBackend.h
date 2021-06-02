@@ -1019,12 +1019,6 @@ public:
         std::unordered_set<ripple::uint256> const& keys,
         KeyIndex const& index,
         bool isAsync = false) const override;
-    BookOffersPage
-    fetchBookOffers(
-        ripple::uint256 const& book,
-        uint32_t sequence,
-        std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor) const override;
 
     bool
     canFetchBatch()
