@@ -351,7 +351,7 @@ PostgresBackend::doFetchLedgerPage(
         {
             keys.push_back({res.asUInt256(i, 0)});
         }
-        if (numRows == limit)
+        if (numRows >= limit)
         {
             returnCursor = keys.back();
             ++(*returnCursor);

@@ -422,7 +422,7 @@ CassandraBackend::doFetchLedgerPage(
     CassandraResult result = executeSyncRead(statement);
     if (!!result)
     {
-        BOOST_LOG_TRIVIAL(trace)
+        BOOST_LOG_TRIVIAL(debug)
             << __func__ << " - got keys - size = " << result.numRows();
         std::vector<ripple::uint256> keys;
 
@@ -430,7 +430,7 @@ CassandraBackend::doFetchLedgerPage(
         {
             keys.push_back(result.getUInt256());
         } while (result.nextRow());
-        if (keys.size() && keys.size() == limit)
+        if (keys.size() && keys.size() >= limit)
         {
             page.cursor = keys.back();
             ++(*page.cursor);
@@ -440,7 +440,7 @@ CassandraBackend::doFetchLedgerPage(
             throw std::runtime_error("Mismatch in size of objects and keys");
 
         if (cursor)
-            BOOST_LOG_TRIVIAL(trace)
+            BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " Cursor = " << ripple::strHex(*page.cursor);
 
         for (size_t i = 0; i < objects.size(); ++i)

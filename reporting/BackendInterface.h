@@ -203,7 +203,8 @@ public:
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
-        std::uint32_t limit) const;
+        std::uint32_t limit,
+        std::uint32_t limitHint = 0) const;
 
     bool
     isLedgerIndexed(std::uint32_t ledgerSequence) const;
