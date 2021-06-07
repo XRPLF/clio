@@ -10,7 +10,7 @@
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 project(reporting)
 cmake_minimum_required(VERSION 3.16)
-set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-narrowing")
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
@@ -21,10 +21,22 @@ endif ()
 file (TO_CMAKE_PATH "${BOOST_ROOT}" BOOST_ROOT)
 
 FIND_PACKAGE( Boost 1.75 COMPONENTS filesystem log log_setup thread system REQUIRED )
-
-add_executable (reporting
-    websocket_server_async.cpp
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
 )
+FetchContent_MakeAvailable(googletest)
+enable_testing()
+include(GoogleTest)
+
+add_executable (reporting_main
+    server/websocket_server_async.cpp
+)
+add_executable (reporting_tests
+    unittests/main.cpp
+)
+add_library(reporting reporting/BackendInterface.h)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
@@ -59,6 +71,7 @@ target_sources(reporting PRIVATE
     reporting/CassandraBackend.cpp
     reporting/PostgresBackend.cpp
     reporting/BackendIndexer.cpp
+    reporting/BackendInterface.cpp
     reporting/Pg.cpp
     reporting/P2pProxy.cpp
     reporting/DBHelpers.cpp
@@ -74,6 +87,7 @@ target_sources(reporting PRIVATE
     handlers/LedgerRange.cpp
     handlers/Ledger.cpp
     handlers/LedgerEntry.cpp
+<<<<<<< HEAD
     handlers/AccountChannels.cpp
     handlers/AccountLines.cpp
     handlers/AccountCurrencies.cpp
@@ -82,8 +96,17 @@ target_sources(reporting PRIVATE
     handlers/ChannelAuthorize.cpp
     handlers/ChannelVerify.cpp
     handlers/Subscribe.cpp)
+=======
+    handlers/ServerInfo.cpp)
+>>>>>>> dev
 
 
 message(${Boost_LIBRARIES})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 TARGET_LINK_LIBRARIES(reporting PUBLIC ${Boost_LIBRARIES})
+TARGET_LINK_LIBRARIES(reporting_main PUBLIC reporting)
+TARGET_LINK_LIBRARIES(reporting_tests PUBLIC reporting gtest_main)
+
+
+gtest_discover_tests(reporting_tests)
+

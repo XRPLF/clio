@@ -253,10 +253,29 @@ public:
             ", grpc port : " + grpcPort_ + " }";
     }
 
+<<<<<<< HEAD
     boost::json::value
     toJson() const
     {
         return boost::json::string(toString());
+=======
+    boost::json::object
+    toJson() const
+    {
+        boost::json::object res;
+        res["validated_range"] = getValidatedRange();
+        res["is_connected"] = std::to_string(isConnected());
+        res["ip"] = ip_;
+        res["ws_port"] = wsPort_;
+        res["grpc_port"] = grpcPort_;
+        auto last = getLastMsgTime();
+        if (last.time_since_epoch().count() != 0)
+            res["last_msg_arrival_time"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now() - getLastMsgTime())
+                    .count());
+        return res;
+>>>>>>> dev
     }
 
     /// Download a ledger in full
@@ -377,6 +396,7 @@ public:
     /// to clients).
     /// @param in ETLSource in question
     /// @return true if messages should be forwarded
+<<<<<<< HEAD
     bool
     shouldPropagateTxnStream(ETLSource* in) const
     {
@@ -398,11 +418,35 @@ public:
     }
 
     boost::json::value
+=======
+    //    bool
+    //    shouldPropagateTxnStream(ETLSource* in) const
+    //    {
+    //        for (auto& src : sources_)
+    //        {
+    //            assert(src);
+    //            // We pick the first ETLSource encountered that is connected
+    //            if (src->isConnected())
+    //            {
+    //                if (src.get() == in)
+    //                    return true;
+    //                else
+    //                    return false;
+    //            }
+    //        }
+    //
+    //        // If no sources connected, then this stream has not been
+    //        forwarded. return true;
+    //    }
+
+    boost::json::array
+>>>>>>> dev
     toJson() const
     {
         boost::json::array ret;
         for (auto& src : sources_)
         {
+<<<<<<< HEAD
             ret.push_back(src->toJson());
         }
         return ret;
@@ -418,6 +462,23 @@ public:
     /// @return response received from p2p node
     boost::json::object
     forwardToP2p(boost::json::object const& request) const;
+=======
+            ret.emplace_back(src->toJson());
+        }
+        return ret;
+    }
+    //
+    //    /// Randomly select a p2p node to forward a gRPC request to
+    //    /// @return gRPC stub to forward requests to p2p node
+    //    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
+    //    getP2pForwardingStub() const;
+    //
+    //    /// Forward a JSON RPC request to a randomly selected p2p node
+    //    /// @param context context of the request
+    //    /// @return response received from p2p node
+    //    Json::Value
+    //    forwardToP2p(RPC::JsonContext& context) const;
+>>>>>>> dev
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

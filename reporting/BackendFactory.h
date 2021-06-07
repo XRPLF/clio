@@ -10,9 +10,13 @@ namespace Backend {
 std::unique_ptr<BackendInterface>
 make_Backend(boost::json::object const& config)
 {
+<<<<<<< HEAD
     BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
 
     boost::json::object const& dbConfig = config.at("database").as_object();
+=======
+    boost::json::object dbConfig = config.at("database").as_object();
+>>>>>>> dev
 
     bool readOnly = false;
     if (config.contains("read_only"))
@@ -24,7 +28,14 @@ make_Backend(boost::json::object const& config)
 
     if (boost::iequals(type, "cassandra"))
     {
+<<<<<<< HEAD
         backend =
+=======
+        if (config.contains("online_delete"))
+            dbConfig.at(type).as_object()["ttl"] =
+                config.at("online_delete").as_int64() * 4;
+        auto backend =
+>>>>>>> dev
             std::make_unique<CassandraBackend>(dbConfig.at(type).as_object());
     }
     else if (boost::iequals(type, "postgres"))

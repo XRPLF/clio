@@ -39,6 +39,8 @@ struct TransactionAndMetadata
     Blob transaction;
     Blob metadata;
     uint32_t ledgerSequence;
+    bool
+    operator==(const TransactionAndMetadata&) const = default;
 };
 
 struct AccountTransactionsCursor
@@ -53,6 +55,19 @@ struct LedgerRange
     uint32_t maxSequence;
 };
 
+// The below two structs exist to prevent developers from accidentally mixing up
+// the two indexes.
+struct BookIndex
+{
+    uint32_t bookIndex;
+    explicit BookIndex(uint32_t v) : bookIndex(v){};
+};
+struct KeyIndex
+{
+    uint32_t keyIndex;
+    explicit KeyIndex(uint32_t v) : keyIndex(v){};
+};
+
 class DatabaseTimeout : public std::exception
 {
     const char*
@@ -65,60 +80,32 @@ class BackendInterface;
 class BackendIndexer
 {
     boost::asio::io_context ioc_;
+    boost::asio::io_context::strand strand_;
     std::mutex mutex_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
-    uint32_t keyShift_ = 20;
-    uint32_t bookShift_ = 10;
-    std::unordered_set<ripple::uint256> keys;
-    std::unordered_set<ripple::uint256> keysCumulative;
-    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        books;
-    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        booksCumulative;
-    bool populatingCacheAsync = false;
-    // These are only used when the cache is being populated asynchronously
-    std::unordered_set<ripple::uint256> deletedKeys;
-    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        deletedBooks;
-    std::unordered_set<ripple::uint256> keysRepair;
-    std::unordered_map<ripple::uint256, std::unordered_set<ripple::uint256>>
-        booksRepair;
-    std::mutex mtx;
-    std::condition_variable cv_;
 
+    std::atomic_uint32_t indexing_ = 0;
+
+    uint32_t keyShift_ = 20;
+    std::unordered_set<ripple::uint256> keys;
+
+    mutable bool isFirst_ = true;
     void
-    addKeyAsync(ripple::uint256 const& key);
+    doKeysRepair(
+        BackendInterface const& backend,
+        std::optional<uint32_t> sequence);
     void
-    addBookOfferAsync(
-        ripple::uint256 const& book,
-        ripple::uint256 const& offerKey);
+    writeKeyFlagLedger(
+        uint32_t ledgerSequence,
+        BackendInterface const& backend);
 
 public:
     BackendIndexer(boost::json::object const& config);
     ~BackendIndexer();
 
     void
-    populateCachesAsync(BackendInterface const& backend);
-    void
-    populateCaches(BackendInterface const& backend);
-    void
-    clearCaches();
-    // Blocking, possibly for minutes
-    void
-    waitForCaches();
-
-    void
-    addKey(ripple::uint256 const& key);
-    void
-    deleteKey(ripple::uint256 const& key);
-    void
-    addBookOffer(ripple::uint256 const& book, ripple::uint256 const& offerKey);
-
-    void
-    deleteBookOffer(
-        ripple::uint256 const& book,
-        ripple::uint256 const& offerKey);
+    addKey(ripple::uint256&& key);
 
     void
     finish(uint32_t ledgerSequence, BackendInterface const& backend);
@@ -127,52 +114,36 @@ public:
         uint32_t ledgerSequence,
         BackendInterface const& backend);
     void
-    writeBookFlagLedgerAsync(
-        uint32_t ledgerSequence,
-        BackendInterface const& backend);
-    void
-    doKeysRepair(
+    doKeysRepairAsync(
         BackendInterface const& backend,
         std::optional<uint32_t> sequence);
-    void
-    doBooksRepair(
-        BackendInterface const& backend,
-        std::optional<uint32_t> sequence);
-    uint32_t
-    getBookShift()
-    {
-        return bookShift_;
-    }
     uint32_t
     getKeyShift()
     {
         return keyShift_;
     }
-    uint32_t
+    std::optional<uint32_t>
+    getCurrentlyIndexing()
+    {
+        uint32_t cur = indexing_.load();
+        if (cur != 0)
+            return cur;
+        return {};
+    }
+    KeyIndex
     getKeyIndexOfSeq(uint32_t seq) const
     {
         if (isKeyFlagLedger(seq))
-            return seq;
+            return KeyIndex{seq};
         auto incr = (1 << keyShift_);
-        return (seq >> keyShift_ << keyShift_) + incr;
+        KeyIndex index{(seq >> keyShift_ << keyShift_) + incr};
+        assert(isKeyFlagLedger(index.keyIndex));
+        return index;
     }
     bool
     isKeyFlagLedger(uint32_t ledgerSequence) const
     {
         return (ledgerSequence % (1 << keyShift_)) == 0;
-    }
-    uint32_t
-    getBookIndexOfSeq(uint32_t seq) const
-    {
-        if (isBookFlagLedger(seq))
-            return seq;
-        auto incr = (1 << bookShift_);
-        return (seq >> bookShift_ << bookShift_) + incr;
-    }
-    bool
-    isBookFlagLedger(uint32_t ledgerSequence) const
-    {
-        return (ledgerSequence % (1 << bookShift_)) == 0;
     }
 };
 
@@ -180,6 +151,7 @@ class BackendInterface
 {
 protected:
     mutable BackendIndexer indexer_;
+    mutable bool isFirst_ = true;
 
 public:
     // read methods
@@ -193,45 +165,14 @@ public:
         return indexer_;
     }
 
-    std::optional<uint32_t>
-    getKeyIndexOfSeq(uint32_t seq) const
-    {
-        if (indexer_.isKeyFlagLedger(seq))
-            return seq;
-        auto rng = fetchLedgerRange();
-        if (!rng)
-            return {};
-        if (rng->minSequence == seq)
-            return seq;
-        return indexer_.getKeyIndexOfSeq(seq);
-    }
-    std::optional<uint32_t>
-    getBookIndexOfSeq(uint32_t seq) const
-    {
-        if (indexer_.isBookFlagLedger(seq))
-            return seq;
-        auto rng = fetchLedgerRange();
-        if (!rng)
-            return {};
-        if (rng->minSequence == seq)
-            return seq;
-        return indexer_.getBookIndexOfSeq(seq);
-    }
+    void
+    checkFlagLedgers() const;
+
+    std::optional<KeyIndex>
+    getKeyIndexOfSeq(uint32_t seq) const;
 
     bool
-    finishWrites(uint32_t ledgerSequence) const
-    {
-        indexer_.finish(ledgerSequence, *this);
-        auto commitRes = doFinishWrites();
-        if (commitRes)
-        {
-            if (indexer_.isBookFlagLedger(ledgerSequence))
-                indexer_.writeBookFlagLedgerAsync(ledgerSequence, *this);
-            if (indexer_.isKeyFlagLedger(ledgerSequence))
-                indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
-        }
-        return commitRes;
-    }
+    finishWrites(uint32_t ledgerSequence) const;
 
     virtual std::optional<uint32_t>
     fetchLatestLedgerSequence() const = 0;
@@ -243,20 +184,7 @@ public:
     fetchLedgerRange() const = 0;
 
     std::optional<LedgerRange>
-    fetchLedgerRangeNoThrow() const
-    {
-        while (true)
-        {
-            try
-            {
-                return fetchLedgerRange();
-            }
-            catch (DatabaseTimeout& t)
-            {
-                ;
-            }
-        }
-    }
+    fetchLedgerRangeNoThrow() const;
 
     virtual std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence) const = 0;
@@ -271,19 +199,32 @@ public:
     virtual std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const = 0;
 
-    virtual LedgerPage
+    LedgerPage
     fetchLedgerPage(
+        std::optional<ripple::uint256> const& cursor,
+        std::uint32_t ledgerSequence,
+        std::uint32_t limit,
+        std::uint32_t limitHint = 0) const;
+
+    bool
+    isLedgerIndexed(std::uint32_t ledgerSequence) const;
+
+    std::optional<LedgerObject>
+    fetchSuccessor(ripple::uint256 key, uint32_t ledgerSequence) const;
+
+    virtual LedgerPage
+    doFetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const = 0;
 
     // TODO add warning for incomplete data
-    virtual BookOffersPage
+    BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,
         std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor = {}) const = 0;
+        std::optional<ripple::uint256> const& cursor = {}) const;
 
     virtual std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes) const = 0;
@@ -316,28 +257,8 @@ public:
         std::string&& blob,
         bool isCreated,
         bool isDeleted,
-        std::optional<ripple::uint256>&& book) const
-    {
-        ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
-        if (isCreated)
-            indexer_.addKey(key256);
-        if (isDeleted)
-            indexer_.deleteKey(key256);
-        if (book)
-        {
-            if (isCreated)
-                indexer_.addBookOffer(*book, key256);
-            if (isDeleted)
-                indexer_.deleteBookOffer(*book, key256);
-        }
-        doWriteLedgerObject(
-            std::move(key),
-            seq,
-            std::move(blob),
-            isCreated,
-            isDeleted,
-            std::move(book));
-    }
+        std::optional<ripple::uint256>&& book) const;
+
     virtual void
     doWriteLedgerObject(
         std::string&& key,
@@ -377,18 +298,11 @@ public:
     doFinishWrites() const = 0;
 
     virtual bool
-    doOnlineDelete(uint32_t minLedgerToKeep) const = 0;
+    doOnlineDelete(uint32_t numLedgersToKeep) const = 0;
     virtual bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence,
-        bool isAsync = false) const = 0;
-    virtual bool
-    writeBooks(
-        std::unordered_map<
-            ripple::uint256,
-            std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence,
+        KeyIndex const& index,
         bool isAsync = false) const = 0;
 
     virtual ~BackendInterface()

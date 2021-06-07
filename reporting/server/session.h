@@ -49,6 +49,7 @@ enum RPCCommand {
     account_objects,
     channel_authorize,
     channel_verify,
+    server_info,
     subscribe,
     unsubscribe
 };
@@ -69,6 +70,7 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
     {"account_objects", account_objects},
     {"channel_authorize", channel_authorize},
     {"channel_verify", channel_verify},
+    {"server_info", server_info},
     {"subscribe", subscribe},
     {"unsubscribe", unsubscribe}};
 
@@ -170,6 +172,7 @@ class session : public std::enable_shared_from_this<session>
     std::shared_ptr<BackendInterface> backend_;
     std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    DOSGuard& dosGuard_;
 
 public:
     // Take ownership of the socket
@@ -177,11 +180,13 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard)
         : ws_(std::move(socket))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , dosGuard_(dosGuard)
     {
     }
 
@@ -190,10 +195,11 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard)
     {
         std::make_shared<session>(
-            std::move(socket), backend, subscriptions, balancer)
+            std::move(socket), backend, subscriptions, balancer, dosGuard)
             ->run();
     }
 
@@ -295,32 +301,58 @@ private:
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
         boost::json::object response;
-        try
+        auto ip =
+            ws_.next_layer().socket().remote_endpoint().address().to_string();
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " received request from ip = " << ip;
+        if (!dosGuard_.isOk(ip))
+            response["error"] = "Too many requests. Slow down";
+        else
         {
-            boost::json::value raw = boost::json::parse(msg);
-            boost::json::object request = raw.as_object();
-            BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
-                std::shared_ptr<SubscriptionManager> subPtr =
-                    subscriptions_.lock();
-                if (!subPtr)
-                    return;
+                boost::json::value raw = boost::json::parse(msg);
+                boost::json::object request = raw.as_object();
+                BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
+                try
+                {
+                    std::shared_ptr<SubscriptionManager> subPtr =
+                        subscriptions_.lock();
+                    if (!subPtr)
+                        return;
 
-                response = buildResponse(
-                    request, backend_, subPtr, balancer_, shared_from_this());
+                    auto [res, cost] = buildResponse(
+                        request,
+                        backend_,
+                        subPtr,
+                        balancer_,
+                        shared_from_this());
+                    auto start = std::chrono::system_clock::now();
+                    response = std::move(res);
+                    if (!dosGuard_.add(ip, cost))
+                    {
+                        response["warning"] = "Too many requests";
+                    }
+
+                    auto end = std::chrono::system_clock::now();
+                    BOOST_LOG_TRIVIAL(info)
+                        << __func__ << " RPC call took "
+                        << ((end - start).count() / 1000000000.0)
+                        << " . request = " << request;
+                }
+                catch (Backend::DatabaseTimeout const& t)
+                {
+                    BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+                    response["error"] =
+                        "Database read timeout. Please retry the request";
+                }
             }
-            catch (Backend::DatabaseTimeout const& t)
+            catch (std::exception const& e)
             {
-                BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                response["error"] =
-                    "Database read timeout. Please retry the request";
+                BOOST_LOG_TRIVIAL(error)
+                    << __func__ << "caught exception : " << e.what();
+                response["error"] = "Unknown exception";
             }
-        }
-        catch (std::exception const& e)
-        {
-            BOOST_LOG_TRIVIAL(error)
-                << __func__ << "caught exception : " << e.what();
         }
         BOOST_LOG_TRIVIAL(trace) << __func__ << response;
         response_ = boost::json::serialize(response);

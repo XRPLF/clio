@@ -40,6 +40,7 @@
 #include <functional>
 #include <iterator>
 #include <reporting/Pg.h>
+#include <signal.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -47,12 +48,11 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <signal.h>
 
 static void
 noticeReceiver(void* arg, PGresult const* res)
 {
-    BOOST_LOG_TRIVIAL(debug) << "server message: " << PQresultErrorMessage(res);
+    BOOST_LOG_TRIVIAL(trace) << "server message: " << PQresultErrorMessage(res);
 }
 
 //-----------------------------------------------------------------------------
@@ -242,8 +242,10 @@ Pg::bulkInsert(char const* table, std::string const& records)
 {
     // https://www.postgresql.org/docs/12/libpq-copy.html#LIBPQ-COPY-SEND
     assert(conn_.get());
-    static auto copyCmd = boost::format(R"(COPY %s FROM stdin)");
-    auto res = query(boost::str(copyCmd % table).c_str());
+    auto copyCmd = boost::format(R"(COPY %s FROM stdin)");
+    auto formattedCmd = boost::str(copyCmd % table);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " " << formattedCmd;
+    auto res = query(formattedCmd.c_str());
     if (!res || res.status() != PGRES_COPY_IN)
     {
         std::stringstream ss;
@@ -284,7 +286,8 @@ Pg::bulkInsert(char const* table, std::string const& records)
     {
         std::stringstream ss;
         ss << "bulkInsert to " << table
-           << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status;
+           << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status
+           << " message = " << PQerrorMessage(conn_.get());
         disconnect();
         BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
@@ -347,11 +350,27 @@ PgPool::PgPool(boost::json::object const& config)
     */
     constexpr std::size_t maxFieldSize = 1024;
     constexpr std::size_t maxFields = 1000;
+    std::string conninfo = "postgres://";
+    auto getFieldAsString = [&config](auto field) {
+        if (!config.contains(field))
+            throw std::runtime_error(
+                field + std::string{" missing from postgres config"});
+        if (!config.at(field).is_string())
+            throw std::runtime_error(
+                field + std::string{" in postgres config is not a string"});
+        return std::string{config.at(field).as_string().c_str()};
+    };
+    conninfo += getFieldAsString("username");
+    conninfo += ":";
+    conninfo += getFieldAsString("password");
+    conninfo += "@";
+    conninfo += getFieldAsString("contact_point");
+    conninfo += "/";
+    conninfo += getFieldAsString("database");
 
     // The connection object must be freed using the libpq API PQfinish() call.
     pg_connection_type conn(
-        PQconnectdb(config.at("conninfo").as_string().c_str()),
-        [](PGconn* conn) { PQfinish(conn); });
+        PQconnectdb(conninfo.c_str()), [](PGconn* conn) { PQfinish(conn); });
     if (!conn)
         throw std::runtime_error("Can't create DB connection.");
     if (PQstatus(conn.get()) != CONNECTION_OK)
@@ -602,9 +621,26 @@ PgPool::checkin(std::unique_ptr<Pg>& pg)
 std::shared_ptr<PgPool>
 make_PgPool(boost::json::object const& config)
 {
-    auto ret = std::make_shared<PgPool>(config);
-    ret->setup();
-    return ret;
+    try
+    {
+        auto ret = std::make_shared<PgPool>(config);
+        ret->setup();
+        return ret;
+    }
+    catch (std::runtime_error& e)
+    {
+        boost::json::object configCopy = config;
+        configCopy["database"] = "postgres";
+        auto ret = std::make_shared<PgPool>(configCopy);
+        ret->setup();
+        PgQuery pgQuery{ret};
+        std::string query = "CREATE DATABASE " +
+            std::string{config.at("database").as_string().c_str()};
+        pgQuery(query.c_str());
+        ret = std::make_shared<PgPool>(config);
+        ret->setup();
+        return ret;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -750,10 +786,11 @@ CREATE TABLE IF NOT EXISTS ledgers (
 
 CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
-    ledger_seq bigint NOT NULL,
-    object bytea,
-    PRIMARY KEY(key, ledger_seq)
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    object bytea
 ) PARTITION BY RANGE (ledger_seq);
+
+CREATE INDEX objects_idx ON objects USING btree(key,ledger_seq);
 
 create table if not exists objects1 partition of objects for values from (0) to (10000000);
 create table if not exists objects2 partition of objects for values from (10000000) to (20000000);
@@ -772,7 +809,7 @@ CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
 -- cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS transactions (
     hash bytea NOT NULL,
-    ledger_seq bigint NOT NULL ,
+    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     transaction bytea NOT NULL,
     metadata bytea NOT NULL
 ) PARTITION BY RANGE(ledger_seq);
@@ -791,7 +828,7 @@ create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq)
 -- ledger table cascade here based on ledger_seq.
 CREATE TABLE IF NOT EXISTS account_transactions (
     account           bytea  NOT NULL,
-    ledger_seq        bigint NOT NULL ,
+    ledger_seq        bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     transaction_index bigint NOT NULL,
     hash bytea NOT NULL,
     PRIMARY KEY (account, ledger_seq, transaction_index, hash)
@@ -804,22 +841,12 @@ create table if not exists account_transactions5 partition of account_transactio
 create table if not exists account_transactions6 partition of account_transactions for values from (50000000) to (60000000);
 create table if not exists account_transactions7 partition of account_transactions for values from (60000000) to (70000000);
 
--- Table that maps a book to a list of offers in that book. Deletes from the ledger table
--- cascade here based on ledger_seq.
-CREATE TABLE IF NOT EXISTS books (
-    ledger_seq bigint NOT NULL,
-    book bytea NOT NULL,
-    offer_key bytea NOT NULL
-);
-
-CREATE INDEX book_idx ON books using btree(ledger_seq, book, offer_key);
 
 CREATE TABLE IF NOT EXISTS keys (
-    ledger_seq bigint NOT NULL,
-    key bytea NOT NULL
+    ledger_seq bigint NOT NULL, 
+    key bytea NOT NULL,
+    PRIMARY KEY(ledger_seq, key)
 );
-
-CREATE INDEX key_idx ON keys USING btree(ledger_seq, key);
 
 -- account_tx() RPC helper. From the rippled reporting process, only the
 -- parameters without defaults are required. For the parameters with
@@ -937,8 +964,6 @@ CREATE OR REPLACE RULE account_transactions_update_protect AS ON UPDATE TO
     account_transactions DO INSTEAD NOTHING;
 CREATE OR REPLACE RULE objects_update_protect AS ON UPDATE TO
     objects DO INSTEAD NOTHING;
-CREATE OR REPLACE RULE books_update_protect AS ON UPDATE TO
-    books DO INSTEAD NOTHING;
 
 
 -- Return the earliest ledger sequence intended for range operations

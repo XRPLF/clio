@@ -21,10 +21,13 @@ std::pair<
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 boost::json::object
-getJson(ripple::STBase const& obj);
+toJson(ripple::STBase const& obj);
 
 boost::json::object
-getJson(ripple::SLE const& sle);
+toJson(ripple::SLE const& sle);
+
+boost::json::object
+toJson(ripple::LedgerInfo const& info);
 
 boost::json::object
 getJson(ripple::TxMeta const& meta);
@@ -37,6 +40,7 @@ ledgerSequenceFromRequest(
     boost::json::object const& request,
     BackendInterface const& backend);
 
+<<<<<<< HEAD
 std::optional<ripple::uint256>
 traverseOwnedNodes(
     BackendInterface const& backend,
@@ -52,5 +56,9 @@ keypairFromRequst(
     
 std::vector<ripple::AccountID>
 getAccountsFromTransaction(boost::json::object const& transaction);
+=======
+std::vector<unsigned char>
+ledgerInfoToBlob(ripple::LedgerInfo const& info);
+>>>>>>> dev
 
 #endif

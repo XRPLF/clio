@@ -104,7 +104,7 @@ doAccountInfo(
     {
         response["success"] = "fetched successfully!";
         if (!binary)
-            response["object"] = getJson(sle);
+            response["object"] = toJson(sle);
         else
             response["object"] = ripple::strHex(*dbResponse);
         response["db_time"] = time;
@@ -124,7 +124,7 @@ doAccountInfo(
         // support multiple SignerLists on one account.
         auto const sleSigners = ledger->read(keylet::signers(accountID));
         if (sleSigners)
-            jvSignerList.append(sleSigners->getJson(JsonOptions::none));
+            jvSignerList.append(sleSigners->toJson(JsonOptions::none));
 
         result[jss::account_data][jss::signer_lists] =
             std::move(jvSignerList);

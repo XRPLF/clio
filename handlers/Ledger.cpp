@@ -1,21 +1,5 @@
 #include <handlers/RPCHelpers.h>
 #include <reporting/BackendInterface.h>
-std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info)
-{
-    ripple::Serializer s;
-    s.add32(info.seq);
-    s.add64(info.drops.drops());
-    s.addBitString(info.parentHash);
-    s.addBitString(info.txHash);
-    s.addBitString(info.accountHash);
-    s.add32(info.parentCloseTime.time_since_epoch().count());
-    s.add32(info.closeTime.time_since_epoch().count());
-    s.add8(info.closeTimeResolution.count());
-    s.add8(info.closeFlags);
-    // s.addBitString(info.hash);
-    return s.peekData();
-}
 
 boost::json::object
 doLedger(boost::json::object const& request, BackendInterface const& backend)
@@ -53,19 +37,7 @@ doLedger(boost::json::object const& request, BackendInterface const& backend)
     }
     else
     {
-        header["ledger_sequence"] = lgrInfo->seq;
-        header["ledger_hash"] = ripple::strHex(lgrInfo->hash);
-        header["txns_hash"] = ripple::strHex(lgrInfo->txHash);
-        header["state_hash"] = ripple::strHex(lgrInfo->accountHash);
-        header["parent_hash"] = ripple::strHex(lgrInfo->parentHash);
-        header["total_coins"] = ripple::to_string(lgrInfo->drops);
-        header["close_flags"] = lgrInfo->closeFlags;
-
-        // Always show fields that contribute to the ledger hash
-        header["parent_close_time"] =
-            lgrInfo->parentCloseTime.time_since_epoch().count();
-        header["close_time"] = lgrInfo->closeTime.time_since_epoch().count();
-        header["close_time_resolution"] = lgrInfo->closeTimeResolution.count();
+        header = toJson(*lgrInfo);
     }
     response["header"] = header;
     if (getTransactions)
@@ -86,8 +58,8 @@ doLedger(boost::json::object const& request, BackendInterface const& backend)
                     if (!binary)
                     {
                         auto [sttx, meta] = deserializeTxPlusMeta(obj);
-                        entry["transaction"] = getJson(*sttx);
-                        entry["metadata"] = getJson(*meta);
+                        entry["transaction"] = toJson(*sttx);
+                        entry["metadata"] = toJson(*meta);
                     }
                     else
                     {

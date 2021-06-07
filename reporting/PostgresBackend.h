@@ -9,13 +9,13 @@ class PostgresBackend : public BackendInterface
 private:
     mutable size_t numRowsInObjectsBuffer_ = 0;
     mutable std::stringstream objectsBuffer_;
+    mutable std::stringstream keysBuffer_;
     mutable std::stringstream transactionsBuffer_;
-    mutable std::stringstream booksBuffer_;
     mutable std::stringstream accountTxBuffer_;
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
-    mutable boost::asio::thread_pool pool_{200};
+    mutable boost::asio::thread_pool pool_{16};
     uint32_t writeInterval_ = 1000000;
 
 public:
@@ -45,17 +45,10 @@ public:
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
 
     LedgerPage
-    fetchLedgerPage(
+    doFetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
-
-    BookOffersPage
-    fetchBookOffers(
-        ripple::uint256 const& book,
-        uint32_t ledgerSequence,
-        std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor) const override;
 
     std::vector<TransactionAndMetadata>
     fetchTransactions(
@@ -113,18 +106,11 @@ public:
     doFinishWrites() const override;
 
     bool
-    doOnlineDelete(uint32_t minLedgerToKeep) const override;
+    doOnlineDelete(uint32_t numLedgersToKeep) const override;
     bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence,
-        bool isAsync = false) const override;
-    bool
-    writeBooks(
-        std::unordered_map<
-            ripple::uint256,
-            std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence,
+        KeyIndex const& index,
         bool isAsync = false) const override;
 };
 }  // namespace Backend

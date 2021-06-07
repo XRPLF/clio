@@ -239,6 +239,13 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                 ++numAttempts;
                 continue;
             }
+            else
+            {
+                auto lgr =
+                    flatMapBackend_->fetchLedgerBySequence(ledgerSequence);
+                assert(lgr);
+                publishLedger(*lgr);
+            }
         }
         catch (Backend::DatabaseTimeout const& e)
         {
@@ -291,7 +298,7 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
 std::pair<ripple::LedgerInfo, bool>
 ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 {
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Beginning ledger update";
 
     ripple::LedgerInfo lgrInfo =
@@ -302,15 +309,16 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
     backend_->startWrites();
 
+<<<<<<< HEAD
     backend_->writeLedger(
+=======
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "started writes";
+    flatMapBackend_->writeLedger(
+>>>>>>> dev
         lgrInfo, std::move(*rawData.mutable_ledger_header()));
-    std::vector<AccountTransactionsData> accountTxData{
-        insertTransactions(lgrInfo, rawData)};
-
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " : "
-        << "Inserted all transactions. Number of transactions  = "
-        << rawData.transactions_list().transactions_size();
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "wrote ledger header";
 
     for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
     {
@@ -343,7 +351,24 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted,
             std::move(bookDir));
     }
+<<<<<<< HEAD
     backend_->writeAccountTransactions(std::move(accountTxData));
+=======
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " : "
+        << "wrote objects. num objects = "
+        << std::to_string(rawData.ledger_objects().objects_size());
+    std::vector<AccountTransactionsData> accountTxData{
+        insertTransactions(lgrInfo, rawData)};
+
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " : "
+        << "Inserted all transactions. Number of transactions  = "
+        << rawData.transactions_list().transactions_size();
+    flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                             << "wrote account_tx";
+>>>>>>> dev
     accumTxns_ += rawData.transactions_list().transactions_size();
     bool success = true;
     if (accumTxns_ >= txnThreshold_)
@@ -353,7 +378,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         auto end = std::chrono::system_clock::now();
 
         auto duration = ((end - start).count()) / 1000000000.0;
-        BOOST_LOG_TRIVIAL(info)
+        BOOST_LOG_TRIVIAL(debug)
             << __func__ << " Accumulated " << std::to_string(accumTxns_)
             << " transactions. Wrote in " << std::to_string(duration)
             << " transactions per second = "
@@ -361,7 +386,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         accumTxns_ = 0;
     }
     else
-        BOOST_LOG_TRIVIAL(info) << __func__ << " skipping commit";
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " skipping commit";
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "
@@ -412,10 +437,14 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
     }
+    std::atomic<uint32_t> minSequence = rng->minSequence;
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populating caches";
 
+<<<<<<< HEAD
     backend_->getIndexer().populateCachesAsync(*backend_);
+=======
+>>>>>>> dev
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populated caches";
 
@@ -501,6 +530,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     }
 
     std::thread transformer{[this,
+                             &minSequence,
                              &writeConflict,
                              &startSequence,
                              &getNext,
@@ -549,17 +579,25 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
+<<<<<<< HEAD
             auto range = backend_->fetchLedgerRangeNoThrow();
+=======
+>>>>>>> dev
             if (onlineDeleteInterval_ && !deleting_ &&
-                range->maxSequence - range->minSequence >
-                    *onlineDeleteInterval_)
+                lgrInfo.seq - minSequence > *onlineDeleteInterval_)
             {
                 deleting_ = true;
-                ioContext_.post([this, &range]() {
+                ioContext_.post([this, &minSequence]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
+<<<<<<< HEAD
                     backend_->doOnlineDelete(
                         range->maxSequence - *onlineDeleteInterval_);
+=======
+                    flatMapBackend_->doOnlineDelete(*onlineDeleteInterval_);
+>>>>>>> dev
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
+                    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+                    minSequence = rng->minSequence;
                     deleting_ = false;
                 });
             }
@@ -580,7 +618,10 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         << "Extracted and wrote " << *lastPublishedSequence - startSequence
         << " in " << ((end - begin).count()) / 1000000000.0;
     writing_ = false;
+<<<<<<< HEAD
     backend_->getIndexer().clearCaches();
+=======
+>>>>>>> dev
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Stopping etl pipeline";
@@ -772,10 +813,27 @@ ReportingETL::ReportingETL(
     if (config.contains("read_only"))
         readOnly_ = config.at("read_only").as_bool();
     if (config.contains("online_delete"))
-        onlineDeleteInterval_ = config.at("online_delete").as_int64();
+    {
+        int64_t interval = config.at("online_delete").as_int64();
+        uint32_t max = std::numeric_limits<uint32_t>::max();
+        if (interval > max)
+        {
+            std::stringstream msg;
+            msg << "online_delete cannot be greater than "
+                << std::to_string(max);
+            throw std::runtime_error(msg.str());
+        }
+        if (interval > 0)
+            onlineDeleteInterval_ = static_cast<uint32_t>(interval);
+    }
     if (config.contains("extractor_threads"))
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
+<<<<<<< HEAD
+=======
+    flatMapBackend_->open(readOnly_);
+    flatMapBackend_->checkFlagLedgers();
+>>>>>>> dev
 }
 

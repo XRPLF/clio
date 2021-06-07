@@ -69,7 +69,7 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_
 }
 
 boost::json::object
-getJson(ripple::STBase const& obj)
+toJson(ripple::STBase const& obj)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -82,6 +82,7 @@ getJson(ripple::STBase const& obj)
 }
 
 boost::json::object
+<<<<<<< HEAD
 getJson(ripple::TxMeta const& meta)
 {
     auto start = std::chrono::system_clock::now();
@@ -105,6 +106,9 @@ getJson(Json::Value const& value)
 
 boost::json::object
 getJson(ripple::SLE const& sle)
+=======
+toJson(ripple::SLE const& sle)
+>>>>>>> dev
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -115,6 +119,27 @@ getJson(ripple::SLE const& sle)
             .count();
     return value.as_object();
 }
+
+boost::json::object
+toJson(ripple::LedgerInfo const& lgrInfo)
+{
+    boost::json::object header;
+    header["ledger_sequence"] = lgrInfo.seq;
+    header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    header["txns_hash"] = ripple::strHex(lgrInfo.txHash);
+    header["state_hash"] = ripple::strHex(lgrInfo.accountHash);
+    header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
+    header["total_coins"] = ripple::to_string(lgrInfo.drops);
+    header["close_flags"] = lgrInfo.closeFlags;
+
+    // Always show fields that contribute to the ledger hash
+    header["parent_close_time"] =
+        lgrInfo.parentCloseTime.time_since_epoch().count();
+    header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
+    header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
+    return header;
+}
+
 std::optional<uint32_t>
 ledgerSequenceFromRequest(
     boost::json::object const& request,
@@ -129,6 +154,7 @@ ledgerSequenceFromRequest(
         return request.at("ledger_index").as_int64();
     }
 }
+<<<<<<< HEAD
 
 std::optional<ripple::uint256>
 traverseOwnedNodes(
@@ -380,4 +406,21 @@ getAccountsFromTransaction(boost::json::object const& transaction)
     }
     
     return accounts;
+=======
+std::vector<unsigned char>
+ledgerInfoToBlob(ripple::LedgerInfo const& info)
+{
+    ripple::Serializer s;
+    s.add32(info.seq);
+    s.add64(info.drops.drops());
+    s.addBitString(info.parentHash);
+    s.addBitString(info.txHash);
+    s.addBitString(info.accountHash);
+    s.add32(info.parentCloseTime.time_since_epoch().count());
+    s.add32(info.closeTime.time_since_epoch().count());
+    s.add8(info.closeTimeResolution.count());
+    s.add8(info.closeFlags);
+    s.addBitString(info.hash);
+    return s.peekData();
+>>>>>>> dev
 }

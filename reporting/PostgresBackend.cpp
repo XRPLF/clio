@@ -324,7 +324,7 @@ PostgresBackend::fetchAllTransactionHashesInLedger(
 }
 
 LedgerPage
-PostgresBackend::fetchLedgerPage(
+PostgresBackend::doFetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
@@ -335,9 +335,10 @@ PostgresBackend::fetchLedgerPage(
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
-    sql << "SELECT key FROM keys WHERE ledger_seq = " << std::to_string(*index);
+    sql << "SELECT key FROM keys WHERE ledger_seq = "
+        << std::to_string(index->keyIndex);
     if (cursor)
-        sql << " AND key > \'\\x" << ripple::strHex(*cursor) << "\'";
+        sql << " AND key >= \'\\x" << ripple::strHex(*cursor) << "\'";
     sql << " ORDER BY key ASC LIMIT " << std::to_string(limit);
     BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
     auto res = pgQuery(sql.str().data());
@@ -350,8 +351,11 @@ PostgresBackend::fetchLedgerPage(
         {
             keys.push_back({res.asUInt256(i, 0)});
         }
-        if (numRows == limit)
+        if (numRows >= limit)
+        {
             returnCursor = keys.back();
+            ++(*returnCursor);
+        }
 
         auto objs = fetchLedgerObjects(keys, ledgerSequence);
         std::vector<LedgerObject> results;
@@ -369,168 +373,6 @@ PostgresBackend::fetchLedgerPage(
     if (!cursor)
         return {{}, {}, "Data may be incomplete"};
     return {};
-}
-
-BookOffersPage
-PostgresBackend::fetchBookOffers(
-    ripple::uint256 const& book,
-    uint32_t ledgerSequence,
-    std::uint32_t limit,
-    std::optional<ripple::uint256> const& cursor) const
-{
-    auto rng = fetchLedgerRange();
-    auto limitTuningFactor = 50;
-
-    if(!rng)
-        return {{},{}};
-
-    ripple::uint256 bookBase = 
-        ripple::keylet::quality({ripple::ltDIR_NODE, book}, 0).key;
-    ripple::uint256 bookEnd = ripple::getQualityNext(bookBase);
-
-    using bookKeyPair = std::pair<ripple::uint256, ripple::uint256>;
-    auto getBooks = 
-        [this, &bookBase, &bookEnd, &limit, &limitTuningFactor]
-        (std::uint32_t sequence)
-        -> std::pair<bool, std::vector<bookKeyPair>>
-    {
-        BOOST_LOG_TRIVIAL(info) << __func__ << ": Fetching books between "
-                        << "0x" <<  ripple::strHex(bookBase) << " and " 
-                        << "0x" << ripple::strHex(bookEnd) << "at ledger "
-                        << std::to_string(sequence);
-
-        auto start = std::chrono::system_clock::now();
-
-        std::stringstream sql;
-        sql << "SELECT COUNT(*) FROM books WHERE "
-            << "book = \'\\x" << ripple::strHex(ripple::uint256(beast::zero)) 
-            << "\' AND ledger_seq = " << std::to_string(sequence);
-
-        bool complete;
-        PgQuery pgQuery(this->pgPool_);
-        auto res = pgQuery(sql.str().data());
-        if (size_t numRows = checkResult(res, 1))
-            complete = res.asInt(0, 0) != 0;
-        else 
-            return {false, {}};
-
-        sql.str("");
-        sql << "SELECT book, offer_key FROM books "
-            << "WHERE ledger_seq = " << std::to_string(sequence)
-            << " AND book >= "
-            << "\'\\x" << ripple::strHex(bookBase) << "\' "
-            << "AND book < "
-            << "\'\\x" << ripple::strHex(bookEnd) << "\' "
-            << "ORDER BY book ASC "
-            << "LIMIT " << std::to_string(limit * limitTuningFactor);
-
-        BOOST_LOG_TRIVIAL(debug) << sql.str();
-
-        res = pgQuery(sql.str().data());
-
-        auto end = std::chrono::system_clock::now();
-        auto duration = ((end - start).count()) / 1000000000.0;
-
-        BOOST_LOG_TRIVIAL(info) << "Postgres book key fetch took "
-                                << std::to_string(duration)
-                                << " seconds";
-
-        if (size_t numRows = checkResult(res, 2))
-        {
-            std::vector<bookKeyPair> results(numRows);
-            for (size_t i = 0; i < numRows; ++i)
-            {
-                auto book = res.asUInt256(i, 0);
-                auto key = res.asUInt256(i, 1);
-
-                results.push_back({std::move(book), std::move(key)});
-            }
-
-            return {complete, results};
-        }
-
-        return {complete, {}};
-    };
-
-    auto fetchObjects = 
-        [this]
-        (std::vector<bookKeyPair> const& pairs,
-         std::uint32_t sequence,
-         std::uint32_t limit,
-         std::optional<std::string> warning)
-            -> BookOffersPage
-    {
-        std::vector<ripple::uint256> allKeys(pairs.size());
-        for (auto const& pair : pairs)
-            allKeys.push_back(pair.second);
-        
-        auto uniqEnd = std::unique(allKeys.begin(), allKeys.end());
-        std::vector<ripple::uint256> keys{allKeys.begin(), uniqEnd};
-
-        auto start = std::chrono::system_clock::now();
-
-        auto ledgerEntries = fetchLedgerObjects(keys, sequence);
-
-        auto end = std::chrono::system_clock::now();
-        auto duration = ((end - start).count()) / 1000000000.0;
-
-        BOOST_LOG_TRIVIAL(info) << "Postgres book objects fetch took "
-                                << std::to_string(duration)
-                                << " seconds. "
-                                << "Fetched "
-                                << std::to_string(ledgerEntries.size())
-                                << " ledger entries";
-
-        std::vector<LedgerObject> objects;
-        for (auto i = 0; i < ledgerEntries.size(); ++i)
-        {
-            if(ledgerEntries[i].size() != 0)
-                objects.push_back(LedgerObject{keys[i], ledgerEntries[i]});                    
-        }
-
-        return {objects, {}, warning};
-    };
-
-    std::uint32_t bookShift = indexer_.getBookShift();
-    auto upper = indexer_.getBookIndexOfSeq(ledgerSequence);
-
-    auto [upperComplete, upperResults] = getBooks(upper);
-
-    BOOST_LOG_TRIVIAL(info) << __func__ << ": Upper results found " 
-                            << upperResults.size() << " books.";
-
-    if (upperComplete)
-    {
-        BOOST_LOG_TRIVIAL(info) << "Upper book page is complete";
-        return fetchObjects(upperResults, ledgerSequence, limit, {});
-    }
-
-    BOOST_LOG_TRIVIAL(info) << "Upper book page is not complete "
-                            << "fetching again";
-
-    auto lower = upper - (1 << bookShift);
-    if (lower < rng->minSequence)
-        lower = rng->minSequence;
-
-    auto [lowerComplete, lowerResults] = getBooks(lower);
-
-    BOOST_LOG_TRIVIAL(info) << __func__ << ": Lower results found " 
-                            << lowerResults.size() << " books.";
-
-    assert(lowerComplete);
-
-    std::vector<bookKeyPair> pairs;
-    pairs.reserve(upperResults.size() + lowerResults.size());
-    std::merge(upperResults.begin(), upperResults.end(),
-               lowerResults.begin(), lowerResults.end(),
-               std::back_inserter(pairs), 
-               [](bookKeyPair pair1, bookKeyPair pair2) -> bool
-               {
-                   return pair1.first < pair2.first;
-               });
-
-    std::optional<std::string> warning = "book data may be incomplete";
-    return fetchObjects(pairs, ledgerSequence, limit, warning);
 }
 
 std::vector<TransactionAndMetadata>
@@ -778,12 +620,16 @@ PostgresBackend::doFinishWrites() const
 {
     if (!abortWrite_)
     {
-        writeConnection_.bulkInsert("transactions", transactionsBuffer_.str());
+        std::string txStr = transactionsBuffer_.str();
+        writeConnection_.bulkInsert("transactions", txStr);
         writeConnection_.bulkInsert(
             "account_transactions", accountTxBuffer_.str());
         std::string objectsStr = objectsBuffer_.str();
         if (objectsStr.size())
             writeConnection_.bulkInsert("objects", objectsStr);
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " objects size = " << objectsStr.size()
+            << " txns size = " << txStr.size();
     }
     auto res = writeConnection_("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
@@ -796,8 +642,6 @@ PostgresBackend::doFinishWrites() const
     transactionsBuffer_.clear();
     objectsBuffer_.str("");
     objectsBuffer_.clear();
-    booksBuffer_.str("");
-    booksBuffer_.clear();
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
@@ -806,173 +650,141 @@ PostgresBackend::doFinishWrites() const
 bool
 PostgresBackend::writeKeys(
     std::unordered_set<ripple::uint256> const& keys,
-    uint32_t ledgerSequence,
+    KeyIndex const& index,
     bool isAsync) const
 {
-    BOOST_LOG_TRIVIAL(debug) << __func__;
+    if (abortWrite_)
+        return false;
     PgQuery pgQuery(pgPool_);
-    pgQuery("BEGIN");
-    std::stringstream keysBuffer;
+    PgQuery& conn = isAsync ? pgQuery : writeConnection_;
+    std::stringstream sql;
     size_t numRows = 0;
     for (auto& key : keys)
     {
-        keysBuffer << std::to_string(ledgerSequence) << '\t' << "\\\\x"
-                   << ripple::strHex(key) << '\n';
         numRows++;
-        // If the buffer gets too large, the insert fails. Not sure why. So we
-        // insert after 1 million records
-        if (numRows == 100000)
+        sql << "INSERT INTO keys (ledger_seq, key) VALUES ("
+            << std::to_string(index.keyIndex) << ", \'\\x"
+            << ripple::strHex(key) << "\') ON CONFLICT DO NOTHING; ";
+        if (numRows > 10000)
         {
-            pgQuery.bulkInsert("keys", keysBuffer.str());
-            std::stringstream temp;
-            keysBuffer.swap(temp);
+            conn(sql.str().c_str());
+            sql.str("");
+            sql.clear();
             numRows = 0;
         }
     }
     if (numRows > 0)
-    {
-        pgQuery.bulkInsert("keys", keysBuffer.str());
-    }
-    pgQuery("COMMIT");
+        conn(sql.str().c_str());
     return true;
-}
-bool
-PostgresBackend::writeBooks(
-    std::unordered_map<
-        ripple::uint256,
-        std::unordered_set<ripple::uint256>> const& books,
-    uint32_t ledgerSequence,
-    bool isAsync) const
-{
+    /*
     BOOST_LOG_TRIVIAL(debug) << __func__;
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::atomic_uint numRemaining = keys.size();
+    auto start = std::chrono::system_clock::now();
+    for (auto& key : keys)
+    {
+        boost::asio::post(
+            pool_, [this, key, &numRemaining, &cv, &mtx, &index]() {
+                PgQuery pgQuery(pgPool_);
+                std::stringstream sql;
+                sql << "INSERT INTO keys (ledger_seq, key) VALUES ("
+                    << std::to_string(index.keyIndex) << ", \'\\x"
+                    << ripple::strHex(key) << "\') ON CONFLICT DO NOTHING";
 
-    PgQuery pgQuery(pgPool_);
-    pgQuery("BEGIN");
-    std::stringstream booksBuffer;
-    size_t numRows = 0;
-    for (auto& book : books)
-    {
-        for (auto& offer : book.second)
-        {
-            booksBuffer << std::to_string(ledgerSequence) << '\t' << "\\\\x"
-                        << ripple::strHex(book.first) << '\t' << "\\\\x"
-                        << ripple::strHex(offer) << '\n';
-            numRows++;
-            // If the buffer gets too large, the insert fails. Not sure why. So
-            // we insert after 1 million records
-            if (numRows == 1000000)
-            {
-                pgQuery.bulkInsert("books", booksBuffer.str());
-                std::stringstream temp;
-                booksBuffer.swap(temp);
-                numRows = 0;
-            }
-        }
+                auto res = pgQuery(sql.str().data());
+                if (--numRemaining == 0)
+                {
+                    std::unique_lock lck(mtx);
+                    cv.notify_one();
+                }
+            });
     }
-    if (numRows > 0)
-    {
-        pgQuery.bulkInsert("books", booksBuffer.str());
-    }
-    pgQuery("COMMIT");
+    std::unique_lock lck(mtx);
+    cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+            .count();
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " wrote " << std::to_string(keys.size())
+        << " keys with threadpool. took " << std::to_string(duration);
+        */
     return true;
 }
 bool
-PostgresBackend::doOnlineDelete(uint32_t minLedgerToKeep) const
+PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
 {
+    auto rng = fetchLedgerRangeNoThrow();
+    if (!rng)
+        return false;
+    uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
+    if (minLedger <= rng->minSequence)
+        return false;
     uint32_t limit = 2048;
     PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 0");
+    std::optional<ripple::uint256> cursor;
+    while (true)
+    {
+        try
+        {
+            auto [objects, curCursor, warning] =
+                fetchLedgerPage(cursor, minLedger, 256);
+            if (warning)
+            {
+                BOOST_LOG_TRIVIAL(warning) << __func__
+                                           << " online delete running but "
+                                              "flag ledger is not complete";
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                continue;
+            }
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+            std::stringstream objectsBuffer;
+
+            for (auto& obj : objects)
+            {
+                objectsBuffer << "\\\\x" << ripple::strHex(obj.key) << '\t'
+                              << std::to_string(minLedger) << '\t' << "\\\\x"
+                              << ripple::strHex(obj.blob) << '\n';
+            }
+            pgQuery.bulkInsert("objects", objectsBuffer.str());
+            cursor = curCursor;
+            if (!cursor)
+                break;
+        }
+        catch (DatabaseTimeout const& e)
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Database timeout fetching keys";
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }
+    BOOST_LOG_TRIVIAL(info) << __func__ << " finished inserting into objects";
     {
         std::stringstream sql;
         sql << "DELETE FROM ledgers WHERE ledger_seq < "
-            << std::to_string(minLedgerToKeep);
+            << std::to_string(minLedger);
         auto res = pgQuery(sql.str().data());
         if (res.msg() != "ok")
             throw std::runtime_error("Error deleting from ledgers table");
     }
-
-    std::string cursor;
-    do
     {
         std::stringstream sql;
-        sql << "SELECT DISTINCT ON (key) key,ledger_seq,object FROM objects"
-            << " WHERE ledger_seq <= " << std::to_string(minLedgerToKeep);
-        if (cursor.size())
-            sql << " AND key < \'\\x" << cursor << "\'";
-        sql << " ORDER BY key DESC, ledger_seq DESC"
-            << " LIMIT " << std::to_string(limit);
-        BOOST_LOG_TRIVIAL(trace) << __func__ << sql.str();
+        sql << "DELETE FROM keys WHERE ledger_seq < "
+            << std::to_string(minLedger);
         auto res = pgQuery(sql.str().data());
-        BOOST_LOG_TRIVIAL(debug) << __func__ << "Fetched a page";
-        if (size_t numRows = checkResult(res, 3))
-        {
-            std::stringstream deleteSql;
-            std::stringstream deleteOffersSql;
-            deleteSql << "DELETE FROM objects WHERE (";
-            deleteOffersSql << "DELETE FROM books WHERE (";
-            bool firstOffer = true;
-            for (size_t i = 0; i < numRows; ++i)
-            {
-                std::string_view keyView{res.c_str(i, 0) + 2};
-                int64_t sequence = res.asBigInt(i, 1);
-                std::string_view objView{res.c_str(i, 2) + 2};
-                if (i != 0)
-                    deleteSql << " OR ";
-
-                deleteSql << "(key = "
-                          << "\'\\x" << keyView << "\'";
-                if (objView.size() == 0)
-                    deleteSql << " AND ledger_seq <= "
-                              << std::to_string(sequence);
-                else
-                    deleteSql << " AND ledger_seq < "
-                              << std::to_string(sequence);
-                deleteSql << ")";
-                bool deleteOffer = false;
-                if (objView.size())
-                {
-                    deleteOffer = isOfferHex(objView);
-                }
-                else
-                {
-                    // This is rather unelegant. For a deleted object, we
-                    // don't know its type just from the key (or do we?).
-                    // So, we just assume it is an offer and try to delete
-                    // it. The alternative is to read the actual object out
-                    // of the db from before it was deleted. This could
-                    // result in a lot of individual reads though, so we
-                    // chose to just delete
-                    deleteOffer = true;
-                }
-                if (deleteOffer)
-                {
-                    if (!firstOffer)
-                        deleteOffersSql << " OR ";
-                    deleteOffersSql << "( offer_key = "
-                                    << "\'\\x" << keyView << "\')";
-                    firstOffer = false;
-                }
-            }
-            if (numRows == limit)
-                cursor = res.c_str(numRows - 1, 0) + 2;
-            else
-                cursor = {};
-            deleteSql << ")";
-            deleteOffersSql << ")";
-            BOOST_LOG_TRIVIAL(trace) << __func__ << deleteSql.str();
-            res = pgQuery(deleteSql.str().data());
-            if (res.msg() != "ok")
-                throw std::runtime_error("Error deleting from objects table");
-            if (!firstOffer)
-            {
-                BOOST_LOG_TRIVIAL(trace) << __func__ << deleteOffersSql.str();
-                res = pgQuery(deleteOffersSql.str().data());
-                if (res.msg() != "ok")
-                    throw std::runtime_error("Error deleting from books table");
-            }
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << "Deleted a page. Cursor = " << cursor;
-        }
-    } while (cursor.size());
+        if (res.msg() != "ok")
+            throw std::runtime_error("Error deleting from keys table");
+    }
+    {
+        std::stringstream sql;
+        sql << "DELETE FROM books WHERE ledger_seq < "
+            << std::to_string(minLedger);
+        auto res = pgQuery(sql.str().data());
+        if (res.msg() != "ok")
+            throw std::runtime_error("Error deleting from books table");
+    }
     return true;
 }
 

@@ -19,102 +19,6 @@
 
 #include <handlers/RPCHelpers.h>
 #include <reporting/BackendInterface.h>
-#include <reporting/Pg.h>
-
-std::vector<std::pair<
-    std::shared_ptr<ripple::STTx const>,
-    std::shared_ptr<ripple::STObject const>>>
-doAccountTxStoredProcedure(
-    ripple::AccountID const& account,
-    std::shared_ptr<PgPool>& pgPool,
-    BackendInterface const& backend)
-{
-    pg_params dbParams;
-
-    char const*& command = dbParams.first;
-    std::vector<std::optional<std::string>>& values = dbParams.second;
-    command =
-        "SELECT account_tx($1::bytea, $2::bool, "
-        "$3::bigint, $4::bigint, $5::bigint, $6::bytea, "
-        "$7::bigint, $8::bool, $9::bigint, $10::bigint)";
-    values.resize(10);
-    values[0] = "\\x" + ripple::strHex(account);
-    values[1] = "true";
-    static std::uint32_t const page_length(200);
-    values[2] = std::to_string(page_length);
-
-    auto res = PgQuery(pgPool)(dbParams);
-    if (!res)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " : Postgres response is null - account = "
-            << ripple::strHex(account);
-        assert(false);
-        return {};
-    }
-    else if (res.status() != PGRES_TUPLES_OK)
-    {
-        assert(false);
-        return {};
-    }
-
-    if (res.isNull() || res.ntuples() == 0)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " : No data returned from Postgres : account = "
-            << ripple::strHex(account);
-
-        assert(false);
-        return {};
-    }
-
-    char const* resultStr = res.c_str();
-
-    boost::json::object result = boost::json::parse(resultStr).as_object();
-    if (result.contains("transactions"))
-    {
-        std::vector<ripple::uint256> nodestoreHashes;
-        for (auto& t : result.at("transactions").as_array())
-        {
-            boost::json::object obj = t.as_object();
-            if (obj.contains("ledger_seq") && obj.contains("nodestore_hash"))
-            {
-                std::string nodestoreHashHex =
-                    obj.at("nodestore_hash").as_string().c_str();
-                nodestoreHashHex.erase(0, 2);
-                ripple::uint256 nodestoreHash;
-                if (!nodestoreHash.parseHex(nodestoreHashHex))
-                    assert(false);
-
-                if (nodestoreHash.isNonZero())
-                {
-                    nodestoreHashes.push_back(nodestoreHash);
-                }
-                else
-                {
-                    assert(false);
-                }
-            }
-            else
-            {
-                assert(false);
-            }
-        }
-
-        std::vector<std::pair<
-            std::shared_ptr<ripple::STTx const>,
-            std::shared_ptr<ripple::STObject const>>>
-            results;
-        auto dbResults = backend.fetchTransactions(nodestoreHashes);
-        for (auto const& res : dbResults)
-        {
-            if (res.transaction.size() && res.metadata.size())
-                results.push_back(deserializeTxPlusMeta(res));
-        }
-        return results;
-    }
-    return {};
-}
 
 // {
 //   account: account,
@@ -190,7 +94,9 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
     auto [blobs, retCursor] =
         backend.fetchAccountTransactions(*account, limit, cursor);
     auto end = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took " << ((end - start).count() / 1000000000.0) << " num blobs = " << blobs.size();
+    BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took "
+                            << ((end - start).count() / 1000000000.0)
+                            << " num blobs = " << blobs.size();
     for (auto const& txnPlusMeta : blobs)
     {
         if (txnPlusMeta.ledgerSequence > ledgerSequence)
@@ -204,8 +110,8 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         if (!binary)
         {
             auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
-            obj["transaction"] = getJson(*txn);
-            obj["metadata"] = getJson(*meta);
+            obj["transaction"] = toJson(*txn);
+            obj["metadata"] = toJson(*meta);
         }
         else
         {
@@ -224,7 +130,8 @@ doAccountTx(boost::json::object const& request, BackendInterface const& backend)
         response["cursor"] = cursorJson;
     }
     auto end2 = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took " << ((end2 - end).count() / 1000000000.0);
+    BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took "
+                            << ((end2 - end).count() / 1000000000.0);
     return response;
 }
 

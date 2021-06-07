@@ -166,6 +166,11 @@ public:
         bindBytes(data.data(), data.size());
     }
     void
+    bindBytes(std::vector<unsigned char> const& data)
+    {
+        bindBytes(data.data(), data.size());
+    }
+    void
     bindBytes(ripple::AccountID const& data)
     {
         bindBytes(data.data(), data.size());
@@ -649,6 +654,7 @@ private:
     CassandraPreparedStatement insertLedgerHeader_;
     CassandraPreparedStatement insertLedgerHash_;
     CassandraPreparedStatement updateLedgerRange_;
+    CassandraPreparedStatement deleteLedgerRange_;
     CassandraPreparedStatement updateLedgerHeader_;
     CassandraPreparedStatement selectLedgerBySeq_;
     CassandraPreparedStatement selectLatestLedger_;
@@ -734,6 +740,11 @@ public:
     getInsertBookPreparedStatement() const
     {
         return insertBook2_;
+    }
+    CassandraPreparedStatement const&
+    getInsertObjectPreparedStatement() const
+    {
+        return insertObject_;
     }
 
     CassandraPreparedStatement const&
@@ -830,14 +841,6 @@ public:
     {
         // wait for all other writes to finish
         sync();
-        auto rng = fetchLedgerRangeNoThrow();
-        if (rng && rng->maxSequence >= ledgerSequence_)
-        {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " Ledger " << std::to_string(ledgerSequence_)
-                << " already written. Returning";
-            return false;
-        }
         // write range
         if (isFirstLedger_)
         {
@@ -954,7 +957,7 @@ public:
         CassandraResult result = executeSyncRead(statement);
         if (!result)
         {
-            BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
             return {};
         }
         return result.getBytes();
@@ -994,7 +997,7 @@ public:
         return {{result.getBytes(), result.getBytes(), result.getUInt32()}};
     }
     LedgerPage
-    fetchLedgerPage(
+    doFetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
@@ -1014,21 +1017,8 @@ public:
     bool
     writeKeys(
         std::unordered_set<ripple::uint256> const& keys,
-        uint32_t ledgerSequence,
-        bool isAsync = false) const;
-    bool
-    writeBooks(
-        std::unordered_map<
-            ripple::uint256,
-            std::unordered_set<ripple::uint256>> const& books,
-        uint32_t ledgerSequence,
+        KeyIndex const& index,
         bool isAsync = false) const override;
-    BookOffersPage
-    fetchBookOffers(
-        ripple::uint256 const& book,
-        uint32_t sequence,
-        std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor) const override;
 
     bool
     canFetchBatch()
@@ -1353,7 +1343,7 @@ public:
         syncCv_.wait(lck, [this]() { return finishedAllRequests(); });
     }
     bool
-    doOnlineDelete(uint32_t minLedgerToKeep) const override;
+    doOnlineDelete(uint32_t numLedgersToKeep) const override;
 
     boost::asio::io_context&
     getIOContext() const

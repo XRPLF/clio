@@ -97,7 +97,6 @@ if(NOT cassandra)
 
         file(TO_CMAKE_PATH "${libuv_src_SOURCE_DIR}" libuv_src_SOURCE_DIR)
     endif()
-
     add_library (cassandra STATIC IMPORTED GLOBAL)
     ExternalProject_Add(cassandra_src
         PREFIX ${nih_cache_path}
@@ -148,6 +147,9 @@ if(NOT cassandra)
     else()
         target_link_libraries(cassandra INTERFACE ${zlib})
     endif()
+	set(OPENSSL_USE_STATIC_LIBS TRUE)
+	find_package(OpenSSL REQUIRED)
+	target_link_libraries(cassandra INTERFACE OpenSSL::SSL)
 
     file(TO_CMAKE_PATH "${cassandra_src_SOURCE_DIR}" cassandra_src_SOURCE_DIR)
     target_link_libraries(reporting PUBLIC cassandra)

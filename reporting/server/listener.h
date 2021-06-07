@@ -39,6 +39,7 @@ class listener : public std::enable_shared_from_this<listener>
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    DOSGuard& dosGuard_;
 
 public:
     static void
@@ -50,12 +51,8 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer)
     {
         std::make_shared<listener>(
-            ioc,
-            endpoint,
-            backend,
-            subscriptions,
-            balancer
-        )->run();
+            ioc, endpoint, backend, subscriptions, balancer)
+            ->run();
     }
 
     listener(
@@ -63,7 +60,8 @@ public:
         boost::asio::ip::tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard)
         : ioc_(ioc)
         , acceptor_(ioc)
         , backend_(backend)
@@ -108,7 +106,6 @@ public:
     ~listener() = default;
 
 private:
-
     void
     run()
     {
@@ -134,7 +131,12 @@ private:
         }
         else
         {
-            session::make_session(std::move(socket), backend_, subscriptions_, balancer_);
+            session::make_session(
+                std::move(socket),
+                backend_,
+                subscriptions_,
+                balancer_,
+                dosGuard_);
         }
 
         // Accept another connection
@@ -142,4 +144,4 @@ private:
     }
 };
 
-#endif // LISTENER_H
+#endif  // LISTENER_H
