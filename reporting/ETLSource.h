@@ -102,12 +102,12 @@ class ETLSource
         auto const host = ip_;
         auto const port = wsPort_;
 
-        resolver_.async_resolve(
-            host, port, [this](auto ec, auto results) { onResolve(ec, results); });
+        resolver_.async_resolve(host, port, [this](auto ec, auto results) {
+            onResolve(ec, results);
+        });
     }
 
 public:
-
     static std::unique_ptr<ETLSource>
     make_ETLSource(
         boost::json::object const& config,
@@ -123,8 +123,7 @@ public:
             backend,
             subscriptions,
             networkValidatedLedgers,
-            balancer
-        );
+            balancer);
 
         src->run();
 
@@ -312,7 +311,6 @@ public:
 
     boost::json::object
     forwardToP2p(boost::json::object const& request) const;
-    
 };
 /// This class is used to manage connections to transaction processing processes
 /// This class spawns a listener for each etl source, which listens to messages
@@ -320,7 +318,7 @@ public:
 /// the network, and the range of ledgers each etl source has). This class also
 /// allows requests for ledger data to be load balanced across all possible etl
 /// sources.
-class ETLLoadBalancer : std::enable_shared_from_this<ETLLoadBalancer>
+class ETLLoadBalancer
 {
 private:
     std::vector<std::unique_ptr<ETLSource>> sources_;
@@ -379,47 +377,47 @@ public:
     /// to clients).
     /// @param in ETLSource in question
     /// @return true if messages should be forwarded
-       bool
-       shouldPropagateTxnStream(ETLSource* in) const
-       {
-           for (auto& src : sources_)
-           {
-               assert(src);
-               // We pick the first ETLSource encountered that is connected
-               if (src->isConnected())
-               {
-                   if (src.get() == in)
-                       return true;
-                   else
-                       return false;
-               }
-           }
-    
-           // If no sources connected, then this stream has not been forwarded
-           return true;
-       }
+    bool
+    shouldPropagateTxnStream(ETLSource* in) const
+    {
+        for (auto& src : sources_)
+        {
+            assert(src);
+            // We pick the first ETLSource encountered that is connected
+            if (src->isConnected())
+            {
+                if (src.get() == in)
+                    return true;
+                else
+                    return false;
+            }
+        }
 
-       boost::json::value
-       toJson() const
-       {
-           boost::json::array ret;
-           for (auto& src : sources_)
-           {
-               ret.push_back(src->toJson());
-           }
-           return ret;
-       }
-    
-       /// Randomly select a p2p node to forward a gRPC request to
-       /// @return gRPC stub to forward requests to p2p node
-       std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-       getP2pForwardingStub() const;
-    
-       /// Forward a JSON RPC request to a randomly selected p2p node
-       /// @param request JSON-RPC request
-       /// @return response received from p2p node
-       boost::json::object
-       forwardToP2p(boost::json::object const& request) const;
+        // If no sources connected, then this stream has not been forwarded
+        return true;
+    }
+
+    boost::json::value
+    toJson() const
+    {
+        boost::json::array ret;
+        for (auto& src : sources_)
+        {
+            ret.push_back(src->toJson());
+        }
+        return ret;
+    }
+
+    /// Randomly select a p2p node to forward a gRPC request to
+    /// @return gRPC stub to forward requests to p2p node
+    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
+    getP2pForwardingStub() const;
+
+    /// Forward a JSON RPC request to a randomly selected p2p node
+    /// @param request JSON-RPC request
+    /// @return response received from p2p node
+    boost::json::object
+    forwardToP2p(boost::json::object const& request) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

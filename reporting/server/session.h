@@ -25,8 +25,8 @@
 #include <boost/beast/websocket.hpp>
 
 #include <reporting/BackendInterface.h>
-#include <reporting/server/SubscriptionManager.h>
 #include <reporting/ETLSource.h>
+#include <reporting/server/SubscriptionManager.h>
 
 class session;
 class SubscriptionManager;
@@ -78,13 +78,10 @@ static std::unordered_set<std::string> forwardCommands{
     "fee",
     "path_find",
     "ripple_path_find",
-    "manifest"
-};
+    "manifest"};
 
 boost::json::object
-doTx(
-    boost::json::object const& request,
-    BackendInterface const& backend);
+doTx(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doAccountTx(
     boost::json::object const& request,
@@ -104,9 +101,7 @@ doLedgerEntry(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
-doLedger(
-    boost::json::object const& request,
-    BackendInterface const& backend);
+doLedger(boost::json::object const& request, BackendInterface const& backend);
 
 boost::json::object
 doLedgerRange(
@@ -198,11 +193,8 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer)
     {
         std::make_shared<session>(
-            std::move(socket),
-            backend,
-            subscriptions,
-            balancer
-        )->run();
+            std::move(socket), backend, subscriptions, balancer)
+            ->run();
     }
 
     ~session()
@@ -232,7 +224,6 @@ public:
     }
 
 private:
-
     // Get on the correct executor
     void
     run()
@@ -311,15 +302,13 @@ private:
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
-                if (subscriptions_.expired())
+                std::shared_ptr<SubscriptionManager> subPtr =
+                    subscriptions_.lock();
+                if (!subPtr)
                     return;
 
                 response = buildResponse(
-                    request, 
-                    backend_,
-                    subscriptions_.lock(),
-                    balancer_,
-                    shared_from_this());
+                    request, backend_, subPtr, balancer_, shared_from_this());
             }
             catch (Backend::DatabaseTimeout const& t)
             {
@@ -360,4 +349,4 @@ private:
     }
 };
 
-#endif // RIPPLE_REPORTING_SESSION_H
+#endif  // RIPPLE_REPORTING_SESSION_H
