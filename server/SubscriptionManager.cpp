@@ -1,5 +1,5 @@
 #include <handlers/RPCHelpers.h>
-#include <reporting/server/SubscriptionManager.h>
+#include <server/SubscriptionManager.h>
 
 void
 SubscriptionManager::subLedger(std::shared_ptr<session>& session)

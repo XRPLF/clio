@@ -21,7 +21,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
+#include <backend/BackendInterface.h>
 
 // {
 //   account: <ident>,

@@ -24,10 +24,10 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
-#include <reporting/BackendInterface.h>
-#include <reporting/ETLSource.h>
-#include <reporting/server/SubscriptionManager.h>
+#include <backend/BackendInterface.h>
+#include <etl/ETLSource.h>
 #include <server/DOSGuard.h>
+#include <server/SubscriptionManager.h>
 
 class session;
 class SubscriptionManager;

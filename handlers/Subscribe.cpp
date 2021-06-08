@@ -1,11 +1,11 @@
 #include <boost/json.hpp>
-#include <reporting/server/session.h>
 #include <handlers/RPCHelpers.h>
+#include <server/session.h>
 
-static std::unordered_set<std::string> validStreams { 
+static std::unordered_set<std::string> validStreams{
     "ledger",
     "transactions",
-    "transactions_proposed" };
+    "transactions_proposed"};
 
 boost::json::value
 validateStreams(boost::json::object const& request)
@@ -99,7 +99,7 @@ validateAccounts(
         if (!id)
         {
             return boost::json::string("invalid account " + s);
-        }   
+        }
     }
 
     return nullptr;
@@ -119,7 +119,7 @@ subscribeToAccounts(
 
         auto accountID = accountFromStringStrict(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -143,7 +143,7 @@ unsubscribeToAccounts(
 
         auto accountID = accountFromStringStrict(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -159,7 +159,8 @@ subscribeToAccountsProposed(
     std::shared_ptr<session>& session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& accounts = request.at("accounts_proposed").as_array();
+    boost::json::array const& accounts =
+        request.at("accounts_proposed").as_array();
 
     for (auto const& account : accounts)
     {
@@ -167,7 +168,7 @@ subscribeToAccountsProposed(
 
         auto accountID = ripple::parseBase58<ripple::AccountID>(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -183,7 +184,8 @@ unsubscribeToAccountsProposed(
     std::shared_ptr<session>& session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& accounts = request.at("accounts_proposed").as_array();
+    boost::json::array const& accounts =
+        request.at("accounts_proposed").as_array();
 
     for (auto const& account : accounts)
     {
@@ -191,7 +193,7 @@ unsubscribeToAccountsProposed(
 
         auto accountID = ripple::parseBase58<ripple::AccountID>(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -200,7 +202,6 @@ unsubscribeToAccountsProposed(
         manager.unsubProposedAccount(*accountID, session);
     }
 }
-
 
 boost::json::object
 doSubscribe(
@@ -214,16 +215,15 @@ doSubscribe(
     {
         boost::json::value error = validateStreams(request);
 
-        if(!error.is_null())
+        if (!error.is_null())
         {
             response["error"] = error;
             return response;
-        }   
+        }
     }
 
     if (request.contains("accounts"))
     {
-
         if (!request.at("accounts").is_array())
         {
             response["error"] = "accounts must be array";
@@ -233,29 +233,30 @@ doSubscribe(
         boost::json::array accounts = request.at("accounts").as_array();
         boost::json::value error = validateAccounts(request, accounts);
 
-        if(!error.is_null())
+        if (!error.is_null())
         {
             response["error"] = error;
             return response;
-        }  
+        }
     }
 
     if (request.contains("accounts_proposed"))
     {
         if (!request.at("accounts_proposed").is_array())
         {
-           response["error"] = "accounts_proposed must be array";
+            response["error"] = "accounts_proposed must be array";
             return response;
         }
 
-        boost::json::array accounts = request.at("accounts_proposed").as_array();
+        boost::json::array accounts =
+            request.at("accounts_proposed").as_array();
         boost::json::value error = validateAccounts(request, accounts);
 
-        if(!error.is_null())
+        if (!error.is_null())
         {
             response["error"] = error;
             return response;
-        }  
+        }
     }
 
     if (request.contains("streams"))
@@ -283,11 +284,11 @@ doUnsubscribe(
     {
         boost::json::value error = validateStreams(request);
 
-        if(!error.is_null())
+        if (!error.is_null())
         {
             response["error"] = error;
             return response;
-        }   
+        }
     }
 
     if (request.contains("accounts"))
@@ -295,23 +296,24 @@ doUnsubscribe(
         boost::json::array accounts = request.at("accounts").as_array();
         boost::json::value error = validateAccounts(request, accounts);
 
-        if(!error.is_null())
+        if (!error.is_null())
         {
             response["error"] = error;
             return response;
-        }  
+        }
     }
 
     if (request.contains("accounts_proposed"))
     {
-        boost::json::array accounts = request.at("accounts_proposed").as_array();
+        boost::json::array accounts =
+            request.at("accounts_proposed").as_array();
         boost::json::value error = validateAccounts(request, accounts);
 
-        if(!error.is_null())
+        if (!error.is_null())
         {
             response["error"] = error;
             return response;
-        }  
+        }
     }
 
     if (request.contains("streams"))

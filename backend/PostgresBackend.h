@@ -1,7 +1,7 @@
 #ifndef RIPPLE_APP_REPORTING_POSTGRESBACKEND_H_INCLUDED
 #define RIPPLE_APP_REPORTING_POSTGRESBACKEND_H_INCLUDED
 #include <boost/json.hpp>
-#include <reporting/BackendInterface.h>
+#include <backend/BackendInterface.h>
 
 namespace Backend {
 class PostgresBackend : public BackendInterface

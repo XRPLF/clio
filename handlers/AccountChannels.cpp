@@ -6,10 +6,8 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
-#include <reporting/Pg.h>
 
 void
 addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
@@ -17,7 +15,8 @@ addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
     boost::json::object jDst;
     jDst["channel_id"] = ripple::to_string(line.key());
     jDst["account"] = ripple::to_string(line.getAccountID(ripple::sfAccount));
-    jDst["destination_account"] = ripple::to_string(line.getAccountID(ripple::sfDestination));
+    jDst["destination_account"] =
+        ripple::to_string(line.getAccountID(ripple::sfDestination));
     jDst["amount"] = line[ripple::sfAmount].getText();
     jDst["balance"] = line[ripple::sfBalance].getText();
     if (publicKeyType(line[ripple::sfPublicKey]))
@@ -53,21 +52,21 @@ doAccountChannels(
         return response;
     }
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
     {
         response["error"] = "Must contain account";
         return response;
     }
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
     {
         response["error"] = "Account must be a string";
         return response;
     }
-    
+
     ripple::AccountID accountID;
     auto parsed = ripple::parseBase58<ripple::AccountID>(
-            request.at("account").as_string().c_str());
+        request.at("account").as_string().c_str());
 
     if (!parsed)
     {
@@ -98,7 +97,7 @@ doAccountChannels(
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
         {
             response["error"] = "limit must be integer";
             return response;
@@ -115,7 +114,7 @@ doAccountChannels(
     ripple::uint256 cursor = beast::zero;
     if (request.contains("cursor"))
     {
-        if(!request.at("cursor").is_string())
+        if (!request.at("cursor").is_string())
         {
             response["error"] = "limit must be string";
             return response;
@@ -138,26 +137,21 @@ doAccountChannels(
         if (sle.getType() == ripple::ltPAYCHAN &&
             sle.getAccountID(ripple::sfAccount) == accountID &&
             (!destAccount ||
-                *destAccount == sle.getAccountID(ripple::sfDestination)))
+             *destAccount == sle.getAccountID(ripple::sfDestination)))
         {
             if (limit-- == 0)
             {
                 return false;
             }
-            
+
             addChannel(jsonChannels, sle);
         }
 
         return true;
     };
 
-    auto nextCursor = 
-        traverseOwnedNodes(
-            backend,
-            accountID,
-            *ledgerSequence,
-            cursor,
-            addToResponse);
+    auto nextCursor = traverseOwnedNodes(
+        backend, accountID, *ledgerSequence, cursor, addToResponse);
 
     if (nextCursor)
         response["next_cursor"] = ripple::strHex(*nextCursor);

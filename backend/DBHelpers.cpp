@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 #include <memory>
-#include <reporting/DBHelpers.h>
+#include <backend/DBHelpers.h>
 
 static bool
 writeToLedgersDB(ripple::LedgerInfo const& info, PgQuery& pgQuery)

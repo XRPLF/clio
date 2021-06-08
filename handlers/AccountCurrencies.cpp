@@ -6,10 +6,8 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
-#include <reporting/Pg.h>
 
 boost::json::object
 doAccountCurrencies(
@@ -25,21 +23,21 @@ doAccountCurrencies(
         return response;
     }
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
     {
         response["error"] = "Must contain account";
         return response;
     }
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
     {
         response["error"] = "Account must be a string";
         return response;
     }
-    
+
     ripple::AccountID accountID;
     auto parsed = ripple::parseBase58<ripple::AccountID>(
-            request.at("account").as_string().c_str());
+        request.at("account").as_string().c_str());
 
     if (!parsed)
     {
@@ -49,13 +47,12 @@ doAccountCurrencies(
 
     accountID = *parsed;
 
-
     std::set<std::string> send, receive;
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             ripple::STAmount const& balance =
-                 sle.getFieldAmount(ripple::sfBalance);
+                sle.getFieldAmount(ripple::sfBalance);
 
             auto lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
             auto highLimit = sle.getFieldAmount(ripple::sfHighLimit);
@@ -68,16 +65,12 @@ doAccountCurrencies(
             if ((-balance) < lineLimitPeer)
                 send.insert(ripple::to_string(balance.getCurrency()));
         }
-        
+
         return true;
     };
 
     traverseOwnedNodes(
-        backend,
-        accountID,
-        *ledgerSequence,
-        beast::zero,
-        addToResponse);
+        backend, accountID, *ledgerSequence, beast::zero, addToResponse);
 
     response["send_currencies"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonSend = response.at("send_currencies").as_array();
@@ -85,8 +78,10 @@ doAccountCurrencies(
     for (auto const& currency : send)
         jsonSend.push_back(currency.c_str());
 
-    response["receive_currencies"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonReceive = response.at("receive_currencies").as_array();
+    response["receive_currencies"] =
+        boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonReceive =
+        response.at("receive_currencies").as_array();
 
     for (auto const& currency : receive)
         jsonReceive.push_back(currency.c_str());

@@ -1,5 +1,5 @@
-#include <ripple/app/paths/RippleState.h>
 #include <ripple/app/ledger/Ledger.h>
+#include <ripple/app/paths/RippleState.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -7,9 +7,8 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
 
 void
 addLine(
@@ -39,13 +38,19 @@ addLine(
     if (peerAccount and peerAccount != lineAccountIDPeer)
         return;
 
-    bool lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineAuthPeer = flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineAuth =
+        flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineAuthPeer =
+        flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineNoRipple =
+        flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
     bool lineDefaultRipple = flags & ripple::lsfDefaultRipple;
-    bool lineNoRipplePeer = flags & (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool lineFreezePeer = flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineNoRipplePeer = flags &
+        (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineFreeze =
+        flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineFreezePeer =
+        flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
 
     ripple::STAmount const& saBalance(balance);
     ripple::STAmount const& saLimit(lineLimit);
@@ -89,21 +94,21 @@ doAccountLines(
         return response;
     }
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
     {
         response["error"] = "Must contain account";
         return response;
     }
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
     {
         response["error"] = "Account must be a string";
         return response;
     }
-    
+
     ripple::AccountID accountID;
     auto parsed = ripple::parseBase58<ripple::AccountID>(
-            request.at("account").as_string().c_str());
+        request.at("account").as_string().c_str());
 
     if (!parsed)
     {
@@ -134,7 +139,7 @@ doAccountLines(
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
         {
             response["error"] = "limit must be integer";
             return response;
@@ -151,7 +156,7 @@ doAccountLines(
     ripple::uint256 cursor = beast::zero;
     if (request.contains("cursor"))
     {
-        if(!request.at("cursor").is_string())
+        if (!request.at("cursor").is_string())
         {
             response["error"] = "limit must be string";
             return response;
@@ -166,7 +171,6 @@ doAccountLines(
 
         cursor = ripple::uint256::fromVoid(bytes->data());
     }
-        
 
     response["lines"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at("lines").as_array();
@@ -178,20 +182,15 @@ doAccountLines(
             {
                 return false;
             }
-            
+
             addLine(jsonLines, sle, accountID, peerAccount);
         }
 
         return true;
     };
 
-    auto nextCursor = 
-        traverseOwnedNodes(
-            backend,
-            accountID,
-            *ledgerSequence,
-            cursor,
-            addToResponse);
+    auto nextCursor = traverseOwnedNodes(
+        backend, accountID, *ledgerSequence, cursor, addToResponse);
 
     if (nextCursor)
         response["next_cursor"] = ripple::strHex(*nextCursor);

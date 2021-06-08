@@ -31,8 +31,8 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
+#include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
 
 namespace Backend {
 

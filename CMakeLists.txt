@@ -36,7 +36,7 @@ add_executable (reporting_main
 add_executable (reporting_tests
     unittests/main.cpp
 )
-add_library(reporting reporting/BackendInterface.h)
+add_library(reporting backend/BackendInterface.h)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
@@ -67,17 +67,16 @@ include(Postgres)
 
 
 target_sources(reporting PRIVATE
-    reporting/ETLSource.cpp
-    reporting/CassandraBackend.cpp
-    reporting/PostgresBackend.cpp
-    reporting/BackendIndexer.cpp
-    reporting/BackendInterface.cpp
-    reporting/Pg.cpp
-    reporting/P2pProxy.cpp
-    reporting/DBHelpers.cpp
-    reporting/ReportingETL.cpp
-    reporting/server/session.cpp
-    reporting/server/SubscriptionManager.cpp
+    backend/CassandraBackend.cpp
+    backend/PostgresBackend.cpp
+    backend/BackendIndexer.cpp
+    backend/BackendInterface.cpp
+    backend/Pg.cpp
+    backend/DBHelpers.cpp
+    etl/ETLSource.cpp
+    etl/ReportingETL.cpp
+    server/session.cpp
+    server/SubscriptionManager.cpp
     handlers/AccountInfo.cpp
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp

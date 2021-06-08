@@ -25,10 +25,9 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
-#include <reporting/BackendInterface.h>
-#include <reporting/ETLSource.h>
-#include <reporting/Pg.h>
-#include <reporting/server/SubscriptionManager.h>
+#include <backend/BackendInterface.h>
+#include <etl/ETLSource.h>
+#include <server/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>

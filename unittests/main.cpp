@@ -1,13 +1,13 @@
 #include <algorithm>
+#include <backend/DBHelpers.h>
 #include <gtest/gtest.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/DBHelpers.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
-#include <reporting/BackendFactory.h>
-#include <reporting/BackendInterface.h>
+#include <backend/BackendFactory.h>
+#include <backend/BackendInterface.h>
 
 // Demonstrate some basic assertions.
 TEST(BackendTest, Basic)

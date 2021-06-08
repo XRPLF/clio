@@ -23,7 +23,7 @@
 #include <ripple/basics/Log.h>
 #include <ripple/protocol/TxMeta.h>
 #include <boost/container/flat_set.hpp>
-#include <reporting/Pg.h>
+#include <backend/Pg.h>
 
 /// Struct used to keep track of what to write to transactions and
 /// account_transactions tables in Postgres

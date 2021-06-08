@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include <ripple/basics/StringUtilities.h>
-#include <reporting/DBHelpers.h>
-#include <reporting/ReportingETL.h>
+#include <backend/DBHelpers.h>
+#include <etl/ReportingETL.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <boost/asio/connect.hpp>

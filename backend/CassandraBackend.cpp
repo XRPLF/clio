@@ -1,6 +1,6 @@
 #include <functional>
-#include <reporting/CassandraBackend.h>
-#include <reporting/DBHelpers.h>
+#include <backend/CassandraBackend.h>
+#include <backend/DBHelpers.h>
 #include <unordered_map>
 /*
 namespace std {

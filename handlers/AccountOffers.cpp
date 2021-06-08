@@ -1,5 +1,5 @@
-#include <ripple/app/paths/RippleState.h>
 #include <ripple/app/ledger/Ledger.h>
+#include <ripple/app/paths/RippleState.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -7,9 +7,8 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
 
 void
 addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
@@ -19,7 +18,7 @@ addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
 
     ripple::STAmount takerPays = offer.getFieldAmount(ripple::sfTakerPays);
     ripple::STAmount takerGets = offer.getFieldAmount(ripple::sfTakerGets);
-    
+
     boost::json::object obj;
 
     if (!takerPays.native())
@@ -55,7 +54,7 @@ addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
     obj["quality"] = rate.getText();
     if (offer.isFieldPresent(ripple::sfExpiration))
         obj["expiration"] = offer.getFieldU32(ripple::sfExpiration);
-    
+
     offersJson.push_back(obj);
 };
 boost::json::object
@@ -72,21 +71,21 @@ doAccountOffers(
         return response;
     }
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
     {
         response["error"] = "Must contain account";
         return response;
     }
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
     {
         response["error"] = "Account must be a string";
         return response;
     }
-    
+
     ripple::AccountID accountID;
     auto parsed = ripple::parseBase58<ripple::AccountID>(
-            request.at("account").as_string().c_str());
+        request.at("account").as_string().c_str());
 
     if (!parsed)
     {
@@ -99,7 +98,7 @@ doAccountOffers(
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
         {
             response["error"] = "limit must be integer";
             return response;
@@ -116,7 +115,7 @@ doAccountOffers(
     ripple::uint256 cursor = beast::zero;
     if (request.contains("cursor"))
     {
-        if(!request.at("cursor").is_string())
+        if (!request.at("cursor").is_string())
         {
             response["error"] = "limit must be string";
             return response;
@@ -131,7 +130,7 @@ doAccountOffers(
 
         cursor = ripple::uint256::fromVoid(bytes->data());
     }
-        
+
     response["offers"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at("offers").as_array();
 
@@ -142,20 +141,15 @@ doAccountOffers(
             {
                 return false;
             }
-            
+
             addOffer(jsonLines, sle);
         }
 
         return true;
     };
-    
-    auto nextCursor = 
-        traverseOwnedNodes(
-            backend,
-            accountID,
-            *ledgerSequence,
-            cursor,
-            addToResponse);
+
+    auto nextCursor = traverseOwnedNodes(
+        backend, accountID, *ledgerSequence, cursor, addToResponse);
 
     if (nextCursor)
         response["next_cursor"] = ripple::strHex(*nextCursor);

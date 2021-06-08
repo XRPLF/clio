@@ -1,5 +1,5 @@
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
+#include <backend/BackendInterface.h>
 boost::json::object
 doServerInfo(
     boost::json::object const& request,

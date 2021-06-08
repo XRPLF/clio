@@ -5,7 +5,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
 #include <boost/json.hpp>
-#include <reporting/BackendInterface.h>
+#include <backend/BackendInterface.h>
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);

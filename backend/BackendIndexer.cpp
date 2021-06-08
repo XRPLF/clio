@@ -1,4 +1,4 @@
-#include <reporting/BackendInterface.h>
+#include <backend/BackendInterface.h>
 
 namespace Backend {
 BackendIndexer::BackendIndexer(boost::json::object const& config)

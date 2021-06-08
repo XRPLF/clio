@@ -19,15 +19,15 @@
 */
 //==============================================================================
 
+#include <ripple/beast/net/IPEndpoint.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 #include <boost/log/trivial.hpp>
-#include <ripple/beast/net/IPEndpoint.h>
-#include <reporting/ETLSource.h>
-#include <reporting/ReportingETL.h>
+#include <etl/ETLSource.h>
+#include <etl/ReportingETL.h>
 
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
@@ -578,13 +578,7 @@ ETLLoadBalancer::ETLLoadBalancer(
     for (auto& entry : config)
     {
         std::unique_ptr<ETLSource> source = ETLSource::make_ETLSource(
-            entry.as_object(),
-            ioContext,
-            backend,
-            subscriptions,
-            nwvl,
-            *this
-        );
+            entry.as_object(), ioContext, backend, subscriptions, nwvl, *this);
 
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
@@ -618,7 +612,7 @@ ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects)
             auto [status, data] =
                 source->fetchLedger(ledgerSequence, getObjects);
             response = std::move(data);
-            if (status.ok() && (response.validated()|| true))
+            if (status.ok() && (response.validated() || true))
             {
                 BOOST_LOG_TRIVIAL(info)
                     << "Successfully fetched ledger = " << ledgerSequence
@@ -644,7 +638,7 @@ ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 }
 
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-ETLLoadBalancer::getP2pForwardingStub() const
+ETLLoadBalancer::getRippledForwardingStub() const
 {
     if (sources_.size() == 0)
         return nullptr;
@@ -653,7 +647,7 @@ ETLLoadBalancer::getP2pForwardingStub() const
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        auto stub = sources_[sourceIdx]->getP2pForwardingStub();
+        auto stub = sources_[sourceIdx]->getRippledForwardingStub();
         if (!stub)
         {
             sourceIdx = (sourceIdx + 1) % sources_.size();
@@ -666,7 +660,7 @@ ETLLoadBalancer::getP2pForwardingStub() const
 }
 
 boost::json::object
-ETLLoadBalancer::forwardToP2p(boost::json::object const& request) const
+ETLLoadBalancer::forwardToRippled(boost::json::object const& request) const
 {
     boost::json::object res;
     if (sources_.size() == 0)
@@ -676,7 +670,7 @@ ETLLoadBalancer::forwardToP2p(boost::json::object const& request) const
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        res = sources_[sourceIdx]->forwardToP2p(request);
+        res = sources_[sourceIdx]->forwardToRippled(request);
 
         if (!res.contains("forwarded") || res.at("forwarded") != true)
         {
@@ -691,7 +685,7 @@ ETLLoadBalancer::forwardToP2p(boost::json::object const& request) const
 }
 
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-ETLSource::getP2pForwardingStub() const
+ETLSource::getRippledForwardingStub() const
 {
     if (!connected_)
         return nullptr;
@@ -712,7 +706,7 @@ ETLSource::getP2pForwardingStub() const
 }
 
 boost::json::object
-ETLSource::forwardToP2p(boost::json::object const& request) const
+ETLSource::forwardToRippled(boost::json::object const& request) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
                              << "request = " << boost::json::serialize(request);
@@ -727,8 +721,8 @@ ETLSource::forwardToP2p(boost::json::object const& request) const
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
     namespace websocket = beast::websocket;  // from
-    namespace net = boost::asio;  // from
-    using tcp = boost::asio::ip::tcp;          // from
+    namespace net = boost::asio;             // from
+    using tcp = boost::asio::ip::tcp;        // from
     try
     {
         // The io_context is required for all I/O
@@ -775,11 +769,10 @@ ETLSource::forwardToP2p(boost::json::object const& request) const
 
         beast::flat_buffer buffer;
         ws->read(buffer);
-        
+
         auto begin = static_cast<char const*>(buffer.data().data());
         auto end = begin + buffer.data().size();
-        auto parsed = 
-            boost::json::parse(std::string(begin, end));
+        auto parsed = boost::json::parse(std::string(begin, end));
 
         if (!parsed.is_object())
         {
@@ -817,7 +810,7 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
             << __func__ << " : "
             << "Attempting to execute func. ledger sequence = "
             << ledgerSequence << " - source = " << source->toString();
-        if (source->hasLedger(ledgerSequence)|| true)
+        if (source->hasLedger(ledgerSequence) || true)
         {
             bool res = f(source);
             if (res)

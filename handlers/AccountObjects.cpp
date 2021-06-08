@@ -7,9 +7,8 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
 
 std::unordered_map<std::string, ripple::LedgerEntryType> types{
     {"state", ripple::ltRIPPLE_STATE},

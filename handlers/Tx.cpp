@@ -17,9 +17,8 @@
 */
 //==============================================================================
 
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/Pg.h>
 
 // {
 //   transaction: <hex>

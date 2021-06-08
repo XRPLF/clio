@@ -2,7 +2,7 @@
 #define RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 #include <ripple/ledger/ReadView.h>
 #include <boost/asio.hpp>
-#include <reporting/DBHelpers.h>
+#include <backend/DBHelpers.h>
 namespace std {
 template <>
 struct hash<ripple::uint256>

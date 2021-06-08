@@ -20,10 +20,10 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
-#include <reporting/server/session.h>
+#include <server/session.h>
 
-#include <set>
 #include <memory>
+#include <set>
 
 class session;
 
@@ -35,16 +35,16 @@ class SubscriptionManager
         Ledgers,
         Transactions,
         TransactionsProposed,
-        
+
         finalEntry
     };
 
     std::array<subscriptions, finalEntry> streamSubscribers_;
     std::unordered_map<ripple::AccountID, subscriptions> accountSubscribers_;
-    std::unordered_map<ripple::AccountID, subscriptions> accountProposedSubscribers_;
+    std::unordered_map<ripple::AccountID, subscriptions>
+        accountProposedSubscribers_;
 
 public:
-
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager()
     {
@@ -71,22 +71,32 @@ public:
     unsubTransactions(std::shared_ptr<session>& session);
 
     void
-    pubTransaction(Backend::TransactionAndMetadata const& blob, std::uint32_t seq);
+    pubTransaction(
+        Backend::TransactionAndMetadata const& blob,
+        std::uint32_t seq);
 
     void
-    subAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+    subAccount(
+        ripple::AccountID const& account,
+        std::shared_ptr<session>& session);
 
     void
-    unsubAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+    unsubAccount(
+        ripple::AccountID const& account,
+        std::shared_ptr<session>& session);
 
     void
     forwardProposedTransaction(boost::json::object const& response);
 
     void
-    subProposedAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+    subProposedAccount(
+        ripple::AccountID const& account,
+        std::shared_ptr<session>& session);
 
     void
-    unsubProposedAccount(ripple::AccountID const& account, std::shared_ptr<session>& session);
+    unsubProposedAccount(
+        ripple::AccountID const& account,
+        std::shared_ptr<session>& session);
 
     void
     subProposedTransactions(std::shared_ptr<session>& session);
@@ -95,4 +105,4 @@ public:
     unsubProposedTransactions(std::shared_ptr<session>& session);
 };
 
-#endif //SUBSCRIPTION_MANAGER_H
+#endif  // SUBSCRIPTION_MANAGER_H

@@ -1,6 +1,6 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
-#include <reporting/BackendInterface.h>
+#include <backend/BackendInterface.h>
 namespace Backend {
 bool
 BackendInterface::finishWrites(uint32_t ledgerSequence) const

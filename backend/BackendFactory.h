@@ -2,9 +2,9 @@
 #define RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
 
 #include <boost/algorithm/string.hpp>
-#include <reporting/BackendInterface.h>
-#include <reporting/CassandraBackend.h>
-#include <reporting/PostgresBackend.h>
+#include <backend/BackendInterface.h>
+#include <backend/CassandraBackend.h>
+#include <backend/PostgresBackend.h>
 
 namespace Backend {
 std::unique_ptr<BackendInterface>

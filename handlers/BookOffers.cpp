@@ -6,10 +6,9 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
+#include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
 #include <handlers/RPCHelpers.h>
-#include <reporting/BackendInterface.h>
-#include <reporting/DBHelpers.h>
-#include <reporting/Pg.h>
 
 boost::json::object
 doBookOffers(
@@ -230,7 +229,7 @@ doBookOffers(
             return response;
         }
 
-        takerID = 
+        takerID =
             accountFromStringStrict(request.at("taker").as_string().c_str());
         if (!takerID)
         {
@@ -251,10 +250,10 @@ doBookOffers(
         backend.fetchBookOffers(bookBase, *ledgerSequence, limit, cursor);
     auto end = std::chrono::system_clock::now();
 
-    BOOST_LOG_TRIVIAL(warning) << "Time loading books: "
-                               << ((end - start).count() / 1000000000.0);
+    BOOST_LOG_TRIVIAL(warning)
+        << "Time loading books: " << ((end - start).count() / 1000000000.0);
 
-    if(warning)
+    if (warning)
         response["warning"] = *warning;
 
     response["offers"] = boost::json::value(boost::json::array_kind);
@@ -270,13 +269,17 @@ doBookOffers(
         {
             ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
             ripple::SLE offer{it, obj.key};
-            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+            ripple::uint256 bookDir =
+                offer.getFieldH256(ripple::sfBookDirectory);
 
             boost::json::object offerJson = toJson(offer);
-            offerJson["quality"] = ripple::amountFromQuality(getQuality(bookDir)).getText();
+            offerJson["quality"] =
+                ripple::amountFromQuality(getQuality(bookDir)).getText();
             jsonOffers.push_back(offerJson);
         }
-        catch (std::exception const& e) {}
+        catch (std::exception const& e)
+        {
+        }
     }
 
     end = std::chrono::system_clock::now();

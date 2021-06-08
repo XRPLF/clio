@@ -1,5 +1,4 @@
-#include <reporting/P2pProxy.h>
-#include <reporting/server/session.h>
+#include <server/session.h>
 
 void
 fail(boost::beast::error_code ec, char const* what)
@@ -7,6 +6,31 @@ fail(boost::beast::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
+bool
+shouldForwardToRippled(boost::json::object const& request)
+{
+    if (request.contains("forward") && request.at("forward").is_bool())
+        return request.at("forward").as_bool();
+
+    std::string strCommand = request.contains("command")
+        ? request.at("command").as_string().c_str()
+        : request.at("method").as_string().c_str();
+
+    if (forwardCommands.find(strCommand) != forwardCommands.end())
+        return true;
+
+    if (request.contains("ledger_index"))
+    {
+        auto indexValue = request.at("ledger_index");
+        if (!indexValue.is_uint64())
+        {
+            std::string index = indexValue.as_string().c_str();
+            return index == "current" || index == "closed";
+        }
+    }
+
+    return false;
+}
 std::pair<boost::json::object, uint32_t>
 buildResponse(
     boost::json::object const& request,
@@ -19,8 +43,8 @@ buildResponse(
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
 
-    if (shouldForwardToP2p(request))
-        return {balancer->forwardToP2p(request), 10};
+    if (shouldForwardToRippled(request))
+        return {balancer->forwardToRippled(request), 10};
 
     switch (commandMap[command])
     {

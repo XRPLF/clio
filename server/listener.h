@@ -24,7 +24,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
-#include <reporting/server/SubscriptionManager.h>
+#include <server/SubscriptionManager.h>
 
 #include <iostream>
 

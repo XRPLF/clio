@@ -25,23 +25,23 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
-#include <reporting/BackendInterface.h>
-#include <reporting/server/SubscriptionManager.h>
+#include <backend/BackendInterface.h>
+#include <server/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
-#include <reporting/ETLHelpers.h>
+#include <etl/ETLHelpers.h>
 
 class ETLLoadBalancer;
 class SubscriptionManager;
 
 /// This class manages a connection to a single ETL source. This is almost
-/// always a p2p node, but really could be another reporting node. This class
-/// subscribes to the ledgers and transactions_proposed streams of the
-/// associated p2p node, and keeps track of which ledgers the p2p node has. This
-/// class also has methods for extracting said ledgers. Lastly this class
-/// forwards transactions received on the transactions_proposed streams to any
-/// subscribers.
+/// always a rippled node, but really could be another reporting node. This
+/// class subscribes to the ledgers and transactions_proposed streams of the
+/// associated rippled node, and keeps track of which ledgers the rippled node
+/// has. This class also has methods for extracting said ledgers. Lastly this
+/// class forwards transactions received on the transactions_proposed streams to
+/// any subscribers.
 
 class ETLSource
 {
@@ -316,13 +316,13 @@ public:
     void
     close(bool startAgain);
 
-    /// Get grpc stub to forward requests to p2p node
+    /// Get grpc stub to forward requests to rippled node
     /// @return stub to send requests to ETL source
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    getP2pForwardingStub() const;
+    getRippledForwardingStub() const;
 
     boost::json::object
-    forwardToP2p(boost::json::object const& request) const;
+    forwardToRippled(boost::json::object const& request) const;
 };
 /// This class is used to manage connections to transaction processing processes
 /// This class spawns a listener for each etl source, which listens to messages
@@ -420,16 +420,16 @@ public:
         return ret;
     }
 
-    /// Randomly select a p2p node to forward a gRPC request to
-    /// @return gRPC stub to forward requests to p2p node
+    /// Randomly select a rippled node to forward a gRPC request to
+    /// @return gRPC stub to forward requests to rippled node
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    getP2pForwardingStub() const;
+    getRippledForwardingStub() const;
 
-    /// Forward a JSON RPC request to a randomly selected p2p node
+    /// Forward a JSON RPC request to a randomly selected rippled node
     /// @param request JSON-RPC request
-    /// @return response received from p2p node
+    /// @return response received from rippled node
     boost::json::object
-    forwardToP2p(boost::json::object const& request) const;
+    forwardToRippled(boost::json::object const& request) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

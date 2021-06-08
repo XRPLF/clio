@@ -39,7 +39,7 @@
 #include <exception>
 #include <functional>
 #include <iterator>
-#include <reporting/Pg.h>
+#include <backend/Pg.h>
 #include <signal.h>
 #include <sstream>
 #include <stdexcept>
