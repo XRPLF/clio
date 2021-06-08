@@ -242,7 +242,11 @@ doBookOffers(
     if (request.contains("cursor"))
     {
         cursor = ripple::uint256{};
-        cursor->parseHex(request.at("cursor").as_string().c_str());
+        if (!cursor->parseHex(request.at("cursor").as_string().c_str()))
+        {
+            response["error"] = "Bad cursor";
+            return response;
+        }
     }
 
     auto start = std::chrono::system_clock::now();
