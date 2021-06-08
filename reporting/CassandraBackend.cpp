@@ -1364,29 +1364,11 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-<<<<<<< HEAD
-        query << "CREATE INDEX ON " << tablePrefix << "objects(sequence)";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query.str("");
-        query << "SELECT * FROM " << tablePrefix << "objects WHERE sequence=1"
-              << " LIMIT 1";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query.str("");
-        query
-            << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
-            << " ( hash blob PRIMARY KEY, ledger_sequence bigint, transaction "
-               "blob, metadata blob)";
-=======
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
               << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
                  "transaction "
                  "blob, metadata blob)"
               << " WITH default_time_to_live = " << std::to_string(ttl);
->>>>>>> dev
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1507,15 +1489,6 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-<<<<<<< HEAD
-        query << "INSERT INTO " << tablePrefix << "books"
-              << " (book, sequence, quality_key) VALUES (?, ?, (?, ?))";
-        if (!insertBook2_.prepareStatement(query, session_.get()))
-            continue;
-
-        query.str("");
-=======
->>>>>>> dev
         query << "SELECT key FROM " << tablePrefix << "keys"
               << " WHERE sequence = ? AND key >= ? ORDER BY key ASC LIMIT ?";
         if (!selectKeys_.prepareStatement(query, session_.get()))
@@ -1639,19 +1612,6 @@ CassandraBackend::open(bool readOnly)
         setupPreparedStatements = true;
     }
 
-<<<<<<< HEAD
-    if (config_.contains("max_requests_outstanding"))
-    {
-        maxRequestsOutstanding = config_["max_requests_outstanding"].as_int64();
-    }
-    if (config_.contains("indexer_max_requests_outstanding"))
-    {
-        indexerMaxRequestsOutstanding =
-            config_["indexer_max_requests_outstanding"].as_int64();
-    }
-
-=======
->>>>>>> dev
     work_.emplace(ioContext_);
     ioThread_ = std::thread{[this]() { ioContext_.run(); }};
     open_ = true;

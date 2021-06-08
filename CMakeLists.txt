@@ -87,7 +87,6 @@ target_sources(reporting PRIVATE
     handlers/LedgerRange.cpp
     handlers/Ledger.cpp
     handlers/LedgerEntry.cpp
-<<<<<<< HEAD
     handlers/AccountChannels.cpp
     handlers/AccountLines.cpp
     handlers/AccountCurrencies.cpp
@@ -95,10 +94,8 @@ target_sources(reporting PRIVATE
     handlers/AccountObjects.cpp
     handlers/ChannelAuthorize.cpp
     handlers/ChannelVerify.cpp
-    handlers/Subscribe.cpp)
-=======
+    handlers/Subscribe.cpp
     handlers/ServerInfo.cpp)
->>>>>>> dev
 
 
 message(${Boost_LIBRARIES})

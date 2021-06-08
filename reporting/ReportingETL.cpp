@@ -148,7 +148,7 @@ ReportingETL::getFees(std::uint32_t seq)
     if (!bytes)
     {
         BOOST_LOG_TRIVIAL(error) << __func__ << " - could not find fees";
-        return {};     
+        return {};
     }
 
     ripple::SerialIter it(bytes->data(), bytes->size());
@@ -174,17 +174,17 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
     auto ledgerRange = backend_->fetchLedgerRange();
     auto fees = getFees(lgrInfo.seq);
-    auto transactions =
-        backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+    auto transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
 
     if (!fees || !ledgerRange)
     {
-        BOOST_LOG_TRIVIAL(error) << __func__ 
-                                 << " - could not fetch from database";
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " - could not fetch from database";
         return;
     }
 
-    std::string range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
+    std::string range = std::to_string(ledgerRange->minSequence) + "-" +
+        std::to_string(ledgerRange->maxSequence);
 
     subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
@@ -259,7 +259,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
         //         << __func__ << " : "
         //         << "Published ledger. " << ledger->seq;
         // });
-        
+
         publishLedger(ledger);
 
         return true;
@@ -309,14 +309,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
     backend_->startWrites();
 
-<<<<<<< HEAD
-    backend_->writeLedger(
-=======
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "started writes";
-    flatMapBackend_->writeLedger(
->>>>>>> dev
-        lgrInfo, std::move(*rawData.mutable_ledger_header()));
+    backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote ledger header";
 
@@ -351,9 +346,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             isDeleted,
             std::move(bookDir));
     }
-<<<<<<< HEAD
-    backend_->writeAccountTransactions(std::move(accountTxData));
-=======
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "wrote objects. num objects = "
@@ -365,10 +357,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << __func__ << " : "
         << "Inserted all transactions. Number of transactions  = "
         << rawData.transactions_list().transactions_size();
-    flatMapBackend_->writeAccountTransactions(std::move(accountTxData));
+    backend_->writeAccountTransactions(std::move(accountTxData));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote account_tx";
->>>>>>> dev
     accumTxns_ += rawData.transactions_list().transactions_size();
     bool success = true;
     if (accumTxns_ >= txnThreshold_)
@@ -404,7 +395,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 {
     if (finishSequence_ && startSequence > *finishSequence_)
         return {};
-    
+
     /*
      * Behold, mortals! This function spawns three separate threads, which talk
      * to each other via 2 different thread safe queues and 1 atomic variable.
@@ -441,10 +432,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populating caches";
 
-<<<<<<< HEAD
-    backend_->getIndexer().populateCachesAsync(*backend_);
-=======
->>>>>>> dev
     BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                             << "Populated caches";
 
@@ -579,22 +566,13 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
-<<<<<<< HEAD
-            auto range = backend_->fetchLedgerRangeNoThrow();
-=======
->>>>>>> dev
             if (onlineDeleteInterval_ && !deleting_ &&
                 lgrInfo.seq - minSequence > *onlineDeleteInterval_)
             {
                 deleting_ = true;
                 ioContext_.post([this, &minSequence]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
-<<<<<<< HEAD
-                    backend_->doOnlineDelete(
-                        range->maxSequence - *onlineDeleteInterval_);
-=======
-                    flatMapBackend_->doOnlineDelete(*onlineDeleteInterval_);
->>>>>>> dev
+                    backend_->doOnlineDelete(*onlineDeleteInterval_);
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
                     auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
                     minSequence = rng->minSequence;
@@ -618,10 +596,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         << "Extracted and wrote " << *lastPublishedSequence - startSequence
         << " in " << ((end - begin).count()) / 1000000000.0;
     writing_ = false;
-<<<<<<< HEAD
-    backend_->getIndexer().clearCaches();
-=======
->>>>>>> dev
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "Stopping etl pipeline";
@@ -830,10 +804,5 @@ ReportingETL::ReportingETL(
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
-<<<<<<< HEAD
-=======
-    flatMapBackend_->open(readOnly_);
-    flatMapBackend_->checkFlagLedgers();
->>>>>>> dev
 }
 

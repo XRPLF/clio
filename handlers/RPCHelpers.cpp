@@ -9,10 +9,10 @@ accountFromStringStrict(std::string const& account)
     boost::optional<ripple::PublicKey> publicKey = {};
     if (blob && ripple::publicKeyType(ripple::makeSlice(*blob)))
     {
-        publicKey = ripple::PublicKey(
-            ripple::Slice{blob->data(), blob->size()});
+        publicKey =
+            ripple::PublicKey(ripple::Slice{blob->data(), blob->size()});
     }
-    else 
+    else
     {
         publicKey = ripple::parseBase58<ripple::PublicKey>(
             ripple::TokenType::AccountPublic, account);
@@ -51,19 +51,17 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
     return result;
 }
 
-
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::TxMeta const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
+deserializeTxPlusMeta(
+    Backend::TransactionAndMetadata const& blobs,
+    std::uint32_t seq)
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
-    std::shared_ptr<ripple::TxMeta> m = 
-        std::make_shared<ripple::TxMeta>(
-            tx->getTransactionID(),
-            seq,
-            *meta);
+    std::shared_ptr<ripple::TxMeta> m =
+        std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
 
     return {tx, m};
 }
@@ -82,8 +80,7 @@ toJson(ripple::STBase const& obj)
 }
 
 boost::json::object
-<<<<<<< HEAD
-getJson(ripple::TxMeta const& meta)
+toJson(ripple::TxMeta const& meta)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -95,20 +92,8 @@ getJson(ripple::TxMeta const& meta)
     return value.as_object();
 }
 
-boost::json::value
-getJson(Json::Value const& value)
-{
-    boost::json::value boostValue = 
-        boost::json::parse(value.toStyledString());
-    
-    return boostValue;
-}
-
 boost::json::object
-getJson(ripple::SLE const& sle)
-=======
 toJson(ripple::SLE const& sle)
->>>>>>> dev
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -154,7 +139,6 @@ ledgerSequenceFromRequest(
         return request.at("ledger_index").as_int64();
     }
 }
-<<<<<<< HEAD
 
 std::optional<ripple::uint256>
 traverseOwnedNodes(
@@ -173,9 +157,8 @@ traverseOwnedNodes(
     auto start = std::chrono::system_clock::now();
     for (;;)
     {
-        auto ownedNode =
-            backend.fetchLedgerObject(currentIndex.key, sequence);
-        
+        auto ownedNode = backend.fetchLedgerObject(currentIndex.key, sequence);
+
         if (!ownedNode)
         {
             throw std::runtime_error("Could not find owned node");
@@ -199,15 +182,14 @@ traverseOwnedNodes(
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(debug) << "Time loading owned directories: "
-                               << ((end - start).count() / 1000000000.0);
-
+                             << ((end - start).count() / 1000000000.0);
 
     start = std::chrono::system_clock::now();
     auto objects = backend.fetchLedgerObjects(keys, sequence);
     end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(debug) << "Time loading owned entries: "
-                               << ((end - start).count() / 1000000000.0);
+                             << ((end - start).count() / 1000000000.0);
 
     for (auto i = 0; i < objects.size(); ++i)
     {
@@ -215,7 +197,7 @@ traverseOwnedNodes(
         ripple::SLE sle(it, keys[i]);
         if (!atOwnedNode(sle))
         {
-            nextCursor = keys[i+1];
+            nextCursor = keys[i + 1];
             break;
         }
     }
@@ -231,9 +213,9 @@ parseRippleLibSeed(boost::json::value const& value)
     // try to detect such keys to avoid user confusion.
     if (!value.is_string())
         return {};
-    
-    auto const result = 
-        ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
+
+    auto const result = ripple::decodeBase58Token(
+        value.as_string().c_str(), ripple::TokenType::None);
 
     if (result.size() == 18 &&
         static_cast<std::uint8_t>(result[0]) == std::uint8_t(0xE1) &&
@@ -251,10 +233,7 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
     // All of the secret types we allow, but only one at a time.
     // The array should be constexpr, but that makes Visual Studio unhappy.
     static std::string const secretTypes[]{
-        "passphrase",
-        "secret",
-        "seed",
-        "seed_hex"};
+        "passphrase", "secret", "seed", "seed_hex"};
 
     // Identify which secret type is in use.
     std::string secretType = "";
@@ -276,8 +255,9 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
 
     if (count > 1)
     {
-        error = "Exactly one of the following must be specified: "
-                " passphrase, secret, seed, or seed_hex";
+        error =
+            "Exactly one of the following must be specified: "
+            " passphrase, secret, seed, or seed_hex";
         return {};
     }
 
@@ -319,7 +299,8 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
         {
             // If the user passed in an Ed25519 seed but *explicitly*
             // requested another key type, return an error.
-            if (keyType.value_or(ripple::KeyType::ed25519) != ripple::KeyType::ed25519)
+            if (keyType.value_or(ripple::KeyType::ed25519) !=
+                ripple::KeyType::ed25519)
             {
                 error = "Specified seed is for an Ed25519 wallet.";
                 return {};
@@ -374,8 +355,8 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
         return {};
     }
 
-    if (keyType != ripple::KeyType::secp256k1
-     && keyType != ripple::KeyType::ed25519)
+    if (keyType != ripple::KeyType::secp256k1 &&
+        keyType != ripple::KeyType::ed25519)
     {
         error = "keypairForSignature: invalid key type";
         return {};
@@ -404,9 +385,9 @@ getAccountsFromTransaction(boost::json::object const& transaction)
             }
         }
     }
-    
+
     return accounts;
-=======
+}
 std::vector<unsigned char>
 ledgerInfoToBlob(ripple::LedgerInfo const& info)
 {
@@ -422,5 +403,4 @@ ledgerInfoToBlob(ripple::LedgerInfo const& info)
     s.add8(info.closeFlags);
     s.addBitString(info.hash);
     return s.peekData();
->>>>>>> dev
 }

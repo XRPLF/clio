@@ -27,8 +27,8 @@
 #include <boost/beast/websocket.hpp>
 #include <reporting/BackendInterface.h>
 #include <reporting/ETLSource.h>
-#include <reporting/server/SubscriptionManager.h>
 #include <reporting/Pg.h>
+#include <reporting/server/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -271,8 +271,6 @@ private:
         return numMarkers_;
     }
 
-<<<<<<< HEAD
-=======
     boost::json::object
     getInfo()
     {
@@ -292,7 +290,6 @@ private:
     }
 
     /// start all of the necessary components and begin ETL
->>>>>>> dev
     void
     run()
     {
@@ -306,7 +303,6 @@ private:
     doWork();
 
 public:
-
     ReportingETL(
         boost::json::object const& config,
         boost::asio::io_context& ioc,
@@ -325,12 +321,7 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> ledgers)
     {
         auto etl = std::make_shared<ReportingETL>(
-            config,
-            ioc,
-            backend,
-            subscriptions,
-            balancer,
-            ledgers);
+            config, ioc, backend, subscriptions, balancer, ledgers);
 
         etl->run();
 
