@@ -1,5 +1,5 @@
-#include <ripple/app/paths/RippleState.h>
 #include <ripple/app/ledger/Ledger.h>
+#include <ripple/app/paths/RippleState.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -11,7 +11,7 @@
 #include <reporting/BackendInterface.h>
 #include <reporting/DBHelpers.h>
 
-std::unordered_map<std::string, ripple::LedgerEntryType> types {
+std::unordered_map<std::string, ripple::LedgerEntryType> types{
     {"state", ripple::ltRIPPLE_STATE},
     {"ticket", ripple::ltTICKET},
     {"signer_list", ripple::ltSIGNER_LIST},
@@ -36,21 +36,21 @@ doAccountObjects(
         return response;
     }
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
     {
         response["error"] = "Must contain account";
         return response;
     }
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
     {
         response["error"] = "Account must be a string";
         return response;
     }
-    
+
     ripple::AccountID accountID;
     auto parsed = ripple::parseBase58<ripple::AccountID>(
-            request.at("account").as_string().c_str());
+        request.at("account").as_string().c_str());
 
     if (!parsed)
     {
@@ -63,7 +63,7 @@ doAccountObjects(
     ripple::uint256 cursor = beast::zero;
     if (request.contains("cursor"))
     {
-        if(!request.at("cursor").is_string())
+        if (!request.at("cursor").is_string())
         {
             response["error"] = "limit must be string";
             return response;
@@ -82,14 +82,14 @@ doAccountObjects(
     std::optional<ripple::LedgerEntryType> objectType = {};
     if (request.contains("type"))
     {
-        if(!request.at("type").is_string())
+        if (!request.at("type").is_string())
         {
             response["error"] = "type must be string";
             return response;
         }
 
         std::string typeAsString = request.at("type").as_string().c_str();
-        if(types.find(typeAsString) == types.end())
+        if (types.find(typeAsString) == types.end())
         {
             response["error"] = "invalid object type";
             return response;
@@ -97,26 +97,21 @@ doAccountObjects(
 
         objectType = types[typeAsString];
     }
-        
+
     response["objects"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonObjects = response.at("objects").as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (!objectType || objectType == sle.getType())
         {
-            jsonObjects.push_back(getJson(sle));
+            jsonObjects.push_back(toJson(sle));
         }
 
         return true;
     };
-    
-    auto nextCursor = 
-        traverseOwnedNodes(
-            backend,
-            accountID,
-            *ledgerSequence,
-            cursor,
-            addToResponse);
+
+    auto nextCursor = traverseOwnedNodes(
+        backend, accountID, *ledgerSequence, cursor, addToResponse);
 
     if (nextCursor)
         response["next_cursor"] = ripple::strHex(*nextCursor);

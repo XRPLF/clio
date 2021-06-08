@@ -20,20 +20,20 @@ buildResponse(
     boost::json::object response;
 
     if (shouldForwardToP2p(request))
-        return balancer->forwardToP2p(request);
+        return {balancer->forwardToP2p(request), 10};
 
     switch (commandMap[command])
     {
         case tx:
             return {doTx(request, *backend), 1};
         case account_tx: {
-            auto res = doAccountTx(request, backend);
+            auto res = doAccountTx(request, *backend);
             if (res.contains("transactions"))
                 return {res, res["transactions"].as_array().size()};
             return {res, 1};
         }
         case ledger: {
-            auto res = doLedger(request, backend);
+            auto res = doLedger(request, *backend);
             if (res.contains("transactions"))
                 return {res, res["transactions"].as_array().size()};
             return {res, 1};
@@ -43,7 +43,7 @@ buildResponse(
         case ledger_range:
             return {doLedgerRange(request, *backend), 1};
         case ledger_data: {
-            auto res = doLedgerData(request, backend);
+            auto res = doLedgerData(request, *backend);
             if (res.contains("objects"))
                 return {res, res["objects"].as_array().size() * 4};
             return {res, 1};
@@ -51,7 +51,7 @@ buildResponse(
         case account_info:
             return {doAccountInfo(request, *backend), 1};
         case book_offers: {
-            auto res = doBookOffers(request, backend);
+            auto res = doBookOffers(request, *backend);
             if (res.contains("offers"))
                 return {res, res["offers"].as_array().size() * 4};
             return {res, 1};
@@ -73,7 +73,7 @@ buildResponse(
             size_t count = 1;
             if (res.contains("send_currencies"))
                 count = res["send_currencies"].as_array().size();
-            if(res.contains("receive_currencies"]))
+            if (res.contains("receive_currencies"))
                 count += res["receive_currencies"].as_array().size();
             return {res, count};
         }
@@ -100,7 +100,7 @@ buildResponse(
         case unsubscribe:
             return {doUnsubscribe(request, session, *manager), 1};
         case server_info: {
-            return {doServerInfo(request, backend), 1};
+            return {doServerInfo(request, *backend), 1};
             break;
         }
         default:

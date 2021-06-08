@@ -276,7 +276,7 @@ private:
     {
         boost::json::object result;
 
-        result["etl_sources"] = loadBalancer_.toJson();
+        result["etl_sources"] = loadBalancer_->toJson();
         result["is_writer"] = writing_.load();
         result["read_only"] = readOnly_;
         auto last = getLastPublish();

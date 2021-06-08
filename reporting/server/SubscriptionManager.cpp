@@ -1,6 +1,6 @@
-#include<reporting/server/SubscriptionManager.h>
-#include<handlers/RPCHelpers.h>
-    
+#include <handlers/RPCHelpers.h>
+#include <reporting/server/SubscriptionManager.h>
+
 void
 SubscriptionManager::subLedger(std::shared_ptr<session>& session)
 {
@@ -27,15 +27,15 @@ SubscriptionManager::pubLedger(
     pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
     pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
 
-    pubMsg["fee_ref"] = getJson(fees.units.jsonClipped());
-    pubMsg["fee_base"] = getJson(fees.base.jsonClipped());
-    pubMsg["reserve_base"] = getJson(fees.accountReserve(0).jsonClipped());
-    pubMsg["reserve_inc"] = getJson(fees.increment.jsonClipped());
+    pubMsg["fee_ref"] = toBoostJson(fees.units.jsonClipped());
+    pubMsg["fee_base"] = toBoostJson(fees.base.jsonClipped());
+    pubMsg["reserve_base"] = toBoostJson(fees.accountReserve(0).jsonClipped());
+    pubMsg["reserve_inc"] = toBoostJson(fees.increment.jsonClipped());
 
     pubMsg["validated_ledgers"] = ledgerRange;
     pubMsg["txn_count"] = txnCount;
 
-    for (auto const& session: streamSubscribers_[Ledgers])
+    for (auto const& session : streamSubscribers_[Ledgers])
         session->send(boost::json::serialize(pubMsg));
 }
 
@@ -53,7 +53,7 @@ SubscriptionManager::unsubTransactions(std::shared_ptr<session>& session)
 
 void
 SubscriptionManager::subAccount(
-    ripple::AccountID const& account, 
+    ripple::AccountID const& account,
     std::shared_ptr<session>& session)
 {
     accountSubscribers_[account].emplace(std::move(session));
@@ -61,7 +61,7 @@ SubscriptionManager::subAccount(
 
 void
 SubscriptionManager::unsubAccount(
-    ripple::AccountID const& account, 
+    ripple::AccountID const& account,
     std::shared_ptr<session>& session)
 {
     accountSubscribers_[account].erase(session);
@@ -75,23 +75,23 @@ SubscriptionManager::pubTransaction(
     auto [tx, meta] = deserializeTxPlusMeta(blob, seq);
 
     boost::json::object pubMsg;
-    pubMsg["transaction"] = getJson(*tx);
-    pubMsg["meta"] = getJson(*meta);
+    pubMsg["transaction"] = toJson(*tx);
+    pubMsg["meta"] = toJson(*meta);
 
-    for (auto const& session: streamSubscribers_[Transactions])
+    for (auto const& session : streamSubscribers_[Transactions])
         session->send(boost::json::serialize(pubMsg));
 
     auto journal = ripple::debugLog();
     auto accounts = meta->getAffectedAccounts(journal);
 
     for (ripple::AccountID const& account : accounts)
-        for (auto const& session: accountSubscribers_[account])
+        for (auto const& session : accountSubscribers_[account])
             session->send(boost::json::serialize(pubMsg));
 }
 
-
 void
-SubscriptionManager::forwardProposedTransaction(boost::json::object const& response)
+SubscriptionManager::forwardProposedTransaction(
+    boost::json::object const& response)
 {
     for (auto const& session : streamSubscribers_[TransactionsProposed])
         session->send(boost::json::serialize(response));
@@ -100,13 +100,13 @@ SubscriptionManager::forwardProposedTransaction(boost::json::object const& respo
     auto accounts = getAccountsFromTransaction(transaction);
 
     for (ripple::AccountID const& account : accounts)
-        for (auto const& session: accountProposedSubscribers_[account])
+        for (auto const& session : accountProposedSubscribers_[account])
             session->send(boost::json::serialize(response));
 }
 
 void
 SubscriptionManager::subProposedAccount(
-    ripple::AccountID const& account, 
+    ripple::AccountID const& account,
     std::shared_ptr<session>& session)
 {
     accountProposedSubscribers_[account].emplace(std::move(session));
@@ -127,7 +127,8 @@ SubscriptionManager::subProposedTransactions(std::shared_ptr<session>& session)
 }
 
 void
-SubscriptionManager::unsubProposedTransactions(std::shared_ptr<session>& session)
+SubscriptionManager::unsubProposedTransactions(
+    std::shared_ptr<session>& session)
 {
     streamSubscribers_[TransactionsProposed].erase(session);
 }

@@ -27,6 +27,7 @@
 #include <reporting/BackendInterface.h>
 #include <reporting/ETLSource.h>
 #include <reporting/server/SubscriptionManager.h>
+#include <server/DOSGuard.h>
 
 class session;
 class SubscriptionManager;
@@ -134,6 +135,10 @@ boost::json::object
 doAccountObjects(
     boost::json::object const& request,
     BackendInterface const& backend);
+boost::json::object
+doServerInfo(
+    boost::json::object const& request,
+    BackendInterface const& backend);
 
 boost::json::object
 doChannelAuthorize(boost::json::object const& request);
@@ -151,7 +156,7 @@ doUnsubscribe(
     std::shared_ptr<session>& session,
     SubscriptionManager& manager);
 
-boost::json::object
+std::pair<boost::json::object, uint32_t>
 buildResponse(
     boost::json::object const& request,
     std::shared_ptr<BackendInterface> backend,

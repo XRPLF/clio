@@ -48,10 +48,11 @@ public:
         boost::asio::ip::tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard)
     {
         std::make_shared<listener>(
-            ioc, endpoint, backend, subscriptions, balancer)
+            ioc, endpoint, backend, subscriptions, balancer, dosGuard)
             ->run();
     }
 
@@ -67,6 +68,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , dosGuard_(dosGuard)
     {
         boost::beast::error_code ec;
 

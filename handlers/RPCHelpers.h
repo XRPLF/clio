@@ -32,10 +32,11 @@ boost::json::object
 toJson(ripple::LedgerInfo const& info);
 
 boost::json::object
-getJson(ripple::TxMeta const& meta);
+toJson(ripple::TxMeta const& meta);
 
+using RippledJson = Json::Value;
 boost::json::value
-getJson(Json::Value const& value);
+toBoostJson(RippledJson const& value);
 
 std::optional<uint32_t>
 ledgerSequenceFromRequest(

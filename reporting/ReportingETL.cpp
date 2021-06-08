@@ -241,8 +241,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
             }
             else
             {
-                auto lgr =
-                    flatMapBackend_->fetchLedgerBySequence(ledgerSequence);
+                auto lgr = backend_->fetchLedgerBySequence(ledgerSequence);
                 assert(lgr);
                 publishLedger(*lgr);
             }
@@ -574,7 +573,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
                     backend_->doOnlineDelete(*onlineDeleteInterval_);
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
-                    auto rng = flatMapBackend_->fetchLedgerRangeNoThrow();
+                    auto rng = backend_->fetchLedgerRangeNoThrow();
                     minSequence = rng->minSequence;
                     deleting_ = false;
                 });

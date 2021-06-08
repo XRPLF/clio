@@ -45,7 +45,7 @@ TEST(BackendTest, Basic)
     for (auto& config : configs)
     {
         std::cout << keyspace << std::endl;
-        auto backend = Backend::makeBackend(config);
+        auto backend = Backend::make_Backend(config);
         backend->open(false);
 
         std::string rawHeader =
