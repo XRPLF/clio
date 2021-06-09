@@ -11,10 +11,12 @@ shouldForwardToRippled(boost::json::object const& request)
 {
     if (request.contains("forward") && request.at("forward").is_bool())
         return request.at("forward").as_bool();
+    BOOST_LOG_TRIVIAL(info) << "checked forward";
 
     std::string strCommand = request.contains("command")
         ? request.at("command").as_string().c_str()
         : request.at("method").as_string().c_str();
+    BOOST_LOG_TRIVIAL(info) << "checked command";
 
     if (forwardCommands.find(strCommand) != forwardCommands.end())
         return true;
@@ -22,12 +24,14 @@ shouldForwardToRippled(boost::json::object const& request)
     if (request.contains("ledger_index"))
     {
         auto indexValue = request.at("ledger_index");
-        if (!indexValue.is_uint64())
+        if (indexValue.is_string())
         {
+            BOOST_LOG_TRIVIAL(info) << "checking ledger as string";
             std::string index = indexValue.as_string().c_str();
             return index == "current" || index == "closed";
         }
     }
+    BOOST_LOG_TRIVIAL(info) << "checked ledger";
 
     return false;
 }
@@ -46,6 +50,7 @@ buildResponse(
     if (shouldForwardToRippled(request))
         return {balancer->forwardToRippled(request), 10};
 
+    BOOST_LOG_TRIVIAL(info) << "Not forwarding";
     switch (commandMap[command])
     {
         case tx:
@@ -58,6 +63,8 @@ buildResponse(
         }
         case ledger: {
             auto res = doLedger(request, *backend);
+
+            BOOST_LOG_TRIVIAL(info) << "did command";
             if (res.contains("transactions"))
                 return {res, res["transactions"].as_array().size()};
             return {res, 1};
