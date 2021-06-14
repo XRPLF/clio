@@ -31,15 +31,19 @@
 class SubscriptionManager;
 
 // Accepts incoming connections and launches the sessions
-// Accepts incoming connections and launches the sessions
-class listener : public std::enable_shared_from_this<listener>
+template <class Session>
+class listener : public std::enable_shared_from_this<listener<Session>>
 {
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
+<<<<<<< HEAD:server/listener.h
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+=======
+    ReportingETL& etl_;
+>>>>>>> 27506bc (rebase handlers):reporting/server/listener.h
 
 public:
     static void
@@ -59,6 +63,7 @@ public:
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
+<<<<<<< HEAD:server/listener.h
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -69,6 +74,12 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+=======
+        ReportingETL& etl)
+        : ioc_(ioc)
+        , acceptor_(ioc)
+        , etl_(etl)
+>>>>>>> 27506bc (rebase handlers):reporting/server/listener.h
     {
         boost::beast::error_code ec;
 
@@ -76,7 +87,8 @@ public:
         acceptor_.open(endpoint.protocol(), ec);
         if (ec)
         {
-            fail(ec, "open");
+            BOOST_LOG_TRIVIAL(error) << "Could not open acceptor: "
+                                     << ec.message();
             return;
         }
 
@@ -84,7 +96,8 @@ public:
         acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
         if (ec)
         {
-            fail(ec, "set_option");
+            BOOST_LOG_TRIVIAL(error) << "Could not set option for acceptor: "
+                                     << ec.message();
             return;
         }
 
@@ -92,7 +105,8 @@ public:
         acceptor_.bind(endpoint, ec);
         if (ec)
         {
-            fail(ec, "bind");
+            BOOST_LOG_TRIVIAL(error) << "Could not bind acceptor: "
+                                     << ec.message();
             return;
         }
 
@@ -100,7 +114,8 @@ public:
         acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
         if (ec)
         {
-            fail(ec, "listen");
+            BOOST_LOG_TRIVIAL(error) << "Acceptor could not start listening: "
+                                     << ec.message();
             return;
         }
     }
@@ -129,16 +144,22 @@ private:
     {
         if (ec)
         {
-            fail(ec, "accept");
+            BOOST_LOG_TRIVIAL(error) << "Failed to accept: "
+                                     << ec.message();
         }
         else
         {
+<<<<<<< HEAD:server/listener.h
             session::make_session(
                 std::move(socket),
                 backend_,
                 subscriptions_,
                 balancer_,
                 dosGuard_);
+=======
+            // Create the session and run it
+            std::make_shared<Session>(std::move(socket), etl_)->run();
+>>>>>>> 27506bc (rebase handlers):reporting/server/listener.h
         }
 
         // Accept another connection

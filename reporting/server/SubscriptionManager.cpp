@@ -1,14 +1,15 @@
 #include<reporting/server/SubscriptionManager.h>
 #include<handlers/RPCHelpers.h>
+#include <reporting/server/Handlers.h>
     
 void
-SubscriptionManager::subLedger(std::shared_ptr<session>& session)
+SubscriptionManager::subLedger(std::shared_ptr<WsSession>& session)
 {
     streamSubscribers_[Ledgers].emplace(std::move(session));
 }
 
 void
-SubscriptionManager::unsubLedger(std::shared_ptr<session>& session)
+SubscriptionManager::unsubLedger(std::shared_ptr<WsSession>& session)
 {
     streamSubscribers_[Ledgers].erase(session);
 }
@@ -40,13 +41,13 @@ SubscriptionManager::pubLedger(
 }
 
 void
-SubscriptionManager::subTransactions(std::shared_ptr<session>& session)
+SubscriptionManager::subTransactions(std::shared_ptr<WsSession>& session)
 {
     streamSubscribers_[Transactions].emplace(std::move(session));
 }
 
 void
-SubscriptionManager::unsubTransactions(std::shared_ptr<session>& session)
+SubscriptionManager::unsubTransactions(std::shared_ptr<WsSession>& session)
 {
     streamSubscribers_[Transactions].erase(session);
 }
@@ -54,7 +55,7 @@ SubscriptionManager::unsubTransactions(std::shared_ptr<session>& session)
 void
 SubscriptionManager::subAccount(
     ripple::AccountID const& account, 
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsSession>& session)
 {
     accountSubscribers_[account].emplace(std::move(session));
 }
@@ -62,7 +63,7 @@ SubscriptionManager::subAccount(
 void
 SubscriptionManager::unsubAccount(
     ripple::AccountID const& account, 
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsSession>& session)
 {
     accountSubscribers_[account].erase(session);
 }

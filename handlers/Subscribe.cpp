@@ -1,4 +1,9 @@
 #include <boost/json.hpp>
+<<<<<<< HEAD
+=======
+#include <reporting/server/WsSession.h>
+#include <reporting/server/SubscriptionManager.h>
+>>>>>>> 27506bc (rebase handlers)
 #include <handlers/RPCHelpers.h>
 #include <server/session.h>
 
@@ -38,7 +43,7 @@ validateStreams(boost::json::object const& request)
 void
 subscribeToStreams(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager)
 {
     boost::json::array const& streams = request.at("streams").as_array();
@@ -61,7 +66,7 @@ subscribeToStreams(
 void
 unsubscribeToStreams(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager)
 {
     boost::json::array const& streams = request.at("streams").as_array();
@@ -108,7 +113,7 @@ validateAccounts(
 void
 subscribeToAccounts(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts = request.at("accounts").as_array();
@@ -132,7 +137,7 @@ subscribeToAccounts(
 void
 unsubscribeToAccounts(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts = request.at("accounts").as_array();
@@ -206,7 +211,7 @@ unsubscribeToAccountsProposed(
 boost::json::object
 doSubscribe(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager)
 {
     boost::json::object response;
@@ -275,7 +280,7 @@ doSubscribe(
 boost::json::object
 doUnsubscribe(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager)
 {
     boost::json::object response;

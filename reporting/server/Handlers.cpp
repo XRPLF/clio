@@ -1,10 +1,4 @@
-#include <reporting/server/session.h>
-
-void
-fail(boost::beast::error_code ec, char const* what)
-{
-    std::cerr << what << ": " << ec.message() << "\n";
-}
+#include <reporting/server/Handlers.h>
 
 boost::json::object
 buildResponse(
@@ -16,6 +10,8 @@ buildResponse(
     std::string command = request.at("command").as_string().c_str();
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
+
+    BackendInterface& backend = etl.getFlatMapBackend();
     switch (commandMap[command])
     {
         case tx:

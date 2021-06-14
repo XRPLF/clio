@@ -1,3 +1,24 @@
+#include <boost/asio/dispatch.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/json.hpp>
+
+#include <boost/log/core.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/trivial.hpp>
+
+#include <reporting/ReportingETL.h>
+
+#include <unordered_map>
+#include <iostream>
+
+#ifndef RIPPLE_REPORTING_HANDLERS_H
+#define RIPPLE_REPORTING_HANDLERS_H
+
+class ReportingETL;
+class SubscriptionManager;
+class WsSession;
+
 static enum RPCCommand { tx, account_tx, ledger, account_info, book_offers, ledger_data, subscribe, unsubscribe };
 static std::unordered_map<std::string, RPCCommand> commandMap{
         {"tx", tx},
@@ -36,20 +57,18 @@ doLedger(
 boost::json::object
 doSubscribe(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager);
 boost::json::object
 doUnsubscribe(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsSession>& session,
     SubscriptionManager& manager);
 
-boost::json::object
+extern boost::json::object
 buildResponse(
     boost::json::object const& request,
-    BackendInterface const& backend,
-    SubscriptionManager& subManager,
-    std::shared_ptr<session> session);
+    ReportingETL& etl,
+    std::shared_ptr<WsSession> session);
 
-void
-fail(boost::beast::error_code ec, char const* what);
+#endif // RIPPLE_REPORTING_HANDLERS_H

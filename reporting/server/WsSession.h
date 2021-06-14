@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#ifndef RIPPLE_REPORTING_SESSION_H
-#define RIPPLE_REPORTING_SESSION_H
+#ifndef RIPPLE_REPORTING_WS_SESSION_H
+#define RIPPLE_REPORTING_WS_SESSION_H
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
@@ -273,7 +273,7 @@ private:
     on_accept(boost::beast::error_code ec)
     {
         if (ec)
-            return fail(ec, "accept");
+            return wsFail(ec, "accept");
 
         // Read a message
         do_read();
@@ -385,7 +385,7 @@ private:
         boost::ignore_unused(bytes_transferred);
 
         if (ec)
-            return fail(ec, "write");
+            return wsFail(ec, "write");
 
         // Clear the buffer
         buffer_.consume(buffer_.size());
@@ -395,4 +395,4 @@ private:
     }
 };
 
-#endif  // RIPPLE_REPORTING_SESSION_H
+#endif  // RIPPLE_REPORTING_WS_SESSION_H
