@@ -105,45 +105,43 @@ handle_request(
 
     if(req.method() == http::verb::get
       && req.body() == "")
+    {
         send(response(http::status::ok, "text/html", defaultResponse));
+        return;
+    }
 
     if(req.method() != http::verb::post)
-        return send(
-            response(
-                http::status::bad_request, 
-                "text/html", 
-                "Expected a POST request"));
+    {
+        send(response(
+            http::status::bad_request, 
+            "text/html", 
+            "Expected a POST request"));
+
+        return;
+    }
 
     try 
     {
         auto request = boost::json::parse(req.body()).as_object();
 
-        boost::json::object builtResponse;
-        try 
-        {
-            builtResponse = buildResponse(request, etl, nullptr);
-        }
-        catch (std::exception const& e)
-        {
-            return send(response(
-                http::status::internal_server_error,
-                "text/html",
-                "Internal Error"
-            ));
-        }
+        auto builtResponse = buildResponse(request, etl, nullptr);
 
-        return send(response(
+        send(response(
             http::status::ok,
             "application/json",
             boost::json::serialize(builtResponse)));
+
+        return;
     }
     catch (std::exception const& e)
     {
-        return send(response(
+        send(response(
             http::status::internal_server_error,
             "text/html",
             "Internal server error occurred"
         ));
+
+        return;
     }
 }
 

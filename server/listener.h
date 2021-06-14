@@ -32,9 +32,9 @@ class SubscriptionManager;
 
 // Accepts incoming connections and launches the sessions
 template <class Session>
-class listener : public std::enable_shared_from_this<listener<Session>>
+class Listener : public std::enable_shared_from_this<Listener<Session>>
 {
-    using std::enable_shared_from_this<listener<Session>>::shared_from_this;
+    using std::enable_shared_from_this<Listener<Session>>::shared_from_this;
 
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
@@ -128,7 +128,7 @@ private:
         acceptor_.async_accept(
             boost::asio::make_strand(ioc_),
             boost::beast::bind_front_handler(
-                &listener::on_accept, shared_from_this()));
+                &Listener::on_accept, shared_from_this()));
     }
 
     void
