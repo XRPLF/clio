@@ -152,7 +152,7 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 5 and argc != 6)
+    if (argc < 3 || argc > 6)
     {
         std::cerr
             << "Usage: websocket-server-async <threads> "
@@ -164,7 +164,10 @@ main(int argc, char* argv[])
 
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
-    auto ctx = parse_certs(argv[3], argv[4]);
+
+    std::optional<ssl::context> ctx = {};
+    if (argc == 4 || argc == 5)
+        ctx = parse_certs(argv[3], argv[4]);
 
     if (argc > 5)
     {
@@ -174,17 +177,12 @@ main(int argc, char* argv[])
     {
         initLogLevel(2);
     }
+
     if (!config)
     {
         std::cerr << "couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
-    if (!ctx)
-    {
-        std::cerr << "could not parse certs, Exiting..." << std::endl;
-        return EXIT_FAILURE;
-    }
-
 
     boost::asio::io_context ioc{threads};
 

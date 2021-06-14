@@ -30,84 +30,126 @@
 
 class SubscriptionManager;
 
-// Accepts incoming connections and launches the sessions
-template <class Session>
-class Listener : public std::enable_shared_from_this<Listener<Session>>
+// Detects SSL handshakes
+class detect_session : public std::enable_shared_from_this<detect_session>
 {
-    using std::enable_shared_from_this<Listener<Session>>::shared_from_this;
-
-    boost::asio::io_context& ioc_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    DOSGuard& dosGuard_;
-    ssl::context& ctx_;
+    boost::beast::tcp_stream stream_;
+    std::optional<ssl::context>& ctx_;
+    ReportingETL& etl_;
+    boost::beast::flat_buffer buffer_;
 
 public:
-    static void
-    make_listener(
-        boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
+    detect_session(
+        tcp::socket&& socket,
+        std::optional<ssl::context>& ctx,
+        ReportingETL& etl)
+        : stream_(std::move(socket))
+        , ctx_(ctx)
+        , etl_(etl)
     {
-        std::make_shared<listener>(
-            ioc, endpoint, backend, subscriptions, balancer, dosGuard)
-            ->run();
     }
 
-    listener(
-        boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
+    // Launch the detector
+    void
+    run()
+    {
+        // Set the timeout.
+        boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+
+        if (!ctx_)
+        {
+            // Launch plain session
+            std::make_shared<HttpSession>(
+                stream_.release_socket(),
+                etl_,
+                std::move(buffer_))->run();
+        }
+
+        // Detect a TLS handshake
+        async_detect_ssl(
+            stream_,
+            buffer_,
+            boost::beast::bind_front_handler(
+                &detect_session::on_detect,
+                shared_from_this()));
+    }
+
+    void
+    on_detect(boost::beast::error_code ec, bool result)
+    {
+        if(ec)
+            return httpFail(ec, "detect");
+
+        if(result)
+        {
+            // Launch SSL session
+            std::make_shared<SslHttpSession>(
+                stream_.release_socket(),
+                *ctx_,
+                etl_,
+                std::move(buffer_))->run();
+            return;
+        }
+
+        // Launch plain session
+        std::make_shared<HttpSession>(
+            stream_.release_socket(),
+            etl_,
+            std::move(buffer_))->run();
+    }
+};
+
+// Accepts incoming connections and launches the sessions
+class Listener : public std::enable_shared_from_this<Listener>
+{
+    net::io_context& ioc_;
+    std::optional<ssl::context>& ctx_;
+    tcp::acceptor acceptor_;
+    ReportingETL& etl_;
+
+public:
+    Listener(
+        net::io_context& ioc,
+        std::optional<ssl::context>& ctx,
+        tcp::endpoint endpoint,
+        ReportingETL& etl)
         : ioc_(ioc)
-        , acceptor_(ioc)
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , dosGuard_(dosGuard)
+        , ctx_(ctx)
+        , acceptor_(net::make_strand(ioc))
+        , etl_(etl)
     {
         boost::beast::error_code ec;
 
         // Open the acceptor
         acceptor_.open(endpoint.protocol(), ec);
-        if (ec)
+        if(ec)
         {
-            BOOST_LOG_TRIVIAL(error) << "Could not open acceptor: "
-                                     << ec.message();
+            httpFail(ec, "open");
             return;
         }
 
         // Allow address reuse
-        acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
-        if (ec)
+        acceptor_.set_option(net::socket_base::reuse_address(true), ec);
+        if(ec)
         {
-            BOOST_LOG_TRIVIAL(error) << "Could not set option for acceptor: "
-                                     << ec.message();
+            httpFail(ec, "set_option");
             return;
         }
 
         // Bind to the server address
         acceptor_.bind(endpoint, ec);
-        if (ec)
+        if(ec)
         {
-            BOOST_LOG_TRIVIAL(error) << "Could not bind acceptor: "
-                                     << ec.message();
+            httpFail(ec, "bind");
             return;
         }
 
         // Start listening for connections
-        acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
-        if (ec)
+        acceptor_.listen(
+            net::socket_base::max_listen_connections, ec);
+        if(ec)
         {
-            BOOST_LOG_TRIVIAL(error) << "Acceptor could not start listening: "
-                                     << ec.message();
+            httpFail(ec, "listen");
             return;
         }
     }
@@ -126,27 +168,26 @@ private:
     {
         // The new connection gets its own strand
         acceptor_.async_accept(
-            boost::asio::make_strand(ioc_),
+            net::make_strand(ioc_),
             boost::beast::bind_front_handler(
-                &Listener::on_accept, shared_from_this()));
+                &Listener::on_accept,
+                shared_from_this()));
     }
 
     void
-    on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+    on_accept(boost::beast::error_code ec, tcp::socket socket)
     {
-        if (ec)
+        if(ec)
         {
-            BOOST_LOG_TRIVIAL(error) << "Failed to accept: "
-                                     << ec.message();
+            httpFail(ec, "accept");
         }
         else
         {
-            session::make_session(
+            // Create the detector session and run it
+            std::make_shared<detect_session>(
                 std::move(socket),
-                backend_,
-                subscriptions_,
-                balancer_,
-                dosGuard_);
+                ctx_,
+                etl_)->run();
         }
 
         // Accept another connection
