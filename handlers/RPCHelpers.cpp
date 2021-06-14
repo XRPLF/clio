@@ -60,8 +60,11 @@ deserializeTxPlusMeta(
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
-    std::shared_ptr<ripple::TxMeta> m =
-        std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
+    std::shared_ptr<ripple::TxMeta> m = 
+        std::make_shared<ripple::TxMeta>(
+            tx->getTransactionID(),
+            seq,
+            *meta);
 
     return {tx, m};
 }
