@@ -138,6 +138,8 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
     v.reserve(numThreads - 1);
     for (auto i = numThreads - 1; i > 0; --i)
         v.emplace_back([&ioc] { ioc.run(); });
+
+    ioc.run();
 }
 
 int

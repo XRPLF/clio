@@ -251,6 +251,8 @@ public:
         , buffer_(std::move(b))
         {}
 
+    ~SslWsUpgrader() = default;
+
     void
     run()
     {

@@ -906,7 +906,9 @@ public:
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectLatestLedger_};
+        std::cout << "READ" << std::endl;
         CassandraResult result = executeSyncRead(statement);
+        std::cout << "ITS THE READ" << std::endl;
         if (!result.hasResult())
         {
             BOOST_LOG_TRIVIAL(error)
