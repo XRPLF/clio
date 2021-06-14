@@ -1,17 +1,17 @@
 #include <reporting/server/Handlers.h>
 
-boost::json::object
+extern boost::json::object
 buildResponse(
-    boost::json::object const& request, 
-    BackendInterface const& backend,
-    SubscriptionManager& manager,
-    std::shared_ptr<session> session)
+    boost::json::object const& request,
+    ReportingETL& etl,
+    std::shared_ptr<WsSession> session)
 {
     std::string command = request.at("command").as_string().c_str();
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
     boost::json::object response;
 
     BackendInterface& backend = etl.getFlatMapBackend();
+    SubscriptionManager& manager = etl.getSubscriptionManager();
     switch (commandMap[command])
     {
         case tx:
