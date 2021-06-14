@@ -111,19 +111,18 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 5 and argc != 6)
+    if (argc != 3 and argc != 4)
     {
         std::cerr
-            << "Usage: websocket-server-async <address> <port> <threads> "
+            << "Usage: websocket-server-async <threads> "
                "<config_file> <log level> \n"
             << "Example:\n"
-            << "    websocket-server-async 0.0.0.0 8080 1 config.json 2\n";
+            << "    websocket-server-async 1 config.json 2\n";
         return EXIT_FAILURE;
     }
-    auto const address = boost::asio::ip::make_address(argv[1]);
-    auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
-    auto const threads = std::max<int>(1, std::atoi(argv[3]));
-    auto const config = parse_config(argv[4]);
+
+    auto const threads = std::max<int>(1, std::atoi(argv[1]));
+    auto const config = parse_config(argv[2]);
     if (argc > 5)
     {
         initLogLevel(std::atoi(argv[5]));
@@ -138,7 +137,6 @@ main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // The io_context is required for all I/O
     boost::asio::io_context ioc{threads};
 
     DOSGuard dosGuard{config.value(), ioc};
