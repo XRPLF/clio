@@ -23,13 +23,12 @@
 #include <server/session.h>
 
 #include <memory>
-#include <set>
-
-class WsSession;
+#include <reporting/server/WsBase.h>
+#include <reporting/BackendInterface.h>
 
 class SubscriptionManager
 {
-    using subscriptions = std::set<std::shared_ptr<WsSession>>;
+    using subscriptions = std::set<std::shared_ptr<WsBase>>;
 
     enum SubscriptionType {
         Ledgers,
@@ -52,7 +51,7 @@ public:
     }
 
     void
-    subLedger(std::shared_ptr<WsSession>& session);
+    subLedger(std::shared_ptr<WsBase>& session);
 
     void
     pubLedger(
@@ -62,13 +61,13 @@ public:
         std::uint32_t txnCount);
 
     void
-    unsubLedger(std::shared_ptr<WsSession>& session);
+    unsubLedger(std::shared_ptr<WsBase>& session);
 
     void
-    subTransactions(std::shared_ptr<WsSession>& session);
+    subTransactions(std::shared_ptr<WsBase>& session);
 
     void
-    unsubTransactions(std::shared_ptr<WsSession>& session);
+    unsubTransactions(std::shared_ptr<WsBase>& session);
 
     void
     pubTransaction(

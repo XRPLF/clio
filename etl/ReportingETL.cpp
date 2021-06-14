@@ -259,8 +259,13 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
         //         << __func__ << " : "
         //         << "Published ledger. " << ledger->seq;
         // });
+<<<<<<< HEAD:etl/ReportingETL.cpp
 
         publishLedger(ledger);
+=======
+        
+        // publishLedger(ledger);
+>>>>>>> f27312a (impliment flex websocket server):reporting/ReportingETL.cpp
 
         return true;
     }
