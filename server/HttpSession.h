@@ -20,7 +20,7 @@
 #ifndef RIPPLE_REPORTING_HTTP_SESSION_H
 #define RIPPLE_REPORTING_HTTP_SESSION_H
 
-#include <reporting/server/HttpBase.h>
+#include <server/HttpBase.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -38,9 +38,12 @@ public:
     explicit
     HttpSession(
         tcp::socket&& socket,
-        ReportingETL& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard,
         boost::beast::flat_buffer buffer)
-        : HttpBase<HttpSession>(etl, std::move(buffer))
+        : HttpBase<HttpSession>(backend, balancer, dosGuard, std::move(buffer))
         , stream_(std::move(socket))
     {}
 
@@ -48,6 +51,12 @@ public:
     stream()
     {
         return stream_;
+    }
+
+    std::string
+    ip()
+    {
+        return stream_.socket().remote_endpoint().address().to_string();
     }
 
     // Start the asynchronous operation

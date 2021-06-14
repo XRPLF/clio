@@ -75,7 +75,7 @@ target_sources(reporting PRIVATE
     backend/DBHelpers.cpp
     etl/ETLSource.cpp
     etl/ReportingETL.cpp
-    server/session.cpp
+    server/Handlers.cpp
     server/SubscriptionManager.cpp
     handlers/AccountInfo.cpp
     handlers/Tx.cpp

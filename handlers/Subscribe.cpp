@@ -1,6 +1,7 @@
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
-#include <server/session.h>
+#include <server/WsBase.h>
+#include <server/SubscriptionManager.h>
 
 static std::unordered_set<std::string> validStreams{
     "ledger",
@@ -156,7 +157,7 @@ unsubscribeToAccounts(
 void
 subscribeToAccountsProposed(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsBase>& session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts =
@@ -181,7 +182,7 @@ subscribeToAccountsProposed(
 void
 unsubscribeToAccountsProposed(
     boost::json::object const& request,
-    std::shared_ptr<session>& session,
+    std::shared_ptr<WsBase>& session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts =

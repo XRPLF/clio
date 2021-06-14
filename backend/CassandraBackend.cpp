@@ -1339,7 +1339,7 @@ CassandraBackend::open(bool readOnly)
                       << std::to_string(rf) << "'}  AND durable_writes = true";
                 if (!executeSimpleStatement(query.str()))
                     continue;
-                query = {};
+                query.str("");
                 query << "USE " << keyspace;
                 if (!executeSimpleStatement(query.str()))
                     continue;
@@ -1578,7 +1578,8 @@ CassandraBackend::open(bool readOnly)
                  "(?,null)";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
-        query = {};
+
+        query.str("");
         query << " update " << tablePrefix << "ledger_range"
               << " set sequence = ? where is_latest = false";
         if (!deleteLedgerRange_.prepareStatement(query, session_.get()))

@@ -28,12 +28,8 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <server/listener.h>
-#include <server/session.h>
-#include <reporting/ReportingETL.h>
-#include <reporting/server/Listener.h>
-#include <reporting/server/WsSession.h>
-#include <reporting/server/HttpSession.h>
+#include <etl/ReportingETL.h>
+#include <server/Listener.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -142,13 +138,6 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
     v.reserve(numThreads - 1);
     for (auto i = numThreads - 1; i > 0; --i)
         v.emplace_back([&ioc] { ioc.run(); });
-
-    std::make_shared<Listener<HttpSession, SslHttpSession>>(
-        ioc,
-        ctx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        etl)
-        ->run();
 }
 
 int
@@ -167,7 +156,7 @@ main(int argc, char* argv[])
 
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
-    auto const ctx = parse_certs(argv[3], argv[4]);
+    auto ctx = parse_certs(argv[3], argv[4]);
 
     if (argc > 5)
     {
@@ -201,20 +190,42 @@ main(int argc, char* argv[])
     std::shared_ptr<NetworkValidatedLedgers> ledgers{
         NetworkValidatedLedgers::make_ValidatedLedgers()};
 
-    std::shared_ptr<ETLLoadBalancer> balancer{
-        ETLLoadBalancer::make_ETLLoadBalancer(
-            *config, ioc, backend, subscriptions, ledgers)};
-
-    std::shared_ptr<ReportingETL> etl{ReportingETL::make_ReportingETL(
-        *config, ioc, backend, subscriptions, balancer, ledgers)};
-
-    listener::make_listener(
+    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
+        *config,
         ioc,
-        boost::asio::ip::tcp::endpoint{address, port},
+        backend,
+        subscriptions,
+        ledgers
+    );
+
+    auto etl = ReportingETL::make_ReportingETL(
+        *config,
+        ioc,
         backend,
         subscriptions,
         balancer,
-        dosGuard);
+        ledgers
+    );
+
+    auto wsServer = Server::make_WebSocketServer(
+        *config,
+        ioc,
+        *ctx,
+        backend,
+        subscriptions,
+        balancer,
+        dosGuard
+    );
+
+    auto httpServer = Server::make_HttpServer(
+        *config,
+        ioc,
+        *ctx,
+        backend,
+        subscriptions,
+        balancer,
+        dosGuard
+    );
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

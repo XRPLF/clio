@@ -1,10 +1,4 @@
-#include <server/session.h>
-
-void
-fail(boost::beast::error_code ec, char const* what)
-{
-    std::cerr << what << ": " << ec.message() << "\n";
-}
+#include <server/Handlers.h>
 
 bool
 shouldForwardToRippled(boost::json::object const& request)
@@ -35,13 +29,14 @@ shouldForwardToRippled(boost::json::object const& request)
 
     return false;
 }
+
 std::pair<boost::json::object, uint32_t>
 buildResponse(
     boost::json::object const& request,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> manager,
     std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<session> session)
+    std::shared_ptr<WsBase> session)
 {
     std::string command = request.at("command").as_string().c_str();
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
