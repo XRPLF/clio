@@ -20,16 +20,22 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
+<<<<<<< HEAD:server/SubscriptionManager.h
 #include <server/session.h>
 
 #include <memory>
 #include <set>
+=======
+#include <set>
+#include <memory>
+#include <reporting/server/WsSession.h>
+>>>>>>> 27506bc (rebase handlers):reporting/server/SubscriptionManager.h
 
-class session;
+class WsSession;
 
 class SubscriptionManager
 {
-    using subscriptions = std::set<std::shared_ptr<session>>;
+    using subscriptions = std::set<std::shared_ptr<WsSession>>;
 
     enum SubscriptionType {
         Ledgers,
@@ -52,7 +58,7 @@ public:
     }
 
     void
-    subLedger(std::shared_ptr<session>& session);
+    subLedger(std::shared_ptr<WsSession>& session);
 
     void
     pubLedger(
@@ -62,13 +68,13 @@ public:
         std::uint32_t txnCount);
 
     void
-    unsubLedger(std::shared_ptr<session>& session);
+    unsubLedger(std::shared_ptr<WsSession>& session);
 
     void
-    subTransactions(std::shared_ptr<session>& session);
+    subTransactions(std::shared_ptr<WsSession>& session);
 
     void
-    unsubTransactions(std::shared_ptr<session>& session);
+    unsubTransactions(std::shared_ptr<WsSession>& session);
 
     void
     pubTransaction(
@@ -99,10 +105,17 @@ public:
         std::shared_ptr<session>& session);
 
     void
+<<<<<<< HEAD:server/SubscriptionManager.h
     subProposedTransactions(std::shared_ptr<session>& session);
 
     void
     unsubProposedTransactions(std::shared_ptr<session>& session);
+=======
+    subAccount(ripple::AccountID const& account, std::shared_ptr<WsSession>& session);
+
+    void
+    unsubAccount(ripple::AccountID const& account, std::shared_ptr<WsSession>& session);
+>>>>>>> 27506bc (rebase handlers):reporting/server/SubscriptionManager.h
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H
