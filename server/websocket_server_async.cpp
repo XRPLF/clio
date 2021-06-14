@@ -167,8 +167,7 @@ main(int argc, char* argv[])
 
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
-
-    std::optional<ssl::context> ctx = parse_certs(argv[3], argv[4]);
+    auto const ctx = parse_certs(argv[3], argv[4]);
 
     if (argc > 5)
     {
@@ -187,6 +186,7 @@ main(int argc, char* argv[])
     if (!ctx)
     {
         std::cerr << "Couldn't parse SSL certificates" << std::endl;
+        return EXIT_FAILURE;
     }
 
     boost::asio::io_context ioc{threads};
