@@ -118,13 +118,24 @@ handle_request(
     {
         auto request = boost::json::parse(req.body()).as_object();
 
-        auto response = buildResponse(request, etl, nullptr);
+        boost::json::object builtResponse;
+        try 
+        {
+            builtResponse = buildResponse(request, etl, nullptr);
+        }
+        catch (std::exception const& e)
+        {
+            return send(response(
+                http::status::internal_server_error,
+                "text/html",
+                "Internal Error"
+            ));
+        }
 
         return send(response(
             http::status::ok,
             "application/json",
-            boost::json::serialize(response)
-        ));
+            boost::json::serialize(builtResponse)));
     }
     catch (std::exception const& e)
     {
@@ -140,8 +151,6 @@ handle_request(
 // Handles an HTTP server connection
 class HttpSession : public std::enable_shared_from_this<HttpSession>
 {
-    // This is the C++11 equivalent of a generic lambda.
-    // The function object is used to send an HTTP message.
     struct send_lambda
     {
         HttpSession& self_;

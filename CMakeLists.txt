@@ -67,7 +67,6 @@ include(Postgres)
 
 
 target_sources(reporting PRIVATE
-<<<<<<< HEAD
     backend/CassandraBackend.cpp
     backend/PostgresBackend.cpp
     backend/BackendIndexer.cpp
@@ -78,17 +77,6 @@ target_sources(reporting PRIVATE
     etl/ReportingETL.cpp
     server/session.cpp
     server/SubscriptionManager.cpp
-=======
-    reporting/ETLSource.cpp
-    reporting/CassandraBackend.cpp
-    reporting/PostgresBackend.cpp
-    reporting/BackendIndexer.cpp
-    reporting/Pg.cpp
-    reporting/DBHelpers.cpp
-    reporting/ReportingETL.cpp
-    reporting/server/Handlers.cpp
-    reporting/server/SubscriptionManager.cpp
->>>>>>> 27506bc (rebase handlers)
     handlers/AccountInfo.cpp
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp

@@ -1,9 +1,4 @@
 #include <boost/json.hpp>
-<<<<<<< HEAD
-=======
-#include <reporting/server/WsSession.h>
-#include <reporting/server/SubscriptionManager.h>
->>>>>>> 27506bc (rebase handlers)
 #include <handlers/RPCHelpers.h>
 #include <server/session.h>
 
