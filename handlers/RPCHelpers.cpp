@@ -79,6 +79,15 @@ toJson(ripple::STBase const& obj)
     return value.as_object();
 }
 
+boost::json::value
+getJson(Json::Value const& value)
+{
+    boost::json::value boostValue = 
+        boost::json::parse(value.toStyledString());
+    
+    return boostValue;
+}
+
 boost::json::object
 toJson(ripple::TxMeta const& meta)
 {
