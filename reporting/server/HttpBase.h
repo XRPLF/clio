@@ -34,6 +34,8 @@
 #include <memory>
 #include <string>
 #include <thread>
+
+#include <reporting/server/Handlers.h>
 #include <vector>
 
 namespace http = boost::beast::http;

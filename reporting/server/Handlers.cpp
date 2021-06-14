@@ -4,7 +4,7 @@ extern boost::json::object
 buildResponse(
     boost::json::object const& request,
     ReportingETL& etl,
-    std::shared_ptr<WsSession> session)
+    std::shared_ptr<WsBase> session)
 {
     std::string command = request.at("command").as_string().c_str();
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;
