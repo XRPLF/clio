@@ -63,8 +63,45 @@ parse_config(const char* filename)
     }
     return {};
 }
-//------------------------------------------------------------------------------
-//
+
+std::optional<ssl::context>
+parse_certs(const char* certFilename, const char* keyFilename)
+{
+    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
+    if (!readCert)
+        return {};
+
+    std::stringstream contents;
+    contents << readCert.rdbuf();
+    readCert.close();
+    std::string cert = contents.str();
+
+    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
+    if(!readKey)
+        return {};
+
+    contents.str("");
+    contents << readKey.rdbuf();
+    readKey.close();
+    std::string key = contents.str();
+
+    ssl::context ctx{ssl::context::tlsv12};
+
+    ctx.set_options(
+        boost::asio::ssl::context::default_workarounds |
+        boost::asio::ssl::context::no_sslv2);
+
+    ctx.use_certificate_chain(
+        boost::asio::buffer(cert.data(), cert.size()));
+
+    ctx.use_private_key(
+        boost::asio::buffer(key.data(), key.size()),
+        boost::asio::ssl::context::file_format::pem);
+
+    return ctx;
+}
+
+
 void
 initLogLevel(int level)
 {
@@ -115,18 +152,19 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 3 and argc != 4)
+    if (argc != 5 and argc != 6)
     {
         std::cerr
             << "Usage: websocket-server-async <threads> "
-               "<config_file> <log level> \n"
+               "<config_file> <cert_file> <key_file> <log level> \n"
             << "Example:\n"
-            << "    websocket-server-async 1 config.json 2\n";
+            << "    websocket-server-async 1 config.json cert.pem key.pem 2\n";
         return EXIT_FAILURE;
     }
 
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
+    auto ctx = parse_certs(argv[3], argv[4]);
 
     if (argc > 5)
     {
@@ -141,6 +179,12 @@ main(int argc, char* argv[])
         std::cerr << "couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
+    if (!ctx)
+    {
+        std::cerr << "could not parse certs, Exiting..." << std::endl;
+        return EXIT_FAILURE;
+    }
+
 
     boost::asio::io_context ioc{threads};
 
