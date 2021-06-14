@@ -69,6 +69,8 @@ public:
     {
     }
 
+    ~WsSession() = default;
+
     void
     send(std::string&& msg)
     {

@@ -22,5 +22,7 @@ public:
     virtual void
     send(std::string&& msg) = 0;
 
+    virtual
+    ~WsBase() {}
 };
 #endif // RIPPLE_REPORTING_WS_BASE_SESSION_H
