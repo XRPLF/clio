@@ -34,16 +34,15 @@ class SubscriptionManager;
 template <class Session>
 class listener : public std::enable_shared_from_this<listener<Session>>
 {
+    using std::enable_shared_from_this<listener<Session>>::shared_from_this;
+
     boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
-<<<<<<< HEAD:server/listener.h
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
-=======
-    ReportingETL& etl_;
->>>>>>> 27506bc (rebase handlers):reporting/server/listener.h
+    ssl::context& ctx_;
 
 public:
     static void
@@ -63,7 +62,6 @@ public:
     listener(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::endpoint endpoint,
-<<<<<<< HEAD:server/listener.h
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -74,12 +72,6 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
-=======
-        ReportingETL& etl)
-        : ioc_(ioc)
-        , acceptor_(ioc)
-        , etl_(etl)
->>>>>>> 27506bc (rebase handlers):reporting/server/listener.h
     {
         boost::beast::error_code ec;
 
@@ -149,17 +141,12 @@ private:
         }
         else
         {
-<<<<<<< HEAD:server/listener.h
             session::make_session(
                 std::move(socket),
                 backend_,
                 subscriptions_,
                 balancer_,
                 dosGuard_);
-=======
-            // Create the session and run it
-            std::make_shared<Session>(std::move(socket), etl_)->run();
->>>>>>> 27506bc (rebase handlers):reporting/server/listener.h
         }
 
         // Accept another connection

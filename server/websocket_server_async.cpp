@@ -30,15 +30,12 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-<<<<<<< HEAD:server/websocket_server_async.cpp
 #include <server/listener.h>
 #include <server/session.h>
-=======
 #include <reporting/ReportingETL.h>
 #include <reporting/server/listener.h>
 #include <reporting/server/WsSession.h>
 #include <reporting/server/HttpSession.h>
->>>>>>> 27506bc (rebase handlers):websocket_server_async.cpp
 #include <sstream>
 #include <string>
 #include <thread>
@@ -106,45 +103,12 @@ initLogLevel(int level)
 void
 start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 {
-<<<<<<< HEAD:server/websocket_server_async.cpp
     std::vector<std::thread> v;
     v.reserve(numThreads - 1);
     for (auto i = numThreads - 1; i > 0; --i)
         v.emplace_back([&ioc] { ioc.run(); });
 
     ioc.run();
-=======
-    auto const address = 
-        boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
-    auto const port = 
-        static_cast<unsigned short>(wsConfig.at("port").as_uint64());
-
-    // Create and launch a listening port
-    std::make_shared<listener<WsSession>>(
-        ioc,
-        boost::asio::ip::tcp::endpoint{address, port},
-        etl)
-        ->run();
-}
-
-void
-openHttpServer(
-    boost::json::object const& httpConfig,
-    boost::asio::io_context& ioc,
-    ReportingETL& etl)
-{
-    auto const address = 
-        boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
-    auto const port = 
-        static_cast<unsigned short>(httpConfig.at("port").as_uint64());
-
-    // Create and launch a listening port
-    std::make_shared<listener<HttpSession>>(
-        ioc,
-        boost::asio::ip::tcp::endpoint{address, port},
-        etl)
-        ->run();
->>>>>>> 27506bc (rebase handlers):websocket_server_async.cpp
 }
 
 int
@@ -163,6 +127,7 @@ main(int argc, char* argv[])
 
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
+
     if (argc > 5)
     {
         initLogLevel(std::atoi(argv[5]));

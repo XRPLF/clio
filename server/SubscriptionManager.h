@@ -20,16 +20,10 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
-<<<<<<< HEAD:server/SubscriptionManager.h
 #include <server/session.h>
 
 #include <memory>
 #include <set>
-=======
-#include <set>
-#include <memory>
-#include <reporting/server/WsSession.h>
->>>>>>> 27506bc (rebase handlers):reporting/server/SubscriptionManager.h
 
 class WsSession;
 
@@ -105,17 +99,10 @@ public:
         std::shared_ptr<session>& session);
 
     void
-<<<<<<< HEAD:server/SubscriptionManager.h
     subProposedTransactions(std::shared_ptr<session>& session);
 
     void
     unsubProposedTransactions(std::shared_ptr<session>& session);
-=======
-    subAccount(ripple::AccountID const& account, std::shared_ptr<WsSession>& session);
-
-    void
-    unsubAccount(ripple::AccountID const& account, std::shared_ptr<WsSession>& session);
->>>>>>> 27506bc (rebase handlers):reporting/server/SubscriptionManager.h
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H
