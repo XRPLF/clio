@@ -20,11 +20,11 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
-#include <server/session.h>
+#include <server/WsBase.h>
 
 #include <memory>
-#include <reporting/server/WsBase.h>
-#include <reporting/BackendInterface.h>
+#include <server/WsBase.h>
+#include <backend/BackendInterface.h>
 
 class SubscriptionManager
 {
@@ -77,12 +77,12 @@ public:
     void
     subAccount(
         ripple::AccountID const& account,
-        std::shared_ptr<session>& session);
+        std::shared_ptr<WsBase>& session);
 
     void
     unsubAccount(
         ripple::AccountID const& account,
-        std::shared_ptr<session>& session);
+        std::shared_ptr<WsBase>& session);
 
     void
     forwardProposedTransaction(boost::json::object const& response);
@@ -90,18 +90,18 @@ public:
     void
     subProposedAccount(
         ripple::AccountID const& account,
-        std::shared_ptr<session>& session);
+        std::shared_ptr<WsBase>& session);
 
     void
     unsubProposedAccount(
         ripple::AccountID const& account,
-        std::shared_ptr<session>& session);
+        std::shared_ptr<WsBase>& session);
 
     void
-    subProposedTransactions(std::shared_ptr<session>& session);
+    subProposedTransactions(std::shared_ptr<WsBase>& session);
 
     void
-    unsubProposedTransactions(std::shared_ptr<session>& session);
+    unsubProposedTransactions(std::shared_ptr<WsBase>& session);
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H

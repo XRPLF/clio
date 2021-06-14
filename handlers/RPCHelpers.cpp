@@ -92,7 +92,6 @@ getJson(Json::Value const& value)
 }
 
 boost::json::object
-<<<<<<< HEAD
 toJson(ripple::TxMeta const& meta)
 {
     auto start = std::chrono::system_clock::now();
@@ -107,9 +106,6 @@ toJson(ripple::TxMeta const& meta)
 
 boost::json::object
 toJson(ripple::SLE const& sle)
-=======
-getJson(ripple::SLE const& sle)
->>>>>>> 03a0315 (compiles)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(

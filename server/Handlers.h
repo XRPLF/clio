@@ -7,8 +7,8 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 
-#include <reporting/ReportingETL.h>
-#include <reporting/server/WsBase.h>
+#include <etl/ReportingETL.h>
+#include <server/WsBase.h>
 
 #include <unordered_map>
 #include <iostream>
@@ -21,6 +21,16 @@ class SubscriptionManager;
 class WsSession;
 
 //------------------------------------------------------------------------------
+
+static std::unordered_set<std::string> forwardCommands{
+    "submit",
+    "submit_multisigned",
+    "fee",
+    "path_find",
+    "ripple_path_find",
+    "manifest"
+};
+
 enum RPCCommand {
     tx,
     account_tx,
@@ -38,7 +48,8 @@ enum RPCCommand {
     channel_authorize,
     channel_verify,
     subscribe,
-    unsubscribe
+    unsubscribe,
+    server_info
 };
 
 static std::unordered_map<std::string, RPCCommand> commandMap{
@@ -58,7 +69,8 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
     {"channel_authorize", channel_authorize},
     {"channel_verify", channel_verify},
     {"subscribe", subscribe},
-    {"unsubscribe", unsubscribe}};
+    {"unsubscribe", unsubscribe},
+    {"server_info", server_info}};
 
 boost::json::object
 doTx(
@@ -122,6 +134,11 @@ boost::json::object
 doChannelVerify(boost::json::object const& request);
 
 boost::json::object
+doServerInfo(
+    boost::json::object const& request,
+    BackendInterface const& backend);
+
+boost::json::object
 doSubscribe(
     boost::json::object const& request,
     std::shared_ptr<WsBase>& session,
@@ -132,10 +149,12 @@ doUnsubscribe(
     std::shared_ptr<WsBase>& session,
     SubscriptionManager& manager);
 
-extern boost::json::object
+std::pair<boost::json::object, uint32_t>
 buildResponse(
     boost::json::object const& request,
-    ReportingETL& etl,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> manager,
+    std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<WsBase> session);
 
 #endif // RIPPLE_REPORTING_HANDLERS_H

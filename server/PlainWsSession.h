@@ -26,9 +26,9 @@
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 
-#include <reporting/server/Handlers.h>
-#include <reporting/server/WsBase.h>
-#include <reporting/ReportingETL.h>
+#include <server/Handlers.h>
+#include <server/WsBase.h>
+#include <etl/ReportingETL.h>
 
 #include <iostream>
 
@@ -69,42 +69,6 @@ public:
     {
     }
 
-    static void
-    make_session(
-        boost::asio::ip::tcp::socket&& socket,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
-    {
-        std::make_shared<session>(
-            std::move(socket), backend, subscriptions, balancer, dosGuard)
-            ->run();
-    }
-
-    void
-    send(std::string&& msg)
-    {
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-            boost::asio::buffer(msg),
-            boost::beast::bind_front_handler(
-                &session::on_write, shared_from_this()));
-    }
-
-    void
-    close(boost::beast::websocket::close_reason const& cr)
-    {
-        boost::beast::error_code ec;
-
-        ws_.close(cr, ec);
-
-        if (ec)
-            return fail(ec, "close");
-    }
-
-private:
-    // Get on the correct executor
     void
     send(std::string&& msg)
     {
@@ -141,6 +105,8 @@ private:
                 &WsSession::on_accept,
                 shared_from_this()));
     }
+
+private:
     
     void
     on_accept(boost::beast::error_code ec)
@@ -169,7 +135,6 @@ private:
     void
     on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
-        std::cout << "readed WS" << std::endl;
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
@@ -271,15 +236,23 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    ReportingETL& etl_;
-
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
+    DOSGuard& dosGuard_;
 public:
     WsUpgrader(
         boost::asio::ip::tcp::socket&& socket,
-        ReportingETL& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard,
         boost::beast::flat_buffer&& b)
         : http_(std::move(socket))
-        , etl_(etl)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
+        , dosGuard_(dosGuard)
         , buffer_(std::move(b))
         {}
 
@@ -346,8 +319,10 @@ private:
 
         std::make_shared<WsSession>(
             http_.release_socket(),
-            etl_,
-            std::move(buffer_))->run(parser_->release());
+            backend_,
+            subscriptions_,
+            balancer_,
+            dosGuard_)->run(parser_->release());
     }
 };
 

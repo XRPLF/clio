@@ -26,7 +26,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include <reporting/server/SubscriptionManager.h>
+#include <server/SubscriptionManager.h>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -245,6 +245,8 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                 auto lgr = backend_->fetchLedgerBySequence(ledgerSequence);
                 assert(lgr);
                 publishLedger(*lgr);
+                
+                return true;
             }
         }
         catch (Backend::DatabaseTimeout const& e)
@@ -252,22 +254,6 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
             continue;
         }
 
-        // publishStrand_.post([this, &ledger, &fees]() {
-        //     subs_->pubLedger(*ledger, *fees);
-        //     setLastPublish();
-        //     BOOST_LOG_TRIVIAL(info)
-        //         << __func__ << " : "
-        //         << "Published ledger. " << ledger->seq;
-        // });
-<<<<<<< HEAD:etl/ReportingETL.cpp
-
-        publishLedger(ledger);
-=======
-        
-        // publishLedger(ledger);
->>>>>>> f27312a (impliment flex websocket server):reporting/ReportingETL.cpp
-
-        return true;
     }
     return false;
 }

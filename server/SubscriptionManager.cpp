@@ -2,13 +2,13 @@
 #include <server/SubscriptionManager.h>
 
 void
-SubscriptionManager::subLedger(std::shared_ptr<session>& session)
+SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[Ledgers].emplace(std::move(session));
 }
 
 void
-SubscriptionManager::unsubLedger(std::shared_ptr<session>& session)
+SubscriptionManager::unsubLedger(std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[Ledgers].erase(session);
 }
@@ -40,13 +40,13 @@ SubscriptionManager::pubLedger(
 }
 
 void
-SubscriptionManager::subTransactions(std::shared_ptr<session>& session)
+SubscriptionManager::subTransactions(std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[Transactions].emplace(std::move(session));
 }
 
 void
-SubscriptionManager::unsubTransactions(std::shared_ptr<session>& session)
+SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[Transactions].erase(session);
 }
@@ -54,7 +54,7 @@ SubscriptionManager::unsubTransactions(std::shared_ptr<session>& session)
 void
 SubscriptionManager::subAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsBase>& session)
 {
     accountSubscribers_[account].emplace(std::move(session));
 }
@@ -62,7 +62,7 @@ SubscriptionManager::subAccount(
 void
 SubscriptionManager::unsubAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsBase>& session)
 {
     accountSubscribers_[account].erase(session);
 }
@@ -107,7 +107,7 @@ SubscriptionManager::forwardProposedTransaction(
 void
 SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsBase>& session)
 {
     accountProposedSubscribers_[account].emplace(std::move(session));
 }
@@ -115,20 +115,20 @@ SubscriptionManager::subProposedAccount(
 void
 SubscriptionManager::unsubProposedAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsBase>& session)
 {
     accountProposedSubscribers_[account].erase(session);
 }
 
 void
-SubscriptionManager::subProposedTransactions(std::shared_ptr<session>& session)
+SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[TransactionsProposed].emplace(std::move(session));
 }
 
 void
 SubscriptionManager::unsubProposedTransactions(
-    std::shared_ptr<session>& session)
+    std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[TransactionsProposed].erase(session);
 }
