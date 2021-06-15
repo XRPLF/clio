@@ -1,4 +1,4 @@
 [submodule "rippled"]
     path = rippled
     url = https://github.com/cjcobb23/rippled.git
-    branch = reportingV2
+    branch = clio
