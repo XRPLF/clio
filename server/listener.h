@@ -24,8 +24,8 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <server/HttpSession.h>
-#include <server/SslHttpSession.h>
 #include <server/PlainWsSession.h>
+#include <server/SslHttpSession.h>
 #include <server/SslWsSession.h>
 #include <server/SubscriptionManager.h>
 
@@ -34,13 +34,15 @@
 class SubscriptionManager;
 
 template <class PlainSession, class SslSession>
-class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslSession>>
+class Detector
+    : public std::enable_shared_from_this<Detector<PlainSession, SslSession>>
 {
-    using std::enable_shared_from_this<Detector<PlainSession, SslSession>>::shared_from_this;
+    using std::enable_shared_from_this<
+        Detector<PlainSession, SslSession>>::shared_from_this;
 
     boost::beast::tcp_stream stream_;
-    ssl::context& ctx_;
-     std::shared_ptr<BackendInterface> backend_;
+    std::optional<std::reference_wrapper<ssl::context>> ctx_;
+    std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
@@ -49,7 +51,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
 public:
     Detector(
         tcp::socket&& socket,
-        ssl::context& ctx,
+        std::optional<std::reference_wrapper<ssl::context>> ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -68,33 +70,36 @@ public:
     run()
     {
         // Set the timeout.
-        boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(stream_).expires_after(
+            std::chrono::seconds(30));
         // Detect a TLS handshake
         async_detect_ssl(
             stream_,
             buffer_,
             boost::beast::bind_front_handler(
-                &Detector::on_detect,
-                shared_from_this()));
+                &Detector::on_detect, shared_from_this()));
     }
 
     void
     on_detect(boost::beast::error_code ec, bool result)
     {
-        if(ec)
+        if (ec)
             return httpFail(ec, "detect");
 
-        if(result)
+        if (result)
         {
+            if (!ctx_)
+                return httpFail(ec, "ssl not supported by this server");
             // Launch SSL session
             std::make_shared<SslSession>(
                 stream_.release_socket(),
-                ctx_,
+                *ctx_,
                 backend_,
                 subscriptions_,
                 balancer_,
                 dosGuard_,
-                std::move(buffer_))->run();
+                std::move(buffer_))
+                ->run();
             return;
         }
 
@@ -105,17 +110,20 @@ public:
             subscriptions_,
             balancer_,
             dosGuard_,
-            std::move(buffer_))->run();
+            std::move(buffer_))
+            ->run();
     }
 };
 
 template <class PlainSession, class SslSession>
-class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslSession>>
+class Listener
+    : public std::enable_shared_from_this<Listener<PlainSession, SslSession>>
 {
-    using std::enable_shared_from_this<Listener<PlainSession, SslSession>>::shared_from_this;
+    using std::enable_shared_from_this<
+        Listener<PlainSession, SslSession>>::shared_from_this;
 
     net::io_context& ioc_;
-    ssl::context& ctx_;
+    std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
@@ -125,7 +133,7 @@ class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslS
 public:
     Listener(
         net::io_context& ioc,
-        ssl::context& ctx,
+        std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -143,7 +151,7 @@ public:
 
         // Open the acceptor
         acceptor_.open(endpoint.protocol(), ec);
-        if(ec)
+        if (ec)
         {
             httpFail(ec, "open");
             return;
@@ -151,7 +159,7 @@ public:
 
         // Allow address reuse
         acceptor_.set_option(net::socket_base::reuse_address(true), ec);
-        if(ec)
+        if (ec)
         {
             httpFail(ec, "set_option");
             return;
@@ -159,16 +167,15 @@ public:
 
         // Bind to the server address
         acceptor_.bind(endpoint, ec);
-        if(ec)
+        if (ec)
         {
             httpFail(ec, "bind");
             return;
         }
 
         // Start listening for connections
-        acceptor_.listen(
-            net::socket_base::max_listen_connections, ec);
-        if(ec)
+        acceptor_.listen(net::socket_base::max_listen_connections, ec);
+        if (ec)
         {
             httpFail(ec, "listen");
             return;
@@ -190,14 +197,13 @@ private:
         acceptor_.async_accept(
             net::make_strand(ioc_),
             boost::beast::bind_front_handler(
-                &Listener::on_accept,
-                shared_from_this()));
+                &Listener::on_accept, shared_from_this()));
     }
 
     void
     on_accept(boost::beast::error_code ec, tcp::socket socket)
     {
-        if(ec)
+        if (ec)
         {
             httpFail(ec, "listener_accept");
         }
@@ -210,7 +216,8 @@ private:
                 backend_,
                 subscriptions_,
                 balancer_,
-                dosGuard_)->run();
+                dosGuard_)
+                ->run();
         }
 
         // Accept another connection
@@ -218,76 +225,75 @@ private:
     }
 };
 
-namespace Server
+namespace Server {
+using WebsocketServer = Listener<WsUpgrader, SslWsUpgrader>;
+using HttpServer = Listener<HttpSession, SslHttpSession>;
+
+static std::shared_ptr<WebsocketServer>
+make_WebSocketServer(
+    boost::json::object const& config,
+    boost::asio::io_context& ioc,
+    std::optional<std::reference_wrapper<ssl::context>> ctx,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    DOSGuard& dosGuard)
 {
-    using WebsocketServer = Listener<WsUpgrader, SslWsUpgrader>;
-    using HttpServer = Listener<HttpSession, SslHttpSession>;
+    if (!config.contains("websocket_public"))
+        return nullptr;
 
-    static std::shared_ptr<WebsocketServer>
-    make_WebSocketServer(
-        boost::json::object const& config,
-        boost::asio::io_context& ioc,
-        ssl::context& ctx,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
-    {
-        if (!config.contains("websocket_public"))
-            return nullptr;
+    auto const& wsConfig = config.at("websocket_public").as_object();
 
-        auto const& wsConfig = config.at("websocket_public").as_object();
+    auto const address =
+        boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
+    auto const port =
+        static_cast<unsigned short>(wsConfig.at("port").as_int64());
 
-        auto const address = 
-            boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
-        auto const port = 
-            static_cast<unsigned short>(wsConfig.at("port").as_int64());
+    auto server = std::make_shared<WebsocketServer>(
+        ioc,
+        ctx,
+        boost::asio::ip::tcp::endpoint{address, port},
+        backend,
+        subscriptions,
+        balancer,
+        dosGuard);
 
-        auto server = std::make_shared<WebsocketServer>(
-            ioc,
-            ctx,
-            boost::asio::ip::tcp::endpoint{address, port},
-            backend,
-            subscriptions,
-            balancer,
-            dosGuard);
-
-        server->run();
-        return server;
-    }
-
-    static std::shared_ptr<HttpServer>
-    make_HttpServer(
-        boost::json::object const& config,
-        boost::asio::io_context& ioc,
-        ssl::context& ctx,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
-    {
-        if (!config.contains("http_public"))
-            return nullptr;
-            
-        auto const& httpConfig = config.at("http_public").as_object();
-
-        auto const address = 
-            boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
-        auto const port = 
-            static_cast<unsigned short>(httpConfig.at("port").as_int64());
-
-        auto server = std::make_shared<HttpServer>(
-            ioc,
-            ctx,
-            boost::asio::ip::tcp::endpoint{address, port},
-            backend,
-            subscriptions,
-            balancer,
-            dosGuard);
-
-        server->run();
-        return server;
-    }
+    server->run();
+    return server;
 }
 
-#endif // LISTENER_H
+static std::shared_ptr<HttpServer>
+make_HttpServer(
+    boost::json::object const& config,
+    boost::asio::io_context& ioc,
+    std::optional<std::reference_wrapper<ssl::context>> ctx,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    DOSGuard& dosGuard)
+{
+    if (!config.contains("http_public"))
+        return nullptr;
+
+    auto const& httpConfig = config.at("http_public").as_object();
+
+    auto const address =
+        boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
+    auto const port =
+        static_cast<unsigned short>(httpConfig.at("port").as_int64());
+
+    auto server = std::make_shared<HttpServer>(
+        ioc,
+        ctx,
+        boost::asio::ip::tcp::endpoint{address, port},
+        backend,
+        subscriptions,
+        balancer,
+        dosGuard);
+
+    server->run();
+    return server;
+}
+}  // namespace Server
+
+#endif  // LISTENER_H

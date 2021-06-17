@@ -28,8 +28,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <etl/ReportingETL.h>
-#include <server/Listener.h>
+#include <server/listener.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -71,7 +70,7 @@ parse_certs(const char* certFilename, const char* keyFilename)
     std::string cert = contents.str();
 
     std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
-    if(!readKey)
+    if (!readKey)
         return {};
 
     contents.str("");
@@ -85,8 +84,7 @@ parse_certs(const char* certFilename, const char* keyFilename)
         boost::asio::ssl::context::default_workarounds |
         boost::asio::ssl::context::no_sslv2);
 
-    ctx.use_certificate_chain(
-        boost::asio::buffer(cert.data(), cert.size()));
+    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
 
     ctx.use_private_key(
         boost::asio::buffer(key.data(), key.size()),
@@ -94,7 +92,6 @@ parse_certs(const char* certFilename, const char* keyFilename)
 
     return ctx;
 }
-
 
 void
 initLogLevel(int level)
@@ -159,6 +156,9 @@ main(int argc, char* argv[])
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
     auto ctx = parse_certs(argv[3], argv[4]);
+    auto ctxRef = ctx
+        ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
+        : std::nullopt;
 
     if (argc > 5)
     {
@@ -172,11 +172,6 @@ main(int argc, char* argv[])
     if (!config)
     {
         std::cerr << "Ccouldnt parse config. Exiting..." << std::endl;
-        return EXIT_FAILURE;
-    }
-    if (!ctx)
-    {
-        std::cerr << "Couldn't parse SSL certificates" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -193,41 +188,16 @@ main(int argc, char* argv[])
         NetworkValidatedLedgers::make_ValidatedLedgers()};
 
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        *config,
-        ioc,
-        backend,
-        subscriptions,
-        ledgers
-    );
+        *config, ioc, backend, subscriptions, ledgers);
 
     auto etl = ReportingETL::make_ReportingETL(
-        *config,
-        ioc,
-        backend,
-        subscriptions,
-        balancer,
-        ledgers
-    );
+        *config, ioc, backend, subscriptions, balancer, ledgers);
 
     auto wsServer = Server::make_WebSocketServer(
-        *config,
-        ioc,
-        *ctx,
-        backend,
-        subscriptions,
-        balancer,
-        dosGuard
-    );
+        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
 
     auto httpServer = Server::make_HttpServer(
-        *config,
-        ioc,
-        *ctx,
-        backend,
-        subscriptions,
-        balancer,
-        dosGuard
-    );
+        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope
