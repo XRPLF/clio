@@ -115,11 +115,10 @@ public:
     }
 };
 
-template <class Body, class Allocator>
 void
 make_websocket_session(
     boost::beast::tcp_stream stream,
-    http::request<Body, http::basic_fields<Allocator>> req,
+    http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
@@ -132,15 +131,15 @@ make_websocket_session(
         subscriptions,
         balancer,
         dosGuard,
-        std::move(buffer))
+        std::move(buffer),
+        std::move(req))
         ->run();
 }
 
-template <class Body, class Allocator>
 void
 make_websocket_session(
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
-    http::request<Body, http::basic_fields<Allocator>> req,
+    http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
