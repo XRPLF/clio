@@ -22,27 +22,27 @@
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 
+#include <etl/ReportingETL.h>
 #include <server/Handlers.h>
 #include <server/WsBase.h>
-#include <etl/ReportingETL.h>
+#include <server/listener.h>
 
 #include <iostream>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
-namespace ssl = boost::asio::ssl;       
+namespace ssl = boost::asio::ssl;
 namespace websocket = boost::beast::websocket;
 using tcp = boost::asio::ip::tcp;
 
 class ReportingETL;
 
 // Echoes back all received WebSocket messages
-class WsSession : public WsBase
-                , public std::enable_shared_from_this<WsSession>
+class WsSession : public WsBase, public std::enable_shared_from_this<WsSession>
 {
     websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
@@ -60,12 +60,14 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
+        DOSGuard& dosGuard,
+        boost::beast::flat_buffer buffer)
         : ws_(std::move(socket))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , buffer_(std::move(buffer))
     {
     }
 
@@ -86,16 +88,15 @@ public:
     {
         std::cout << "Ran ws" << std::endl;
         // Set suggested timeout settings for the websocket
-        ws_.set_option(
-            websocket::stream_base::timeout::suggested(
-                boost::beast::role_type::server));
+        ws_.set_option(websocket::stream_base::timeout::suggested(
+            boost::beast::role_type::server));
 
         std::cout << "Trying to decorate" << std::endl;
         // Set a decorator to change the Server of the handshake
         ws_.set_option(websocket::stream_base::decorator(
-            [](websocket::response_type& res)
-            {
-                res.set(http::field::server,
+            [](websocket::response_type& res) {
+                res.set(
+                    http::field::server,
                     std::string(BOOST_BEAST_VERSION_STRING) +
                         " websocket-server-async");
             }));
@@ -104,17 +105,14 @@ public:
         ws_.async_accept(
             req,
             boost::beast::bind_front_handler(
-                &WsSession::on_accept,
-                shared_from_this()));
+                &WsSession::on_accept, shared_from_this()));
     }
 
 private:
-    
     void
     on_accept(boost::beast::error_code ec)
     {
         std::cout << "accepted WS" << std::endl;
-
         if (ec)
             return wsFail(ec, "acceptWS");
 
@@ -132,6 +130,8 @@ private:
             buffer_,
             boost::beast::bind_front_handler(
                 &WsSession::on_read, shared_from_this()));
+        boost::beast::bind_front_handler(
+            &WsSession::on_read, shared_from_this());
     }
 
     void
@@ -232,7 +232,6 @@ private:
     }
 };
 
-
 class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
 {
     boost::beast::tcp_stream http_;
@@ -242,6 +241,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+
 public:
     WsUpgrader(
         boost::asio::ip::tcp::socket&& socket,
@@ -256,7 +256,23 @@ public:
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , buffer_(std::move(b))
-        {}
+    {
+    }
+    WsUpgrader(
+        boost::beast::tcp_stream&& stream,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard,
+        boost::beast::flat_buffer&& b)
+        : http_(std::move(stream))
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
+        , dosGuard_(dosGuard)
+        , buffer_(std::move(b))
+    {
+    }
 
     void
     run()
@@ -270,8 +286,7 @@ public:
         net::dispatch(
             http_.get_executor(),
             boost::beast::bind_front_handler(
-                &WsUpgrader::do_upgrade,
-                shared_from_this()));
+                &WsUpgrader::do_upgrade, shared_from_this()));
     }
 
 private:
@@ -286,7 +301,8 @@ private:
         parser_->body_limit(10000);
 
         // Set the timeout.
-        boost::beast::get_lowest_layer(http_).expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(http_).expires_after(
+            std::chrono::seconds(30));
 
         // Read a request using the parser-oriented interface
         http::async_read(
@@ -294,8 +310,7 @@ private:
             buffer_,
             *parser_,
             boost::beast::bind_front_handler(
-                &WsUpgrader::on_upgrade,
-                shared_from_this()));
+                &WsUpgrader::on_upgrade, shared_from_this()));
     }
 
     void
@@ -305,14 +320,14 @@ private:
         boost::ignore_unused(bytes_transferred);
 
         // This means they closed the connection
-        if(ec == http::error::end_of_stream)
+        if (ec == http::error::end_of_stream)
             return;
 
         if (ec)
             return wsFail(ec, "upgrade");
 
         // See if it is a WebSocket Upgrade
-        if(!websocket::is_upgrade(parser_->get()))
+        if (!websocket::is_upgrade(parser_->get()))
             return wsFail(ec, "is_upgrade");
 
         // Disable the timeout.
@@ -324,8 +339,10 @@ private:
             backend_,
             subscriptions_,
             balancer_,
-            dosGuard_)->run(parser_->release());
+            dosGuard_,
+            std::move(buffer_))
+            ->run(parser_->release());
     }
 };
 
-#endif // RIPPLE_REPORTING_WS_SESSION_H
+#endif  // RIPPLE_REPORTING_WS_SESSION_H

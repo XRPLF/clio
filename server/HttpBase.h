@@ -20,12 +20,12 @@
 #ifndef RIPPLE_REPORTING_HTTP_BASE_SESSION_H
 #define RIPPLE_REPORTING_HTTP_BASE_SESSION_H
 
+#include <boost/asio/dispatch.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/version.hpp>
-#include <boost/asio/dispatch.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/config.hpp>
 #include <boost/json.hpp>
 #include <algorithm>
@@ -36,16 +36,16 @@
 #include <string>
 #include <thread>
 
-#include <server/Handlers.h>
 #include <server/DOSGuard.h>
+#include <server/Handlers.h>
 #include <vector>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
-namespace ssl = boost::asio::ssl;       
+namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
 
-static std::string defaultResponse = 
+static std::string defaultResponse =
     "<!DOCTYPE html><html><head><title>"
     " Test page for reporting mode</title></head><body><h1>"
     " Test</h1><p>This page shows xrpl reporting http(s) "
@@ -71,7 +71,7 @@ httpFail(boost::beast::error_code ec, char const* what)
     // Therefore, if we see a short read here, it has occurred
     // after the message has been completed, so it is safe to ignore it.
 
-    if(ec == net::ssl::error::stream_truncated)
+    if (ec == net::ssl::error::stream_truncated)
         return;
 
     std::cerr << what << ": " << ec.message() << "\n";
@@ -93,10 +93,10 @@ validRequest(boost::json::object const& req)
 
     if (array.size() != 1)
         return false;
-    
+
     if (!array.at(0).is_object())
         return false;
-    
+
     return true;
 }
 
@@ -104,23 +104,20 @@ validRequest(boost::json::object const& req)
 // request. The type of the response object depends on the
 // contents of the request, so the interface requires the
 // caller to pass a generic lambda for receiving the response.
-template<
-    class Body, class Allocator,
-    class Send>
+template <class Body, class Allocator, class Send>
 void
 handle_request(
-    boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
+    boost::beast::http::
+        request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard)
 {
-    auto const response =
-    [&req](
-        http::status status,
-        std::string content_type,
-        std::string message)
-    {
+    auto const response = [&req](
+                              http::status status,
+                              std::string content_type,
+                              std::string message) {
         http::response<http::string_body> res{status, req.version()};
         res.set(http::field::server, "xrpl-reporting-server-v0.0.0");
         res.set(http::field::content_type, content_type);
@@ -130,25 +127,21 @@ handle_request(
         return res;
     };
 
-
-    if(req.method() == http::verb::get
-      && req.body() == "")
+    if (req.method() == http::verb::get && req.body() == "")
     {
         send(response(http::status::ok, "text/html", defaultResponse));
         return;
     }
 
-    if(req.method() != http::verb::post)
+    if (req.method() != http::verb::post)
     {
         send(response(
-            http::status::bad_request, 
-            "text/html", 
-            "Expected a POST request"));
+            http::status::bad_request, "text/html", "Expected a POST request"));
 
         return;
     }
 
-    try 
+    try
     {
         BOOST_LOG_TRIVIAL(info) << "Received request: " << req.body();
 
@@ -160,24 +153,22 @@ handle_request(
         catch (std::runtime_error const& e)
         {
             send(response(
-            http::status::bad_request, 
-            "text/html", 
-            "Cannot parse json in body"));
+                http::status::bad_request,
+                "text/html",
+                "Cannot parse json in body"));
 
             return;
         }
 
-        if(!validRequest(request))
+        if (!validRequest(request))
         {
             send(response(
-            http::status::bad_request, 
-            "text/html", 
-            "Malformed request"));
+                http::status::bad_request, "text/html", "Malformed request"));
 
             return;
         }
 
-        boost::json::object wsStyleRequest = request.contains("params") 
+        boost::json::object wsStyleRequest = request.contains("params")
             ? request.at("params").as_array().at(0).as_object()
             : boost::json::object{};
 
@@ -185,12 +176,8 @@ handle_request(
 
         std::cout << "Transfromed to ws style stuff" << std::endl;
 
-        auto [builtResponse, cost] = buildResponse(
-            wsStyleRequest,
-            backend,
-            nullptr,
-            balancer,
-            nullptr);
+        auto [builtResponse, cost] =
+            buildResponse(wsStyleRequest, backend, nullptr, balancer, nullptr);
 
         send(response(
             http::status::ok,
@@ -205,15 +192,14 @@ handle_request(
         send(response(
             http::status::internal_server_error,
             "text/html",
-            "Internal server error occurred"
-        ));
+            "Internal server error occurred"));
 
         return;
     }
 }
 
 // From Boost Beast examples http_server_flex.cpp
-template<class Derived>
+template <class Derived>
 class HttpBase
 {
     // Access the derived class, this is part of
@@ -228,21 +214,19 @@ class HttpBase
     {
         HttpBase& self_;
 
-        explicit
-        send_lambda(HttpBase& self)
-            : self_(self)
+        explicit send_lambda(HttpBase& self) : self_(self)
         {
         }
 
-        template<bool isRequest, class Body, class Fields>
+        template <bool isRequest, class Body, class Fields>
         void
         operator()(http::message<isRequest, Body, Fields>&& msg) const
         {
             // The lifetime of the message has to extend
             // for the duration of the async operation so
             // we use a shared_ptr to manage it.
-            auto sp = std::make_shared<
-                http::message<isRequest, Body, Fields>>(std::move(msg));
+            auto sp = std::make_shared<http::message<isRequest, Body, Fields>>(
+                std::move(msg));
 
             // Store a type-erased version of the shared
             // pointer in the class to keep it alive.
@@ -262,6 +246,7 @@ class HttpBase
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
     std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
     send_lambda lambda_;
@@ -270,17 +255,20 @@ protected:
     boost::beast::flat_buffer buffer_;
 
 public:
-    HttpBase(       
+    HttpBase(
         std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
         boost::beast::flat_buffer buffer)
         : backend_(backend)
+        , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , lambda_(*this)
         , buffer_(std::move(buffer))
-    {}
+    {
+    }
 
     void
     do_read()
@@ -290,7 +278,8 @@ public:
         req_ = {};
 
         // Set the timeout.
-        boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(derived().stream())
+            .expires_after(std::chrono::seconds(30));
 
         // Read a request
         http::async_read(
@@ -298,28 +287,40 @@ public:
             buffer_,
             req_,
             boost::beast::bind_front_handler(
-                &HttpBase::on_read,
-                derived().shared_from_this()));
+                &HttpBase::on_read, derived().shared_from_this()));
     }
 
     void
-    on_read(
-        boost::beast::error_code ec,
-        std::size_t bytes_transferred)
+    on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
         // This means they closed the connection
-        if(ec == http::error::end_of_stream)
+        if (ec == http::error::end_of_stream)
             return derived().do_close();
 
-        if(ec)
+        if (ec)
             return httpFail(ec, "read");
 
         auto ip = derived().ip();
+        if (boost::beast::websocket::is_upgrade(req_))
+        {
+            // Disable the timeout.
+            // The websocket::stream uses its own timeout settings.
+            boost::beast::get_lowest_layer(derived().stream()).expires_never();
+            return make_websocket_session(
+                derived().release_stream(),
+                std::move(req_),
+                std::move(buffer_),
+                backend_,
+                subscriptions_,
+                balancer_,
+                dosGuard_);
+        }
 
         // Send the response
-        handle_request(std::move(req_), lambda_, backend_, balancer_, dosGuard_);
+        handle_request(
+            std::move(req_), lambda_, backend_, balancer_, dosGuard_);
     }
 
     void
@@ -330,10 +331,10 @@ public:
     {
         boost::ignore_unused(bytes_transferred);
 
-        if(ec)
+        if (ec)
             return httpFail(ec, "write");
 
-        if(close)
+        if (close)
         {
             // This means we should close the connection, usually because
             // the response indicated the "Connection: close" semantic.
@@ -348,4 +349,4 @@ public:
     }
 };
 
-#endif //RIPPLE_REPORTING_HTTP_BASE_SESSION_H
+#endif  // RIPPLE_REPORTING_HTTP_BASE_SESSION_H

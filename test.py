@@ -494,7 +494,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
                 
                     
                 if "error" in res:
-                    print(res)
+                    print(res["error"])
                     continue
 
                 objects = []
@@ -505,12 +505,10 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
                 for x in objects:
                     if binary:
                         if typ is None or x["data"][2:6] == typ:
-                            print(json.dumps(x))
-                            blobs.append(x["data"])
+                            #print(json.dumps(x))
                             keys.append(x["index"])
                     else:
                         if typ is None or x["LedgerEntryType"] == typ:
-                            print(json.dumps(x))
                             blobs.append(x)
                             keys.append(x["index"])
                 if count != -1 and len(keys) > count:
@@ -520,6 +518,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
                     return (keys,blobs)
                 if "cursor" in res:
                     marker = res["cursor"]
+                    print(marker)
                 elif "result" in res and "marker" in res["result"]:
                     marker = res["result"]["marker"]
                     print(marker)

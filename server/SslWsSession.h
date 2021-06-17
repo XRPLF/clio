@@ -22,28 +22,29 @@
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 
-#include <server/Handlers.h>
 #include <etl/ReportingETL.h>
+#include <server/Handlers.h>
 
 #include <server/WsBase.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
-namespace websocket = boost::beast::websocket;    
+namespace websocket = boost::beast::websocket;
 using tcp = boost::asio::ip::tcp;
 
 class ReportingETL;
 
-class SslWsSession : public WsBase
-                   , public std::enable_shared_from_this<SslWsSession>
+class SslWsSession : public WsBase,
+                     public std::enable_shared_from_this<SslWsSession>
 {
     boost::beast::websocket::stream<
-        boost::beast::ssl_stream<boost::beast::tcp_stream>> ws_;
+        boost::beast::ssl_stream<boost::beast::tcp_stream>>
+        ws_;
     std::string response_;
     boost::beast::flat_buffer buffer_;
     http::request_parser<http::string_body> parser_;
@@ -67,6 +68,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , buffer_(std::move(b))
     {
     }
 
@@ -85,20 +87,19 @@ public:
     {
         std::cout << "Running ws" << std::endl;
         // Set suggested timeout settings for the websocket
-        ws_.set_option(
-            websocket::stream_base::timeout::suggested(
-                boost::beast::role_type::server));
-    
+        ws_.set_option(websocket::stream_base::timeout::suggested(
+            boost::beast::role_type::server));
+
         std::cout << "Trying to decorate" << std::endl;
         // Set a decorator to change the Server of the handshake
         ws_.set_option(websocket::stream_base::decorator(
-            [](websocket::response_type& res)
-            {
-                res.set(http::field::server,
+            [](websocket::response_type& res) {
+                res.set(
+                    http::field::server,
                     std::string(BOOST_BEAST_VERSION_STRING) +
                         " websocket-server-async");
             }));
-        
+
         std::cout << "trying to async accept" << std::endl;
 
         ws_.async_accept(
@@ -143,8 +144,12 @@ public:
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
         boost::json::object response;
-        auto ip =
-            ws_.next_layer().next_layer().socket().remote_endpoint().address().to_string();
+        auto ip = ws_.next_layer()
+                      .next_layer()
+                      .socket()
+                      .remote_endpoint()
+                      .address()
+                      .to_string();
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " received request from ip = " << ip;
         if (!dosGuard_.isOk(ip))
@@ -228,11 +233,11 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    ssl::context& ctx_;
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+
 public:
     SslWsUpgrader(
         boost::asio::ip::tcp::socket&& socket,
@@ -243,13 +248,28 @@ public:
         DOSGuard& dosGuard,
         boost::beast::flat_buffer&& b)
         : https_(std::move(socket), ctx)
-        , ctx_(ctx)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , buffer_(std::move(b))
-        {}
+    {
+    }
+    SslWsUpgrader(
+        boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        DOSGuard& dosGuard,
+        boost::beast::flat_buffer&& b)
+        : https_(std::move(stream))
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
+        , dosGuard_(dosGuard)
+        , buffer_(std::move(b))
+    {
+    }
 
     ~SslWsUpgrader() = default;
 
@@ -257,7 +277,8 @@ public:
     run()
     {
         // Set the timeout.
-        boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(https_).expires_after(
+            std::chrono::seconds(30));
 
         // Perform the SSL handshake
         // Note, this is the buffered version of the handshake.
@@ -265,18 +286,14 @@ public:
             ssl::stream_base::server,
             buffer_.data(),
             boost::beast::bind_front_handler(
-                &SslWsUpgrader::on_handshake,
-                shared_from_this()));
+                &SslWsUpgrader::on_handshake, shared_from_this()));
     }
 
 private:
-
     void
-    on_handshake(
-        boost::beast::error_code ec,
-        std::size_t bytes_used)
+    on_handshake(boost::beast::error_code ec, std::size_t bytes_used)
     {
-        if(ec)
+        if (ec)
             return wsFail(ec, "handshake");
 
         // Consume the portion of the buffer used by the handshake
@@ -296,7 +313,8 @@ private:
         parser_->body_limit(10000);
 
         // Set the timeout.
-        boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(https_).expires_after(
+            std::chrono::seconds(30));
 
         // // Read a request using the parser-oriented interface
         http::async_read(
@@ -304,8 +322,7 @@ private:
             buffer_,
             *parser_,
             boost::beast::bind_front_handler(
-                &SslWsUpgrader::on_upgrade,
-                shared_from_this()));
+                &SslWsUpgrader::on_upgrade, shared_from_this()));
     }
 
     void
@@ -315,14 +332,14 @@ private:
         boost::ignore_unused(bytes_transferred);
 
         // This means they closed the connection
-        if(ec == http::error::end_of_stream)
+        if (ec == http::error::end_of_stream)
             return;
 
         if (ec)
             return wsFail(ec, "upgrade");
 
         // See if it is a WebSocket Upgrade
-        if(!websocket::is_upgrade(parser_->get()))
+        if (!websocket::is_upgrade(parser_->get()))
             return wsFail(ec, "is_upgrade");
 
         // Disable the timeout.
@@ -335,8 +352,9 @@ private:
             subscriptions_,
             balancer_,
             dosGuard_,
-            std::move(buffer_))->run(parser_->release());
+            std::move(buffer_))
+            ->run(parser_->release());
     }
 };
 
-#endif // RIPPLE_REPORTING_SSL_WS_SESSION_H
+#endif  // RIPPLE_REPORTING_SSL_WS_SESSION_H

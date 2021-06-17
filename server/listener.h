@@ -115,6 +115,47 @@ public:
     }
 };
 
+template <class Body, class Allocator>
+void
+make_websocket_session(
+    boost::beast::tcp_stream stream,
+    http::request<Body, http::basic_fields<Allocator>> req,
+    boost::beast::flat_buffer buffer,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    DOSGuard& dosGuard)
+{
+    std::make_shared<WsUpgrader>(
+        std::move(stream),
+        backend,
+        subscriptions,
+        balancer,
+        dosGuard,
+        std::move(buffer))
+        ->run();
+}
+
+template <class Body, class Allocator>
+void
+make_websocket_session(
+    boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+    http::request<Body, http::basic_fields<Allocator>> req,
+    boost::beast::flat_buffer buffer,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    DOSGuard& dosGuard)
+{
+    std::make_shared<SslWsUpgrader>(
+        std::move(stream),
+        backend,
+        subscriptions,
+        balancer,
+        dosGuard,
+        std::move(buffer))
+        ->run();
+}
 template <class PlainSession, class SslSession>
 class Listener
     : public std::enable_shared_from_this<Listener<PlainSession, SslSession>>

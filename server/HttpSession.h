@@ -24,33 +24,43 @@
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
-namespace ssl = boost::asio::ssl;       
+namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
 
 // Handles an HTTP server connection
-class HttpSession : public HttpBase<HttpSession>
-                  , public std::enable_shared_from_this<HttpSession>
+class HttpSession : public HttpBase<HttpSession>,
+                    public std::enable_shared_from_this<HttpSession>
 {
     boost::beast::tcp_stream stream_;
 
 public:
     // Take ownership of the socket
-    explicit
-    HttpSession(
+    explicit HttpSession(
         tcp::socket&& socket,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
         boost::beast::flat_buffer buffer)
-        : HttpBase<HttpSession>(backend, balancer, dosGuard, std::move(buffer))
+        : HttpBase<HttpSession>(
+              backend,
+              subscriptions,
+              balancer,
+              dosGuard,
+              std::move(buffer))
         , stream_(std::move(socket))
-    {}
+    {
+    }
 
     boost::beast::tcp_stream&
     stream()
     {
         return stream_;
+    }
+    boost::beast::tcp_stream
+    release_stream()
+    {
+        return std::move(stream_);
     }
 
     std::string
@@ -64,14 +74,13 @@ public:
     run()
     {
         // We need to be executing within a strand to perform async operations
-        // on the I/O objects in this HttpSession. Although not strictly necessary
-        // for single-threaded contexts, this example code is written to be
-        // thread-safe by default.
+        // on the I/O objects in this HttpSession. Although not strictly
+        // necessary for single-threaded contexts, this example code is written
+        // to be thread-safe by default.
         net::dispatch(
             stream_.get_executor(),
             boost::beast::bind_front_handler(
-                &HttpBase::do_read,
-                shared_from_this()));
+                &HttpBase::do_read, shared_from_this()));
     }
 
     void
@@ -85,4 +94,4 @@ public:
     }
 };
 
-#endif // RIPPLE_REPORTING_HTTP_SESSION_H
+#endif  // RIPPLE_REPORTING_HTTP_SESSION_H
