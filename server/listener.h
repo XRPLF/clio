@@ -152,7 +152,8 @@ make_websocket_session(
         subscriptions,
         balancer,
         dosGuard,
-        std::move(buffer))
+        std::move(buffer),
+        std::move(req))
         ->run();
 }
 template <class PlainSession, class SslSession>

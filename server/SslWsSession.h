@@ -237,6 +237,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    http::request<http::string_body> req_;
 
 public:
     SslWsUpgrader(
@@ -261,13 +262,15 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
-        boost::beast::flat_buffer&& b)
+        boost::beast::flat_buffer&& b,
+        http::request<http::string_body> req)
         : https_(std::move(stream))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , buffer_(std::move(b))
+        , req_(std::move(req))
     {
     }
 
@@ -280,13 +283,10 @@ public:
         boost::beast::get_lowest_layer(https_).expires_after(
             std::chrono::seconds(30));
 
-        // Perform the SSL handshake
-        // Note, this is the buffered version of the handshake.
-        https_.async_handshake(
-            ssl::stream_base::server,
-            buffer_.data(),
+        net::dispatch(
+            https_.get_executor(),
             boost::beast::bind_front_handler(
-                &SslWsUpgrader::on_handshake, shared_from_this()));
+                &SslWsUpgrader::do_upgrade, shared_from_this()));
     }
 
 private:
@@ -316,31 +316,17 @@ private:
         boost::beast::get_lowest_layer(https_).expires_after(
             std::chrono::seconds(30));
 
-        // // Read a request using the parser-oriented interface
-        http::async_read(
-            https_,
-            buffer_,
-            *parser_,
-            boost::beast::bind_front_handler(
-                &SslWsUpgrader::on_upgrade, shared_from_this()));
+        on_upgrade();
     }
 
     void
-    on_upgrade(boost::beast::error_code ec, std::size_t bytes_transferred)
+    on_upgrade()
     {
-        std::cout << "upgraded WS" << std::endl;
-        boost::ignore_unused(bytes_transferred);
-
-        // This means they closed the connection
-        if (ec == http::error::end_of_stream)
-            return;
-
-        if (ec)
-            return wsFail(ec, "upgrade");
-
         // See if it is a WebSocket Upgrade
-        if (!websocket::is_upgrade(parser_->get()))
-            return wsFail(ec, "is_upgrade");
+        if (!websocket::is_upgrade(req_))
+        {
+            return;
+        }
 
         // Disable the timeout.
         // The websocket::stream uses its own timeout settings.
@@ -353,7 +339,7 @@ private:
             balancer_,
             dosGuard_,
             std::move(buffer_))
-            ->run(parser_->release());
+            ->run(std::move(req_));
     }
 };
 
