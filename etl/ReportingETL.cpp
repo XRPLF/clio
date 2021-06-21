@@ -251,16 +251,6 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
             continue;
         }
 
-        // publishStrand_.post([this, &ledger, &fees]() {
-        //     subs_->pubLedger(*ledger, *fees);
-        //     setLastPublish();
-        //     BOOST_LOG_TRIVIAL(info)
-        //         << __func__ << " : "
-        //         << "Published ledger. " << ledger->seq;
-        // });
-
-        publishLedger(ledger);
-
         return true;
     }
     return false;

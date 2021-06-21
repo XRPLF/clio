@@ -284,6 +284,7 @@ struct ReadDiffCallbackData
     CassandraBackend const& backend;
     uint32_t sequence;
     std::vector<LedgerObject>& result;
+    std::mutex& mtx;
     std::condition_variable& cv;
 
     std::atomic_uint32_t& numFinished;
@@ -293,12 +294,14 @@ struct ReadDiffCallbackData
         CassandraBackend const& backend,
         uint32_t sequence,
         std::vector<LedgerObject>& result,
+        std::mutex& mtx,
         std::condition_variable& cv,
         std::atomic_uint32_t& numFinished,
         size_t batchSize)
         : backend(backend)
         , sequence(sequence)
         , result(result)
+        , mtx(mtx)
         , cv(cv)
         , numFinished(numFinished)
         , batchSize(batchSize)
@@ -353,6 +356,7 @@ CassandraBackend::fetchLedgerDiffs(std::vector<uint32_t> const& sequences) const
             *this,
             sequences[i],
             results[sequences[i]],
+            mtx,
             cv,
             numFinished,
             sequences.size()));
@@ -477,7 +481,7 @@ CassandraBackend::fetchLedgerObjects(
     for (std::size_t i = 0; i < keys.size(); ++i)
     {
         cbs.push_back(std::make_shared<ReadObjectCallbackData>(
-            *this, keys[i], sequence, results[i], cv, numFinished, numKeys));
+            *this, keys[i], sequence, results[i], mtx, cv, numFinished, numKeys));
         readObject(*cbs[i]);
     }
     assert(results.size() == cbs.size());
@@ -1339,7 +1343,7 @@ CassandraBackend::open(bool readOnly)
                       << std::to_string(rf) << "'}  AND durable_writes = true";
                 if (!executeSimpleStatement(query.str()))
                     continue;
-                query = {};
+                query.str("");
                 query << "USE " << keyspace;
                 if (!executeSimpleStatement(query.str()))
                     continue;
@@ -1578,7 +1582,7 @@ CassandraBackend::open(bool readOnly)
                  "(?,null)";
         if (!updateLedgerRange_.prepareStatement(query, session_.get()))
             continue;
-        query = {};
+        query.str("");
         query << " update " << tablePrefix << "ledger_range"
               << " set sequence = ? where is_latest = false";
         if (!deleteLedgerRange_.prepareStatement(query, session_.get()))

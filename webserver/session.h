@@ -26,8 +26,8 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <server/DOSGuard.h>
-#include <server/SubscriptionManager.h>
+#include <webserver/DOSGuard.h>
+#include <webserver/SubscriptionManager.h>
 
 class session;
 class SubscriptionManager;

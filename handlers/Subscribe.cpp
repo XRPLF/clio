@@ -1,6 +1,6 @@
 #include <boost/json.hpp>
 #include <handlers/RPCHelpers.h>
-#include <server/session.h>
+#include <webserver/session.h>
 
 static std::unordered_set<std::string> validStreams{
     "ledger",

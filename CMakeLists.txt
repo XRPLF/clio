@@ -31,7 +31,7 @@ enable_testing()
 include(GoogleTest)
 
 add_executable (reporting_main
-    server/websocket_server_async.cpp
+    webserver/websocket_server_async.cpp
 )
 add_executable (reporting_tests
     unittests/main.cpp
@@ -75,8 +75,8 @@ target_sources(reporting PRIVATE
     backend/DBHelpers.cpp
     etl/ETLSource.cpp
     etl/ReportingETL.cpp
-    server/session.cpp
-    server/SubscriptionManager.cpp
+    webserver/session.cpp
+    webserver/SubscriptionManager.cpp
     handlers/AccountInfo.cpp
     handlers/Tx.cpp
     handlers/RPCHelpers.cpp

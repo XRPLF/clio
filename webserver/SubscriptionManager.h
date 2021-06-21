@@ -20,7 +20,7 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
-#include <server/session.h>
+#include <webserver/session.h>
 
 #include <memory>
 #include <set>

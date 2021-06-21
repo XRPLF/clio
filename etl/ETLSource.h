@@ -26,7 +26,7 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
-#include <server/SubscriptionManager.h>
+#include <webserver/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
