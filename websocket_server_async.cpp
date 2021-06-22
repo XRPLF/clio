@@ -107,23 +107,61 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
     ioc.run();
 }
 
+openWebsocketServer(
+    boost::json::object const& wsConfig,
+    boost::asio::io_context& ioc,
+    ReportingETL& etl)
+{
+    auto const address = 
+        boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
+    auto const port = 
+        static_cast<unsigned short>(wsConfig.at("port").as_uint64());
+
+    // Create and launch a listening port
+    std::make_shared<listener>(
+        ioc,
+        boost::asio::ip::tcp::endpoint{address, port},
+        etl.getSubscriptionManager(),
+        etl.getFlatMapBackend())
+        ->run();
+}
+
+void
+openHttpServer(
+    boost::json::object const& httpConfig,
+    boost::asio::io_context& ioc,
+    ReportingETL& etl)
+{
+    auto const address = 
+        boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
+    auto const port = 
+        static_cast<unsigned short>(httpConfig.at("port").as_uint64());
+
+    // Create and launch a listening port
+    std::make_shared<listener>(
+        ioc,
+        boost::asio::ip::tcp::endpoint{address, port},
+        etl.getSubscriptionManager(),
+        etl.getFlatMapBackend())
+        ->run();
+}
+
 int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 5 and argc != 6)
+    if (argc != 3 and argc != 4)
     {
         std::cerr
-            << "Usage: websocket-server-async <address> <port> <threads> "
+            << "Usage: websocket-server-async <threads> "
                "<config_file> <log level> \n"
             << "Example:\n"
-            << "    websocket-server-async 0.0.0.0 8080 1 config.json 2\n";
+            << "    websocket-server-async 1 config.json 2\n";
         return EXIT_FAILURE;
     }
-    auto const address = boost::asio::ip::make_address(argv[1]);
-    auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
-    auto const threads = std::max<int>(1, std::atoi(argv[3]));
-    auto const config = parse_config(argv[4]);
+
+    auto const threads = std::max<int>(1, std::atoi(argv[1]));
+    auto const config = parse_config(argv[2]);
     if (argc > 5)
     {
         initLogLevel(std::atoi(argv[5]));
@@ -138,7 +176,6 @@ main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // The io_context is required for all I/O
     boost::asio::io_context ioc{threads};
     
     std::shared_ptr<BackendInterface> backend{

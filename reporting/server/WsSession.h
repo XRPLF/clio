@@ -28,7 +28,6 @@
 #include <reporting/server/SubscriptionManager.h>
 #include <reporting/ETLSource.h>
 
-class session;
 class SubscriptionManager;
 class ETLLoadBalancer;
 
@@ -166,7 +165,7 @@ void
 fail(boost::beast::error_code ec, char const* what);
 
 // Echoes back all received WebSocket messages
-class session : public std::enable_shared_from_this<session>
+class WsSession : public std::enable_shared_from_this<WsSession>
 {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     boost::beast::flat_buffer buffer_;
@@ -178,7 +177,7 @@ class session : public std::enable_shared_from_this<session>
 
 public:
     // Take ownership of the socket
-    explicit session(
+    explicit WsSession(
         boost::asio::ip::tcp::socket&& socket,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -237,7 +236,7 @@ private:
         boost::asio::dispatch(
             ws_.get_executor(),
             boost::beast::bind_front_handler(
-                &session::on_run, shared_from_this()));
+                &WsSession::on_run, shared_from_this()));
     }
 
     // Start the asynchronous operation
@@ -258,7 +257,7 @@ private:
             }));
         // Accept the websocket handshake
         ws_.async_accept(boost::beast::bind_front_handler(
-            &session::on_accept, shared_from_this()));
+            &WsSession::on_accept, shared_from_this()));
     }
 
     void
@@ -278,7 +277,7 @@ private:
         ws_.async_read(
             buffer_,
             boost::beast::bind_front_handler(
-                &session::on_read, shared_from_this()));
+                &WsSession::on_read, shared_from_this()));
     }
 
     void
@@ -354,7 +353,7 @@ private:
         ws_.async_write(
             boost::asio::buffer(response_),
             boost::beast::bind_front_handler(
-                &session::on_write, shared_from_this()));
+                &WsSession::on_write, shared_from_this()));
     }
 
     void
