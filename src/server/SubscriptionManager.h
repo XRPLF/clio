@@ -22,9 +22,8 @@
 
 #include <backend/BackendInterface.h>
 #include <memory>
-#include <reporting/server/WsSession.h>
-
-class WsBase;
+#include <reporting/server/WsBase.h>
+#include <reporting/BackendInterface.h>
 
 class SubscriptionManager
 {
@@ -76,9 +75,13 @@ public:
         std::uint32_t seq);
 
     void
+<<<<<<< HEAD:server/SubscriptionManager.h
     subAccount(
         ripple::AccountID const& account,
         std::shared_ptr<WsBase>& session);
+=======
+    subAccount(ripple::AccountID const& account, std::shared_ptr<WsBase>& session);
+>>>>>>> 95d22a9 (rebase WS):reporting/server/SubscriptionManager.h
 
     void
     unsubAccount(

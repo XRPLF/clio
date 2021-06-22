@@ -8,6 +8,7 @@
 #include <boost/log/trivial.hpp>
 
 #include <reporting/ReportingETL.h>
+#include <reporting/server/WsBase.h>
 
 #include <unordered_map>
 #include <iostream>
@@ -123,18 +124,18 @@ doChannelVerify(boost::json::object const& request);
 boost::json::object
 doSubscribe(
     boost::json::object const& request,
-    std::shared_ptr<WsSession>& session,
+    std::shared_ptr<WsBase>& session,
     SubscriptionManager& manager);
 boost::json::object
 doUnsubscribe(
     boost::json::object const& request,
-    std::shared_ptr<WsSession>& session,
+    std::shared_ptr<WsBase>& session,
     SubscriptionManager& manager);
 
 extern boost::json::object
 buildResponse(
     boost::json::object const& request,
     ReportingETL& etl,
-    std::shared_ptr<WsSession> session);
+    std::shared_ptr<WsBase> session);
 
 #endif // RIPPLE_REPORTING_HANDLERS_H

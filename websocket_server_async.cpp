@@ -15,10 +15,8 @@
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/json.hpp>
-
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
@@ -155,11 +153,11 @@ openWebsocketServer(
     auto const port = 
         static_cast<unsigned short>(wsConfig.at("port").as_int64());
 
-    // Create and launch a listening port
-    std::make_shared<Listener<WsSession>>(
+    // Create and launch a listening port, listens only for websocket connections
+    std::make_shared<Listener<WsUpgrader, SslWsUpgrader>>(
         ioc,
-        boost::asio::ip::tcp::endpoint{address, port},
         ctx,
+        boost::asio::ip::tcp::endpoint{address, port},
         etl)
         ->run();
 }
@@ -168,7 +166,7 @@ void
 openHttpServer(
     boost::json::object const& httpConfig,
     boost::asio::io_context& ioc,
-    std::optional<ssl::context>& ctx,
+    ssl::context& ctx,
     ReportingETL& etl)
 {
     auto const address = 
@@ -176,7 +174,7 @@ openHttpServer(
     auto const port = 
         static_cast<unsigned short>(httpConfig.at("port").as_int64());
 
-    std::make_shared<Listener>(
+    std::make_shared<Listener<HttpSession, SslHttpSession>>(
         ioc,
         ctx,
         boost::asio::ip::tcp::endpoint{address, port},
@@ -188,7 +186,7 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc < 3 || argc > 6)
+    if (argc < 5 || argc > 6)
     {
         std::cerr
             << "Usage: websocket-server-async <threads> "
@@ -201,9 +199,7 @@ main(int argc, char* argv[])
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
 
-    std::optional<ssl::context> ctx = {};
-    if (argc == 4 || argc == 5)
-        ctx = parse_certs(argv[3], argv[4]);
+    std::optional<ssl::context> ctx = parse_certs(argv[3], argv[4]);
 
     if (argc > 5)
     {
@@ -216,8 +212,12 @@ main(int argc, char* argv[])
 
     if (!config)
     {
-        std::cerr << "couldnt parse config. Exiting..." << std::endl;
+        std::cerr << "Ccouldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
+    }
+    if (!ctx)
+    {
+        std::cerr << "Couldn't parse SSL certificates" << std::endl;
     }
 
     boost::asio::io_context ioc{threads};
@@ -229,16 +229,16 @@ main(int argc, char* argv[])
     ReportingETL etl{config.value(), ioc};
 
 
-    // if (config->contains("websocket_public"))
-    // {
-    //     BOOST_LOG_TRIVIAL(info) << "Starting Websocket Server";
+    if (config->contains("websocket_public"))
+    {
+        BOOST_LOG_TRIVIAL(info) << "Starting Websocket Server";
 
-    //     auto wsConfig = config->at("websocket_public");
-    //     if(!wsConfig.is_object())
-    //         throw std::runtime_error("Websocket config must be JSON object");
+        auto wsConfig = config->at("websocket_public");
+        if(!wsConfig.is_object())
+            throw std::runtime_error("Websocket config must be JSON object");
 
-    //     openWebsocketServer(wsConfig.as_object(), ioc, *ctx, etl);
-    // }
+        openWebsocketServer(wsConfig.as_object(), ioc, *ctx, etl);
+    }
 
 
     std::shared_ptr<SubscriptionManager> subscriptions{

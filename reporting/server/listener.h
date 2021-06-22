@@ -25,24 +25,28 @@
 #include <boost/beast/websocket.hpp>
 #include <reporting/server/HttpSession.h>
 #include <reporting/server/SslHttpSession.h>
+#include <reporting/server/WsSession.h>
+#include <reporting/server/SslWsSession.h>
 #include <reporting/server/SubscriptionManager.h>
 
 #include <iostream>
 
 class SubscriptionManager;
 
-// Detects SSL handshakes
-class detect_session : public std::enable_shared_from_this<detect_session>
+template <class PlainSession, class SslSession>
+class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslSession>>
 {
+    using std::enable_shared_from_this<Detector<PlainSession, SslSession>>::shared_from_this;
+
     boost::beast::tcp_stream stream_;
-    std::optional<ssl::context>& ctx_;
+    ssl::context& ctx_;
     ReportingETL& etl_;
     boost::beast::flat_buffer buffer_;
 
 public:
-    detect_session(
+    Detector(
         tcp::socket&& socket,
-        std::optional<ssl::context>& ctx,
+        ssl::context& ctx,
         ReportingETL& etl)
         : stream_(std::move(socket))
         , ctx_(ctx)
@@ -56,22 +60,12 @@ public:
     {
         // Set the timeout.
         boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
-
-        if (!ctx_)
-        {
-            // Launch plain session
-            std::make_shared<HttpSession>(
-                stream_.release_socket(),
-                etl_,
-                std::move(buffer_))->run();
-        }
-
         // Detect a TLS handshake
         async_detect_ssl(
             stream_,
             buffer_,
             boost::beast::bind_front_handler(
-                &detect_session::on_detect,
+                &Detector::on_detect,
                 shared_from_this()));
     }
 
@@ -84,61 +78,31 @@ public:
         if(result)
         {
             // Launch SSL session
-            std::make_shared<SslHttpSession>(
+            std::make_shared<SslSession>(
                 stream_.release_socket(),
-                *ctx_,
+                ctx_,
                 etl_,
                 std::move(buffer_))->run();
             return;
         }
 
         // Launch plain session
-        std::make_shared<HttpSession>(
+        std::make_shared<PlainSession>(
             stream_.release_socket(),
             etl_,
             std::move(buffer_))->run();
     }
 };
 
-
-
-public:
-    static void
-    make_listener(
-        boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
-    {
-        std::make_shared<listener>(
-            ioc,
-            endpoint,
-            backend,
-            subscriptions,
-            balancer
-        )->run();
-    }
-
-    listener(
-        boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
-        : ioc_(ioc)
-        , acceptor_(ioc)
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-// Accepts incoming connections and launches the sessions
-class Listener : public std::enable_shared_from_this<Listener>
+template <class PlainSession, class SslSession>
+class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslSession>>
 {
-    boost::asio::io_context& ioc_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
+    using std::enable_shared_from_this<Listener<PlainSession, SslSession>>::shared_from_this;
+
+    net::io_context& ioc_;
+    ssl::context& ctx_;
+    tcp::acceptor acceptor_;
+    ReportingETL& etl_;
 
 public:
     static void
@@ -232,12 +196,12 @@ private:
     {
         if(ec)
         {
-            httpFail(ec, "accept");
+            httpFail(ec, "listener_accept");
         }
         else
         {
             // Create the detector session and run it
-            std::make_shared<detect_session>(
+            std::make_shared<Detector<PlainSession, SslSession>>(
                 std::move(socket),
                 ctx_,
                 etl_)->run();
