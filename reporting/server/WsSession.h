@@ -17,12 +17,14 @@
 */
 //==============================================================================
 
-#ifndef RIPPLE_REPORTING_SESSION_H
-#define RIPPLE_REPORTING_SESSION_H
+#ifndef RIPPLE_REPORTING_WS_SESSION_H
+#define RIPPLE_REPORTING_WS_SESSION_H
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket/ssl.hpp>
 
 #include <reporting/BackendInterface.h>
 #include <reporting/server/SubscriptionManager.h>
@@ -167,7 +169,8 @@ fail(boost::beast::error_code ec, char const* what);
 // Echoes back all received WebSocket messages
 class WsSession : public std::enable_shared_from_this<WsSession>
 {
-    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    boost::beast::websocket::stream<
+        boost::beast::ssl_stream<boost::beast::tcp_stream>> ws_;
     boost::beast::flat_buffer buffer_;
     std::string response_;
 
@@ -243,28 +246,52 @@ private:
     void
     on_run()
     {
+        boost::beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+
+         // Perform the SSL handshake
+        ws_.next_layer().async_handshake(
+            ssl::stream_base::server,
+            boost::beast::bind_front_handler(
+                &WsSession::on_handshake,
+                shared_from_this()));
+    }
+
+    void
+    on_handshake(boost::beast::error_code ec)
+    {
+        if(ec)
+            return wsFail(ec, "handshake");
+
+        // Turn off the timeout on the tcp_stream, because
+        // the websocket stream has its own timeout system.
+        boost::beast::get_lowest_layer(ws_).expires_never();
+
         // Set suggested timeout settings for the websocket
-        ws_.set_option(boost::beast::websocket::stream_base::timeout::suggested(
-            boost::beast::role_type::server));
+        ws_.set_option(
+            boost::beast::websocket::stream_base::timeout::suggested(
+                boost::beast::role_type::server));
 
         // Set a decorator to change the Server of the handshake
         ws_.set_option(boost::beast::websocket::stream_base::decorator(
-            [](boost::beast::websocket::response_type& res) {
-                res.set(
-                    boost::beast::http::field::server,
+            [](boost::beast::websocket::response_type& res)
+            {
+                res.set(http::field::server,
                     std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-server-async");
+                        " websocket-server-async-ssl");
             }));
+
         // Accept the websocket handshake
-        ws_.async_accept(boost::beast::bind_front_handler(
-            &WsSession::on_accept, shared_from_this()));
+        ws_.async_accept(
+            boost::beast::bind_front_handler(
+                &WsSession::on_accept,
+                shared_from_this()));
     }
 
     void
     on_accept(boost::beast::error_code ec)
     {
         if (ec)
-            return fail(ec, "accept");
+            return wsFail(ec, "accept");
 
         // Read a message
         do_read();
@@ -310,8 +337,7 @@ private:
         }
 
         if (ec)
-            fail(ec, "read");
-
+            wsFail(ec, "read");
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
@@ -367,7 +393,7 @@ private:
             return do_close();
 
         if (ec)
-            return fail(ec, "write");
+            return wsFail(ec, "write");
 
         // Clear the buffer
         buffer_.consume(buffer_.size());
@@ -377,4 +403,4 @@ private:
     }
 };
 
-#endif // RIPPLE_REPORTING_SESSION_H
+#endif // RIPPLE_REPORTING_WS_SESSION_H

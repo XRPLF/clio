@@ -29,9 +29,9 @@
 #include <iostream>
 #include <memory>
 #include <reporting/ReportingETL.h>
-#include <reporting/BackendFactory.h>
-#include <reporting/server/session.h>
-#include <reporting/server/listener.h>
+#include <reporting/server/Listener.h>
+#include <reporting/server/WsSession.h>
+#include <reporting/server/HttpSession.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -59,8 +59,45 @@ parse_config(const char* filename)
     }
     return {};
 }
-//------------------------------------------------------------------------------
-//
+
+std::optional<ssl::context>
+parse_certs(const char* certFilename, const char* keyFilename)
+{
+    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
+    if (!readCert)
+        return {};
+
+    std::stringstream contents;
+    contents << readCert.rdbuf();
+    readCert.close();
+    std::string cert = contents.str();
+
+    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
+    if(!readKey)
+        return {};
+
+    contents.str("");
+    contents << readKey.rdbuf();
+    readKey.close();
+    std::string key = contents.str();
+
+    ssl::context ctx{ssl::context::tlsv12};
+
+    ctx.set_options(
+        boost::asio::ssl::context::default_workarounds |
+        boost::asio::ssl::context::no_sslv2);
+
+    ctx.use_certificate_chain(
+        boost::asio::buffer(cert.data(), cert.size()));
+
+    ctx.use_private_key(
+        boost::asio::buffer(key.data(), key.size()),
+        boost::asio::ssl::context::file_format::pem);
+
+    return ctx;
+}
+
+
 void
 initLogLevel(int level)
 {
@@ -110,19 +147,20 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 openWebsocketServer(
     boost::json::object const& wsConfig,
     boost::asio::io_context& ioc,
+    ssl::context& ctx,
     ReportingETL& etl)
 {
     auto const address = 
         boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
     auto const port = 
-        static_cast<unsigned short>(wsConfig.at("port").as_uint64());
+        static_cast<unsigned short>(wsConfig.at("port").as_int64());
 
     // Create and launch a listening port
-    std::make_shared<listener>(
+    std::make_shared<Listener<WsSession>>(
         ioc,
         boost::asio::ip::tcp::endpoint{address, port},
-        etl.getSubscriptionManager(),
-        etl.getFlatMapBackend())
+        ctx,
+        etl)
         ->run();
 }
 
@@ -130,19 +168,19 @@ void
 openHttpServer(
     boost::json::object const& httpConfig,
     boost::asio::io_context& ioc,
+    std::optional<ssl::context>& ctx,
     ReportingETL& etl)
 {
     auto const address = 
         boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
     auto const port = 
-        static_cast<unsigned short>(httpConfig.at("port").as_uint64());
+        static_cast<unsigned short>(httpConfig.at("port").as_int64());
 
-    // Create and launch a listening port
-    std::make_shared<listener>(
+    std::make_shared<Listener>(
         ioc,
+        ctx,
         boost::asio::ip::tcp::endpoint{address, port},
-        etl.getSubscriptionManager(),
-        etl.getFlatMapBackend())
+        etl)
         ->run();
 }
 
@@ -150,18 +188,23 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 3 and argc != 4)
+    if (argc < 3 || argc > 6)
     {
         std::cerr
             << "Usage: websocket-server-async <threads> "
-               "<config_file> <log level> \n"
+               "<config_file> <cert_file> <key_file> <log level> \n"
             << "Example:\n"
-            << "    websocket-server-async 1 config.json 2\n";
+            << "    websocket-server-async 1 config.json cert.pem key.pem 2\n";
         return EXIT_FAILURE;
     }
 
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
     auto const config = parse_config(argv[2]);
+
+    std::optional<ssl::context> ctx = {};
+    if (argc == 4 || argc == 5)
+        ctx = parse_certs(argv[3], argv[4]);
+
     if (argc > 5)
     {
         initLogLevel(std::atoi(argv[5]));
@@ -170,6 +213,7 @@ main(int argc, char* argv[])
     {
         initLogLevel(2);
     }
+
     if (!config)
     {
         std::cerr << "couldnt parse config. Exiting..." << std::endl;
@@ -181,6 +225,21 @@ main(int argc, char* argv[])
     std::shared_ptr<BackendInterface> backend{
         Backend::make_Backend(*config)
     };
+    
+    ReportingETL etl{config.value(), ioc};
+
+
+    // if (config->contains("websocket_public"))
+    // {
+    //     BOOST_LOG_TRIVIAL(info) << "Starting Websocket Server";
+
+    //     auto wsConfig = config->at("websocket_public");
+    //     if(!wsConfig.is_object())
+    //         throw std::runtime_error("Websocket config must be JSON object");
+
+    //     openWebsocketServer(wsConfig.as_object(), ioc, *ctx, etl);
+    // }
+
 
     std::shared_ptr<SubscriptionManager> subscriptions{
         SubscriptionManager::make_SubscriptionManager()

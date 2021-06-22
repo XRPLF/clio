@@ -22,6 +22,7 @@
 
 #include <backend/BackendInterface.h>
 #include <memory>
+#include <reporting/server/WsSession.h>
 
 class WsBase;
 
