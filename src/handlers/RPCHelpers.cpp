@@ -112,6 +112,7 @@ toJson(ripple::SLE const& sle)
             .count();
     return value.as_object();
 }
+
 boost::json::value
 toBoostJson(RippledJson const& value)
 {

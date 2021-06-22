@@ -15,7 +15,7 @@ session::do_close()
     mgr->clearSession(this);
 }
 
-boost::json::object
+extern boost::json::object
 buildResponse(
     boost::json::object const& request,
     std::shared_ptr<BackendInterface> backend,

@@ -100,12 +100,7 @@ public:
     }
 };
 
-<<<<<<< HEAD
-    boost::asio::io_context& ioc_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
+
 
 public:
     static void
@@ -136,26 +131,44 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
-=======
 // Accepts incoming connections and launches the sessions
 class Listener : public std::enable_shared_from_this<Listener>
 {
-    net::io_context& ioc_;
-    std::optional<ssl::context>& ctx_;
-    tcp::acceptor acceptor_;
-    ReportingETL& etl_;
+    boost::asio::io_context& ioc_;
+    boost::asio::ip::tcp::acceptor acceptor_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
+    static void
+    make_Listener(
+        boost::asio::io_context& ioc,
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
+    {
+        std::make_shared<listener>(
+            ioc,
+            endpoint,
+            backend,
+            subscriptions,
+            balancer
+        )->run();
+    }
+
     Listener(
-        net::io_context& ioc,
-        std::optional<ssl::context>& ctx,
-        tcp::endpoint endpoint,
-        ReportingETL& etl)
+        boost::asio::io_context& ioc,
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
         : ioc_(ioc)
-        , ctx_(ctx)
-        , acceptor_(net::make_strand(ioc))
-        , etl_(etl)
->>>>>>> a00a59e (HTTP server is now a flex server)
+        , acceptor_(ioc)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
     {
         boost::beast::error_code ec;
 
@@ -223,15 +236,11 @@ private:
         }
         else
         {
-<<<<<<< HEAD
-            session::make_session(std::move(socket), backend_, subscriptions_, balancer_);
-=======
             // Create the detector session and run it
             std::make_shared<detect_session>(
                 std::move(socket),
                 ctx_,
                 etl_)->run();
->>>>>>> a00a59e (HTTP server is now a flex server)
         }
 
         // Accept another connection
