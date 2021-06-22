@@ -224,6 +224,7 @@ BackendInterface::fetchLedgerPage(
             page.objects.end(), partial.objects.begin(), partial.objects.end());
         page.cursor = partial.cursor;
     } while (page.objects.size() < limit && page.cursor);
+    
     if (incomplete)
     {
         auto rng = fetchLedgerRange();
@@ -332,4 +333,37 @@ BackendInterface::checkFlagLedgers() const
         }
     }
 }
+
+std::optional<ripple::Fees>
+BackendInterface::fetchFees(std::uint32_t seq) const
+{
+    ripple::Fees fees;
+
+    auto key = ripple::keylet::fees().key;
+    auto bytes = fetchLedgerObject(key, seq);
+
+    if (!bytes)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " - could not find fees";
+        return {};
+    }
+
+    ripple::SerialIter it(bytes->data(), bytes->size());
+    ripple::SLE sle{it, key};
+
+    if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
+        fees.base = sle.getFieldU64(ripple::sfBaseFee);
+
+    if (sle.getFieldIndex(ripple::sfReferenceFeeUnits) != -1)
+        fees.units = sle.getFieldU32(ripple::sfReferenceFeeUnits);
+
+    if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
+        fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
+
+    if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
+        fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
+
+    return fees;
+}
+
 }  // namespace Backend

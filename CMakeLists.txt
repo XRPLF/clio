@@ -36,29 +36,22 @@ add_executable (clio_server
 add_executable (clio_tests
     unittests/main.cpp
 )
-add_library(clio src/backend/BackendInterface.h)
+add_library(clio)
 include_directories(src)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
 message(${CMAKE_MODULE_PATH})
-#include(rippled/Builds/CMake/RippledCore.cmake)
 add_subdirectory(rippled)
 target_link_libraries(clio PUBLIC xrpl_core grpc_pbufs)
 add_dependencies(clio xrpl_core)
 add_dependencies(clio grpc_pbufs)
 get_target_property(grpc_includes grpc_pbufs INCLUDE_DIRECTORIES)
-#get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
-# get_target_property(proto_includes protobuf_src INCLUDE_DIRECTORIES)
-message("hi")
 message("${grpc_includes}")
 message("${proto_includes}")
-# ExternalProject_Get_Property(protobuf_src SOURCE_DIR)
 message("${SOURCE_DIR}")
 INCLUDE_DIRECTORIES(${grpc_includes})
-#INCLUDE_DIRECTORIES(${xrpl_core_includes})
 INCLUDE_DIRECTORIES(${SOURCE_DIR}/src)
-# ExternalProject_Get_Property(grpc_src SOURCE_DIR)
 INCLUDE_DIRECTORIES(${SOURCE_DIR}/include)
 get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
 message("${xrpl_core_includes}")
@@ -68,34 +61,46 @@ include(Postgres)
 
 
 target_sources(clio PRIVATE
-    src/backend/CassandraBackend.cpp
-    src/backend/PostgresBackend.cpp
-    src/backend/BackendIndexer.cpp
-    src/backend/BackendInterface.cpp
-    src/backend/Pg.cpp
-    src/backend/DBHelpers.cpp
-    src/etl/ETLSource.cpp
-    src/etl/ReportingETL.cpp
-    src/server/Handlers.cpp
-    src/server/SubscriptionManager.cpp
-    src/handlers/AccountInfo.cpp
-    src/handlers/Tx.cpp
-    src/handlers/RPCHelpers.cpp
-    src/handlers/AccountTx.cpp
-    src/handlers/LedgerData.cpp
-    src/handlers/BookOffers.cpp
-    src/handlers/LedgerRange.cpp
-    src/handlers/Ledger.cpp
-    src/handlers/LedgerEntry.cpp
-    src/handlers/AccountChannels.cpp
-    src/handlers/AccountLines.cpp
-    src/handlers/AccountCurrencies.cpp
-    src/handlers/AccountOffers.cpp
-    src/handlers/AccountObjects.cpp
-    src/handlers/ChannelAuthorize.cpp
-    src/handlers/ChannelVerify.cpp
-    src/handlers/Subscribe.cpp
-    src/handlers/ServerInfo.cpp)
+## Backend
+  src/backend/CassandraBackend.cpp
+  src/backend/PostgresBackend.cpp
+  src/backend/BackendIndexer.cpp
+  src/backend/BackendInterface.cpp
+  src/backend/Pg.cpp
+  src/backend/DBHelpers.cpp
+## Reporting
+  src/etl/ETLSource.cpp
+  src/etl/ReportingETL.cpp
+## Server
+  src/webserver/SubscriptionManager.cpp
+## Handlers
+  src/handlers/Status.cpp
+  src/handlers/RPCHelpers.cpp
+  src/handlers/Handlers.cpp
+  src/handlers/Context.cpp
+## Methods
+  # Account
+  src/handlers/methods/impl/AccountChannels.cpp
+  src/handlers/methods/impl/AccountCurrencies.cpp
+  src/handlers/methods/impl/AccountInfo.cpp
+  src/handlers/methods/impl/AccountLines.cpp
+  src/handlers/methods/impl/AccountOffers.cpp
+  src/handlers/methods/impl/AccountObjects.cpp
+  # Ledger
+  src/handlers/methods/impl/Ledger.cpp
+  src/handlers/methods/impl/LedgerData.cpp
+  src/handlers/methods/impl/LedgerEntry.cpp
+  src/handlers/methods/impl/LedgerRange.cpp
+  # Transaction
+  src/handlers/methods/impl/Tx.cpp
+  src/handlers/methods/impl/AccountTx.cpp
+  # Dex
+  src/handlers/methods/impl/BookOffers.cpp
+  # Payment Channel
+  src/handlers/methods/impl/ChannelAuthorize.cpp
+  src/handlers/methods/impl/ChannelVerify.cpp
+  # Subscribe
+  src/handlers/methods/impl/Subscribe.cpp)
 
 
 message(${Boost_LIBRARIES})

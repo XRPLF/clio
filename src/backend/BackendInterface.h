@@ -91,18 +91,23 @@ public:
     virtual std::optional<ripple::LedgerInfo>
     fetchLedgerBySequence(uint32_t sequence) const = 0;
 
+    virtual std::optional<ripple::LedgerInfo>
+    fetchLedgerByHash(ripple::uint256 const& hash) const = 0;
+
     virtual std::optional<uint32_t>
     fetchLatestLedgerSequence() const = 0;
 
     virtual std::optional<LedgerRange>
     fetchLedgerRange() const = 0;
 
+    std::optional<ripple::Fees>
+    fetchFees(std::uint32_t seq) const;
+
     // Doesn't throw DatabaseTimeout. Should be used with care.
     std::optional<LedgerRange>
     fetchLedgerRangeNoThrow() const;
 
     // *** transaction methods
-
     virtual std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash) const = 0;
 

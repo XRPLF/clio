@@ -286,6 +286,7 @@ struct ReadDiffCallbackData
     CassandraBackend const& backend;
     uint32_t sequence;
     std::vector<LedgerObject>& result;
+    std::mutex& mtx;
     std::condition_variable& cv;
 
     std::atomic_uint32_t& numFinished;
@@ -295,12 +296,14 @@ struct ReadDiffCallbackData
         CassandraBackend const& backend,
         uint32_t sequence,
         std::vector<LedgerObject>& result,
+        std::mutex& mtx,
         std::condition_variable& cv,
         std::atomic_uint32_t& numFinished,
         size_t batchSize)
         : backend(backend)
         , sequence(sequence)
         , result(result)
+        , mtx(mtx)
         , cv(cv)
         , numFinished(numFinished)
         , batchSize(batchSize)
@@ -355,6 +358,7 @@ CassandraBackend::fetchLedgerDiffs(std::vector<uint32_t> const& sequences) const
             *this,
             sequences[i],
             results[sequences[i]],
+            mtx,
             cv,
             numFinished,
             sequences.size()));
@@ -414,7 +418,10 @@ CassandraBackend::doFetchLedgerPage(
     CassandraStatement statement{selectKeys_};
     statement.bindInt(index->keyIndex);
     if (cursor)
-        statement.bindBytes(*cursor);
+    {
+        auto thisCursor = *cursor;
+        statement.bindBytes(++thisCursor);
+    }
     else
     {
         ripple::uint256 zero;
@@ -426,12 +433,13 @@ CassandraBackend::doFetchLedgerPage(
     {
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " - got keys - size = " << result.numRows();
-        std::vector<ripple::uint256> keys;
 
+        std::vector<ripple::uint256> keys;
         do
         {
             keys.push_back(result.getUInt256());
         } while (result.nextRow());
+
         if (keys.size() && keys.size() >= limit)
         {
             page.cursor = keys.back();
@@ -454,12 +462,17 @@ CassandraBackend::doFetchLedgerPage(
                 page.objects.push_back({std::move(key), std::move(obj)});
             }
         }
+
         if (!cursor && (!keys.size() || !keys[0].isZero()))
+        {
             page.warning = "Data may be incomplete";
+        }
+
         return page;
     }
     if (!cursor)
         return {{}, {}, "Data may be incomplete"};
+
     return {};
 }
 std::vector<Blob>
@@ -479,7 +492,7 @@ CassandraBackend::fetchLedgerObjects(
     for (std::size_t i = 0; i < keys.size(); ++i)
     {
         cbs.push_back(std::make_shared<ReadObjectCallbackData>(
-            *this, keys[i], sequence, results[i], cv, numFinished, numKeys));
+            *this, keys[i], sequence, results[i], mtx, cv, numFinished, numKeys));
         readObject(*cbs[i]);
     }
     assert(results.size() == cbs.size());
@@ -1572,6 +1585,12 @@ CassandraBackend::open(bool readOnly)
         query << " INSERT INTO " << tablePrefix << "ledger_hashes"
               << " (hash, sequence) VALUES(?,?)";
         if (!insertLedgerHash_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT sequence FROM " << tablePrefix << "ledger_hashes "
+              << "WHERE hash = ? LIMIT 1";
+        if (!selectLedgerByHash_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

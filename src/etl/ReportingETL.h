@@ -27,7 +27,7 @@
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <server/SubscriptionManager.h>
+#include <webserver/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -247,12 +247,6 @@ private:
     /// @param ledger the ledger to publish
     void
     publishLedger(ripple::LedgerInfo const& lgrInfo);
-
-    /// Get fees at a current ledger_index
-    /// @param seq the ledger index
-    /// @return nullopt if not found, fees if found.
-    std::optional<ripple::Fees>
-    getFees(std::uint32_t seq);
 
     bool
     isStopping()
