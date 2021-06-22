@@ -169,3 +169,4 @@ SubscriptionManager::clearSession(WsBase* s)
             accountProposedSubscribers_[account].erase(targetSession);
     }
 }
+
