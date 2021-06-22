@@ -37,6 +37,7 @@ class SubscriptionManager
         finalEntry
     };
 
+    std::mutex m_;
     std::array<subscriptions, finalEntry> streamSubscribers_;
     std::unordered_map<ripple::AccountID, subscriptions> accountSubscribers_;
     std::unordered_map<ripple::AccountID, subscriptions>
@@ -101,6 +102,9 @@ public:
 
     void
     unsubProposedTransactions(std::shared_ptr<WsBase>& session);
+
+    void
+    clearSession(session* session);
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H

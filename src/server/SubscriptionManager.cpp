@@ -5,12 +5,14 @@
 void
 SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     streamSubscribers_[Ledgers].emplace(std::move(session));
 }
 
 void
 SubscriptionManager::unsubLedger(std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     streamSubscribers_[Ledgers].erase(session);
 }
 
@@ -36,19 +38,22 @@ SubscriptionManager::pubLedger(
     pubMsg["validated_ledgers"] = ledgerRange;
     pubMsg["txn_count"] = txnCount;
 
-    for (auto const& session : streamSubscribers_[Ledgers])
+    std::lock_guard lk(m_);
+    for (auto const& session: streamSubscribers_[Ledgers])
         session->send(boost::json::serialize(pubMsg));
 }
 
 void
 SubscriptionManager::subTransactions(std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     streamSubscribers_[Transactions].emplace(std::move(session));
 }
 
 void
 SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     streamSubscribers_[Transactions].erase(session);
 }
 
@@ -57,6 +62,7 @@ SubscriptionManager::subAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     accountSubscribers_[account].emplace(std::move(session));
 }
 
@@ -65,6 +71,7 @@ SubscriptionManager::unsubAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     accountSubscribers_[account].erase(session);
 }
 
@@ -73,6 +80,8 @@ SubscriptionManager::pubTransaction(
     Backend::TransactionAndMetadata const& blob,
     std::uint32_t seq)
 {
+    std::lock_guard lk(m_);
+
     auto [tx, meta] = deserializeTxPlusMeta(blob, seq);
 
     boost::json::object pubMsg;
@@ -94,6 +103,7 @@ void
 SubscriptionManager::forwardProposedTransaction(
     boost::json::object const& response)
 {
+    std::lock_guard lk(m_);
     for (auto const& session : streamSubscribers_[TransactionsProposed])
         session->send(boost::json::serialize(response));
 
@@ -110,6 +120,7 @@ SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     accountProposedSubscribers_[account].emplace(std::move(session));
 }
 
@@ -118,17 +129,43 @@ SubscriptionManager::unsubProposedAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     accountProposedSubscribers_[account].erase(session);
 }
 
 void
 SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     streamSubscribers_[TransactionsProposed].emplace(std::move(session));
 }
 
 void
 SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase>& session)
 {
+    std::lock_guard lk(m_);
     streamSubscribers_[TransactionsProposed].erase(session);
+}
+
+void
+SubscriptionManager::clearSession(WsBase* s)
+{
+    std::lock_guard lk(m_);
+
+    // need the == operator. No-op delete
+    std::shared_ptr<WsBase> targetSession(s, [](WsBase*){}); 
+    for(auto& stream : streamSubscribers_)
+        stream.erase(targetSession);
+
+    for(auto& [account, subscribers] : accountSubscribers_)
+    {
+        if (subscribers.find(targetSession) != subscribers.end())
+            accountSubscribers_[account].erase(targetSession);
+    }
+
+    for(auto& [account, subscribers] : accountProposedSubscribers_)
+    {
+        if (subscribers.find(targetSession) != subscribers.end())
+            accountProposedSubscribers_[account].erase(targetSession);
+    }
 }
