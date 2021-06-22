@@ -57,75 +57,39 @@ parse_config(const char* filename)
     return {};
 }
 
-std::optional<ssl::context>
-parse_certs(const char* certFilename, const char* keyFilename)
-{
-    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
-    if (!readCert)
-        return {};
-
-    std::stringstream contents;
-    contents << readCert.rdbuf();
-    readCert.close();
-    std::string cert = contents.str();
-
-    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
-    if (!readKey)
-        return {};
-
-    contents.str("");
-    contents << readKey.rdbuf();
-    readKey.close();
-    std::string key = contents.str();
-
-    ssl::context ctx{ssl::context::tlsv12};
-
-    ctx.set_options(
-        boost::asio::ssl::context::default_workarounds |
-        boost::asio::ssl::context::no_sslv2);
-
-    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
-
-    ctx.use_private_key(
-        boost::asio::buffer(key.data(), key.size()),
-        boost::asio::ssl::context::file_format::pem);
-
-    return ctx;
-}
-
 void
-initLogLevel(int level)
+initLogLevel(boost::json::object const& config)
 {
-    switch (level)
+    auto const logLevel = config.contains("log_level")
+        ? config.at("log_level").as_string()
+        : "info";
+    if (boost::iequals(logLevel, "trace"))
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::trace);
+    else if (boost::iequals(logLevel, "debug"))
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::debug);
+    else if (boost::iequals(logLevel, "info"))
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::info);
+    else if (
+        boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::warning);
+    else if (boost::iequals(logLevel, "error"))
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::error);
+    else if (boost::iequals(logLevel, "fatal"))
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::fatal);
+    else
     {
-        case 0:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::trace);
-            break;
-        case 1:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::debug);
-            break;
-        case 2:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::info);
-            break;
-        case 3:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::warning);
-            break;
-        case 4:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::error);
-            break;
-        case 5:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::fatal);
-            break;
-        default:
-            boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::info);
+        BOOST_LOG_TRIVIAL(warning) << "Unrecognized log level: " << logLevel
+                                   << ". Setting log level to info";
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::info);
     }
+    BOOST_LOG_TRIVIAL(info) << "Log level = " << logLevel;
 }
 
 void
@@ -143,37 +107,31 @@ int
 main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc < 5 || argc > 6)
+    if (argc != 2)
     {
-        std::cerr
-            << "Usage: websocket-server-async <threads> "
-               "<config_file> <cert_file> <key_file> <log level> \n"
-            << "Example:\n"
-            << "    websocket-server-async 1 config.json cert.pem key.pem 2\n";
+        std::cerr << "Usage: websocket-server-async "
+                     "<config_file> \n"
+                  << "Example:\n"
+                  << "    websocket-server-async config.json \n";
         return EXIT_FAILURE;
     }
 
-    auto const threads = std::max<int>(1, std::atoi(argv[1]));
-    auto const config = parse_config(argv[2]);
-    auto ctx = parse_certs(argv[3], argv[4]);
-    auto ctxRef = ctx
-        ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
-        : std::nullopt;
-
-    if (argc > 5)
-    {
-        initLogLevel(std::atoi(argv[5]));
-    }
-    else
-    {
-        initLogLevel(2);
-    }
-
+    auto const config = parse_config(argv[1]);
     if (!config)
     {
         std::cerr << "Ccouldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
+    initLogLevel(*config);
+    auto const threads = config->contains("workers")
+        ? config->at("workers").as_int64()
+        : std::thread::hardware_concurrency();
+    if (threads <= 0)
+    {
+        BOOST_LOG_TRIVIAL(fatal) << "Workers is less than 0";
+        return EXIT_FAILURE;
+    }
+    BOOST_LOG_TRIVIAL(info) << "Number of workers = " << threads;
 
     boost::asio::io_context ioc{threads};
 
@@ -193,11 +151,8 @@ main(int argc, char* argv[])
     auto etl = ReportingETL::make_ReportingETL(
         *config, ioc, backend, subscriptions, balancer, ledgers);
 
-    auto wsServer = Server::make_WebSocketServer(
-        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
-
     auto httpServer = Server::make_HttpServer(
-        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
+        *config, ioc, backend, subscriptions, balancer, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

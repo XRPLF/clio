@@ -676,12 +676,19 @@ def getHashes(res):
 
 import random
 import datetime
+import ssl
+import pathlib
 numCalls = 0
 async def ledgers(ip, port, minLedger, maxLedger, transactions, expand, maxCalls):
     global numCalls
     address = 'ws://' + str(ip) + ':' + str(port)
     random.seed()
     ledger = 0
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    localhost_pem = pathlib.Path(__file__).with_name("cert.pem")
+    ssl_context.load_verify_locations(localhost_pem)
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
     try:
         async with websockets.connect(address,max_size=1000000000) as ws:
             global numCalls
@@ -692,7 +699,7 @@ async def ledgers(ip, port, minLedger, maxLedger, transactions, expand, maxCalls
                 start = datetime.datetime.now().timestamp()
                 await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":True, "transactions":bool(transactions),"expand":bool(expand)}))
                 res = json.loads(await ws.recv())
-                #print(res["header"]["blob"])
+                print(res["header"]["blob"])
                 end = datetime.datetime.now().timestamp()
                 if (end - start) > 0.1:
                     print("request took more than 100ms")

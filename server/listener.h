@@ -164,7 +164,7 @@ class Listener
         Listener<PlainSession, SslSession>>::shared_from_this;
 
     net::io_context& ioc_;
-    std::optional<std::reference_wrapper<ssl::context>> ctx_;
+    std::optional<ssl::context> ctx_;
     tcp::acceptor acceptor_;
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
@@ -174,14 +174,14 @@ class Listener
 public:
     Listener(
         net::io_context& ioc,
-        std::optional<std::reference_wrapper<ssl::context>> ctx,
+        std::optional<ssl::context>&& ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard)
         : ioc_(ioc)
-        , ctx_(ctx)
+        , ctx_(std::move(ctx))
         , acceptor_(net::make_strand(ioc))
         , backend_(backend)
         , subscriptions_(subscriptions)
@@ -250,10 +250,14 @@ private:
         }
         else
         {
+            auto ctxRef = ctx_
+                ? std::optional<
+                      std::reference_wrapper<ssl::context>>{ctx_.value()}
+                : std::nullopt;
             // Create the detector session and run it
             std::make_shared<Detector<PlainSession, SslSession>>(
                 std::move(socket),
-                ctx_,
+                ctxRef,
                 backend_,
                 subscriptions_,
                 balancer_,
@@ -267,65 +271,74 @@ private:
 };
 
 namespace Server {
+std::optional<ssl::context>
+parse_certs(const char* certFilename, const char* keyFilename)
+{
+    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
+    if (!readCert)
+        return {};
+
+    std::stringstream contents;
+    contents << readCert.rdbuf();
+    readCert.close();
+    std::string cert = contents.str();
+
+    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
+    if (!readKey)
+        return {};
+
+    contents.str("");
+    contents << readKey.rdbuf();
+    readKey.close();
+    std::string key = contents.str();
+
+    ssl::context ctx{ssl::context::tlsv12};
+
+    ctx.set_options(
+        boost::asio::ssl::context::default_workarounds |
+        boost::asio::ssl::context::no_sslv2);
+
+    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
+
+    ctx.use_private_key(
+        boost::asio::buffer(key.data(), key.size()),
+        boost::asio::ssl::context::file_format::pem);
+
+    return ctx;
+}
 using WebsocketServer = Listener<WsUpgrader, SslWsUpgrader>;
 using HttpServer = Listener<HttpSession, SslHttpSession>;
-
-static std::shared_ptr<WebsocketServer>
-make_WebSocketServer(
-    boost::json::object const& config,
-    boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<ssl::context>> ctx,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    DOSGuard& dosGuard)
-{
-    if (!config.contains("websocket_public"))
-        return nullptr;
-
-    auto const& wsConfig = config.at("websocket_public").as_object();
-
-    auto const address =
-        boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
-    auto const port =
-        static_cast<unsigned short>(wsConfig.at("port").as_int64());
-
-    auto server = std::make_shared<WebsocketServer>(
-        ioc,
-        ctx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        backend,
-        subscriptions,
-        balancer,
-        dosGuard);
-
-    server->run();
-    return server;
-}
 
 static std::shared_ptr<HttpServer>
 make_HttpServer(
     boost::json::object const& config,
     boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<ssl::context>> ctx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard)
 {
-    if (!config.contains("http_public"))
+    if (!config.contains("server"))
         return nullptr;
 
-    auto const& httpConfig = config.at("http_public").as_object();
+    auto const& serverConfig = config.at("server").as_object();
+    std::optional<ssl::context> sslCtx;
+    if (serverConfig.contains("ssl_cert_file") &&
+        serverConfig.contains("ssl_key_file"))
+    {
+        sslCtx = parse_certs(
+            serverConfig.at("ssl_cert_file").as_string().c_str(),
+            serverConfig.at("ssl_key_file").as_string().c_str());
+    }
 
-    auto const address =
-        boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
+    auto const address = boost::asio::ip::make_address(
+        serverConfig.at("ip").as_string().c_str());
     auto const port =
-        static_cast<unsigned short>(httpConfig.at("port").as_int64());
+        static_cast<unsigned short>(serverConfig.at("port").as_int64());
 
     auto server = std::make_shared<HttpServer>(
         ioc,
-        ctx,
+        std::move(sslCtx),
         boost::asio::ip::tcp::endpoint{address, port},
         backend,
         subscriptions,

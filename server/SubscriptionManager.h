@@ -20,11 +20,10 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
-#include <server/WsBase.h>
-
-#include <memory>
-#include <server/WsBase.h>
 #include <backend/BackendInterface.h>
+#include <memory>
+
+class WsBase;
 
 class SubscriptionManager
 {

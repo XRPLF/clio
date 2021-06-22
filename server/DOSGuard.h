@@ -1,3 +1,6 @@
+#ifndef RIPPLE_REPORTING_DOS_GUARD_H
+#define RIPPLE_REPORTING_DOS_GUARD_H
+
 #include <boost/asio.hpp>
 #include <string>
 #include <unordered_map>
@@ -84,3 +87,4 @@ public:
         ipFetchCount_.clear();
     }
 };
+#endif

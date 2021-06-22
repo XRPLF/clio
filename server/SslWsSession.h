@@ -39,19 +39,11 @@ using tcp = boost::asio::ip::tcp;
 
 class ReportingETL;
 
-class SslWsSession : public WsBase,
-                     public std::enable_shared_from_this<SslWsSession>
+class SslWsSession : public WsSession<SslWsSession>
 {
     boost::beast::websocket::stream<
         boost::beast::ssl_stream<boost::beast::tcp_stream>>
         ws_;
-    std::string response_;
-    boost::beast::flat_buffer buffer_;
-    http::request_parser<http::string_body> parser_;
-    std::shared_ptr<BackendInterface> backend_;
-    std::weak_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    DOSGuard& dosGuard_;
 
 public:
     // Take ownership of the socket
@@ -61,170 +53,27 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
-        boost::beast::flat_buffer b)
-        : WsBase()
+        boost::beast::flat_buffer&& b)
+        : WsSession(backend, subscriptions, balancer, dosGuard, std::move(b))
         , ws_(std::move(stream))
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , dosGuard_(dosGuard)
-        , buffer_(std::move(b))
     {
     }
-
-    void
-    send(std::string&& msg)
+    boost::beast::websocket::stream<
+        boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+    ws()
     {
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-            boost::asio::buffer(msg),
-            boost::beast::bind_front_handler(
-                &SslWsSession::on_write, shared_from_this()));
+        return ws_;
     }
-
-    void
-    run(http::request<http::string_body> req)
+    std::string
+    ip()
     {
-        std::cout << "Running ws" << std::endl;
-        // Set suggested timeout settings for the websocket
-        ws_.set_option(websocket::stream_base::timeout::suggested(
-            boost::beast::role_type::server));
-
-        std::cout << "Trying to decorate" << std::endl;
-        // Set a decorator to change the Server of the handshake
-        ws_.set_option(websocket::stream_base::decorator(
-            [](websocket::response_type& res) {
-                res.set(
-                    http::field::server,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-server-async");
-            }));
-
-        std::cout << "trying to async accept" << std::endl;
-
-        ws_.async_accept(
-            req,
-            boost::beast::bind_front_handler(
-                &SslWsSession::on_accept, shared_from_this()));
-    }
-
-    void
-    on_accept(boost::beast::error_code ec)
-    {
-        if (ec)
-            return wsFail(ec, "accept");
-
-        // Read a message
-        do_read();
-    }
-
-    void
-    do_read()
-    {
-        // Read a message into our buffer
-        ws_.async_read(
-            buffer_,
-            boost::beast::bind_front_handler(
-                &SslWsSession::on_read, shared_from_this()));
-    }
-
-    void
-    on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
-    {
-        boost::ignore_unused(bytes_transferred);
-
-        // This indicates that the session was closed
-        if (ec == boost::beast::websocket::error::closed)
-            return;
-
-        if (ec)
-            wsFail(ec, "read");
-
-        std::string msg{
-            static_cast<char const*>(buffer_.data().data()), buffer_.size()};
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
-        boost::json::object response;
-        auto ip = ws_.next_layer()
-                      .next_layer()
-                      .socket()
-                      .remote_endpoint()
-                      .address()
-                      .to_string();
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " received request from ip = " << ip;
-        if (!dosGuard_.isOk(ip))
-            response["error"] = "Too many requests. Slow down";
-        else
-        {
-            try
-            {
-                boost::json::value raw = boost::json::parse(msg);
-                boost::json::object request = raw.as_object();
-                BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
-                try
-                {
-                    std::shared_ptr<SubscriptionManager> subPtr =
-                        subscriptions_.lock();
-                    if (!subPtr)
-                        return;
-
-                    auto [res, cost] = buildResponse(
-                        request,
-                        backend_,
-                        subPtr,
-                        balancer_,
-                        shared_from_this());
-                    auto start = std::chrono::system_clock::now();
-                    response = std::move(res);
-                    if (!dosGuard_.add(ip, cost))
-                    {
-                        response["warning"] = "Too many requests";
-                    }
-
-                    auto end = std::chrono::system_clock::now();
-                    BOOST_LOG_TRIVIAL(info)
-                        << __func__ << " RPC call took "
-                        << ((end - start).count() / 1000000000.0)
-                        << " . request = " << request;
-                }
-                catch (Backend::DatabaseTimeout const& t)
-                {
-                    BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                    response["error"] =
-                        "Database read timeout. Please retry the request";
-                }
-            }
-            catch (std::exception const& e)
-            {
-                BOOST_LOG_TRIVIAL(error)
-                    << __func__ << "caught exception : " << e.what();
-                response["error"] = "Unknown exception";
-            }
-        }
-        BOOST_LOG_TRIVIAL(trace) << __func__ << response;
-        response_ = boost::json::serialize(response);
-
-        // Echo the message
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-            boost::asio::buffer(response_),
-            boost::beast::bind_front_handler(
-                &SslWsSession::on_write, shared_from_this()));
-    }
-
-    void
-    on_write(boost::beast::error_code ec, std::size_t bytes_transferred)
-    {
-        boost::ignore_unused(bytes_transferred);
-
-        if (ec)
-            return wsFail(ec, "write");
-
-        // Clear the buffer
-        buffer_.consume(buffer_.size());
-
-        // Do another read
-        do_read();
+        return ws()
+            .next_layer()
+            .next_layer()
+            .socket()
+            .remote_endpoint()
+            .address()
+            .to_string();
     }
 };
 

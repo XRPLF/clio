@@ -1,5 +1,6 @@
 #include <handlers/RPCHelpers.h>
 #include <server/SubscriptionManager.h>
+#include <server/WsBase.h>
 
 void
 SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
@@ -127,8 +128,7 @@ SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase>& session)
 }
 
 void
-SubscriptionManager::unsubProposedTransactions(
-    std::shared_ptr<WsBase>& session)
+SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase>& session)
 {
     streamSubscribers_[TransactionsProposed].erase(session);
 }

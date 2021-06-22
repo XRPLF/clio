@@ -10,15 +10,14 @@
 #include <etl/ReportingETL.h>
 #include <server/WsBase.h>
 
-#include <unordered_map>
 #include <iostream>
+#include <unordered_map>
 
 #ifndef RIPPLE_REPORTING_HANDLERS_H
 #define RIPPLE_REPORTING_HANDLERS_H
 
 class ReportingETL;
 class SubscriptionManager;
-class WsSession;
 
 //------------------------------------------------------------------------------
 
@@ -28,8 +27,7 @@ static std::unordered_set<std::string> forwardCommands{
     "fee",
     "path_find",
     "ripple_path_find",
-    "manifest"
-};
+    "manifest"};
 
 enum RPCCommand {
     tx,
@@ -73,9 +71,7 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
     {"server_info", server_info}};
 
 boost::json::object
-doTx(
-    boost::json::object const& request,
-    BackendInterface const& backend);
+doTx(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doAccountTx(
     boost::json::object const& request,
@@ -95,9 +91,7 @@ doLedgerEntry(
     boost::json::object const& request,
     BackendInterface const& backend);
 boost::json::object
-doLedger(
-    boost::json::object const& request,
-    BackendInterface const& backend);
+doLedger(boost::json::object const& request, BackendInterface const& backend);
 boost::json::object
 doLedgerRange(
     boost::json::object const& request,
@@ -157,4 +151,4 @@ buildResponse(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<WsBase> session);
 
-#endif // RIPPLE_REPORTING_HANDLERS_H
+#endif  // RIPPLE_REPORTING_HANDLERS_H
