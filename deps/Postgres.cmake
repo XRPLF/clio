@@ -45,23 +45,23 @@ if(NOT PostgreSQL_FOUND)
 
         file(TO_CMAKE_PATH "${postgres_src_SOURCE_DIR}" postgres_src_SOURCE_DIR)
 
-	target_link_libraries(reporting PUBLIC postgres)
+	target_link_libraries(clio PUBLIC postgres)
     else()
 
         message("Found system installed Postgres via find_libary")
 
-        target_include_directories(reporting INTERFACE ${libpq-fe})
+        target_include_directories(clio INTERFACE ${libpq-fe})
 
-        target_link_libraries(reporting INTERFACE ${postgres})
+        target_link_libraries(clio INTERFACE ${postgres})
     endif()
 
 else()
     message("Found system installed Postgres via find_package")
     message("${PostgreSQL_INCLUDE_DIRS}")
 
-    include_directories(reporting INTERFACE "${PostgreSQL_INCLUDE_DIRS}")
+    include_directories(clio INTERFACE "${PostgreSQL_INCLUDE_DIRS}")
 
-    target_link_libraries(reporting PUBLIC ${PostgreSQL_LIBRARIES})
+    target_link_libraries(clio PUBLIC ${PostgreSQL_LIBRARIES})
 endif()
 
 

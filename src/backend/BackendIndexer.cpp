@@ -1,3 +1,4 @@
+#include <backend/BackendIndexer.h>
 #include <backend/BackendInterface.h>
 
 namespace Backend {

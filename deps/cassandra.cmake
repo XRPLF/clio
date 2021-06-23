@@ -152,13 +152,12 @@ if(NOT cassandra)
 	target_link_libraries(cassandra INTERFACE OpenSSL::SSL)
 
     file(TO_CMAKE_PATH "${cassandra_src_SOURCE_DIR}" cassandra_src_SOURCE_DIR)
-    target_link_libraries(reporting PUBLIC cassandra)
+    target_link_libraries(clio PUBLIC cassandra)
 else()
     message("Found system installed cassandra cpp driver")
     message(${cassandra})
 
     find_path(cassandra_includes NAMES cassandra.h REQUIRED)
-    target_link_libraries (reporting PUBLIC ${cassandra})
-    target_include_directories(reporting INTERFACE ${cassandra_includes})
+    target_link_libraries (clio PUBLIC ${cassandra})
+    target_include_directories(clio INTERFACE ${cassandra_includes})
 endif()
-

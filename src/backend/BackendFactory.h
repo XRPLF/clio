@@ -7,7 +7,7 @@
 #include <backend/PostgresBackend.h>
 
 namespace Backend {
-std::unique_ptr<BackendInterface>
+std::shared_ptr<BackendInterface>
 make_Backend(boost::json::object const& config)
 {
     BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
@@ -20,7 +20,7 @@ make_Backend(boost::json::object const& config)
 
     auto type = dbConfig.at("type").as_string();
 
-    std::unique_ptr<BackendInterface> backend = nullptr;
+    std::shared_ptr<BackendInterface> backend = nullptr;
 
     if (boost::iequals(type, "cassandra"))
     {
@@ -28,12 +28,12 @@ make_Backend(boost::json::object const& config)
             dbConfig.at(type).as_object()["ttl"] =
                 config.at("online_delete").as_int64() * 4;
         backend =
-            std::make_unique<CassandraBackend>(dbConfig.at(type).as_object());
+            std::make_shared<CassandraBackend>(dbConfig.at(type).as_object());
     }
     else if (boost::iequals(type, "postgres"))
     {
         backend =
-            std::make_unique<PostgresBackend>(dbConfig.at(type).as_object());
+            std::make_shared<PostgresBackend>(dbConfig.at(type).as_object());
     }
 
     if (!backend)

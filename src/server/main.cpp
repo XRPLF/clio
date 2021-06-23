@@ -119,7 +119,7 @@ main(int argc, char* argv[])
     auto const config = parse_config(argv[1]);
     if (!config)
     {
-        std::cerr << "Ccouldnt parse config. Exiting..." << std::endl;
+        std::cerr << "Couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
     initLogLevel(*config);
@@ -133,24 +133,39 @@ main(int argc, char* argv[])
     }
     BOOST_LOG_TRIVIAL(info) << "Number of workers = " << threads;
 
+    // io context to handle all incoming requests, as well as other things
+    // This is not the only io context in the application
     boost::asio::io_context ioc{threads};
 
+    // Rate limiter, to prevent abuse
     DOSGuard dosGuard{config.value(), ioc};
 
+    // Interface to the database
     std::shared_ptr<BackendInterface> backend{Backend::make_Backend(*config)};
 
+    // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{
         SubscriptionManager::make_SubscriptionManager()};
 
+    // Tracks which ledgers have been validated by the
+    // network
     std::shared_ptr<NetworkValidatedLedgers> ledgers{
         NetworkValidatedLedgers::make_ValidatedLedgers()};
 
+    // Handles the connection to one or more rippled nodes.
+    // ETL uses the balancer to extract data.
+    // The server uses the balancer to forward RPCs to a rippled node.
+    // The balancer itself publishes to streams (transactions_proposed and
+    // accounts_proposed)
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
         *config, ioc, backend, subscriptions, ledgers);
 
+    // ETL is responsible for writing and publishing to streams. In read-only
+    // mode, ETL only publishes
     auto etl = ReportingETL::make_ReportingETL(
         *config, ioc, backend, subscriptions, balancer, ledgers);
 
+    // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(
         *config, ioc, backend, subscriptions, balancer, dosGuard);
 

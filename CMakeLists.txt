@@ -8,7 +8,7 @@
 #
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
-project(reporting)
+project(clio)
 cmake_minimum_required(VERSION 3.16)
 set (CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-narrowing")
@@ -30,22 +30,23 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 
-add_executable (reporting_main
-    server/websocket_server_async.cpp
+add_executable (clio_server
+    src/server/main.cpp
 )
-add_executable (reporting_tests
+add_executable (clio_tests
     unittests/main.cpp
 )
-add_library(reporting backend/BackendInterface.h)
+add_library(clio src/backend/BackendInterface.h)
+include_directories(src)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
 message(${CMAKE_MODULE_PATH})
 #include(rippled/Builds/CMake/RippledCore.cmake)
 add_subdirectory(rippled)
-target_link_libraries(reporting PUBLIC xrpl_core grpc_pbufs)
-add_dependencies(reporting xrpl_core)
-add_dependencies(reporting grpc_pbufs)
+target_link_libraries(clio PUBLIC xrpl_core grpc_pbufs)
+add_dependencies(clio xrpl_core)
+add_dependencies(clio grpc_pbufs)
 get_target_property(grpc_includes grpc_pbufs INCLUDE_DIRECTORIES)
 #get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
 # get_target_property(proto_includes protobuf_src INCLUDE_DIRECTORIES)
@@ -66,43 +67,43 @@ include(cassandra)
 include(Postgres)
 
 
-target_sources(reporting PRIVATE
-    backend/CassandraBackend.cpp
-    backend/PostgresBackend.cpp
-    backend/BackendIndexer.cpp
-    backend/BackendInterface.cpp
-    backend/Pg.cpp
-    backend/DBHelpers.cpp
-    etl/ETLSource.cpp
-    etl/ReportingETL.cpp
-    server/Handlers.cpp
-    server/SubscriptionManager.cpp
-    handlers/AccountInfo.cpp
-    handlers/Tx.cpp
-    handlers/RPCHelpers.cpp
-    handlers/AccountTx.cpp
-    handlers/LedgerData.cpp
-    handlers/BookOffers.cpp
-    handlers/LedgerRange.cpp
-    handlers/Ledger.cpp
-    handlers/LedgerEntry.cpp
-    handlers/AccountChannels.cpp
-    handlers/AccountLines.cpp
-    handlers/AccountCurrencies.cpp
-    handlers/AccountOffers.cpp
-    handlers/AccountObjects.cpp
-    handlers/ChannelAuthorize.cpp
-    handlers/ChannelVerify.cpp
-    handlers/Subscribe.cpp
-    handlers/ServerInfo.cpp)
+target_sources(clio PRIVATE
+    src/backend/CassandraBackend.cpp
+    src/backend/PostgresBackend.cpp
+    src/backend/BackendIndexer.cpp
+    src/backend/BackendInterface.cpp
+    src/backend/Pg.cpp
+    src/backend/DBHelpers.cpp
+    src/etl/ETLSource.cpp
+    src/etl/ReportingETL.cpp
+    src/server/Handlers.cpp
+    src/server/SubscriptionManager.cpp
+    src/handlers/AccountInfo.cpp
+    src/handlers/Tx.cpp
+    src/handlers/RPCHelpers.cpp
+    src/handlers/AccountTx.cpp
+    src/handlers/LedgerData.cpp
+    src/handlers/BookOffers.cpp
+    src/handlers/LedgerRange.cpp
+    src/handlers/Ledger.cpp
+    src/handlers/LedgerEntry.cpp
+    src/handlers/AccountChannels.cpp
+    src/handlers/AccountLines.cpp
+    src/handlers/AccountCurrencies.cpp
+    src/handlers/AccountOffers.cpp
+    src/handlers/AccountObjects.cpp
+    src/handlers/ChannelAuthorize.cpp
+    src/handlers/ChannelVerify.cpp
+    src/handlers/Subscribe.cpp
+    src/handlers/ServerInfo.cpp)
 
 
 message(${Boost_LIBRARIES})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-TARGET_LINK_LIBRARIES(reporting PUBLIC ${Boost_LIBRARIES})
-TARGET_LINK_LIBRARIES(reporting_main PUBLIC reporting)
-TARGET_LINK_LIBRARIES(reporting_tests PUBLIC reporting gtest_main)
+TARGET_LINK_LIBRARIES(clio PUBLIC ${Boost_LIBRARIES})
+TARGET_LINK_LIBRARIES(clio_server PUBLIC clio)
+TARGET_LINK_LIBRARIES(clio_tests PUBLIC clio gtest_main)
 
 
-gtest_discover_tests(reporting_tests)
+gtest_discover_tests(clio_tests)
 
