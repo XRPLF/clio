@@ -681,7 +681,7 @@ import pathlib
 numCalls = 0
 async def ledgers(ip, port, minLedger, maxLedger, transactions, expand, maxCalls):
     global numCalls
-    address = 'wss://' + str(ip) + ':' + str(port)
+    address = 'ws://' + str(ip) + ':' + str(port)
     random.seed()
     ledger = 0
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -690,7 +690,7 @@ async def ledgers(ip, port, minLedger, maxLedger, transactions, expand, maxCalls
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
     try:
-        async with websockets.connect(address,max_size=1000000000,ssl=ssl_context) as ws:
+        async with websockets.connect(address,max_size=1000000000) as ws:
             global numCalls
             for i in range(0, maxCalls):
                 

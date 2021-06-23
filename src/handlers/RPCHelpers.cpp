@@ -1,5 +1,5 @@
-#include <handlers/RPCHelpers.h>
 #include <backend/BackendInterface.h>
+#include <handlers/RPCHelpers.h>
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account)
@@ -60,11 +60,8 @@ deserializeTxPlusMeta(
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
-    std::shared_ptr<ripple::TxMeta> m = 
-        std::make_shared<ripple::TxMeta>(
-            tx->getTransactionID(),
-            seq,
-            *meta);
+    std::shared_ptr<ripple::TxMeta> m =
+        std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
 
     return {tx, m};
 }
@@ -85,9 +82,8 @@ toJson(ripple::STBase const& obj)
 boost::json::value
 getJson(Json::Value const& value)
 {
-    boost::json::value boostValue = 
-        boost::json::parse(value.toStyledString());
-    
+    boost::json::value boostValue = boost::json::parse(value.toStyledString());
+
     return boostValue;
 }
 
@@ -147,7 +143,8 @@ ledgerSequenceFromRequest(
     boost::json::object const& request,
     BackendInterface const& backend)
 {
-    if (not request.contains("ledger_index"))
+    if (!request.contains("ledger_index") ||
+        request.at("ledger_index").is_string())
     {
         return backend.fetchLatestLedgerSequence();
     }
