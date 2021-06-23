@@ -31,7 +31,7 @@ enable_testing()
 include(GoogleTest)
 
 add_executable (clio_server
-    src/server/main.cpp
+    src/main.cpp
 )
 add_executable (clio_tests
     unittests/main.cpp
