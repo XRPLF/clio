@@ -8,7 +8,7 @@ The data model used by clio is called the flat map data model. The flat map data
 SHAMap inner nodes, and instead only stores the raw ledger objects contained in the leaf node. Ledger objects
 are stored in the database with a compound key of `(object_id, ledger_sequence)`, where `ledger_sequence` is the
 ledger in which the object was created or modified. Objects are then fetched using an inequality operation,
-such as `SELECT * FROM objects WHERE object_id = id AND ledger_sequence <= seq`, where `seq` is the ledger
+such as `SELECT * FROM objects WHERE object_id = id AND ledger_sequence <= seq order by ledger_sequence limit 1`, where `seq` is the ledger
 in which we are trying to look up the object. When an object is deleted, we write an empty blob.
 
 Transactions are stored in a separate table, where the key is the hash.
