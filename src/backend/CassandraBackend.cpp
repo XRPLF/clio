@@ -1,6 +1,6 @@
-#include <functional>
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
+#include <functional>
 #include <unordered_map>
 /*
 namespace std {
@@ -268,7 +268,9 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     CassandraResult result = executeSyncRead(statement);
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+        BOOST_LOG_TRIVIAL(error)
+            << __func__
+            << " - no rows . ledger = " << std::to_string(ledgerSequence);
         return {};
     }
     std::vector<ripple::uint256> hashes;
@@ -742,7 +744,7 @@ CassandraBackend::writeKeys(
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
     uint32_t concurrentLimit =
-        isAsync ? indexerMaxRequestsOutstanding : keys.size();
+        isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " Ledger = " << std::to_string(index.keyIndex)
         << " . num keys = " << std::to_string(keys.size())

@@ -26,9 +26,9 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include <server/SubscriptionManager.h>
 #include <cstdlib>
 #include <iostream>
+#include <server/SubscriptionManager.h>
 #include <string>
 #include <variant>
 
@@ -173,9 +173,22 @@ ReportingETL::getFees(std::uint32_t seq)
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
-    auto ledgerRange = backend_->fetchLedgerRange();
+    auto ledgerRange = backend_->fetchLedgerRangeNoThrow();
+
     auto fees = getFees(lgrInfo.seq);
-    auto transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+    std::vector<Backend::TransactionAndMetadata> transactions;
+    while (true)
+    {
+        try
+        {
+            transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+            break;
+        }
+        catch (Backend::DatabaseTimeout const&)
+        {
+            BOOST_LOG_TRIVIAL(warning) << "Read timeout fetching transactions";
+        }
+    }
 
     if (!fees || !ledgerRange)
     {
@@ -245,7 +258,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                 auto lgr = backend_->fetchLedgerBySequence(ledgerSequence);
                 assert(lgr);
                 publishLedger(*lgr);
-                
+
                 return true;
             }
         }
@@ -253,7 +266,6 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
         {
             continue;
         }
-
     }
     return false;
 }
@@ -553,7 +565,9 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // success is false if the ledger was already written
             if (success)
             {
-                publishLedger(lgrInfo);
+                boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
+                    publishLedger(lgrInfo);
+                });
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
