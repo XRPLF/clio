@@ -26,9 +26,9 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include <server/SubscriptionManager.h>
 #include <cstdlib>
 #include <iostream>
+#include <server/SubscriptionManager.h>
 #include <string>
 #include <variant>
 
@@ -245,7 +245,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                 auto lgr = backend_->fetchLedgerBySequence(ledgerSequence);
                 assert(lgr);
                 publishLedger(*lgr);
-                
+
                 return true;
             }
         }
@@ -253,7 +253,6 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
         {
             continue;
         }
-
     }
     return false;
 }
@@ -516,6 +515,30 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         beast::setCurrentThreadName("rippled: ReportingETL transform");
         uint32_t currentSequence = startSequence;
 
+        int counter = 0;
+        std::atomic_int per = 1;
+        auto startTimer = [this, &per]() {
+            std::cout << "calling outer";
+            auto innerFunc = [this, &per](auto& f) -> void {
+                std::cout << "calling inner";
+                std::shared_ptr<boost::asio::steady_timer> timer =
+                    std::make_shared<boost::asio::steady_timer>(
+                        ioContext_,
+                        std::chrono::steady_clock::now() +
+                            std::chrono::seconds(30));
+                timer->async_wait(
+                    [timer, f, &per](const boost::system::error_code& error) {
+                        std::cout << "***incrementing per*****";
+                        ++per;
+                        if (per > 100)
+                            per = 100;
+                        f(f);
+                    });
+            };
+            innerFunc(innerFunc);
+        };
+        startTimer();
+
         while (!writeConflict)
         {
             std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{
@@ -569,6 +592,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                     minSequence = rng->minSequence;
                     deleting_ = false;
                 });
+            }
+            if (++counter >= per)
+            {
+                std::this_thread::sleep_for(std::chrono::seconds(4));
+                counter = 0;
             }
         }
     }};

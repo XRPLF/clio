@@ -174,8 +174,6 @@ handle_request(
 
         wsStyleRequest["command"] = request["method"];
 
-        std::cout << "Transfromed to ws style stuff" << std::endl;
-
         auto [builtResponse, cost] =
             buildResponse(wsStyleRequest, backend, nullptr, balancer, nullptr);
 

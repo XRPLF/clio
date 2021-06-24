@@ -1,6 +1,6 @@
-#include <functional>
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
+#include <functional>
 #include <unordered_map>
 /*
 namespace std {
@@ -268,7 +268,9 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     CassandraResult result = executeSyncRead(statement);
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+        BOOST_LOG_TRIVIAL(error)
+            << __func__
+            << " - no rows . ledger = " << std::to_string(ledgerSequence);
         return {};
     }
     std::vector<ripple::uint256> hashes;
