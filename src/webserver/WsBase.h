@@ -272,6 +272,9 @@ public:
             {
                 BOOST_LOG_TRIVIAL(error)
                     << __func__ << " caught exception : " << e.what();
+
+                return send(boost::json::serialize(
+                    RPC::make_error(RPC::Error::rpcINTERNAL)));
             }
         }
         BOOST_LOG_TRIVIAL(trace) << __func__ << response_;

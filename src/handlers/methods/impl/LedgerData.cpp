@@ -60,7 +60,7 @@ LedgerData::check()
         if(!request.at("limit").is_int64())
             return {Error::rpcINVALID_PARAMS, "limitNotInteger"};
         
-        limit = request.at("binary").as_int64();
+        limit = value_to<int>(request.at("limit"));
     }
 
     std::optional<ripple::uint256> cursor;
@@ -70,6 +70,7 @@ LedgerData::check()
             return {Error::rpcINVALID_PARAMS, "cursorNotString"};
         
         BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing cursor";
+
         cursor = ripple::uint256{};
         if(!cursor->parseHex(request.at("cursor").as_string().c_str()))
             return {Error::rpcINVALID_PARAMS, "cursorMalformed"};
@@ -92,32 +93,36 @@ LedgerData::check()
             .count();
 
     boost::json::object header;
-    if (binary)
+    if(!cursor)
     {
-        header["ledger_data"] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
-    }
-    else
-    {
-        header["accepted"] = true;
-        header["account_hash"] = ripple::strHex(lgrInfo.accountHash);
-        header["close_flags"] = lgrInfo.closeFlags;
-        header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
-        header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);;
-        header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
-        header["closed"] = true;
-        header["hash"] = ripple::strHex(lgrInfo.hash);
-        header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-        header["ledger_index"] = std::to_string(lgrInfo.seq);
-        header["parent_close_time"] =
-            lgrInfo.parentCloseTime.time_since_epoch().count();
-        header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
-        header["seqNum"] = std::to_string(lgrInfo.seq);
-        header["totalCoins"] = ripple::to_string(lgrInfo.drops);
-        header["total_coins"] = ripple::to_string(lgrInfo.drops);
-        header["transaction_hash"] = ripple::strHex(lgrInfo.txHash);
+        if (binary)
+        {
+            header["ledger_data"] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
+        }
+        else
+        {
+            header["accepted"] = true;
+            header["account_hash"] = ripple::strHex(lgrInfo.accountHash);
+            header["close_flags"] = lgrInfo.closeFlags;
+            header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
+            header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);;
+            header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
+            header["closed"] = true;
+            header["hash"] = ripple::strHex(lgrInfo.hash);
+            header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+            header["ledger_index"] = std::to_string(lgrInfo.seq);
+            header["parent_close_time"] =
+                lgrInfo.parentCloseTime.time_since_epoch().count();
+            header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
+            header["seqNum"] = std::to_string(lgrInfo.seq);
+            header["totalCoins"] = ripple::to_string(lgrInfo.drops);
+            header["total_coins"] = ripple::to_string(lgrInfo.drops);
+            header["transaction_hash"] = ripple::strHex(lgrInfo.txHash);
+
+            response_["ledger"] = header;
+        }
     }
         
-    response_["ledger"] = header;
     response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response_["ledger_index"] = lgrInfo.seq;
 
@@ -147,7 +152,7 @@ LedgerData::check()
     response_["state"] = objects;
 
 
-    if (page.warning)
+    if (cursor && page.warning)
     {
         response_["warning"] =
             "Periodic database update in progress. Data for this ledger may be "

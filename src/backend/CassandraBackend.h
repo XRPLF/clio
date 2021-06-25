@@ -575,6 +575,8 @@ public:
         {
             BOOST_LOG_TRIVIAL(trace) << "finished a request";
             size_t batchSize = requestParams_.batchSize;
+
+            std::unique_lock lk(requestParams_.mtx);
             if (++(requestParams_.numFinished) == batchSize)
                 requestParams_.cv.notify_all();
         }
@@ -1054,6 +1056,7 @@ public:
         CassandraBackend const& backend;
         ripple::uint256 const& hash;
         TransactionAndMetadata& result;
+        std::mutex& mtx;
         std::condition_variable& cv;
 
         std::atomic_uint32_t& numFinished;
@@ -1063,12 +1066,14 @@ public:
             CassandraBackend const& backend,
             ripple::uint256 const& hash,
             TransactionAndMetadata& result,
+            std::mutex& mtx,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
             size_t batchSize)
             : backend(backend)
             , hash(hash)
             , result(result)
+            , mtx(mtx)
             , cv(cv)
             , numFinished(numFinished)
             , batchSize(batchSize)
@@ -1093,7 +1098,7 @@ public:
         for (std::size_t i = 0; i < hashes.size(); ++i)
         {
             cbs.push_back(std::make_shared<ReadCallbackData>(
-                *this, hashes[i], results[i], cv, numFinished, numHashes));
+                *this, hashes[i], results[i], mtx, cv, numFinished, numHashes));
             read(*cbs[i]);
         }
         assert(results.size() == cbs.size());
@@ -1127,6 +1132,7 @@ public:
         ripple::uint256 const& key;
         uint32_t sequence;
         Blob& result;
+        std::mutex& mtx;
         std::condition_variable& cv;
 
         std::atomic_uint32_t& numFinished;
@@ -1137,6 +1143,7 @@ public:
             ripple::uint256 const& key,
             uint32_t sequence,
             Blob& result,
+            std::mutex& mtx,
             std::condition_variable& cv,
             std::atomic_uint32_t& numFinished,
             size_t batchSize)
@@ -1144,6 +1151,7 @@ public:
             , key(key)
             , sequence(sequence)
             , result(result)
+            , mtx(mtx)
             , cv(cv)
             , numFinished(numFinished)
             , batchSize(batchSize)

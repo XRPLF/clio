@@ -111,27 +111,26 @@ shouldForwardToRippled(Context const& ctx)
 
     if (request.contains("forward") && request.at("forward").is_bool())
         return request.at("forward").as_bool();
-    BOOST_LOG_TRIVIAL(info) << "checked forward";
 
-    std::string strCommand = request.contains("command")
-        ? request.at("command").as_string().c_str()
-        : request.at("method").as_string().c_str();
-    BOOST_LOG_TRIVIAL(info) << "checked command";
+    BOOST_LOG_TRIVIAL(debug) << "checked forward";
 
-    if (forwardCommands.find(strCommand) != forwardCommands.end())
+    if (forwardCommands.find(ctx.method) != forwardCommands.end())
         return true;
+
+    BOOST_LOG_TRIVIAL(debug) << "checked command";
 
     if (request.contains("ledger_index"))
     {
         auto indexValue = request.at("ledger_index");
         if (indexValue.is_string())
         {
-            BOOST_LOG_TRIVIAL(info) << "checking ledger as string";
+            BOOST_LOG_TRIVIAL(debug) << "checking ledger as string";
             std::string index = indexValue.as_string().c_str();
             return index == "current" || index == "closed";
         }
     }
-    BOOST_LOG_TRIVIAL(info) << "checked ledger";
+    
+    BOOST_LOG_TRIVIAL(debug) << "checked ledger";
 
     return false;
 }

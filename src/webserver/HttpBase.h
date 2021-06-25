@@ -193,6 +193,8 @@ handle_request(
             result["validated"] = true;
         }
 
+        // std::cout << response << std::endl;
+
         return send(httpResponse(
             http::status::ok,
             "application/json",

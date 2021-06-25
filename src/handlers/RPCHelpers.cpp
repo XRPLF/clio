@@ -74,9 +74,6 @@ toJson(ripple::STBase const& obj)
     boost::json::value value = boost::json::parse(
         obj.getJson(ripple::JsonOptions::none).toStyledString());
     auto end = std::chrono::system_clock::now();
-    value.as_object()["deserialization_time_microseconds"] =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
     return value.as_object();
 }
 
@@ -87,9 +84,6 @@ toJson(ripple::TxMeta const& meta)
     boost::json::value value = boost::json::parse(
         meta.getJson(ripple::JsonOptions::none).toStyledString());
     auto end = std::chrono::system_clock::now();
-    value.as_object()["deserialization_time_microseconds"] =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
     return value.as_object();
 }
 
@@ -122,9 +116,6 @@ toJson(ripple::SLE const& sle)
     boost::json::value value = boost::json::parse(
         sle.getJson(ripple::JsonOptions::none).toStyledString());
     auto end = std::chrono::system_clock::now();
-    value.as_object()["deserialization_time_microseconds"] =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
     return value.as_object();
 }
 
@@ -151,8 +142,13 @@ toJson(ripple::LedgerInfo const& lgrInfo)
 std::variant<RPC::Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(RPC::Context const& ctx)
 {
-    auto indexValue = ctx.params.at("ledger_index");
-    auto hashValue = ctx.params.at("ledger_hash");
+    auto indexValue = ctx.params.contains("ledger_index")
+        ? ctx.params.at("ledger_index")
+        : nullptr;
+
+    auto hashValue = ctx.params.contains("ledger_hash")
+        ? ctx.params.at("ledger_hash")
+        : nullptr;
 
     std::optional<ripple::LedgerInfo> lgrInfo;
     if (!hashValue.is_null())

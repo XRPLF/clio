@@ -120,13 +120,10 @@ LedgerEntry::check()
         }
         else
         {
-            std::uint64_t subIndex =
-                request.at("directory").as_object().contains("sub_index")
-                ? request.at("directory").as_object().at("sub_index").as_int64()
+            auto directory = request.at("directory").as_object();
+            std::uint64_t subIndex = directory.contains("sub_index")
+                ? value_to<std::uint64_t>(directory.at("sub_index"))
                 : 0;
-
-             boost::json::object const& directory =
-                    request.at("directory").as_object();
 
             if (directory.contains("dir_root"))
             {
@@ -158,9 +155,12 @@ LedgerEntry::check()
                 }
                 else
                 {
+                    std::cout << "GOT OWNER ID " << *ownerID << std::endl;
                     key =
                         ripple::keylet::page(
                             ripple::keylet::ownerDir(*ownerID), subIndex).key;
+
+                    std::cout << "GOT KEY " << key << std::endl;
                 }
             }
             else
@@ -217,22 +217,24 @@ LedgerEntry::check()
             return {Error::rpcINVALID_PARAMS, "malformedAccount"};
         }
         else if (
-            !request.at("escrow").as_object().contains("seq") ||
-            !request.at("escrow").as_object().at("seq").is_int64())
+            !request.at("offer").as_object().contains("seq") ||
+            !request.at("offer").as_object().at("seq").is_int64())
         {
             return {Error::rpcINVALID_PARAMS, "malformedSeq"};
         }
         else
         {
+            auto offer = request.at("offer").as_object();
             auto const id = ripple::parseBase58<ripple::AccountID>(
-                request.at("offer").as_object().at("account").as_string().c_str());
+                offer.at("account").as_string().c_str());
+
+            std::cout << "PARSED" << std::endl;
 
             if (!id)
                 return {Error::rpcINVALID_PARAMS, "malformedAccount"};
             else
             {
-                std::uint32_t seq = 
-                    request.at("offer").as_object().at("seq").as_int64();
+                std::uint32_t seq = value_to<std::uint32_t>(offer.at("seq"));
                 key = ripple::keylet::offer(*id, seq).key;
             }
         }
@@ -331,12 +333,15 @@ LedgerEntry::check()
         return {Error::rpcINVALID_PARAMS, "unknownOption"};
     }
 
+    std::cout << "KEY IS " << key << std::endl;
     auto start = std::chrono::system_clock::now();
     auto dbResponse = context_.backend->fetchLedgerObject(key, lgrInfo.seq);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
+
+    std::cout << "GOT OBJECTS" << std::endl;
 
     if (!dbResponse or dbResponse->size() == 0)
         return {Error::rpcENTRY_NOT_FOUND};
@@ -347,14 +352,17 @@ LedgerEntry::check()
 
     if (binary)
     {
+        std::cout << "BIN" << std::endl;
         response_["node_binary"] = ripple::strHex(*dbResponse);
     }
     else
     {
+        std::cout << "NOT BIN" << std::endl;
         ripple::STLedgerEntry sle{
             ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
         response_["node"] = toJson(sle);
     }
+    std::cout << "DONE" << std::endl;
 
     return OK;
 }
