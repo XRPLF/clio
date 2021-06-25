@@ -193,8 +193,6 @@ handle_request(
             result["validated"] = true;
         }
 
-        // std::cout << response << std::endl;
-
         return send(httpResponse(
             http::status::ok,
             "application/json",
@@ -202,7 +200,6 @@ handle_request(
     }
     catch (std::exception const& e)
     {
-        std::cout << e.what() << std::endl;
         return send(httpResponse(
             http::status::internal_server_error,
             "application/json",

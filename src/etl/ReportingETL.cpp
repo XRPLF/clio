@@ -449,7 +449,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 
     auto getNext = [&queues, &startSequence, &numExtractors](
                        uint32_t sequence) -> std::shared_ptr<QueueType> {
-        std::cout << std::to_string((sequence - startSequence) % numExtractors);
         return queues[(sequence - startSequence) % numExtractors];
     };
     std::vector<std::thread> extractors;

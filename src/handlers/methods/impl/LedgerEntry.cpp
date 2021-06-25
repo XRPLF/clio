@@ -155,12 +155,9 @@ LedgerEntry::check()
                 }
                 else
                 {
-                    std::cout << "GOT OWNER ID " << *ownerID << std::endl;
                     key =
                         ripple::keylet::page(
                             ripple::keylet::ownerDir(*ownerID), subIndex).key;
-
-                    std::cout << "GOT KEY " << key << std::endl;
                 }
             }
             else
@@ -227,8 +224,6 @@ LedgerEntry::check()
             auto offer = request.at("offer").as_object();
             auto const id = ripple::parseBase58<ripple::AccountID>(
                 offer.at("account").as_string().c_str());
-
-            std::cout << "PARSED" << std::endl;
 
             if (!id)
                 return {Error::rpcINVALID_PARAMS, "malformedAccount"};
@@ -333,15 +328,12 @@ LedgerEntry::check()
         return {Error::rpcINVALID_PARAMS, "unknownOption"};
     }
 
-    std::cout << "KEY IS " << key << std::endl;
     auto start = std::chrono::system_clock::now();
     auto dbResponse = context_.backend->fetchLedgerObject(key, lgrInfo.seq);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
-
-    std::cout << "GOT OBJECTS" << std::endl;
 
     if (!dbResponse or dbResponse->size() == 0)
         return {Error::rpcENTRY_NOT_FOUND};
@@ -352,17 +344,14 @@ LedgerEntry::check()
 
     if (binary)
     {
-        std::cout << "BIN" << std::endl;
         response_["node_binary"] = ripple::strHex(*dbResponse);
     }
     else
     {
-        std::cout << "NOT BIN" << std::endl;
         ripple::STLedgerEntry sle{
             ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
         response_["node"] = toJson(sle);
     }
-    std::cout << "DONE" << std::endl;
 
     return OK;
 }

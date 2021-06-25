@@ -153,7 +153,6 @@ private:
     void
     do_upgrade()
     {
-        std::cout << "doing upgrade" << std::endl;
         parser_.emplace();
 
         // Apply a reasonable limit to the allowed size

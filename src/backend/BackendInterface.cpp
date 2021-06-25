@@ -31,7 +31,6 @@ BackendInterface::isLedgerIndexed(std::uint32_t ledgerSequence) const
     if (keyIndex)
     {
         auto page = doFetchLedgerPage({}, ledgerSequence, 1);
-        std::cout << !page.warning.has_value() << std::endl;
         return !page.warning.has_value();
     }
     return false;

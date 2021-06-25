@@ -127,12 +127,10 @@ public:
     void
     run(http::request<http::string_body> req)
     {
-        std::cout << "Running ws" << std::endl;
         // Set suggested timeout settings for the websocket
         derived().ws().set_option(websocket::stream_base::timeout::suggested(
             boost::beast::role_type::server));
 
-        std::cout << "Trying to decorate" << std::endl;
         // Set a decorator to change the Server of the handshake
         derived().ws().set_option(websocket::stream_base::decorator(
             [](websocket::response_type& res) {
@@ -141,8 +139,6 @@ public:
                     std::string(BOOST_BEAST_VERSION_STRING) +
                         " websocket-server-async");
             }));
-
-        std::cout << "trying to async accept" << std::endl;
 
         derived().ws().async_accept(
             req,
@@ -190,7 +186,6 @@ public:
         // This indicates that the session was closed
         if (ec == boost::beast::websocket::error::closed)
         {
-            std::cout << "session closed" << std::endl;
             return;
         }
 
