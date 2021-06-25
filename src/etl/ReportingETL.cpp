@@ -173,9 +173,22 @@ ReportingETL::getFees(std::uint32_t seq)
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
-    auto ledgerRange = backend_->fetchLedgerRange();
+    auto ledgerRange = backend_->fetchLedgerRangeNoThrow();
+
     auto fees = getFees(lgrInfo.seq);
-    auto transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+    std::vector<Backend::TransactionAndMetadata> transactions;
+    while (true)
+    {
+        try
+        {
+            transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+            break;
+        }
+        catch (Backend::DatabaseTimeout const&)
+        {
+            BOOST_LOG_TRIVIAL(warning) << "Read timeout fetching transactions";
+        }
+    }
 
     if (!fees || !ledgerRange)
     {
@@ -516,20 +529,19 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         uint32_t currentSequence = startSequence;
 
         int counter = 0;
-        std::atomic_int per = 1;
+        std::atomic_int per = 4;
         auto startTimer = [this, &per]() {
-            std::cout << "calling outer";
             auto innerFunc = [this, &per](auto& f) -> void {
-                std::cout << "calling inner";
                 std::shared_ptr<boost::asio::steady_timer> timer =
                     std::make_shared<boost::asio::steady_timer>(
                         ioContext_,
                         std::chrono::steady_clock::now() +
-                            std::chrono::seconds(30));
+                            std::chrono::minutes(5));
                 timer->async_wait(
                     [timer, f, &per](const boost::system::error_code& error) {
-                        std::cout << "***incrementing per*****";
                         ++per;
+                        BOOST_LOG_TRIVIAL(info)
+                            << "Incremented per to " << std::to_string(per);
                         if (per > 100)
                             per = 100;
                         f(f);
@@ -538,6 +550,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             innerFunc(innerFunc);
         };
         startTimer();
+        auto begin = std::chrono::system_clock::now();
 
         while (!writeConflict)
         {
@@ -576,7 +589,9 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // success is false if the ledger was already written
             if (success)
             {
-                publishLedger(lgrInfo);
+                boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
+                    publishLedger(lgrInfo);
+                });
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
@@ -595,8 +610,14 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             }
             if (++counter >= per)
             {
-                std::this_thread::sleep_for(std::chrono::seconds(4));
+                std::chrono::milliseconds sleep =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::seconds(4) - (end - begin));
+                BOOST_LOG_TRIVIAL(info) << "Sleeping for " << sleep.count()
+                                        << " . per = " << std::to_string(per);
+                std::this_thread::sleep_for(sleep);
                 counter = 0;
+                begin = std::chrono::system_clock::now();
             }
         }
     }};

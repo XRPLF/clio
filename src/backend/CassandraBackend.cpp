@@ -744,7 +744,7 @@ CassandraBackend::writeKeys(
     std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
     cbs.reserve(keys.size());
     uint32_t concurrentLimit =
-        isAsync ? indexerMaxRequestsOutstanding : keys.size();
+        isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " Ledger = " << std::to_string(index.keyIndex)
         << " . num keys = " << std::to_string(keys.size())
