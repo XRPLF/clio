@@ -1600,9 +1600,7 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << " SELECT sequence FROM " << tablePrefix
-              << "ledger_range WHERE "
-              << " is_latest IN (true, false)";
+        query << " SELECT sequence FROM " << tablePrefix << "ledger_range";
         if (!selectLedgerRange_.prepareStatement(query, session_.get()))
             continue;
         /*
