@@ -29,7 +29,7 @@
 #include <webserver/SubscriptionManager.h>
 #include <cstdlib>
 #include <iostream>
-#include <server/SubscriptionManager.h>
+#include <webserver/SubscriptionManager.h>
 #include <string>
 #include <variant>
 
@@ -143,7 +143,7 @@ void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
     auto ledgerRange = backend_->fetchLedgerRangeNoThrow();
-    auto fees = backend_->getFees(lgrInfo.seq);
+    auto fees = backend_->fetchFees(lgrInfo.seq);
     auto transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
 
     if (!fees || !ledgerRange)

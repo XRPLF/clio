@@ -70,20 +70,18 @@ deserializeTxPlusMeta(
 boost::json::object
 toJson(ripple::STBase const& obj)
 {
-    auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
         obj.getJson(ripple::JsonOptions::none).toStyledString());
-    auto end = std::chrono::system_clock::now();
+
     return value.as_object();
 }
 
 boost::json::object
 toJson(ripple::TxMeta const& meta)
 {
-    auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
         meta.getJson(ripple::JsonOptions::none).toStyledString());
-    auto end = std::chrono::system_clock::now();
+
     return value.as_object();
 }
 
@@ -97,25 +95,11 @@ toBoostJson(Json::Value const& value)
 }
 
 boost::json::object
-toJson(ripple::TxMeta const& meta)
-{
-    auto start = std::chrono::system_clock::now();
-    boost::json::value value = boost::json::parse(
-        meta.getJson(ripple::JsonOptions::none).toStyledString());
-    auto end = std::chrono::system_clock::now();
-    value.as_object()["deserialization_time_microseconds"] =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-    return value.as_object();
-}
-
-boost::json::object
 toJson(ripple::SLE const& sle)
 {
-    auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
         sle.getJson(ripple::JsonOptions::none).toStyledString());
-    auto end = std::chrono::system_clock::now();
+
     return value.as_object();
 }
 
@@ -432,23 +416,6 @@ getAccountsFromTransaction(boost::json::object const& transaction)
     return accounts;
 }
 
-std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info)
-{
-    ripple::Serializer s;
-    s.add32(info.seq);
-    s.add64(info.drops.drops());
-    s.addBitString(info.parentHash);
-    s.addBitString(info.txHash);
-    s.addBitString(info.accountHash);
-    s.add32(info.parentCloseTime.time_since_epoch().count());
-    s.add32(info.closeTime.time_since_epoch().count());
-    s.add8(info.closeTimeResolution.count());
-    s.add8(info.closeFlags);
-    s.addBitString(info.hash);
-    return s.peekData();
-}
-
 bool
 isGlobalFrozen(
     BackendInterface const& backend,
@@ -531,7 +498,7 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
 
-    auto const reserve = backend.getFees(sequence)->accountReserve(ownerCount);
+    auto const reserve = backend.fetchFees(sequence)->accountReserve(ownerCount);
 
     auto const balance = sle.getFieldAmount(ripple::sfBalance);
 

@@ -335,7 +335,7 @@ BackendInterface::checkFlagLedgers() const
 }
 
 std::optional<ripple::Fees>
-BackendInterface::getFees(std::uint32_t seq) const
+BackendInterface::fetchFees(std::uint32_t seq) const
 {
     ripple::Fees fees;
 

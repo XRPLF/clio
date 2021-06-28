@@ -92,7 +92,7 @@ handle_request(
     DOSGuard& dosGuard,
     std::string const& ip)
 {
-    auto const response = [&req](
+    auto const httpResponse = [&req](
                               http::status status,
                               std::string content_type,
                               std::string message) {
@@ -107,13 +107,12 @@ handle_request(
 
     if (req.method() == http::verb::get && req.body() == "")
     {
-        send(response(http::status::ok, "text/html", defaultResponse));
+        send(httpResponse(http::status::ok, "text/html", defaultResponse));
         return;
     }
 
     if (req.method() != http::verb::post)
-    {
-        send(response(
+        return send(httpResponse(
             http::status::bad_request, "text/html", "Expected a POST request"));
 
     if (!dosGuard.isOk(ip))
