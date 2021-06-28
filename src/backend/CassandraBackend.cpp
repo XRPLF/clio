@@ -1575,6 +1575,12 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
+        query << "SELECT sequence FROM " << tablePrefix << "ledger_hashes "
+              << "WHERE hash = ? LIMIT 1";
+        if (!selectLedgerByHash_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
         query << " update " << tablePrefix << "ledger_range"
               << " set sequence = ? where is_latest = ? if sequence in "
                  "(?,null)";

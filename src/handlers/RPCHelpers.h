@@ -5,6 +5,8 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
 #include <boost/json.hpp>
+#include <handlers/Status.h>
+#include <handlers/Context.h>
 #include <backend/BackendInterface.h>
 
 std::optional<ripple::AccountID>
@@ -38,10 +40,8 @@ using RippledJson = Json::Value;
 boost::json::value
 toBoostJson(RippledJson const& value);
 
-std::optional<uint32_t>
-ledgerSequenceFromRequest(
-    boost::json::object const& request,
-    BackendInterface const& backend);
+std::variant<RPC::Status, ripple::LedgerInfo>
+ledgerInfoFromRequest(RPC::Context const& ctx);
 
 std::optional<ripple::uint256>
 traverseOwnedNodes(

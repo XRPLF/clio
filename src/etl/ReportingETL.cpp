@@ -26,6 +26,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <webserver/SubscriptionManager.h>
 #include <cstdlib>
 #include <iostream>
 #include <server/SubscriptionManager.h>

@@ -61,45 +61,46 @@ include(Postgres)
 
 
 target_sources(clio PRIVATE
+## Backend
+  src/backend/CassandraBackend.cpp
+  src/backend/PostgresBackend.cpp
+  src/backend/BackendIndexer.cpp
+  src/backend/BackendInterface.cpp
+  src/backend/Pg.cpp
+  src/backend/DBHelpers.cpp
 ## Reporting
-    src/reporting/ETLSource.cpp
-    src/reporting/CassandraBackend.cpp
-    src/reporting/PostgresBackend.cpp
-    src/reporting/BackendIndexer.cpp
-    src/reporting/Pg.cpp
-    src/reporting/P2pProxy.cpp
-    src/reporting/DBHelpers.cpp
-    src/reporting/ReportingETL.cpp
+  src/etl/ETLSource.cpp
+  src/etl/ReportingETL.cpp
 ## Server
-    src/server/SubscriptionManager.cpp
-## RPC
-    src/rpc/Status.cpp
-    src/rpc/RPCHelpers.cpp
-    src/rpc/Handlers.cpp
-    src/rpc/Context.cpp
+  src/webserver/SubscriptionManager.cpp
 ## Handlers
-    # Account
-    src/rpc/handlers/impl/AccountChannels.cpp
-    src/rpc/handlers/impl/AccountCurrencies.cpp
-    src/rpc/handlers/impl/AccountInfo.cpp
-    src/rpc/handlers/impl/AccountLines.cpp
-    src/rpc/handlers/impl/AccountOffers.cpp
-    src/rpc/handlers/impl/AccountObjects.cpp
-    # Ledger
-    src/rpc/handlers/impl/Ledger.cpp
-    src/rpc/handlers/impl/LedgerData.cpp
-    src/rpc/handlers/impl/LedgerEntry.cpp
-    src/rpc/handlers/impl/LedgerRange.cpp
-    # Transaction
-    src/rpc/handlers/impl/Tx.cpp
-    src/rpc/handlers/impl/AccountTx.cpp
-    # Dex
-    src/rpc/handlers/impl/BookOffers.cpp
-    # Payment Channel
-    src/rpc/handlers/impl/ChannelAuthorize.cpp
-    src/rpc/handlers/impl/ChannelVerify.cpp
-    # Subscribe
-    src/rpc/handlers/impl/Subscribe.cpp)
+  src/handlers/Status.cpp
+  src/handlers/RPCHelpers.cpp
+  src/handlers/Handlers.cpp
+  src/handlers/Context.cpp
+## Methods
+  # Account
+  src/handlers/methods/impl/AccountChannels.cpp
+  src/handlers/methods/impl/AccountCurrencies.cpp
+  src/handlers/methods/impl/AccountInfo.cpp
+  src/handlers/methods/impl/AccountLines.cpp
+  src/handlers/methods/impl/AccountOffers.cpp
+  src/handlers/methods/impl/AccountObjects.cpp
+  # Ledger
+  src/handlers/methods/impl/Ledger.cpp
+  src/handlers/methods/impl/LedgerData.cpp
+  src/handlers/methods/impl/LedgerEntry.cpp
+  src/handlers/methods/impl/LedgerRange.cpp
+  # Transaction
+  src/handlers/methods/impl/Tx.cpp
+  src/handlers/methods/impl/AccountTx.cpp
+  # Dex
+  src/handlers/methods/impl/BookOffers.cpp
+  # Payment Channel
+  src/handlers/methods/impl/ChannelAuthorize.cpp
+  src/handlers/methods/impl/ChannelVerify.cpp
+  # Subscribe
+  src/handlers/methods/impl/Subscribe.cpp)
 
 
 message(${Boost_LIBRARIES})

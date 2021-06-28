@@ -199,6 +199,20 @@ PostgresBackend::fetchLedgerBySequence(uint32_t sequence) const
     return {};
 }
 
+std::optional<ripple::LedgerInfo>
+PostgresBackend::fetchLedgerByHash(ripple::uint256 const& hash) const
+{
+    PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
+    std::stringstream sql;
+    sql << "SELECT * FROM ledgers WHERE ledger_hash = "
+        << ripple::to_string(hash);
+    auto res = pgQuery(sql.str().data());
+    if (checkResult(res, 10))
+        return parseLedgerInfo(res);
+    return {};
+}
+
 std::optional<LedgerRange>
 PostgresBackend::fetchLedgerRange() const
 {

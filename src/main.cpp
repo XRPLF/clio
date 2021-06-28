@@ -1,17 +1,21 @@
-//
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-// Official repository: https://github.com/boostorg/beast
-//
+//------------------------------------------------------------------------------
+/*
+    This file is part of rippled: https://github.com/ripple/rippled
+    Copyright (c) 2021 Ripple Labs Inc.
 
-//------------------------------------------------------------------------------
-//
-// Example: WebSocket server, asynchronous
-//
-//------------------------------------------------------------------------------
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose  with  or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL ,  DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
@@ -21,16 +25,14 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <algorithm>
+#include <backend/BackendFactory.h>
 #include <cstdlib>
+#include <etl/ReportingETL.h>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <reporting/ReportingETL.h>
-#include <reporting/BackendFactory.h>
-#include <server/Listener.h>
-#include <server/WsSession.h>
-#include <server/HttpSession.h>
+#include <webserver/Listener.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -111,10 +113,10 @@ main(int argc, char* argv[])
     // Check command line arguments.
     if (argc != 2)
     {
-        std::cerr << "Usage: websocket-server-async "
+        std::cerr << "Usage: clio_server "
                      "<config_file> \n"
                   << "Example:\n"
-                  << "    websocket-server-async config.json \n";
+                  << "    clio_server config.json \n";
         return EXIT_FAILURE;
     }
 
@@ -175,7 +177,6 @@ main(int argc, char* argv[])
     // When stopped, shared_ptrs fall out of scope
     // Calls destructors on all resources, and destructs in order
     start(ioc, threads);
-    std::cout << "Out Of Scope" << std::endl;
 
     return EXIT_SUCCESS;
 }

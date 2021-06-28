@@ -1,5 +1,6 @@
-#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
+#include <handlers/Status.h>
+#include <backend/BackendInterface.h>
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account)
@@ -80,7 +81,7 @@ toJson(ripple::STBase const& obj)
 }
 
 boost::json::object
-getJson(ripple::TxMeta const& meta)
+toJson(ripple::TxMeta const& meta)
 {
     auto start = std::chrono::system_clock::now();
     boost::json::value value = boost::json::parse(
@@ -93,10 +94,11 @@ getJson(ripple::TxMeta const& meta)
 }
 
 boost::json::value
-getJson(Json::Value const& value)
+toBoostJson(Json::Value const& value)
 {
-    boost::json::value boostValue = boost::json::parse(value.toStyledString());
-
+    boost::json::value boostValue = 
+        boost::json::parse(value.toStyledString());
+    
     return boostValue;
 }
 
@@ -126,12 +128,6 @@ toJson(ripple::SLE const& sle)
     return value.as_object();
 }
 
-boost::json::value
-toBoostJson(RippledJson const& value)
-{
-    return boost::json::parse(value.toStyledString());
-}
-
 boost::json::object
 toJson(ripple::LedgerInfo const& lgrInfo)
 {
@@ -152,24 +148,65 @@ toJson(ripple::LedgerInfo const& lgrInfo)
     return header;
 }
 
-std::optional<uint32_t>
-ledgerSequenceFromRequest(
-    boost::json::object const& request,
-    BackendInterface const& backend)
+std::variant<RPC::Status, ripple::LedgerInfo>
+ledgerInfoFromRequest(RPC::Context const& ctx)
 {
-    if (!request.contains("ledger_index") ||
-        request.at("ledger_index").is_string())
+    auto indexValue = ctx.params.at("ledger_index");
+    auto hashValue = ctx.params.at("ledger_hash");
+
+    std::optional<ripple::LedgerInfo> lgrInfo;
+    if (!hashValue.is_null())
     {
-        return backend.fetchLatestLedgerSequence();
+        if (!hashValue.is_string())
+            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
 
-    auto ledger_index = request.at("ledger_index");
-    if (ledger_index.is_string() and ledger_index.as_string() == "validated")
-        return backend.fetchLatestLedgerSequence();
+        ripple::uint256 ledgerHash;
+        if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
+            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-    if (ledger_index.is_int64())
-        return request.at("ledger_index").as_int64();
-    
-    return {};
+        lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash);
+
+    }
+    else if (!indexValue.is_null())
+    {
+        std::uint32_t ledgerSequence;
+        if (indexValue.is_string() && indexValue.as_string() == "validated")
+            ledgerSequence = ctx.range.maxSequence;
+        else if (!indexValue.is_string() && indexValue.is_int64())
+            ledgerSequence = indexValue.as_int64();
+        else
+            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
+
+        lgrInfo =
+            ctx.backend->fetchLedgerBySequence(ledgerSequence);
+    }
+    else
+    {
+        lgrInfo = 
+            ctx.backend->fetchLedgerBySequence(ctx.range.maxSequence);
+    }
+
+    if (!lgrInfo)
+        return RPC::Status{RPC::Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+
+    return *lgrInfo;
+}
+
+std::vector<unsigned char>
+ledgerInfoToBlob(ripple::LedgerInfo const& info)
+{
+    ripple::Serializer s;
+    s.add32(info.seq);
+    s.add64(info.drops.drops());
+    s.addBitString(info.parentHash);
+    s.addBitString(info.txHash);
+    s.addBitString(info.accountHash);
+    s.add32(info.parentCloseTime.time_since_epoch().count());
+    s.add32(info.closeTime.time_since_epoch().count());
+    s.add8(info.closeTimeResolution.count());
+    s.add8(info.closeFlags);
+    // s.addBitString(info.hash);
+    return s.peekData();
 }
 
 std::optional<ripple::uint256>
@@ -257,8 +294,8 @@ parseRippleLibSeed(boost::json::value const& value)
     return {};
 }
 
-std::pair<ripple::PublicKey, ripple::SecretKey>
-keypairFromRequst(boost::json::object const& request, boost::json::value& error)
+std::variant<RPC::Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
+keypairFromRequst(boost::json::object const& request)
 {
     bool const has_key_type = request.contains("key_type");
 
@@ -280,17 +317,13 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
     }
 
     if (count == 0)
-    {
-        error = "missing field secret";
-        return {};
-    }
+        return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "missing field secret"};
 
     if (count > 1)
     {
-        error =
-            "Exactly one of the following must be specified: "
-            " passphrase, secret, seed, or seed_hex";
-        return {};
+        return RPC::Status{RPC::Error::rpcINVALID_PARAMS, 
+                "Exactly one of the following must be specified: "
+                " passphrase, secret, seed, or seed_hex"};
     }
 
     boost::optional<ripple::KeyType> keyType;
@@ -299,25 +332,18 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
     if (has_key_type)
     {
         if (!request.at("key_type").is_string())
-        {
-            error = "key_type must be string";
-            return {};
-        }
+            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "keyTypeNotString"};
 
         std::string key_type = request.at("key_type").as_string().c_str();
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
-        {
-            error = "Invalid field key_type";
-            return {};
-        }
+            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "invalidFieldKeyType"};
 
         if (secretType == "secret")
-        {
-            error = "The secret field is not allowed if key_type is used.";
-            return {};
-        }
+            return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
+                    "The secret field is not allowed if key_type is used."};
+
     }
 
     // ripple-lib encodes seed used to generate an Ed25519 wallet in a
@@ -331,12 +357,9 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
         {
             // If the user passed in an Ed25519 seed but *explicitly*
             // requested another key type, return an error.
-            if (keyType.value_or(ripple::KeyType::ed25519) !=
-                ripple::KeyType::ed25519)
-            {
-                error = "Specified seed is for an Ed25519 wallet.";
-                return {};
-            }
+            if (keyType.value_or(ripple::KeyType::ed25519) != ripple::KeyType::ed25519)
+                return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
+                       "Specified seed is for an Ed25519 wallet."};
 
             keyType = ripple::KeyType::ed25519;
         }
@@ -350,10 +373,8 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
         if (has_key_type)
         {
             if (!request.at(secretType).is_string())
-            {
-                error = "secret value must be string";
-                return {};
-            }
+                return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
+                                   "secret value must be string"};
 
             std::string key = request.at(secretType).as_string().c_str();
 
@@ -371,10 +392,8 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
         else
         {
             if (!request.at("secret").is_string())
-            {
-                error = "field secret should be a string";
-                return {};
-            }
+                return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
+                                  "field secret should be a string"};
 
             std::string secret = request.at("secret").as_string().c_str();
             seed = ripple::parseGenericSeed(secret);
@@ -382,17 +401,13 @@ keypairFromRequst(boost::json::object const& request, boost::json::value& error)
     }
 
     if (!seed)
-    {
-        error = "Bad Seed: invalid field message secretType";
-        return {};
-    }
+        return RPC::Status{RPC::Error::rpcBAD_SEED,
+                "Bad Seed: invalid field message secretType"};
 
-    if (keyType != ripple::KeyType::secp256k1 &&
-        keyType != ripple::KeyType::ed25519)
-    {
-        error = "keypairForSignature: invalid key type";
-        return {};
-    }
+    if (keyType != ripple::KeyType::secp256k1
+     && keyType != ripple::KeyType::ed25519)
+        return RPC::Status{RPC::Error::rpcINVALID_PARAMS, 
+                "keypairForSignature: invalid key type"};
 
     return generateKeyPair(*keyType, *seed);
 }
@@ -420,6 +435,7 @@ getAccountsFromTransaction(boost::json::object const& transaction)
 
     return accounts;
 }
+
 std::vector<unsigned char>
 ledgerInfoToBlob(ripple::LedgerInfo const& info)
 {

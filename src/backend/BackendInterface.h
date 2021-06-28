@@ -94,6 +94,12 @@ public:
     virtual std::optional<uint32_t>
     fetchLatestLedgerSequence() const = 0;
 
+    virtual std::optional<ripple::LedgerInfo>
+    fetchLedgerBySequence(uint32_t sequence) const = 0;
+
+    virtual std::optional<ripple::LedgerInfo>
+    fetchLedgerByHash(ripple::uint256 const& hash) const = 0;
+
     virtual std::optional<LedgerRange>
     fetchLedgerRange() const = 0;
 

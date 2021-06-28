@@ -657,6 +657,7 @@ private:
     CassandraPreparedStatement deleteLedgerRange_;
     CassandraPreparedStatement updateLedgerHeader_;
     CassandraPreparedStatement selectLedgerBySeq_;
+    CassandraPreparedStatement selectLedgerByHash_;
     CassandraPreparedStatement selectLatestLedger_;
     CassandraPreparedStatement selectLedgerRange_;
     CassandraPreparedStatement selectLedgerDiff_;
@@ -934,6 +935,26 @@ public:
         std::vector<unsigned char> header = result.getBytes();
         return deserializeHeader(ripple::makeSlice(header));
     }
+
+    std::optional<ripple::LedgerInfo>
+    fetchLedgerByHash(ripple::uint256 const& hash) const override
+    {
+        CassandraStatement statement{selectLedgerByHash_};
+
+        statement.bindBytes(hash);
+
+        CassandraResult result = executeSyncRead(statement);
+        if (!result.hasResult())
+        {
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
+            return {};
+        }
+
+        std::uint32_t sequence = result.getInt64();
+
+        return fetchLedgerBySequence(sequence);
+    }
+
     std::optional<LedgerRange>
     fetchLedgerRange() const override;
 
