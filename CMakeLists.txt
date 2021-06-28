@@ -61,34 +61,45 @@ include(Postgres)
 
 
 target_sources(clio PRIVATE
-    src/backend/CassandraBackend.cpp
-    src/backend/PostgresBackend.cpp
-    src/backend/BackendIndexer.cpp
-    src/backend/BackendInterface.cpp
-    src/backend/Pg.cpp
-    src/backend/DBHelpers.cpp
-    src/etl/ETLSource.cpp
-    src/etl/ReportingETL.cpp
-    src/server/Handlers.cpp
+## Reporting
+    src/reporting/ETLSource.cpp
+    src/reporting/CassandraBackend.cpp
+    src/reporting/PostgresBackend.cpp
+    src/reporting/BackendIndexer.cpp
+    src/reporting/Pg.cpp
+    src/reporting/P2pProxy.cpp
+    src/reporting/DBHelpers.cpp
+    src/reporting/ReportingETL.cpp
+## Server
     src/server/SubscriptionManager.cpp
-    src/handlers/AccountInfo.cpp
-    src/handlers/Tx.cpp
-    src/handlers/RPCHelpers.cpp
-    src/handlers/AccountTx.cpp
-    src/handlers/LedgerData.cpp
-    src/handlers/BookOffers.cpp
-    src/handlers/LedgerRange.cpp
-    src/handlers/Ledger.cpp
-    src/handlers/LedgerEntry.cpp
-    src/handlers/AccountChannels.cpp
-    src/handlers/AccountLines.cpp
-    src/handlers/AccountCurrencies.cpp
-    src/handlers/AccountOffers.cpp
-    src/handlers/AccountObjects.cpp
-    src/handlers/ChannelAuthorize.cpp
-    src/handlers/ChannelVerify.cpp
-    src/handlers/Subscribe.cpp
-    src/handlers/ServerInfo.cpp)
+## RPC
+    src/rpc/Status.cpp
+    src/rpc/RPCHelpers.cpp
+    src/rpc/Handlers.cpp
+    src/rpc/Context.cpp
+## Handlers
+    # Account
+    src/rpc/handlers/impl/AccountChannels.cpp
+    src/rpc/handlers/impl/AccountCurrencies.cpp
+    src/rpc/handlers/impl/AccountInfo.cpp
+    src/rpc/handlers/impl/AccountLines.cpp
+    src/rpc/handlers/impl/AccountOffers.cpp
+    src/rpc/handlers/impl/AccountObjects.cpp
+    # Ledger
+    src/rpc/handlers/impl/Ledger.cpp
+    src/rpc/handlers/impl/LedgerData.cpp
+    src/rpc/handlers/impl/LedgerEntry.cpp
+    src/rpc/handlers/impl/LedgerRange.cpp
+    # Transaction
+    src/rpc/handlers/impl/Tx.cpp
+    src/rpc/handlers/impl/AccountTx.cpp
+    # Dex
+    src/rpc/handlers/impl/BookOffers.cpp
+    # Payment Channel
+    src/rpc/handlers/impl/ChannelAuthorize.cpp
+    src/rpc/handlers/impl/ChannelVerify.cpp
+    # Subscribe
+    src/rpc/handlers/impl/Subscribe.cpp)
 
 
 message(${Boost_LIBRARIES})

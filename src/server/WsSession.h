@@ -26,8 +26,8 @@
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 
-#include <reporting/server/Handlers.h>
-#include <reporting/server/WsBase.h>
+#include <rpc/Handlers.h>
+#include <server/WsBase.h>
 #include <reporting/ReportingETL.h>
 
 #include <iostream>
@@ -66,6 +66,8 @@ public:
     {
     }
 
+    ~WsSession() = default;
+
     void
     send(std::string&& msg)
     {
@@ -88,13 +90,11 @@ public:
     void
     run(http::request<http::string_body> req)
     {
-        std::cout << "Ran ws" << std::endl;
         // Set suggested timeout settings for the websocket
         ws_.set_option(
             websocket::stream_base::timeout::suggested(
                 boost::beast::role_type::server));
 
-        std::cout << "Trying to decorate" << std::endl;
         // Set a decorator to change the Server of the handshake
         ws_.set_option(websocket::stream_base::decorator(
             [](websocket::response_type& res)
@@ -104,7 +104,6 @@ public:
                         " websocket-server-async");
             }));
 
-        std::cout << "trying to async accept" << std::endl;
         ws_.async_accept(
             req,
             boost::beast::bind_front_handler(
@@ -116,8 +115,6 @@ private:
     void
     on_accept(boost::beast::error_code ec)
     {
-        std::cout << "accepted WS" << std::endl;
-
         if (ec)
             return wsFail(ec, "acceptWS");
 
@@ -130,7 +127,6 @@ private:
     {
         // Read a message into our buffer
 
-        std::cout << "doing read WS" << std::endl;
         ws_.async_read(
             buffer_,
             boost::beast::bind_front_handler(
@@ -156,14 +152,12 @@ private:
     void
     on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
-        std::cout << "readed WS" << std::endl;
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed or cancelled
         if (ec == boost::beast::websocket::error::closed
             || ec == boost::asio::error::operation_aborted)
         {
-            std::cout << "Session has been closed" << std::endl;
             return do_close();
         }
 
@@ -172,8 +166,6 @@ private:
 
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
-        boost::json::object response;
         try
         {
             boost::json::value raw = boost::json::parse(msg);
@@ -181,44 +173,67 @@ private:
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
-                if (subscriptions_.expired())
-                    return;
+                auto range = backend_->fetchLedgerRange();
+                if (!range)
+                    return send(boost::json::serialize(RPC::make_error(RPC::Error::rpcNOT_READY)));
 
-                response = buildResponse(
-                    request, 
+                std::optional<RPC::Context> context = RPC::make_WsContext(
+                    request,
                     backend_,
                     subscriptions_.lock(),
                     balancer_,
-                    shared_from_this());
+                    shared_from_this(),
+                    *range
+                );
+
+                if (!context)
+                    return send(boost::json::serialize(RPC::make_error(RPC::Error::rpcBAD_SYNTAX)));
+
+                auto id = request.contains("id") 
+                    ? request.at("id") 
+                    : nullptr;
+
+                auto response = getDefaultWsResponse(id);
+                boost::json::object& result = response["result"].as_object();
+
+                auto status = RPC::buildResponse(*context, result);
+
+                if(status)
+                {
+                    auto error = RPC::make_error(status.error);
+
+                    if (!id.is_null())
+                        error["id"] = id;
+                    error["request"] = request;
+
+                    response_ = boost::json::serialize(error);
+
+                }
+                else
+                {
+                    response_ = boost::json::serialize(response);
+                }
+                
             }
             catch (Backend::DatabaseTimeout const& t)
             {
                 BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                response["error"] =
-                    "Database read timeout. Please retry the request";
+                return send(boost::json::serialize(RPC::make_error(RPC::Error::rpcNOT_READY)));
             }
         }
         catch (std::exception const& e)
         {
             BOOST_LOG_TRIVIAL(error)
-                << __func__ << "caught exception : " << e.what();
+                << __func__ << " caught exception : " << e.what();
         }
-        BOOST_LOG_TRIVIAL(trace) << __func__ << response;
-        response_ = boost::json::serialize(response);
+        BOOST_LOG_TRIVIAL(trace) << __func__ << response_;
 
-        // Echo the message
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-            boost::asio::buffer(response_),
-            boost::beast::bind_front_handler(
-                &WsSession::on_write, shared_from_this()));
+        send(std::move(response_));
     }
 
     void
     on_write(boost::beast::error_code const& ec, std::size_t bytes_transferred)
     {
-        std::cout << "writing WS" << std::endl;
-
         boost::ignore_unused(bytes_transferred);
 
         // Indicates the session is closed or  canceled
@@ -264,7 +279,6 @@ public:
     void
     run()
     {
-        std::cout << "RUNNING" << std::endl;
         // We need to be executing within a strand to perform async operations
         // on the I/O objects in this session. Although not strictly necessary
         // for single-threaded contexts, this example code is written to be
@@ -281,7 +295,6 @@ private:
     void
     do_upgrade()
     {
-        std::cout << "doing upgrade" << std::endl;
         parser_.emplace();
 
         // Apply a reasonable limit to the allowed size
@@ -304,7 +317,6 @@ private:
     void
     on_upgrade(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
-        std::cout << "upgraded WS" << std::endl;
         boost::ignore_unused(bytes_transferred);
 
         // This means they closed the connection

@@ -152,47 +152,64 @@ handle_request(
         }
         catch (std::runtime_error const& e)
         {
-            send(response(
-                http::status::bad_request,
-                "text/html",
-                "Cannot parse json in body"));
-
-            return;
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
         }
 
-        if (!validRequest(request))
+        auto range = backend->fetchLedgerRange();
+        if (!range)
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(RPC::make_error(RPC::Error::rpcNOT_READY))));
+                
+        std::optional<RPC::Context> context = RPC::make_HttpContext(
+            request,
+            backend,
+            nullptr,
+            balancer,
+            *range
+        );
+
+        if (!context)
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+    
+        boost::json::object response{{"result", boost::json::object{}}};
+        boost::json::object& result = response["result"].as_object();
+        std::cout << "BUILDING RESP" << std::endl;
+        auto status = RPC::buildResponse(*context, result);
+
+        if(status)
         {
-            send(response(
-                http::status::bad_request, "text/html", "Malformed request"));
+            auto error = RPC::make_error(status.error);
 
-            return;
+            error["request"] = request;
+
+            result = error;
+        }
+        else
+        {
+            result["status"] = "success";
+            result["validated"] = true;
         }
 
-        boost::json::object wsStyleRequest = request.contains("params")
-            ? request.at("params").as_array().at(0).as_object()
-            : boost::json::object{};
-
-        wsStyleRequest["command"] = request["method"];
-
-        auto [builtResponse, cost] =
-            buildResponse(wsStyleRequest, backend, nullptr, balancer, nullptr);
-
-        send(response(
+        return send(httpResponse(
             http::status::ok,
             "application/json",
-            boost::json::serialize(builtResponse)));
-
-        return;
+            boost::json::serialize(response)));
     }
     catch (std::exception const& e)
     {
         std::cout << e.what() << std::endl;
-        send(response(
+        return send(httpResponse(
             http::status::internal_server_error,
-            "text/html",
-            "Internal server error occurred"));
-
-        return;
+            "application/json",
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcINTERNAL))));
     }
 }
 

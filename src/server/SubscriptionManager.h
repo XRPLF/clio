@@ -20,9 +20,9 @@
 #ifndef SUBSCRIPTION_MANAGER_H
 #define SUBSCRIPTION_MANAGER_H
 
-#include <backend/BackendInterface.h>
+#include <set>
 #include <memory>
-#include <reporting/server/WsBase.h>
+#include <server/WsBase.h>
 #include <reporting/BackendInterface.h>
 
 class SubscriptionManager
@@ -33,7 +33,6 @@ class SubscriptionManager
         Ledgers,
         Transactions,
         TransactionsProposed,
-
         finalEntry
     };
 

@@ -24,12 +24,12 @@
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
-namespace ssl = boost::asio::ssl;
+namespace ssl = boost::asio::ssl;       
 using tcp = boost::asio::ip::tcp;
 
 // Handles an HTTPS server connection
-class SslHttpSession : public HttpBase<SslHttpSession>,
-                       public std::enable_shared_from_this<SslHttpSession>
+class SslHttpSession : public HttpBase<SslHttpSession>
+                     , public std::enable_shared_from_this<SslHttpSession>
 {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
 
@@ -59,6 +59,7 @@ public:
     {
         return stream_;
     }
+    
     boost::beast::ssl_stream<boost::beast::tcp_stream>
     release_stream()
     {

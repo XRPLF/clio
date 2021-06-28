@@ -21,14 +21,16 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <algorithm>
-#include <backend/BackendFactory.h>
 #include <cstdlib>
-#include <etl/ReportingETL.h>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <server/listener.h>
+#include <reporting/ReportingETL.h>
+#include <reporting/BackendFactory.h>
+#include <server/Listener.h>
+#include <server/WsSession.h>
+#include <server/HttpSession.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -173,6 +175,7 @@ main(int argc, char* argv[])
     // When stopped, shared_ptrs fall out of scope
     // Calls destructors on all resources, and destructs in order
     start(ioc, threads);
+    std::cout << "Out Of Scope" << std::endl;
 
     return EXIT_SUCCESS;
 }

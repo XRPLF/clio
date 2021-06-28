@@ -105,6 +105,7 @@ public:
         , buffer_(std::move(b))
     {
     }
+    
     SslWsUpgrader(
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::shared_ptr<BackendInterface> backend,
