@@ -248,12 +248,6 @@ private:
     void
     publishLedger(ripple::LedgerInfo const& lgrInfo);
 
-    /// Get fees at a current ledger_index
-    /// @param seq the ledger index
-    /// @return nullopt if not found, fees if found.
-    std::optional<ripple::Fees>
-    getFees(std::uint32_t seq);
-
     bool
     isStopping()
     {

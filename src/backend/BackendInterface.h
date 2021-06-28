@@ -141,6 +141,9 @@ public:
 
     // Fetches a page of ledger objects, ordered by key/index.
     // Used by ledger_data
+    std::optional<ripple::Fees>
+    fetchFees(std::uint32_t seq) const;
+
     LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,

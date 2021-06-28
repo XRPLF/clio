@@ -135,12 +135,6 @@ AccountTx::check()
 {
     auto request = context_.params;
 
-    auto v = ledgerInfoFromRequest(context_);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
-
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-
     if(!request.contains("account"))
         return {Error::rpcINVALID_PARAMS, "missingAccount"};
 
@@ -162,20 +156,56 @@ AccountTx::check()
         binary = request.at("binary").as_bool();
     }
 
+    auto minIndex = context_.range.minSequence;
+    if (request.contains("ledger_index_min"))
+    {
+        if (!request.at("ledger_index_min").is_int64())
+            return {Error::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
+
+        minIndex = value_to<std::uint32_t>(request.at("ledger_index_min"));
+    }
+
     std::optional<Backend::AccountTransactionsCursor> cursor;
+    cursor = {context_.range.maxSequence, 0};
+
     if (request.contains("cursor"))
     {
         auto const& obj = request.at("cursor").as_object();
-        std::optional<uint32_t> transactionIndex;
-        if (obj.contains("transaction_index"))
+
+        std::optional<std::uint32_t> transactionIndex = {};
+        if (obj.contains("seq"))
         {
-            if (!obj.at("transaction_index").is_int64())
+            if (!obj.at("seq").is_int64())
                 return {Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
 
-            transactionIndex = (uint32_t)obj.at("transaction_index").as_int64();
+            transactionIndex = value_to<std::uint32_t>(obj.at("seq"));
         }
 
-        cursor = {lgrInfo.seq, *transactionIndex};
+        std::optional<std::uint32_t> ledgerIndex = {};
+        if (obj.contains("ledger"))
+        {
+            if (!obj.at("ledger").is_int64())
+                return {Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
+
+            transactionIndex = value_to<std::uint32_t>(obj.at("ledger"));
+        }
+
+        if (!transactionIndex || !ledgerIndex)
+            return {Error::rpcINVALID_PARAMS, "missingLedgerOrSeq"};
+
+        cursor = {*ledgerIndex, *transactionIndex};
+    }
+    else if (request.contains("ledger_index_max"))
+    {
+        if (!request.at("ledger_index_max").is_int64())
+            return {Error::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
+
+        auto maxIndex = value_to<std::uint32_t>(request.at("ledger_index_max"));
+
+        if (minIndex > maxIndex)
+            return {Error::rpcINVALID_PARAMS, "invalidIndex"};
+
+        cursor = {maxIndex, 0};
     }
 
     std::uint32_t limit = 200;
@@ -187,6 +217,8 @@ AccountTx::check()
         limit = request.at("limit").as_int64();
         if (limit <= 0)
             return {Error::rpcINVALID_PARAMS, "limitNotPositive"};
+
+        response_["limit"] = limit;
     }
 
 
@@ -194,42 +226,56 @@ AccountTx::check()
     auto start = std::chrono::system_clock::now();
     auto [blobs, retCursor] =
         context_.backend->fetchAccountTransactions(*accountID, limit, cursor);
+
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took " << ((end - start).count() / 1000000000.0) << " num blobs = " << blobs.size();
-    
+
+    response_["account"] = ripple::to_string(*accountID);
+    response_["ledger_index_min"] = minIndex;
+    response_["ledger_index_max"] = cursor->ledgerSequence;
+
+    if (retCursor)
+    {
+        boost::json::object cursorJson;
+        cursorJson["ledger"] = retCursor->ledgerSequence;
+        cursorJson["seq"] = retCursor->transactionIndex;
+        response_["marker"] = cursorJson;
+    }
+
     for (auto const& txnPlusMeta : blobs)
     {
-        if (txnPlusMeta.ledgerSequence > lgrInfo.seq)
+        if (txnPlusMeta.ledgerSequence < minIndex)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
                 << " skipping over transactions from incomplete ledger";
             continue;
         }
+
         boost::json::object obj;
+
         if (!binary)
         {
             auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
-            obj["transaction"] = toJson(*txn);
-            obj["metadata"] = toJson(*meta);
+            obj["meta"] = toJson(*meta);
+            obj["tx"] = toJson(*txn);
+            obj["tx"].as_object()["ledger_index"] = txnPlusMeta.ledgerSequence;
+            obj["tx"].as_object()["inLedger"] = txnPlusMeta.ledgerSequence;
+
         }
         else
         {
-            obj["transaction"] = ripple::strHex(txnPlusMeta.transaction);
-            obj["metadata"] = ripple::strHex(txnPlusMeta.metadata);
+            obj["meta"] = ripple::strHex(txnPlusMeta.metadata);
+            obj["tx_blob"] = ripple::strHex(txnPlusMeta.transaction);
+            obj["ledger_index"] = txnPlusMeta.ledgerSequence;
         }
-        obj["ledger_sequence"] = txnPlusMeta.ledgerSequence;
+
+        obj["validated"] = true;
+
         txns.push_back(obj);
     }
 
     response_["transactions"] = txns;
-    if (retCursor)
-    {
-        boost::json::object cursorJson;
-        cursorJson["ledger_sequence"] = retCursor->ledgerSequence;
-        cursorJson["transaction_index"] = retCursor->transactionIndex;
-        response_["cursor"] = cursorJson;
-    }
 
     auto end2 = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took " << ((end2 - end).count() / 1000000000.0);

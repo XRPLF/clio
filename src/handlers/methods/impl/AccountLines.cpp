@@ -44,6 +44,9 @@ addLine(
     if (peerAccount and peerAccount != lineAccountIDPeer)
         return;
 
+    if (!viewLowest)
+        balance.negate();
+
     bool lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
     bool lineAuthPeer = flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
     bool lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);

@@ -3,6 +3,9 @@
 #define XRPL_REPORTING_RPCHELPERS_H_INCLUDED
 
 #include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/app/ledger/Ledger.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/jss.h>
 #include <ripple/protocol/STTx.h>
 #include <boost/json.hpp>
 #include <handlers/Status.h>
@@ -61,5 +64,39 @@ getAccountsFromTransaction(boost::json::object const& transaction);
 
 std::vector<unsigned char>
 ledgerInfoToBlob(ripple::LedgerInfo const& info);
+
+bool
+isGlobalFrozen(
+    BackendInterface const& backend,
+    std::uint32_t seq,
+    ripple::AccountID const& issuer);
+
+bool
+isFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer);
+
+ripple::STAmount
+accountHolds(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer);
+
+ripple::Rate
+transferRate(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& issuer);
+
+ripple::XRPAmount
+xrpLiquid(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& id);
 
 #endif

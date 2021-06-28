@@ -139,57 +139,12 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     return lgrInfo;
 }
 
-std::optional<ripple::Fees>
-ReportingETL::getFees(std::uint32_t seq)
-{
-    ripple::Fees fees;
-
-    auto key = ripple::keylet::fees().key;
-    auto bytes = backend_->fetchLedgerObject(key, seq);
-
-    if (!bytes)
-    {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " - could not find fees";
-        return {};
-    }
-
-    ripple::SerialIter it(bytes->data(), bytes->size());
-    ripple::SLE sle{it, key};
-
-    if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
-        fees.base = sle.getFieldU64(ripple::sfBaseFee);
-
-    if (sle.getFieldIndex(ripple::sfReferenceFeeUnits) != -1)
-        fees.units = sle.getFieldU32(ripple::sfReferenceFeeUnits);
-
-    if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
-        fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
-
-    if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
-        fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
-
-    return fees;
-}
-
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
     auto ledgerRange = backend_->fetchLedgerRangeNoThrow();
-
-    auto fees = getFees(lgrInfo.seq);
-    std::vector<Backend::TransactionAndMetadata> transactions;
-    while (true)
-    {
-        try
-        {
-            transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
-            break;
-        }
-        catch (Backend::DatabaseTimeout const&)
-        {
-            BOOST_LOG_TRIVIAL(warning) << "Read timeout fetching transactions";
-        }
-    }
+    auto fees = backend_->getFees(lgrInfo.seq);
+    auto transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
 
     if (!fees || !ledgerRange)
     {

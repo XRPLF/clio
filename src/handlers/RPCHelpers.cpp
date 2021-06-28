@@ -448,3 +448,161 @@ ledgerInfoToBlob(ripple::LedgerInfo const& info)
     s.addBitString(info.hash);
     return s.peekData();
 }
+
+bool
+isGlobalFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& issuer)
+{
+    if (ripple::isXRP(issuer))
+        return false;
+
+    auto key = ripple::keylet::account(issuer).key;
+    auto blob = backend.fetchLedgerObject(key, sequence);
+
+    if (!blob)
+        return false;
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE sle{it, key};
+        
+    return sle.isFlag(ripple::lsfGlobalFreeze);
+}
+
+bool
+isFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer)
+{
+    if (ripple::isXRP(currency))
+        return false;
+
+    auto key = ripple::keylet::account(issuer).key;
+    auto blob = backend.fetchLedgerObject(key, sequence);
+
+    if (!blob)
+        return false;
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE sle{it, key};
+    
+    if (sle.isFlag(ripple::lsfGlobalFreeze))
+        return true;
+
+    if (issuer != account)
+    {
+        key = ripple::keylet::line(account, issuer, currency).key;
+        blob = backend.fetchLedgerObject(key, sequence);
+
+        if (!blob)
+            return false;
+
+        ripple::SerialIter issuerIt{blob->data(), blob->size()};
+        ripple::SLE issuerLine{it, key};
+
+        auto frozen = 
+            (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
+
+        if (issuerLine.isFlag(frozen))
+            return true;
+    }
+
+    return false;
+}
+
+ripple::XRPAmount
+xrpLiquid(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& id)
+{
+    auto key = ripple::keylet::account(id).key;
+    auto blob = backend.fetchLedgerObject(key, sequence);
+
+    if (!blob)
+        return beast::zero;
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE sle{it, key};
+
+    std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
+
+    auto const reserve = backend.getFees(sequence)->accountReserve(ownerCount);
+
+    auto const balance = sle.getFieldAmount(ripple::sfBalance);
+
+    ripple::STAmount amount = balance - reserve;
+    if (balance < reserve)
+        amount.clear();
+
+    return amount.xrp();
+}
+
+ripple::STAmount
+accountHolds(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer)
+{
+    ripple::STAmount amount;
+    if (ripple::isXRP(currency))
+    {
+        return {xrpLiquid(backend, sequence, account)};
+    }
+
+    auto key = ripple::keylet::line(account, issuer, currency).key;
+    auto const blob = backend.fetchLedgerObject(key, sequence);
+
+    if (!blob)
+    {
+        amount.clear({currency, issuer});
+        return amount;
+    }
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE sle{it, key};
+
+    if (isFrozen(backend, sequence, account, currency, issuer))
+    {
+        amount.clear(ripple::Issue(currency, issuer));
+    }
+    else
+    {
+        amount = sle.getFieldAmount(ripple::sfBalance);
+        if (account > issuer)
+        {
+            // Put balance in account terms.
+            amount.negate();
+        }
+        amount.setIssuer(issuer);
+    }
+
+    return amount;
+}
+
+ripple::Rate
+transferRate(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& issuer)
+{
+    auto key = ripple::keylet::account(issuer).key;
+    auto blob = backend.fetchLedgerObject(key, sequence);
+
+    if (blob)
+    {
+        ripple::SerialIter it{blob->data(), blob->size()};
+        ripple::SLE sle{it, key};
+
+        if (sle.isFieldPresent(ripple::sfTransferRate))
+            return ripple::Rate{sle.getFieldU32(ripple::sfTransferRate)};
+    }
+
+    return ripple::parityRate;
+}

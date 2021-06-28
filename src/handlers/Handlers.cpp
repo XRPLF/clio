@@ -22,6 +22,7 @@ private:
             addHandler<AccountChannels>(v);
             addHandler<AccountCurrencies>(v);
             addHandler<AccountInfo>(v);
+            addHandler<AccountLines>(v);
             addHandler<AccountObjects>(v);
             addHandler<AccountOffers>(v);
             addHandler<AccountTx>(v);
