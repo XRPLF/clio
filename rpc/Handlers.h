@@ -22,25 +22,36 @@ class WsSession;
 
 //------------------------------------------------------------------------------
 
-enum RPCCommand {
-    tx,
-    account_tx,
-    ledger,
-    account_info,
-    ledger_data,
-    book_offers,
-    ledger_range,
-    ledger_entry,
-    account_channels,
-    account_lines,
-    account_currencies,
-    account_offers,
-    account_objects,
-    channel_authorize,
-    channel_verify,
-    subscribe,
-    unsubscribe
-};
+namespace RPC {
+namespace method {
+#define METHOD(x) constexpr char[] x(#x)
+
+METHOD(tx);
+METHOD(account_tx);
+METHOD(ledger);
+METHOD(account_info);
+METHOD(ledger_data);
+METHOD(book_offers);
+METHOD(ledger_range);
+METHOD(ledger_entry);
+METHOD(account_channels);
+METHOD(account_lines);
+METHOD(account_currencies);
+METHOD(account_offers);
+METHOD(account_objects);
+METHOD(channel_authorize);
+METHOD(channel_verify);
+METHOD(subscribe);
+METHOD(unsubscribe);
+METHOD(submit);
+METHOD(submit_multisigned);
+METHOD(fee);
+METHOD(path_find);
+METHOD(ripple_path_find);
+METHOD(manifest);
+
+}
+}
 
 static std::unordered_set<std::string> forwardCommands{
     "submit",
@@ -69,6 +80,8 @@ static std::unordered_map<std::string, RPCCommand> commandMap{
     {"channel_verify", channel_verify},
     {"subscribe", subscribe},
     {"unsubscribe", unsubscribe}};
+
+static std::unordered_map<std::string, std::function<void()> commands
 
 boost::json::object
 doTx(

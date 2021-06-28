@@ -35,7 +35,8 @@ class HttpSession : public HttpBase<HttpSession>,
 
 public:
     // Take ownership of the socket
-    explicit HttpSession(
+    explicit
+    HttpSession(
         tcp::socket&& socket,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,

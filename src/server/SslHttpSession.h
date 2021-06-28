@@ -35,7 +35,8 @@ class SslHttpSession : public HttpBase<SslHttpSession>,
 
 public:
     // Take ownership of the socket
-    explicit SslHttpSession(
+    explicit
+    SslHttpSession(
         tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface> backend,
@@ -129,4 +130,4 @@ public:
     }
 };
 
-#endif  // RIPPLE_REPORTING_HTTPS_SESSION_H
+#endif // RIPPLE_REPORTING_HTTPS_SESSION_H
