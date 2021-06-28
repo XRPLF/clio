@@ -79,6 +79,19 @@ toJson(ripple::STBase const& obj)
     return value.as_object();
 }
 
+boost::json::object
+getJson(ripple::TxMeta const& meta)
+{
+    auto start = std::chrono::system_clock::now();
+    boost::json::value value = boost::json::parse(
+        meta.getJson(ripple::JsonOptions::none).toStyledString());
+    auto end = std::chrono::system_clock::now();
+    value.as_object()["deserialization_time_microseconds"] =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+    return value.as_object();
+}
+
 boost::json::value
 getJson(Json::Value const& value)
 {
@@ -148,11 +161,15 @@ ledgerSequenceFromRequest(
         request.at("ledger_index").is_string())
     {
         return backend.fetchLatestLedgerSequence();
-    }
-    else
-    {
+
+    auto ledger_index = request.at("ledger_index");
+    if (ledger_index.is_string() and ledger_index.as_string() == "validated")
+        return backend.fetchLatestLedgerSequence();
+
+    if (ledger_index.is_int64())
         return request.at("ledger_index").as_int64();
-    }
+    
+    return {};
 }
 
 std::optional<ripple::uint256>

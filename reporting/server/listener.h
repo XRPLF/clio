@@ -40,17 +40,23 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
 
     boost::beast::tcp_stream stream_;
     ssl::context& ctx_;
-    ReportingETL& etl_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
     boost::beast::flat_buffer buffer_;
 
 public:
     Detector(
         tcp::socket&& socket,
         ssl::context& ctx,
-        ReportingETL& etl)
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
         : stream_(std::move(socket))
         , ctx_(ctx)
-        , etl_(etl)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
     {
     }
 
@@ -81,7 +87,9 @@ public:
             std::make_shared<SslSession>(
                 stream_.release_socket(),
                 ctx_,
-                etl_,
+                backend_,
+                subscriptions_,
+                balancer_,
                 std::move(buffer_))->run();
             return;
         }
@@ -89,7 +97,9 @@ public:
         // Launch plain session
         std::make_shared<PlainSession>(
             stream_.release_socket(),
-            etl_,
+            backend_,
+            subscriptions_,
+            balancer_,
             std::move(buffer_))->run();
     }
 };
@@ -102,33 +112,20 @@ class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslS
     net::io_context& ioc_;
     ssl::context& ctx_;
     tcp::acceptor acceptor_;
-    ReportingETL& etl_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
-    static void
-    make_Listener(
-        boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer)
-    {
-        std::make_shared<listener>(
-            ioc,
-            endpoint,
-            backend,
-            subscriptions,
-            balancer
-        )->run();
-    }
-
     Listener(
         boost::asio::io_context& ioc,
+        ssl::context& ctx,
         boost::asio::ip::tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer)
         : ioc_(ioc)
+        , ctx_(ctx)
         , acceptor_(ioc)
         , backend_(backend)
         , subscriptions_(subscriptions)
@@ -170,15 +167,15 @@ public:
         }
     }
 
-    ~listener() = default;
-
-private:
+    ~Listener() = default;
 
     void
     run()
     {
         do_accept();
     }
+    
+private:
 
     void
     do_accept()
@@ -204,12 +201,82 @@ private:
             std::make_shared<Detector<PlainSession, SslSession>>(
                 std::move(socket),
                 ctx_,
-                etl_)->run();
+                backend_,
+                subscriptions_,
+                balancer_)->run();
         }
 
         // Accept another connection
         do_accept();
     }
 };
+
+namespace Server
+{
+    using WebsocketServer = Listener<WsUpgrader, SslWsUpgrader>;
+    using HttpServer = Listener<HttpSession, SslHttpSession>;
+
+        static std::shared_ptr<WebsocketServer>
+    make_WebSocketServer(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        ssl::context& ctx,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
+    {
+        if (!config.contains("websocket_public"))
+            return nullptr;
+
+        auto const& wsConfig = config.at("websocket_public").as_object();
+
+        auto const address = 
+            boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
+        auto const port = 
+            static_cast<unsigned short>(wsConfig.at("port").as_int64());
+
+        auto server = std::make_shared<WebsocketServer>(
+            ioc,
+            ctx,
+            boost::asio::ip::tcp::endpoint{address, port},
+            backend,
+            subscriptions,
+            balancer);
+
+        server->run();
+        return server;
+    }
+
+    static std::shared_ptr<HttpServer>
+    make_HttpServer(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        ssl::context& ctx,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer)
+    {
+        if (!config.contains("http_public"))
+            return nullptr;
+            
+        auto const& httpConfig = config.at("http_public").as_object();
+
+        auto const address = 
+            boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
+        auto const port = 
+            static_cast<unsigned short>(httpConfig.at("port").as_int64());
+
+        auto server = std::make_shared<HttpServer>(
+            ioc,
+            ctx,
+            boost::asio::ip::tcp::endpoint{address, port},
+            backend,
+            subscriptions,
+            balancer);
+
+        server->run();
+        return server;
+    }
+}
 
 #endif // LISTENER_H

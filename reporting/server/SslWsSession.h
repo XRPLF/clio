@@ -46,17 +46,24 @@ class SslWsSession : public WsBase
     std::string response_;
     boost::beast::flat_buffer buffer_;
     http::request_parser<http::string_body> parser_;
-    ReportingETL& etl_;
+
+    std::shared_ptr<BackendInterface> backend_;
+    std::weak_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
     // Take ownership of the socket
     explicit SslWsSession(
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
-        ReportingETL& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::weak_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
         boost::beast::flat_buffer b)
         : WsBase()
         , ws_(std::move(stream))
-        , etl_(etl)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
     {
     }
 
@@ -117,6 +124,23 @@ public:
                 &SslWsSession::on_read, shared_from_this()));
     }
 
+
+    void
+    do_close();
+
+    void
+    on_close(boost::beast::error_code ec)
+    {
+        if (ec == boost::beast::websocket::error::closed
+        || ec == boost::asio::error::operation_aborted)
+            return;
+
+        if (ec)
+            return wsFail(ec, "close");
+
+        do_close();
+    }
+
     void
     on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
@@ -139,9 +163,14 @@ public:
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
+                if (subscriptions_.expired())
+                    return;
+
                 response = buildResponse(
                     request, 
-                    etl_,
+                    backend_,
+                    subscriptions_.lock(),
+                    balancer_,
                     shared_from_this());
             }
             catch (Backend::DatabaseTimeout const& t)
@@ -189,17 +218,23 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     ssl::context& ctx_;
-    ReportingETL& etl_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
 
 public:
     SslWsUpgrader(
         boost::asio::ip::tcp::socket&& socket,
         ssl::context& ctx,
-        ReportingETL& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
         boost::beast::flat_buffer&& b)
         : https_(std::move(socket), ctx)
         , ctx_(ctx)
-        , etl_(etl)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
         , buffer_(std::move(b))
         {}
 
@@ -281,7 +316,9 @@ private:
 
         std::make_shared<SslWsSession>(
             std::move(https_),
-            etl_,
+            backend_,
+            subscriptions_,
+            balancer_,
             std::move(buffer_))->run(parser_->release());
     }
 };

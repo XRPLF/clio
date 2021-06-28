@@ -38,9 +38,11 @@ public:
     explicit
     HttpSession(
         tcp::socket&& socket,
-        ReportingETL& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
         boost::beast::flat_buffer buffer)
-        : HttpBase<HttpSession>(etl, std::move(buffer))
+        : HttpBase<HttpSession>(backend, subscriptions, balancer, std::move(buffer))
         , stream_(std::move(socket))
     {}
 

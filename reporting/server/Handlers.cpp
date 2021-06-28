@@ -1,14 +1,18 @@
-#include <reporting/server/session.h>
+#include <reporting/server/Handlers.h>
+#include <reporting/server/WsSession.h>
+#include <reporting/server/SslWsSession.h>
 #include <reporting/P2pProxy.h>
 
 void
-fail(boost::beast::error_code ec, char const* what)
+WsSession::do_close()
 {
-    std::cerr << what << ": " << ec.message() << "\n";
+    // perform a close operation
+    std::shared_ptr<SubscriptionManager> mgr = subscriptions_.lock();
+    mgr->clearSession(this);
 }
 
 void
-session::do_close()
+SslWsSession::do_close()
 {
     // perform a close operation
     std::shared_ptr<SubscriptionManager> mgr = subscriptions_.lock();
@@ -21,7 +25,7 @@ buildResponse(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> manager,
     std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<session> session)
+    std::shared_ptr<WsBase> session)
 {
     std::string command = request.at("command").as_string().c_str();
     BOOST_LOG_TRIVIAL(info) << "Received rpc command : " << request;

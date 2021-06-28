@@ -109,7 +109,9 @@ void
 handle_request(
     boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
-    ReportingETL& etl)
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> manager,
+    std::shared_ptr<ETLLoadBalancer> balancer)
 {
     auto const response =
     [&req](
@@ -181,7 +183,12 @@ handle_request(
 
         std::cout << "Transfromed to ws style stuff" << std::endl;
 
-        auto builtResponse = buildResponse(wsStyleRequest, etl, nullptr);
+        auto builtResponse = buildResponse(
+            wsStyleRequest,
+            backend,
+            manager,
+            balancer,
+            nullptr);
 
         send(response(
             http::status::ok,
@@ -252,15 +259,23 @@ class HttpBase
 
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
-    ReportingETL& etl_;
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
     send_lambda lambda_;
 
 protected:
     boost::beast::flat_buffer buffer_;
 
 public:
-    HttpBase(ReportingETL& etl, boost::beast::flat_buffer buffer)
-        : etl_(etl)
+    HttpBase(
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
+        boost::beast::flat_buffer buffer)
+        : backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {}
@@ -300,7 +315,7 @@ public:
             return httpFail(ec, "read");
 
         // Send the response
-        handle_request(std::move(req_), lambda_, etl_);
+        handle_request(std::move(req_), lambda_, backend_, subscriptions_, balancer_);
     }
 
     void

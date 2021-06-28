@@ -39,9 +39,11 @@ public:
     SslHttpSession(
         tcp::socket&& socket,
         ssl::context& ctx,
-        ReportingETL& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<ETLLoadBalancer> balancer,
         boost::beast::flat_buffer buffer)
-        : HttpBase<SslHttpSession>(etl, std::move(buffer))
+        : HttpBase<SslHttpSession>(backend, subscriptions, balancer, std::move(buffer))
         , stream_(std::move(socket), ctx)
     {}
 

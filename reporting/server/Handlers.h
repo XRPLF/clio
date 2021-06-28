@@ -21,6 +21,7 @@ class SubscriptionManager;
 class WsSession;
 
 //------------------------------------------------------------------------------
+
 enum RPCCommand {
     tx,
     account_tx,
@@ -39,6 +40,15 @@ enum RPCCommand {
     channel_verify,
     subscribe,
     unsubscribe
+};
+
+static std::unordered_set<std::string> forwardCommands{
+    "submit",
+    "submit_multisigned",
+    "fee",
+    "path_find",
+    "ripple_path_find",
+    "manifest"
 };
 
 static std::unordered_map<std::string, RPCCommand> commandMap{
@@ -135,7 +145,9 @@ doUnsubscribe(
 extern boost::json::object
 buildResponse(
     boost::json::object const& request,
-    ReportingETL& etl,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> manager,
+    std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<WsBase> session);
 
 #endif // RIPPLE_REPORTING_HANDLERS_H

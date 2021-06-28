@@ -75,13 +75,9 @@ public:
         std::uint32_t seq);
 
     void
-<<<<<<< HEAD:server/SubscriptionManager.h
     subAccount(
         ripple::AccountID const& account,
         std::shared_ptr<WsBase>& session);
-=======
-    subAccount(ripple::AccountID const& account, std::shared_ptr<WsBase>& session);
->>>>>>> 95d22a9 (rebase WS):reporting/server/SubscriptionManager.h
 
     void
     unsubAccount(
@@ -108,7 +104,7 @@ public:
     unsubProposedTransactions(std::shared_ptr<WsBase>& session);
 
     void
-    clearSession(session* session);
+    clearSession(WsBase* session);
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H

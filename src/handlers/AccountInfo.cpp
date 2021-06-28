@@ -104,9 +104,13 @@ doAccountInfo(
     {
         response["success"] = "fetched successfully!";
         if (!binary)
+<<<<<<< HEAD
             response["object"] = toJson(sle);
+=======
+            response["result"] = getJson(sle);
+>>>>>>> 54005ca (save progress)
         else
-            response["object"] = ripple::strHex(*dbResponse);
+            response["result"] = ripple::strHex(*dbResponse);
         response["db_time"] = time;
         return response;
     }

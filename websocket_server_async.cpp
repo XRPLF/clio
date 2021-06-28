@@ -27,6 +27,7 @@
 #include <iostream>
 #include <memory>
 #include <reporting/ReportingETL.h>
+#include <reporting/BackendFactory.h>
 #include <reporting/server/Listener.h>
 #include <reporting/server/WsSession.h>
 #include <reporting/server/HttpSession.h>
@@ -142,46 +143,6 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
     ioc.run();
 }
 
-openWebsocketServer(
-    boost::json::object const& wsConfig,
-    boost::asio::io_context& ioc,
-    ssl::context& ctx,
-    ReportingETL& etl)
-{
-    auto const address = 
-        boost::asio::ip::make_address(wsConfig.at("ip").as_string().c_str());
-    auto const port = 
-        static_cast<unsigned short>(wsConfig.at("port").as_int64());
-
-    // Create and launch a listening port, listens only for websocket connections
-    std::make_shared<Listener<WsUpgrader, SslWsUpgrader>>(
-        ioc,
-        ctx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        etl)
-        ->run();
-}
-
-void
-openHttpServer(
-    boost::json::object const& httpConfig,
-    boost::asio::io_context& ioc,
-    ssl::context& ctx,
-    ReportingETL& etl)
-{
-    auto const address = 
-        boost::asio::ip::make_address(httpConfig.at("ip").as_string().c_str());
-    auto const port = 
-        static_cast<unsigned short>(httpConfig.at("port").as_int64());
-
-    std::make_shared<Listener<HttpSession, SslHttpSession>>(
-        ioc,
-        ctx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        etl)
-        ->run();
-}
-
 int
 main(int argc, char* argv[])
 {
@@ -222,53 +183,42 @@ main(int argc, char* argv[])
 
     boost::asio::io_context ioc{threads};
     
-    std::shared_ptr<BackendInterface> backend{
-        Backend::make_Backend(*config)
-    };
+    auto backend = Backend::make_Backend(*config);
     
-    ReportingETL etl{config.value(), ioc};
+    auto subscriptions = SubscriptionManager::make_SubscriptionManager();
 
+    auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
 
-    if (config->contains("websocket_public"))
-    {
-        BOOST_LOG_TRIVIAL(info) << "Starting Websocket Server";
-
-        auto wsConfig = config->at("websocket_public");
-        if(!wsConfig.is_object())
-            throw std::runtime_error("Websocket config must be JSON object");
-
-        openWebsocketServer(wsConfig.as_object(), ioc, *ctx, etl);
-    }
-
-
-    std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager()
-    };
-
-    std::shared_ptr<NetworkValidatedLedgers> ledgers{
-        NetworkValidatedLedgers::make_ValidatedLedgers()
-    };
-
-    std::shared_ptr<ETLLoadBalancer> balancer{ETLLoadBalancer::make_ETLLoadBalancer(
+    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
         *config,
         ioc,
         backend,
         subscriptions,
         ledgers
-    )};
+    );
 
-    std::shared_ptr<ReportingETL> etl{ReportingETL::make_ReportingETL(
+    auto etl = ReportingETL::make_ReportingETL(
         *config,
         ioc,
         backend,
         subscriptions,
         balancer,
         ledgers
-    )};
+    );
 
-    listener::make_listener(
+    auto wsServer = Server::make_WebSocketServer(
+        *config,
         ioc,
-        boost::asio::ip::tcp::endpoint{address, port},
+        *ctx,
+        backend,
+        subscriptions,
+        balancer
+    );
+
+    auto httpServer = Server::make_HttpServer(
+        *config,
+        ioc,
+        *ctx,
         backend,
         subscriptions,
         balancer
