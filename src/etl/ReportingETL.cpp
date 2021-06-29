@@ -141,10 +141,24 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
-{
+{       
     auto ledgerRange = backend_->fetchLedgerRangeNoThrow();
-    auto fees = backend_->fetchFees(lgrInfo.seq);
-    auto transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+
+    std::optional<ripple::Fees> fees;
+    std::vector<Backend::TransactionAndMetadata> transactions; 
+    for(;;)
+    {
+        try
+        {
+            fees = backend_->fetchFees(lgrInfo.seq);
+            transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
+            break;
+        }
+        catch (Backend::DatabaseTimeout const&)
+        {
+            BOOST_LOG_TRIVIAL(warning) << "Read timeout fetching transactions";
+        }
+    }
 
     if (!fees || !ledgerRange)
     {
