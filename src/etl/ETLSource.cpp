@@ -23,11 +23,13 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 #include <boost/log/trivial.hpp>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <server/Ssl.h>
 
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
@@ -40,9 +42,6 @@ ETLSource::ETLSource(
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
     ETLLoadBalancer& balancer)
     : ioc_(ioContext)
-    , ws_(std::make_unique<
-          boost::beast::websocket::stream<boost::beast::tcp_stream>>(
-          boost::asio::make_strand(ioc_)))
     , resolver_(boost::asio::make_strand(ioc_))
     , timer_(ioc_)
     , networkValidatedLedgers_(networkValidatedLedgers)
@@ -50,6 +49,28 @@ ETLSource::ETLSource(
     , subscriptions_(subscriptions)
     , balancer_(balancer)
 {
+    std::optional<boost::asio::ssl::context> sslCtx;
+    if (config.contains("ssl_cert_file") &&
+        config.contains("ssl_key_file"))
+    {
+        sslCtx = parse_certs(
+            config.at("ssl_cert_file").as_string().c_str(),
+            config.at("ssl_key_file").as_string().c_str());
+    }
+
+    if (sslCtx)
+    {
+        ws_ = nullptr;
+        // std::make_unique<boost::beast::websocket::stream<
+        //     boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
+        //         boost::asio::make_strand(ioc_), *sslCtx);
+    }
+    else
+    {
+        ws_ = std::make_unique<boost::beast::websocket::stream<
+            boost::beast::tcp_stream>>(boost::asio::make_strand(ioc_));
+    }
+
     if (config.contains("ip"))
     {
         auto ipJs = config.at("ip").as_string();
