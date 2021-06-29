@@ -699,11 +699,14 @@ async def ledgers(ip, port, minLedger, maxLedger, transactions, expand, maxCalls
                 start = datetime.datetime.now().timestamp()
                 await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":True, "transactions":bool(transactions),"expand":bool(expand)}))
                 res = json.loads(await ws.recv())
-                print(res["header"]["blob"])
                 end = datetime.datetime.now().timestamp()
                 if (end - start) > 0.1:
-                    print("request took more than 100ms")
+                    print("request took more than 100ms : " + str(end - start))
                 numCalls = numCalls + 1
+                if "error" in res:
+                    print(res["error"])
+                else:
+                    print(res["header"]["blob"])
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -842,8 +845,13 @@ args = parser.parse_args()
 
 def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
-    if(args.ledger is None):
-        args.ledger = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))[1]
+    rng =asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
+    if args.ledger is None:
+        args.ledger = rng[1]
+    if args.maxLedger == -1:
+        args.maxLedger = rng[1]
+    if args.minLedger == -1:
+        args.minLedger = rng[0]
     if args.action == "fee":
         asyncio.get_event_loop().run_until_complete(fee(args.ip, args.port))
     elif args.action == "server_info":
@@ -891,6 +899,7 @@ def run(args):
         end = datetime.datetime.now().timestamp()
         num = int(args.numRunners) * int(args.numCalls)
         print("Completed " + str(num) + " in " + str(end - start) + " seconds. Throughput = " + str(num / (end - start)) + " calls per second")
+        print("Latency = " + str((end - start) / int(args.numCalls)) + " seconds")
     elif args.action == "ledger_entries":
         keys = []
         ledger_index = 0

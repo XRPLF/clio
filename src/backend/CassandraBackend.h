@@ -26,13 +26,13 @@
 #include <boost/json.hpp>
 #include <boost/log/trivial.hpp>
 #include <atomic>
+#include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
 #include <cassandra.h>
 #include <cstddef>
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
 
 namespace Backend {
 
@@ -633,6 +633,7 @@ private:
     // than making a new statement
     CassandraPreparedStatement insertObject_;
     CassandraPreparedStatement insertTransaction_;
+    CassandraPreparedStatement insertLedgerTransaction_;
     CassandraPreparedStatement selectTransaction_;
     CassandraPreparedStatement selectAllTransactionsInLedger_;
     CassandraPreparedStatement selectAllTransactionHashesInLedger_;
@@ -1319,18 +1320,7 @@ public:
         std::string&& hash,
         uint32_t seq,
         std::string&& transaction,
-        std::string&& metadata) const override
-    {
-        BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
-        WriteTransactionCallbackData* data = new WriteTransactionCallbackData(
-            this,
-            std::move(hash),
-            seq,
-            std::move(transaction),
-            std::move(metadata));
-
-        writeTransaction(*data, false);
-    }
+        std::string&& metadata) const override;
 
     void
     startWrites() const override

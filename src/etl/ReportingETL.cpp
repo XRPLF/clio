@@ -529,7 +529,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         uint32_t currentSequence = startSequence;
 
         int counter = 0;
-        std::atomic_int per = 4;
+        std::atomic_int per = 100;
         auto startTimer = [this, &per]() {
             auto innerFunc = [this, &per](auto& f) -> void {
                 std::shared_ptr<boost::asio::steady_timer> timer =
@@ -549,7 +549,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             };
             innerFunc(innerFunc);
         };
-        startTimer();
+        // startTimer();
+
         auto begin = std::chrono::system_clock::now();
 
         while (!writeConflict)
@@ -608,6 +609,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                     deleting_ = false;
                 });
             }
+            /*
             if (++counter >= per)
             {
                 std::chrono::milliseconds sleep =
@@ -619,6 +621,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 counter = 0;
                 begin = std::chrono::system_clock::now();
             }
+            */
         }
     }};
 
