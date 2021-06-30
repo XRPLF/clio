@@ -46,12 +46,6 @@ public:
         return "subscribe";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -74,13 +68,7 @@ public:
     {
         return "unsubscribe";
     }
-
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
+    
 private:
     Context& context_;
     boost::json::object& response_;

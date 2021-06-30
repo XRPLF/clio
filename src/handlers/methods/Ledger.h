@@ -46,12 +46,6 @@ public:
         return "ledger";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -73,12 +67,6 @@ public:
     name()
     {
         return "ledger_entry";
-    }
-
-    static Role
-    role()
-    {
-        return Role::USER;
     }
 
 private:
@@ -104,12 +92,6 @@ public:
         return "ledger_data";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -131,12 +113,6 @@ public:
     name()
     {
         return "ledger_range";
-    }
-
-    static Role
-    role()
-    {
-        return Role::USER;
     }
 
 private:

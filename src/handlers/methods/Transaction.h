@@ -46,12 +46,6 @@ public:
         return "tx";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -73,12 +67,6 @@ public:
     name()
     {
         return "account_tx";
-    }
-
-    static Role
-    role()
-    {
-        return Role::USER;
     }
 
 private:

@@ -46,12 +46,6 @@ public:
         return "account_info";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -73,12 +67,6 @@ public:
     name()
     {
         return "account_channels";
-    }
-
-    static Role
-    role()
-    {
-        return Role::USER;
     }
 
 private:
@@ -104,12 +92,6 @@ public:
         return "account_currencies";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -131,12 +113,6 @@ public:
     name()
     {
         return "account_lines";
-    }
-
-    static Role
-    role()
-    {
-        return Role::USER;
     }
 
 private:
@@ -162,12 +138,6 @@ public:
         return "account_objects";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -189,12 +159,6 @@ public:
     name()
     {
         return "account_offers";
-    }
-
-    static Role
-    role()
-    {
-        return Role::USER;
     }
 
 private:

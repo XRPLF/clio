@@ -74,8 +74,7 @@ private:
 
         Handler h;
         h.name = HandlerImpl::name();
-        h.role = HandlerImpl::role();
-
+        
         h.method = [](Context& ctx, boost::json::object& result) -> Status
             {
                 HandlerImpl handler{ctx, result};

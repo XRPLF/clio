@@ -29,7 +29,6 @@ struct Handler
     const char* name;
     std::uint32_t cost;
     Method method;
-    Role role;
 };
 
 std::pair<Status, std::uint32_t>

@@ -46,12 +46,6 @@ public:
         return "channel_authorize";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
@@ -74,13 +68,7 @@ public:
     {
         return "channel_verify";
     }
-
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
+    
 private:
     Context& context_;
     boost::json::object& response_;

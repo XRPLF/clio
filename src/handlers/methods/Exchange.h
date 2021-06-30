@@ -46,12 +46,6 @@ public:
         return "book_offers";
     }
 
-    static Role
-    role()
-    {
-        return Role::USER;
-    }
-
 private:
     Context& context_;
     boost::json::object& response_;
