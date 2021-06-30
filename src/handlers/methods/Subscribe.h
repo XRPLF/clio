@@ -27,52 +27,12 @@
 
 namespace RPC
 {
-    
-class Subscribe
-{
-public:
-    explicit Subscribe(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
 
-    Status
-    check();
+Result  
+doSubscribe(Context const& context);
 
-    static char const*
-    name()
-    {
-        return "subscribe";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class Unsubscribe
-{
-public:
-    explicit Unsubscribe(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "unsubscribe";
-    }
-    
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doUnsubscribe(Context const& context);
 
 } // namespace RPC
 

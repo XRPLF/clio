@@ -23,56 +23,15 @@
 #include <handlers/Context.h>
 #include <handlers/Status.h>
 #include <handlers/Handlers.h>
-#include <boost/json.hpp>
 
 namespace RPC
 {
-    
-class ChannelAuthorize
-{
-public:
-    explicit ChannelAuthorize(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
 
-    Status
-    check();
+Result  
+doChannelAuthorize(Context const& context);
 
-    static char const*
-    name()
-    {
-        return "channel_authorize";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class ChannelVerify
-{
-public:
-    explicit ChannelVerify(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "channel_verify";
-    }
-    
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doChannelVerify(Context const& context);
 
 } // namespace RPC
 

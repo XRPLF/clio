@@ -13,15 +13,16 @@
 namespace RPC 
 {
 
-Status
-LedgerEntry::check()
+Result
+doLedgerEntry(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
     bool binary =
         request.contains("binary") ? request.at("binary").as_bool() : false;
 
-    auto v = ledgerInfoFromRequest(context_);
+    auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
@@ -31,31 +32,31 @@ LedgerEntry::check()
     if (request.contains("index"))
     {
         if(!request.at("index").is_string())
-            return {Error::rpcINVALID_PARAMS, "indexNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "indexNotString"};
 
         if (!key.parseHex(request.at("index").as_string().c_str()))
-            return {Error::rpcINVALID_PARAMS, "malformedIndex"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedIndex"};
     }
     else if (request.contains("account_root"))
     {
         if(!request.at("account_root").is_string())
-            return {Error::rpcINVALID_PARAMS, "account_rootNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "account_rootNotString"};
 
         auto const account = ripple::parseBase58<ripple::AccountID>(
             request.at("account_root").as_string().c_str());
         if (!account || account->isZero())
-            return {Error::rpcINVALID_PARAMS, "malformedAddress"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedAddress"};
         else
             key = ripple::keylet::account(*account).key;
     }
     else if (request.contains("check"))
     {
         if(!request.at("check").is_string())
-            return {Error::rpcINVALID_PARAMS, "checkNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "checkNotString"};
 
         if (!key.parseHex(request.at("check").as_string().c_str()))
         {
-            return {Error::rpcINVALID_PARAMS, "checkMalformed"};
+            return Status{Error::rpcINVALID_PARAMS, "checkMalformed"};
         }
     }
     else if (request.contains("deposit_preauth"))
@@ -66,20 +67,20 @@ LedgerEntry::check()
                 !key.parseHex(
                     request.at("deposit_preauth").as_string().c_str()))
             {
-                return {Error::rpcINVALID_PARAMS, "deposit_preauthMalformed"};
+                return Status{Error::rpcINVALID_PARAMS, "deposit_preauthMalformed"};
             }
         }
         else if (
             !request.at("deposit_preauth").as_object().contains("owner") ||
             !request.at("deposit_preauth").as_object().at("owner").is_string())
         {
-            return {Error::rpcINVALID_PARAMS, "ownerNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "ownerNotString"};
         }
         else if(
             !request.at("deposit_preauth").as_object().contains("authorized") ||
             !request.at("deposit_preauth").as_object().at("authorized").is_string())
         {
-            return {Error::rpcINVALID_PARAMS, "authorizedNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "authorizedNotString"};
         }
         else
         {
@@ -93,9 +94,9 @@ LedgerEntry::check()
                 deposit_preauth.at("authorized").as_string().c_str());
 
             if (!owner)
-                return {Error::rpcINVALID_PARAMS, "malformedOwner"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
             else if (!authorized)
-                return {Error::rpcINVALID_PARAMS, "malformedAuthorized"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedAuthorized"};
             else
                 key = ripple::keylet::depositPreauth(*owner, *authorized).key;
         }
@@ -105,18 +106,18 @@ LedgerEntry::check()
         if (!request.at("directory").is_object())
         {
             if(!request.at("directory").is_string())
-                return {Error::rpcINVALID_PARAMS, "directoryNotString"};
+                return Status{Error::rpcINVALID_PARAMS, "directoryNotString"};
 
             if (!key.parseHex(request.at("directory").as_string().c_str()))
             {
-                return {Error::rpcINVALID_PARAMS, "malformedDirectory"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedDirectory"};
             }
         }
         else if (
             request.at("directory").as_object().contains("sub_index") &&
             !request.at("directory").as_object().at("sub_index").is_int64())
         {
-            return {Error::rpcINVALID_PARAMS, "sub_indexNotInt"};
+            return Status{Error::rpcINVALID_PARAMS, "sub_indexNotInt"};
         }
         else
         {
@@ -132,12 +133,12 @@ LedgerEntry::check()
                 if (directory.contains("owner"))
                 {
                     // May not specify both dir_root and owner.
-                    return {Error::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"};
+                    return Status{Error::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"};
                 }
                 else if (!uDirRoot.parseHex(
                     directory.at("dir_root").as_string().c_str()))
                 {
-                    return {Error::rpcINVALID_PARAMS, "malformedDirRoot"};
+                    return Status{Error::rpcINVALID_PARAMS, "malformedDirRoot"};
                 }
                 else
                 {
@@ -151,7 +152,7 @@ LedgerEntry::check()
 
                 if (!ownerID)
                 {
-                    return {Error::rpcINVALID_PARAMS, "malformedAddress"};
+                    return Status{Error::rpcINVALID_PARAMS, "malformedAddress"};
                 }
                 else
                 {
@@ -162,7 +163,7 @@ LedgerEntry::check()
             }
             else
             {
-                return {Error::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"};
+                return Status{Error::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"};
             }
         }
     }
@@ -171,19 +172,19 @@ LedgerEntry::check()
         if (!request.at("escrow").is_object())
         {
             if (!key.parseHex(request.at("escrow").as_string().c_str()))
-                return {Error::rpcINVALID_PARAMS, "malformedEscrow"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedEscrow"};
         }
         else if (              
             !request.at("escrow").as_object().contains("owner") ||
             !request.at("escrow").as_object().at("owner").is_string())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedOwner"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
         }
         else if(
             !request.at("escrow").as_object().contains("seq") ||
             !request.at("escrow").as_object().at("seq").is_int64())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedSeq"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedSeq"};
         }
         else
         {
@@ -191,7 +192,7 @@ LedgerEntry::check()
                 request.at("escrow").as_object().at("owner").as_string().c_str());
 
             if (!id)
-                return {Error::rpcINVALID_PARAMS, "malformedOwner"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
             else
             {
                 std::uint32_t seq = 
@@ -205,19 +206,19 @@ LedgerEntry::check()
         if (!request.at("offer").is_object())
         {
             if (!key.parseHex(request.at("offer").as_string().c_str()))
-                return {Error::rpcINVALID_PARAMS, "malformedOffer"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedOffer"};
         }
         else if (
             !request.at("offer").as_object().contains("account") ||
             !request.at("offer").as_object().at("account").is_string())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedAccount"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
         }
         else if (
             !request.at("offer").as_object().contains("seq") ||
             !request.at("offer").as_object().at("seq").is_int64())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedSeq"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedSeq"};
         }
         else
         {
@@ -226,7 +227,7 @@ LedgerEntry::check()
                 offer.at("account").as_string().c_str());
 
             if (!id)
-                return {Error::rpcINVALID_PARAMS, "malformedAccount"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
             else
             {
                 std::uint32_t seq = value_to<std::uint32_t>(offer.at("seq"));
@@ -237,15 +238,15 @@ LedgerEntry::check()
     else if (request.contains("payment_channel"))
     {
         if (!request.at("payment_channel").is_string())
-            return {Error::rpcINVALID_PARAMS, "paymentChannelNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "paymentChannelNotString"};
 
         if (!key.parseHex(request.at("payment_channel").as_string().c_str()))
-            return {Error::rpcINVALID_PARAMS, "malformedPaymentChannel"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedPaymentChannel"};
     }
     else if (request.contains("ripple_state"))
     {
         if (!request.at("ripple_state").is_object())
-            return {Error::rpcINVALID_PARAMS, "rippleStateNotObject"};
+            return Status{Error::rpcINVALID_PARAMS, "rippleStateNotObject"};
 
         ripple::Currency currency;
         boost::json::object const& state = request.at("ripple_state").as_object();
@@ -254,7 +255,7 @@ LedgerEntry::check()
             !state.contains("currency") ||
             !state.at("currency").is_string())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedCurrency"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedCurrency"};
         }
 
         if (
@@ -266,7 +267,7 @@ LedgerEntry::check()
             (state.at("accounts").as_array().at(0).as_string() ==
              state.at("accounts").as_array().at(1).as_string()))
         {
-            return {Error::rpcINVALID_PARAMS, "malformedAccounts"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedAccounts"};
         }
 
         auto const id1 = ripple::parseBase58<ripple::AccountID>(
@@ -275,11 +276,11 @@ LedgerEntry::check()
             state.at("accounts").as_array().at(1).as_string().c_str());
 
         if (!id1 || !id2)
-            return {Error::rpcINVALID_PARAMS, "malformedAccounts"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedAccounts"};
 
         else if (!ripple::to_currency(
                         currency, state.at("currency").as_string().c_str()))
-            return {Error::rpcINVALID_PARAMS, "malformedCurrency"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedCurrency"};
 
         key = ripple::keylet::line(*id1, *id2, currency).key;
         
@@ -289,23 +290,23 @@ LedgerEntry::check()
         if (!request.at("ticket").is_object())
         {
             if (!request.at("ticket").is_string())
-                return {Error::rpcINVALID_PARAMS, "ticketNotString"};
+                return Status{Error::rpcINVALID_PARAMS, "ticketNotString"};
 
             if (!key.parseHex(request.at("ticket").as_string().c_str()))
-                return {Error::rpcINVALID_PARAMS, "malformedTicket"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedTicket"};
 
         }
         else if (
             !request.at("ticket").as_object().contains("account") ||
             !request.at("ticket").as_object().at("account").is_string())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedTicketAccount"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedTicketAccount"};
         }
         else if (
             !request.at("ticket").as_object().contains("ticket_seq") ||
             !request.at("ticket").as_object().at("ticket_seq").is_int64())
         {
-            return {Error::rpcINVALID_PARAMS, "malformedTicketSeq"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedTicketSeq"};
         }
         else
         {
@@ -313,7 +314,7 @@ LedgerEntry::check()
                 request.at("ticket").as_object().at("account").as_string().c_str());
 
             if (!id)
-                return {Error::rpcINVALID_PARAMS, "malformedTicketAccount"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedTicketAccount"};
             else
             {
                 std::uint32_t seq = 
@@ -325,32 +326,32 @@ LedgerEntry::check()
     }
     else
     {
-        return {Error::rpcINVALID_PARAMS, "unknownOption"};
+        return Status{Error::rpcINVALID_PARAMS, "unknownOption"};
     }
 
     auto start = std::chrono::system_clock::now();
-    auto dbResponse = context_.backend->fetchLedgerObject(key, lgrInfo.seq);
+    auto dbResponse = context.backend->fetchLedgerObject(key, lgrInfo.seq);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
 
     if (!dbResponse or dbResponse->size() == 0)
-        return {Error::rpcLGR_NOT_FOUND};
+        return Status{Error::rpcLGR_NOT_FOUND};
     
-    response_["index"] = ripple::strHex(key);
-    response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response_["ledger_index"] = lgrInfo.seq;
+    response["index"] = ripple::strHex(key);
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
 
     if (binary)
     {
-        response_["node_binary"] = ripple::strHex(*dbResponse);
+        response["node_binary"] = ripple::strHex(*dbResponse);
     }
     else
     {
         ripple::STLedgerEntry sle{
             ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
-        response_["node"] = toJson(sle);
+        response["node"] = toJson(sle);
     }
 
     return OK;

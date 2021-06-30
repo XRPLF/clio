@@ -21,6 +21,7 @@
 #define RPC_ERRORCODES_H_INCLUDED
 
 #include <string>
+#include <variant>
 #include <boost/json.hpp>
 #include <ripple/protocol/ErrorCodes.h>
 
@@ -28,6 +29,7 @@ namespace RPC
 {
 
 using Error = ripple::error_code_i;
+
 
 struct Status
 {
@@ -51,6 +53,8 @@ struct Status
 };
 
 static Status OK;
+
+using Result = std::variant<Status, boost::json::object>;
 
 void
 inject_error(Error err, boost::json::object& json);

@@ -27,29 +27,9 @@
 
 namespace RPC
 {
-    
-class BookOffers
-{
-public:
-    explicit BookOffers(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
 
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "book_offers";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doBookOffers(Context const& context);
 
 } // namespace RPC
 

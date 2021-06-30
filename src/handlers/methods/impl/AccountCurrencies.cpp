@@ -15,29 +15,29 @@
 namespace RPC
 {
 
-Status
-AccountCurrencies::check()
+Result
+doAccountCurrencies(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
-    auto v = ledgerInfoFromRequest(context_);
+    auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     if(!request.contains("account"))
-        return {Error::rpcINVALID_PARAMS, "missingAccount"};
+        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
     if(!request.at("account").is_string())
-        return {Error::rpcINVALID_PARAMS, "accountNotString"};
+        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
     
     auto accountID = 
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
-        return {Error::rpcINVALID_PARAMS, "malformedAccount"};
-
+        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
 
     std::set<std::string> send, receive;
     auto const addToResponse = [&](ripple::SLE const& sle) {
@@ -62,23 +62,23 @@ AccountCurrencies::check()
     };
 
     traverseOwnedNodes(
-        *context_.backend,
+        *context.backend,
         *accountID,
         lgrInfo.seq,
         beast::zero,
         addToResponse);
 
-    response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response_["ledger_index"] = lgrInfo.seq;
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
 
-    response_["receive_currencies"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonReceive = response_.at("receive_currencies").as_array();
+    response["receive_currencies"] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonReceive = response.at("receive_currencies").as_array();
 
     for (auto const& currency : receive)
         jsonReceive.push_back(currency.c_str());
 
-    response_["send_currencies"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonSend = response_.at("send_currencies").as_array();
+    response["send_currencies"] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonSend = response.at("send_currencies").as_array();
 
     for (auto const& currency : send)
         jsonSend.push_back(currency.c_str());

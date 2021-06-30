@@ -27,66 +27,67 @@ std::unordered_map<std::string, ripple::LedgerEntryType> types {
     {"check", ripple::ltCHECK},
 };
 
-Status
-AccountObjects::check()
+Result
+doAccountObjects(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
-    auto v = ledgerInfoFromRequest(context_);
+    auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     if(!request.contains("account"))
-        return {Error::rpcINVALID_PARAMS, "missingAccount"};
+        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
     if(!request.at("account").is_string())
-        return {Error::rpcINVALID_PARAMS, "accountNotString"};
+        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
     
     auto accountID = 
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
-        return {Error::rpcINVALID_PARAMS, "malformedAccount"};
+        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
 
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
         if(!request.at("limit").is_int64())
-            return {Error::rpcINVALID_PARAMS, "limitNotInt"};
+            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
 
         limit = request.at("limit").as_int64();
         if (limit <= 0)
-            return {Error::rpcINVALID_PARAMS, "limitNotPositive"};
+            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
     }
 
     ripple::uint256 cursor;
     if (request.contains("cursor"))
     {
         if(!request.at("cursor").is_string())
-            return {Error::rpcINVALID_PARAMS, "cursorNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
 
         if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
-            return {Error::rpcINVALID_PARAMS, "malformedCursor"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
     }
 
     std::optional<ripple::LedgerEntryType> objectType = {};
     if (request.contains("type"))
     {
         if(!request.at("type").is_string())
-            return {Error::rpcINVALID_PARAMS, "typeNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "typeNotString"};
 
         std::string typeAsString = request.at("type").as_string().c_str();
         if(types.find(typeAsString) == types.end())
-            return {Error::rpcINVALID_PARAMS, "typeInvalid"};
+            return Status{Error::rpcINVALID_PARAMS, "typeInvalid"};
 
         objectType = types[typeAsString];
     }
     
-    response_["account"] = ripple::to_string(*accountID);
-    response_["account_objects"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonObjects = response_.at("objects").as_array();
+    response["account"] = ripple::to_string(*accountID);
+    response["account_objects"] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonObjects = response.at("objects").as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (!objectType || objectType == sle.getType())
@@ -104,17 +105,17 @@ AccountObjects::check()
     
     auto nextCursor = 
         traverseOwnedNodes(
-            *context_.backend,
+            *context.backend,
             *accountID,
             lgrInfo.seq,
             cursor,
             addToResponse);
 
-    response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response_["ledger_index"] = lgrInfo.seq;
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
 
     if (nextCursor)
-        response_["marker"] = ripple::strHex(*nextCursor);
+        response["marker"] = ripple::strHex(*nextCursor);
 
     return OK;
 }

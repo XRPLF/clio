@@ -29,48 +29,49 @@ namespace RPC
 //   transaction: <hex>
 // }
 
-Status
-Tx::check()
+Result
+doTx(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
     if (!request.contains("transaction"))
-        return {Error::rpcINVALID_PARAMS, "specifyTransaction"};
+        return Status{Error::rpcINVALID_PARAMS, "specifyTransaction"};
     
     if (!request.at("transaction").is_string())
-        return {Error::rpcINVALID_PARAMS, "transactionNotString"};
+        return Status{Error::rpcINVALID_PARAMS, "transactionNotString"};
 
     ripple::uint256 hash;
     if (!hash.parseHex(request.at("transaction").as_string().c_str()))
-        return {Error::rpcINVALID_PARAMS, "malformedTransaction"};
+        return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
 
     bool binary = false;
     if(request.contains("binary"))
     {
         if(!request.at("binary").is_bool())
-            return {Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
         
         binary = request.at("binary").as_bool();
     }
 
-    auto range = context_.backend->fetchLedgerRange();
+    auto range = context.backend->fetchLedgerRange();
     if (!range)
-        return {Error::rpcNOT_READY};
+        return Status{Error::rpcNOT_READY};
 
-    auto dbResponse = context_.backend->fetchTransaction(hash);
+    auto dbResponse = context.backend->fetchTransaction(hash);
     if (!dbResponse)
-        return {Error::rpcTXN_NOT_FOUND};
+        return Status{Error::rpcTXN_NOT_FOUND};
 
     if (!binary)
     {
         auto [sttx, meta] = deserializeTxPlusMeta(dbResponse.value());
-        response_ = toJson(*sttx);
-        response_["meta"] = toJson(*meta);
+        response = toJson(*sttx);
+        response["meta"] = toJson(*meta);
     }
     else
     {
-        response_["tx"] = ripple::strHex(dbResponse->transaction);
-        response_["metadata"] = ripple::strHex(dbResponse->metadata);
+        response["tx"] = ripple::strHex(dbResponse->transaction);
+        response["metadata"] = ripple::strHex(dbResponse->metadata);
     }
 
     return OK;

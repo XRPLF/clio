@@ -27,144 +27,24 @@
 
 namespace RPC
 {
-    
-class AccountInfo
-{
-public:
-    explicit AccountInfo(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
 
-    Status
-    check();
+Result  
+doAccountInfo(Context const& context);
 
-    static char const*
-    name()
-    {
-        return "account_info";
-    }
+Result
+doAccountChannels(Context const& context);
 
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doAccountCurrencies(Context const& context);
 
-class AccountChannels
-{
-public:
-    explicit AccountChannels(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
+Result
+doAccountLines(Context const& context);
 
-    Status
-    check();
+Result  
+doAccountObjects(Context const& context);
 
-    static char const*
-    name()
-    {
-        return "account_channels";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class AccountCurrencies
-{
-public:
-    explicit AccountCurrencies(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "account_currencies";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class AccountLines
-{
-public:
-    explicit AccountLines(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "account_lines";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class AccountObjects
-{
-public:
-    explicit AccountObjects(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "account_objects";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class AccountOffers
-{
-public:
-    explicit AccountOffers(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "account_offers";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doAccountOffers(Context const& context);
 
 } // namespace RPC
 

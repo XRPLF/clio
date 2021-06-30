@@ -10,99 +10,21 @@
 namespace RPC
 {
 
-class HandlerTable
+static std::unordered_map<std::string, std::function<Result(Context const&)>> 
+    handlerTable 
 {
-private:
-    HandlerTable()
-    {
-        for (auto v = RPC::ApiMinimumSupportedVersion;
-             v <= RPC::ApiMaximumSupportedVersion;
-             ++v)
-        {
-            addHandler<AccountChannels>(v);
-            addHandler<AccountCurrencies>(v);
-            addHandler<AccountInfo>(v);
-            addHandler<AccountLines>(v);
-            addHandler<AccountObjects>(v);
-            addHandler<AccountOffers>(v);
-            addHandler<AccountTx>(v);
-            addHandler<BookOffers>(v);
-            addHandler<ChannelAuthorize>(v);
-            addHandler<ChannelVerify>(v);
-            addHandler<Ledger>(v);
-            addHandler<LedgerData>(v);
-            addHandler<LedgerEntry>(v);
-            addHandler<LedgerRange>(v);
-            addHandler<Subscribe>(v);
-            addHandler<Unsubscribe>(v);
-            addHandler<Tx>(v);
-        }
-    }
-
-public:
-    static HandlerTable const&
-    instance()
-    {
-        static HandlerTable const handlerTable{};
-        return handlerTable;
-    }
-
-    Handler const*
-    getHandler(unsigned version, std::string name) const
-    {
-        if (version > RPC::ApiMaximumSupportedVersion ||
-            version < RPC::ApiMinimumSupportedVersion)
-            return nullptr;
-        auto& innerTable = table_[versionToIndex(version)];
-        auto i = innerTable.find(name);
-        return i == innerTable.end() ? nullptr : &i->second;
-    }
-
-private:
-    std::array<std::map<std::string, Handler>, APINumberVersionSupported>
-        table_;
-
-    template <class HandlerImpl>
-    void
-    addHandler(unsigned version)
-    {
-        assert(
-            version >= RPC::ApiMinimumSupportedVersion &&
-            version <= RPC::ApiMaximumSupportedVersion);
-        auto& innerTable = table_[versionToIndex(version)];
-        assert(innerTable.find(HandlerImpl::name()) == innerTable.end());
-
-        Handler h;
-        h.name = HandlerImpl::name();
-        
-        h.method = [](Context& ctx, boost::json::object& result) -> Status
-            {
-                HandlerImpl handler{ctx, result};
-
-                auto status = handler.check();
-                if (status)
-                    result = make_error(status.error);
-
-                return status;
-            };
-
-        innerTable[HandlerImpl::name()] = h;
-    }
-
-    inline unsigned
-    versionToIndex(unsigned version) const
-    {
-        return version - RPC::ApiMinimumSupportedVersion;
-    }
+    {"ledger", std::bind(doLedger, std::placeholders::_1)},
+    {"ledger_data", std::bind(doLedgerData, std::placeholders::_1)}
 };
 
-static std::unordered_set<std::string> forwardCommands{
+static std::unordered_set<std::string> forwardCommands {
     "submit",
     "submit_multisigned",
     "fee",
     "path_find",
     "ripple_path_find",
-    "manifest"};
+    "manifest"
+};
 
 bool
 shouldForwardToRippled(Context const& ctx)
@@ -135,24 +57,18 @@ shouldForwardToRippled(Context const& ctx)
     return false;
 }
 
-std::pair<Status, std::uint32_t>
-buildResponse(Context& ctx, boost::json::object& result)
+Result
+buildResponse(Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
-    {
-        result = ctx.balancer->forwardToRippled(ctx.params);
-        return {OK, 1};
-    }
+        return ctx.balancer->forwardToRippled(ctx.params);
 
-    Handler const* handler =
-        HandlerTable::instance().getHandler(ctx.version, ctx.method);
+    if (handlerTable.find(ctx.method) == handlerTable.end())
+        return Status{Error::rpcUNKNOWN_COMMAND};
 
-    if (!handler || !handler->method || !handler->cost)
-        return {Error::rpcUNKNOWN_COMMAND, 1};
-    
-    auto method = handler->method;
+    auto method = handlerTable[ctx.method];
 
-    return {method(ctx, result), handler->cost};
+    return method(ctx);
 }
 
 }

@@ -27,52 +27,12 @@
 
 namespace RPC
 {
-    
-class Tx
-{
-public:
-    explicit Tx(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
 
-    Status
-    check();
+Result  
+doTx(Context const& context);
 
-    static char const*
-    name()
-    {
-        return "tx";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class AccountTx
-{
-public:
-    explicit AccountTx(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "account_tx";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doAccountTx(Context const& context);
 
 } // namespace RPC
 

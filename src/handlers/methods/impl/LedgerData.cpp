@@ -40,16 +40,17 @@
 namespace RPC
 {
 
-Status
-LedgerData::check()
+Result
+doLedgerData(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
     bool binary = false;
     if(request.contains("binary"))
     {
         if(!request.at("binary").is_bool())
-            return {Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
         
         binary = request.at("binary").as_bool();
     }
@@ -58,7 +59,7 @@ LedgerData::check()
     if(request.contains("limit"))
     {
         if(!request.at("limit").is_int64())
-            return {Error::rpcINVALID_PARAMS, "limitNotInteger"};
+            return Status{Error::rpcINVALID_PARAMS, "limitNotInteger"};
         
         limit = value_to<int>(request.at("limit"));
     }
@@ -67,16 +68,16 @@ LedgerData::check()
     if(request.contains("cursor"))
     {
         if(!request.at("cursor").is_string())
-            return {Error::rpcINVALID_PARAMS, "cursorNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
         
         BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing cursor";
 
         cursor = ripple::uint256{};
         if(!cursor->parseHex(request.at("cursor").as_string().c_str()))
-            return {Error::rpcINVALID_PARAMS, "cursorMalformed"};
+            return Status{Error::rpcINVALID_PARAMS, "cursorMalformed"};
     }
 
-    auto v = ledgerInfoFromRequest(context_);
+    auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
@@ -84,7 +85,7 @@ LedgerData::check()
 
     Backend::LedgerPage page;
     auto start = std::chrono::system_clock::now();
-    page = context_.backend->fetchLedgerPage(cursor, lgrInfo.seq, limit);
+    page = context.backend->fetchLedgerPage(cursor, lgrInfo.seq, limit);
 
     auto end = std::chrono::system_clock::now();
 
@@ -119,19 +120,19 @@ LedgerData::check()
             header["total_coins"] = ripple::to_string(lgrInfo.drops);
             header["transaction_hash"] = ripple::strHex(lgrInfo.txHash);
 
-            response_["ledger"] = header;
+            response["ledger"] = header;
         }
     }
         
-    response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response_["ledger_index"] = lgrInfo.seq;
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
 
     boost::json::array objects;
     std::vector<Backend::LedgerObject>& results = page.objects;
     std::optional<ripple::uint256> const& returnedCursor = page.cursor;
 
     if(returnedCursor)
-        response_["marker"] = ripple::strHex(*returnedCursor);
+        response["marker"] = ripple::strHex(*returnedCursor);
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " number of results = " << results.size();
@@ -149,12 +150,12 @@ LedgerData::check()
         else
             objects.push_back(toJson(sle));
     }
-    response_["state"] = objects;
+    response["state"] = objects;
 
 
     if (cursor && page.warning)
     {
-        response_["warning"] =
+        response["warning"] =
             "Periodic database update in progress. Data for this ledger may be "
             "incomplete. Data should be complete "
             "within a few minutes. Other RPC calls are not affected, "

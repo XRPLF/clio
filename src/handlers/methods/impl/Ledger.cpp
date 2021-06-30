@@ -5,16 +5,17 @@
 namespace RPC
 {
 
-Status
-Ledger::check()
+Result
+doLedger(Context const& context)
 {
-    auto params = context_.params;
+    auto params = context.params;
+    boost::json::object response = {};
 
     bool binary = false;
     if(params.contains("binary"))
     {
         if(!params.at("binary").is_bool())
-            return {Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
         
         binary = params.at("binary").as_bool();
     }
@@ -23,7 +24,7 @@ Ledger::check()
     if(params.contains("transactions"))
     {
         if(!params.at("transactions").is_bool())
-            return {Error::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
+            return Status{Error::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
         
         transactions = params.at("transactions").as_bool();
     }
@@ -32,12 +33,12 @@ Ledger::check()
     if(params.contains("expand"))
     {
         if(!params.at("expand").is_bool())
-            return {Error::rpcINVALID_PARAMS, "expandFlagNotBool"};
+            return Status{Error::rpcINVALID_PARAMS, "expandFlagNotBool"};
         
         expand = params.at("expand").as_bool();
     }
 
-    auto v = ledgerInfoFromRequest(context_);
+    auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
@@ -75,7 +76,7 @@ Ledger::check()
         boost::json::array& jsonTxs = header.at("transactions").as_array();
         if (expand)
         {
-            auto txns = context_.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
+            auto txns = context.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
 
             std::transform(
                 std::move_iterator(txns.begin()),
@@ -101,7 +102,7 @@ Ledger::check()
         else
         {
             auto hashes =
-                context_.backend->fetchAllTransactionHashesInLedger(lgrInfo.seq);
+                context.backend->fetchAllTransactionHashesInLedger(lgrInfo.seq);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
@@ -113,9 +114,9 @@ Ledger::check()
         }
     }
     
-    response_["ledger"] = header;
-    response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response_["ledger_index"] = lgrInfo.seq;
+    response["ledger"] = header;
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
     return OK;
 }
 

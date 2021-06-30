@@ -27,98 +27,18 @@
 
 namespace RPC
 {
-    
-class Ledger
-{
-public:
-    explicit Ledger(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
 
-    Status
-    check();
+Result  
+doLedger(Context const& context);
 
-    static char const*
-    name()
-    {
-        return "ledger";
-    }
+Result
+doLedgerEntry(Context const& context);
 
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doLedgerData(Context const& context);
 
-class LedgerEntry
-{
-public:
-    explicit LedgerEntry(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "ledger_entry";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class LedgerData
-{
-public:
-    explicit LedgerData(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "ledger_data";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
-
-class LedgerRange
-{
-public:
-    explicit LedgerRange(
-        Context& ctx,
-        boost::json::object& response)
-    : context_(ctx)
-    , response_(response) {}
-
-    Status
-    check();
-
-    static char const*
-    name()
-    {
-        return "ledger_range";
-    }
-
-private:
-    Context& context_;
-    boost::json::object& response_;
-};
+Result
+doLedgerRange(Context const& context);
 
 } // namespace RPC
 

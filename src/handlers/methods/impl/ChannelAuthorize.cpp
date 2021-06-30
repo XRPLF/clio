@@ -41,25 +41,26 @@ serializePayChanAuthorization(
     msg.add64(amt.drops());
 }
 
-Status
-ChannelAuthorize::check()
+Result
+doChannelAuthorize(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
     if(!request.contains("channel_id"))
-        return {Error::rpcINVALID_PARAMS, "missingChannelID"};
+        return Status{Error::rpcINVALID_PARAMS, "missingChannelID"};
     
     if(!request.at("channel_id").is_string())
-        return {Error::rpcINVALID_PARAMS, "channelIDNotString"};
+        return Status{Error::rpcINVALID_PARAMS, "channelIDNotString"};
 
     if(!request.contains("amount"))
-        return {Error::rpcINVALID_PARAMS, "missingAmount"};
+        return Status{Error::rpcINVALID_PARAMS, "missingAmount"};
 
     if(!request.at("amount").is_string())
-            return {Error::rpcINVALID_PARAMS, "amountNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "amountNotString"};
 
     if (!request.contains("key_type") && !request.contains("secret"))
-        return {Error::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
+        return Status{Error::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
 
     auto v = keypairFromRequst(request);
     if (auto status = std::get_if<Status>(&v))
@@ -69,13 +70,13 @@ ChannelAuthorize::check()
 
     ripple::uint256 channelId;
     if (!channelId.parseHex(request.at("channel_id").as_string().c_str()))
-        return {Error::rpcCHANNEL_MALFORMED, "malformedChannelID"};
+        return Status{Error::rpcCHANNEL_MALFORMED, "malformedChannelID"};
 
     auto optDrops =
         ripple::to_uint64(request.at("amount").as_string().c_str());
 
     if (!optDrops)
-        return {Error::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
+        return Status{Error::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
 
     std::uint64_t drops = *optDrops;
 
@@ -85,11 +86,11 @@ ChannelAuthorize::check()
     try
     {
         auto const buf = ripple::sign(pk, sk, msg.slice());
-        response_["signature"] = ripple::strHex(buf);
+        response["signature"] = ripple::strHex(buf);
     }
     catch (std::exception&)
     {
-        return {Error::rpcINTERNAL};
+        return Status{Error::rpcINTERNAL};
     }
 
     return OK;

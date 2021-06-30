@@ -20,12 +20,12 @@ validateStreams(boost::json::object const& request)
     for (auto const& stream : streams)
     {
         if (!stream.is_string())
-            return {Error::rpcINVALID_PARAMS, "streamNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "streamNotString"};
 
         std::string s = stream.as_string().c_str();
 
         if (validStreams.find(s) == validStreams.end())
-            return {Error::rpcINVALID_PARAMS, "invalidStream" + s};
+            return Status{Error::rpcINVALID_PARAMS, "invalidStream" + s};
     }
 
     return OK;
@@ -34,7 +34,7 @@ validateStreams(boost::json::object const& request)
 void
 subscribeToStreams(
     boost::json::object const& request,
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
     boost::json::array const& streams = request.at("streams").as_array();
@@ -57,7 +57,7 @@ subscribeToStreams(
 void
 unsubscribeToStreams(
     boost::json::object const& request,
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
     boost::json::array const& streams = request.at("streams").as_array();
@@ -83,13 +83,13 @@ validateAccounts(boost::json::array const& accounts)
     for (auto const& account : accounts)
     {
         if (!account.is_string())
-            return {Error::rpcINVALID_PARAMS, "accountNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
 
         std::string s = account.as_string().c_str();
         auto id = accountFromStringStrict(s);
 
         if (!id)
-            return {Error::rpcINVALID_PARAMS, "invalidAccount" + s};
+            return Status{Error::rpcINVALID_PARAMS, "invalidAccount" + s};
     }
 
     return OK;
@@ -98,7 +98,7 @@ validateAccounts(boost::json::array const& accounts)
 void
 subscribeToAccounts(
     boost::json::object const& request,
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts = request.at("accounts").as_array();
@@ -122,7 +122,7 @@ subscribeToAccounts(
 void
 unsubscribeToAccounts(
     boost::json::object const& request,
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts = request.at("accounts").as_array();
@@ -146,7 +146,7 @@ unsubscribeToAccounts(
 void
 subscribeToAccountsProposed(
     boost::json::object const& request,
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts = request.at("accounts_proposed").as_array();
@@ -170,7 +170,7 @@ subscribeToAccountsProposed(
 void
 unsubscribeToAccountsProposed(
     boost::json::object const& request,
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts = request.at("accounts_proposed").as_array();
@@ -192,15 +192,15 @@ unsubscribeToAccountsProposed(
 }
 
 
-Status
-Subscribe::check()
+Result
+doSubscribe(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
 
     if (request.contains("streams"))
     {
         if (!request.at("streams").is_array())
-            return {Error::rpcINVALID_PARAMS, "streamsNotArray"};
+            return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
 
@@ -212,7 +212,7 @@ Subscribe::check()
     {
 
         if (!request.at("accounts").is_array())
-            return {Error::rpcINVALID_PARAMS, "accountsNotArray"};
+            return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
         boost::json::array accounts = request.at("accounts").as_array();
         auto status = validateAccounts(accounts);
@@ -224,7 +224,7 @@ Subscribe::check()
     if (request.contains("accounts_proposed"))
     {
         if (!request.at("accounts_proposed").is_array())
-            return {Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
+            return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
         boost::json::array accounts = request.at("accounts_proposed").as_array();
         auto status = validateAccounts(accounts);
@@ -234,26 +234,26 @@ Subscribe::check()
     }
 
     if (request.contains("streams"))
-        subscribeToStreams(request, context_.session, *context_.subscriptions);
+        subscribeToStreams(request, context.session, *context.subscriptions);
 
     if (request.contains("accounts"))
-        subscribeToAccounts(request, context_.session, *context_.subscriptions);
+        subscribeToAccounts(request, context.session, *context.subscriptions);
 
     if (request.contains("accounts_proposed"))
-        subscribeToAccountsProposed(request, context_.session, *context_.subscriptions);
+        subscribeToAccountsProposed(request, context.session, *context.subscriptions);
 
     return OK;
 }
 
-Status
-Unsubscribe::check()
+Result
+doUnsubscribe(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
 
    if (request.contains("streams"))
     {
         if (!request.at("streams").is_array())
-            return {Error::rpcINVALID_PARAMS, "streamsNotArray"};
+            return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
 
@@ -265,7 +265,7 @@ Unsubscribe::check()
     {
 
         if (!request.at("accounts").is_array())
-            return {Error::rpcINVALID_PARAMS, "accountsNotArray"};
+            return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
         boost::json::array accounts = request.at("accounts").as_array();
         auto status = validateAccounts(accounts);
@@ -277,7 +277,7 @@ Unsubscribe::check()
     if (request.contains("accounts_proposed"))
     {
         if (!request.at("accounts_proposed").is_array())
-            return {Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
+            return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
         boost::json::array accounts = request.at("accounts_proposed").as_array();
         auto status = validateAccounts(accounts);
@@ -287,13 +287,13 @@ Unsubscribe::check()
     }
 
     if (request.contains("streams"))
-        unsubscribeToStreams(request, context_.session, *context_.subscriptions);
+        unsubscribeToStreams(request, context.session, *context.subscriptions);
 
     if (request.contains("accounts"))
-        unsubscribeToAccounts(request, context_.session, *context_.subscriptions);
+        unsubscribeToAccounts(request, context.session, *context.subscriptions);
 
     if (request.contains("accounts_proposed"))
-        unsubscribeToAccountsProposed(request, context_.session, *context_.subscriptions);
+        unsubscribeToAccountsProposed(request, context.session, *context.subscriptions);
 
     return OK;
 }

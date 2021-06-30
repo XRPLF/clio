@@ -5,18 +5,20 @@
 namespace RPC
 {
     
-Status
-LedgerRange::check()
+Result
+doLedgerRange(Context const& context)
 {
-    auto range = context_.backend->fetchLedgerRange();
+    boost::json::object response = {};
+
+    auto range = context.backend->fetchLedgerRange();
     if (!range)
     {
-        return {Error::rpcNOT_READY, "rangeNotFound"};
+        return Status{Error::rpcNOT_READY, "rangeNotFound"};
     }
     else
     {
-        response_["ledger_index_min"] = range->minSequence;
-        response_["ledger_index_max"] = range->maxSequence;
+        response["ledger_index_min"] = range->minSequence;
+        response["ledger_index_max"] = range->maxSequence;
     }
 
     return OK;

@@ -22,17 +22,8 @@ constexpr unsigned int APINumberVersionSupported =
 static_assert(ApiMinimumSupportedVersion >= APIVersionIfUnspecified);
 static_assert(ApiMaximumSupportedVersion >= ApiMinimumSupportedVersion);
 
-struct Handler
-{
-    using Method = std::function<Status(Context&, boost::json::object&)>;
-
-    const char* name;
-    std::uint32_t cost;
-    Method method;
-};
-
-std::pair<Status, std::uint32_t>
-buildResponse(Context& ctx, boost::json::object& result);
+Result
+buildResponse(Context const& ctx);
 
 } // namespace RPC
 #endif // RIPPLE_REPORTING_HANDLERS_H

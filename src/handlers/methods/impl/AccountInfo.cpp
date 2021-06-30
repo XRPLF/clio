@@ -42,10 +42,11 @@
 namespace RPC
 {
 
-Status
-AccountInfo::check()
+Result
+doAccountInfo(Context const& context)
 {
-    auto request = context_.params;
+    auto request = context.params;
+    boost::json::object response = {};
 
     std::string strIdent;
     if (request.contains("account"))
@@ -53,9 +54,9 @@ AccountInfo::check()
     else if (request.contains("ident"))
         strIdent = request.at("ident").as_string().c_str();
     else
-        return {Error::rpcACT_MALFORMED};
+        return Status{Error::rpcACT_MALFORMED};
 
-    auto v = ledgerInfoFromRequest(context_);
+    auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
@@ -68,7 +69,7 @@ AccountInfo::check()
 
     auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
-        context_.backend->fetchLedgerObject(key.key, lgrInfo.seq);
+        context.backend->fetchLedgerObject(key.key, lgrInfo.seq);
     auto end = std::chrono::system_clock::now();
 
     auto time =
@@ -77,14 +78,14 @@ AccountInfo::check()
 
     if (!dbResponse)
     {
-        return {Error::rpcACT_NOT_FOUND};
+        return Status{Error::rpcACT_NOT_FOUND};
     }
 
     ripple::STLedgerEntry sle{
         ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
 
     if (!key.check(sle))
-        return {Error::rpcDB_DESERIALIZATION};
+        return Status{Error::rpcDB_DESERIALIZATION};
 
     // if (!binary)
     //     response["account_data"] = getJson(sle);
@@ -92,9 +93,9 @@ AccountInfo::check()
     //     response["account_data"] = ripple::strHex(*dbResponse);
     // response["db_time"] = time;
 
-    response_["account_data"] = toJson(sle);
-    response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response_["ledger_index"] = lgrInfo.seq;
+    response["account_data"] = toJson(sle);
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
 
     // Return SignerList(s) if that is requested.
     /*

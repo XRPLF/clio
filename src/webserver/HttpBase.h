@@ -127,6 +127,7 @@ handle_request(
         BOOST_LOG_TRIVIAL(info) << "Received request: " << req.body();
 
         boost::json::object request;
+        std::string responseStr = "";
         try
         {
             request = boost::json::parse(req.body()).as_object();
@@ -173,29 +174,34 @@ handle_request(
         boost::json::object response{{"result", boost::json::object{}}};
         boost::json::object& result = response["result"].as_object();
 
-        auto [status, cost] = RPC::buildResponse(*context, result);
+        auto v = RPC::buildResponse(*context);
 
-        if (!dosGuard.add(ip, cost))
-            result["warning"] = "Too many requests";
-
-        if(status)
+        if (auto status = std::get_if<RPC::Status>(&v))
         {
-            auto error = RPC::make_error(status.error);
+            auto error = RPC::make_error(status->error);
 
             error["request"] = request;
 
             result = error;
+
+            responseStr = boost::json::serialize(error);
         }
         else
         {
+            result = std::get<boost::json::object>(v);
             result["status"] = "success";
             result["validated"] = true;
+
+            responseStr = boost::json::serialize(response);
         }
+
+        if (!dosGuard.add(ip, responseStr.size()))
+            result["warning"] = "Too many requests";
 
         return send(httpResponse(
             http::status::ok,
             "application/json",
-            boost::json::serialize(response)));
+            responseStr));
     }
     catch (std::exception const& e)
     {

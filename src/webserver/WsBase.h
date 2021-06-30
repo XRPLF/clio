@@ -29,6 +29,7 @@
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
 #include <handlers/Handlers.h>
+#include <handlers/Status.h>
 #include <webserver/DOSGuard.h>
 #include <webserver/SubscriptionManager.h>
 
@@ -235,26 +236,27 @@ public:
                     auto response = getDefaultWsResponse(id);
                     boost::json::object& result = response["result"].as_object();
 
-                    auto [status, cost] = RPC::buildResponse(*context, result);
+                    auto v = RPC::buildResponse(*context);
 
-                    if (!dosGuard_.add(ip, cost))
-                        result["warning"] = "Too many requests";
-
-                    if (status)
+                    if (auto status = std::get_if<RPC::Status>(&v))
                     {
-                        auto error = RPC::make_error(status.error);
+                        auto error = RPC::make_error(status->error);
 
                         if (!id.is_null())
                             error["id"] = id;
                         error["request"] = request;
 
                         response_ = boost::json::serialize(error);
-
                     }
                     else
                     {
-                        response_ = boost::json::serialize(response);
-                    } 
+                        auto json = std::get<boost::json::object>(v);
+                        response_ = boost::json::serialize(json);
+                    }
+
+                    if (!dosGuard_.add(ip, response_.size()))
+                        result["warning"] = "Too many requests";
+
                 }
                 catch (Backend::DatabaseTimeout const& t)
                 {
