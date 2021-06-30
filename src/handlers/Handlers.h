@@ -22,11 +22,6 @@ constexpr unsigned int APINumberVersionSupported =
 static_assert(ApiMinimumSupportedVersion >= APIVersionIfUnspecified);
 static_assert(ApiMaximumSupportedVersion >= ApiMinimumSupportedVersion);
 
-// Indicates the level of administrative permission to grant.
-// NOTE, this does not currently affect RPCs in clio, and will be implimented later.
-enum class Role { GUEST, USER, IDENTIFIED, ADMIN, PROXY, FORBID };
-
-
 struct Handler
 {
     using Method = std::function<Status(Context&, boost::json::object&)>;
