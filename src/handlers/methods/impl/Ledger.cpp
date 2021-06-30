@@ -117,7 +117,7 @@ doLedger(Context const& context)
     response["ledger"] = header;
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
-    return OK;
+    return response;
 }
 
 }

@@ -93,7 +93,7 @@ doChannelAuthorize(Context const& context)
         return Status{Error::rpcINTERNAL};
     }
 
-    return OK;
+    return response;
 }   
 
 } // namesace RPC

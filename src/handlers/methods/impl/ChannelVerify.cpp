@@ -102,7 +102,7 @@ doChannelVerify(Context const& context)
     response["signature_verified"] =
         ripple::verify(*pk, msg.slice(), ripple::makeSlice(*sig), true);
     
-    return OK;
+    return response;
 }
 
 } // namespace RPC

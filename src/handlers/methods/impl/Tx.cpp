@@ -74,7 +74,7 @@ doTx(Context const& context)
         response["metadata"] = ripple::strHex(dbResponse->metadata);
     }
 
-    return OK;
+    return response;
 }
 
 } // namespace RPC

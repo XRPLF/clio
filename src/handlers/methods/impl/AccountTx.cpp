@@ -176,7 +176,7 @@ doAccountTx(Context const& context)
     auto end2 = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took " << ((end2 - end).count() / 1000000000.0);
     
-    return OK;
+    return response;
 }
 
 } // namespace RPC

@@ -354,7 +354,7 @@ doLedgerEntry(Context const& context)
         response["node"] = toJson(sle);
     }
 
-    return OK;
+    return response;
 }
 
 }

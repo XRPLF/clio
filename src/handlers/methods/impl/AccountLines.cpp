@@ -172,7 +172,7 @@ doAccountLines(Context const& context)
     if (nextCursor)
         response["marker"] = ripple::strHex(*nextCursor);
 
-    return OK;
+    return response;
 }
 
 } // namespace RPC

@@ -242,13 +242,15 @@ doSubscribe(Context const& context)
     if (request.contains("accounts_proposed"))
         subscribeToAccountsProposed(request, context.session, *context.subscriptions);
 
-    return OK;
+    boost::json::object response = {{"status", "success"}};
+    return response;
 }
 
 Result
 doUnsubscribe(Context const& context)
 {
     auto request = context.params;
+
 
    if (request.contains("streams"))
     {
@@ -295,7 +297,8 @@ doUnsubscribe(Context const& context)
     if (request.contains("accounts_proposed"))
         unsubscribeToAccountsProposed(request, context.session, *context.subscriptions);
 
-    return OK;
+    boost::json::object response = {{"status", "success"}};
+    return response;
 }
 
 } // namespace RPC

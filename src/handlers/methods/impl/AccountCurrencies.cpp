@@ -83,7 +83,7 @@ doAccountCurrencies(Context const& context)
     for (auto const& currency : send)
         jsonSend.push_back(currency.c_str());
 
-    return OK;
+    return response;
 }
 
 } // namespace RPC

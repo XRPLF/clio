@@ -319,7 +319,7 @@ doBookOffers(Context const& context)
             "this ledger "
             "may be incomplete. Data should be complete within one minute";
 
-    return OK;
+    return response;
 }
 
 } // namespace RPC

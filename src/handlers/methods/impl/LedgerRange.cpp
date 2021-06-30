@@ -21,7 +21,7 @@ doLedgerRange(Context const& context)
         response["ledger_index_max"] = range->maxSequence;
     }
 
-    return OK;
+    return response;
 }
 
 }

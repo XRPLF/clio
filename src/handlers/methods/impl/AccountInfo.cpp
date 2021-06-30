@@ -117,7 +117,7 @@ doAccountInfo(Context const& context)
     }
     */
 
-    return OK;
+    return response;
 }
 
 } //namespace RPC

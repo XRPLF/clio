@@ -164,7 +164,7 @@ doLedgerData(Context const& context)
             "page of the ledger";
     }
 
-    return OK;
+    return response;
 }
 
 } // namespace RPC
