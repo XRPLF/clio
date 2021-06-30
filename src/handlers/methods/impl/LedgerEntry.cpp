@@ -336,7 +336,7 @@ LedgerEntry::check()
             .count();
 
     if (!dbResponse or dbResponse->size() == 0)
-        return {Error::rpcENTRY_NOT_FOUND};
+        return {Error::rpcLGR_NOT_FOUND};
     
     response_["index"] = ripple::strHex(key);
     response_["ledger_hash"] = ripple::strHex(lgrInfo.hash);

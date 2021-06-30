@@ -16,6 +16,7 @@ make_WsContext(
         return {};
     
     std::string command = request.at("command").as_string().c_str();
+
     return Context{
         command,
         1,
@@ -41,7 +42,9 @@ make_HttpContext(
 
     std::string const& command = request.at("method").as_string().c_str();
 
-    // empty params
+    if (command == "subscribe" || command == "unsubscribe")
+        return {};
+
     if (!request.contains("params") || !request.at("params").is_array())
         return {};
 
