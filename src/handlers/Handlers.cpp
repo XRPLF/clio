@@ -13,27 +13,24 @@ namespace RPC
 static std::unordered_map<std::string, std::function<Result(Context const&)>> 
     handlerTable 
 {
-    {"account_channels", std::bind(doAccountChannels, std::placeholders::_1)},
-    {
-        "account_currencies", 
-        std::bind(doAccountCurrencies, std::placeholders::_1)
-    },
-    {"account_info", std::bind(doAccountInfo, std::placeholders::_1)},
-    {"account_lines", std::bind(doAccountLines, std::placeholders::_1)},
-    {"account_objects", std::bind(doAccountObjects, std::placeholders::_1)},
-    {"account_offers", std::bind(doAccountOffers, std::placeholders::_1)},
-    {"account_tx", std::bind(doAccountTx, std::placeholders::_1)},
-    {"book_offers", std::bind(doBookOffers, std::placeholders::_1)},
-    {"channel_authorize", std::bind(doChannelAuthorize, std::placeholders::_1)},
-    {"channel_verify", std::bind(doChannelVerify, std::placeholders::_1)},
-    {"ledger", std::bind(&doLedger, std::placeholders::_1)},
-    {"ledger_data", std::bind(doLedgerData, std::placeholders::_1)},
-    {"ledger_entry", std::bind(doLedgerEntry, std::placeholders::_1)},
-    {"ledger_range", std::bind(doLedgerRange, std::placeholders::_1)},
-    {"ledger_data", std::bind(doLedgerData, std::placeholders::_1)},
-    {"subscribe", std::bind(doSubscribe, std::placeholders::_1)},
-    {"unsubscribe", std::bind(doUnsubscribe, std::placeholders::_1)},
-    {"tx", std::bind(doTx, std::placeholders::_1)},
+    { "account_channels", &doAccountChannels },
+    { "account_currencies", &doAccountCurrencies },
+    { "account_info", &doAccountInfo },
+    { "account_lines", &doAccountLines },
+    { "account_objects", &doAccountObjects },
+    { "account_offers", &doAccountOffers },
+    { "account_tx", &doAccountTx },
+    { "book_offers", &doBookOffers },
+    { "channel_authorize", &doChannelAuthorize },
+    { "channel_verify", &doChannelVerify },
+    { "ledger", &doLedger },
+    { "ledger_data", &doLedgerData },
+    { "ledger_entry", &doLedgerEntry },
+    { "ledger_range", &doLedgerRange },
+    { "ledger_data", &doLedgerData },
+    { "subscribe", &doSubscribe },
+    { "unsubscribe", &doUnsubscribe },
+    { "tx", &doTx },
 };
 
 static std::unordered_set<std::string> forwardCommands {
@@ -87,7 +84,7 @@ buildResponse(Context const& ctx)
 
     auto method = handlerTable[ctx.method];
 
-    return method(ctx);
+    return method(std::cref(ctx));
 }
 
 }

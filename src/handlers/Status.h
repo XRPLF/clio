@@ -30,7 +30,6 @@ namespace RPC
 
 using Error = ripple::error_code_i;
 
-
 struct Status
 {
     Error error = Error::rpcSUCCESS;
