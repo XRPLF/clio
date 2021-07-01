@@ -84,7 +84,7 @@ buildResponse(Context const& ctx)
 
     auto method = handlerTable[ctx.method];
 
-    return method(std::cref(ctx));
+    return method(ctx);
 }
 
 }
