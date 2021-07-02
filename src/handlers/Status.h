@@ -55,12 +55,6 @@ static Status OK;
 
 using Result = std::variant<Status, boost::json::object>;
 
-void
-inject_error(Error err, boost::json::object& json);
-
-void
-inject_error(Error err, std::string const& message, boost::json::object& json);
-
 boost::json::object
 make_error(Error err);
 
