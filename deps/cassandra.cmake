@@ -44,7 +44,7 @@ if(NOT cassandra)
             GIT_REPOSITORY https://github.com/krb5/krb5.git
             GIT_TAG master
             UPDATE_COMMAND ""
-            CONFIGURE_COMMAND autoreconf src && ./src/configure --enable-static --disable-shared
+            CONFIGURE_COMMAND autoreconf src && CFLAGS=-fcommon ./src/configure --enable-static --disable-shared
             BUILD_IN_SOURCE 1
             BUILD_COMMAND make
             INSTALL_COMMAND ""
@@ -106,7 +106,7 @@ if(NOT cassandra)
         -DLIBUV_ROOT_DIR=${BINARY_DIR}
         -DLIBUV_INCLUDE_DIR=${SOURCE_DIR}/include
         -DCASS_BUILD_STATIC=ON
-	-DCASS_BUILD_SHARED=OFF
+        -DCASS_BUILD_SHARED=OFF
         INSTALL_COMMAND ""
         BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}cassandra_static.a
         )
