@@ -29,12 +29,12 @@
 #include <boost/log/trivial.hpp>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
-#include <server/Ssl.h>
 
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
 // Primarly used in read-only mode, to monitor when ledgers are validated
-ETLSource::ETLSource(
+template <class Derived>
+ETLSourceImpl<Derived>::ETLSourceImpl(
     boost::json::object const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
@@ -49,27 +49,6 @@ ETLSource::ETLSource(
     , subscriptions_(subscriptions)
     , balancer_(balancer)
 {
-    std::optional<boost::asio::ssl::context> sslCtx;
-    if (config.contains("ssl_cert_file") &&
-        config.contains("ssl_key_file"))
-    {
-        sslCtx = parse_certs(
-            config.at("ssl_cert_file").as_string().c_str(),
-            config.at("ssl_key_file").as_string().c_str());
-    }
-
-    if (sslCtx)
-    {
-        ws_ = nullptr;
-        // std::make_unique<boost::beast::websocket::stream<
-        //     boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
-        //         boost::asio::make_strand(ioc_), *sslCtx);
-    }
-    else
-    {
-        ws_ = std::make_unique<boost::beast::websocket::stream<
-            boost::beast::tcp_stream>>(boost::asio::make_strand(ioc_));
-    }
 
     if (config.contains("ip"))
     {
@@ -105,13 +84,29 @@ ETLSource::ETLSource(
     }
 }
 
+template <class Derived>
 void
-ETLSource::reconnect(boost::beast::error_code ec)
+ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
 {
     connected_ = false;
     // These are somewhat normal errors. operation_aborted occurs on shutdown,
     // when the timer is cancelled. connection_refused will occur repeatedly
+    std::string err = ec.message();
     // if we cannot connect to the transaction processing process
+    if (ec.category() == boost::asio::error::get_ssl_category()) {
+        err = std::string(" (")
+                +boost::lexical_cast<std::string>(ERR_GET_LIB(ec.value()))+","
+                +boost::lexical_cast<std::string>(ERR_GET_FUNC(ec.value()))+","
+                +boost::lexical_cast<std::string>(ERR_GET_REASON(ec.value()))+") "
+        ;
+        //ERR_PACK /* crypto/err/err.h */
+        char buf[128];
+        ::ERR_error_string_n(ec.value(), buf, sizeof(buf));
+        err += buf;
+
+        std::cout << err << std::endl;
+    }
+
     if (ec != boost::asio::error::operation_aborted &&
         ec != boost::asio::error::connection_refused)
     {
@@ -137,21 +132,22 @@ ETLSource::reconnect(boost::beast::error_code ec)
     });
 }
 
+template <class Derived>
 void
-ETLSource::close(bool startAgain)
+ETLSourceImpl<Derived>::close(bool startAgain)
 {
     timer_.cancel();
     ioc_.post([this, startAgain]() {
         if (closing_)
             return;
 
-        if (ws_->is_open())
+        if (derived().ws().is_open())
         {
             // onStop() also calls close(). If the async_close is called twice,
             // an assertion fails. Using closing_ makes sure async_close is only
             // called once
             closing_ = true;
-            ws_->async_close(
+            derived().ws().async_close(
                 boost::beast::websocket::close_code::normal,
                 [this, startAgain](auto ec) {
                     if (ec)
@@ -172,8 +168,9 @@ ETLSource::close(bool startAgain)
     });
 }
 
+template <class Derived>
 void
-ETLSource::onResolve(
+ETLSourceImpl<Derived>::onResolve(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type results)
 {
@@ -186,15 +183,16 @@ ETLSource::onResolve(
     }
     else
     {
-        boost::beast::get_lowest_layer(*ws_).expires_after(
+        boost::beast::get_lowest_layer(derived().ws()).expires_after(
             std::chrono::seconds(30));
-        boost::beast::get_lowest_layer(*ws_).async_connect(
+        boost::beast::get_lowest_layer(derived().ws()).async_connect(
             results, [this](auto ec, auto ep) { onConnect(ec, ep); });
     }
 }
 
+template <class Derived>
 void
-ETLSource::onConnect(
+ETLSourceImpl<Derived>::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
@@ -210,15 +208,15 @@ ETLSource::onConnect(
         numFailures_ = 0;
         // Turn off timeout on the tcp stream, because websocket stream has it's
         // own timeout system
-        boost::beast::get_lowest_layer(*ws_).expires_never();
+        boost::beast::get_lowest_layer(derived().ws()).expires_never();
 
         // Set suggested timeout settings for the websocket
-        ws_->set_option(
+        derived().ws().set_option(
             boost::beast::websocket::stream_base::timeout::suggested(
                 boost::beast::role_type::client));
 
         // Set a decorator to change the User-Agent of the handshake
-        ws_->set_option(boost::beast::websocket::stream_base::decorator(
+        derived().ws().set_option(boost::beast::websocket::stream_base::decorator(
             [](boost::beast::websocket::request_type& req) {
                 req.set(
                     boost::beast::http::field::user_agent,
@@ -231,12 +229,13 @@ ETLSource::onConnect(
         // See https://tools.ietf.org/html/rfc7230#section-5.4
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         // Perform the websocket handshake
-        ws_->async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
+        derived().ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
 }
 
+template <class Derived>
 void
-ETLSource::onHandshake(boost::beast::error_code ec)
+ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
 {
     BOOST_LOG_TRIVIAL(trace)
         << __func__ << " : ec = " << ec << " - " << toString();
@@ -253,14 +252,15 @@ ETLSource::onHandshake(boost::beast::error_code ec)
         std::string s = boost::json::serialize(jv);
         BOOST_LOG_TRIVIAL(trace) << "Sending subscribe stream message";
         // Send the message
-        ws_->async_write(boost::asio::buffer(s), [this](auto ec, size_t size) {
+        derived().ws().async_write(boost::asio::buffer(s), [this](auto ec, size_t size) {
             onWrite(ec, size);
         });
     }
 }
 
+template <class Derived>
 void
-ETLSource::onWrite(boost::beast::error_code ec, size_t bytesWritten)
+ETLSourceImpl<Derived>::onWrite(boost::beast::error_code ec, size_t bytesWritten)
 {
     BOOST_LOG_TRIVIAL(trace)
         << __func__ << " : ec = " << ec << " - " << toString();
@@ -271,13 +271,14 @@ ETLSource::onWrite(boost::beast::error_code ec, size_t bytesWritten)
     }
     else
     {
-        ws_->async_read(
+        derived().ws().async_read(
             readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
     }
 }
 
+template <class Derived>
 void
-ETLSource::onRead(boost::beast::error_code ec, size_t size)
+ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
 {
     BOOST_LOG_TRIVIAL(trace)
         << __func__ << " : ec = " << ec << " - " << toString();
@@ -294,13 +295,14 @@ ETLSource::onRead(boost::beast::error_code ec, size_t size)
 
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : calling async_read - " << toString();
-        ws_->async_read(
+         derived().ws().async_read(
             readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
     }
 }
 
+template <class Derived>
 bool
-ETLSource::handleMessage()
+ETLSourceImpl<Derived>::handleMessage()
 {
     BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << toString();
 
@@ -505,8 +507,9 @@ public:
     }
 };
 
+template <class Derived>
 bool
-ETLSource::loadInitialLedger(uint32_t sequence)
+ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence)
 {
     if (!stub_)
         return false;
@@ -561,8 +564,9 @@ ETLSource::loadInitialLedger(uint32_t sequence)
     return !abort;
 }
 
+template <class Derived>
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
+ETLSourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 {
     org::xrpl::rpc::v1::GetLedgerResponse response;
     if (!stub_)
@@ -580,7 +584,7 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
     if (status.ok() && !response.is_unlimited())
     {
         BOOST_LOG_TRIVIAL(warning)
-            << "ETLSource::fetchLedger - is_unlimited is "
+            << "ETLSourceImpl::fetchLedger - is_unlimited is "
                "false. Make sure secure_gateway is set "
                "correctly on the ETL source. source = "
             << toString() << " status = " << status.error_message();
@@ -592,14 +596,21 @@ ETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::array const& config,
     boost::asio::io_context& ioContext,
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl)
 {
     for (auto& entry : config)
     {
-        std::unique_ptr<ETLSource> source = ETLSource::make_ETLSource(
-            entry.as_object(), ioContext, backend, subscriptions, nwvl, *this);
+        std::unique_ptr<ETLSource> source = ETL::make_ETLSource(
+            entry.as_object(),
+            ioContext,
+            sslCtx,
+            backend,
+            subscriptions,
+            nwvl,
+            *this);
 
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
@@ -705,8 +716,9 @@ ETLLoadBalancer::forwardToRippled(boost::json::object const& request) const
     return res;
 }
 
+template <class Derived>
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-ETLSource::getRippledForwardingStub() const
+ETLSourceImpl<Derived>::getRippledForwardingStub() const
 {
     if (!connected_)
         return nullptr;
@@ -726,8 +738,9 @@ ETLSource::getRippledForwardingStub() const
     }
 }
 
+template <class Derived>
 boost::json::object
-ETLSource::forwardToRippled(boost::json::object const& request) const
+ETLSourceImpl<Derived>::forwardToRippled(boost::json::object const& request) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
                              << "request = " << boost::json::serialize(request);

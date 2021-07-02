@@ -57,6 +57,49 @@ parse_config(const char* filename)
     return {};
 }
 
+std::optional<ssl::context>
+parse_certs(boost::json::object const& config)
+{
+
+    if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
+        return {};
+
+    auto certFilename = config.at("ssl_cert_file").as_string().c_str();
+    auto keyFilename = config.at("ssl_key_file").as_string().c_str();
+    
+    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
+    if (!readCert)
+        return {};
+
+    std::stringstream contents;
+    contents << readCert.rdbuf();
+    readCert.close();
+    std::string cert = contents.str();
+
+    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
+    if (!readKey)
+        return {};
+
+    contents.str("");
+    contents << readKey.rdbuf();
+    readKey.close();
+    std::string key = contents.str();
+
+    ssl::context ctx{ssl::context::tlsv12};
+
+    ctx.set_options(
+        boost::asio::ssl::context::default_workarounds |
+        boost::asio::ssl::context::no_sslv2);
+
+    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
+
+    ctx.use_private_key(
+        boost::asio::buffer(key.data(), key.size()),
+        boost::asio::ssl::context::file_format::pem);
+
+    return ctx;
+}
+
 void
 initLogLevel(boost::json::object const& config)
 {
@@ -122,10 +165,18 @@ main(int argc, char* argv[])
         std::cerr << "Couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
+
+    auto ctx = parse_certs(*config);
+    auto ctxRef = ctx
+        ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
+        : std::nullopt;
+
     initLogLevel(*config);
+
     auto const threads = config->contains("workers")
         ? config->at("workers").as_int64()
         : std::thread::hardware_concurrency();
+
     if (threads <= 0)
     {
         BOOST_LOG_TRIVIAL(fatal) << "Workers is less than 0";
@@ -158,7 +209,7 @@ main(int argc, char* argv[])
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        *config, ioc, backend, subscriptions, ledgers);
+        *config, ioc, ctxRef, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only
     // mode, ETL only publishes
@@ -167,7 +218,7 @@ main(int argc, char* argv[])
 
     // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(
-        *config, ioc, backend, subscriptions, balancer, dosGuard);
+        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

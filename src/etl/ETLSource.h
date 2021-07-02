@@ -24,6 +24,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
 #include <server/SubscriptionManager.h>
@@ -43,7 +44,45 @@ class SubscriptionManager;
 /// class forwards transactions received on the transactions_proposed streams to
 /// any subscribers.
 
+
 class ETLSource
+{
+public:
+    virtual bool
+    isConnected() const = 0;
+
+    virtual boost::json::object
+    toJson() const = 0;
+
+    virtual void
+    run() = 0;
+
+    virtual std::string
+    toString() const = 0;
+
+    virtual bool
+    hasLedger(uint32_t sequence) const = 0;
+
+    virtual std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
+    fetchLedger(uint32_t ledgerSequence, bool getObjects = true) = 0;
+    
+    virtual bool
+    loadInitialLedger(uint32_t ledgerSequence) = 0;
+
+    virtual std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
+    getRippledForwardingStub() const = 0;
+
+    virtual boost::json::object
+    forwardToRippled(boost::json::object const& request) const = 0;
+
+    virtual
+    ~ETLSource()
+    {
+    }
+};
+
+template <class Derived>
+class ETLSourceImpl : public ETLSource
 {
     std::string ip_;
 
@@ -55,8 +94,6 @@ class ETLSource
 
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
 
-    std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>>
-        ws_;
     boost::asio::ip::tcp::resolver resolver_;
 
     boost::beast::flat_buffer readBuffer_;
@@ -95,7 +132,7 @@ class ETLSource
     ETLLoadBalancer& balancer_;
 
     void
-    run()
+    run() override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << toString();
 
@@ -107,36 +144,21 @@ class ETLSource
         });
     }
 
-public:
-    static std::unique_ptr<ETLSource>
-    make_ETLSource(
-        boost::json::object const& config,
-        boost::asio::io_context& ioContext,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-        ETLLoadBalancer& balancer)
+    Derived&
+    derived()
     {
-        std::unique_ptr<ETLSource> src = std::make_unique<ETLSource>(
-            config,
-            ioContext,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
-
-        src->run();
-
-        return src;
+        return static_cast<Derived&>(*this);
     }
 
-    ~ETLSource()
+public:
+
+    ~ETLSourceImpl()
     {
         close(false);
     }
 
     bool
-    isConnected() const
+    isConnected() const override
     {
         return connected_;
     }
@@ -158,7 +180,7 @@ public:
     /// Create ETL source without gRPC endpoint
     /// Fetch ledger and load initial ledger will fail for this source
     /// Primarly used in read-only mode, to monitor when ledgers are validated
-    ETLSource(
+    ETLSourceImpl(
         boost::json::object const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
@@ -169,7 +191,7 @@ public:
     /// @param sequence ledger sequence to check for
     /// @return true if this source has the desired ledger
     bool
-    hasLedger(uint32_t sequence) const
+    hasLedger(uint32_t sequence) const override
     {
         std::lock_guard lck(mtx_);
         for (auto& pair : validatedLedgers_)
@@ -243,10 +265,10 @@ public:
     /// and the prior one
     /// @return the extracted data and the result status
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(uint32_t ledgerSequence, bool getObjects = true);
+    fetchLedger(uint32_t ledgerSequence, bool getObjects = true) override;
 
     std::string
-    toString() const
+    toString() const override
     {
         return "{ validated_ledger : " + getValidatedRange() +
             " , ip : " + ip_ + " , web socket port : " + wsPort_ +
@@ -254,7 +276,7 @@ public:
     }
 
     boost::json::object
-    toJson() const
+    toJson() const override
     {
         boost::json::object res;
         res["validated_range"] = getValidatedRange();
@@ -276,7 +298,7 @@ public:
     /// @param writeQueue queue to push downloaded ledger objects
     /// @return true if the download was successful
     bool
-    loadInitialLedger(uint32_t ledgerSequence);
+    loadInitialLedger(uint32_t ledgerSequence) override;
 
     /// Attempt to reconnect to the ETL source
     void
@@ -319,11 +341,115 @@ public:
     /// Get grpc stub to forward requests to rippled node
     /// @return stub to send requests to ETL source
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    getRippledForwardingStub() const;
+    getRippledForwardingStub() const override;
 
     boost::json::object
-    forwardToRippled(boost::json::object const& request) const;
+    forwardToRippled(boost::json::object const& request) const override;
 };
+
+
+class PlainETLSource : public ETLSourceImpl<PlainETLSource>
+{
+    std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>>
+        ws_;
+
+public:
+    PlainETLSource(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> nwvl,
+        ETLLoadBalancer& balancer)
+        : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer)
+        , ws_(std::make_unique<
+            boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+                boost::asio::make_strand(ioc)))
+    {
+    }
+
+    boost::beast::websocket::stream<boost::beast::tcp_stream>&
+    ws()
+    {
+        return *ws_;
+    }
+};
+
+class SslETLSource : public ETLSourceImpl<SslETLSource>
+{
+    std::unique_ptr<boost::beast::websocket::stream<boost::beast::ssl_stream<
+        boost::beast::tcp_stream>>> ws_;
+
+public:
+    SslETLSource(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> nwvl,
+        ETLLoadBalancer& balancer)
+        : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer)
+        , ws_(std::make_unique<
+            boost::beast::websocket::stream<boost::beast::ssl_stream<
+            boost::beast::tcp_stream>>>(
+                boost::asio::make_strand(ioc), *sslCtx))
+    {
+    }
+
+    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+    ws()
+    {
+        return *ws_;
+    }
+};
+
+
+namespace ETL
+{
+    static std::unique_ptr<ETLSource>
+    make_ETLSource(
+        boost::json::object const& config,
+        boost::asio::io_context& ioContext,
+        std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
+        ETLLoadBalancer& balancer)
+    {
+        std::unique_ptr<ETLSource> src = nullptr;
+        if (sslCtx)
+        {
+            src = std::make_unique<SslETLSource>(
+                config,
+                ioContext,
+                sslCtx,
+                backend,
+                subscriptions,
+                networkValidatedLedgers,
+                balancer);
+        }
+        else
+        {
+            src = std::make_unique<PlainETLSource>(
+                config,
+                ioContext,
+                backend,
+                subscriptions,
+                networkValidatedLedgers,
+                balancer);
+        }
+
+        src->run();
+
+        return src;
+    }
+}
+
+
+
+
+
 /// This class is used to manage connections to transaction processing processes
 /// This class spawns a listener for each etl source, which listens to messages
 /// on the ledgers stream (to keep track of which ledgers have been validated by
@@ -339,6 +465,7 @@ public:
     ETLLoadBalancer(
         boost::json::array const& config,
         boost::asio::io_context& ioContext,
+        std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl);
@@ -347,6 +474,7 @@ public:
     make_ETLLoadBalancer(
         boost::json::object const& config,
         boost::asio::io_context& ioc,
+        std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
@@ -354,6 +482,7 @@ public:
         return std::make_shared<ETLLoadBalancer>(
             config.at("etl_sources").as_array(),
             ioc,
+            sslCtx,
             backend,
             subscriptions,
             validatedLedgers);
