@@ -1,10 +1,5 @@
 #include <handlers/Handlers.h>
-#include <handlers/methods/Account.h>
-#include <handlers/methods/Channel.h>
-#include <handlers/methods/Exchange.h>
-#include <handlers/methods/Ledger.h>
-#include <handlers/methods/Subscribe.h>
-#include <handlers/methods/Transaction.h>
+#include <handlers/methods/Methods.h>
 #include <etl/ETLSource.h>
 
 namespace RPC

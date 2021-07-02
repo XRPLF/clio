@@ -17,8 +17,8 @@
 //==============================================================================
 
 
-#ifndef REPORTING_TRANSACTION_HANDLER_H_INCLUDED
-#define REPORTING_TRANSACTION_HANDLER_H_INCLUDED
+#ifndef REPORTING_METHODS_H_INCLUDED
+#define REPORTING_METHODS_H_INCLUDED
 
 #include <handlers/Context.h>
 #include <handlers/Status.h>
@@ -29,6 +29,51 @@ namespace RPC
 {
 
 Result  
+doAccountInfo(Context const& context);
+
+Result
+doAccountChannels(Context const& context);
+
+Result
+doAccountCurrencies(Context const& context);
+
+Result
+doAccountLines(Context const& context);
+
+Result  
+doAccountObjects(Context const& context);
+
+Result
+doAccountOffers(Context const& context);
+
+Result  
+doChannelAuthorize(Context const& context);
+
+Result
+doChannelVerify(Context const& context);
+
+Result
+doBookOffers(Context const& context);
+
+Result  
+doLedger(Context const& context);
+
+Result
+doLedgerEntry(Context const& context);
+
+Result
+doLedgerData(Context const& context);
+
+Result
+doLedgerRange(Context const& context);
+
+Result  
+doSubscribe(Context const& context);
+
+Result
+doUnsubscribe(Context const& context);
+
+Result  
 doTx(Context const& context);
 
 Result
@@ -36,4 +81,4 @@ doAccountTx(Context const& context);
 
 } // namespace RPC
 
-#endif // REPORTING_TRANSACTION_HANDLER_H_INCLUDED
+#endif // REPORTING_METHODS_H_INCLUDED

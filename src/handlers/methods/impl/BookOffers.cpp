@@ -7,7 +7,7 @@
 #include <boost/json.hpp>
 #include <algorithm>
 #include <handlers/RPCHelpers.h>
-#include <handlers/methods/Exchange.h>
+#include <handlers/methods/Methods.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
 #include <backend/Pg.h>

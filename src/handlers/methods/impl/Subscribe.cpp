@@ -1,7 +1,7 @@
 #include <boost/json.hpp>
 #include <webserver/WsBase.h>
 #include <webserver/SubscriptionManager.h>
-#include <handlers/methods/Subscribe.h>
+#include <handlers/methods/Methods.h>
 #include <handlers/RPCHelpers.h>
 
 namespace RPC

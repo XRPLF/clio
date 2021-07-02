@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <handlers/RPCHelpers.h>
-#include <handlers/methods/Transaction.h>
+#include <handlers/methods/Methods.h>
 #include <backend/BackendInterface.h>
 #include <backend/Pg.h>
 

@@ -23,7 +23,7 @@
 #include <ripple/protocol/STAccount.h>
 #include <ripple/protocol/jss.h>
 #include <ripple/resource/Fees.h>
-#include <handlers/methods/Channel.h>
+#include <handlers/methods/Methods.h>
 #include <handlers/RPCHelpers.h>
 #include <optional>
 

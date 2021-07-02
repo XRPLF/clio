@@ -6,7 +6,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
-#include <handlers/methods/Account.h>
+#include <handlers/methods/Methods.h>
 #include <algorithm>
 #include <handlers/RPCHelpers.h>
 #include <backend/BackendInterface.h>

@@ -6,7 +6,7 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
-#include <handlers/methods/Account.h>
+#include <handlers/methods/Methods.h>
 #include <handlers/RPCHelpers.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
