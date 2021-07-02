@@ -22,33 +22,18 @@
 namespace RPC
 {
 
-void
-inject_error(Error err, boost::json::object& json)
+boost::json::object
+make_error(Error err)
 {
+    boost::json::object json{};
     ripple::RPC::ErrorInfo const& info(ripple::RPC::get_error_info(err));
+
     json["error"] = info.token;
     json["error_code"] = static_cast<std::uint32_t>(err);
     json["error_message"] = info.message;
     json["status"] = "error";
     json["type"] = "response";
-}
-
-void
-inject_error(Error err, std::string const& message, boost::json::object& json)
-{
-    ripple::RPC::ErrorInfo const& info(ripple::RPC::get_error_info(err));
-    json["error"] = info.token;
-    json["error_code"] = static_cast<std::uint32_t>(err);
-    json["error_message"] = message;
-    json["status"] = "error";
-    json["type"] = "response";
-}
-
-boost::json::object
-make_error(Error err)
-{
-    boost::json::object json{};
-    inject_error(err, json);
+    
     return json;
 }
 
@@ -56,7 +41,14 @@ boost::json::object
 make_error(Error err, std::string const& message)
 {
     boost::json::object json{};
-    inject_error(err, message, json);
+    ripple::RPC::ErrorInfo const& info(ripple::RPC::get_error_info(err));
+
+    json["error"] = info.token;
+    json["error_code"] = static_cast<std::uint32_t>(err);
+    json["error_message"] = message;
+    json["status"] = "error";
+    json["type"] = "response";
+    
     return json;
 }
 } 
