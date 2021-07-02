@@ -635,7 +635,6 @@ private:
     CassandraPreparedStatement insertTransaction_;
     CassandraPreparedStatement insertLedgerTransaction_;
     CassandraPreparedStatement selectTransaction_;
-    CassandraPreparedStatement selectAllTransactionsInLedger_;
     CassandraPreparedStatement selectAllTransactionHashesInLedger_;
     CassandraPreparedStatement selectObject_;
     CassandraPreparedStatement selectLedgerPageKeys_;
@@ -1059,39 +1058,8 @@ public:
     };
 
     std::vector<TransactionAndMetadata>
-    fetchTransactions(std::vector<ripple::uint256> const& hashes) const override
-    {
-        std::size_t const numHashes = hashes.size();
-        BOOST_LOG_TRIVIAL(debug)
-            << "Fetching " << numHashes << " transactions from Cassandra";
-        std::atomic_uint32_t numFinished = 0;
-        std::condition_variable cv;
-        std::mutex mtx;
-        std::vector<TransactionAndMetadata> results{numHashes};
-        std::vector<std::shared_ptr<ReadCallbackData>> cbs;
-        cbs.reserve(numHashes);
-        for (std::size_t i = 0; i < hashes.size(); ++i)
-        {
-            cbs.push_back(std::make_shared<ReadCallbackData>(
-                *this, hashes[i], results[i], cv, numFinished, numHashes));
-            read(*cbs[i]);
-        }
-        assert(results.size() == cbs.size());
-
-        std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&numFinished, &numHashes]() {
-            return numFinished == numHashes;
-        });
-        for (auto const& res : results)
-        {
-            if (res.transaction.size() == 1 && res.transaction[0] == 0)
-                throw DatabaseTimeout();
-        }
-
-        BOOST_LOG_TRIVIAL(debug)
-            << "Fetched " << numHashes << " transactions from Cassandra";
-        return results;
-    }
+    fetchTransactions(
+        std::vector<ripple::uint256> const& hashes) const override;
 
     void
     read(ReadCallbackData& data) const

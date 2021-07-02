@@ -205,6 +205,7 @@ BackendInterface::fetchLedgerPage(
     uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
     page.cursor = cursor;
+    int numCalls = 0;
     do
     {
         adjustedLimit = adjustedLimit >= 8192 ? 8192 : adjustedLimit * 2;
@@ -223,7 +224,7 @@ BackendInterface::fetchLedgerPage(
         page.objects.insert(
             page.objects.end(), partial.objects.begin(), partial.objects.end());
         page.cursor = partial.cursor;
-    } while (page.objects.size() < limit && page.cursor);
+    } while (page.objects.size() < limit && page.cursor && ++numCalls < 10);
     if (incomplete)
     {
         auto rng = fetchLedgerRange();

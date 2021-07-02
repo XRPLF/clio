@@ -301,13 +301,52 @@ CassandraBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
     auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence);
     return fetchTransactions(hashes);
 }
+std::vector<TransactionAndMetadata>
+CassandraBackend::fetchTransactions(
+    std::vector<ripple::uint256> const& hashes) const
+{
+    std::size_t const numHashes = hashes.size();
+    std::atomic_uint32_t numFinished = 0;
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::vector<TransactionAndMetadata> results{numHashes};
+    std::vector<std::shared_ptr<ReadCallbackData>> cbs;
+    cbs.reserve(numHashes);
+    auto start = std::chrono::system_clock::now();
+    for (std::size_t i = 0; i < hashes.size(); ++i)
+    {
+        cbs.push_back(std::make_shared<ReadCallbackData>(
+            *this, hashes[i], results[i], cv, numFinished, numHashes));
+        read(*cbs[i]);
+    }
+    assert(results.size() == cbs.size());
+
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(
+        lck, [&numFinished, &numHashes]() { return numFinished == numHashes; });
+    auto end = std::chrono::system_clock::now();
+    for (auto const& res : results)
+    {
+        if (res.transaction.size() == 1 && res.transaction[0] == 0)
+            throw DatabaseTimeout();
+    }
+
+    BOOST_LOG_TRIVIAL(debug)
+        << "Fetched " << numHashes << " transactions from Cassandra in "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+               .count()
+        << " milliseconds";
+    return results;
+}
 std::vector<ripple::uint256>
 CassandraBackend::fetchAllTransactionHashesInLedger(
     uint32_t ledgerSequence) const
 {
     CassandraStatement statement{selectAllTransactionHashesInLedger_};
     statement.bindInt(ledgerSequence);
+    auto start = std::chrono::system_clock::now();
     CassandraResult result = executeSyncRead(statement);
+    auto end = std::chrono::system_clock::now();
     if (!result)
     {
         BOOST_LOG_TRIVIAL(error)
@@ -320,6 +359,12 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     {
         hashes.push_back(result.getUInt256());
     } while (result.nextRow());
+    BOOST_LOG_TRIVIAL(debug)
+        << "Fetched " << hashes.size()
+        << " transaction hashes from Cassandra in "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+               .count()
+        << " milliseconds";
     return hashes;
 }
 
@@ -1567,13 +1612,6 @@ CassandraBackend::open(bool readOnly)
         if (!selectTransaction_.prepareStatement(query, session_.get()))
             continue;
 
-        query.str("");
-        query << "SELECT transaction, metadata, ledger_sequence FROM "
-              << tablePrefix << "transactions"
-              << " WHERE ledger_sequence = ?";
-        if (!selectAllTransactionsInLedger_.prepareStatement(
-                query, session_.get()))
-            continue;
         query.str("");
         query << "SELECT hash FROM " << tablePrefix << "ledger_transactions"
               << " WHERE ledger_sequence = ?";
