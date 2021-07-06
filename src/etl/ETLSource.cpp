@@ -186,13 +186,12 @@ ETLSourceImpl<Derived>::onResolve(
         boost::beast::get_lowest_layer(derived().ws()).expires_after(
             std::chrono::seconds(30));
         boost::beast::get_lowest_layer(derived().ws()).async_connect(
-            results, [this](auto ec, auto ep) { onConnect(ec, ep); });
+            results, [this](auto ec, auto ep) { derived().onConnect(ec, ep); });
     }
 }
 
-template <class Derived>
 void
-ETLSourceImpl<Derived>::onConnect(
+PlainETLSource::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
@@ -230,6 +229,68 @@ ETLSourceImpl<Derived>::onConnect(
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         // Perform the websocket handshake
         derived().ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
+    }
+}
+
+void
+SslETLSource::onConnect(
+    boost::beast::error_code ec,
+    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+{
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " : ec = " << ec << " - " << toString();
+    if (ec)
+    {
+        // start over
+        reconnect(ec);
+    }
+    else
+    {
+        numFailures_ = 0;
+        // Turn off timeout on the tcp stream, because websocket stream has it's
+        // own timeout system
+        boost::beast::get_lowest_layer(derived().ws()).expires_never();
+
+        // Set suggested timeout settings for the websocket
+        derived().ws().set_option(
+            boost::beast::websocket::stream_base::timeout::suggested(
+                boost::beast::role_type::client));
+
+        // Set a decorator to change the User-Agent of the handshake
+        derived().ws().set_option(boost::beast::websocket::stream_base::decorator(
+            [](boost::beast::websocket::request_type& req) {
+                req.set(
+                    boost::beast::http::field::user_agent,
+                    std::string(BOOST_BEAST_VERSION_STRING) +
+                        " websocket-client-async");
+            }));
+
+        // Update the host_ string. This will provide the value of the
+        // Host HTTP header during the WebSocket handshake.
+        // See https://tools.ietf.org/html/rfc7230#section-5.4
+        auto host = ip_ + ':' + std::to_string(endpoint.port());
+        // Perform the websocket handshake
+        ws().next_layer().async_handshake(
+            boost::asio::ssl::stream_base::client,
+            [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
+    }
+}
+
+void
+SslETLSource::onSslHandshake(
+    boost::beast::error_code ec,
+    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+{
+    if (ec)
+    {
+        reconnect(ec);
+    }
+    else
+    {
+        // Perform the websocket handshake
+        auto host = ip_ + ':' + std::to_string(endpoint.port());
+        // Perform the websocket handshake
+        ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
 }
 

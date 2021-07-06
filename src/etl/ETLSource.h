@@ -84,8 +84,6 @@ public:
 template <class Derived>
 class ETLSourceImpl : public ETLSource
 {
-    std::string ip_;
-
     std::string wsPort_;
 
     std::string grpcPort_;
@@ -107,8 +105,6 @@ class ETLSourceImpl : public ETLSource
     // beast::Journal journal_;
 
     mutable std::mutex mtx_;
-
-    size_t numFailures_ = 0;
 
     std::atomic_bool closing_{false};
 
@@ -144,11 +140,16 @@ class ETLSourceImpl : public ETLSource
         });
     }
 
+protected:
     Derived&
     derived()
     {
         return static_cast<Derived&>(*this);
     }
+
+    std::string ip_;
+
+    size_t numFailures_ = 0;
 
 public:
 
@@ -311,10 +312,10 @@ public:
         boost::asio::ip::tcp::resolver::results_type results);
 
     /// Callback
-    void
+    virtual void
     onConnect(
         boost::beast::error_code ec,
-        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint);
+        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint) = 0;
 
     /// Callback
     void
@@ -366,7 +367,13 @@ public:
             boost::beast::websocket::stream<boost::beast::tcp_stream>>(
                 boost::asio::make_strand(ioc)))
     {
+        std::cout << "making plain" << std::endl;
     }
+
+    void
+    onConnect(
+        boost::beast::error_code ec,
+        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint) override;
 
     boost::beast::websocket::stream<boost::beast::tcp_stream>&
     ws()
@@ -395,7 +402,18 @@ public:
             boost::beast::tcp_stream>>>(
                 boost::asio::make_strand(ioc), *sslCtx))
     {
+        std::cout << "MAKING SSL" << std::endl;
     }
+
+    void
+    onConnect(
+        boost::beast::error_code ec,
+        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint) override;
+
+    void
+    onSslHandshake(
+        boost::beast::error_code ec,
+        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint);
 
     boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
     ws()
