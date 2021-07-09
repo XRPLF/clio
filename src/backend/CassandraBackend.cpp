@@ -45,10 +45,7 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
     {
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " Succesfully inserted a record";
-        backend.finishAsyncWrite();
-        int remaining = --requestParams.refs;
-        if (remaining == 0)
-            delete &requestParams;
+        requestParams.finish();
     }
 }
 template <class T>
@@ -58,6 +55,7 @@ processAsyncWrite(CassFuture* fut, void* cbData)
     T& requestParams = *static_cast<T*>(cbData);
     processAsyncWriteResponse(requestParams, fut, requestParams.retry);
 }
+/*
 // Process the result of an asynchronous write. Retry on error
 // @param fut cassandra future associated with the write
 // @param cbData struct that holds the request parameters
@@ -72,7 +70,7 @@ flatMapWriteCallback(CassFuture* fut, void* cbData)
 
     processAsyncWriteResponse(requestParams, fut, func);
 }
-
+*/
 /*
 
 void
@@ -141,6 +139,7 @@ flatMapGetCreatedCallback(CassFuture* fut, void* cbData)
     }
 }
 */
+/*
 void
 flatMapWriteTransactionCallback(CassFuture* fut, void* cbData)
 {
@@ -182,6 +181,7 @@ flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData)
     };
     processAsyncWriteResponse(requestParams, fut, func);
 }
+*/
 
 // Process the result of an asynchronous read. Retry on error
 // @param fut cassandra future associated with the read
@@ -224,21 +224,185 @@ flatMapReadObjectCallback(CassFuture* fut, void* cbData)
     }
 }
 
-template <class T, class F>
+template <class T, class B>
 struct CallbackData
 {
     CassandraBackend const* backend;
     T data;
-    F retry;
+    std::function<void(CallbackData<T, B>&, bool)> retry;
     uint32_t currentRetries;
     std::atomic<int> refs = 1;
 
-    CallbackData(CassandraBackend const* b, T&& d, F f)
-        : backend(b), data(std::move(d)), retry(f)
+    CallbackData(CassandraBackend const* b, T&& d, B bind)
+        : backend(b), data(std::move(d))
+    {
+        retry = [bind, this](auto& params, bool isRetry) {
+            auto statement = bind(params);
+            backend->executeAsyncWrite(
+                statement,
+                processAsyncWrite<
+                    typename std::remove_reference<decltype(params)>::type>,
+                params,
+                isRetry);
+        };
+    }
+    virtual void
+    start()
+    {
+        retry(*this, false);
+    }
+
+    virtual void
+    finish()
+    {
+        backend->finishAsyncWrite();
+        int remaining = --refs;
+        if (remaining == 0)
+            delete this;
+    }
+    virtual ~CallbackData()
+    {
+    }
+};
+template <class T, class B>
+struct BulkWriteCallbackData : public CallbackData<T, B>
+{
+    std::mutex& mtx;
+    std::condition_variable& cv;
+    std::atomic_int& numRemaining;
+    BulkWriteCallbackData(
+        CassandraBackend const* b,
+        T&& d,
+        B bind,
+        std::atomic_int& r,
+        std::mutex& m,
+        std::condition_variable& c)
+        : CallbackData<T, B>(b, std::move(d), bind)
+        , numRemaining(r)
+        , mtx(m)
+        , cv(c)
+    {
+    }
+    void
+    start() override
+    {
+        this->retry(*this, true);
+    }
+
+    void
+    finish() override
+    {
+        {
+            std::lock_guard lck(mtx);
+            --numRemaining;
+            cv.notify_one();
+        }
+    }
+    ~BulkWriteCallbackData()
     {
     }
 };
 
+template <class T, class B>
+void
+makeAndExecuteAsyncWrite(CassandraBackend const* b, T&& d, B bind)
+{
+    auto* cb = new CallbackData(b, std::move(d), bind);
+    cb->start();
+}
+template <class T, class B>
+std::shared_ptr<BulkWriteCallbackData<T, B>>
+makeAndExecuteBulkAsyncWrite(
+    CassandraBackend const* b,
+    T&& d,
+    B bind,
+    std::atomic_int& r,
+    std::mutex& m,
+    std::condition_variable& c)
+{
+    auto cb = std::make_shared<BulkWriteCallbackData<T, B>>(
+        b, std::move(d), bind, r, m, c);
+    cb->start();
+    return cb;
+}
+void
+CassandraBackend::doWriteLedgerObject(
+    std::string&& key,
+    uint32_t seq,
+    std::string&& blob,
+    bool isCreated,
+    bool isDeleted,
+    std::optional<ripple::uint256>&& book) const
+{
+    BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
+    makeAndExecuteAsyncWrite(
+        this,
+        std::move(std::make_tuple(std::move(key), seq, std::move(blob))),
+        [this](auto& params) {
+            auto& [key, sequence, blob] = params.data;
+
+            CassandraStatement statement{insertObject_};
+            statement.bindBytes(key);
+            statement.bindInt(sequence);
+            statement.bindBytes(blob);
+            return statement;
+        });
+}
+void
+CassandraBackend::writeLedger(
+    ripple::LedgerInfo const& ledgerInfo,
+    std::string&& header,
+    bool isFirst) const
+{
+    makeAndExecuteAsyncWrite(
+        this,
+        std::move(std::make_tuple(ledgerInfo.seq, std::move(header))),
+        [this](auto& params) {
+            auto& [sequence, header] = params.data;
+            CassandraStatement statement{insertLedgerHeader_};
+            statement.bindInt(sequence);
+            statement.bindBytes(header);
+            return statement;
+        });
+    makeAndExecuteAsyncWrite(
+        this,
+        std::move(std::make_tuple(ledgerInfo.hash, ledgerInfo.seq)),
+        [this](auto& params) {
+            auto& [hash, sequence] = params.data;
+            CassandraStatement statement{insertLedgerHash_};
+            statement.bindBytes(hash);
+            statement.bindInt(sequence);
+            return statement;
+        });
+    ledgerSequence_ = ledgerInfo.seq;
+    isFirstLedger_ = isFirst;
+}
+void
+CassandraBackend::writeAccountTransactions(
+    std::vector<AccountTransactionsData>&& data) const
+{
+    for (auto& record : data)
+    {
+        for (auto& account : record.accounts)
+        {
+            makeAndExecuteAsyncWrite(
+                this,
+                std::move(std::make_tuple(
+                    std::move(account),
+                    record.ledgerSequence,
+                    record.transactionIndex,
+                    record.txHash)),
+                [this](auto& params) {
+                    CassandraStatement statement(insertAccountTx_);
+                    auto& [account, lgrSeq, txnIdx, hash] = params.data;
+                    statement.bindBytes(account);
+                    statement.bindIntTuple(lgrSeq, txnIdx);
+                    statement.bindBytes(hash);
+                    return statement;
+                });
+        }
+    }
+}
 void
 CassandraBackend::writeTransaction(
     std::string&& hash,
@@ -248,28 +412,27 @@ CassandraBackend::writeTransaction(
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
     std::string hashCpy = hash;
-    auto func = [this](auto& params, bool retry) {
-        CassandraStatement statement{insertLedgerTransaction_};
-        statement.bindInt(params.data.first);
-        statement.bindBytes(params.data.second);
-        executeAsyncWrite(
-            statement,
-            processAsyncWrite<
-                typename std::remove_reference<decltype(params)>::type>,
-            params,
-            retry);
-    };
-    auto* lgrSeqToHash =
-        new CallbackData(this, std::make_pair(seq, std::move(hashCpy)), func);
-    WriteTransactionCallbackData* data = new WriteTransactionCallbackData(
-        this,
-        std::move(hash),
-        seq,
-        std::move(transaction),
-        std::move(metadata));
 
-    writeTransaction(*data, false);
-    func(*lgrSeqToHash, false);
+    makeAndExecuteAsyncWrite(
+        this, std::move(std::make_pair(seq, hash)), [this](auto& params) {
+            CassandraStatement statement{insertLedgerTransaction_};
+            statement.bindInt(params.data.first);
+            statement.bindBytes(params.data.second);
+            return statement;
+        });
+    makeAndExecuteAsyncWrite(
+        this,
+        std::move(std::make_tuple(
+            std::move(hash), seq, std::move(transaction), std::move(metadata))),
+        [this](auto& params) {
+            CassandraStatement statement{insertTransaction_};
+            auto& [hash, sequence, transaction, metadata] = params.data;
+            statement.bindBytes(hash);
+            statement.bindInt(sequence);
+            statement.bindBytes(transaction);
+            statement.bindBytes(metadata);
+            return statement;
+        });
 }
 
 std::optional<LedgerRange>
@@ -825,10 +988,20 @@ CassandraBackend::writeKeys(
     KeyIndex const& index,
     bool isAsync) const
 {
-    std::atomic_uint32_t numRemaining = keys.size();
+    auto bind = [this](auto& params) {
+        auto& [lgrSeq, key] = params.data;
+        CassandraStatement statement{insertKey_};
+        statement.bindInt(lgrSeq);
+        statement.bindBytes(key);
+        return statement;
+    };
+    std::atomic_int numRemaining = keys.size();
     std::condition_variable cv;
     std::mutex mtx;
-    std::vector<std::shared_ptr<WriteKeyCallbackData>> cbs;
+    std::vector<std::shared_ptr<BulkWriteCallbackData<
+        std::pair<uint32_t, ripple::uint256>,
+        typename std::remove_reference<decltype(bind)>::type>>>
+        cbs;
     cbs.reserve(keys.size());
     uint32_t concurrentLimit =
         isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
@@ -840,9 +1013,13 @@ CassandraBackend::writeKeys(
     uint32_t numSubmitted = 0;
     for (auto& key : keys)
     {
-        cbs.push_back(std::make_shared<WriteKeyCallbackData>(
-            *this, key, index.keyIndex, cv, mtx, numRemaining));
-        writeKey(*cbs.back());
+        cbs.push_back(makeAndExecuteBulkAsyncWrite(
+            this,
+            std::make_pair(index.keyIndex, std::move(key)),
+            bind,
+            numRemaining,
+            mtx,
+            cv));
         ++numSubmitted;
         BOOST_LOG_TRIVIAL(trace) << __func__ << "Submitted a write request";
         std::unique_lock<std::mutex> lck(mtx);

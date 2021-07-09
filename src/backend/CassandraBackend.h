@@ -869,18 +869,7 @@ public:
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& header,
-        bool isFirst = false) const override
-    {
-        WriteLedgerHeaderCallbackData* headerCb =
-            new WriteLedgerHeaderCallbackData(
-                this, ledgerInfo.seq, std::move(header));
-        WriteLedgerHashCallbackData* hashCb = new WriteLedgerHashCallbackData(
-            this, ledgerInfo.hash, ledgerInfo.seq);
-        writeLedgerHeader(*headerCb, false);
-        writeLedgerHash(*hashCb, false);
-        ledgerSequence_ = ledgerInfo.seq;
-        isFirstLedger_ = isFirst;
-    }
+        bool isFirst = false) const override;
     void
     writeLedgerHash(WriteLedgerHashCallbackData& cb, bool isRetry) const
     {
@@ -1174,6 +1163,7 @@ public:
         }
     };
 
+    /*
     void
     write(WriteCallbackData& data, bool isRetry) const
     {
@@ -1185,7 +1175,7 @@ public:
 
             executeAsyncWrite(statement, flatMapWriteCallback, data, isRetry);
         }
-    }
+    }*/
 
     void
     doWriteLedgerObject(
@@ -1194,53 +1184,11 @@ public:
         std::string&& blob,
         bool isCreated,
         bool isDeleted,
-        std::optional<ripple::uint256>&& book) const override
-    {
-        BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
-        bool hasBook = book.has_value();
-        WriteCallbackData* data = new WriteCallbackData(
-            this,
-            std::move(key),
-            seq,
-            std::move(blob),
-            isCreated,
-            isDeleted,
-            std::move(book));
-
-        write(*data, false);
-    }
+        std::optional<ripple::uint256>&& book) const override;
 
     void
     writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data) const override
-    {
-        for (auto& record : data)
-        {
-            for (auto& account : record.accounts)
-            {
-                WriteAccountTxCallbackData* cbData =
-                    new WriteAccountTxCallbackData(
-                        this,
-                        std::move(account),
-                        record.ledgerSequence,
-                        record.transactionIndex,
-                        std::move(record.txHash));
-                writeAccountTx(*cbData, false);
-            }
-        }
-    }
-
-    void
-    writeAccountTx(WriteAccountTxCallbackData& data, bool isRetry) const
-    {
-        CassandraStatement statement(insertAccountTx_);
-        statement.bindBytes(data.account);
-        statement.bindIntTuple(data.ledgerSequence, data.transactionIndex);
-        statement.bindBytes(data.txHash);
-
-        executeAsyncWrite(
-            statement, flatMapWriteAccountTxCallback, data, isRetry);
-    }
+        std::vector<AccountTransactionsData>&& data) const override;
 
     struct WriteTransactionCallbackData
     {
@@ -1271,18 +1219,6 @@ public:
         }
     };
 
-    void
-    writeTransaction(WriteTransactionCallbackData& data, bool isRetry) const
-    {
-        CassandraStatement statement{insertTransaction_};
-        statement.bindBytes(data.hash);
-        statement.bindInt(data.sequence);
-        statement.bindBytes(data.transaction);
-        statement.bindBytes(data.metadata);
-
-        executeAsyncWrite(
-            statement, flatMapWriteTransactionCallback, data, isRetry);
-    }
     void
     writeTransaction(
         std::string&& hash,
