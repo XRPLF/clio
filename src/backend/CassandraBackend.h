@@ -37,25 +37,11 @@
 namespace Backend {
 
 void
-flatMapWriteCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteKeyCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteTransactionCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteBookCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
-void
 flatMapReadCallback(CassFuture* fut, void* cbData);
 void
 flatMapReadObjectCallback(CassFuture* fut, void* cbData);
 void
 flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 
 class CassandraPreparedStatement
 {
@@ -571,7 +557,7 @@ public:
 
     ~CassandraAsyncResult()
     {
-        if (result_.isOk() or timedOut_)
+        if (result_.isOk() || timedOut_)
         {
             BOOST_LOG_TRIVIAL(trace) << "finished a request";
             size_t batchSize = requestParams_.batchSize;
@@ -644,11 +630,6 @@ private:
     CassandraPreparedStatement insertKey_;
     CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement getBook_;
-    CassandraPreparedStatement selectBook_;
-    CassandraPreparedStatement completeBook_;
-    CassandraPreparedStatement insertBook_;
-    CassandraPreparedStatement insertBook2_;
-    CassandraPreparedStatement deleteBook_;
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement insertLedgerHeader_;
@@ -659,7 +640,6 @@ private:
     CassandraPreparedStatement selectLedgerBySeq_;
     CassandraPreparedStatement selectLatestLedger_;
     CassandraPreparedStatement selectLedgerRange_;
-    CassandraPreparedStatement selectLedgerDiff_;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
@@ -732,25 +712,9 @@ public:
         open_ = false;
     }
     CassandraPreparedStatement const&
-    getInsertKeyPreparedStatement() const
-    {
-        return insertKey_;
-    }
-    CassandraPreparedStatement const&
-    getInsertBookPreparedStatement() const
-    {
-        return insertBook2_;
-    }
-    CassandraPreparedStatement const&
     getInsertObjectPreparedStatement() const
     {
         return insertObject_;
-    }
-
-    CassandraPreparedStatement const&
-    getSelectLedgerDiffPreparedStatement() const
-    {
-        return selectLedgerDiff_;
     }
 
     std::pair<
@@ -803,39 +767,6 @@ public:
         return {{}, {}};
     }
 
-    struct WriteLedgerHeaderCallbackData
-    {
-        CassandraBackend const* backend;
-        uint32_t sequence;
-        std::string header;
-        uint32_t currentRetries = 0;
-
-        std::atomic<int> refs = 1;
-        WriteLedgerHeaderCallbackData(
-            CassandraBackend const* f,
-            uint32_t sequence,
-            std::string&& header)
-            : backend(f), sequence(sequence), header(std::move(header))
-        {
-        }
-    };
-    struct WriteLedgerHashCallbackData
-    {
-        CassandraBackend const* backend;
-        ripple::uint256 hash;
-        uint32_t sequence;
-        uint32_t currentRetries = 0;
-
-        std::atomic<int> refs = 1;
-        WriteLedgerHashCallbackData(
-            CassandraBackend const* f,
-            ripple::uint256 hash,
-            uint32_t sequence)
-            : backend(f), hash(hash), sequence(sequence)
-        {
-        }
-    };
-
     bool
     doFinishWrites() const override
     {
@@ -870,25 +801,6 @@ public:
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& header,
         bool isFirst = false) const override;
-    void
-    writeLedgerHash(WriteLedgerHashCallbackData& cb, bool isRetry) const
-    {
-        CassandraStatement statement{insertLedgerHash_};
-        statement.bindBytes(cb.hash);
-        statement.bindInt(cb.sequence);
-        executeAsyncWrite(
-            statement, flatMapWriteLedgerHashCallback, cb, isRetry);
-    }
-
-    void
-    writeLedgerHeader(WriteLedgerHeaderCallbackData& cb, bool isRetry) const
-    {
-        CassandraStatement statement{insertLedgerHeader_};
-        statement.bindInt(cb.sequence);
-        statement.bindBytes(cb.header);
-        executeAsyncWrite(
-            statement, flatMapWriteLedgerHeaderCallback, cb, isRetry);
-    }
 
     std::optional<uint32_t>
     fetchLatestLedgerSequence() const override
@@ -1104,79 +1016,6 @@ public:
         std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const override;
 
-    struct WriteCallbackData
-    {
-        CassandraBackend const* backend;
-        std::string key;
-        uint32_t sequence;
-        uint32_t createdSequence = 0;
-        std::string blob;
-        bool isCreated;
-        bool isDeleted;
-        std::optional<ripple::uint256> book;
-
-        uint32_t currentRetries = 0;
-        std::atomic<int> refs = 1;
-
-        WriteCallbackData(
-            CassandraBackend const* f,
-            std::string&& key,
-            uint32_t sequence,
-            std::string&& blob,
-            bool isCreated,
-            bool isDeleted,
-            std::optional<ripple::uint256>&& inBook)
-            : backend(f)
-            , key(std::move(key))
-            , sequence(sequence)
-            , blob(std::move(blob))
-            , isCreated(isCreated)
-            , isDeleted(isDeleted)
-            , book(std::move(inBook))
-        {
-        }
-    };
-
-    struct WriteAccountTxCallbackData
-    {
-        CassandraBackend const* backend;
-        ripple::AccountID account;
-        uint32_t ledgerSequence;
-        uint32_t transactionIndex;
-        ripple::uint256 txHash;
-
-        uint32_t currentRetries = 0;
-        std::atomic<int> refs = 1;
-
-        WriteAccountTxCallbackData(
-            CassandraBackend const* f,
-            ripple::AccountID&& account,
-            uint32_t lgrSeq,
-            uint32_t txIdx,
-            ripple::uint256&& hash)
-            : backend(f)
-            , account(std::move(account))
-            , ledgerSequence(lgrSeq)
-            , transactionIndex(txIdx)
-            , txHash(std::move(hash))
-        {
-        }
-    };
-
-    /*
-    void
-    write(WriteCallbackData& data, bool isRetry) const
-    {
-        {
-            CassandraStatement statement{insertObject_};
-            statement.bindBytes(data.key);
-            statement.bindInt(data.sequence);
-            statement.bindBytes(data.blob);
-
-            executeAsyncWrite(statement, flatMapWriteCallback, data, isRetry);
-        }
-    }*/
-
     void
     doWriteLedgerObject(
         std::string&& key,
@@ -1189,35 +1028,6 @@ public:
     void
     writeAccountTransactions(
         std::vector<AccountTransactionsData>&& data) const override;
-
-    struct WriteTransactionCallbackData
-    {
-        CassandraBackend const* backend;
-        // The shared pointer to the node object must exist until it's
-        // confirmed persisted. Otherwise, it can become deleted
-        // prematurely if other copies are removed from caches.
-        std::string hash;
-        uint32_t sequence;
-        std::string transaction;
-        std::string metadata;
-
-        uint32_t currentRetries = 0;
-
-        std::atomic<int> refs = 1;
-        WriteTransactionCallbackData(
-            CassandraBackend const* f,
-            std::string&& hash,
-            uint32_t sequence,
-            std::string&& transaction,
-            std::string&& metadata)
-            : backend(f)
-            , hash(std::move(hash))
-            , sequence(sequence)
-            , transaction(std::move(transaction))
-            , metadata(std::move(metadata))
-        {
-        }
-    };
 
     void
     writeTransaction(
@@ -1248,26 +1058,9 @@ public:
     }
 
     friend void
-    flatMapWriteCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteKeyCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteTransactionCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteBookCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
-
-    friend void
     flatMapReadCallback(CassFuture* fut, void* cbData);
     friend void
     flatMapReadObjectCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
 
     inline void
     incremementOutstandingRequestCount() const
