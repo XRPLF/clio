@@ -36,13 +36,6 @@
 
 namespace Backend {
 
-void
-flatMapReadCallback(CassFuture* fut, void* cbData);
-void
-flatMapReadObjectCallback(CassFuture* fut, void* cbData);
-void
-flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
-
 class CassandraPreparedStatement
 {
 private:
@@ -521,63 +514,6 @@ isTimeout(CassError rc)
         return true;
     return false;
 }
-template <class T, class F>
-class CassandraAsyncResult
-{
-    T& requestParams_;
-    CassandraResult result_;
-    bool timedOut_ = false;
-    bool retryOnTimeout_ = false;
-
-public:
-    CassandraAsyncResult(
-        T& requestParams,
-        CassFuture* fut,
-        F retry,
-        bool retryOnTimeout = false)
-        : requestParams_(requestParams), retryOnTimeout_(retryOnTimeout)
-    {
-        CassError rc = cass_future_error_code(fut);
-        if (rc != CASS_OK)
-        {
-            // TODO - should we ever be retrying requests? These are reads,
-            // and they usually only fail when the db is under heavy load. Seems
-            // best to just return an error to the client and have the client
-            // try again
-            if (isTimeout(rc))
-                timedOut_ = true;
-            if (!timedOut_ || retryOnTimeout_)
-                retry(requestParams_);
-        }
-        else
-        {
-            result_ = std::move(CassandraResult(cass_future_get_result(fut)));
-        }
-    }
-
-    ~CassandraAsyncResult()
-    {
-        if (result_.isOk() || timedOut_)
-        {
-            BOOST_LOG_TRIVIAL(trace) << "finished a request";
-            size_t batchSize = requestParams_.batchSize;
-            if (++(requestParams_.numFinished) == batchSize)
-                requestParams_.cv.notify_all();
-        }
-    }
-
-    CassandraResult&
-    getResult()
-    {
-        return result_;
-    }
-
-    bool
-    timedOut()
-    {
-        return timedOut_;
-    }
-};
 
 class CassandraBackend : public BackendInterface
 {
@@ -629,7 +565,6 @@ private:
     CassandraPreparedStatement getToken_;
     CassandraPreparedStatement insertKey_;
     CassandraPreparedStatement selectKeys_;
-    CassandraPreparedStatement getBook_;
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement insertLedgerHeader_;
@@ -677,15 +612,8 @@ public:
 
     ~CassandraBackend() override
     {
-        BOOST_LOG_TRIVIAL(info) << __func__;
         if (open_)
             close();
-    }
-
-    std::string
-    getName()
-    {
-        return "cassandra";
     }
 
     bool
@@ -710,11 +638,6 @@ public:
             ioThread_.join();
         }
         open_ = false;
-    }
-    CassandraPreparedStatement const&
-    getInsertObjectPreparedStatement() const
-    {
-        return insertObject_;
     }
 
     std::pair<
@@ -904,18 +827,6 @@ public:
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
-    std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence) const;
-    std::map<uint32_t, std::vector<LedgerObject>>
-    fetchLedgerDiffs(std::vector<uint32_t> const& sequences) const;
-
-    bool
-    runIndexer(uint32_t ledgerSequence) const;
-    bool
-    isIndexed(uint32_t ledgerSequence) const;
-
-    std::optional<uint32_t>
-    getNextToIndex() const;
 
     bool
     writeKeys(
@@ -923,94 +834,10 @@ public:
         KeyIndex const& index,
         bool isAsync = false) const override;
 
-    bool
-    canFetchBatch()
-    {
-        return true;
-    }
-
-    struct ReadCallbackData
-    {
-        CassandraBackend const& backend;
-        ripple::uint256 const& hash;
-        TransactionAndMetadata& result;
-        std::condition_variable& cv;
-
-        std::atomic_uint32_t& numFinished;
-        size_t batchSize;
-
-        ReadCallbackData(
-            CassandraBackend const& backend,
-            ripple::uint256 const& hash,
-            TransactionAndMetadata& result,
-            std::condition_variable& cv,
-            std::atomic_uint32_t& numFinished,
-            size_t batchSize)
-            : backend(backend)
-            , hash(hash)
-            , result(result)
-            , cv(cv)
-            , numFinished(numFinished)
-            , batchSize(batchSize)
-        {
-        }
-
-        ReadCallbackData(ReadCallbackData const& other) = default;
-    };
-
     std::vector<TransactionAndMetadata>
     fetchTransactions(
         std::vector<ripple::uint256> const& hashes) const override;
 
-    void
-    read(ReadCallbackData& data) const
-    {
-        CassandraStatement statement{selectTransaction_};
-        statement.bindBytes(data.hash);
-        executeAsyncRead(statement, flatMapReadCallback, data);
-    }
-
-    struct ReadObjectCallbackData
-    {
-        CassandraBackend const& backend;
-        ripple::uint256 const& key;
-        uint32_t sequence;
-        Blob& result;
-        std::condition_variable& cv;
-
-        std::atomic_uint32_t& numFinished;
-        size_t batchSize;
-
-        ReadObjectCallbackData(
-            CassandraBackend const& backend,
-            ripple::uint256 const& key,
-            uint32_t sequence,
-            Blob& result,
-            std::condition_variable& cv,
-            std::atomic_uint32_t& numFinished,
-            size_t batchSize)
-            : backend(backend)
-            , key(key)
-            , sequence(sequence)
-            , result(result)
-            , cv(cv)
-            , numFinished(numFinished)
-            , batchSize(batchSize)
-        {
-        }
-
-        ReadObjectCallbackData(ReadObjectCallbackData const& other) = default;
-    };
-
-    void
-    readObject(ReadObjectCallbackData& data) const
-    {
-        CassandraStatement statement{selectObject_};
-        statement.bindBytes(data.key);
-        statement.bindInt(data.sequence);
-
-        executeAsyncRead(statement, flatMapReadObjectCallback, data);
-    }
     std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
@@ -1056,11 +883,6 @@ public:
     {
         return ioContext_;
     }
-
-    friend void
-    flatMapReadCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapReadObjectCallback(CassFuture* fut, void* cbData);
 
     inline void
     incremementOutstandingRequestCount() const
