@@ -407,10 +407,11 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
 
 LedgerPage
 CassandraBackend::doFetchLedgerPage(
-    std::optional<ripple::uint256> const& cursor,
+    std::optional<ripple::uint256> const& cursorIn,
     std::uint32_t ledgerSequence,
     std::uint32_t limit) const
 {
+    std::optional<ripple::uint256> cursor = cursorIn;
     auto index = getKeyIndexOfSeq(ledgerSequence);
     if (!index)
         return {};
@@ -423,13 +424,13 @@ CassandraBackend::doFetchLedgerPage(
             << __func__ << " - Cursor = " << ripple::strHex(*cursor);
     CassandraStatement statement{selectKeys_};
     statement.bindInt(index->keyIndex);
-    if (cursor)
-        statement.bindBytes(*cursor);
-    else
+    if (!cursor)
     {
         ripple::uint256 zero;
-        statement.bindBytes(zero);
+        cursor = zero;
     }
+    statement.bindBytes(cursor->data(), 1);
+    statement.bindBytes(*cursor);
     statement.bindUInt(limit + 1);
     CassandraResult result = executeSyncRead(statement);
     if (!!result)
@@ -446,6 +447,12 @@ CassandraBackend::doFetchLedgerPage(
         {
             page.cursor = keys.back();
             ++(*page.cursor);
+        }
+        else if (cursor->data()[0] != 0xFF)
+        {
+            ripple::uint256 zero;
+            zero.data()[0] = cursor->data()[0] + 1;
+            page.cursor = zero;
         }
         auto objects = fetchLedgerObjects(keys, ledgerSequence);
         if (objects.size() != keys.size())
@@ -523,6 +530,7 @@ CassandraBackend::writeKeys(
         auto& [lgrSeq, key] = params.data;
         CassandraStatement statement{insertKey_};
         statement.bindInt(lgrSeq);
+        statement.bindBytes(key.data(), 1);
         statement.bindBytes(key);
         return statement;
     };
@@ -974,8 +982,8 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
-              << " ( sequence bigint, key blob, PRIMARY KEY "
-                 "(sequence, key))"
+              << " ( sequence bigint, first_byte blob, key blob, PRIMARY KEY "
+                 "((sequence,first_byte), key))"
                  " WITH default_time_to_live = "
               << std::to_string(keysTtl);
         if (!executeSimpleStatement(query.str()))
@@ -1072,13 +1080,14 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "keys"
-              << " (sequence, key) VALUES (?, ?)";
+              << " (sequence,first_byte, key) VALUES (?, ?, ?)";
         if (!insertKey_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");
         query << "SELECT key FROM " << tablePrefix << "keys"
-              << " WHERE sequence = ? AND key >= ? ORDER BY key ASC LIMIT ?";
+              << " WHERE sequence = ? AND first_byte = ? AND key >= ? ORDER BY "
+                 "key ASC LIMIT ?";
         if (!selectKeys_.prepareStatement(query, session_.get()))
             continue;
 
