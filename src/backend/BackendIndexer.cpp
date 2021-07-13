@@ -209,7 +209,6 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
     BOOST_LOG_TRIVIAL(debug)
         << __func__
         << " starting. sequence = " << std::to_string(ledgerSequence);
-    bool isFirst = false;
     auto keyIndex = getKeyIndexOfSeq(ledgerSequence);
     if (isFirst_)
     {

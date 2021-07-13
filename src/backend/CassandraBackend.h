@@ -108,6 +108,15 @@ public:
         cass_statement_set_consistency(statement_, CASS_CONSISTENCY_QUORUM);
     }
 
+    CassandraStatement(CassandraStatement&& other)
+    {
+        statement_ = other.statement_;
+        other.statement_ = nullptr;
+        curBindingIndex_ = other.curBindingIndex_;
+        other.curBindingIndex_ = 0;
+    }
+    CassandraStatement(CassandraStatement const& other) = delete;
+
     CassStatement*
     get() const
     {
@@ -950,11 +959,15 @@ public:
         T callback,
         S& callbackData) const
     {
+        BOOST_LOG_TRIVIAL(debug) << "Executing";
+
+        BOOST_LOG_TRIVIAL(debug) << "address = " << &callbackData;
         CassFuture* fut = cass_session_execute(session_.get(), statement.get());
 
         cass_future_set_callback(
             fut, callback, static_cast<void*>(&callbackData));
         cass_future_free(fut);
+        BOOST_LOG_TRIVIAL(debug) << "Submitted callback";
     }
     template <class T, class S>
     void

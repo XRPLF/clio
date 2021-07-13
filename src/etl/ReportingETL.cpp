@@ -114,10 +114,13 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
     backend_->startWrites();
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " started writes";
     backend_->writeLedger(
         lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " inserted txns";
 
     auto start = std::chrono::system_clock::now();
 
@@ -126,6 +129,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     // consumes from the queue and inserts the data into the Ledger object.
     // Once the below call returns, all data has been pushed into the queue
     loadBalancer_->loadInitialLedger(startingSequence);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " loaded initial ledger";
 
     if (!stopping_)
     {

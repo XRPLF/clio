@@ -7,6 +7,7 @@ template <class T, class F>
 void
 processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
 {
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " Processing async write response";
     CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
@@ -39,6 +40,7 @@ template <class T>
 void
 processAsyncWrite(CassFuture* fut, void* cbData)
 {
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " processing async write";
     T& requestParams = *static_cast<T*>(cbData);
     // TODO don't pass in func
     processAsyncWriteResponse(requestParams, fut, requestParams.retry);
@@ -56,6 +58,7 @@ struct WriteCallbackData
     WriteCallbackData(CassandraBackend const* b, T&& d, B bind)
         : backend(b), data(std::move(d))
     {
+        BOOST_LOG_TRIVIAL(debug) << "Making WriteCallbackData";
         retry = [bind, this](auto& params, bool isRetry) {
             auto statement = bind(params);
             backend->executeAsyncWrite(
@@ -69,7 +72,10 @@ struct WriteCallbackData
     virtual void
     start()
     {
+        BOOST_LOG_TRIVIAL(debug) << "Starting";
+        BOOST_LOG_TRIVIAL(debug) << "address is  " << this;
         retry(*this, false);
+        BOOST_LOG_TRIVIAL(debug) << "Started";
     }
 
     virtual void
@@ -82,6 +88,7 @@ struct WriteCallbackData
     }
     virtual ~WriteCallbackData()
     {
+        BOOST_LOG_TRIVIAL(debug) << __func__;
     }
 };
 template <class T, class B>
@@ -342,8 +349,11 @@ CassandraBackend::fetchTransactions(
         statement.bindBytes(hashes[i]);
         cbs.push_back(std::make_shared<ReadCallbackData>(
             numOutstanding, mtx, cv, [i, &results](auto& result) {
-                results[i] = {
-                    result.getBytes(), result.getBytes(), result.getUInt32()};
+                if (result.hasResult())
+                    results[i] = {
+                        result.getBytes(),
+                        result.getBytes(),
+                        result.getUInt32()};
             }));
         executeAsyncRead(statement, processAsyncRead, *cbs[i]);
     }
@@ -480,7 +490,8 @@ CassandraBackend::fetchLedgerObjects(
     {
         cbs.push_back(std::make_shared<ReadCallbackData>(
             numOutstanding, mtx, cv, [i, &results](auto& result) {
-                results[i] = result.getBytes();
+                if (result.hasResult())
+                    results[i] = result.getBytes();
             }));
         CassandraStatement statement{selectObject_};
         statement.bindBytes(keys[i]);
@@ -515,7 +526,7 @@ CassandraBackend::writeKeys(
         statement.bindBytes(key);
         return statement;
     };
-    std::atomic_int numOutstanding = keys.size();
+    std::atomic_int numOutstanding = 0;
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<BulkWriteCallbackData<
