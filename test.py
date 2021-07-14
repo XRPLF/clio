@@ -347,9 +347,6 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                 else:
                     print(res)
                     break    
-                if numCalls > numPages:
-                    print("breaking")
-                    break
             return results
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -1043,7 +1040,7 @@ def run(args):
             args.account = res["transaction"]["Account"]
         print("starting")
         res = asyncio.get_event_loop().run_until_complete(
-                account_tx_full(args.ip, args.port, args.account, args.binary,None,None,int(args.numPages)))
+                account_tx_full(args.ip, args.port, args.account, args.binary,None,None))
         rng = getMinAndMax(res)
         print(len(res["transactions"]))
         print(args.account)

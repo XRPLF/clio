@@ -655,49 +655,14 @@ public:
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t limit,
-        std::optional<AccountTransactionsCursor> const& cursor) const override
-    {
-        BOOST_LOG_TRIVIAL(debug) << "Starting doAccountTx";
-        CassandraStatement statement{selectAccountTx_};
-        statement.bindBytes(account);
-        if (cursor)
-            statement.bindIntTuple(
-                cursor->ledgerSequence, cursor->transactionIndex);
-        else
-            statement.bindIntTuple(INT32_MAX, INT32_MAX);
-        statement.bindUInt(limit);
-        CassandraResult result = executeSyncRead(statement);
-        if (!result.hasResult())
-        {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
-            return {{}, {}};
-        }
-
-        std::vector<ripple::uint256> hashes;
-        size_t numRows = result.numRows();
-        bool returnCursor = numRows == limit;
-        std::optional<AccountTransactionsCursor> retCursor;
-
-        BOOST_LOG_TRIVIAL(info) << "num_rows = " << std::to_string(numRows);
-        do
-        {
-            hashes.push_back(result.getUInt256());
-            --numRows;
-            if (numRows == 0 && returnCursor)
-            {
-                auto [lgrSeq, txnIdx] = result.getInt64Tuple();
-                retCursor = {(uint32_t)lgrSeq, (uint32_t)txnIdx};
-            }
-        } while (result.nextRow());
-
-        BOOST_LOG_TRIVIAL(debug)
-            << "doAccountTx - populated hashes. num hashes = " << hashes.size();
-        if (hashes.size())
-        {
-            return {fetchTransactions(hashes), retCursor};
-        }
-        return {{}, {}};
-    }
+        std::optional<AccountTransactionsCursor> const& cursor) const override;
+    std::pair<
+        std::vector<TransactionAndMetadata>,
+        std::optional<AccountTransactionsCursor>>
+    doFetchAccountTransactions(
+        ripple::AccountID const& account,
+        std::uint32_t limit,
+        std::optional<AccountTransactionsCursor> const& cursor) const;
 
     bool
     doFinishWrites() const override
