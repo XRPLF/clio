@@ -26,12 +26,11 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include <webserver/SubscriptionManager.h>
 #include <cstdlib>
 #include <iostream>
-#include <webserver/SubscriptionManager.h>
 #include <string>
 #include <variant>
+#include <webserver/SubscriptionManager.h>
 
 namespace detail {
 /// Convenience function for printing out basic ledger info
@@ -90,7 +89,7 @@ std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
     // check that database is actually empty
-    auto rng = backend_->fetchLedgerRangeNoThrow();
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
     if (rng)
     {
         BOOST_LOG_TRIVIAL(fatal) << __func__ << " : "
@@ -115,10 +114,13 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
     backend_->startWrites();
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " started writes";
     backend_->writeLedger(
         lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " inserted txns";
 
     auto start = std::chrono::system_clock::now();
 
@@ -127,6 +129,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     // consumes from the queue and inserts the data into the Ledger object.
     // Once the below call returns, all data has been pushed into the queue
     loadBalancer_->loadInitialLedger(startingSequence);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " loaded initial ledger";
 
     if (!stopping_)
     {
@@ -141,12 +144,13 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
-{       
-    auto ledgerRange = backend_->fetchLedgerRangeNoThrow();
+{
+    backend_->updateRange(lgrInfo.seq);
+    auto ledgerRange = backend_->fetchLedgerRange();
 
     std::optional<ripple::Fees> fees;
-    std::vector<Backend::TransactionAndMetadata> transactions; 
-    for(;;)
+    std::vector<Backend::TransactionAndMetadata> transactions;
+    for (;;)
     {
         try
         {
@@ -189,7 +193,7 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
     {
         try
         {
-            auto range = backend_->fetchLedgerRangeNoThrow();
+            auto range = backend_->hardFetchLedgerRangeNoThrow();
 
             if (!range || range->maxSequence < ledgerSequence)
             {
@@ -395,7 +399,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                              << "Starting etl pipeline";
     writing_ = true;
 
-    auto rng = backend_->fetchLedgerRangeNoThrow();
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
     if (!rng || rng->maxSequence != startSequence - 1)
     {
         assert(false);
@@ -497,6 +501,31 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         beast::setCurrentThreadName("rippled: ReportingETL transform");
         uint32_t currentSequence = startSequence;
 
+        int counter = 0;
+        std::atomic_int per = 100;
+        auto startTimer = [this, &per]() {
+            auto innerFunc = [this, &per](auto& f) -> void {
+                std::shared_ptr<boost::asio::steady_timer> timer =
+                    std::make_shared<boost::asio::steady_timer>(
+                        ioContext_,
+                        std::chrono::steady_clock::now() +
+                            std::chrono::minutes(5));
+                timer->async_wait(
+                    [timer, f, &per](const boost::system::error_code& error) {
+                        ++per;
+                        BOOST_LOG_TRIVIAL(info)
+                            << "Incremented per to " << std::to_string(per);
+                        if (per > 100)
+                            per = 100;
+                        f(f);
+                    });
+            };
+            innerFunc(innerFunc);
+        };
+        // startTimer();
+
+        auto begin = std::chrono::system_clock::now();
+
         while (!writeConflict)
         {
             std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{
@@ -548,11 +577,24 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
                     backend_->doOnlineDelete(*onlineDeleteInterval_);
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
-                    auto rng = backend_->fetchLedgerRangeNoThrow();
+                    auto rng = backend_->fetchLedgerRange();
                     minSequence = rng->minSequence;
                     deleting_ = false;
                 });
             }
+            /*
+            if (++counter >= per)
+            {
+                std::chrono::milliseconds sleep =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::seconds(4) - (end - begin));
+                BOOST_LOG_TRIVIAL(info) << "Sleeping for " << sleep.count()
+                                        << " . per = " << std::to_string(per);
+                std::this_thread::sleep_for(sleep);
+                counter = 0;
+                begin = std::chrono::system_clock::now();
+            }
+            */
         }
     }};
 

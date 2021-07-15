@@ -37,8 +37,8 @@
 #include <thread>
 
 #include <handlers/Handlers.h>
-#include <webserver/DOSGuard.h>
 #include <vector>
+#include <webserver/DOSGuard.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -93,9 +93,9 @@ handle_request(
     std::string const& ip)
 {
     auto const httpResponse = [&req](
-                              http::status status,
-                              std::string content_type,
-                              std::string message) {
+                                  http::status status,
+                                  std::string content_type,
+                                  std::string message) {
         http::response<http::string_body> res{status, req.version()};
         res.set(http::field::server, "xrpl-reporting-server-v0.0.0");
         res.set(http::field::content_type, content_type);
@@ -119,8 +119,7 @@ handle_request(
         return send(httpResponse(
             http::status::ok,
             "application/json",
-            boost::json::serialize(
-                RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
 
     try
     {
@@ -155,14 +154,9 @@ handle_request(
                 "application/json",
                 boost::json::serialize(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
-                
-        std::optional<RPC::Context> context = RPC::make_HttpContext(
-            request,
-            backend,
-            nullptr,
-            balancer,
-            *range
-        );
+
+        std::optional<RPC::Context> context =
+            RPC::make_HttpContext(request, backend, nullptr, balancer, *range);
 
         if (!context)
             return send(httpResponse(
@@ -170,7 +164,7 @@ handle_request(
                 "application/json",
                 boost::json::serialize(
                     RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
-    
+
         boost::json::object response{{"result", boost::json::object{}}};
         boost::json::object& result = response["result"].as_object();
 
@@ -198,10 +192,8 @@ handle_request(
         if (!dosGuard.add(ip, responseStr.size()))
             result["warning"] = "Too many requests";
 
-        return send(httpResponse(
-            http::status::ok,
-            "application/json",
-            responseStr));
+        return send(
+            httpResponse(http::status::ok, "application/json", responseStr));
     }
     catch (std::exception const& e)
     {

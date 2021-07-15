@@ -17,13 +17,12 @@
 */
 //==============================================================================
 
-#include <handlers/RPCHelpers.h>
-#include <handlers/methods/Transaction.h>
 #include <backend/BackendInterface.h>
 #include <backend/Pg.h>
+#include <handlers/RPCHelpers.h>
+#include <handlers/methods/Transaction.h>
 
-namespace RPC
-{
+namespace RPC {
 
 Result
 doAccountTx(Context const& context)
@@ -31,24 +30,24 @@ doAccountTx(Context const& context)
     auto request = context.params;
     boost::json::object response = {};
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
         return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
         return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-    
-    auto accountID = 
+
+    auto accountID =
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
         return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
 
     bool binary = false;
-    if(request.contains("binary"))
+    if (request.contains("binary"))
     {
-        if(!request.at("binary").is_bool())
+        if (!request.at("binary").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
-        
+
         binary = request.at("binary").as_bool();
     }
 
@@ -64,15 +63,16 @@ doAccountTx(Context const& context)
     std::optional<Backend::AccountTransactionsCursor> cursor;
     cursor = {context.range.maxSequence, 0};
 
-    if (request.contains("cursor"))
+    if (request.contains("marker"))
     {
-        auto const& obj = request.at("cursor").as_object();
+        auto const& obj = request.at("marker").as_object();
 
         std::optional<std::uint32_t> transactionIndex = {};
         if (obj.contains("seq"))
         {
             if (!obj.at("seq").is_int64())
-                return Status{Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
+                return Status{
+                    Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
 
             transactionIndex = value_to<std::uint32_t>(obj.at("seq"));
         }
@@ -81,9 +81,9 @@ doAccountTx(Context const& context)
         if (obj.contains("ledger"))
         {
             if (!obj.at("ledger").is_int64())
-                return Status{Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
+                return Status{Error::rpcINVALID_PARAMS, "ledgerIndexNotInt"};
 
-            transactionIndex = value_to<std::uint32_t>(obj.at("ledger"));
+            ledgerIndex = value_to<std::uint32_t>(obj.at("ledger"));
         }
 
         if (!transactionIndex || !ledgerIndex)
@@ -107,7 +107,7 @@ doAccountTx(Context const& context)
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
 
         limit = request.at("limit").as_int64();
@@ -117,14 +117,15 @@ doAccountTx(Context const& context)
         response["limit"] = limit;
     }
 
-
     boost::json::array txns;
     auto start = std::chrono::system_clock::now();
     auto [blobs, retCursor] =
         context.backend->fetchAccountTransactions(*accountID, limit, cursor);
 
     auto end = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took " << ((end - start).count() / 1000000000.0) << " num blobs = " << blobs.size();
+    BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took "
+                            << ((end - start).count() / 1000000000.0)
+                            << " num blobs = " << blobs.size();
 
     response["account"] = ripple::to_string(*accountID);
     response["ledger_index_min"] = minIndex;
@@ -132,6 +133,7 @@ doAccountTx(Context const& context)
 
     if (retCursor)
     {
+        BOOST_LOG_TRIVIAL(debug) << "setting json cursor";
         boost::json::object cursorJson;
         cursorJson["ledger"] = retCursor->ledgerSequence;
         cursorJson["seq"] = retCursor->transactionIndex;
@@ -157,7 +159,6 @@ doAccountTx(Context const& context)
             obj["tx"] = toJson(*txn);
             obj["tx"].as_object()["ledger_index"] = txnPlusMeta.ledgerSequence;
             obj["tx"].as_object()["inLedger"] = txnPlusMeta.ledgerSequence;
-
         }
         else
         {
@@ -174,9 +175,10 @@ doAccountTx(Context const& context)
     response["transactions"] = txns;
 
     auto end2 = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took " << ((end2 - end).count() / 1000000000.0);
-    
+    BOOST_LOG_TRIVIAL(info) << __func__ << " serialization took "
+                            << ((end2 - end).count() / 1000000000.0);
+
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

@@ -30,9 +30,6 @@ public:
     std::optional<ripple::LedgerInfo>
     fetchLedgerByHash(ripple::uint256 const& hash) const override;
 
-    std::optional<LedgerRange>
-    fetchLedgerRange() const override;
-
     std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
         const override;
@@ -46,6 +43,9 @@ public:
 
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
+
+    std::optional<LedgerRange>
+    hardFetchLedgerRange() const override;
 
     LedgerPage
     doFetchLedgerPage(

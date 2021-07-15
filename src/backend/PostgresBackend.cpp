@@ -214,7 +214,7 @@ PostgresBackend::fetchLedgerByHash(ripple::uint256 const& hash) const
 }
 
 std::optional<LedgerRange>
-PostgresBackend::fetchLedgerRange() const
+PostgresBackend::hardFetchLedgerRange() const
 {
     auto range = PgQuery(pgPool_)("SELECT complete_ledgers()");
     if (!range)
@@ -729,7 +729,7 @@ PostgresBackend::writeKeys(
 bool
 PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
 {
-    auto rng = fetchLedgerRangeNoThrow();
+    auto rng = fetchLedgerRange();
     if (!rng)
         return false;
     uint32_t minLedger = rng->maxSequence - numLedgersToKeep;

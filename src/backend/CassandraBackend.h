@@ -26,36 +26,15 @@
 #include <boost/json.hpp>
 #include <boost/log/trivial.hpp>
 #include <atomic>
+#include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
 #include <cassandra.h>
 #include <cstddef>
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
 
 namespace Backend {
-
-void
-flatMapWriteCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteKeyCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteTransactionCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteBookCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
-void
-flatMapReadCallback(CassFuture* fut, void* cbData);
-void
-flatMapReadObjectCallback(CassFuture* fut, void* cbData);
-void
-flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
-void
-flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
 
 class CassandraPreparedStatement
 {
@@ -128,6 +107,15 @@ public:
         statement_ = cass_prepared_bind(prepared.get());
         cass_statement_set_consistency(statement_, CASS_CONSISTENCY_QUORUM);
     }
+
+    CassandraStatement(CassandraStatement&& other)
+    {
+        statement_ = other.statement_;
+        other.statement_ = nullptr;
+        curBindingIndex_ = other.curBindingIndex_;
+        other.curBindingIndex_ = 0;
+    }
+    CassandraStatement(CassandraStatement const& other) = delete;
 
     CassStatement*
     get() const
@@ -535,65 +523,6 @@ isTimeout(CassError rc)
         return true;
     return false;
 }
-template <class T, class F>
-class CassandraAsyncResult
-{
-    T& requestParams_;
-    CassandraResult result_;
-    bool timedOut_ = false;
-    bool retryOnTimeout_ = false;
-
-public:
-    CassandraAsyncResult(
-        T& requestParams,
-        CassFuture* fut,
-        F retry,
-        bool retryOnTimeout = false)
-        : requestParams_(requestParams), retryOnTimeout_(retryOnTimeout)
-    {
-        CassError rc = cass_future_error_code(fut);
-        if (rc != CASS_OK)
-        {
-            // TODO - should we ever be retrying requests? These are reads,
-            // and they usually only fail when the db is under heavy load. Seems
-            // best to just return an error to the client and have the client
-            // try again
-            if (isTimeout(rc))
-                timedOut_ = true;
-            if (!timedOut_ || retryOnTimeout_)
-                retry(requestParams_);
-        }
-        else
-        {
-            result_ = std::move(CassandraResult(cass_future_get_result(fut)));
-        }
-    }
-
-    ~CassandraAsyncResult()
-    {
-        if (result_.isOk() or timedOut_)
-        {
-            BOOST_LOG_TRIVIAL(trace) << "finished a request";
-            size_t batchSize = requestParams_.batchSize;
-
-            std::unique_lock lk(requestParams_.mtx);
-            if (++(requestParams_.numFinished) == batchSize)
-                requestParams_.cv.notify_all();
-        }
-    }
-
-    CassandraResult&
-    getResult()
-    {
-        return result_;
-    }
-
-    bool
-    timedOut()
-    {
-        return timedOut_;
-    }
-};
 
 class CassandraBackend : public BackendInterface
 {
@@ -635,8 +564,8 @@ private:
     // than making a new statement
     CassandraPreparedStatement insertObject_;
     CassandraPreparedStatement insertTransaction_;
+    CassandraPreparedStatement insertLedgerTransaction_;
     CassandraPreparedStatement selectTransaction_;
-    CassandraPreparedStatement selectAllTransactionsInLedger_;
     CassandraPreparedStatement selectAllTransactionHashesInLedger_;
     CassandraPreparedStatement selectObject_;
     CassandraPreparedStatement selectLedgerPageKeys_;
@@ -645,12 +574,6 @@ private:
     CassandraPreparedStatement getToken_;
     CassandraPreparedStatement insertKey_;
     CassandraPreparedStatement selectKeys_;
-    CassandraPreparedStatement getBook_;
-    CassandraPreparedStatement selectBook_;
-    CassandraPreparedStatement completeBook_;
-    CassandraPreparedStatement insertBook_;
-    CassandraPreparedStatement insertBook2_;
-    CassandraPreparedStatement deleteBook_;
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement insertLedgerHeader_;
@@ -662,7 +585,6 @@ private:
     CassandraPreparedStatement selectLedgerByHash_;
     CassandraPreparedStatement selectLatestLedger_;
     CassandraPreparedStatement selectLedgerRange_;
-    CassandraPreparedStatement selectLedgerDiff_;
 
     // io_context used for exponential backoff for write retries
     mutable boost::asio::io_context ioContext_;
@@ -700,15 +622,8 @@ public:
 
     ~CassandraBackend() override
     {
-        BOOST_LOG_TRIVIAL(info) << __func__;
         if (open_)
             close();
-    }
-
-    std::string
-    getName()
-    {
-        return "cassandra";
     }
 
     bool
@@ -734,27 +649,6 @@ public:
         }
         open_ = false;
     }
-    CassandraPreparedStatement const&
-    getInsertKeyPreparedStatement() const
-    {
-        return insertKey_;
-    }
-    CassandraPreparedStatement const&
-    getInsertBookPreparedStatement() const
-    {
-        return insertBook2_;
-    }
-    CassandraPreparedStatement const&
-    getInsertObjectPreparedStatement() const
-    {
-        return insertObject_;
-    }
-
-    CassandraPreparedStatement const&
-    getSelectLedgerDiffPreparedStatement() const
-    {
-        return selectLedgerDiff_;
-    }
 
     std::pair<
         std::vector<TransactionAndMetadata>,
@@ -762,82 +656,14 @@ public:
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t limit,
-        std::optional<AccountTransactionsCursor> const& cursor) const override
-    {
-        BOOST_LOG_TRIVIAL(debug) << "Starting doAccountTx";
-        CassandraStatement statement{selectAccountTx_};
-        statement.bindBytes(account);
-        if (cursor)
-            statement.bindIntTuple(
-                cursor->ledgerSequence, cursor->transactionIndex);
-        else
-            statement.bindIntTuple(INT32_MAX, INT32_MAX);
-        statement.bindUInt(limit);
-        CassandraResult result = executeSyncRead(statement);
-        if (!result.hasResult())
-        {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
-            return {{}, {}};
-        }
-
-        std::vector<ripple::uint256> hashes;
-        size_t numRows = result.numRows();
-        bool returnCursor = numRows == limit;
-        std::optional<AccountTransactionsCursor> retCursor;
-
-        BOOST_LOG_TRIVIAL(info) << "num_rows = " << std::to_string(numRows);
-        do
-        {
-            hashes.push_back(result.getUInt256());
-            --numRows;
-            if (numRows == 0 && returnCursor)
-            {
-                auto [lgrSeq, txnIdx] = result.getInt64Tuple();
-                retCursor = {(uint32_t)lgrSeq, (uint32_t)txnIdx};
-            }
-        } while (result.nextRow());
-
-        BOOST_LOG_TRIVIAL(debug)
-            << "doAccountTx - populated hashes. num hashes = " << hashes.size();
-        if (hashes.size())
-        {
-            return {fetchTransactions(hashes), retCursor};
-        }
-        return {{}, {}};
-    }
-
-    struct WriteLedgerHeaderCallbackData
-    {
-        CassandraBackend const* backend;
-        uint32_t sequence;
-        std::string header;
-        uint32_t currentRetries = 0;
-
-        std::atomic<int> refs = 1;
-        WriteLedgerHeaderCallbackData(
-            CassandraBackend const* f,
-            uint32_t sequence,
-            std::string&& header)
-            : backend(f), sequence(sequence), header(std::move(header))
-        {
-        }
-    };
-    struct WriteLedgerHashCallbackData
-    {
-        CassandraBackend const* backend;
-        ripple::uint256 hash;
-        uint32_t sequence;
-        uint32_t currentRetries = 0;
-
-        std::atomic<int> refs = 1;
-        WriteLedgerHashCallbackData(
-            CassandraBackend const* f,
-            ripple::uint256 hash,
-            uint32_t sequence)
-            : backend(f), hash(hash), sequence(sequence)
-        {
-        }
-    };
+        std::optional<AccountTransactionsCursor> const& cursor) const override;
+    std::pair<
+        std::vector<TransactionAndMetadata>,
+        std::optional<AccountTransactionsCursor>>
+    doFetchAccountTransactions(
+        ripple::AccountID const& account,
+        std::uint32_t limit,
+        std::optional<AccountTransactionsCursor> const& cursor) const;
 
     bool
     doFinishWrites() const override
@@ -872,37 +698,7 @@ public:
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& header,
-        bool isFirst = false) const override
-    {
-        WriteLedgerHeaderCallbackData* headerCb =
-            new WriteLedgerHeaderCallbackData(
-                this, ledgerInfo.seq, std::move(header));
-        WriteLedgerHashCallbackData* hashCb = new WriteLedgerHashCallbackData(
-            this, ledgerInfo.hash, ledgerInfo.seq);
-        writeLedgerHeader(*headerCb, false);
-        writeLedgerHash(*hashCb, false);
-        ledgerSequence_ = ledgerInfo.seq;
-        isFirstLedger_ = isFirst;
-    }
-    void
-    writeLedgerHash(WriteLedgerHashCallbackData& cb, bool isRetry) const
-    {
-        CassandraStatement statement{insertLedgerHash_};
-        statement.bindBytes(cb.hash);
-        statement.bindInt(cb.sequence);
-        executeAsyncWrite(
-            statement, flatMapWriteLedgerHashCallback, cb, isRetry);
-    }
-
-    void
-    writeLedgerHeader(WriteLedgerHeaderCallbackData& cb, bool isRetry) const
-    {
-        CassandraStatement statement{insertLedgerHeader_};
-        statement.bindInt(cb.sequence);
-        statement.bindBytes(cb.header);
-        executeAsyncWrite(
-            statement, flatMapWriteLedgerHeaderCallback, cb, isRetry);
-    }
+        bool isFirst = false) const override;
 
     std::optional<uint32_t>
     fetchLatestLedgerSequence() const override
@@ -956,7 +752,7 @@ public:
     }
 
     std::optional<LedgerRange>
-    fetchLedgerRange() const override;
+    hardFetchLedgerRange() const override;
 
     std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(uint32_t ledgerSequence) const override;
@@ -964,11 +760,8 @@ public:
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
 
-    // Synchronously fetch the object with key key and store the result in
-    // pno
-    // @param key the key of the object
-    // @param pno object in which to store the result
-    // @return result status of query
+    // Synchronously fetch the object with key key, as of ledger with sequence
+    // sequence
     std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
         const override
@@ -983,7 +776,10 @@ public:
             BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
             return {};
         }
-        return result.getBytes();
+        auto res = result.getBytes();
+        if (res.size())
+            return res;
+        return {};
     }
 
     std::optional<int64_t>
@@ -1024,18 +820,6 @@ public:
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit) const override;
-    std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence) const;
-    std::map<uint32_t, std::vector<LedgerObject>>
-    fetchLedgerDiffs(std::vector<uint32_t> const& sequences) const;
-
-    bool
-    runIndexer(uint32_t ledgerSequence) const;
-    bool
-    isIndexed(uint32_t ledgerSequence) const;
-
-    std::optional<uint32_t>
-    getNextToIndex() const;
 
     bool
     writeKeys(
@@ -1043,207 +827,14 @@ public:
         KeyIndex const& index,
         bool isAsync = false) const override;
 
-    bool
-    canFetchBatch()
-    {
-        return true;
-    }
-
-    struct ReadCallbackData
-    {
-        CassandraBackend const& backend;
-        ripple::uint256 const& hash;
-        TransactionAndMetadata& result;
-        std::mutex& mtx;
-        std::condition_variable& cv;
-
-        std::atomic_uint32_t& numFinished;
-        size_t batchSize;
-
-        ReadCallbackData(
-            CassandraBackend const& backend,
-            ripple::uint256 const& hash,
-            TransactionAndMetadata& result,
-            std::mutex& mtx,
-            std::condition_variable& cv,
-            std::atomic_uint32_t& numFinished,
-            size_t batchSize)
-            : backend(backend)
-            , hash(hash)
-            , result(result)
-            , mtx(mtx)
-            , cv(cv)
-            , numFinished(numFinished)
-            , batchSize(batchSize)
-        {
-        }
-
-        ReadCallbackData(ReadCallbackData const& other) = default;
-    };
-
     std::vector<TransactionAndMetadata>
-    fetchTransactions(std::vector<ripple::uint256> const& hashes) const override
-    {
-        std::size_t const numHashes = hashes.size();
-        BOOST_LOG_TRIVIAL(debug)
-            << "Fetching " << numHashes << " transactions from Cassandra";
-        std::atomic_uint32_t numFinished = 0;
-        std::condition_variable cv;
-        std::mutex mtx;
-        std::vector<TransactionAndMetadata> results{numHashes};
-        std::vector<std::shared_ptr<ReadCallbackData>> cbs;
-        cbs.reserve(numHashes);
-        for (std::size_t i = 0; i < hashes.size(); ++i)
-        {
-            cbs.push_back(std::make_shared<ReadCallbackData>(
-                *this, hashes[i], results[i], mtx, cv, numFinished, numHashes));
-            read(*cbs[i]);
-        }
-        assert(results.size() == cbs.size());
+    fetchTransactions(
+        std::vector<ripple::uint256> const& hashes) const override;
 
-        std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&numFinished, &numHashes]() {
-            return numFinished == numHashes;
-        });
-        for (auto const& res : results)
-        {
-            if (res.transaction.size() == 1 && res.transaction[0] == 0)
-                throw DatabaseTimeout();
-        }
-
-        BOOST_LOG_TRIVIAL(debug)
-            << "Fetched " << numHashes << " transactions from Cassandra";
-        return results;
-    }
-
-    void
-    read(ReadCallbackData& data) const
-    {
-        CassandraStatement statement{selectTransaction_};
-        statement.bindBytes(data.hash);
-        executeAsyncRead(statement, flatMapReadCallback, data);
-    }
-
-    struct ReadObjectCallbackData
-    {
-        CassandraBackend const& backend;
-        ripple::uint256 const& key;
-        uint32_t sequence;
-        Blob& result;
-        std::mutex& mtx;
-        std::condition_variable& cv;
-
-        std::atomic_uint32_t& numFinished;
-        size_t batchSize;
-
-        ReadObjectCallbackData(
-            CassandraBackend const& backend,
-            ripple::uint256 const& key,
-            uint32_t sequence,
-            Blob& result,
-            std::mutex& mtx,
-            std::condition_variable& cv,
-            std::atomic_uint32_t& numFinished,
-            size_t batchSize)
-            : backend(backend)
-            , key(key)
-            , sequence(sequence)
-            , result(result)
-            , mtx(mtx)
-            , cv(cv)
-            , numFinished(numFinished)
-            , batchSize(batchSize)
-        {
-        }
-
-        ReadObjectCallbackData(ReadObjectCallbackData const& other) = default;
-    };
-
-    void
-    readObject(ReadObjectCallbackData& data) const
-    {
-        CassandraStatement statement{selectObject_};
-        statement.bindBytes(data.key);
-        statement.bindInt(data.sequence);
-
-        executeAsyncRead(statement, flatMapReadObjectCallback, data);
-    }
     std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const override;
-
-    struct WriteCallbackData
-    {
-        CassandraBackend const* backend;
-        std::string key;
-        uint32_t sequence;
-        uint32_t createdSequence = 0;
-        std::string blob;
-        bool isCreated;
-        bool isDeleted;
-        std::optional<ripple::uint256> book;
-
-        uint32_t currentRetries = 0;
-        std::atomic<int> refs = 1;
-
-        WriteCallbackData(
-            CassandraBackend const* f,
-            std::string&& key,
-            uint32_t sequence,
-            std::string&& blob,
-            bool isCreated,
-            bool isDeleted,
-            std::optional<ripple::uint256>&& inBook)
-            : backend(f)
-            , key(std::move(key))
-            , sequence(sequence)
-            , blob(std::move(blob))
-            , isCreated(isCreated)
-            , isDeleted(isDeleted)
-            , book(std::move(inBook))
-        {
-        }
-    };
-
-    struct WriteAccountTxCallbackData
-    {
-        CassandraBackend const* backend;
-        ripple::AccountID account;
-        uint32_t ledgerSequence;
-        uint32_t transactionIndex;
-        ripple::uint256 txHash;
-
-        uint32_t currentRetries = 0;
-        std::atomic<int> refs = 1;
-
-        WriteAccountTxCallbackData(
-            CassandraBackend const* f,
-            ripple::AccountID&& account,
-            uint32_t lgrSeq,
-            uint32_t txIdx,
-            ripple::uint256&& hash)
-            : backend(f)
-            , account(std::move(account))
-            , ledgerSequence(lgrSeq)
-            , transactionIndex(txIdx)
-            , txHash(std::move(hash))
-        {
-        }
-    };
-
-    void
-    write(WriteCallbackData& data, bool isRetry) const
-    {
-        {
-            CassandraStatement statement{insertObject_};
-            statement.bindBytes(data.key);
-            statement.bindInt(data.sequence);
-            statement.bindBytes(data.blob);
-
-            executeAsyncWrite(statement, flatMapWriteCallback, data, isRetry);
-        }
-    }
 
     void
     doWriteLedgerObject(
@@ -1252,112 +843,18 @@ public:
         std::string&& blob,
         bool isCreated,
         bool isDeleted,
-        std::optional<ripple::uint256>&& book) const override
-    {
-        BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
-        bool hasBook = book.has_value();
-        WriteCallbackData* data = new WriteCallbackData(
-            this,
-            std::move(key),
-            seq,
-            std::move(blob),
-            isCreated,
-            isDeleted,
-            std::move(book));
-
-        write(*data, false);
-    }
+        std::optional<ripple::uint256>&& book) const override;
 
     void
     writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data) const override
-    {
-        for (auto& record : data)
-        {
-            for (auto& account : record.accounts)
-            {
-                WriteAccountTxCallbackData* cbData =
-                    new WriteAccountTxCallbackData(
-                        this,
-                        std::move(account),
-                        record.ledgerSequence,
-                        record.transactionIndex,
-                        std::move(record.txHash));
-                writeAccountTx(*cbData, false);
-            }
-        }
-    }
+        std::vector<AccountTransactionsData>&& data) const override;
 
-    void
-    writeAccountTx(WriteAccountTxCallbackData& data, bool isRetry) const
-    {
-        CassandraStatement statement(insertAccountTx_);
-        statement.bindBytes(data.account);
-        statement.bindIntTuple(data.ledgerSequence, data.transactionIndex);
-        statement.bindBytes(data.txHash);
-
-        executeAsyncWrite(
-            statement, flatMapWriteAccountTxCallback, data, isRetry);
-    }
-
-    struct WriteTransactionCallbackData
-    {
-        CassandraBackend const* backend;
-        // The shared pointer to the node object must exist until it's
-        // confirmed persisted. Otherwise, it can become deleted
-        // prematurely if other copies are removed from caches.
-        std::string hash;
-        uint32_t sequence;
-        std::string transaction;
-        std::string metadata;
-
-        uint32_t currentRetries = 0;
-
-        std::atomic<int> refs = 1;
-        WriteTransactionCallbackData(
-            CassandraBackend const* f,
-            std::string&& hash,
-            uint32_t sequence,
-            std::string&& transaction,
-            std::string&& metadata)
-            : backend(f)
-            , hash(std::move(hash))
-            , sequence(sequence)
-            , transaction(std::move(transaction))
-            , metadata(std::move(metadata))
-        {
-        }
-    };
-
-    void
-    writeTransaction(WriteTransactionCallbackData& data, bool isRetry) const
-    {
-        CassandraStatement statement{insertTransaction_};
-        statement.bindBytes(data.hash);
-        statement.bindInt(data.sequence);
-        statement.bindBytes(data.transaction);
-        statement.bindBytes(data.metadata);
-
-        executeAsyncWrite(
-            statement, flatMapWriteTransactionCallback, data, isRetry);
-    }
     void
     writeTransaction(
         std::string&& hash,
         uint32_t seq,
         std::string&& transaction,
-        std::string&& metadata) const override
-    {
-        BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
-        WriteTransactionCallbackData* data = new WriteTransactionCallbackData(
-            this,
-            std::move(hash),
-            seq,
-            std::move(transaction),
-            std::move(metadata));
-
-        writeTransaction(*data, false);
-    }
+        std::string&& metadata) const override;
 
     void
     startWrites() const override
@@ -1379,28 +876,6 @@ public:
     {
         return ioContext_;
     }
-
-    friend void
-    flatMapWriteCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteKeyCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteTransactionCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteBookCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteAccountTxCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteLedgerHeaderCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapWriteLedgerHashCallback(CassFuture* fut, void* cbData);
-
-    friend void
-    flatMapReadCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapReadObjectCallback(CassFuture* fut, void* cbData);
-    friend void
-    flatMapGetCreatedCallback(CassFuture* fut, void* cbData);
 
     inline void
     incremementOutstandingRequestCount() const

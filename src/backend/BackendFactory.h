@@ -40,6 +40,12 @@ make_Backend(boost::json::object const& config)
         throw std::runtime_error("Invalid database type");
 
     backend->open(readOnly);
+    auto rng = backend->hardFetchLedgerRangeNoThrow();
+    if (rng)
+    {
+        backend->updateRange(rng->minSequence);
+        backend->updateRange(rng->maxSequence);
+    }
     backend->checkFlagLedgers();
 
     BOOST_LOG_TRIVIAL(info)

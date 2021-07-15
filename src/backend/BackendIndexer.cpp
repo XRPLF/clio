@@ -27,7 +27,7 @@ BackendIndexer::doKeysRepair(
     BackendInterface const& backend,
     std::optional<uint32_t> sequence)
 {
-    auto rng = backend.fetchLedgerRangeNoThrow();
+    auto rng = backend.fetchLedgerRange();
 
     if (!rng)
         return;
@@ -209,11 +209,10 @@ BackendIndexer::finish(uint32_t ledgerSequence, BackendInterface const& backend)
     BOOST_LOG_TRIVIAL(debug)
         << __func__
         << " starting. sequence = " << std::to_string(ledgerSequence);
-    bool isFirst = false;
     auto keyIndex = getKeyIndexOfSeq(ledgerSequence);
     if (isFirst_)
     {
-        auto rng = backend.fetchLedgerRangeNoThrow();
+        auto rng = backend.fetchLedgerRange();
         if (rng && rng->minSequence != ledgerSequence)
             isFirst_ = false;
         else

@@ -219,7 +219,7 @@ async def account_tx(ip, port, account, binary, minLedger=None, maxLedger=None):
                 await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"limit":200,"ledger_index_min":minLedger, "ledger_index_max":maxLedger}))
 
             res = json.loads(await ws.recv())
-            #print(json.dumps(res,indent=4,sort_keys=True))
+            print(json.dumps(res,indent=4,sort_keys=True))
             return res
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -322,6 +322,8 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                     req["ledger_index_min"] = minLedger
                     req["ledger_index_max"] = maxLedger
                 start = datetime.datetime.now().timestamp()
+                print("sending")
+                print(req)
                 await ws.send(json.dumps(req))
                 res = await ws.recv()
                 
@@ -329,7 +331,8 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                 
                 print(end - start)
                 res = json.loads(res)
-                #print(json.dumps(res,indent=4,sort_keys=True))
+                #print(res)
+                print(json.dumps(res,indent=4,sort_keys=True))
                 if "result" in res:
                     print(len(res["result"]["transactions"]))
                 else:
@@ -341,15 +344,15 @@ async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=No
                 if "cursor" in res:
                     cursor = {"ledger_sequence":res["cursor"]["ledger_sequence"],"transaction_index":res["cursor"]["transaction_index"]}
                     print(cursor)
+                if "marker" in res:
+                    marker = {"ledger":res["marker"]["ledger"],"seq":res["marker"]["seq"]}
+                    print(marker)
                 elif "result" in res and "marker" in res["result"]:
                     marker={"ledger":res["result"]["marker"]["ledger"],"seq":res["result"]["marker"]["seq"]}
                     print(marker)
                 else:
-                    print(res)
+                    print("no cursor or marker")
                     break    
-                if numCalls > numPages:
-                    print("breaking")
-                    break
             return results
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -665,7 +668,8 @@ def getHashes(res):
         res = res["result"]["ledger"]
 
     hashes = []
-    for x in res["transactions"]:
+    for x in res["ledger"]["transactions"]:
+        print(x)
         if "hash" in x:
             hashes.append(x["hash"])
         elif "transaction" in x and "hash" in x["transaction"]:
@@ -699,11 +703,14 @@ async def ledgers(ip, port, minLedger, maxLedger, transactions, expand, maxCalls
                 start = datetime.datetime.now().timestamp()
                 await ws.send(json.dumps({"command":"ledger","ledger_index":int(ledger),"binary":True, "transactions":bool(transactions),"expand":bool(expand)}))
                 res = json.loads(await ws.recv())
-                print(res["header"]["blob"])
                 end = datetime.datetime.now().timestamp()
                 if (end - start) > 0.1:
-                    print("request took more than 100ms")
+                    print("request took more than 100ms : " + str(end - start))
                 numCalls = numCalls + 1
+                if "error" in res:
+                    print(res["error"])
+                else:
+                    print(res["header"]["blob"])
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(e)
@@ -842,8 +849,13 @@ args = parser.parse_args()
 
 def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
-    if(args.ledger is None):
-        args.ledger = asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))[1]
+    rng =asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
+    if args.ledger is None:
+        args.ledger = rng[1]
+    if args.maxLedger == -1:
+        args.maxLedger = rng[1]
+    if args.minLedger == -1:
+        args.minLedger = rng[0]
     if args.action == "fee":
         asyncio.get_event_loop().run_until_complete(fee(args.ip, args.port))
     elif args.action == "server_info":
@@ -891,6 +903,7 @@ def run(args):
         end = datetime.datetime.now().timestamp()
         num = int(args.numRunners) * int(args.numCalls)
         print("Completed " + str(num) + " in " + str(end - start) + " seconds. Throughput = " + str(num / (end - start)) + " calls per second")
+        print("Latency = " + str((end - start) / int(args.numCalls)) + " seconds")
     elif args.action == "ledger_entries":
         keys = []
         ledger_index = 0
@@ -1012,7 +1025,8 @@ def run(args):
             args.hash = getHashes(asyncio.get_event_loop().run_until_complete(ledger(args.ip,args.port,args.ledger,False,True,False)))[0]
         
             res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
-            args.account = res["transaction"]["Account"]
+            print(res)
+            args.account = res["Account"]
         
         res = asyncio.get_event_loop().run_until_complete(
                 account_tx(args.ip, args.port, args.account, args.binary))
@@ -1031,16 +1045,16 @@ def run(args):
             args.hash = getHashes(asyncio.get_event_loop().run_until_complete(ledger(args.ip,args.port,args.ledger,False,True,False)))[0]
         
             res = asyncio.get_event_loop().run_until_complete(tx(args.ip,args.port,args.hash,False))
-            args.account = res["transaction"]["Account"]
+            args.account = res["Account"]
         print("starting")
         res = asyncio.get_event_loop().run_until_complete(
-                account_tx_full(args.ip, args.port, args.account, args.binary,None,None,int(args.numPages)))
+                account_tx_full(args.ip, args.port, args.account, args.binary,None,None))
         rng = getMinAndMax(res)
         print(len(res["transactions"]))
         print(args.account)
         txs = set()
         for x in res["transactions"]:
-            txs.add((x["transaction"],x["ledger_sequence"]))
+            txs.add((x["tx_blob"],x["ledger_index"]))
         print(len(txs))
 
         if args.verify:

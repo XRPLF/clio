@@ -66,6 +66,7 @@ class BackendInterface
 protected:
     mutable BackendIndexer indexer_;
     mutable bool isFirst_ = true;
+    mutable std::optional<LedgerRange> range;
 
 public:
     BackendInterface(boost::json::object const& config) : indexer_(config)
@@ -97,15 +98,14 @@ public:
     virtual std::optional<uint32_t>
     fetchLatestLedgerSequence() const = 0;
 
-    virtual std::optional<LedgerRange>
-    fetchLedgerRange() const = 0;
+    std::optional<LedgerRange>
+    fetchLedgerRange() const
+    {
+        return range;
+    }
 
     std::optional<ripple::Fees>
     fetchFees(std::uint32_t seq) const;
-
-    // Doesn't throw DatabaseTimeout. Should be used with care.
-    std::optional<LedgerRange>
-    fetchLedgerRangeNoThrow() const;
 
     // *** transaction methods
     virtual std::optional<TransactionAndMetadata>
@@ -174,6 +174,20 @@ protected:
     friend std::shared_ptr<BackendInterface>
     make_Backend(boost::json::object const& config);
     friend class ::BackendTest_Basic_Test;
+    virtual std::optional<LedgerRange>
+    hardFetchLedgerRange() const = 0;
+    // Doesn't throw DatabaseTimeout. Should be used with care.
+    std::optional<LedgerRange>
+    hardFetchLedgerRangeNoThrow() const;
+
+    void
+    updateRange(uint32_t newMax)
+    {
+        if (!range)
+            range = {newMax, newMax};
+        else
+            range->maxSequence = newMax;
+    }
 
     virtual void
     writeLedger(
