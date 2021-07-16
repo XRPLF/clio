@@ -283,10 +283,10 @@ TEST(BackendTest, Basic)
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
             for (auto& a : affectedAccounts)
             {
-                auto accountTxns = backend->fetchAccountTransactions(a, 100);
-                EXPECT_EQ(accountTxns.first.size(), 1);
-                EXPECT_EQ(accountTxns.first[0], txns[0]);
-                EXPECT_FALSE(accountTxns.second);
+                auto [txns, cursor] = backend->fetchAccountTransactions(a, 100);
+                EXPECT_EQ(txns.size(), 1);
+                EXPECT_EQ(txns[0], txns[0]);
+                EXPECT_FALSE(cursor);
             }
 
             ripple::uint256 key256;
@@ -524,13 +524,12 @@ TEST(BackendTest, Basic)
                 do
                 {
                     uint32_t limit = 10;
-                    auto res = backend->fetchAccountTransactions(
-                        account, limit, cursor);
-                    if (res.second)
-                        EXPECT_EQ(res.first.size(), limit);
-                    retData.insert(
-                        retData.end(), res.first.begin(), res.first.end());
-                    cursor = res.second;
+                    auto [txns, retCursor] = backend->fetchAccountTransactions(
+                        account, limit, false, cursor);
+                    if (retCursor)
+                        EXPECT_EQ(txns.size(), limit);
+                    retData.insert(retData.end(), txns.begin(), txns.end());
+                    cursor = retCursor;
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i)

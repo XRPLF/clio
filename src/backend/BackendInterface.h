@@ -46,6 +46,12 @@ struct AccountTransactionsCursor
     uint32_t transactionIndex;
 };
 
+struct AccountTransactions
+{
+    std::vector<TransactionAndMetadata> txns;
+    std::optional<AccountTransactionsCursor> cursor;
+};
+
 struct LedgerRange
 {
     uint32_t minSequence;
@@ -114,12 +120,11 @@ public:
     virtual std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes) const = 0;
 
-    virtual std::pair<
-        std::vector<TransactionAndMetadata>,
-        std::optional<AccountTransactionsCursor>>
+    virtual AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t limit,
+        bool forward = false,
         std::optional<AccountTransactionsCursor> const& cursor = {}) const = 0;
 
     virtual std::vector<TransactionAndMetadata>

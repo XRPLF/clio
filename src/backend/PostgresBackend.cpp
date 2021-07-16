@@ -527,12 +527,11 @@ PostgresBackend::fetchLedgerObjects(
     return results;
 }
 
-std::pair<
-    std::vector<TransactionAndMetadata>,
-    std::optional<AccountTransactionsCursor>>
+AccountTransactions
 PostgresBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
     std::uint32_t limit,
+    bool forward,
     std::optional<AccountTransactionsCursor> const& cursor) const
 {
     PgQuery pgQuery(pgPool_);

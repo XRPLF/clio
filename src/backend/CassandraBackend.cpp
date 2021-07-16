@@ -402,12 +402,11 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     return hashes;
 }
 
-std::pair<
-    std::vector<TransactionAndMetadata>,
-    std::optional<AccountTransactionsCursor>>
+AccountTransactions
 CassandraBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
     std::uint32_t limit,
+    bool forward,
     std::optional<AccountTransactionsCursor> const& cursorIn) const
 {
     auto rng = fetchLedgerRange();

@@ -116,11 +116,19 @@ doAccountTx(Context const& context)
 
         response["limit"] = limit;
     }
+    bool forward = false;
+    if (request.contains("forward"))
+    {
+        if (!request.at("limit").is_bool())
+            return Status{Error::rpcINVALID_PARAMS, "forwardNotBool"};
+
+        forward = request.at("limit").as_bool();
+    }
 
     boost::json::array txns;
     auto start = std::chrono::system_clock::now();
-    auto [blobs, retCursor] =
-        context.backend->fetchAccountTransactions(*accountID, limit, cursor);
+    auto [blobs, retCursor] = context.backend->fetchAccountTransactions(
+        *accountID, limit, forward, cursor);
 
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took "

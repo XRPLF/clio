@@ -650,20 +650,12 @@ public:
         open_ = false;
     }
 
-    std::pair<
-        std::vector<TransactionAndMetadata>,
-        std::optional<AccountTransactionsCursor>>
+    AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t limit,
+        bool forward,
         std::optional<AccountTransactionsCursor> const& cursor) const override;
-    std::pair<
-        std::vector<TransactionAndMetadata>,
-        std::optional<AccountTransactionsCursor>>
-    doFetchAccountTransactions(
-        ripple::AccountID const& account,
-        std::uint32_t limit,
-        std::optional<AccountTransactionsCursor> const& cursor) const;
 
     bool
     doFinishWrites() const override

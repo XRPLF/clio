@@ -62,12 +62,11 @@ public:
         std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const override;
 
-    std::pair<
-        std::vector<TransactionAndMetadata>,
-        std::optional<AccountTransactionsCursor>>
+    AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t limit,
+        bool forward,
         std::optional<AccountTransactionsCursor> const& cursor) const override;
 
     void
