@@ -33,13 +33,13 @@
 #include <boost/log/trivial.hpp>
 #include <algorithm>
 #include <array>
+#include <backend/Pg.h>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <functional>
 #include <iterator>
-#include <backend/Pg.h>
 #include <signal.h>
 #include <sstream>
 #include <stdexcept>
@@ -848,112 +848,6 @@ CREATE TABLE IF NOT EXISTS keys (
     PRIMARY KEY(ledger_seq, key)
 );
 
--- account_tx() RPC helper. From the rippled reporting process, only the
--- parameters without defaults are required. For the parameters with
--- defaults, validation should be done by rippled, such as:
--- _in_account_id should be a valid xrp base58 address.
--- _in_forward either true or false according to the published api
--- _in_limit should be validated and not simply passed through from
--- client.
---
--- For _in_ledger_index_min and _in_ledger_index_max, if passed in the
--- request, verify that their type is int and pass through as is.
--- For _ledger_hash, verify and convert from hex length 32 bytes and
--- prepend with \x (\\x C++).
---
--- For _in_ledger_index, if the input type is integer, then pass through
--- as is. If the type is string and contents = validated, then do not
--- set _in_ledger_index. Instead set _in_invalidated to TRUE.
---
--- There is no need for rippled to do any type of lookup on max/min
--- ledger range, lookup of hash, or the like. This functions does those
--- things, including error responses if bad input. Only the above must
--- be done to set the correct search range.
---
--- If a marker is present in the request, verify the members 'ledger'
--- and 'seq' are integers and they correspond to _in_marker_seq
--- _in_marker_index.
--- To reiterate:
--- JSON input field 'ledger' corresponds to _in_marker_seq
--- JSON input field 'seq' corresponds to _in_marker_index
-CREATE OR REPLACE FUNCTION account_tx(
-        _in_account_id bytea,
-        _in_limit bigint,
-        _in_marker_seq bigint DEFAULT NULL::bigint,
-        _in_marker_index bigint DEFAULT NULL::bigint)
-RETURNS jsonb
-AS $$
-DECLARE
-    _min          bigint;
-    _max          bigint;
-    _marker       bool;
-    _between_min  bigint;
-    _between_max  bigint;
-    _sql          text;
-    _cursor       refcursor;
-    _result       jsonb;
-    _record       record;
-    _tally        bigint     := 0;
-    _ret_marker   jsonb;
-    _transactions jsonb[]    := '{}';
-BEGIN
-    _min := min_ledger();
-    _max := max_ledger();
-    IF _in_marker_seq IS NOT NULL OR _in_marker_index IS NOT NULL THEN
-        _marker := TRUE;
-        IF _in_marker_seq IS NULL OR _in_marker_index IS NULL THEN
-            -- The rippled implementation returns no transaction results
-            -- if either of these values are missing.
-            _between_min := 0;
-            _between_max := 0;
-        ELSE
-            _between_min := _min;
-            _between_max := _in_marker_seq;
-        END IF;
-    ELSE
-        _marker := FALSE;
-        _between_min := _min;
-        _between_max := _max;
-    END IF;
-
-
-    _sql := format('SELECT hash, ledger_seq, transaction_index FROM account_transactions WHERE account = $1
-        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq DESC, transaction_index DESC');
-
-    OPEN _cursor FOR EXECUTE _sql USING _in_account_id, _between_min, _between_max;
-    LOOP
-        FETCH _cursor INTO _record;
-        IF _record IS NULL THEN EXIT; END IF;
-        IF _marker IS TRUE THEN
-            IF _in_marker_seq = _record.ledger_seq THEN
-                IF _in_marker_index < _record.transaction_index THEN
-                    CONTINUE;
-                END IF;
-            END IF;
-            _marker := FALSE;
-        END IF;
-        _tally := _tally + 1;
-        IF _tally > _in_limit THEN
-            _ret_marker := jsonb_build_object(
-                'ledger_sequence', _record.ledger_seq,
-                'transaction_index', _record.transaction_index);
-            EXIT;
-        END IF;
-
-        -- Is the transaction index in the tx object?
-        _transactions := _transactions || jsonb_build_object('hash',_record.hash);
-    END LOOP;
-    CLOSE _cursor;
-
-    _result := jsonb_build_object('ledger_index_min', _min,
-        'ledger_index_max', _max,
-        'transactions', _transactions);
-    IF _ret_marker IS NOT NULL THEN
-        _result := _result || jsonb_build_object('cursor', _ret_marker);
-    END IF;
-    RETURN _result;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Avoid inadvertent administrative tampering with committed data.
 CREATE OR REPLACE RULE ledgers_update_protect AS ON UPDATE TO
@@ -1249,6 +1143,125 @@ $$ LANGUAGE plpgsql;
     //  , R"(Full idempotent text of schema version n)"
 };
 
+static constexpr char* accountTxSchema = R"(
+
+-- account_tx() RPC helper. From the rippled reporting process, only the
+-- parameters without defaults are required. For the parameters with
+-- defaults, validation should be done by rippled, such as:
+-- _in_account_id should be a valid xrp base58 address.
+-- _in_forward either true or false according to the published api
+-- _in_limit should be validated and not simply passed through from
+-- client.
+--
+-- For _in_ledger_index_min and _in_ledger_index_max, if passed in the
+-- request, verify that their type is int and pass through as is.
+-- For _ledger_hash, verify and convert from hex length 32 bytes and
+-- prepend with \x (\\x C++).
+--
+-- For _in_ledger_index, if the input type is integer, then pass through
+-- as is. If the type is string and contents = validated, then do not
+-- set _in_ledger_index. Instead set _in_invalidated to TRUE.
+--
+-- There is no need for rippled to do any type of lookup on max/min
+-- ledger range, lookup of hash, or the like. This functions does those
+-- things, including error responses if bad input. Only the above must
+-- be done to set the correct search range.
+--
+-- If a marker is present in the request, verify the members 'ledger'
+-- and 'seq' are integers and they correspond to _in_marker_seq
+-- _in_marker_index.
+-- To reiterate:
+-- JSON input field 'ledger' corresponds to _in_marker_seq
+-- JSON input field 'seq' corresponds to _in_marker_index
+CREATE OR REPLACE FUNCTION account_tx(
+        _in_account_id bytea,
+        _in_limit bigint,
+        _in_forward bool,
+        _in_marker_seq bigint DEFAULT NULL::bigint,
+        _in_marker_index bigint DEFAULT NULL::bigint)
+RETURNS jsonb
+AS $$
+DECLARE
+    _min          bigint;
+    _max          bigint;
+    _marker       bool;
+    _between_min  bigint;
+    _between_max  bigint;
+    _sql          text;
+    _cursor       refcursor;
+    _result       jsonb;
+    _record       record;
+    _tally        bigint     := 0;
+    _ret_marker   jsonb;
+    _transactions jsonb[]    := '{}';
+    _sort_order   text       := (SELECT CASE WHEN _in_forward IS TRUE THEN
+                                 'ASC' ELSE 'DESC' END);
+BEGIN
+    _min := min_ledger();
+    _max := max_ledger();
+    IF _in_marker_seq IS NOT NULL OR _in_marker_index IS NOT NULL THEN
+        _marker := TRUE;
+        IF _in_marker_seq IS NULL OR _in_marker_index IS NULL THEN
+            -- The rippled implementation returns no transaction results
+            -- if either of these values are missing.
+            _between_min := 0;
+            _between_max := 0;
+        ELSE
+            _between_min := _min;
+            _between_max := _in_marker_seq;
+        END IF;
+    ELSE
+        _marker := FALSE;
+        _between_min := _min;
+        _between_max := _max;
+    END IF;
+
+
+    _sql := format('SELECT hash, ledger_seq, transaction_index FROM account_transactions WHERE account = $1
+        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq %s, transaction_index %s');
+
+    OPEN _cursor FOR EXECUTE _sql USING _in_account_id, _between_min, _between_max;
+    LOOP
+        FETCH _cursor INTO _record;
+        IF _record IS NULL THEN EXIT; END IF;
+        IF _marker IS TRUE THEN
+            IF _in_marker_seq = _record.ledger_seq THEN
+                IF _in_forward IS TRUE THEN
+                    IF _in_marker_index > _record.transaction_index THEN
+                        CONTINUE;
+                    END IF;
+                ELSE
+                    IF _in_marker_index < _record.transaction_index THEN
+                        CONTINUE;
+                    END IF;
+                END IF;
+            END IF;
+            _marker := FALSE;
+        END IF;
+        _tally := _tally + 1;
+        IF _tally > _in_limit THEN
+            _ret_marker := jsonb_build_object(
+                'ledger_sequence', _record.ledger_seq,
+                'transaction_index', _record.transaction_index);
+            EXIT;
+        END IF;
+
+        -- Is the transaction index in the tx object?
+        _transactions := _transactions || jsonb_build_object('hash',_record.hash);
+    END LOOP;
+    CLOSE _cursor;
+
+    _result := jsonb_build_object('ledger_index_min', _min,
+        'ledger_index_max', _max,
+        'transactions', _transactions);
+    IF _ret_marker IS NOT NULL THEN
+        _result := _result || jsonb_build_object('cursor', _ret_marker);
+    END IF;
+    RETURN _result;
+END;
+$$ LANGUAGE plpgsql;
+
+)";
 std::array<char const*, LATEST_SCHEMA_VERSION> upgrade_schemata = {
     // upgrade from version 0:
     "There is no upgrade path from version 0. Instead, install "
@@ -1310,6 +1323,18 @@ applySchema(
         std::stringstream ss;
         ss << "Error setting schema version from " << currentVersion << " to "
            << schemaVersion << ": " << res.msg();
+        throw std::runtime_error(ss.str());
+    }
+}
+
+void
+initAccountTx(std::shared_ptr<PgPool> const& pool)
+{
+    auto res = PgQuery(pool)(accountTxSchema);
+    if (!res)
+    {
+        std::stringstream ss;
+        ss << "Error initializing account_tx stored procedure";
         throw std::runtime_error(ss.str());
     }
 }

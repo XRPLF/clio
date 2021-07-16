@@ -541,17 +541,19 @@ PostgresBackend::fetchAccountTransactions(
     char const*& command = dbParams.first;
     std::vector<std::optional<std::string>>& values = dbParams.second;
     command =
-        "SELECT account_tx($1::bytea, $2::bigint, "
-        "$3::bigint, $4::bigint)";
-    values.resize(4);
+        "SELECT account_tx($1::bytea, $2::bigint, $3::bool"
+        "$4::bigint, $5::bigint)";
+    values.resize(5);
     values[0] = "\\x" + strHex(account);
 
     values[1] = std::to_string(limit);
 
+    values[2] = std::to_string(forward);
+
     if (cursor)
     {
-        values[2] = std::to_string(cursor->ledgerSequence);
-        values[3] = std::to_string(cursor->transactionIndex);
+        values[3] = std::to_string(cursor->ledgerSequence);
+        values[4] = std::to_string(cursor->transactionIndex);
     }
     for (size_t i = 0; i < values.size(); ++i)
     {
@@ -607,6 +609,7 @@ PostgresBackend::open(bool readOnly)
 {
     if (!readOnly)
         initSchema(pgPool_);
+    initAccountTx(pgPool_);
 }
 
 void
