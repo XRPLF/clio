@@ -576,6 +576,7 @@ private:
     CassandraPreparedStatement selectKeys_;
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
+    CassandraPreparedStatement selectAccountTxForward_;
     CassandraPreparedStatement insertLedgerHeader_;
     CassandraPreparedStatement insertLedgerHash_;
     CassandraPreparedStatement updateLedgerRange_;

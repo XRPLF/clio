@@ -49,7 +49,7 @@ inline boost::json::object
 getDefaultWsResponse(boost::json::value const& id)
 {
     boost::json::object defaultResp = {};
-    if(!id.is_null())
+    if (!id.is_null())
         defaultResp["id"] = id;
 
     defaultResp["result"] = boost::json::object_kind;
@@ -162,12 +162,11 @@ public:
     {
         std::shared_ptr<SubscriptionManager> mgr = subscriptions_.lock();
 
-        if(!mgr)
+        if (!mgr)
             return;
 
         mgr->clearSession(this);
     }
-
 
     void
     do_read()
@@ -222,25 +221,25 @@ public:
                         subscriptions_.lock(),
                         balancer_,
                         shared_from_this(),
-                        *range
-                    );
+                        *range);
 
                     if (!context)
                         return send(boost::json::serialize(
                             RPC::make_error(RPC::Error::rpcBAD_SYNTAX)));
 
-                    auto id = request.contains("id") 
-                        ? request.at("id") 
-                        : nullptr;
+                    auto id =
+                        request.contains("id") ? request.at("id") : nullptr;
 
                     auto response = getDefaultWsResponse(id);
-                    boost::json::object& result = response["result"].as_object();
+                    boost::json::object& result =
+                        response["result"].as_object();
 
                     auto v = RPC::buildResponse(*context);
 
                     if (auto status = std::get_if<RPC::Status>(&v))
                     {
-                        auto error = RPC::make_error(status->error);
+                        auto error =
+                            RPC::make_error(status->error, status->message);
 
                         if (!id.is_null())
                             error["id"] = id;
@@ -256,7 +255,6 @@ public:
 
                     if (!dosGuard_.add(ip, response_.size()))
                         result["warning"] = "Too many requests";
-
                 }
                 catch (Backend::DatabaseTimeout const& t)
                 {

@@ -208,15 +208,15 @@ def getMinAndMax(res):
     return (minSeq,maxSeq)
     
 
-async def account_tx(ip, port, account, binary, minLedger=None, maxLedger=None):
+async def account_tx(ip, port, account, binary, forward=False, minLedger=None, maxLedger=None):
 
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
             if minLedger is None or maxLedger is None:
-                await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"limit":200}))
+                await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"forward":bool(forward),"limit":200}))
             else:
-                await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"limit":200,"ledger_index_min":minLedger, "ledger_index_max":maxLedger}))
+                await ws.send(json.dumps({"command":"account_tx","account":account, "binary":bool(binary),"forward":bool(forward),"limit":200,"ledger_index_min":minLedger, "ledger_index_max":maxLedger}))
 
             res = json.loads(await ws.recv())
             print(json.dumps(res,indent=4,sort_keys=True))
@@ -303,12 +303,12 @@ async def account_txs(ip, port, accounts, numCalls):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
-async def account_tx_full(ip, port, account, binary,minLedger=None, maxLedger=None):
+async def account_tx_full(ip, port, account, binary,forward=False,minLedger=None, maxLedger=None):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         cursor = None
         marker = None
-        req = {"command":"account_tx","account":account, "binary":bool(binary),"limit":200}
+        req = {"command":"account_tx","account":account, "binary":bool(binary),"forward":bool(forward),"limit":200}
         results = {"transactions":[]}
         numCalls = 0
         async with websockets.connect(address) as ws:
@@ -826,6 +826,7 @@ parser.add_argument('--p2pIp', default='s2.ripple.com')
 parser.add_argument('--p2pPort', default='51233')
 parser.add_argument('--verify',default=False)
 parser.add_argument('--binary',default=True)
+parser.add_argument('--forward',default=False)
 parser.add_argument('--expand',default=False)
 parser.add_argument('--transactions',default=False)
 parser.add_argument('--minLedger',default=-1)
@@ -1029,7 +1030,7 @@ def run(args):
             args.account = res["Account"]
         
         res = asyncio.get_event_loop().run_until_complete(
-                account_tx(args.ip, args.port, args.account, args.binary))
+                account_tx(args.ip, args.port, args.account, args.binary, args.forward))
         rng = getMinAndMax(res)
 
 
@@ -1048,7 +1049,7 @@ def run(args):
             args.account = res["Account"]
         print("starting")
         res = asyncio.get_event_loop().run_until_complete(
-                account_tx_full(args.ip, args.port, args.account, args.binary,None,None))
+                account_tx_full(args.ip, args.port, args.account, args.binary,args.forward,None,None))
         rng = getMinAndMax(res)
         print(len(res["transactions"]))
         print(args.account)
@@ -1060,7 +1061,7 @@ def run(args):
         if args.verify:
             print("requesting p2p node")
             res2 = asyncio.get_event_loop().run_until_complete(
-                    account_tx_full(args.p2pIp, args.p2pPort, args.account, args.binary, rng[0],rng[1],int(args.numPages)))
+                    account_tx_full(args.p2pIp, args.p2pPort, args.account, args.binary,args.forward, rng[0],rng[1],int(args.numPages)))
 
             print(compareAccountTx(res,res2))
     elif args.action == "ledger_data":

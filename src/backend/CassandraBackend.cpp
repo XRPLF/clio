@@ -422,19 +422,34 @@ CassandraBackend::fetchAccountTransactions(
     do
     {
         {
-            CassandraStatement statement{selectAccountTx_};
+            CassandraStatement statement = [this, forward]() {
+                if (forward)
+                    return CassandraStatement{selectAccountTxForward_};
+                else
+                    return CassandraStatement{selectAccountTx_};
+            }();
             statement.bindBytes(account);
             if (cursor)
             {
                 statement.bindUInt(cursor->ledgerSequence >> 20 << 20);
                 statement.bindIntTuple(
                     cursor->ledgerSequence, cursor->transactionIndex);
+                BOOST_LOG_TRIVIAL(debug)
+                    << " account = " << ripple::strHex(account)
+                    << " idx = " << (cursor->ledgerSequence >> 20 << 20)
+                    << " tuple = " << cursor->ledgerSequence << " : "
+                    << cursor->transactionIndex;
             }
             else
             {
-                statement.bindUInt(rng->maxSequence >> 20 << 20);
+                int seq = forward ? rng->minSequence : rng->maxSequence;
+                statement.bindUInt(seq >> 20 << 20);
+                int placeHolder = forward ? 0 : INT32_MAX;
 
-                statement.bindIntTuple(INT32_MAX, INT32_MAX);
+                statement.bindIntTuple(placeHolder, placeHolder);
+                BOOST_LOG_TRIVIAL(debug)
+                    << " account = " << ripple::strHex(account)
+                    << " idx = " << seq << " tuple = " << placeHolder;
             }
             uint32_t adjustedLimit = limit - hashes.size();
             statement.bindUInt(adjustedLimit);
@@ -457,6 +472,8 @@ CassandraBackend::fetchAccountTransactions(
                     BOOST_LOG_TRIVIAL(debug) << __func__ << " setting cursor";
                     auto [lgrSeq, txnIdx] = result.getInt64Tuple();
                     cursor = {(uint32_t)lgrSeq, (uint32_t)txnIdx};
+                    if (forward)
+                        ++cursor->transactionIndex;
                 }
             } while (result.nextRow());
         }
@@ -464,9 +481,14 @@ CassandraBackend::fetchAccountTransactions(
         {
             BOOST_LOG_TRIVIAL(debug) << __func__ << " less than limit";
             uint32_t seq = cursor->ledgerSequence;
-            seq = ((seq >> 20) - 1) << 20;
+            seq = seq >> 20;
+            if (forward)
+                seq += 1;
+            else
+                seq -= 1;
+            seq = seq << 20;
             cursor->ledgerSequence = seq;
-            cursor->transactionIndex = INT32_MAX;
+            cursor->transactionIndex = forward ? 0 : INT32_MAX;
             BOOST_LOG_TRIVIAL(debug) << __func__ << " walking back";
             CassandraStatement statement{selectObject_};
             statement.bindBytes(keylet.key);
@@ -1244,6 +1266,13 @@ CassandraBackend::open(bool readOnly)
               << " AND idx = ? "
               << " AND seq_idx < ? LIMIT ?";
         if (!selectAccountTx_.prepareStatement(query, session_.get()))
+            continue;
+        query.str("");
+        query << " SELECT hash,seq_idx FROM " << tablePrefix << "account_tx"
+              << " WHERE account = ? "
+              << " AND idx = ? "
+              << " AND seq_idx >= ? ORDER BY seq_idx ASC LIMIT ?";
+        if (!selectAccountTxForward_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

@@ -61,7 +61,6 @@ doAccountTx(Context const& context)
     }
 
     std::optional<Backend::AccountTransactionsCursor> cursor;
-    cursor = {context.range.maxSequence, 0};
 
     if (request.contains("marker"))
     {
@@ -119,10 +118,10 @@ doAccountTx(Context const& context)
     bool forward = false;
     if (request.contains("forward"))
     {
-        if (!request.at("limit").is_bool())
+        if (!request.at("forward").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "forwardNotBool"};
 
-        forward = request.at("limit").as_bool();
+        forward = request.at("forward").as_bool();
     }
 
     boost::json::array txns;
