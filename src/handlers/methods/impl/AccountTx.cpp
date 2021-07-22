@@ -194,11 +194,10 @@ doAccountTx(Context const& context)
 
         if (!binary)
         {
-            auto [txn, meta] = deserializeTxPlusMeta(txnPlusMeta);
-            obj["meta"] = toJson(*meta);
-            obj["tx"] = toJson(*txn);
+            auto [txn, meta] = toExpandedJson(txnPlusMeta);
+            obj["meta"] = meta;
+            obj["tx"] = txn;
             obj["tx"].as_object()["ledger_index"] = txnPlusMeta.ledgerSequence;
-            obj["tx"].as_object()["inLedger"] = txnPlusMeta.ledgerSequence;
         }
         else
         {

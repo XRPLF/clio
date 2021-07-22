@@ -17,13 +17,12 @@
 */
 //==============================================================================
 
-#include <handlers/RPCHelpers.h>
-#include <handlers/methods/Transaction.h>
 #include <backend/BackendInterface.h>
 #include <backend/Pg.h>
+#include <handlers/RPCHelpers.h>
+#include <handlers/methods/Transaction.h>
 
-namespace RPC
-{
+namespace RPC {
 
 // {
 //   transaction: <hex>
@@ -37,7 +36,7 @@ doTx(Context const& context)
 
     if (!request.contains("transaction"))
         return Status{Error::rpcINVALID_PARAMS, "specifyTransaction"};
-    
+
     if (!request.at("transaction").is_string())
         return Status{Error::rpcINVALID_PARAMS, "transactionNotString"};
 
@@ -46,11 +45,11 @@ doTx(Context const& context)
         return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
 
     bool binary = false;
-    if(request.contains("binary"))
+    if (request.contains("binary"))
     {
-        if(!request.at("binary").is_bool())
+        if (!request.at("binary").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
-        
+
         binary = request.at("binary").as_bool();
     }
 
@@ -64,9 +63,10 @@ doTx(Context const& context)
 
     if (!binary)
     {
-        auto [sttx, meta] = deserializeTxPlusMeta(dbResponse.value());
-        response = toJson(*sttx);
-        response["meta"] = toJson(*meta);
+        auto [txn, meta] = toExpandedJson(*dbResponse);
+        response = txn;
+        response["meta"] = meta;
+        response["ledger_index"] = dbResponse->ledgerSequence;
     }
     else
     {
@@ -77,4 +77,4 @@ doTx(Context const& context)
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

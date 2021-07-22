@@ -1,6 +1,56 @@
+#include <backend/BackendInterface.h>
 #include <handlers/RPCHelpers.h>
 #include <handlers/Status.h>
-#include <backend/BackendInterface.h>
+
+std::optional<ripple::STAmount>
+getDeliveredAmount(
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::STObject const> const& meta,
+    uint32_t ledgerSequence)
+{
+    if (meta->isFieldPresent(ripple::sfDeliveredAmount))
+        return meta->getFieldAmount(ripple::sfDeliveredAmount);
+    if (txn->isFieldPresent(ripple::sfAmount))
+    {
+        using namespace std::chrono_literals;
+
+        // Ledger 4594095 is the first ledger in which the DeliveredAmount field
+        // was present when a partial payment was made and its absence indicates
+        // that the amount delivered is listed in the Amount field.
+        //
+        // If the ledger closed long after the DeliveredAmount code was deployed
+        // then its absence indicates that the amount delivered is listed in the
+        // Amount field. DeliveredAmount went live January 24, 2014.
+        // 446000000 is in Feb 2014, well after DeliveredAmount went live
+        if (ledgerSequence >= 4594095)
+        {
+            return txn->getFieldAmount(ripple::sfAmount);
+        }
+    }
+    return {};
+}
+
+bool
+canHaveDeliveredAmount(
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::STObject const> const& meta)
+{
+    ripple::TxType const tt{txn->getTxnType()};
+    if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH &&
+        tt != ripple::ttACCOUNT_DELETE)
+        return false;
+
+    /*
+    if (tt == ttCHECK_CASH && !getFix1623Enabled())
+        return false;
+        */
+
+    if (ripple::TER::fromInt(meta->getFieldU8(ripple::sfTransactionResult)) !=
+        ripple::tesSUCCESS)
+        return false;
+
+    return true;
+}
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account)
@@ -76,6 +126,23 @@ toJson(ripple::STBase const& obj)
     return value.as_object();
 }
 
+std::pair<boost::json::object, boost::json::object>
+toExpandedJson(Backend::TransactionAndMetadata const& blobs)
+{
+    auto [txn, meta] = deserializeTxPlusMeta(blobs);
+    auto txnJson = toJson(*txn);
+    auto metaJson = toJson(*meta);
+    if (canHaveDeliveredAmount(txn, meta))
+    {
+        if (auto amt = getDeliveredAmount(txn, meta, blobs.ledgerSequence))
+            metaJson["delivered_amount"] =
+                toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
+        else
+            metaJson["delivered_amount"] = "unavailable";
+    }
+    return {txnJson, metaJson};
+}
+
 boost::json::object
 toJson(ripple::TxMeta const& meta)
 {
@@ -88,9 +155,8 @@ toJson(ripple::TxMeta const& meta)
 boost::json::value
 toBoostJson(Json::Value const& value)
 {
-    boost::json::value boostValue = 
-        boost::json::parse(value.toStyledString());
-    
+    boost::json::value boostValue = boost::json::parse(value.toStyledString());
+
     return boostValue;
 }
 
@@ -138,14 +204,15 @@ ledgerInfoFromRequest(RPC::Context const& ctx)
     if (!hashValue.is_null())
     {
         if (!hashValue.is_string())
-            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
+            return RPC::Status{
+                RPC::Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
 
         ripple::uint256 ledgerHash;
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
-            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
+            return RPC::Status{
+                RPC::Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
         lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash);
-
     }
     else if (!indexValue.is_null())
     {
@@ -155,15 +222,14 @@ ledgerInfoFromRequest(RPC::Context const& ctx)
         else if (!indexValue.is_string() && indexValue.is_int64())
             ledgerSequence = indexValue.as_int64();
         else
-            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
+            return RPC::Status{
+                RPC::Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
-        lgrInfo =
-            ctx.backend->fetchLedgerBySequence(ledgerSequence);
+        lgrInfo = ctx.backend->fetchLedgerBySequence(ledgerSequence);
     }
     else
     {
-        lgrInfo = 
-            ctx.backend->fetchLedgerBySequence(ctx.range.maxSequence);
+        lgrInfo = ctx.backend->fetchLedgerBySequence(ctx.range.maxSequence);
     }
 
     if (!lgrInfo)
@@ -297,13 +363,15 @@ keypairFromRequst(boost::json::object const& request)
     }
 
     if (count == 0)
-        return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "missing field secret"};
+        return RPC::Status{
+            RPC::Error::rpcINVALID_PARAMS, "missing field secret"};
 
     if (count > 1)
     {
-        return RPC::Status{RPC::Error::rpcINVALID_PARAMS, 
-                "Exactly one of the following must be specified: "
-                " passphrase, secret, seed, or seed_hex"};
+        return RPC::Status{
+            RPC::Error::rpcINVALID_PARAMS,
+            "Exactly one of the following must be specified: "
+            " passphrase, secret, seed, or seed_hex"};
     }
 
     boost::optional<ripple::KeyType> keyType;
@@ -312,18 +380,20 @@ keypairFromRequst(boost::json::object const& request)
     if (has_key_type)
     {
         if (!request.at("key_type").is_string())
-            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "keyTypeNotString"};
+            return RPC::Status{
+                RPC::Error::rpcINVALID_PARAMS, "keyTypeNotString"};
 
         std::string key_type = request.at("key_type").as_string().c_str();
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
-            return RPC::Status{RPC::Error::rpcINVALID_PARAMS, "invalidFieldKeyType"};
+            return RPC::Status{
+                RPC::Error::rpcINVALID_PARAMS, "invalidFieldKeyType"};
 
         if (secretType == "secret")
-            return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
-                    "The secret field is not allowed if key_type is used."};
-
+            return RPC::Status{
+                RPC::Error::rpcINVALID_PARAMS,
+                "The secret field is not allowed if key_type is used."};
     }
 
     // ripple-lib encodes seed used to generate an Ed25519 wallet in a
@@ -337,9 +407,11 @@ keypairFromRequst(boost::json::object const& request)
         {
             // If the user passed in an Ed25519 seed but *explicitly*
             // requested another key type, return an error.
-            if (keyType.value_or(ripple::KeyType::ed25519) != ripple::KeyType::ed25519)
-                return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
-                       "Specified seed is for an Ed25519 wallet."};
+            if (keyType.value_or(ripple::KeyType::ed25519) !=
+                ripple::KeyType::ed25519)
+                return RPC::Status{
+                    RPC::Error::rpcINVALID_PARAMS,
+                    "Specified seed is for an Ed25519 wallet."};
 
             keyType = ripple::KeyType::ed25519;
         }
@@ -353,8 +425,9 @@ keypairFromRequst(boost::json::object const& request)
         if (has_key_type)
         {
             if (!request.at(secretType).is_string())
-                return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
-                                   "secret value must be string"};
+                return RPC::Status{
+                    RPC::Error::rpcINVALID_PARAMS,
+                    "secret value must be string"};
 
             std::string key = request.at(secretType).as_string().c_str();
 
@@ -372,8 +445,9 @@ keypairFromRequst(boost::json::object const& request)
         else
         {
             if (!request.at("secret").is_string())
-                return RPC::Status{RPC::Error::rpcINVALID_PARAMS,
-                                  "field secret should be a string"};
+                return RPC::Status{
+                    RPC::Error::rpcINVALID_PARAMS,
+                    "field secret should be a string"};
 
             std::string secret = request.at("secret").as_string().c_str();
             seed = ripple::parseGenericSeed(secret);
@@ -381,13 +455,15 @@ keypairFromRequst(boost::json::object const& request)
     }
 
     if (!seed)
-        return RPC::Status{RPC::Error::rpcBAD_SEED,
-                "Bad Seed: invalid field message secretType"};
+        return RPC::Status{
+            RPC::Error::rpcBAD_SEED,
+            "Bad Seed: invalid field message secretType"};
 
-    if (keyType != ripple::KeyType::secp256k1
-     && keyType != ripple::KeyType::ed25519)
-        return RPC::Status{RPC::Error::rpcINVALID_PARAMS, 
-                "keypairForSignature: invalid key type"};
+    if (keyType != ripple::KeyType::secp256k1 &&
+        keyType != ripple::KeyType::ed25519)
+        return RPC::Status{
+            RPC::Error::rpcINVALID_PARAMS,
+            "keypairForSignature: invalid key type"};
 
     return generateKeyPair(*keyType, *seed);
 }
@@ -433,7 +509,7 @@ isGlobalFrozen(
 
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE sle{it, key};
-        
+
     return sle.isFlag(ripple::lsfGlobalFreeze);
 }
 
@@ -456,7 +532,7 @@ isFrozen(
 
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE sle{it, key};
-    
+
     if (sle.isFlag(ripple::lsfGlobalFreeze))
         return true;
 
@@ -471,7 +547,7 @@ isFrozen(
         ripple::SerialIter issuerIt{blob->data(), blob->size()};
         ripple::SLE issuerLine{it, key};
 
-        auto frozen = 
+        auto frozen =
             (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
 
         if (issuerLine.isFlag(frozen))
@@ -498,7 +574,8 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
 
-    auto const reserve = backend.fetchFees(sequence)->accountReserve(ownerCount);
+    auto const reserve =
+        backend.fetchFees(sequence)->accountReserve(ownerCount);
 
     auto const balance = sle.getFieldAmount(ripple::sfBalance);
 

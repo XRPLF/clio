@@ -2,15 +2,15 @@
 #ifndef XRPL_REPORTING_RPCHELPERS_H_INCLUDED
 #define XRPL_REPORTING_RPCHELPERS_H_INCLUDED
 
-#include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/jss.h>
+#include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
+#include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
-#include <handlers/Status.h>
-#include <handlers/Context.h>
 #include <backend/BackendInterface.h>
+#include <handlers/Context.h>
+#include <handlers/Status.h>
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
@@ -26,6 +26,9 @@ std::pair<
 deserializeTxPlusMeta(
     Backend::TransactionAndMetadata const& blobs,
     std::uint32_t seq);
+
+std::pair<boost::json::object, boost::json::object>
+toExpandedJson(Backend::TransactionAndMetadata const& blobs);
 
 boost::json::object
 toJson(ripple::STBase const& obj);

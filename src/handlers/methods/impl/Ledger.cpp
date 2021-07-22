@@ -1,9 +1,8 @@
-#include <handlers/methods/Ledger.h>
-#include <handlers/RPCHelpers.h>
 #include <backend/BackendInterface.h>
+#include <handlers/RPCHelpers.h>
+#include <handlers/methods/Ledger.h>
 
-namespace RPC
-{
+namespace RPC {
 
 Result
 doLedger(Context const& context)
@@ -12,29 +11,29 @@ doLedger(Context const& context)
     boost::json::object response = {};
 
     bool binary = false;
-    if(params.contains("binary"))
+    if (params.contains("binary"))
     {
-        if(!params.at("binary").is_bool())
+        if (!params.at("binary").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
-        
+
         binary = params.at("binary").as_bool();
     }
 
     bool transactions = false;
-    if(params.contains("transactions"))
+    if (params.contains("transactions"))
     {
-        if(!params.at("transactions").is_bool())
+        if (!params.at("transactions").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
-        
+
         transactions = params.at("transactions").as_bool();
     }
 
     bool expand = false;
-    if(params.contains("expand"))
+    if (params.contains("expand"))
     {
-        if(!params.at("expand").is_bool())
+        if (!params.at("expand").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "expandFlagNotBool"};
-        
+
         expand = params.at("expand").as_bool();
     }
 
@@ -55,7 +54,8 @@ doLedger(Context const& context)
         header["account_hash"] = ripple::strHex(lgrInfo.accountHash);
         header["close_flags"] = lgrInfo.closeFlags;
         header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
-        header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);;
+        header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);
+        ;
         header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
         header["closed"] = true;
         header["hash"] = ripple::strHex(lgrInfo.hash);
@@ -69,6 +69,7 @@ doLedger(Context const& context)
         header["total_coins"] = ripple::to_string(lgrInfo.drops);
         header["transaction_hash"] = ripple::strHex(lgrInfo.txHash);
     }
+    header["closed"] = true;
 
     if (transactions)
     {
@@ -76,7 +77,8 @@ doLedger(Context const& context)
         boost::json::array& jsonTxs = header.at("transactions").as_array();
         if (expand)
         {
-            auto txns = context.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
+            auto txns =
+                context.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
 
             std::transform(
                 std::move_iterator(txns.begin()),
@@ -86,16 +88,16 @@ doLedger(Context const& context)
                     boost::json::object entry;
                     if (!binary)
                     {
-                        auto [sttx, meta] = deserializeTxPlusMeta(obj);
-                        entry = toJson(*sttx);
-                        entry["metaData"] = toJson(*meta);
+                        auto [txn, meta] = toExpandedJson(obj);
+                        entry = txn;
+                        entry["metaData"] = meta;
                     }
                     else
                     {
                         entry["tx_blob"] = ripple::strHex(obj.transaction);
                         entry["meta"] = ripple::strHex(obj.metadata);
                     }
-                    entry["ledger_sequence"] = obj.ledgerSequence;
+                    entry["ledger_index"] = obj.ledgerSequence;
                     return entry;
                 });
         }
@@ -113,11 +115,11 @@ doLedger(Context const& context)
                 });
         }
     }
-    
+
     response["ledger"] = header;
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
     return response;
 }
 
-}
+}  // namespace RPC

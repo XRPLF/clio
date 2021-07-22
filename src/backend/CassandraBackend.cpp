@@ -7,7 +7,6 @@ template <class T, class F>
 void
 processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
 {
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " Processing async write response";
     CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
