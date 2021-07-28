@@ -211,8 +211,6 @@ main(int argc, char* argv[])
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
-    if(!ctxRef)
-        std::cout << "NO WORK" << std::endl;
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
         *config, ioc, ctxRef, backend, subscriptions, ledgers);
 
