@@ -57,7 +57,7 @@ accountFromStringStrict(std::string const& account)
 {
     auto blob = ripple::strUnHex(account);
 
-    boost::optional<ripple::PublicKey> publicKey = {};
+    std::optional<ripple::PublicKey> publicKey = {};
     if (blob && ripple::publicKeyType(ripple::makeSlice(*blob)))
     {
         publicKey =
@@ -69,7 +69,7 @@ accountFromStringStrict(std::string const& account)
             ripple::TokenType::AccountPublic, account);
     }
 
-    boost::optional<ripple::AccountID> result;
+    std::optional<ripple::AccountID> result;
     if (publicKey)
         result = ripple::calcAccountID(*publicKey);
     else
@@ -320,7 +320,7 @@ traverseOwnedNodes(
     return nextCursor;
 }
 
-boost::optional<ripple::Seed>
+std::optional<ripple::Seed>
 parseRippleLibSeed(boost::json::value const& value)
 {
     // ripple-lib encodes seed used to generate an Ed25519 wallet in a
@@ -374,8 +374,8 @@ keypairFromRequst(boost::json::object const& request)
             " passphrase, secret, seed, or seed_hex"};
     }
 
-    boost::optional<ripple::KeyType> keyType;
-    boost::optional<ripple::Seed> seed;
+    std::optional<ripple::KeyType> keyType;
+    std::optional<ripple::Seed> seed;
 
     if (has_key_type)
     {

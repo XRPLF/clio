@@ -60,7 +60,7 @@ doChannelVerify(Context const& context)
     if(!request.at("public_key").is_string())
         return Status{Error::rpcINVALID_PARAMS, "publicKeyNotString"};
 
-    boost::optional<ripple::PublicKey> pk;
+    std::optional<ripple::PublicKey> pk;
     {
         std::string const strPk = request.at("public_key").as_string().c_str();
         pk = ripple::parseBase58<ripple::PublicKey>(ripple::TokenType::AccountPublic, strPk);
