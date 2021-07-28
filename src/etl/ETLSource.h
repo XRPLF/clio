@@ -348,7 +348,6 @@ public:
             boost::beast::websocket::stream<boost::beast::tcp_stream>>(
                 boost::asio::make_strand(ioc)))
     {
-        std::cout << "making plain" << std::endl;
     }
 
     void
@@ -383,7 +382,6 @@ public:
             boost::beast::tcp_stream>>>(
                 boost::asio::make_strand(ioc), *sslCtx))
     {
-        std::cout << "MAKING SSL" << std::endl;
     }
 
     void
