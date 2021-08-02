@@ -42,8 +42,8 @@ ETLSourceImpl<Derived>::ETLSourceImpl(
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
     ETLLoadBalancer& balancer)
     : ioc_(ioContext)
-    , resolver_(boost::asio::make_strand(ioc_))
-    , timer_(ioc_)
+    , resolver_(boost::asio::make_strand(ioContext))
+    , timer_(ioContext)
     , networkValidatedLedgers_(networkValidatedLedgers)
     , backend_(backend)
     , subscriptions_(subscriptions)
@@ -128,13 +128,12 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     timer_.async_wait([this](auto ec) {
         bool startAgain = (ec != boost::asio::error::operation_aborted);
         BOOST_LOG_TRIVIAL(trace) << __func__ << " async_wait : ec = " << ec;
-        close(startAgain);
+        derived().close(startAgain);
     });
 }
 
-template <class Derived>
 void
-ETLSourceImpl<Derived>::close(bool startAgain)
+PlainETLSource::close(bool startAgain)
 {
     timer_.cancel();
     ioc_.post([this, startAgain]() {
@@ -163,6 +162,54 @@ ETLSourceImpl<Derived>::close(bool startAgain)
         }
         else if (startAgain)
         {
+            run();
+        }
+    });
+}
+
+void
+SslETLSource::close(bool startAgain)
+{
+    timer_.cancel();
+    ioc_.post([this, startAgain]() {
+        if (closing_)
+            return;
+
+        if (derived().ws().is_open())
+        {
+            // onStop() also calls close(). If the async_close is called twice,
+            // an assertion fails. Using closing_ makes sure async_close is only
+            // called once
+            closing_ = true;
+            derived().ws().async_close(
+                boost::beast::websocket::close_code::normal,
+                [this, startAgain](auto ec) {
+                    if (ec)
+                    {
+                        BOOST_LOG_TRIVIAL(error)
+                            << __func__ << " async_close : "
+                            << "error code = " << ec << " - " << toString();
+                    }
+                    closing_ = false;
+                    if (startAgain)
+                    {
+                        ws_ = std::make_unique<boost::beast::websocket::stream<
+                            boost::beast::ssl_stream<
+                            boost::beast::tcp_stream>>>(
+                            boost::asio::make_strand(ioc_), *sslCtx_);
+                        
+                        run();
+                    }
+
+                });
+        }
+        else if (startAgain)
+        {
+            ws_ = std::make_unique<boost::beast::websocket::stream<
+                            boost::beast::ssl_stream<
+                            boost::beast::tcp_stream>>>(
+                            boost::asio::make_strand(ioc_), *sslCtx_);
+
             run();
         }
     });

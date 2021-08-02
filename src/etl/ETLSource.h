@@ -88,8 +88,6 @@ class ETLSourceImpl : public ETLSource
 
     std::string grpcPort_;
 
-    boost::asio::io_context& ioc_;
-
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
 
     boost::asio::ip::tcp::resolver resolver_;
@@ -106,8 +104,6 @@ class ETLSourceImpl : public ETLSource
 
     mutable std::mutex mtx_;
 
-    std::atomic_bool closing_{false};
-
     std::atomic_bool connected_{false};
 
     // true if this ETL source is forwarding transactions received on the
@@ -120,12 +116,27 @@ class ETLSourceImpl : public ETLSource
     std::chrono::system_clock::time_point lastMsgTime_;
     mutable std::mutex lastMsgTimeMtx_;
 
-    // used for retrying connections
-    boost::asio::steady_timer timer_;
-
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     ETLLoadBalancer& balancer_;
+
+protected:
+    Derived&
+    derived()
+    {
+        return static_cast<Derived&>(*this);
+    }
+
+    std::string ip_;
+
+    size_t numFailures_ = 0;
+
+    boost::asio::io_context& ioc_;
+
+    // used for retrying connections
+    boost::asio::steady_timer timer_;
+
+    std::atomic_bool closing_{false};
 
     void
     run() override
@@ -139,17 +150,6 @@ class ETLSourceImpl : public ETLSource
             onResolve(ec, results);
         });
     }
-
-protected:
-    Derived&
-    derived()
-    {
-        return static_cast<Derived&>(*this);
-    }
-
-    std::string ip_;
-
-    size_t numFailures_ = 0;
 
 public:
 
@@ -334,11 +334,6 @@ public:
     bool
     handleMessage();
 
-    /// Close the websocket
-    /// @param startAgain whether to reconnect
-    void
-    close(bool startAgain);
-
     /// Get grpc stub to forward requests to rippled node
     /// @return stub to send requests to ETL source
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
@@ -374,6 +369,11 @@ public:
         boost::beast::error_code ec,
         boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint) override;
 
+    /// Close the websocket
+    /// @param startAgain whether to reconnect
+    void
+    close(bool startAgain);
+
     boost::beast::websocket::stream<boost::beast::tcp_stream>&
     ws()
     {
@@ -383,6 +383,8 @@ public:
 
 class SslETLSource : public ETLSourceImpl<SslETLSource>
 {
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx_;
+
     std::unique_ptr<boost::beast::websocket::stream<boost::beast::ssl_stream<
         boost::beast::tcp_stream>>> ws_;
 
@@ -396,10 +398,11 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer)
         : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer)
+        , sslCtx_(sslCtx)
         , ws_(std::make_unique<
             boost::beast::websocket::stream<boost::beast::ssl_stream<
             boost::beast::tcp_stream>>>(
-                boost::asio::make_strand(ioc), *sslCtx))
+                boost::asio::make_strand(ioc_), *sslCtx_))
     {
     }
 
@@ -412,6 +415,11 @@ public:
     onSslHandshake(
         boost::beast::error_code ec,
         boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint);
+
+    /// Close the websocket
+    /// @param startAgain whether to reconnect
+    void
+    close(bool startAgain);
 
     boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
     ws()
