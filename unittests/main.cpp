@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <backend/DBHelpers.h>
 #include <gtest/gtest.h>
-#include <handlers/RPCHelpers.h>
+#include <rpc/RPCHelpers.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>

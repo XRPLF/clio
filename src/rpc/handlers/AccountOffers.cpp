@@ -7,8 +7,8 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
-#include <handlers/RPCHelpers.h>
-#include <handlers/methods/Account.h>
+#include <rpc/RPCHelpers.h>
+
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
 
@@ -16,19 +16,56 @@
 namespace RPC
 {
 
-std::unordered_map<std::string, ripple::LedgerEntryType> types {
-    {"state", ripple::ltRIPPLE_STATE},
-    {"ticket", ripple::ltTICKET},
-    {"signer_list", ripple::ltSIGNER_LIST},
-    {"payment_channel", ripple::ltPAYCHAN},
-    {"offer", ripple::ltOFFER},
-    {"escrow", ripple::ltESCROW},
-    {"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
-    {"check", ripple::ltCHECK},
+void
+addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
+{
+    auto quality = getQuality(offer.getFieldH256(ripple::sfBookDirectory));
+    ripple::STAmount rate = ripple::amountFromQuality(quality);
+
+    ripple::STAmount takerPays = offer.getFieldAmount(ripple::sfTakerPays);
+    ripple::STAmount takerGets = offer.getFieldAmount(ripple::sfTakerGets);
+    
+    boost::json::object obj;
+
+    if (!takerPays.native())
+    {
+        obj["taker_pays"] = boost::json::value(boost::json::object_kind);
+        boost::json::object& takerPaysJson = obj.at("taker_pays").as_object();
+
+        takerPaysJson["value"] = takerPays.getText();
+        takerPaysJson["currency"] = ripple::to_string(takerPays.getCurrency());
+        takerPaysJson["issuer"] = ripple::to_string(takerPays.getIssuer());
+    }
+    else
+    {
+        obj["taker_pays"] = takerPays.getText();
+    }
+
+    if (!takerGets.native())
+    {
+        obj["taker_gets"] = boost::json::value(boost::json::object_kind);
+        boost::json::object& takerGetsJson = obj.at("taker_gets").as_object();
+
+        takerGetsJson["value"] = takerGets.getText();
+        takerGetsJson["currency"] = ripple::to_string(takerGets.getCurrency());
+        takerGetsJson["issuer"] = ripple::to_string(takerGets.getIssuer());
+    }
+    else
+    {
+        obj["taker_gets"] = takerGets.getText();
+    }
+
+    obj["seq"] = offer.getFieldU32(ripple::sfSequence);
+    obj["flags"] = offer.getFieldU32(ripple::sfFlags);
+    obj["quality"] = rate.getText();
+    if (offer.isFieldPresent(ripple::sfExpiration))
+        obj["expiration"] = offer.getFieldU32(ripple::sfExpiration);
+    
+    offersJson.push_back(obj);
 };
 
 Result
-doAccountObjects(Context const& context)
+doAccountOffers(Context const& context)
 {
     auto request = context.params;
     boost::json::object response = {};
@@ -51,6 +88,7 @@ doAccountObjects(Context const& context)
     if (!accountID)
         return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
 
+
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
@@ -71,33 +109,22 @@ doAccountObjects(Context const& context)
         if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
     }
-
-    std::optional<ripple::LedgerEntryType> objectType = {};
-    if (request.contains("type"))
-    {
-        if(!request.at("type").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "typeNotString"};
-
-        std::string typeAsString = request.at("type").as_string().c_str();
-        if(types.find(typeAsString) == types.end())
-            return Status{Error::rpcINVALID_PARAMS, "typeInvalid"};
-
-        objectType = types[typeAsString];
-    }
     
     response["account"] = ripple::to_string(*accountID);
-    response["account_objects"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonObjects = response.at("objects").as_array();
+    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response["ledger_index"] = lgrInfo.seq;
+    response["offers"] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonLines = response.at("offers").as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
-        if (!objectType || objectType == sle.getType())
+        if (sle.getType() == ripple::ltOFFER)
         {
             if (limit-- == 0)
             {
                 return false;
             }
-
-            jsonObjects.push_back(toJson(sle));
+            
+            addOffer(jsonLines, sle);
         }
 
         return true;
@@ -110,9 +137,6 @@ doAccountObjects(Context const& context)
             lgrInfo.seq,
             cursor,
             addToResponse);
-
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
 
     if (nextCursor)
         response["marker"] = ripple::strHex(*nextCursor);

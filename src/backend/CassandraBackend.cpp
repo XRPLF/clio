@@ -15,7 +15,7 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
         auto wait = std::chrono::milliseconds(
             lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
         BOOST_LOG_TRIVIAL(error)
-            << "ERROR!!! Cassandra ETL insert error: " << rc << ", "
+            << "ERROR!!! Cassandra write error: " << rc << ", "
             << cass_error_desc(rc) << ", retrying in " << wait.count()
             << " milliseconds";
         ++requestParams.currentRetries;

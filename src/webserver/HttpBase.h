@@ -36,7 +36,7 @@
 #include <string>
 #include <thread>
 
-#include <handlers/Handlers.h>
+#include <rpc/RPC.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
 

@@ -27,7 +27,7 @@
 #include <boost/beast/websocket/ssl.hpp>
 
 #include <etl/ReportingETL.h>
-#include <handlers/Handlers.h>
+#include <rpc/RPC.h>
 #include <webserver/WsBase.h>
 #include <webserver/Listener.h>
 

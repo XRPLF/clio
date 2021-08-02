@@ -23,26 +23,15 @@
 #include <ripple/protocol/STAccount.h>
 #include <ripple/protocol/jss.h>
 #include <ripple/resource/Fees.h>
-#include <handlers/methods/Channel.h>
-#include <handlers/RPCHelpers.h>
+
+#include <rpc/RPCHelpers.h>
 #include <optional>
 
 namespace RPC
 {
 
-void
-serializePayChanAuthorization(
-    ripple::Serializer& msg,
-    ripple::uint256 const& key,
-    ripple::XRPAmount const& amt)
-{
-    msg.add32(ripple::HashPrefix::paymentChannelClaim);
-    msg.addBitString(key);
-    msg.add64(amt.drops());
-}
-
 Result
-doChannelAuthorize(Context const& context)
+doChannelVerify(Context const& context)
 {
     auto request = context.params;
     boost::json::object response = {};
@@ -59,14 +48,36 @@ doChannelAuthorize(Context const& context)
     if(!request.at("amount").is_string())
             return Status{Error::rpcINVALID_PARAMS, "amountNotString"};
 
-    if (!request.contains("key_type") && !request.contains("secret"))
-        return Status{Error::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
+    if (!request.contains("signature"))
+        return Status{Error::rpcINVALID_PARAMS, "missingSignature"};
 
-    auto v = keypairFromRequst(request);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    if(!request.at("signature").is_string())
+        return Status{Error::rpcINVALID_PARAMS, "signatureNotString"};
 
-    auto const [pk, sk] = std::get<std::pair<ripple::PublicKey, ripple::SecretKey>>(v);
+    if (!request.contains("public_key"))
+        return Status{Error::rpcINVALID_PARAMS, "missingPublicKey"};
+    
+    if(!request.at("public_key").is_string())
+        return Status{Error::rpcINVALID_PARAMS, "publicKeyNotString"};
+
+    std::optional<ripple::PublicKey> pk;
+    {
+        std::string const strPk = request.at("public_key").as_string().c_str();
+        pk = ripple::parseBase58<ripple::PublicKey>(ripple::TokenType::AccountPublic, strPk);
+
+        if (!pk)
+        {
+            auto pkHex = ripple::strUnHex(strPk);
+            if (!pkHex)
+                return Status{Error::rpcPUBLIC_MALFORMED, "malformedPublicKey"};
+
+            auto const pkType = ripple::publicKeyType(ripple::makeSlice(*pkHex));
+            if (!pkType)
+                return Status{Error::rpcPUBLIC_MALFORMED, "invalidKeyType"};
+
+            pk.emplace(ripple::makeSlice(*pkHex));
+        }
+    }
 
     ripple::uint256 channelId;
     if (!channelId.parseHex(request.at("channel_id").as_string().c_str()))
@@ -80,20 +91,18 @@ doChannelAuthorize(Context const& context)
 
     std::uint64_t drops = *optDrops;
 
+    auto sig = ripple::strUnHex(request.at("signature").as_string().c_str());
+    
+    if (!sig || !sig->size())
+        return Status{Error::rpcINVALID_PARAMS, "invalidSignature"};
+
     ripple::Serializer msg;
     ripple::serializePayChanAuthorization(msg, channelId, ripple::XRPAmount(drops));
 
-    try
-    {
-        auto const buf = ripple::sign(pk, sk, msg.slice());
-        response["signature"] = ripple::strHex(buf);
-    }
-    catch (std::exception&)
-    {
-        return Status{Error::rpcINTERNAL};
-    }
-
+    response["signature_verified"] =
+        ripple::verify(*pk, msg.slice(), ripple::makeSlice(*sig), true);
+    
     return response;
-}   
+}
 
-} // namesace RPC
+} // namespace RPC

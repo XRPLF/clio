@@ -19,8 +19,8 @@
 
 #include <backend/BackendInterface.h>
 #include <backend/Pg.h>
-#include <handlers/RPCHelpers.h>
-#include <handlers/methods/Transaction.h>
+#include <rpc/RPCHelpers.h>
+
 
 namespace RPC {
 

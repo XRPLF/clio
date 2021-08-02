@@ -1051,9 +1051,8 @@ public:
             {
                 std::stringstream ss;
                 ss << "Cassandra executeSyncRead error";
-                ss << ", retrying";
                 ss << ": " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(warning) << ss.str();
+                BOOST_LOG_TRIVIAL(error) << ss.str();
             }
             if (isTimeout(rc))
             {

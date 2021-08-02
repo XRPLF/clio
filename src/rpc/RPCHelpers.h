@@ -1,16 +1,18 @@
 
 #ifndef XRPL_REPORTING_RPCHELPERS_H_INCLUDED
 #define XRPL_REPORTING_RPCHELPERS_H_INCLUDED
+/*
+ * This file contains a variety of utility functions used when executing
+ * the handlers
+ */
 
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
 #include <backend/BackendInterface.h>
-#include <handlers/Context.h>
-#include <handlers/Status.h>
+#include <rpc/RPC.h>
 
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
@@ -45,6 +47,13 @@ toJson(ripple::TxMeta const& meta);
 using RippledJson = Json::Value;
 boost::json::value
 toBoostJson(RippledJson const& value);
+
+
+boost::json::object
+generatePubLedgerMessage(ripple::LedgerInfo const& lgrInfo,
+        ripple::Fees const& fees,
+        std::string const& ledgerRange,
+        uint32_t txnCount);
 
 std::variant<RPC::Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(RPC::Context const& ctx);

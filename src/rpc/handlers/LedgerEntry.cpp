@@ -1,8 +1,8 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
-#include <handlers/methods/Ledger.h>
-#include <handlers/RPCHelpers.h>
+
+#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
 // {
 //   ledger_hash : <ledger>

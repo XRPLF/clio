@@ -1,6 +1,5 @@
 #include <backend/BackendInterface.h>
-#include <handlers/RPCHelpers.h>
-#include <handlers/Status.h>
+#include <rpc/RPCHelpers.h>
 
 std::optional<ripple::STAmount>
 getDeliveredAmount(

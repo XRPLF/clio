@@ -28,8 +28,7 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <handlers/Handlers.h>
-#include <handlers/Status.h>
+#include <rpc/RPC.h>
 #include <webserver/DOSGuard.h>
 #include <webserver/SubscriptionManager.h>
 

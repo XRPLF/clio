@@ -20,8 +20,8 @@
 #include <ripple/app/ledger/LedgerToJson.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
-#include <handlers/methods/Ledger.h>
-#include <handlers/RPCHelpers.h>
+
+#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
 // Get state nodes from a ledger
 //   Inputs:

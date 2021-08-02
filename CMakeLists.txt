@@ -61,46 +61,44 @@ include(Postgres)
 
 
 target_sources(clio PRIVATE
-## Backend
+  ## Backend
   src/backend/CassandraBackend.cpp
   src/backend/PostgresBackend.cpp
   src/backend/BackendIndexer.cpp
   src/backend/BackendInterface.cpp
   src/backend/Pg.cpp
   src/backend/DBHelpers.cpp
-## Reporting
+  ## ETL
   src/etl/ETLSource.cpp
   src/etl/ReportingETL.cpp
-## Server
+  ## Server
   src/webserver/SubscriptionManager.cpp
-## Handlers
-  src/handlers/Status.cpp
-  src/handlers/RPCHelpers.cpp
-  src/handlers/Handlers.cpp
-  src/handlers/Context.cpp
-## Methods
+  ## RPC
+  src/rpc/RPC.cpp
+  src/rpc/RPCHelpers.cpp
+  ## RPC Methods
   # Account
-  src/handlers/methods/impl/AccountChannels.cpp
-  src/handlers/methods/impl/AccountCurrencies.cpp
-  src/handlers/methods/impl/AccountInfo.cpp
-  src/handlers/methods/impl/AccountLines.cpp
-  src/handlers/methods/impl/AccountOffers.cpp
-  src/handlers/methods/impl/AccountObjects.cpp
+  src/rpc/handlers/AccountChannels.cpp
+  src/rpc/handlers/AccountCurrencies.cpp
+  src/rpc/handlers/AccountInfo.cpp
+  src/rpc/handlers/AccountLines.cpp
+  src/rpc/handlers/AccountOffers.cpp
+  src/rpc/handlers/AccountObjects.cpp
   # Ledger
-  src/handlers/methods/impl/Ledger.cpp
-  src/handlers/methods/impl/LedgerData.cpp
-  src/handlers/methods/impl/LedgerEntry.cpp
-  src/handlers/methods/impl/LedgerRange.cpp
+  src/rpc/handlers/Ledger.cpp
+  src/rpc/handlers/LedgerData.cpp
+  src/rpc/handlers/LedgerEntry.cpp
+  src/rpc/handlers/LedgerRange.cpp
   # Transaction
-  src/handlers/methods/impl/Tx.cpp
-  src/handlers/methods/impl/AccountTx.cpp
+  src/rpc/handlers/Tx.cpp
+  src/rpc/handlers/AccountTx.cpp
   # Dex
-  src/handlers/methods/impl/BookOffers.cpp
+  src/rpc/handlers/BookOffers.cpp
   # Payment Channel
-  src/handlers/methods/impl/ChannelAuthorize.cpp
-  src/handlers/methods/impl/ChannelVerify.cpp
+  src/rpc/handlers/ChannelAuthorize.cpp
+  src/rpc/handlers/ChannelVerify.cpp
   # Subscribe
-  src/handlers/methods/impl/Subscribe.cpp)
+  src/rpc/handlers/Subscribe.cpp)
 
 
 message(${Boost_LIBRARIES})
