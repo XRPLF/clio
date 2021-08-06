@@ -833,10 +833,7 @@ public:
     doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
-        std::string&& blob,
-        bool isCreated,
-        bool isDeleted,
-        std::optional<ripple::uint256>&& book) const override;
+        std::string&& blob) const override;
 
     void
     writeAccountTransactions(

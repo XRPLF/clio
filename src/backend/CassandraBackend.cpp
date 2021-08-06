@@ -148,10 +148,7 @@ void
 CassandraBackend::doWriteLedgerObject(
     std::string&& key,
     uint32_t seq,
-    std::string&& blob,
-    bool isCreated,
-    bool isDeleted,
-    std::optional<ripple::uint256>&& book) const
+    std::string&& blob) const
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
     makeAndExecuteAsyncWrite(

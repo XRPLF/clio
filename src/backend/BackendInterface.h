@@ -204,10 +204,7 @@ protected:
     writeLedgerObject(
         std::string&& key,
         uint32_t seq,
-        std::string&& blob,
-        bool isCreated,
-        bool isDeleted,
-        std::optional<ripple::uint256>&& book) const;
+        std::string&& blob) const;
 
     virtual void
     writeTransaction(
@@ -263,10 +260,7 @@ private:
     doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
-        std::string&& blob,
-        bool isCreated,
-        bool isDeleted,
-        std::optional<ripple::uint256>&& book) const = 0;
+        std::string&& blob) const = 0;
 
     virtual bool
     doFinishWrites() const = 0;

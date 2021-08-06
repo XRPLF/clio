@@ -39,20 +39,15 @@ void
 BackendInterface::writeLedgerObject(
     std::string&& key,
     uint32_t seq,
-    std::string&& blob,
-    bool isCreated,
-    bool isDeleted,
-    std::optional<ripple::uint256>&& book) const
+    std::string&& blob) const
 {
+    assert(key.size() == sizeof(rippled::uint256));
     ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
     indexer_.addKey(std::move(key256));
     doWriteLedgerObject(
         std::move(key),
         seq,
-        std::move(blob),
-        isCreated,
-        isDeleted,
-        std::move(book));
+        std::move(blob));
 }
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const

@@ -253,10 +253,7 @@ TEST(BackendTest, Basic)
             backend->writeLedgerObject(
                 std::move(std::string{accountIndexBlob}),
                 lgrInfoNext.seq,
-                std::move(std::string{accountBlob}),
-                true,
-                false,
-                {});
+                std::move(std::string{accountBlob}));
 
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
@@ -324,10 +321,7 @@ TEST(BackendTest, Basic)
             backend->writeLedgerObject(
                 std::move(std::string{accountIndexBlob}),
                 lgrInfoNext.seq,
-                std::move(std::string{accountBlob}),
-                true,
-                false,
-                {});
+                std::move(std::string{accountBlob}));
 
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
@@ -474,10 +468,7 @@ TEST(BackendTest, Basic)
                     backend->writeLedgerObject(
                         std::move(key),
                         lgrInfo.seq,
-                        std::move(obj),
-                        true,
-                        false,
-                        std::move(bookDir));
+                        std::move(obj));
                 }
                 backend->writeAccountTransactions(std::move(accountTx));
 

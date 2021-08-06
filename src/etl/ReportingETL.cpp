@@ -294,34 +294,11 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 
     for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
     {
-        bool isCreated = false;
-        bool isDeleted = false;
-        if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::CREATED)
-            isCreated = true;
-        else if (
-            obj.mod_type() == org ::xrpl::rpc::v1::RawLedgerObject::DELETED)
-            isDeleted = true;
 
-        std::optional<ripple::uint256> bookDir;
-        if (isCreated)
-        {
-            if (isOffer(obj.data()))
-                bookDir = getBook(obj.data());
-        }
-        else if (obj.book_of_deleted_offer().size())
-        {
-            bookDir =
-                ripple::uint256::fromVoid(obj.book_of_deleted_offer().data());
-        }
-
-        assert(not(isCreated and isDeleted));
         backend_->writeLedgerObject(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
-            std::move(*obj.mutable_data()),
-            isCreated,
-            isDeleted,
-            std::move(bookDir));
+            std::move(*obj.mutable_data()));
     }
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
