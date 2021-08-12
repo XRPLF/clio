@@ -1,108 +1,174 @@
-Reporting mode is a special operating mode of rippled, designed to handle RPCs
-for validated data. A server running in reporting mode does not connect to the
-p2p network, but rather extracts validated data from a node that is connected
-to the p2p network. To run rippled in reporting mode, you must also run a
-separate rippled node in p2p mode, to use as an ETL source. Multiple reporting
-nodes can share access to the same network accessible databases (Postgres and
-Cassandra); at any given time, only one reporting node will be performing ETL
-and writing to the databases, while the others simply read from the databases.
-A server running in reporting mode will forward any requests that require access
-to the p2p network to a p2p node.
+The data model used by clio is different than that used by rippled.
+rippled uses what is known as a SHAMap, which is a tree structure, with
+actual ledger and transaction data at the leaves of the tree. Looking up a record
+is a tree traversal, where the key is used to determine the path to the proper
+leaf node. The path from root to leaf is used as a proof-tree on the p2p network,
+where nodes can prove that a piece of data is present in a ledger by sending
+the path from root to leaf. Other nodes can verify this path and be certain
+that the data does actually exist in the ledger in question.
 
-# Reporting ETL
-A single reporting node has one or more ETL sources, specified in the config
-file. A reporting node will subscribe to the "ledgers" stream of each of the ETL
-sources. This stream sends a message whenever a new ledger is validated. Upon
-receiving a message on the stream, reporting will then fetch the data associated
-with the newly validated ledger from one of the ETL sources. The fetch is
-performed via a gRPC request ("GetLedger"). This request returns the ledger
-header, transactions+metadata blobs, and every ledger object
-added/modified/deleted as part of this ledger. ETL then writes all of this data
-to the databases, and moves on to the next ledger. ETL does not apply
-transactions, but rather extracts the already computed results of those
-transactions (all of the added/modified/deleted SHAMap leaf nodes of the state
-tree). The new SHAMap inner nodes are computed by the ETL writer; this computation mainly
-involves manipulating child pointers and recomputing hashes, logic which is
-buried inside of SHAMap.
+clio instead flattens the data model, so lookups are 0(1). This results in time
+and space savings. This is possible because clio does not participate in the peer
+to peer protocol, and thus does not need to verify any data. clio fully trusts the
+rippled nodes that are being used as a data source.
 
-If the database is entirely empty, ETL must download an entire ledger in full
-(as opposed to just the diff, as described above). This download is done via the
-"GetLedgerData" gRPC request. "GetLedgerData" allows clients to page through an
-entire ledger over several RPC calls. ETL will page through an entire ledger,
-and write each object to the database.
+clio uses certain features of database query languages to make this happen. Many
+databases provide the necessary features to implement the clio data model. At the
+time of writing, the data model is implemented in PostgreSQL and CQL (the query
+language used by Apache Cassandra and ScyllaDB).
 
-If the database is not empty, the reporting node will first come up in a "soft"
-read-only mode. In read-only mode, the server does not perform ETL and simply
-publishes new ledgers as they are written to the database. 
-If the database is not updated within a certain time period
-(currently hard coded at 20 seconds), the reporting node will begin the ETL
-process and start writing to the database. Postgres will report an error when
-trying to write a record with a key that already exists. ETL uses this error to
-determine that another process is writing to the database, and subsequently
-falls back to a soft read-only mode. Reporting nodes can also operate in strict
-read-only mode, in which case they will never write to the database.
+The below examples are a sort of pseudo query language
 
-# Database Nuances
-The database schema for reporting mode does not allow any history gaps.
-Attempting to write a ledger to a non-empty database where the previous ledger
-does not exist will return an error.
+## Ledgers
 
-The databases must be set up prior to running reporting mode. This requires
-creating the Postgres database, and setting up the Cassandra keyspace. Reporting
-mode will create the objects table in Cassandra if the table does not yet exist. 
+We store ledger headers in a ledgers table. In PostgreSQL, we store
+the headers in their deserialized form, so we can look up by sequence or hash.
 
-Creating the Postgres database:
+In Cassandra, we store the headers as blobs. The primary table maps a ledger sequence
+to the blob, and a secondary table maps a ledger hash to a ledger sequence.
+
+## Transactions
+Transactions are stored in a very basic table, with a schema like so:
+
 ```
-$ psql -h [host] -U [user]
-postgres=# create database [database];
+CREATE TABLE transactions (
+hash blob,
+ledger_sequence int,
+transaction blob,
+PRIMARY KEY(hash))
 ```
-Creating the keyspace:
-```
-$ cqlsh [host] [port]
-> CREATE KEYSPACE rippled WITH REPLICATION =
-  {'class' : 'SimpleStrategy', 'replication_factor' : 3    };
-```
-A replication factor of 3 is recommended. However, when running locally, only a
-replication factor of 1 is supported.
+The primary key is the hash.
 
-Online delete is not supported by reporting mode and must be done manually. The
-easiest way to do this would be to setup a second Cassandra keyspace and
-Postgres database, bring up a single reporting mode instance that uses those
-databases, and start ETL at a ledger of your choosing (via --startReporting on
-the command line). Once this node is caught up, the other databases can be
-deleted.
-
-To delete:
+A common query pattern is fetching all transactions in a ledger. In PostgreSQL,
+nothing special is needed for this. We just query:
 ```
-$ psql -h [host] -U [user] -d [database]
-reporting=$ truncate table ledgers cascade;
+SELECT * FROM transactions WHERE ledger_sequence = s;
 ```
+Cassandra doesn't handle queries like this well, since `ledger_sequence` is not
+the primary key, so we use a second table that maps a ledger sequence number
+to all of the hashes in that ledger:
+
 ```
-$ cqlsh [host] [port]
-> truncate table objects;
+CREATE TABLE transaction_hashes (
+ledger_sequence int,
+hash blob,
+PRIMARY KEY(ledger_sequence, blob))
 ```
-# Proxy
-RPCs that require access to the p2p network and/or the open ledger are forwarded
-from the reporting node to one of the ETL sources. The request is not processed
-prior to forwarding, and the response is delivered as-is to the client.
-Reporting will forward any requests that always require p2p/open ledger access
-(fee and submit, for instance). In addition, any request that explicitly
-requests data from the open or closed ledger (via setting
-"ledger_index":"current" or "ledger_index":"closed"), will be forwarded to a
-p2p node. 
+This table uses a compound primary key, so we can have multiple records with
+the same ledger sequence but different hash. Looking up all of the transactions
+in a given ledger then requires querying the transaction_hashes table to get the hashes of
+all of the transactions in the ledger, and then using those hashes to query the
+transactions table. Sometimes we only want the hashes though.
 
-For the stream "transactions_proposed" (AKA "rt_transactions"), reporting
-subscribes to the "transactions_proposed" streams of each ETL source, and then
-forwards those messages to any clients subscribed to the same stream on the
-reporting node. A reporting node will subscribe to the stream on each ETL
-source, but will only forward the messages from one of the streams at any given
-time (to avoid sending the same message more than once to the same client).
+## Ledger data
 
-# API changes
-A reporting node defaults to only returning validated data. If a ledger is not
-specified, the most recently validated ledger is used. This is in contrast to
-the normal rippled behavior, where the open ledger is used by default.
+Ledger data is more complicated than transaction data. Objects have different versions,
+where applying transactions in a particular ledger changes an object with a given
+key. A basic example is an account root object: the balance changes with every
+transaction sent or received, though the key (object ID) for this object remains the same.
 
-Reporting will reject all subscribe requests for streams "server", "manifests",
-"validations", "peer_status" and "consensus".
+Ledger data then is modeled like so:
 
+```
+CREATE TABLE objects (
+id blob,
+ledger_sequence int,
+object blob,
+PRIMARY KEY(key,ledger_sequence))
+```
+
+The `objects` table has a compound primary key. This is essential. Looking up
+a ledger object as of a given ledger then is just:
+```
+SELECT object FROM objects WHERE id = ? and ledger_sequence <= ?
+    ORDER BY ledger_sequence DESC LIMIT 1;
+```
+This gives us the most recent ledger object written at or before a specified ledger.
+
+When a ledger object is deleted, we write a record where `object` is just an empty blob.
+
+### Next
+Generally RPCs that read ledger data will just use the above query pattern. However,
+a few RPCs (`book_offers` and `ledger_data`) make use of a certain tree operation
+called `successor`, which takes in an object id and ledger sequence, and returns
+the id of the successor object in the ledger. This is the object in the ledger with the smallest id
+greater than the input id.
+
+This problem is quite difficult for clio's data model, since computing this
+generally requires the inner nodes of the tree, which clio doesn't store. A naive
+way to do this with PostgreSQL is like so:
+```
+SELECT * FROM objects WHERE id > ? AND ledger_sequence <= s ORDER BY id ASC, ledger_sequence DESC LIMIT 1;
+```
+This query is not really possible with Cassandra, unless you use ALLOW FILTERING, which
+is an anti pattern (for good reason!). It would require contacting basically every node
+in the entire cluster.
+
+But even with Postgres, this query is not scalable. Why? Consider what the query
+is doing at the database level. The database starts at the input id, and begins scanning
+the table in ascending order of id. It needs to skip over any records that don't actually
+exist in the desired ledger, which are objects that have been deleted, or objects that
+were created later. As ledger history grows, this query skips over more and more records,
+which results in the query taking longer and longer. The time this query takes grows
+unbounded then, as ledger history just keeps growing. With under a million ledgers, this
+query is usable, but as we approach 10 million ledgers are more, the query starts to become very slow.
+
+To alleviate this issue, the data model uses a checkpointing method. We create a second
+table called keys, like so:
+```
+CREATE TABLE keys (
+ledger_sequence int,
+id blob,
+PRIMARY KEY(ledger_sequence, id)
+)
+```
+However, this table does not have an entry for every ledger sequence. Instead,
+this table has an entry for rougly every 1 million ledgers. We call these ledgers
+flag ledgers. For each flag ledger, the keys table contains every object id in that
+ledger, as well as every object id that existed in any ledger between the last flag
+ledger and this one. This is a lot of keys, but not every key that ever existed (which
+is what the naive attempt at implementing successor was iterating over). In this manner,
+the performance is bounded. If we wanted to increase the performance of the successor operation,
+we can increase the frequency of flag ledgers. However, this will use more space. 1 million
+was chosen as a reasonable tradeoff to bound the performance, but not use too much space,
+especially since this is only needed for two RPC calls.
+
+We write to this table every ledger, for each new key. However, we also need to handle
+keys that existed in the previous flag ledger. To do that, at each flag ledger, we
+iterate through the previous flag ledger, and write any keys that are still present
+in the new flag ledger. This is done asynchronously.
+
+## Account Transactions
+rippled offers a RPC called `account_tx`. This RPC returns all transactions that
+affect a given account, and allows users to page backwards or forwards in time.
+Generally, this is a modeled with a table like so:
+```
+CREATE TABLE account_tx (
+account blob,
+ledger_sequence int,
+transaction_index int,
+hash blob,
+PRIMARY KEY(account,ledger_sequence,transaction_index))
+```
+
+An example of looking up from this table going backwards in time is:
+```
+SELECT hash FROM account_tx WHERE account = ? 
+    AND ledger_sequence <= ? and transaction_index <= ? 
+    ORDER BY ledger_sequence DESC, transaction_index DESC;
+```
+
+This query returns the hashes, and then we use those hashes to read from the 
+transactions table.
+
+## Comments
+There are various nuances around how these data models are tuned and optimized
+for each database implementation. Cassandra and PostgreSQL are very different,
+so some slight modifications are needed. However, the general model outlined here
+is implemented by both databases, and when adding a new database, this general model
+should be followed, unless there is a good reason not to. Generally, a database will be
+decently similar to either PostgreSQL or Cassandra, so using those as a basis should
+be sufficient.
+
+Whatever database is used, clio requires strong consistency, and durability. For this
+reason, any replication strategy needs to maintain strong consistency.
