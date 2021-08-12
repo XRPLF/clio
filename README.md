@@ -21,7 +21,7 @@ At any given time, there is only one writer, and any synchronization happens via
 If the writer for a given dataset fails for any reason, one of the other clio nodes will automatically become the writer.
 
 ## Requirements
-1. Access to a Postgres server or Cassandra cluster. Can be local or remote.
+1. Access to a Postgres server or Cassandra/Scylla cluster. Can be local or remote.
 
 2. Access to one or more rippled nodes. Can be local or remote.
 
@@ -33,8 +33,100 @@ git submodule update --init --recursive
 mdkir build
 cd build
 cmake -DCMAKE_C_COMPILER=<your c compiler> -DCMAKE_CXX_COMPILER=<your c++ compiler that supports c++20> -DBOOST_ROOT=<location of boost> ..
-cmake --build . -- -j 8
+cmake --build . -- -j <number of parallel jobs>
 ```
 
 ## Running
-` ./clio_server config.json`
+`./clio_server config.json`
+
+clio needs access to a rippled server. The config files of rippled and clio need
+to match in a certain sense.
+clio needs to know:
+- the ip of rippled
+- the port on which rippled is accepting unencrypted websocket connections
+- the port on which rippled is handling gRPC requests
+
+rippled needs to open:
+- a port to accept unencrypted websocket connections
+- a port to handle gRPC requests, with the ip(s) of clio specified in the `secure_gateway` entry
+
+The example configs of rippled and clio are setup such that minimal changes are
+required. When running locally, the only change needed is to uncomment the `port_grpc`
+section of the rippled config. When running clio and rippled on separate machines,
+in addition to uncommenting the `port_grpc` section, a few other steps must be taken:
+1. change the `ip` of the first entry of `etl_sources` to the ip where your rippled
+server is running
+2. open a public, unencrypted websocket port on your rippled server
+3. change the ip specified in `secure_gateway` of `port_grpc` section of the rippled config
+to the ip of your clio server. This entry can take the form of a comma separated list if
+you are running multiple clio nodes.
+
+Once your config files are ready, start rippled and clio. It doesn't matter which you
+start first, and it's fine to stop one or the other and restart at any given time.
+
+clio will wait for rippled to sync before extracting any ledgers. If there is already
+data in clio's database, clio will begin extraction with the ledger whose sequence
+is one greater than the greatest sequence currently in the database. clio will wait
+for this ledger to be available. Be aware that the behavior of rippled is to sync to
+the most recent ledger on the network, and then backfill. If clio is extracting ledgers
+from rippled, and then rippled is stopped for a significant amount of time and then restarted, rippled
+will take time to backfill to the next ledger that clio wants. The time it takes is proportional
+to the amount of time rippled was offline for. Also be aware that the amount rippled backfills
+is dependent on the online_delete and ledger_history config values; if these values
+are small, and rippled is stopped for a significant amount of time, rippled may never backfill
+to the ledger that clio wants. To avoid this situation, it is advised to keep history
+proportional to the amount of time that you expect rippled to be offline. For example, if you
+expect rippled to be offline for a few days from time to time, you should keep at least
+a few days of history. If you expect rippled to never be offline, then you can keep a very small
+amount of history.
+
+clio can use multiple rippled servers as a data source. Simply add more entries to
+the `etl_sources` section. clio will load balance requests across the servers specified
+in this list. As long as one rippled server is up and synced, clio will continue
+extracting ledgers.
+
+In contrast to rippled, clio will answer RPC requests for the data already in the
+database as soon as the server starts. clio doesn't wait to sync to the network, or 
+for rippled to sync.
+
+When starting clio with a fresh database, clio needs to download a ledger in full.
+This can take some time, and depends on database throughput. With a moderately fast
+database, this should take less than 10 minutes. If you did not properly set `secure_gateway`
+in the `port_grpc` section of rippled, this step will fail. Once the first ledger
+is fully downloaded, clio only needs to extract the changed data for each ledger,
+so extraction is much faster and clio can keep up with rippled in real time. Even under
+intense load, clio should not lag behind the network, as clio is not processing the data,
+and is simply writing to a database. The throughput of clio is dependent on the throughput
+of your database, but a standard Postgres, Cassandra or Scylla deployment can handle
+the write load of the XRP Ledger without any trouble. Generally the performance considerations
+come on the read side, and depends on the number of RPC requests your clio nodes
+are serving. Be aware that very heavy read traffic can impact write throughput. Again, this
+is on the database side, so if you are seeing this, upgrade your database.
+
+It is possible to run multiple clio nodes that share access to the same database.
+The clio nodes don't need to know about each other. You can simply spin up more clio
+nodes pointing to the same database as you wish, and shut them down as you wish.
+On startup, each clio node queries the database for the latest ledger. If this latest
+ledger does not change for 20 seconds, the clio node begins extracting ledgers
+and writing to the database. If the clio node detects a ledger that it is trying to
+write has already been written, the clio node will backoff and stop writing. If later
+the clio node sees no ledger written for 20 seconds, it will start writing again.
+This algorithm ensures that at any given time, one and only one clio node is writing
+to the database.
+
+It is possible to force clio to only read data, and to never become a writer.
+To do this, set `read_only: true` in the config. Be aware though that this reduces
+fault tolerance, since this clio node will never become the writer in the event that
+the writer fails. It is best to just use a cluster of homogenous nodes, and let them
+figure out automatically who should be the writer. Generally, the first clio node
+you start will be the writer.
+
+When using multiple rippled servers as data sources and multiple clio nodes,
+each clio node should use the same set of rippled servers as sources. The order doesn't matter.
+The only reason not to do this is if you are running servers in different regions, and
+you want the clio nodes to extract from servers in their region. However, if you
+are doing this, be aware that database traffic will be flowing across regions,
+which can cause high latencies. A possible alternative to this is to just deploy
+a database in each region, and the clio nodes in each region use their region's database.
+This is effectively two systems.
+

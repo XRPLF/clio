@@ -294,7 +294,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 
     for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
     {
-
         backend_->writeLedgerObject(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,

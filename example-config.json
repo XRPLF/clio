@@ -1,13 +1,13 @@
 {
     "database":
     {
-        "type":"cassandra",
+        "type":"postgres",
         "cassandra":
         {
             "contact_points":"127.0.0.1",
             "port":9042,
             "keyspace":"clio",
-	    "replication_factor":1,
+	        "replication_factor":1,
             "table_prefix":"",
             "max_requests_outstanding":25000,
             "threads":8
@@ -38,5 +38,5 @@
     "log_level":"debug",
     "online_delete":0,
     "extractor_threads":8,
-    "read_only":true
+    "read_only":false
 }
