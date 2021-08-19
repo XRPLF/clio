@@ -29,8 +29,8 @@ and then go through the functions declared in `BackendInterface`. Reviewers coul
 also branch out to the rest of the code by looking at where these functions are
 called from.
 
-### server
-The code in the server folder implements the web server for handling RPC requests.
+### webserver
+The code in the webserver folder implements the web server for handling RPC requests.
 This code was mostly copied and pasted from boost beast example code, so I would
 really appreciate review here.
 
