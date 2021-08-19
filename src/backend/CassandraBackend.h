@@ -124,11 +124,11 @@ public:
     }
 
     void
-    bindBoolean(bool val)
+    bindNextBoolean(bool val)
     {
         if (!statement_)
             throw std::runtime_error(
-                "CassandraStatement::bindBoolean - statement_ is null");
+                "CassandraStatement::bindNextBoolean - statement_ is null");
         CassError rc = cass_statement_bind_bool(
             statement_, 1, static_cast<cass_bool_t>(val));
         if (rc != CASS_OK)
@@ -143,45 +143,45 @@ public:
     }
 
     void
-    bindBytes(const char* data, uint32_t size)
+    bindNextBytes(const char* data, uint32_t size)
     {
-        bindBytes((unsigned char*)data, size);
+        bindNextBytes((unsigned char*)data, size);
     }
 
     void
-    bindBytes(ripple::uint256 const& data)
+    bindNextBytes(ripple::uint256 const& data)
     {
-        bindBytes(data.data(), data.size());
+        bindNextBytes(data.data(), data.size());
     }
     void
-    bindBytes(std::vector<unsigned char> const& data)
+    bindNextBytes(std::vector<unsigned char> const& data)
     {
-        bindBytes(data.data(), data.size());
+        bindNextBytes(data.data(), data.size());
     }
     void
-    bindBytes(ripple::AccountID const& data)
+    bindNextBytes(ripple::AccountID const& data)
     {
-        bindBytes(data.data(), data.size());
-    }
-
-    void
-    bindBytes(std::string const& data)
-    {
-        bindBytes(data.data(), data.size());
+        bindNextBytes(data.data(), data.size());
     }
 
     void
-    bindBytes(void const* key, uint32_t size)
+    bindNextBytes(std::string const& data)
     {
-        bindBytes(static_cast<const unsigned char*>(key), size);
+        bindNextBytes(data.data(), data.size());
     }
 
     void
-    bindBytes(const unsigned char* data, uint32_t size)
+    bindNextBytes(void const* key, uint32_t size)
+    {
+        bindNextBytes(static_cast<const unsigned char*>(key), size);
+    }
+
+    void
+    bindNextBytes(const unsigned char* data, uint32_t size)
     {
         if (!statement_)
             throw std::runtime_error(
-                "CassandraStatement::bindBytes - statement_ is null");
+                "CassandraStatement::bindNextBytes - statement_ is null");
         CassError rc = cass_statement_bind_bytes(
             statement_,
             curBindingIndex_,
@@ -199,11 +199,11 @@ public:
     }
 
     void
-    bindUInt(uint32_t value)
+    bindNextUInt(uint32_t value)
     {
         if (!statement_)
             throw std::runtime_error(
-                "CassandraStatement::bindUInt - statement_ is null");
+                "CassandraStatement::bindNextUInt - statement_ is null");
         BOOST_LOG_TRIVIAL(trace)
             << std::to_string(curBindingIndex_) << " " << std::to_string(value);
         CassError rc =
@@ -220,17 +220,17 @@ public:
     }
 
     void
-    bindInt(uint32_t value)
+    bindNextInt(uint32_t value)
     {
-        bindInt((int64_t)value);
+        bindNextInt((int64_t)value);
     }
 
     void
-    bindInt(int64_t value)
+    bindNextInt(int64_t value)
     {
         if (!statement_)
             throw std::runtime_error(
-                "CassandraStatement::bindInt - statement_ is null");
+                "CassandraStatement::bindNextInt - statement_ is null");
         CassError rc =
             cass_statement_bind_int64(statement_, curBindingIndex_, value);
         if (rc != CASS_OK)
@@ -245,7 +245,7 @@ public:
     }
 
     void
-    bindIntTuple(uint32_t first, uint32_t second)
+    bindNextIntTuple(uint32_t first, uint32_t second)
     {
         CassTuple* tuple = cass_tuple_new(2);
         CassError rc = cass_tuple_set_int64(tuple, 0, first);
@@ -667,15 +667,15 @@ public:
         if (isFirstLedger_)
         {
             CassandraStatement statement{updateLedgerRange_};
-            statement.bindInt(ledgerSequence_);
-            statement.bindBoolean(false);
-            statement.bindInt(ledgerSequence_);
+            statement.bindNextInt(ledgerSequence_);
+            statement.bindNextBoolean(false);
+            statement.bindNextInt(ledgerSequence_);
             executeSyncWrite(statement);
         }
         CassandraStatement statement{updateLedgerRange_};
-        statement.bindInt(ledgerSequence_);
-        statement.bindBoolean(true);
-        statement.bindInt(ledgerSequence_ - 1);
+        statement.bindNextInt(ledgerSequence_);
+        statement.bindNextBoolean(true);
+        statement.bindNextInt(ledgerSequence_ - 1);
         if (!executeSyncUpdate(statement))
         {
             BOOST_LOG_TRIVIAL(warning)
@@ -713,7 +713,7 @@ public:
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectLedgerBySeq_};
-        statement.bindInt(sequence);
+        statement.bindNextInt(sequence);
         CassandraResult result = executeSyncRead(statement);
 
         if (!result)
@@ -730,7 +730,7 @@ public:
     {
         CassandraStatement statement{selectLedgerByHash_};
 
-        statement.bindBytes(hash);
+        statement.bindNextBytes(hash);
 
         CassandraResult result = executeSyncRead(statement);
         if (!result.hasResult())
@@ -761,8 +761,8 @@ public:
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         CassandraStatement statement{selectObject_};
-        statement.bindBytes(key);
-        statement.bindInt(sequence);
+        statement.bindNextBytes(key);
+        statement.bindNextInt(sequence);
         CassandraResult result = executeSyncRead(statement);
         if (!result)
         {
@@ -780,7 +780,7 @@ public:
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         CassandraStatement statement{getToken_};
-        statement.bindBytes(key, 32);
+        statement.bindNextBytes(key, 32);
         CassandraResult result = executeSyncRead(statement);
         if (!result)
         {
@@ -799,7 +799,7 @@ public:
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectTransaction_};
-        statement.bindBytes(hash);
+        statement.bindNextBytes(hash);
         CassandraResult result = executeSyncRead(statement);
         if (!result)
         {
@@ -830,10 +830,8 @@ public:
         uint32_t sequence) const override;
 
     void
-    doWriteLedgerObject(
-        std::string&& key,
-        uint32_t seq,
-        std::string&& blob) const override;
+    doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
+        const override;
 
     void
     writeAccountTransactions(

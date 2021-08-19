@@ -145,12 +145,14 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 void
 ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " - Publishing ledger " << std::to_string(lgrInfo.seq);
     backend_->updateRange(lgrInfo.seq);
     auto ledgerRange = backend_->fetchLedgerRange();
 
     std::optional<ripple::Fees> fees;
     std::vector<Backend::TransactionAndMetadata> transactions;
-    for (;;)
+    while (true)
     {
         try
         {
@@ -180,6 +182,8 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
         subscriptions_->pubTransaction(txAndMeta, lgrInfo.seq);
 
     setLastPublish();
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " - Published ledger " << std::to_string(lgrInfo.seq);
 }
 
 bool
@@ -301,11 +305,10 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     }
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
-        << "wrote objects. num objects = "
-        << std::to_string(rawData.ledger_objects().objects_size());
+        << "Inserted/modified/deleted all objects. Number of objects = "
+        << rawData.ledger_objects().objects_size();
     std::vector<AccountTransactionsData> accountTxData{
         insertTransactions(lgrInfo, rawData)};
-
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted all transactions. Number of transactions  = "
@@ -313,28 +316,13 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     backend_->writeAccountTransactions(std::move(accountTxData));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote account_tx";
-    accumTxns_ += rawData.transactions_list().transactions_size();
-    bool success = true;
-    if (accumTxns_ >= txnThreshold_)
-    {
-        auto start = std::chrono::system_clock::now();
-        success = backend_->finishWrites(lgrInfo.seq);
-        auto end = std::chrono::system_clock::now();
+    auto start = std::chrono::system_clock::now();
+    bool success = backend_->finishWrites(lgrInfo.seq);
+    auto end = std::chrono::system_clock::now();
 
-        auto duration = ((end - start).count()) / 1000000000.0;
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " Accumulated " << std::to_string(accumTxns_)
-            << " transactions. Wrote in " << std::to_string(duration)
-            << " transactions per second = "
-            << std::to_string(accumTxns_ / duration);
-        accumTxns_ = 0;
-    }
-    else
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " skipping commit";
+    auto duration = ((end - start).count()) / 1000000000.0;
     BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " : "
-        << "Inserted/modified/deleted all objects. Number of objects = "
-        << rawData.ledger_objects().objects_size();
+        << __func__ << " finished writes. took " << std::to_string(duration);
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -477,29 +465,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         beast::setCurrentThreadName("rippled: ReportingETL transform");
         uint32_t currentSequence = startSequence;
 
-        int counter = 0;
-        std::atomic_int per = 100;
-        auto startTimer = [this, &per]() {
-            auto innerFunc = [this, &per](auto& f) -> void {
-                std::shared_ptr<boost::asio::steady_timer> timer =
-                    std::make_shared<boost::asio::steady_timer>(
-                        ioContext_,
-                        std::chrono::steady_clock::now() +
-                            std::chrono::minutes(5));
-                timer->async_wait(
-                    [timer, f, &per](const boost::system::error_code& error) {
-                        ++per;
-                        BOOST_LOG_TRIVIAL(info)
-                            << "Incremented per to " << std::to_string(per);
-                        if (per > 100)
-                            per = 100;
-                        f(f);
-                    });
-            };
-            innerFunc(innerFunc);
-        };
-        // startTimer();
-
         auto begin = std::chrono::system_clock::now();
 
         while (!writeConflict)
@@ -527,7 +492,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             if (success)
                 BOOST_LOG_TRIVIAL(info)
                     << "Load phase of etl : "
-                    << "Successfully published ledger! Ledger info: "
+                    << "Successfully wrote ledger! Ledger info: "
                     << detail::toString(lgrInfo) << ". txn count = " << numTxns
                     << ". object count = " << numObjects
                     << ". load time = " << duration
@@ -558,19 +523,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                     deleting_ = false;
                 });
             }
-            /*
-            if (++counter >= per)
-            {
-                std::chrono::milliseconds sleep =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::seconds(4) - (end - begin));
-                BOOST_LOG_TRIVIAL(info) << "Sleeping for " << sleep.count()
-                                        << " . per = " << std::to_string(per);
-                std::this_thread::sleep_for(sleep);
-                counter = 0;
-                begin = std::chrono::system_clock::now();
-            }
-            */
         }
     }};
 

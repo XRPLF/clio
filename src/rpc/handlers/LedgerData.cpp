@@ -21,8 +21,8 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 
-#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 // Get state nodes from a ledger
 //   Inputs:
 //     limit:        integer, maximum number of entries
@@ -37,8 +37,7 @@
 //
 //
 
-namespace RPC
-{
+namespace RPC {
 
 Result
 doLedgerData(Context const& context)
@@ -47,34 +46,34 @@ doLedgerData(Context const& context)
     boost::json::object response = {};
 
     bool binary = false;
-    if(request.contains("binary"))
+    if (request.contains("binary"))
     {
-        if(!request.at("binary").is_bool())
+        if (!request.at("binary").is_bool())
             return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
-        
+
         binary = request.at("binary").as_bool();
     }
 
     std::size_t limit = binary ? 2048 : 256;
-    if(request.contains("limit"))
+    if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInteger"};
-        
+
         limit = value_to<int>(request.at("limit"));
     }
 
     std::optional<ripple::uint256> cursor;
-    if(request.contains("cursor"))
+    if (request.contains("marker"))
     {
-        if(!request.at("cursor").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
-        
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing cursor";
+        if (!request.at("marker").is_string())
+            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
 
         cursor = ripple::uint256{};
-        if(!cursor->parseHex(request.at("cursor").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "cursorMalformed"};
+        if (!cursor->parseHex(request.at("marker").as_string().c_str()))
+            return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
     }
 
     auto v = ledgerInfoFromRequest(context);
@@ -94,7 +93,7 @@ doLedgerData(Context const& context)
             .count();
 
     boost::json::object header;
-    if(!cursor)
+    if (!cursor)
     {
         if (binary)
         {
@@ -106,8 +105,10 @@ doLedgerData(Context const& context)
             header["account_hash"] = ripple::strHex(lgrInfo.accountHash);
             header["close_flags"] = lgrInfo.closeFlags;
             header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
-            header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);;
-            header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
+            header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);
+            ;
+            header["close_time_resolution"] =
+                lgrInfo.closeTimeResolution.count();
             header["closed"] = true;
             header["hash"] = ripple::strHex(lgrInfo.hash);
             header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
@@ -123,7 +124,7 @@ doLedgerData(Context const& context)
             response["ledger"] = header;
         }
     }
-        
+
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
 
@@ -131,8 +132,12 @@ doLedgerData(Context const& context)
     std::vector<Backend::LedgerObject>& results = page.objects;
     std::optional<ripple::uint256> const& returnedCursor = page.cursor;
 
-    if(returnedCursor)
+    if (returnedCursor)
+    {
         response["marker"] = ripple::strHex(*returnedCursor);
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " cursor = " << ripple::strHex(*returnedCursor);
+    }
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " number of results = " << results.size();
@@ -152,7 +157,6 @@ doLedgerData(Context const& context)
     }
     response["state"] = objects;
 
-
     if (cursor && page.warning)
     {
         response["warning"] =
@@ -167,4 +171,4 @@ doLedgerData(Context const& context)
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

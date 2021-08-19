@@ -158,9 +158,9 @@ CassandraBackend::doWriteLedgerObject(
             auto& [key, sequence, blob] = params.data;
 
             CassandraStatement statement{insertObject_};
-            statement.bindBytes(key);
-            statement.bindInt(sequence);
-            statement.bindBytes(blob);
+            statement.bindNextBytes(key);
+            statement.bindNextInt(sequence);
+            statement.bindNextBytes(blob);
             return statement;
         });
 }
@@ -176,8 +176,8 @@ CassandraBackend::writeLedger(
         [this](auto& params) {
             auto& [sequence, header] = params.data;
             CassandraStatement statement{insertLedgerHeader_};
-            statement.bindInt(sequence);
-            statement.bindBytes(header);
+            statement.bindNextInt(sequence);
+            statement.bindNextBytes(header);
             return statement;
         });
     makeAndExecuteAsyncWrite(
@@ -186,8 +186,8 @@ CassandraBackend::writeLedger(
         [this](auto& params) {
             auto& [hash, sequence] = params.data;
             CassandraStatement statement{insertLedgerHash_};
-            statement.bindBytes(hash);
-            statement.bindInt(sequence);
+            statement.bindNextBytes(hash);
+            statement.bindNextInt(sequence);
             return statement;
         });
     ledgerSequence_ = ledgerInfo.seq;
@@ -211,12 +211,12 @@ CassandraBackend::writeAccountTransactions(
                 [this](auto& params) {
                     CassandraStatement statement(insertAccountTx_);
                     auto& [account, lgrSeq, txnIdx, hash] = params.data;
-                    statement.bindBytes(account);
+                    statement.bindNextBytes(account);
                     uint32_t index = lgrSeq >> 20 << 20;
-                    statement.bindUInt(index);
+                    statement.bindNextUInt(index);
 
-                    statement.bindIntTuple(lgrSeq, txnIdx);
-                    statement.bindBytes(hash);
+                    statement.bindNextIntTuple(lgrSeq, txnIdx);
+                    statement.bindNextBytes(hash);
                     return statement;
                 });
         }
@@ -235,8 +235,8 @@ CassandraBackend::writeTransaction(
     makeAndExecuteAsyncWrite(
         this, std::move(std::make_pair(seq, hash)), [this](auto& params) {
             CassandraStatement statement{insertLedgerTransaction_};
-            statement.bindInt(params.data.first);
-            statement.bindBytes(params.data.second);
+            statement.bindNextInt(params.data.first);
+            statement.bindNextBytes(params.data.second);
             return statement;
         });
     makeAndExecuteAsyncWrite(
@@ -246,10 +246,10 @@ CassandraBackend::writeTransaction(
         [this](auto& params) {
             CassandraStatement statement{insertTransaction_};
             auto& [hash, sequence, transaction, metadata] = params.data;
-            statement.bindBytes(hash);
-            statement.bindInt(sequence);
-            statement.bindBytes(transaction);
-            statement.bindBytes(metadata);
+            statement.bindNextBytes(hash);
+            statement.bindNextInt(sequence);
+            statement.bindNextBytes(transaction);
+            statement.bindNextBytes(metadata);
             return statement;
         });
 }
@@ -290,7 +290,7 @@ struct ReadCallbackData
     std::atomic_int& numOutstanding;
     std::mutex& mtx;
     std::condition_variable& cv;
-    bool errored = false;
+    std::atomic_bool errored = false;
     ReadCallbackData(
         std::atomic_int& numOutstanding,
         std::mutex& m,
@@ -321,7 +321,7 @@ struct ReadCallbackData
 void
 processAsyncRead(CassFuture* fut, void* cbData)
 {
-    ReadCallbackData cb = *static_cast<ReadCallbackData*>(cbData);
+    ReadCallbackData& cb = *static_cast<ReadCallbackData*>(cbData);
     cb.finish(fut);
 }
 std::vector<TransactionAndMetadata>
@@ -339,7 +339,7 @@ CassandraBackend::fetchTransactions(
     for (std::size_t i = 0; i < hashes.size(); ++i)
     {
         CassandraStatement statement{selectTransaction_};
-        statement.bindBytes(hashes[i]);
+        statement.bindNextBytes(hashes[i]);
         cbs.push_back(std::make_shared<ReadCallbackData>(
             numOutstanding, mtx, cv, [i, &results](auto& result) {
                 if (result.hasResult())
@@ -373,7 +373,7 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     uint32_t ledgerSequence) const
 {
     CassandraStatement statement{selectAllTransactionHashesInLedger_};
-    statement.bindInt(ledgerSequence);
+    statement.bindNextInt(ledgerSequence);
     auto start = std::chrono::system_clock::now();
     CassandraResult result = executeSyncRead(statement);
     auto end = std::chrono::system_clock::now();
@@ -424,11 +424,11 @@ CassandraBackend::fetchAccountTransactions(
                 else
                     return CassandraStatement{selectAccountTx_};
             }();
-            statement.bindBytes(account);
+            statement.bindNextBytes(account);
             if (cursor)
             {
-                statement.bindUInt(cursor->ledgerSequence >> 20 << 20);
-                statement.bindIntTuple(
+                statement.bindNextUInt(cursor->ledgerSequence >> 20 << 20);
+                statement.bindNextIntTuple(
                     cursor->ledgerSequence, cursor->transactionIndex);
                 BOOST_LOG_TRIVIAL(debug)
                     << " account = " << ripple::strHex(account)
@@ -439,16 +439,16 @@ CassandraBackend::fetchAccountTransactions(
             else
             {
                 int seq = forward ? rng->minSequence : rng->maxSequence;
-                statement.bindUInt(seq >> 20 << 20);
+                statement.bindNextUInt(seq >> 20 << 20);
                 int placeHolder = forward ? 0 : INT32_MAX;
 
-                statement.bindIntTuple(placeHolder, placeHolder);
+                statement.bindNextIntTuple(placeHolder, placeHolder);
                 BOOST_LOG_TRIVIAL(debug)
                     << " account = " << ripple::strHex(account)
                     << " idx = " << seq << " tuple = " << placeHolder;
             }
             uint32_t adjustedLimit = limit - hashes.size();
-            statement.bindUInt(adjustedLimit);
+            statement.bindNextUInt(adjustedLimit);
             CassandraResult result = executeSyncRead(statement);
             if (!result.hasResult())
             {
@@ -487,8 +487,8 @@ CassandraBackend::fetchAccountTransactions(
             cursor->transactionIndex = forward ? 0 : INT32_MAX;
             BOOST_LOG_TRIVIAL(debug) << __func__ << " walking back";
             CassandraStatement statement{selectObject_};
-            statement.bindBytes(keylet.key);
-            statement.bindInt(seq);
+            statement.bindNextBytes(keylet.key);
+            statement.bindNextInt(seq);
             CassandraResult result = executeSyncRead(statement);
             if (!result)
             {
@@ -529,15 +529,15 @@ CassandraBackend::doFetchLedgerPage(
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " - Cursor = " << ripple::strHex(*cursor);
     CassandraStatement statement{selectKeys_};
-    statement.bindInt(index->keyIndex);
+    statement.bindNextInt(index->keyIndex);
     if (!cursor)
     {
         ripple::uint256 zero;
         cursor = zero;
     }
-    statement.bindBytes(cursor->data(), 1);
-    statement.bindBytes(*cursor);
-    statement.bindUInt(limit + 1);
+    statement.bindNextBytes(cursor->data(), 1);
+    statement.bindNextBytes(*cursor);
+    statement.bindNextUInt(limit + 1);
     CassandraResult result = executeSyncRead(statement);
     if (!!result)
     {
@@ -613,8 +613,8 @@ CassandraBackend::fetchLedgerObjects(
                     results[i] = result.getBytes();
             }));
         CassandraStatement statement{selectObject_};
-        statement.bindBytes(keys[i]);
-        statement.bindInt(sequence);
+        statement.bindNextBytes(keys[i]);
+        statement.bindNextInt(sequence);
         executeAsyncRead(statement, processAsyncRead, *cbs[i]);
     }
     assert(results.size() == cbs.size());
@@ -641,9 +641,9 @@ CassandraBackend::writeKeys(
     auto bind = [this](auto& params) {
         auto& [lgrSeq, key] = params.data;
         CassandraStatement statement{insertKey_};
-        statement.bindInt(lgrSeq);
-        statement.bindBytes(key.data(), 1);
-        statement.bindBytes(key);
+        statement.bindNextInt(lgrSeq);
+        statement.bindNextBytes(key.data(), 1);
+        statement.bindNextBytes(key);
         return statement;
     };
     std::atomic_int numOutstanding = 0;
@@ -706,9 +706,9 @@ CassandraBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
     auto bind = [this](auto& params) {
         auto& [key, seq, obj] = params.data;
         CassandraStatement statement{insertObject_};
-        statement.bindBytes(key);
-        statement.bindInt(seq);
-        statement.bindBytes(obj);
+        statement.bindNextBytes(key);
+        statement.bindNextInt(seq);
+        statement.bindNextBytes(obj);
         return statement;
     };
     std::condition_variable cv;
@@ -770,7 +770,7 @@ CassandraBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });
     CassandraStatement statement{deleteLedgerRange_};
-    statement.bindInt(minLedger);
+    statement.bindNextInt(minLedger);
     executeSyncWrite(statement);
     // update ledger_range
     return true;

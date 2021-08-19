@@ -810,7 +810,7 @@ async def perf(ip, port):
 
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info"])
+parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps"])
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
@@ -864,6 +864,15 @@ def run(args):
     elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))
+    elif args.action == "gaps":
+        missing = []
+        for x in range(rng[0],rng[1]):
+            res = asyncio.get_event_loop().run_until_complete(
+                    ledger(args.ip, args.port, x, True, False, False))
+            if "error" in res:
+                print("missing " + str(x))
+                missing.append(x)
+        print(missing)
     elif args.action == "account_info":
         res1 = asyncio.get_event_loop().run_until_complete(
                 account_info(args.ip, args.port, args.account, args.ledger, args.binary))

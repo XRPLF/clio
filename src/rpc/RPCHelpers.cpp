@@ -84,21 +84,44 @@ std::pair<
     std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
 {
-    std::pair<
-        std::shared_ptr<ripple::STTx const>,
-        std::shared_ptr<ripple::STObject const>>
-        result;
+    try
     {
-        ripple::SerialIter s{
-            blobs.transaction.data(), blobs.transaction.size()};
-        result.first = std::make_shared<ripple::STTx const>(s);
+        std::pair<
+            std::shared_ptr<ripple::STTx const>,
+            std::shared_ptr<ripple::STObject const>>
+            result;
+        {
+            ripple::SerialIter s{
+                blobs.transaction.data(), blobs.transaction.size()};
+            result.first = std::make_shared<ripple::STTx const>(s);
+        }
+        {
+            ripple::SerialIter s{blobs.metadata.data(), blobs.metadata.size()};
+            result.second =
+                std::make_shared<ripple::STObject const>(s, ripple::sfMetadata);
+        }
+        return result;
     }
+    catch (std::exception const& e)
     {
-        ripple::SerialIter s{blobs.metadata.data(), blobs.metadata.size()};
-        result.second =
-            std::make_shared<ripple::STObject const>(s, ripple::sfMetadata);
+        std::stringstream txn;
+        std::stringstream meta;
+        std::copy(
+            blobs.transaction.begin(),
+            blobs.transaction.end(),
+            std::ostream_iterator<unsigned char>(txn));
+        std::copy(
+            blobs.metadata.begin(),
+            blobs.metadata.end(),
+            std::ostream_iterator<unsigned char>(meta));
+        BOOST_LOG_TRIVIAL(error)
+            << __func__
+            << " Failed to deserialize transaction. txn = " << txn.str()
+            << " - meta = " << meta.str()
+            << " txn length = " << std::to_string(blobs.transaction.size())
+            << " meta length = " << std::to_string(blobs.metadata.size());
+        throw e;
     }
-    return result;
 }
 
 std::pair<

@@ -44,10 +44,7 @@ BackendInterface::writeLedgerObject(
     assert(key.size() == sizeof(rippled::uint256));
     ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
     indexer_.addKey(std::move(key256));
-    doWriteLedgerObject(
-        std::move(key),
-        seq,
-        std::move(blob));
+    doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
@@ -196,6 +193,7 @@ BackendInterface::fetchLedgerPage(
 {
     assert(limit != 0);
     bool incomplete = !isLedgerIndexed(ledgerSequence);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " incomplete = " << incomplete;
     // really low limits almost always miss
     uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
@@ -208,10 +206,14 @@ BackendInterface::fetchLedgerPage(
         auto partial =
             doFetchLedgerPage(page.cursor, ledgerSequence, adjustedLimit);
         auto end = std::chrono::system_clock::now();
+        std::string pageCursorStr =
+            page.cursor ? ripple::strHex(*page.cursor) : "";
+        std::string partialCursorStr =
+            partial.cursor ? ripple::strHex(*partial.cursor) : "";
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " " << std::to_string(ledgerSequence) << " "
-            << std::to_string(adjustedLimit) << " "
-            << ripple::strHex(*page.cursor) << " - time = "
+            << std::to_string(adjustedLimit) << " " << pageCursorStr << " - "
+            << partialCursorStr << " - time = "
             << std::to_string(
                    std::chrono::duration_cast<std::chrono::milliseconds>(
                        end - start)
@@ -261,11 +263,6 @@ BackendInterface::fetchLedgerPage(
             return a.key < b.key;
         });
         page.warning = "Data may be incomplete";
-    }
-    if (page.objects.size() >= limit)
-    {
-        page.objects.resize(limit);
-        page.cursor = page.objects.back().key;
     }
     return page;
 }
