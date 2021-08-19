@@ -21,11 +21,13 @@ generally depends on the data model and the way we talk to the database.
 
 Reviewers should start with the README in this folder to get a high level idea
 of the data model and to review the data model itself. Then, reviewers should
-dive into the implementation. A good way to approach the implementation would
-be to go through the functions in BackendInterface, and review each of their
-implementations in PostgresBackend and CassandraBackend. Reviewers can also
-look at how these functions are being used. This will take you into other parts
-of the code, which you can review as well.
+dive into the implementation. The table schemas and queries for Cassandra are 
+defined in `CassandraBackend::open()`. The table schemas for Postgres are defined
+in Pg.cpp. The queries for Postgres are defined in each of the functions of `PostgresBackend`.
+A good way to approach the implementation would be to look at the table schemas,
+and then go through the functions declared in `BackendInterface`. Reviewers could
+also branch out to the rest of the code by looking at where these functions are
+called from.
 
 ### server
 The code in the server folder implements the web server for handling RPC requests.
@@ -65,6 +67,10 @@ For account_tx, this has performance implications when iterating very far back
 in time. Refer to the `fetchAccountTransactions()` function in `CassandraBackend`.
 
 It is unclear if this needs to be done for other tables.
+
+### Postgres table partitioning
+Originally, Postgres exhibited performance problems when the dataset approach 1
+TB. This was solved by table partitioning.
 
 ### Threading
 I used asio for multithreading. There are a lot of different io_contexts lying
