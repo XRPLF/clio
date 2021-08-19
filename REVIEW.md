@@ -86,7 +86,8 @@ I used boost json for serializing data to json.
 As of now, there is no cache. I am not sure if a cache is even worth it. A
 transaction cache would not be hard, but a cache for ledger data will be hard.
 While a cache would improve performance, it would increase memory usage. clio
-is designed to be lightweight.
+is designed to be lightweight. Also, I've reached thousands of requests per
+second with a single clio node, so I'm not sure performance is even an issue.
 
 ## Things I'm less than happy about
 
