@@ -73,7 +73,7 @@ TEST(BackendTest, Basic)
             return uint.fromVoid((void const*)bin.data());
         };
         auto ledgerInfoToBinaryString = [](auto const& info) {
-            auto blob = ledgerInfoToBlob(info);
+            auto blob = RPC::ledgerInfoToBlob(info);
             std::string strBlob;
             for (auto c : blob)
             {
@@ -105,7 +105,8 @@ TEST(BackendTest, Basic)
             auto retLgr = backend->fetchLedgerBySequence(lgrInfo.seq);
             EXPECT_TRUE(retLgr.has_value());
             EXPECT_EQ(retLgr->seq, lgrInfo.seq);
-            EXPECT_EQ(ledgerInfoToBlob(lgrInfo), ledgerInfoToBlob(*retLgr));
+            EXPECT_EQ(
+                RPC::ledgerInfoToBlob(lgrInfo), RPC::ledgerInfoToBlob(*retLgr));
         }
 
         EXPECT_FALSE(
@@ -138,12 +139,20 @@ TEST(BackendTest, Basic)
             auto retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq);
             EXPECT_TRUE(retLgr.has_value());
             EXPECT_EQ(retLgr->seq, lgrInfoNext.seq);
-            EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
-            EXPECT_NE(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoOld));
+            EXPECT_EQ(
+                RPC::ledgerInfoToBlob(*retLgr),
+                RPC::ledgerInfoToBlob(lgrInfoNext));
+            EXPECT_NE(
+                RPC::ledgerInfoToBlob(*retLgr),
+                RPC::ledgerInfoToBlob(lgrInfoOld));
             retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq - 1);
-            EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoOld));
+            EXPECT_EQ(
+                RPC::ledgerInfoToBlob(*retLgr),
+                RPC::ledgerInfoToBlob(lgrInfoOld));
 
-            EXPECT_NE(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
+            EXPECT_NE(
+                RPC::ledgerInfoToBlob(*retLgr),
+                RPC::ledgerInfoToBlob(lgrInfoNext));
             retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq - 2);
             EXPECT_FALSE(backend->fetchLedgerBySequence(lgrInfoNext.seq - 2)
                              .has_value());
@@ -265,7 +274,9 @@ TEST(BackendTest, Basic)
             EXPECT_EQ(rng->maxSequence, lgrInfoNext.seq);
             auto retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq);
             EXPECT_TRUE(retLgr);
-            EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
+            EXPECT_EQ(
+                RPC::ledgerInfoToBlob(*retLgr),
+                RPC::ledgerInfoToBlob(lgrInfoNext));
             auto txns = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq);
             EXPECT_EQ(txns.size(), 1);
             EXPECT_STREQ(
@@ -332,7 +343,9 @@ TEST(BackendTest, Basic)
             EXPECT_EQ(rng->maxSequence, lgrInfoNext.seq);
             auto retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq);
             EXPECT_TRUE(retLgr);
-            EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
+            EXPECT_EQ(
+                RPC::ledgerInfoToBlob(*retLgr),
+                RPC::ledgerInfoToBlob(lgrInfoNext));
             auto txns = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq);
             EXPECT_EQ(txns.size(), 0);
 
@@ -466,9 +479,7 @@ TEST(BackendTest, Basic)
                     if (isOffer(obj.data()))
                         bookDir = getBook(obj);
                     backend->writeLedgerObject(
-                        std::move(key),
-                        lgrInfo.seq,
-                        std::move(obj));
+                        std::move(key), lgrInfo.seq, std::move(obj));
                 }
                 backend->writeAccountTransactions(std::move(accountTx));
 
@@ -486,10 +497,12 @@ TEST(BackendTest, Basic)
             EXPECT_GE(rng->maxSequence, seq);
             auto retLgr = backend->fetchLedgerBySequence(seq);
             EXPECT_TRUE(retLgr);
-            EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfo));
+            EXPECT_EQ(
+                RPC::ledgerInfoToBlob(*retLgr), RPC::ledgerInfoToBlob(lgrInfo));
             // retLgr = backend->fetchLedgerByHash(lgrInfo.hash);
             // EXPECT_TRUE(retLgr);
-            // EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfo));
+            // EXPECT_EQ(RPC::ledgerInfoToBlob(*retLgr),
+            // RPC::ledgerInfoToBlob(lgrInfo));
             auto retTxns = backend->fetchAllTransactionsInLedger(seq);
             for (auto [hash, txn, meta] : txns)
             {

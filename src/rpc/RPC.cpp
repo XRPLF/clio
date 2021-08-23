@@ -1,8 +1,7 @@
-#include <unordered_map>
 #include <etl/ETLSource.h>
 #include <rpc/Handlers.h>
-namespace RPC
-{
+#include <unordered_map>
+namespace RPC {
 
 std::optional<Context>
 make_WsContext(
@@ -15,19 +14,11 @@ make_WsContext(
 {
     if (!request.contains("command"))
         return {};
-    
+
     std::string command = request.at("command").as_string().c_str();
 
     return Context{
-        command,
-        1,
-        request,
-        backend,
-        subscriptions,
-        balancer,
-        session,
-        range
-    };
+        command, 1, request, backend, subscriptions, balancer, session, range};
 }
 
 std::optional<Context>
@@ -53,10 +44,10 @@ make_HttpContext(
 
     if (array.size() != 1)
         return {};
-    
+
     if (!array.at(0).is_object())
         return {};
-    
+
     return Context{
         command,
         1,
@@ -65,11 +56,8 @@ make_HttpContext(
         subscriptions,
         balancer,
         nullptr,
-        range
-    };
+        range};
 }
-    
-
 
 void
 inject_error(Error err, boost::json::object& json)
@@ -126,6 +114,7 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"ledger_range", &doLedgerRange},
         {"ledger_data", &doLedgerData},
         {"subscribe", &doSubscribe},
+        {"server_info", &doServerInfo},
         {"unsubscribe", &doUnsubscribe},
         {"tx", &doTx},
     };
@@ -172,4 +161,4 @@ buildResponse(Context const& ctx)
 
     return method(ctx);
 }
-} 
+}  // namespace RPC

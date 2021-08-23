@@ -12,8 +12,7 @@
 #include <backend/DBHelpers.h>
 #include <backend/Pg.h>
 
-namespace RPC
-{
+namespace RPC {
 
 Result
 doBookOffers(Context const& context)
@@ -39,113 +38,20 @@ doBookOffers(Context const& context)
     }
     else
     {
-        if (!request.contains("taker_pays"))
-            return Status{Error::rpcINVALID_PARAMS, "missingTakerPays"};
-
-        if (!request.contains("taker_gets"))
-            return Status{Error::rpcINVALID_PARAMS, "missingTakerGets"};
-
-        if (!request.at("taker_pays").is_object())
-            return Status{Error::rpcINVALID_PARAMS, "takerPaysNotObject"};
-        
-        if (!request.at("taker_gets").is_object())
-            return Status{Error::rpcINVALID_PARAMS, "takerGetsNotObject"};
-
-        auto taker_pays = request.at("taker_pays").as_object();
-        if (!taker_pays.contains("currency"))
-            return Status{Error::rpcINVALID_PARAMS, "missingTakerPaysCurrency"};
-
-        if (!taker_pays.at("currency").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "takerPaysCurrencyNotString"};
-
-        auto taker_gets = request.at("taker_gets").as_object();
-        if (!taker_gets.contains("currency"))
-            return Status{Error::rpcINVALID_PARAMS, "missingTakerGetsCurrency"};
-
-        if (!taker_gets.at("currency").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "takerGetsCurrencyNotString"};
-
-        ripple::Currency pay_currency;
-        if (!ripple::to_currency(
-                pay_currency, taker_pays.at("currency").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "badTakerPaysCurrency"};
-
-        ripple::Currency get_currency;
-        if (!ripple::to_currency(
-                get_currency, taker_gets["currency"].as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "badTakerGetsCurrency"};
-
-        ripple::AccountID pay_issuer;
-        if (taker_pays.contains("issuer"))
-        {
-            if (!taker_pays.at("issuer").is_string())
-                return Status{Error::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
-
-            if (!ripple::to_issuer(
-                    pay_issuer, taker_pays.at("issuer").as_string().c_str()))
-                return Status{Error::rpcINVALID_PARAMS, "badTakerPaysIssuer"};
-
-            if (pay_issuer == ripple::noAccount())
-                return Status{Error::rpcINVALID_PARAMS, "badTakerPaysIssuerAccountOne"};
-        }
+        auto parsed = parseBook(request);
+        if (auto status = std::get_if<Status>(&parsed))
+            return *status;
         else
         {
-            pay_issuer = ripple::xrpAccount();
+            book = std::get<ripple::Book>(parsed);
+            bookBase = getBookBase(book);
         }
-
-        if (isXRP(pay_currency) && !isXRP(pay_issuer))
-            return Status{Error::rpcINVALID_PARAMS, 
-                "Unneeded field 'taker_pays.issuer' for XRP currency "
-                "specification."};
-
-        if (!isXRP(pay_currency) && isXRP(pay_issuer))
-            return Status{Error::rpcINVALID_PARAMS,
-                    "Invalid field 'taker_pays.issuer', expected non-XRP "
-                    "issuer."};
-
-        ripple::AccountID get_issuer;
-
-        if (taker_gets.contains("issuer"))
-        {
-            if (!taker_gets["issuer"].is_string())
-                return Status{Error::rpcINVALID_PARAMS, 
-                        "taker_gets.issuer should be string"};
-
-            if (!ripple::to_issuer(
-                    get_issuer, taker_gets.at("issuer").as_string().c_str()))
-                return Status{Error::rpcINVALID_PARAMS,
-                        "Invalid field 'taker_gets.issuer', bad issuer."};
-
-            if (get_issuer == ripple::noAccount())
-                return Status{Error::rpcINVALID_PARAMS,
-                    "Invalid field 'taker_gets.issuer', bad issuer account "
-                    "one."};
-        }
-        else
-        {
-            get_issuer = ripple::xrpAccount();
-        }
-
-        if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
-            return Status{Error::rpcINVALID_PARAMS,
-                    "Unneeded field 'taker_gets.issuer' for XRP currency "
-                    "specification."};
-
-        if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
-            return Status{Error::rpcINVALID_PARAMS,
-                "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
-
-        if (pay_currency == get_currency && pay_issuer == get_issuer)
-            return Status{Error::rpcINVALID_PARAMS, "badMarket"};
-
-        book = {{pay_currency, pay_issuer}, {get_currency, get_issuer}};
-        bookBase = getBookBase(book);
     }
 
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
 
         limit = request.at("limit").as_int64();
@@ -153,24 +59,22 @@ doBookOffers(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
     }
 
-
     std::optional<ripple::AccountID> takerID = {};
     if (request.contains("taker"))
     {
-        if (!request.at("taker").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "takerNotString"};
-
-        takerID = 
-            accountFromStringStrict(request.at("taker").as_string().c_str());
-            
-        if (!takerID)
-            return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
+        auto parsed = parseTaker(request["taker"]);
+        if (auto status = std::get_if<Status>(&parsed))
+            return *status;
+        else
+        {
+            takerID = std::get<ripple::AccountID>(parsed);
+        }
     }
 
     ripple::uint256 cursor = beast::zero;
     if (request.contains("cursor"))
     {
-        if(!request.at("cursor").is_string())
+        if (!request.at("cursor").is_string())
             return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
 
         if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
@@ -182,8 +86,8 @@ doBookOffers(Context const& context)
         context.backend->fetchBookOffers(bookBase, lgrInfo.seq, limit, cursor);
     auto end = std::chrono::system_clock::now();
 
-    BOOST_LOG_TRIVIAL(warning) << "Time loading books: "
-                               << ((end - start).count() / 1000000000.0);
+    BOOST_LOG_TRIVIAL(warning)
+        << "Time loading books: " << ((end - start).count() / 1000000000.0);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
@@ -193,7 +97,7 @@ doBookOffers(Context const& context)
 
     std::map<ripple::AccountID, ripple::STAmount> umBalance;
 
-    bool globalFreeze = 
+    bool globalFreeze =
         isGlobalFrozen(*context.backend, lgrInfo.seq, book.out.account) ||
         isGlobalFrozen(*context.backend, lgrInfo.seq, book.out.account);
 
@@ -209,7 +113,8 @@ doBookOffers(Context const& context)
         {
             ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
             ripple::SLE offer{it, obj.key};
-            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+            ripple::uint256 bookDir =
+                offer.getFieldH256(ripple::sfBookDirectory);
 
             auto const uOfferOwnerID = offer.getAccountID(ripple::sfAccount);
             auto const& saTakerGets = offer.getFieldAmount(ripple::sfTakerGets);
@@ -239,7 +144,8 @@ doBookOffers(Context const& context)
                     saOwnerFunds = umBalanceEntry->second;
                     firstOwnerOffer = false;
                 }
-                else {
+                else
+                {
                     saOwnerFunds = accountHolds(
                         *context.backend,
                         lgrInfo.seq,
@@ -281,19 +187,20 @@ doBookOffers(Context const& context)
             {
                 saTakerGetsFunded = saOwnerFundsLimit;
                 offerJson["taker_gets_funded"] = saTakerGetsFunded.getText();
-                offerJson["taker_pays_funded"] = toBoostJson(std::min(
-                    saTakerPays,
-                    ripple::multiply(
-                        saTakerGetsFunded, dirRate, saTakerPays.issue()))
-                    .getJson(ripple::JsonOptions::none));
+                offerJson["taker_pays_funded"] = toBoostJson(
+                    std::min(
+                        saTakerPays,
+                        ripple::multiply(
+                            saTakerGetsFunded, dirRate, saTakerPays.issue()))
+                        .getJson(ripple::JsonOptions::none));
             }
 
             ripple::STAmount saOwnerPays = (ripple::parityRate == offerRate)
                 ? saTakerGetsFunded
                 : std::min(
-                        saOwnerFunds, 
-                        ripple::multiply(saTakerGetsFunded, offerRate));
-            
+                      saOwnerFunds,
+                      ripple::multiply(saTakerGetsFunded, offerRate));
+
             umBalance[uOfferOwnerID] = saOwnerFunds - saOwnerPays;
 
             if (firstOwnerOffer)
@@ -303,7 +210,9 @@ doBookOffers(Context const& context)
 
             jsonOffers.push_back(offerJson);
         }
-        catch (std::exception const& e) {}
+        catch (std::exception const& e)
+        {
+        }
     }
 
     end = std::chrono::system_clock::now();
@@ -322,4 +231,4 @@ doBookOffers(Context const& context)
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

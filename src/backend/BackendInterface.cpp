@@ -151,7 +151,7 @@ BackendInterface::fetchBookOffers(
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(info)
+    BOOST_LOG_TRIVIAL(debug)
         << __func__ << " "
         << "Fetching " << std::to_string(keys.size()) << " keys took "
         << std::to_string(getMillis(mid - begin))

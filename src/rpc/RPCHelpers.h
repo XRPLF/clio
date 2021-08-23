@@ -14,14 +14,17 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPC.h>
 
+namespace RPC {
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
+// TODO this function should probably be in a different file and namespace
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs);
 
+// TODO this function should probably be in a different file and namespace
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::TxMeta const>>
@@ -48,15 +51,15 @@ using RippledJson = Json::Value;
 boost::json::value
 toBoostJson(RippledJson const& value);
 
-
 boost::json::object
-generatePubLedgerMessage(ripple::LedgerInfo const& lgrInfo,
-        ripple::Fees const& fees,
-        std::string const& ledgerRange,
-        uint32_t txnCount);
+generatePubLedgerMessage(
+    ripple::LedgerInfo const& lgrInfo,
+    ripple::Fees const& fees,
+    std::string const& ledgerRange,
+    uint32_t txnCount);
 
-std::variant<RPC::Status, ripple::LedgerInfo>
-ledgerInfoFromRequest(RPC::Context const& ctx);
+std::variant<Status, ripple::LedgerInfo>
+ledgerInfoFromRequest(Context const& ctx);
 
 std::optional<ripple::uint256>
 traverseOwnedNodes(
@@ -66,7 +69,7 @@ traverseOwnedNodes(
     ripple::uint256 const& cursor,
     std::function<bool(ripple::SLE)> atOwnedNode);
 
-std::variant<RPC::Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
+std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
 
 std::vector<ripple::AccountID>
@@ -109,4 +112,11 @@ xrpLiquid(
     std::uint32_t sequence,
     ripple::AccountID const& id);
 
+std::variant<Status, ripple::Book>
+parseBook(boost::json::object const& request);
+
+std::variant<Status, ripple::AccountID>
+parseTaker(boost::json::value const& request);
+
+}  // namespace RPC
 #endif

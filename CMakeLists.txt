@@ -98,7 +98,9 @@ target_sources(clio PRIVATE
   src/rpc/handlers/ChannelAuthorize.cpp
   src/rpc/handlers/ChannelVerify.cpp
   # Subscribe
-  src/rpc/handlers/Subscribe.cpp)
+  src/rpc/handlers/Subscribe.cpp
+  # Server
+  src/rpc/handlers/ServerInfo.cpp)
 
 
 message(${Boost_LIBRARIES})

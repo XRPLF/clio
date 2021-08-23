@@ -22,7 +22,6 @@
 
 #include <backend/BackendInterface.h>
 #include <memory>
-#include <backend/BackendInterface.h>
 
 class WsBase;
 
@@ -37,12 +36,12 @@ class SubscriptionManager
 
         finalEntry
     };
-
     std::mutex m_;
     std::array<subscriptions, finalEntry> streamSubscribers_;
     std::unordered_map<ripple::AccountID, subscriptions> accountSubscribers_;
     std::unordered_map<ripple::AccountID, subscriptions>
         accountProposedSubscribers_;
+    std::unordered_map<ripple::Book, subscriptions> bookSubscribers_;
 
 public:
     static std::shared_ptr<SubscriptionManager>
@@ -72,7 +71,7 @@ public:
 
     void
     pubTransaction(
-        Backend::TransactionAndMetadata const& blob,
+        Backend::TransactionAndMetadata const& blobs,
         std::uint32_t seq);
 
     void
@@ -84,6 +83,12 @@ public:
     unsubAccount(
         ripple::AccountID const& account,
         std::shared_ptr<WsBase>& session);
+
+    void
+    subBook(ripple::Book const& book, std::shared_ptr<WsBase>& session);
+
+    void
+    unsubBook(ripple::Book const& book, std::shared_ptr<WsBase>& session);
 
     void
     forwardProposedTransaction(boost::json::object const& response);

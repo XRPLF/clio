@@ -1,16 +1,16 @@
 #include <boost/json.hpp>
-#include <webserver/WsBase.h>
 #include <webserver/SubscriptionManager.h>
+#include <webserver/WsBase.h>
 
 #include <rpc/RPCHelpers.h>
 
-namespace RPC
-{
+namespace RPC {
 
-static std::unordered_set<std::string> validStreams { 
+// these are the streams that take no arguments
+static std::unordered_set<std::string> validCommonStreams{
     "ledger",
     "transactions",
-    "transactions_proposed" };
+    "transactions_proposed"};
 
 Status
 validateStreams(boost::json::object const& request)
@@ -24,7 +24,7 @@ validateStreams(boost::json::object const& request)
 
         std::string s = stream.as_string().c_str();
 
-        if (validStreams.find(s) == validStreams.end())
+        if (validCommonStreams.find(s) == validCommonStreams.end())
             return Status{Error::rpcINVALID_PARAMS, "invalidStream" + s};
     }
 
@@ -109,7 +109,7 @@ subscribeToAccounts(
 
         auto accountID = accountFromStringStrict(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -133,7 +133,7 @@ unsubscribeToAccounts(
 
         auto accountID = accountFromStringStrict(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -149,7 +149,8 @@ subscribeToAccountsProposed(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& accounts = request.at("accounts_proposed").as_array();
+    boost::json::array const& accounts =
+        request.at("accounts_proposed").as_array();
 
     for (auto const& account : accounts)
     {
@@ -157,7 +158,7 @@ subscribeToAccountsProposed(
 
         auto accountID = ripple::parseBase58<ripple::AccountID>(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -173,7 +174,8 @@ unsubscribeToAccountsProposed(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& accounts = request.at("accounts_proposed").as_array();
+    boost::json::array const& accounts =
+        request.at("accounts_proposed").as_array();
 
     for (auto const& account : accounts)
     {
@@ -181,7 +183,7 @@ unsubscribeToAccountsProposed(
 
         auto accountID = ripple::parseBase58<ripple::AccountID>(s);
 
-        if(!accountID)
+        if (!accountID)
         {
             assert(false);
             continue;
@@ -191,7 +193,40 @@ unsubscribeToAccountsProposed(
     }
 }
 
+std::variant<Status, std::vector<ripple::Book>>
+validateAndGetBooks(boost::json::object const& request)
+{
+    if (!request.at("books").is_array())
+        return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
+    boost::json::array const& books = request.at("books").as_array();
 
+    std::vector<ripple::Book> booksToSub;
+    for (auto const& book : books)
+    {
+        auto parsed = parseBook(book.as_object());
+        if (auto status = std::get_if<Status>(&parsed))
+            return *status;
+        else
+        {
+            auto b = std::get<ripple::Book>(parsed);
+            booksToSub.push_back(b);
+            if (book.as_object().contains("both"))
+                booksToSub.push_back(ripple::reversed(b));
+        }
+    }
+    return booksToSub;
+}
+void
+subscribeToBooks(
+    std::vector<ripple::Book> const& books,
+    std::shared_ptr<WsBase> session,
+    SubscriptionManager& manager)
+{
+    for (auto const book : books)
+    {
+        manager.subBook(book, session);
+    }
+}
 Result
 doSubscribe(Context const& context)
 {
@@ -210,7 +245,6 @@ doSubscribe(Context const& context)
 
     if (request.contains("accounts"))
     {
-
         if (!request.at("accounts").is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
@@ -226,11 +260,20 @@ doSubscribe(Context const& context)
         if (!request.at("accounts_proposed").is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
-        boost::json::array accounts = request.at("accounts_proposed").as_array();
+        boost::json::array accounts =
+            request.at("accounts_proposed").as_array();
         auto status = validateAccounts(accounts);
 
-        if(status)
+        if (status)
             return status;
+    }
+    std::vector<ripple::Book> books;
+    if (request.contains("books"))
+    {
+        auto parsed = validateAndGetBooks(request);
+        if (auto status = std::get_if<Status>(&parsed))
+            return *status;
+        books = std::get<std::vector<ripple::Book>>(parsed);
     }
 
     if (request.contains("streams"))
@@ -240,7 +283,11 @@ doSubscribe(Context const& context)
         subscribeToAccounts(request, context.session, *context.subscriptions);
 
     if (request.contains("accounts_proposed"))
-        subscribeToAccountsProposed(request, context.session, *context.subscriptions);
+        subscribeToAccountsProposed(
+            request, context.session, *context.subscriptions);
+
+    if (request.contains("books"))
+        subscribeToBooks(books, context.session, *context.subscriptions);
 
     boost::json::object response = {{"status", "success"}};
     return response;
@@ -251,8 +298,7 @@ doUnsubscribe(Context const& context)
 {
     auto request = context.params;
 
-
-   if (request.contains("streams"))
+    if (request.contains("streams"))
     {
         if (!request.at("streams").is_array())
             return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
@@ -265,7 +311,6 @@ doUnsubscribe(Context const& context)
 
     if (request.contains("accounts"))
     {
-
         if (!request.at("accounts").is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
@@ -281,10 +326,11 @@ doUnsubscribe(Context const& context)
         if (!request.at("accounts_proposed").is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
-        boost::json::array accounts = request.at("accounts_proposed").as_array();
+        boost::json::array accounts =
+            request.at("accounts_proposed").as_array();
         auto status = validateAccounts(accounts);
 
-        if(status)
+        if (status)
             return status;
     }
 
@@ -295,10 +341,11 @@ doUnsubscribe(Context const& context)
         unsubscribeToAccounts(request, context.session, *context.subscriptions);
 
     if (request.contains("accounts_proposed"))
-        unsubscribeToAccountsProposed(request, context.session, *context.subscriptions);
+        unsubscribeToAccountsProposed(
+            request, context.session, *context.subscriptions);
 
     boost::json::object response = {{"status", "success"}};
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

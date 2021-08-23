@@ -3,14 +3,13 @@
 
 #include <rpc/RPC.h>
 
-namespace RPC
-{
-    /*
-     * This file just contains declarations for all of the handlers
-     */
+namespace RPC {
+/*
+ * This file just contains declarations for all of the handlers
+ */
 
 // account state methods
-Result  
+Result
 doAccountInfo(Context const& context);
 
 Result
@@ -22,7 +21,7 @@ doAccountCurrencies(Context const& context);
 Result
 doAccountLines(Context const& context);
 
-Result  
+Result
 doAccountObjects(Context const& context);
 
 Result
@@ -30,7 +29,7 @@ doAccountOffers(Context const& context);
 
 // channels methods
 
-Result  
+Result
 doChannelAuthorize(Context const& context);
 
 Result
@@ -41,7 +40,7 @@ Result
 doBookOffers(Context const& context);
 
 // ledger methods
-Result  
+Result
 doLedger(Context const& context);
 
 Result
@@ -54,18 +53,22 @@ Result
 doLedgerRange(Context const& context);
 
 // transaction methods
-Result  
+Result
 doTx(Context const& context);
 
 Result
 doAccountTx(Context const& context);
 
 // subscriptions
-Result  
+Result
 doSubscribe(Context const& context);
 
 Result
 doUnsubscribe(Context const& context);
 
-} // namespace RPC
+// server methods
+Result
+doServerInfo(Context const& context);
+
+}  // namespace RPC
 #endif

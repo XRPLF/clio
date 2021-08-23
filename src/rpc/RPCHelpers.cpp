@@ -1,5 +1,6 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+namespace RPC {
 
 std::optional<ripple::STAmount>
 getDeliveredAmount(
@@ -211,8 +212,8 @@ toJson(ripple::LedgerInfo const& lgrInfo)
     return header;
 }
 
-std::variant<RPC::Status, ripple::LedgerInfo>
-ledgerInfoFromRequest(RPC::Context const& ctx)
+std::variant<Status, ripple::LedgerInfo>
+ledgerInfoFromRequest(Context const& ctx)
 {
     auto indexValue = ctx.params.contains("ledger_index")
         ? ctx.params.at("ledger_index")
@@ -226,13 +227,11 @@ ledgerInfoFromRequest(RPC::Context const& ctx)
     if (!hashValue.is_null())
     {
         if (!hashValue.is_string())
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
 
         ripple::uint256 ledgerHash;
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
+            return Status{Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
         lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash);
     }
@@ -244,8 +243,7 @@ ledgerInfoFromRequest(RPC::Context const& ctx)
         else if (!indexValue.is_string() && indexValue.is_int64())
             ledgerSequence = indexValue.as_int64();
         else
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
+            return Status{Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
         lgrInfo = ctx.backend->fetchLedgerBySequence(ledgerSequence);
     }
@@ -255,7 +253,7 @@ ledgerInfoFromRequest(RPC::Context const& ctx)
     }
 
     if (!lgrInfo)
-        return RPC::Status{RPC::Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+        return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
 
     return *lgrInfo;
 }
@@ -362,7 +360,7 @@ parseRippleLibSeed(boost::json::value const& value)
     return {};
 }
 
-std::variant<RPC::Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
+std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request)
 {
     bool const has_key_type = request.contains("key_type");
@@ -385,13 +383,12 @@ keypairFromRequst(boost::json::object const& request)
     }
 
     if (count == 0)
-        return RPC::Status{
-            RPC::Error::rpcINVALID_PARAMS, "missing field secret"};
+        return Status{Error::rpcINVALID_PARAMS, "missing field secret"};
 
     if (count > 1)
     {
-        return RPC::Status{
-            RPC::Error::rpcINVALID_PARAMS,
+        return Status{
+            Error::rpcINVALID_PARAMS,
             "Exactly one of the following must be specified: "
             " passphrase, secret, seed, or seed_hex"};
     }
@@ -402,19 +399,17 @@ keypairFromRequst(boost::json::object const& request)
     if (has_key_type)
     {
         if (!request.at("key_type").is_string())
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "keyTypeNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "keyTypeNotString"};
 
         std::string key_type = request.at("key_type").as_string().c_str();
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "invalidFieldKeyType"};
+            return Status{Error::rpcINVALID_PARAMS, "invalidFieldKeyType"};
 
         if (secretType == "secret")
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS,
+            return Status{
+                Error::rpcINVALID_PARAMS,
                 "The secret field is not allowed if key_type is used."};
     }
 
@@ -431,8 +426,8 @@ keypairFromRequst(boost::json::object const& request)
             // requested another key type, return an error.
             if (keyType.value_or(ripple::KeyType::ed25519) !=
                 ripple::KeyType::ed25519)
-                return RPC::Status{
-                    RPC::Error::rpcINVALID_PARAMS,
+                return Status{
+                    Error::rpcINVALID_PARAMS,
                     "Specified seed is for an Ed25519 wallet."};
 
             keyType = ripple::KeyType::ed25519;
@@ -447,9 +442,8 @@ keypairFromRequst(boost::json::object const& request)
         if (has_key_type)
         {
             if (!request.at(secretType).is_string())
-                return RPC::Status{
-                    RPC::Error::rpcINVALID_PARAMS,
-                    "secret value must be string"};
+                return Status{
+                    Error::rpcINVALID_PARAMS, "secret value must be string"};
 
             std::string key = request.at(secretType).as_string().c_str();
 
@@ -467,8 +461,8 @@ keypairFromRequst(boost::json::object const& request)
         else
         {
             if (!request.at("secret").is_string())
-                return RPC::Status{
-                    RPC::Error::rpcINVALID_PARAMS,
+                return Status{
+                    Error::rpcINVALID_PARAMS,
                     "field secret should be a string"};
 
             std::string secret = request.at("secret").as_string().c_str();
@@ -477,15 +471,13 @@ keypairFromRequst(boost::json::object const& request)
     }
 
     if (!seed)
-        return RPC::Status{
-            RPC::Error::rpcBAD_SEED,
-            "Bad Seed: invalid field message secretType"};
+        return Status{
+            Error::rpcBAD_SEED, "Bad Seed: invalid field message secretType"};
 
     if (keyType != ripple::KeyType::secp256k1 &&
         keyType != ripple::KeyType::ed25519)
-        return RPC::Status{
-            RPC::Error::rpcINVALID_PARAMS,
-            "keypairForSignature: invalid key type"};
+        return Status{
+            Error::rpcINVALID_PARAMS, "keypairForSignature: invalid key type"};
 
     return generateKeyPair(*keyType, *seed);
 }
@@ -672,3 +664,130 @@ transferRate(
 
     return ripple::parityRate;
 }
+
+std::variant<Status, ripple::Book>
+parseBook(boost::json::object const& request)
+{
+    if (!request.contains("taker_pays"))
+        return Status{Error::rpcINVALID_PARAMS, "missingTakerPays"};
+
+    if (!request.contains("taker_gets"))
+        return Status{Error::rpcINVALID_PARAMS, "missingTakerGets"};
+
+    if (!request.at("taker_pays").is_object())
+        return Status{Error::rpcINVALID_PARAMS, "takerPaysNotObject"};
+
+    if (!request.at("taker_gets").is_object())
+        return Status{Error::rpcINVALID_PARAMS, "takerGetsNotObject"};
+
+    auto taker_pays = request.at("taker_pays").as_object();
+    if (!taker_pays.contains("currency"))
+        return Status{Error::rpcINVALID_PARAMS, "missingTakerPaysCurrency"};
+
+    if (!taker_pays.at("currency").is_string())
+        return Status{Error::rpcINVALID_PARAMS, "takerPaysCurrencyNotString"};
+
+    auto taker_gets = request.at("taker_gets").as_object();
+    if (!taker_gets.contains("currency"))
+        return Status{Error::rpcINVALID_PARAMS, "missingTakerGetsCurrency"};
+
+    if (!taker_gets.at("currency").is_string())
+        return Status{Error::rpcINVALID_PARAMS, "takerGetsCurrencyNotString"};
+
+    ripple::Currency pay_currency;
+    if (!ripple::to_currency(
+            pay_currency, taker_pays.at("currency").as_string().c_str()))
+        return Status{Error::rpcINVALID_PARAMS, "badTakerPaysCurrency"};
+
+    ripple::Currency get_currency;
+    if (!ripple::to_currency(
+            get_currency, taker_gets["currency"].as_string().c_str()))
+        return Status{Error::rpcINVALID_PARAMS, "badTakerGetsCurrency"};
+
+    ripple::AccountID pay_issuer;
+    if (taker_pays.contains("issuer"))
+    {
+        if (!taker_pays.at("issuer").is_string())
+            return Status{Error::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
+
+        if (!ripple::to_issuer(
+                pay_issuer, taker_pays.at("issuer").as_string().c_str()))
+            return Status{Error::rpcINVALID_PARAMS, "badTakerPaysIssuer"};
+
+        if (pay_issuer == ripple::noAccount())
+            return Status{
+                Error::rpcINVALID_PARAMS, "badTakerPaysIssuerAccountOne"};
+    }
+    else
+    {
+        pay_issuer = ripple::xrpAccount();
+    }
+
+    if (isXRP(pay_currency) && !isXRP(pay_issuer))
+        return Status{
+            Error::rpcINVALID_PARAMS,
+            "Unneeded field 'taker_pays.issuer' for XRP currency "
+            "specification."};
+
+    if (!isXRP(pay_currency) && isXRP(pay_issuer))
+        return Status{
+            Error::rpcINVALID_PARAMS,
+            "Invalid field 'taker_pays.issuer', expected non-XRP "
+            "issuer."};
+
+    ripple::AccountID get_issuer;
+
+    if (taker_gets.contains("issuer"))
+    {
+        if (!taker_gets["issuer"].is_string())
+            return Status{
+                Error::rpcINVALID_PARAMS, "taker_gets.issuer should be string"};
+
+        if (!ripple::to_issuer(
+                get_issuer, taker_gets.at("issuer").as_string().c_str()))
+            return Status{
+                Error::rpcINVALID_PARAMS,
+                "Invalid field 'taker_gets.issuer', bad issuer."};
+
+        if (get_issuer == ripple::noAccount())
+            return Status{
+                Error::rpcINVALID_PARAMS,
+                "Invalid field 'taker_gets.issuer', bad issuer account "
+                "one."};
+    }
+    else
+    {
+        get_issuer = ripple::xrpAccount();
+    }
+
+    if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
+        return Status{
+            Error::rpcINVALID_PARAMS,
+            "Unneeded field 'taker_gets.issuer' for XRP currency "
+            "specification."};
+
+    if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
+        return Status{
+            Error::rpcINVALID_PARAMS,
+            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+
+    if (pay_currency == get_currency && pay_issuer == get_issuer)
+        return Status{Error::rpcINVALID_PARAMS, "badMarket"};
+
+    return ripple::Book{{pay_currency, pay_issuer}, {get_currency, get_issuer}};
+}
+std::variant<Status, ripple::AccountID>
+parseTaker(boost::json::value const& taker)
+{
+    std::optional<ripple::AccountID> takerID = {};
+    if (!taker.is_string())
+        return {Status{Error::rpcINVALID_PARAMS, "takerNotString"}};
+
+    takerID = accountFromStringStrict(taker.as_string().c_str());
+
+    if (!takerID)
+        return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
+    return *takerID;
+}
+
+}  // namespace RPC
