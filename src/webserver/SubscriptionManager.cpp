@@ -6,7 +6,7 @@ void
 SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
-    streamSubscribers_[Ledgers].emplace(std::move(session));
+    streamSubscribers_[Ledgers].emplace(session);
 }
 
 void
@@ -48,7 +48,7 @@ void
 SubscriptionManager::subTransactions(std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
-    streamSubscribers_[Transactions].emplace(std::move(session));
+    streamSubscribers_[Transactions].emplace(session);
 }
 
 void
@@ -64,7 +64,7 @@ SubscriptionManager::subAccount(
     std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
-    accountSubscribers_[account].emplace(std::move(session));
+    accountSubscribers_[account].emplace(session);
 }
 
 void
@@ -82,7 +82,7 @@ SubscriptionManager::subBook(
     std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
-    bookSubscribers_[book].emplace(std::move(session));
+    bookSubscribers_[book].emplace(session);
 }
 
 void
@@ -115,6 +115,42 @@ SubscriptionManager::pubTransaction(
     for (ripple::AccountID const& account : accounts)
         for (auto const& session : accountSubscribers_[account])
             session->send(boost::json::serialize(pubMsg));
+
+    for (auto const& node : meta->peekNodes())
+    {
+        if (!node.isFieldPresent(ripple::sfLedgerEntryType))
+            assert(false);
+        if (node.getFieldU16(ripple::sfLedgerEntryType) == ripple::ltOFFER)
+        {
+            ripple::SField const* field = nullptr;
+
+            // We need a field that contains the TakerGets and TakerPays
+            // parameters.
+            if (node.getFName() == ripple::sfModifiedNode)
+                field = &ripple::sfPreviousFields;
+            else if (node.getFName() == ripple::sfCreatedNode)
+                field = &ripple::sfNewFields;
+            else if (node.getFName() == ripple::sfDeletedNode)
+                field = &ripple::sfFinalFields;
+
+            if (field)
+            {
+                auto data = dynamic_cast<const ripple::STObject*>(
+                    node.peekAtPField(*field));
+
+                if (data && data->isFieldPresent(ripple::sfTakerPays) &&
+                    data->isFieldPresent(ripple::sfTakerGets))
+                {
+                    // determine the OrderBook
+                    ripple::Book book{
+                        data->getFieldAmount(ripple::sfTakerGets).issue(),
+                        data->getFieldAmount(ripple::sfTakerPays).issue()};
+                    for (auto const& session : bookSubscribers_[book])
+                        session->send(boost::json::serialize(pubMsg));
+                }
+            }
+        }
+    }
 }
 
 void
@@ -139,7 +175,7 @@ SubscriptionManager::subProposedAccount(
     std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
-    accountProposedSubscribers_[account].emplace(std::move(session));
+    accountProposedSubscribers_[account].emplace(session);
 }
 
 void
@@ -155,7 +191,7 @@ void
 SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
-    streamSubscribers_[TransactionsProposed].emplace(std::move(session));
+    streamSubscribers_[TransactionsProposed].emplace(session);
 }
 
 void
