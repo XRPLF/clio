@@ -17,34 +17,6 @@ SubscriptionManager::unsubLedger(std::shared_ptr<WsBase>& session)
 }
 
 void
-SubscriptionManager::pubLedger(
-    ripple::LedgerInfo const& lgrInfo,
-    ripple::Fees const& fees,
-    std::string const& ledgerRange,
-    std::uint32_t txnCount)
-{
-    boost::json::object pubMsg;
-
-    pubMsg["type"] = "ledgerClosed";
-    pubMsg["ledger_index"] = lgrInfo.seq;
-    pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
-    pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
-
-    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
-    pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
-    pubMsg["reserve_base"] =
-        RPC::toBoostJson(fees.accountReserve(0).jsonClipped());
-    pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
-
-    pubMsg["validated_ledgers"] = ledgerRange;
-    pubMsg["txn_count"] = txnCount;
-
-    std::lock_guard lk(m_);
-    for (auto const& session : streamSubscribers_[Ledgers])
-        session->send(boost::json::serialize(pubMsg));
-}
-
-void
 SubscriptionManager::subTransactions(std::shared_ptr<WsBase>& session)
 {
     std::lock_guard lk(m_);
@@ -95,26 +67,69 @@ SubscriptionManager::unsubBook(
 }
 
 void
+SubscriptionManager::sendAll(
+    std::string const& pubMsg,
+    std::unordered_set<std::shared_ptr<WsBase>>& subs)
+{
+    std::lock_guard lk(m_);
+    for (auto it = subs.begin(); it != subs.end();)
+    {
+        auto& session = *it;
+        if (session->dead())
+        {
+            it = subs.erase(it);
+        }
+        else
+        {
+            session->publishToStream(pubMsg);
+            ++it;
+        }
+    }
+}
+
+void
+SubscriptionManager::pubLedger(
+    ripple::LedgerInfo const& lgrInfo,
+    ripple::Fees const& fees,
+    std::string const& ledgerRange,
+    std::uint32_t txnCount)
+{
+    boost::json::object pubMsg;
+
+    pubMsg["type"] = "ledgerClosed";
+    pubMsg["ledger_index"] = lgrInfo.seq;
+    pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
+    pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
+
+    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
+    pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
+    pubMsg["reserve_base"] =
+        RPC::toBoostJson(fees.accountReserve(0).jsonClipped());
+    pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
+
+    pubMsg["validated_ledgers"] = ledgerRange;
+    pubMsg["txn_count"] = txnCount;
+
+    sendAll(boost::json::serialize(pubMsg), streamSubscribers_[Ledgers]);
+}
+
+void
 SubscriptionManager::pubTransaction(
     Backend::TransactionAndMetadata const& blobs,
     std::uint32_t seq)
 {
-    std::lock_guard lk(m_);
-
     auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, seq);
-    boost::json::object pubMsg;
-    pubMsg["transaction"] = RPC::toJson(*tx);
-    pubMsg["meta"] = RPC::toJson(*meta);
-
-    for (auto const& session : streamSubscribers_[Transactions])
-        session->send(boost::json::serialize(pubMsg));
+    boost::json::object pubObj;
+    pubObj["transaction"] = RPC::toJson(*tx);
+    pubObj["meta"] = RPC::toJson(*meta);
+    std::string pubMsg{boost::json::serialize(pubObj)};
+    sendAll(pubMsg, streamSubscribers_[Transactions]);
 
     auto journal = ripple::debugLog();
     auto accounts = meta->getAffectedAccounts(journal);
 
     for (ripple::AccountID const& account : accounts)
-        for (auto const& session : accountSubscribers_[account])
-            session->send(boost::json::serialize(pubMsg));
+        sendAll(pubMsg, accountSubscribers_[account]);
 
     for (auto const& node : meta->peekNodes())
     {
@@ -145,8 +160,7 @@ SubscriptionManager::pubTransaction(
                     ripple::Book book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
                         data->getFieldAmount(ripple::sfTakerPays).issue()};
-                    for (auto const& session : bookSubscribers_[book])
-                        session->send(boost::json::serialize(pubMsg));
+                    sendAll(pubMsg, bookSubscribers_[book]);
                 }
             }
         }
@@ -157,16 +171,14 @@ void
 SubscriptionManager::forwardProposedTransaction(
     boost::json::object const& response)
 {
-    std::lock_guard lk(m_);
-    for (auto const& session : streamSubscribers_[TransactionsProposed])
-        session->send(boost::json::serialize(response));
+    std::string pubMsg{boost::json::serialize(pubMsg)};
+    sendAll(pubMsg, streamSubscribers_[TransactionsProposed]);
 
     auto transaction = response.at("transaction").as_object();
     auto accounts = RPC::getAccountsFromTransaction(transaction);
 
     for (ripple::AccountID const& account : accounts)
-        for (auto const& session : accountProposedSubscribers_[account])
-            session->send(boost::json::serialize(response));
+        sendAll(pubMsg, accountProposedSubscribers_[account]);
 }
 
 void
@@ -201,25 +213,3 @@ SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase>& session)
     streamSubscribers_[TransactionsProposed].erase(session);
 }
 
-void
-SubscriptionManager::clearSession(WsBase* s)
-{
-    std::lock_guard lk(m_);
-
-    // need the == operator. No-op delete
-    std::shared_ptr<WsBase> targetSession(s, [](WsBase*) {});
-    for (auto& stream : streamSubscribers_)
-        stream.erase(targetSession);
-
-    for (auto& [account, subscribers] : accountSubscribers_)
-    {
-        if (subscribers.find(targetSession) != subscribers.end())
-            accountSubscribers_[account].erase(targetSession);
-    }
-
-    for (auto& [account, subscribers] : accountProposedSubscribers_)
-    {
-        if (subscribers.find(targetSession) != subscribers.end())
-            accountProposedSubscribers_[account].erase(targetSession);
-    }
-}

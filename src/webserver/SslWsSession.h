@@ -142,7 +142,7 @@ private:
     on_handshake(boost::beast::error_code ec, std::size_t bytes_used)
     {
         if (ec)
-            return wsFail(ec, "handshake");
+            return logError(ec, "handshake");
 
         // Consume the portion of the buffer used by the handshake
         buffer_.consume(bytes_used);

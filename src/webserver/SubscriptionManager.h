@@ -27,7 +27,7 @@ class WsBase;
 
 class SubscriptionManager
 {
-    using subscriptions = std::set<std::shared_ptr<WsBase>>;
+    using subscriptions = std::unordered_set<std::shared_ptr<WsBase>>;
 
     enum SubscriptionType {
         Ledgers,
@@ -109,8 +109,11 @@ public:
     void
     unsubProposedTransactions(std::shared_ptr<WsBase>& session);
 
+private:
     void
-    clearSession(WsBase* session);
+    sendAll(
+        std::string const& pubMsg,
+        std::unordered_set<std::shared_ptr<WsBase>>& subs);
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H

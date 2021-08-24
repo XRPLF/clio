@@ -1,12 +1,12 @@
 #ifndef REPORTING_RPC_H_INCLUDED
 #define REPORTING_RPC_H_INCLUDED
 
+#include <ripple/protocol/ErrorCodes.h>
+#include <boost/json.hpp>
+#include <backend/BackendInterface.h>
 #include <optional>
 #include <string>
 #include <variant>
-#include <boost/json.hpp>
-#include <ripple/protocol/ErrorCodes.h>
-#include <backend/BackendInterface.h>
 /*
  * This file contains various classes necessary for executing RPC handlers.
  * Context gives the handlers access to various other parts of the application
@@ -22,8 +22,7 @@ class WsBase;
 class SubscriptionManager;
 class ETLLoadBalancer;
 
-namespace RPC
-{
+namespace RPC {
 
 struct Context
 {
@@ -31,8 +30,11 @@ struct Context
     std::uint32_t version;
     boost::json::object const& params;
     std::shared_ptr<BackendInterface> const& backend;
-    std::shared_ptr<SubscriptionManager> const& subscriptions;
     std::shared_ptr<ETLLoadBalancer> const& balancer;
+    // this needs to be an actual shared_ptr, not a reference. The above
+    // references refer to shared_ptr members of WsBase, but WsBase contains
+    // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
+    std::shared_ptr<SubscriptionManager> subscriptions;
     std::shared_ptr<WsBase> session;
     Backend::LedgerRange const& range;
 
@@ -45,15 +47,16 @@ struct Context
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
         std::shared_ptr<WsBase> const& session_,
         Backend::LedgerRange const& range_)
-    : method(command_)
-    , version(version_)
-    , params(params_)
-    , backend(backend_)
-    , subscriptions(subscriptions_)
-    , balancer(balancer_)
-    , session(session_)
-    , range(range_)
-    {}
+        : method(command_)
+        , version(version_)
+        , params(params_)
+        , backend(backend_)
+        , subscriptions(subscriptions_)
+        , balancer(balancer_)
+        , session(session_)
+        , range(range_)
+    {
+    }
 };
 using Error = ripple::error_code_i;
 
@@ -62,14 +65,14 @@ struct Status
     Error error = Error::rpcSUCCESS;
     std::string message = "";
 
-    Status() {};
+    Status(){};
 
-    Status(Error error_) : error(error_) {};
+    Status(Error error_) : error(error_){};
 
     Status(Error error_, std::string message_)
-    : error(error_)
-    , message(message_) 
-    {}
+        : error(error_), message(message_)
+    {
+    }
 
     /** Returns true if the Status is *not* OK. */
     operator bool() const
@@ -94,7 +97,6 @@ make_error(Error err);
 boost::json::object
 make_error(Error err, std::string const& message);
 
-
 std::optional<Context>
 make_WsContext(
     boost::json::object const& request,
@@ -114,7 +116,7 @@ make_HttpContext(
 
 Result
 buildResponse(Context const& ctx);
-    
-} // namespace RPC
 
-#endif //REPORTING_RPC_H_INCLUDED
+}  // namespace RPC
+
+#endif  // REPORTING_RPC_H_INCLUDED

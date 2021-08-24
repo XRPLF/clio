@@ -39,9 +39,10 @@ namespace websocket = boost::beast::websocket;
 using tcp = boost::asio::ip::tcp;
 
 inline void
-wsFail(boost::beast::error_code ec, char const* what)
+logError(boost::beast::error_code ec, char const* what)
 {
-    std::cerr << what << ": " << ec.message() << "\n";
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " : " << what << ": " << ec.message() << "\n";
 }
 
 inline boost::json::object
@@ -60,13 +61,28 @@ getDefaultWsResponse(boost::json::value const& id)
 
 class WsBase
 {
+    std::atomic_bool dead_ = false;
+
 public:
     // Send, that enables SubscriptionManager to publish to clients
     virtual void
-    send(std::string&& msg) = 0;
+    publishToStream(std::string const& msg) = 0;
 
     virtual ~WsBase()
     {
+    }
+
+    void
+    wsFail(boost::beast::error_code ec, char const* what)
+    {
+        logError(ec, what);
+        dead_ = true;
+    }
+
+    bool
+    dead()
+    {
+        return dead_;
     }
 };
 
@@ -81,12 +97,16 @@ class WsSession : public WsBase,
     using std::enable_shared_from_this<WsSession<Derived>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
-    std::string response_;
+    std::string responseBuffer_;
 
     std::shared_ptr<BackendInterface> backend_;
+    // has to be a weak ptr because SubscriptionManager maintains collections
+    // of std::shared_ptr<WsBase> objects. If this were shared, there would be
+    // a cyclical dependency that would block destruction
     std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    std::mutex mtx_;
 
 public:
     explicit WsSession(
@@ -115,11 +135,31 @@ public:
     }
 
     void
-    send(std::string&& msg)
+    publishToStream(std::string const& msg)
     {
+        // msg might not stick around for as long as it takes to write, so we
+        // make a copy and capture it in the lambda
+        auto msgSaved = std::make_unique<std::string>(msg);
+
+        std::lock_guard<std::mutex> lck(mtx_);
+        derived().ws().text(derived().ws().got_text());
+        // we send from SubscriptionManager as well as from on_read
+        derived().ws().async_write(
+            boost::asio::buffer(*msgSaved),
+            [m = std::move(msgSaved), shared = shared_from_this()](
+                auto ec, size_t size) {
+                if (ec)
+                    return shared->wsFail(ec, "publishToStream");
+            });
+    }
+    void
+    sendResponse(boost::json::object const& object)
+    {
+        std::lock_guard<std::mutex> lck(mtx_);
+        responseBuffer_ = boost::json::serialize(object);
         derived().ws().text(derived().ws().got_text());
         derived().ws().async_write(
-            boost::asio::buffer(msg),
+            boost::asio::buffer(responseBuffer_),
             boost::beast::bind_front_handler(
                 &WsSession::on_write, this->shared_from_this()));
     }
@@ -157,19 +197,9 @@ public:
     }
 
     void
-    do_close()
-    {
-        std::shared_ptr<SubscriptionManager> mgr = subscriptions_.lock();
-
-        if (!mgr)
-            return;
-
-        mgr->clearSession(this);
-    }
-
-    void
     do_read()
     {
+        std::lock_guard<std::mutex> lck{mtx_};
         // Read a message into our buffer
         derived().ws().async_read(
             buffer_,
@@ -182,18 +212,11 @@ public:
     {
         boost::ignore_unused(bytes_transferred);
 
-        // This indicates that the session was closed
-        if (ec == boost::beast::websocket::error::closed)
-        {
-            return;
-        }
-
         if (ec)
             return wsFail(ec, "read");
 
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
         boost::json::object response;
         auto ip = derived().ip();
         BOOST_LOG_TRIVIAL(debug)
@@ -211,8 +234,8 @@ public:
                 {
                     auto range = backend_->fetchLedgerRange();
                     if (!range)
-                        return send(boost::json::serialize(
-                            RPC::make_error(RPC::Error::rpcNOT_READY)));
+                        return sendResponse(
+                            RPC::make_error(RPC::Error::rpcNOT_READY));
 
                     std::optional<RPC::Context> context = RPC::make_WsContext(
                         request,
@@ -223,13 +246,13 @@ public:
                         *range);
 
                     if (!context)
-                        return send(boost::json::serialize(
-                            RPC::make_error(RPC::Error::rpcBAD_SYNTAX)));
+                        return sendResponse(
+                            RPC::make_error(RPC::Error::rpcBAD_SYNTAX));
 
                     auto id =
                         request.contains("id") ? request.at("id") : nullptr;
 
-                    auto response = getDefaultWsResponse(id);
+                    response = getDefaultWsResponse(id);
                     boost::json::object& result =
                         response["result"].as_object();
 
@@ -243,23 +266,18 @@ public:
                         if (!id.is_null())
                             error["id"] = id;
                         error["request"] = request;
-
-                        response_ = boost::json::serialize(error);
+                        response = error;
                     }
                     else
                     {
-                        auto json = std::get<boost::json::object>(v);
-                        response_ = boost::json::serialize(json);
+                        response = std::get<boost::json::object>(v);
                     }
-
-                    if (!dosGuard_.add(ip, response_.size()))
-                        result["warning"] = "Too many requests";
                 }
                 catch (Backend::DatabaseTimeout const& t)
                 {
                     BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                    return send(boost::json::serialize(
-                        RPC::make_error(RPC::Error::rpcNOT_READY)));
+                    return sendResponse(
+                        RPC::make_error(RPC::Error::rpcNOT_READY));
                 }
             }
             catch (std::exception const& e)
@@ -267,13 +285,13 @@ public:
                 BOOST_LOG_TRIVIAL(error)
                     << __func__ << " caught exception : " << e.what();
 
-                return send(boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcINTERNAL)));
+                return sendResponse(RPC::make_error(RPC::Error::rpcINTERNAL));
             }
         }
-        BOOST_LOG_TRIVIAL(trace) << __func__ << response_;
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " : " << boost::json::serialize(response);
 
-        send(std::move(response_));
+        sendResponse(response);
     }
 
     void
@@ -286,7 +304,7 @@ public:
 
         // Clear the buffer
         buffer_.consume(buffer_.size());
-
+        responseBuffer_.clear();
         // Do another read
         do_read();
     }
