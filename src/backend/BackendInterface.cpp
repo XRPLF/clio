@@ -120,10 +120,6 @@ BackendInterface::fetchBookOffers(
                 offerDir->key};
             auto indexes = sle.getFieldV256(ripple::sfIndexes);
             keys.insert(keys.end(), indexes.begin(), indexes.end());
-            // TODO we probably don't have to wait here. We can probably fetch
-            // these objects in another thread, and move on to another page of
-            // the book directory, or another directory. We also could just
-            // accumulate all of the keys before fetching the offers
             auto next = sle.getFieldU64(ripple::sfIndexNext);
             if (!next)
             {
@@ -142,7 +138,7 @@ BackendInterface::fetchBookOffers(
     }
     auto mid = std::chrono::system_clock::now();
     auto objs = fetchLedgerObjects(keys, ledgerSequence);
-    for (size_t i = 0; i < keys.size(); ++i)
+    for (size_t i = 0; i < keys.size() && i < limit; ++i)
     {
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " key = " << ripple::strHex(keys[i])
@@ -153,14 +149,15 @@ BackendInterface::fetchBookOffers(
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " "
-        << "Fetching " << std::to_string(keys.size()) << " keys took "
+        << "Fetching " << std::to_string(keys.size()) << " offers took "
         << std::to_string(getMillis(mid - begin))
         << " milliseconds. Fetching next dir took "
         << std::to_string(succMillis) << " milliseonds. Fetched next dir "
         << std::to_string(numSucc) << " times"
         << " Fetching next page of dir took " << std::to_string(pageMillis)
+        << " milliseconds"
         << ". num pages = " << std::to_string(numPages)
-        << " milliseconds. Fetching all objects took "
+        << ". Fetching all objects took "
         << std::to_string(getMillis(end - mid))
         << " milliseconds. total time = "
         << std::to_string(getMillis(end - begin)) << " milliseconds";
@@ -198,7 +195,6 @@ BackendInterface::fetchLedgerPage(
     uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
     page.cursor = cursor;
-    int numCalls = 0;
     do
     {
         adjustedLimit = adjustedLimit >= 8192 ? 8192 : adjustedLimit * 2;
@@ -221,7 +217,7 @@ BackendInterface::fetchLedgerPage(
         page.objects.insert(
             page.objects.end(), partial.objects.begin(), partial.objects.end());
         page.cursor = partial.cursor;
-    } while (page.objects.size() < limit && page.cursor && ++numCalls < 10);
+    } while (page.objects.size() < limit && page.cursor);
     if (incomplete)
     {
         auto rng = fetchLedgerRange();
