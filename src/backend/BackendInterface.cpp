@@ -41,7 +41,7 @@ BackendInterface::writeLedgerObject(
     uint32_t seq,
     std::string&& blob) const
 {
-    assert(key.size() == sizeof(rippled::uint256));
+    assert(key.size() == sizeof(ripple::uint256));
     ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
     indexer_.addKey(std::move(key256));
     doWriteLedgerObject(std::move(key), seq, std::move(blob));
