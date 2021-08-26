@@ -193,14 +193,18 @@ unsubscribeToAccountsProposed(
     }
 }
 
-std::variant<Status, std::vector<ripple::Book>>
-validateAndGetBooks(boost::json::object const& request)
+std::variant<Status, std::pair<std::vector<ripple::Book>, boost::json::array>>
+validateAndGetBooks(
+    boost::json::object const& request,
+    std::shared_ptr<Backend::BackendInterface> const& backend)
 {
     if (!request.at("books").is_array())
         return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
     boost::json::array const& books = request.at("books").as_array();
 
     std::vector<ripple::Book> booksToSub;
+    std::optional<Backend::LedgerRange> rng;
+    boost::json::array snapshot;
     for (auto const& book : books)
     {
         auto parsed = parseBook(book.as_object());
@@ -210,11 +214,46 @@ validateAndGetBooks(boost::json::object const& request)
         {
             auto b = std::get<ripple::Book>(parsed);
             booksToSub.push_back(b);
-            if (book.as_object().contains("both"))
+            bool both = book.as_object().contains("both");
+            if (both)
                 booksToSub.push_back(ripple::reversed(b));
+
+            if (book.as_object().contains("snapshot"))
+            {
+                if (!rng)
+                    rng = backend->fetchLedgerRange();
+                ripple::AccountID takerID = beast::zero;
+                if (book.as_object().contains("taker"))
+                {
+                    auto parsed = parseTaker(request.at("taker"));
+                    if (auto status = std::get_if<Status>(&parsed))
+                        return *status;
+                    else
+                    {
+                        takerID = std::get<ripple::AccountID>(parsed);
+                    }
+                }
+                auto getOrderBook =
+                    [&snapshot, &backend, &rng, &takerID](auto book) {
+                        auto bookBase = getBookBase(book);
+                        auto [offers, retCursor, warning] =
+                            backend->fetchBookOffers(
+                                bookBase, rng->maxSequence, 200, {});
+
+                        auto orderBook = postProcessOrderBook(
+                            offers, book, takerID, *backend, rng->maxSequence);
+                        std::copy(
+                            orderBook.begin(),
+                            orderBook.end(),
+                            std::back_inserter(snapshot));
+                    };
+                getOrderBook(b);
+                if (both)
+                    getOrderBook(ripple::reversed(b));
+            }
         }
     }
-    return booksToSub;
+    return std::make_pair(booksToSub, snapshot);
 }
 void
 subscribeToBooks(
@@ -268,12 +307,17 @@ doSubscribe(Context const& context)
             return status;
     }
     std::vector<ripple::Book> books;
+    boost::json::array snapshot;
     if (request.contains("books"))
     {
-        auto parsed = validateAndGetBooks(request);
+        auto parsed = validateAndGetBooks(request, context.backend);
         if (auto status = std::get_if<Status>(&parsed))
             return *status;
-        books = std::get<std::vector<ripple::Book>>(parsed);
+        auto [bks, snap] =
+            std::get<std::pair<std::vector<ripple::Book>, boost::json::array>>(
+                parsed);
+        books = std::move(bks);
+        snapshot = std::move(snap);
     }
 
     if (request.contains("streams"))
@@ -290,6 +334,8 @@ doSubscribe(Context const& context)
         subscribeToBooks(books, context.session, *context.subscriptions);
 
     boost::json::object response = {{"status", "success"}};
+    if (snapshot.size())
+        response["offers"] = snapshot;
     return response;
 }
 

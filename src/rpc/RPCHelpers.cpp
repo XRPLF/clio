@@ -559,7 +559,7 @@ isFrozen(
             return false;
 
         ripple::SerialIter issuerIt{blob->data(), blob->size()};
-        ripple::SLE issuerLine{it, key};
+        ripple::SLE issuerLine{issuerIt, key};
 
         auto frozen =
             (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
@@ -613,8 +613,8 @@ accountHolds(
     {
         return {xrpLiquid(backend, sequence, account)};
     }
-
     auto key = ripple::keylet::line(account, issuer, currency).key;
+
     auto const blob = backend.fetchLedgerObject(key, sequence);
 
     if (!blob)
@@ -663,6 +663,135 @@ transferRate(
     }
 
     return ripple::parityRate;
+}
+
+boost::json::array
+postProcessOrderBook(
+    std::vector<Backend::LedgerObject> const& offers,
+    ripple::Book const& book,
+    ripple::AccountID const& takerID,
+    Backend::BackendInterface const& backend,
+    uint32_t ledgerSequence)
+{
+    boost::json::array jsonOffers;
+
+    std::map<ripple::AccountID, ripple::STAmount> umBalance;
+
+    bool globalFreeze =
+        isGlobalFrozen(backend, ledgerSequence, book.out.account) ||
+        isGlobalFrozen(backend, ledgerSequence, book.out.account);
+
+    auto rate = transferRate(backend, ledgerSequence, book.out.account);
+
+    for (auto const& obj : offers)
+    {
+        try
+        {
+            ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
+            ripple::SLE offer{it, obj.key};
+            ripple::uint256 bookDir =
+                offer.getFieldH256(ripple::sfBookDirectory);
+
+            auto const uOfferOwnerID = offer.getAccountID(ripple::sfAccount);
+            auto const& saTakerGets = offer.getFieldAmount(ripple::sfTakerGets);
+            auto const& saTakerPays = offer.getFieldAmount(ripple::sfTakerPays);
+            ripple::STAmount saOwnerFunds;
+            bool firstOwnerOffer = true;
+
+            if (book.out.account == uOfferOwnerID)
+            {
+                // If an offer is selling issuer's own IOUs, it is fully
+                // funded.
+                saOwnerFunds = saTakerGets;
+            }
+            else if (globalFreeze)
+            {
+                // If either asset is globally frozen, consider all offers
+                // that aren't ours to be totally unfunded
+                saOwnerFunds.clear(book.out);
+            }
+            else
+            {
+                auto umBalanceEntry = umBalance.find(uOfferOwnerID);
+                if (umBalanceEntry != umBalance.end())
+                {
+                    // Found in running balance table.
+
+                    saOwnerFunds = umBalanceEntry->second;
+                    firstOwnerOffer = false;
+                }
+                else
+                {
+                    saOwnerFunds = accountHolds(
+                        backend,
+                        ledgerSequence,
+                        uOfferOwnerID,
+                        book.out.currency,
+                        book.out.account);
+
+                    if (saOwnerFunds < beast::zero)
+                        saOwnerFunds.clear();
+                }
+            }
+
+            boost::json::object offerJson = toJson(offer);
+
+            ripple::STAmount saTakerGetsFunded;
+            ripple::STAmount saOwnerFundsLimit = saOwnerFunds;
+            ripple::Rate offerRate = ripple::parityRate;
+            ripple::STAmount dirRate =
+                ripple::amountFromQuality(getQuality(bookDir));
+
+            if (rate != ripple::parityRate
+                // Have a tranfer fee.
+                && takerID != book.out.account
+                // Not taking offers of own IOUs.
+                && book.out.account != uOfferOwnerID)
+            // Offer owner not issuing ownfunds
+            {
+                // Need to charge a transfer fee to offer owner.
+                offerRate = rate;
+                saOwnerFundsLimit = ripple::divide(saOwnerFunds, offerRate);
+            }
+
+            if (saOwnerFundsLimit >= saTakerGets)
+            {
+                // Sufficient funds no shenanigans.
+                saTakerGetsFunded = saTakerGets;
+            }
+            else
+            {
+                saTakerGetsFunded = saOwnerFundsLimit;
+                offerJson["taker_gets_funded"] = saTakerGetsFunded.getText();
+                offerJson["taker_pays_funded"] = toBoostJson(
+                    std::min(
+                        saTakerPays,
+                        ripple::multiply(
+                            saTakerGetsFunded, dirRate, saTakerPays.issue()))
+                        .getJson(ripple::JsonOptions::none));
+            }
+
+            ripple::STAmount saOwnerPays = (ripple::parityRate == offerRate)
+                ? saTakerGetsFunded
+                : std::min(
+                      saOwnerFunds,
+                      ripple::multiply(saTakerGetsFunded, offerRate));
+
+            umBalance[uOfferOwnerID] = saOwnerFunds - saOwnerPays;
+
+            if (firstOwnerOffer)
+                offerJson["owner_funds"] = saOwnerFunds.getText();
+
+            offerJson["quality"] = dirRate.getText();
+
+            jsonOffers.push_back(offerJson);
+        }
+        catch (std::exception const& e)
+        {
+            BOOST_LOG_TRIVIAL(error) << "caught exception: " << e.what();
+        }
+    }
+    return jsonOffers;
 }
 
 std::variant<Status, ripple::Book>

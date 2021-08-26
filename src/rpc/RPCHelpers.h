@@ -111,6 +111,13 @@ xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& id);
+boost::json::array
+postProcessOrderBook(
+    std::vector<Backend::LedgerObject> const& offers,
+    ripple::Book const& book,
+    ripple::AccountID const& takerID,
+    Backend::BackendInterface const& backend,
+    uint32_t ledgerSequence);
 
 std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request);

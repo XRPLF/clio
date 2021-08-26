@@ -49,7 +49,7 @@ BackendInterface::writeLedgerObject(
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    BOOST_LOG_TRIVIAL(warning) << __func__;
+    BOOST_LOG_TRIVIAL(debug) << __func__;
     while (true)
     {
         try
