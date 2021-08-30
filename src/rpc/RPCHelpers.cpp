@@ -5,11 +5,11 @@ namespace RPC {
 std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::STObject const> const& meta,
+    std::shared_ptr<ripple::TxMeta const> const& meta,
     uint32_t ledgerSequence)
 {
-    if (meta->isFieldPresent(ripple::sfDeliveredAmount))
-        return meta->getFieldAmount(ripple::sfDeliveredAmount);
+    if (meta->hasDeliveredAmount())
+        return meta->getDeliveredAmount();
     if (txn->isFieldPresent(ripple::sfAmount))
     {
         using namespace std::chrono_literals;
@@ -33,7 +33,7 @@ getDeliveredAmount(
 bool
 canHaveDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::STObject const> const& meta)
+    std::shared_ptr<ripple::TxMeta const> const& meta)
 {
     ripple::TxType const tt{txn->getTxnType()};
     if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH &&
@@ -45,8 +45,7 @@ canHaveDeliveredAmount(
         return false;
         */
 
-    if (ripple::TER::fromInt(meta->getFieldU8(ripple::sfTransactionResult)) !=
-        ripple::tesSUCCESS)
+    if (meta->getResultTER() != ripple::tesSUCCESS)
         return false;
 
     return true;
@@ -152,18 +151,29 @@ toJson(ripple::STBase const& obj)
 std::pair<boost::json::object, boost::json::object>
 toExpandedJson(Backend::TransactionAndMetadata const& blobs)
 {
-    auto [txn, meta] = deserializeTxPlusMeta(blobs);
+    auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
     auto metaJson = toJson(*meta);
+    insertDeliveredAmount(metaJson, txn, meta);
+    return {txnJson, metaJson};
+}
+
+bool
+insertDeliveredAmount(
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta)
+{
     if (canHaveDeliveredAmount(txn, meta))
     {
-        if (auto amt = getDeliveredAmount(txn, meta, blobs.ledgerSequence))
+        if (auto amt = getDeliveredAmount(txn, meta, meta->getLgrSeq()))
             metaJson["delivered_amount"] =
                 toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
         else
             metaJson["delivered_amount"] = "unavailable";
+        return true;
     }
-    return {txnJson, metaJson};
+    return false;
 }
 
 boost::json::object
@@ -598,6 +608,24 @@ xrpLiquid(
         amount.clear();
 
     return amount.xrp();
+}
+
+ripple::STAmount
+accountFunds(
+    BackendInterface const& backend,
+    uint32_t sequence,
+    ripple::STAmount const& amount,
+    ripple::AccountID const& id)
+{
+    if (!amount.native() && amount.getIssuer() == id)
+    {
+        return amount;
+    }
+    else
+    {
+        return accountHolds(
+            backend, sequence, id, amount.getCurrency(), amount.getIssuer());
+    }
 }
 
 ripple::STAmount

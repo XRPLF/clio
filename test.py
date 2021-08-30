@@ -835,8 +835,8 @@ async def subscribe(ip, port):
 async def verifySubscribe(ip,clioPort,ripdPort):
     clioAddress = 'ws://' + str(ip) + ':' + str(clioPort)
     ripdAddress = 'ws://' + str(ip) + ':' + str(ripdPort)
-    ripdMsgs = []
-    clioMsgs = []
+    ripdTxns = {}
+    clioTxns = {}
     try:
         async with websockets.connect(clioAddress) as ws1:
             async with websockets.connect(ripdAddress) as ws2:
@@ -844,7 +844,7 @@ async def verifySubscribe(ip,clioPort,ripdPort):
                 res = json.loads(await ws1.recv())
                 print(res)
                 start = int(res["result"]["info"]["complete_ledgers"].split("-")[1])
-                end = start + 10
+                end = start + 2
 
                 streams = ["ledger","transactions"]
                 await ws1.send(json.dumps({"command":"subscribe","streams":streams})),
@@ -858,24 +858,72 @@ async def verifySubscribe(ip,clioPort,ripdPort):
                 print(res1)
                 print(res2)
                 assert(json.dumps(res1,sort_keys=True) == json.dumps(res2,sort_keys=True))
+                idx = 0
                 while True:
                     print("getting second message")
                     res1 = json.loads(await ws1.recv())
                     res2 = json.loads(await ws2.recv())
                     print("got second message")
                     if "type" in res1 and res1["type"] == "ledgerClosed":
+                        idx = int(res1["ledger_index"])
                         if int(res1["ledger_index"]) >= end:
                             print("breaking")
                             break
                         assert("validated_ledgers" in res1 and "validated_ledgers" in res2)
                         res1["validated_ledgers"] = ""
                         res2["validated_ledgers"] = ""
-                    print(res1)
-                    print(res2)
-                    ripdMsgs.append(res1)
-                    clioMsgs.append(res2)
+                        assert(res1 == res2)
+                    else:
+                        print(res1)
+                        print(res2)
+                        if not idx in clioTxns:
+                            clioTxns[idx] = {}
+                        if not idx in ripdTxns:
+                            ripdTxns[idx] = {}
+                        print("inserting")
+                        clioTxns[idx][res1["transaction"]["hash"]] = res1
+                        ripdTxns[idx][res2["transaction"]["hash"]] = res2
+                        print("inserted")
                     #assert(json.dumps(res1,sort_keys=True) == json.dumps(res2,sort_keys=True))
-                assert(ripdMsgs == clioMsgs)
+                
+                for x in clioTxns:
+                    for y in clioTxns[x]:
+                        if not y in ripdTxns[x]:
+                            print("missing " + y + " from ripd")
+                            assert(False)
+                        else:
+                            if clioTxns[x][y] != ripdTxns[x][y]:
+                                print("Mismatch at " + str(y))
+                                print(clioTxns[x][y])
+                                print(ripdTxns[x][y])
+                                for z in clioTxns[x][y]:
+                                    if z not in ripdTxns[x][y]:
+                                        print("missing " + str(z))
+                                    clioElt = clioTxns[x][y][z]
+                                    ripdElt = ripdTxns[x][y][z]
+                                    if clioElt != ripdElt:
+                                        print("mismatch at " + str(z))
+                                        if type(clioElt) is dict:
+                                            for t in clioElt:
+                                                if t not in ripdElt:
+                                                    print("missing from ripd " + str(t))
+                                                elif clioElt[t] != ripdElt[t]:
+                                                    print("mismatch at " + str(t))
+                                                    print(clioElt[t])
+                                                    print(ripdElt[t])
+                                            for t in ripdElt:
+                                                if t not in clioElt:
+                                                    print("missing from clio " + str(t))
+                                                if ripdElt[t] != clioElt[t]:
+                                                    print("mismatch at " + str(t))
+                                                    print(clioElt[t])
+                                                    print(ripdElt[t])
+
+                                assert(False)
+                            else:
+                                print("matched!")
+                print("all good!")
+
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 

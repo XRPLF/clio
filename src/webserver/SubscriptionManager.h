@@ -79,7 +79,7 @@ public:
     void
     pubTransaction(
         Backend::TransactionAndMetadata const& blobs,
-        std::uint32_t seq);
+        ripple::LedgerInfo const& lgrInfo);
 
     void
     subAccount(

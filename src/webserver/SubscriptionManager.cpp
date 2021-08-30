@@ -137,7 +137,6 @@ SubscriptionManager::pubLedger(
     std::string const& ledgerRange,
     std::uint32_t txnCount)
 {
-    std::cout << "publishing ledger" << std::endl;
     sendAll(
         boost::json::serialize(
             getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)),
@@ -147,14 +146,42 @@ SubscriptionManager::pubLedger(
 void
 SubscriptionManager::pubTransaction(
     Backend::TransactionAndMetadata const& blobs,
-    std::uint32_t seq)
+    ripple::LedgerInfo const& lgrInfo)
 {
-    auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, seq);
+    auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
     pubObj["transaction"] = RPC::toJson(*tx);
     pubObj["meta"] = RPC::toJson(*meta);
+    RPC::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta);
+    pubObj["type"] = "transaction";
+    pubObj["validated"] = true;
+    pubObj["status"] = "closed";
+
+    pubObj["ledger_index"] = lgrInfo.seq;
+    pubObj["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    pubObj["transaction"].as_object()["date"] =
+        lgrInfo.closeTime.time_since_epoch().count();
+
+    pubObj["engine_result_code"] = meta->getResult();
+    std::string token;
+    std::string human;
+    ripple::transResultInfo(meta->getResultTER(), token, human);
+    pubObj["engine_result"] = token;
+    pubObj["engine_result_message"] = human;
+    if (tx->getTxnType() == ripple::ttOFFER_CREATE)
+    {
+        auto account = tx->getAccountID(ripple::sfAccount);
+        auto amount = tx->getFieldAmount(ripple::sfTakerGets);
+        if (account != amount.issue().account)
+        {
+            auto ownerFunds =
+                RPC::accountFunds(*backend_, lgrInfo.seq, amount, account);
+            pubObj["transaction"].as_object()["owner_funds"] =
+                ownerFunds.getText();
+        }
+    }
+
     std::string pubMsg{boost::json::serialize(pubObj)};
-    std::cout << "publishing txn" << std::endl;
     sendAll(pubMsg, streamSubscribers_[Transactions]);
 
     auto journal = ripple::debugLog();

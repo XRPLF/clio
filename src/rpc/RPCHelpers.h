@@ -35,6 +35,12 @@ deserializeTxPlusMeta(
 std::pair<boost::json::object, boost::json::object>
 toExpandedJson(Backend::TransactionAndMetadata const& blobs);
 
+bool
+insertDeliveredAmount(
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta);
+
 boost::json::object
 toJson(ripple::STBase const& obj);
 
@@ -91,6 +97,13 @@ isFrozen(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer);
+
+ripple::STAmount
+accountFunds(
+    BackendInterface const& backend,
+    uint32_t sequence,
+    ripple::STAmount const& amount,
+    ripple::AccountID const& id);
 
 ripple::STAmount
 accountHolds(
