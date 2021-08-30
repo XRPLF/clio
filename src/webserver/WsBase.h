@@ -66,7 +66,7 @@ class WsBase
 public:
     // Send, that enables SubscriptionManager to publish to clients
     virtual void
-    publishToStream(std::string const& msg) = 0;
+    send(std::string const& msg) = 0;
 
     virtual ~WsBase()
     {
@@ -97,7 +97,6 @@ class WsSession : public WsBase,
     using std::enable_shared_from_this<WsSession<Derived>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
-    std::string responseBuffer_;
 
     std::shared_ptr<BackendInterface> backend_;
     // has to be a weak ptr because SubscriptionManager maintains collections
@@ -107,6 +106,7 @@ class WsSession : public WsBase,
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
     std::mutex mtx_;
+    std::queue<std::string> messages_;
 
 public:
     explicit WsSession(
@@ -135,33 +135,37 @@ public:
     }
 
     void
-    publishToStream(std::string const& msg)
+    sendNext()
     {
-        // msg might not stick around for as long as it takes to write, so we
-        // make a copy and capture it in the lambda
-        auto msgSaved = std::make_unique<std::string>(msg);
-
         std::lock_guard<std::mutex> lck(mtx_);
-        derived().ws().text(derived().ws().got_text());
-        // we send from SubscriptionManager as well as from on_read
         derived().ws().async_write(
-            boost::asio::buffer(*msgSaved),
-            [m = std::move(msgSaved), shared = shared_from_this()](
-                auto ec, size_t size) {
+            boost::asio::buffer(messages_.front()),
+            [shared = shared_from_this()](auto ec, size_t size) {
                 if (ec)
                     return shared->wsFail(ec, "publishToStream");
+                size_t left = 0;
+                {
+                    std::lock_guard<std::mutex> lck(shared->mtx_);
+                    shared->messages_.pop();
+                    left = shared->messages_.size();
+                }
+                if (left > 0)
+                    shared->sendNext();
             });
     }
+
     void
-    sendResponse(boost::json::object const& object)
+    send(std::string const& msg)
     {
-        std::lock_guard<std::mutex> lck(mtx_);
-        responseBuffer_ = boost::json::serialize(object);
-        derived().ws().text(derived().ws().got_text());
-        derived().ws().async_write(
-            boost::asio::buffer(responseBuffer_),
-            boost::beast::bind_front_handler(
-                &WsSession::on_write, this->shared_from_this()));
+        size_t left = 0;
+        {
+            std::lock_guard<std::mutex> lck(mtx_);
+            messages_.push(msg);
+            left = messages_.size();
+        }
+        // if the queue was previously empty, start the send chain
+        if (left == 1)
+            sendNext();
     }
 
     void
@@ -200,6 +204,8 @@ public:
     do_read()
     {
         std::lock_guard<std::mutex> lck{mtx_};
+        // Clear the buffer
+        buffer_.consume(buffer_.size());
         // Read a message into our buffer
         derived().ws().async_read(
             buffer_,
@@ -225,6 +231,9 @@ public:
             response["error"] = "Too many requests. Slow down";
         else
         {
+            auto sendError = [this](auto error) {
+                send(boost::json::serialize(RPC::make_error(error)));
+            };
             try
             {
                 boost::json::value raw = boost::json::parse(msg);
@@ -234,8 +243,7 @@ public:
                 {
                     auto range = backend_->fetchLedgerRange();
                     if (!range)
-                        return sendResponse(
-                            RPC::make_error(RPC::Error::rpcNOT_READY));
+                        return sendError(RPC::Error::rpcNOT_READY);
 
                     std::optional<RPC::Context> context = RPC::make_WsContext(
                         request,
@@ -246,8 +254,7 @@ public:
                         *range);
 
                     if (!context)
-                        return sendResponse(
-                            RPC::make_error(RPC::Error::rpcBAD_SYNTAX));
+                        return sendError(RPC::Error::rpcBAD_SYNTAX);
 
                     auto id =
                         request.contains("id") ? request.at("id") : nullptr;
@@ -270,14 +277,13 @@ public:
                     }
                     else
                     {
-                        response = std::get<boost::json::object>(v);
+                        result = std::get<boost::json::object>(v);
                     }
                 }
                 catch (Backend::DatabaseTimeout const& t)
                 {
                     BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                    return sendResponse(
-                        RPC::make_error(RPC::Error::rpcNOT_READY));
+                    return sendError(RPC::Error::rpcNOT_READY);
                 }
             }
             catch (std::exception const& e)
@@ -285,27 +291,13 @@ public:
                 BOOST_LOG_TRIVIAL(error)
                     << __func__ << " caught exception : " << e.what();
 
-                return sendResponse(RPC::make_error(RPC::Error::rpcINTERNAL));
+                return sendError(RPC::Error::rpcINTERNAL);
             }
         }
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : " << boost::json::serialize(response);
 
-        sendResponse(response);
-    }
-
-    void
-    on_write(boost::beast::error_code ec, std::size_t bytes_transferred)
-    {
-        boost::ignore_unused(bytes_transferred);
-
-        if (ec)
-            return wsFail(ec, "write");
-
-        // Clear the buffer
-        buffer_.consume(buffer_.size());
-        responseBuffer_.clear();
-        // Do another read
+        send(boost::json::serialize(response));
         do_read();
     }
 };

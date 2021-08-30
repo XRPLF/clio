@@ -31,7 +31,7 @@ validateStreams(boost::json::object const& request)
     return OK;
 }
 
-void
+boost::json::object
 subscribeToStreams(
     boost::json::object const& request,
     std::shared_ptr<WsBase> session,
@@ -39,12 +39,13 @@ subscribeToStreams(
 {
     boost::json::array const& streams = request.at("streams").as_array();
 
+    boost::json::object response;
     for (auto const& stream : streams)
     {
         std::string s = stream.as_string().c_str();
 
         if (s == "ledger")
-            manager.subLedger(session);
+            response = manager.subLedger(session);
         else if (s == "transactions")
             manager.subTransactions(session);
         else if (s == "transactions_proposed")
@@ -52,6 +53,7 @@ subscribeToStreams(
         else
             assert(false);
     }
+    return response;
 }
 
 void
@@ -320,8 +322,10 @@ doSubscribe(Context const& context)
         snapshot = std::move(snap);
     }
 
+    boost::json::object response;
     if (request.contains("streams"))
-        subscribeToStreams(request, context.session, *context.subscriptions);
+        response = subscribeToStreams(
+            request, context.session, *context.subscriptions);
 
     if (request.contains("accounts"))
         subscribeToAccounts(request, context.session, *context.subscriptions);
@@ -333,7 +337,6 @@ doSubscribe(Context const& context)
     if (request.contains("books"))
         subscribeToBooks(books, context.session, *context.subscriptions);
 
-    boost::json::object response = {{"status", "success"}};
     if (snapshot.size())
         response["offers"] = snapshot;
     return response;

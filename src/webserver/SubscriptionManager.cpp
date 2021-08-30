@@ -2,11 +2,54 @@
 #include <webserver/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
-void
+boost::json::object
+getLedgerPubMessage(
+    ripple::LedgerInfo const& lgrInfo,
+    ripple::Fees const& fees,
+    std::string const& ledgerRange,
+    std::uint32_t txnCount)
+{
+    boost::json::object pubMsg;
+
+    pubMsg["type"] = "ledgerClosed";
+    pubMsg["ledger_index"] = lgrInfo.seq;
+    pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
+    pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
+
+    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
+    pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
+    pubMsg["reserve_base"] =
+        RPC::toBoostJson(fees.accountReserve(0).jsonClipped());
+    pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
+
+    pubMsg["validated_ledgers"] = ledgerRange;
+    pubMsg["txn_count"] = txnCount;
+    return pubMsg;
+}
+
+boost::json::object
 SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[Ledgers].emplace(session);
+    {
+        std::lock_guard lk(m_);
+        streamSubscribers_[Ledgers].emplace(session);
+    }
+    auto ledgerRange = backend_->fetchLedgerRange();
+    assert(ledgerRange);
+    auto lgrInfo = backend_->fetchLedgerBySequence(ledgerRange->maxSequence);
+    assert(lgrInfo);
+
+    std::optional<ripple::Fees> fees;
+    fees = backend_->fetchFees(lgrInfo->seq);
+    assert(fees);
+
+    std::string range = std::to_string(ledgerRange->minSequence) + "-" +
+        std::to_string(ledgerRange->maxSequence);
+
+    auto pubMsg = getLedgerPubMessage(*lgrInfo, *fees, range, 0);
+    pubMsg.erase("txn_count");
+    pubMsg.erase("type");
+    return pubMsg;
 }
 
 void
@@ -81,7 +124,7 @@ SubscriptionManager::sendAll(
         }
         else
         {
-            session->publishToStream(pubMsg);
+            session->send(pubMsg);
             ++it;
         }
     }
@@ -94,23 +137,11 @@ SubscriptionManager::pubLedger(
     std::string const& ledgerRange,
     std::uint32_t txnCount)
 {
-    boost::json::object pubMsg;
-
-    pubMsg["type"] = "ledgerClosed";
-    pubMsg["ledger_index"] = lgrInfo.seq;
-    pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
-    pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
-
-    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
-    pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
-    pubMsg["reserve_base"] =
-        RPC::toBoostJson(fees.accountReserve(0).jsonClipped());
-    pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
-
-    pubMsg["validated_ledgers"] = ledgerRange;
-    pubMsg["txn_count"] = txnCount;
-
-    sendAll(boost::json::serialize(pubMsg), streamSubscribers_[Ledgers]);
+    std::cout << "publishing ledger" << std::endl;
+    sendAll(
+        boost::json::serialize(
+            getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)),
+        streamSubscribers_[Ledgers]);
 }
 
 void
@@ -123,6 +154,7 @@ SubscriptionManager::pubTransaction(
     pubObj["transaction"] = RPC::toJson(*tx);
     pubObj["meta"] = RPC::toJson(*meta);
     std::string pubMsg{boost::json::serialize(pubObj)};
+    std::cout << "publishing txn" << std::endl;
     sendAll(pubMsg, streamSubscribers_[Transactions]);
 
     auto journal = ripple::debugLog();
@@ -171,7 +203,7 @@ void
 SubscriptionManager::forwardProposedTransaction(
     boost::json::object const& response)
 {
-    std::string pubMsg{boost::json::serialize(pubMsg)};
+    std::string pubMsg{boost::json::serialize(response)};
     sendAll(pubMsg, streamSubscribers_[TransactionsProposed]);
 
     auto transaction = response.at("transaction").as_object();

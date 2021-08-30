@@ -42,15 +42,22 @@ class SubscriptionManager
     std::unordered_map<ripple::AccountID, subscriptions>
         accountProposedSubscribers_;
     std::unordered_map<ripple::Book, subscriptions> bookSubscribers_;
+    std::shared_ptr<Backend::BackendInterface> backend_;
 
 public:
     static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager()
+    make_SubscriptionManager(
+        std::shared_ptr<Backend::BackendInterface> const& b)
     {
-        return std::make_shared<SubscriptionManager>();
+        return std::make_shared<SubscriptionManager>(b);
     }
 
-    void
+    SubscriptionManager(std::shared_ptr<Backend::BackendInterface> const& b)
+        : backend_(b)
+    {
+    }
+
+    boost::json::object
     subLedger(std::shared_ptr<WsBase>& session);
 
     void

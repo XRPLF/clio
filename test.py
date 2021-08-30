@@ -768,6 +768,7 @@ async def ledger_range(ip, port):
                 idx = rng.find("-")
                 return (int(rng[0:idx]),int(rng[idx+1:-1]))
                 
+            res = res["result"]
             return (res["ledger_index_min"],res["ledger_index_max"])
     except websockets.exceptions.connectionclosederror as e:
         print(e)
@@ -813,18 +814,78 @@ async def subscribe(ip, port):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"subscribe","streams":["ledger","transactions"],"books":[{"snapshot":True,"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}}]}))
-            #await ws.send(json.dumps({"command":"subscribe","streams":["ledger"]}))
+            await ws.send(json.dumps({"command":"server_info"}));
+            print(json.loads(await ws.recv()))
+            await ws.send(json.dumps({"command":"server_info"}));
+            print(json.loads(await ws.recv()))
+            await ws.send(json.dumps({"command":"server_info"}));
+            await ws.send(json.dumps({"command":"server_info"}));
+            await ws.send(json.dumps({"command":"server_info"}));
+            print(json.loads(await ws.recv()))
+            print(json.loads(await ws.recv()))
+            print(json.loads(await ws.recv()))
+            await ws.send(json.dumps({"command":"subscribe","streams":["ledger","transactions","transactions_proposed"],"books":[{"snapshot":True,"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}}]}))
+            #await ws.send(json.dumps({"command":"subscribe","streams":["manifests"]}))
             while True:
                 res = json.loads(await ws.recv())
                 print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
+async def verifySubscribe(ip,clioPort,ripdPort):
+    clioAddress = 'ws://' + str(ip) + ':' + str(clioPort)
+    ripdAddress = 'ws://' + str(ip) + ':' + str(ripdPort)
+    ripdMsgs = []
+    clioMsgs = []
+    try:
+        async with websockets.connect(clioAddress) as ws1:
+            async with websockets.connect(ripdAddress) as ws2:
+                await ws1.send(json.dumps({"command":"server_info"}))
+                res = json.loads(await ws1.recv())
+                print(res)
+                start = int(res["result"]["info"]["complete_ledgers"].split("-")[1])
+                end = start + 10
+
+                streams = ["ledger","transactions"]
+                await ws1.send(json.dumps({"command":"subscribe","streams":streams})),
+                await ws2.send(json.dumps({"command":"subscribe","streams":streams}))
+
+                res1 = json.loads(await ws1.recv())["result"]
+                res2 = json.loads(await ws2.recv())["result"]
+                assert("validated_ledgers" in res1 and "validated_ledgers" in res2)
+                res1["validated_ledgers"] = ""
+                res2["validated_ledgers"] = ""
+                print(res1)
+                print(res2)
+                assert(json.dumps(res1,sort_keys=True) == json.dumps(res2,sort_keys=True))
+                while True:
+                    print("getting second message")
+                    res1 = json.loads(await ws1.recv())
+                    res2 = json.loads(await ws2.recv())
+                    print("got second message")
+                    if "type" in res1 and res1["type"] == "ledgerClosed":
+                        if int(res1["ledger_index"]) >= end:
+                            print("breaking")
+                            break
+                        assert("validated_ledgers" in res1 and "validated_ledgers" in res2)
+                        res1["validated_ledgers"] = ""
+                        res2["validated_ledgers"] = ""
+                    print(res1)
+                    print(res2)
+                    ripdMsgs.append(res1)
+                    clioMsgs.append(res2)
+                    #assert(json.dumps(res1,sort_keys=True) == json.dumps(res2,sort_keys=True))
+                assert(ripdMsgs == clioMsgs)
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
+
+
+
+
     
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe"])
+parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe","verify_subscribe"])
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
@@ -836,8 +897,8 @@ parser.add_argument('--taker_pays_issuer',default='rvYAfWj5gh67oV6fW32ZzP3Aw4Eub
 parser.add_argument('--taker_pays_currency',default='USD')
 parser.add_argument('--taker_gets_issuer')
 parser.add_argument('--taker_gets_currency',default='XRP')
-parser.add_argument('--p2pIp', default='s2.ripple.com')
-parser.add_argument('--p2pPort', default='51233')
+parser.add_argument('--p2pIp', default='127.0.0.1')
+parser.add_argument('--p2pPort', default='6006')
 parser.add_argument('--verify',default=False)
 parser.add_argument('--binary',default=True)
 parser.add_argument('--forward',default=False)
@@ -891,6 +952,8 @@ def run(args):
         print(missing)
     elif args.action == "subscribe":
         asyncio.get_event_loop().run_until_complete(subscribe(args.ip,args.port))
+    elif args.action == "verify_subscribe":
+        asyncio.get_event_loop().run_until_complete(verifySubscribe(args.ip,args.port,args.p2pPort))
     elif args.action == "account_info":
         res1 = asyncio.get_event_loop().run_until_complete(
                 account_info(args.ip, args.port, args.account, args.ledger, args.binary))

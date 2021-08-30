@@ -32,11 +32,11 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <webserver/Listener.h>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
+#include <webserver/Listener.h>
 
 std::optional<boost::json::object>
 parse_config(const char* filename)
@@ -149,7 +149,7 @@ main(int argc, char* argv[])
 
     // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager()};
+        SubscriptionManager::make_SubscriptionManager(backend)};
 
     // Tracks which ledgers have been validated by the
     // network
