@@ -190,6 +190,8 @@ SubscriptionManager::pubTransaction(
     for (ripple::AccountID const& account : accounts)
         sendAll(pubMsg, accountSubscribers_[account]);
 
+    std::unordered_set<ripple::Book> alreadySent;
+
     for (auto const& node : meta->peekNodes())
     {
         if (!node.isFieldPresent(ripple::sfLedgerEntryType))
@@ -219,7 +221,11 @@ SubscriptionManager::pubTransaction(
                     ripple::Book book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
                         data->getFieldAmount(ripple::sfTakerPays).issue()};
-                    sendAll(pubMsg, bookSubscribers_[book]);
+                    if (!alreadySent.contains(book))
+                    {
+                        sendAll(pubMsg, bookSubscribers_[book]);
+                        alreadySent.insert(book);
+                    }
                 }
             }
         }
