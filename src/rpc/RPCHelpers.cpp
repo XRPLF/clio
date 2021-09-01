@@ -634,7 +634,8 @@ accountHolds(
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
-    ripple::AccountID const& issuer)
+    ripple::AccountID const& issuer,
+    bool zeroIfFrozen)
 {
     ripple::STAmount amount;
     if (ripple::isXRP(currency))
@@ -654,7 +655,7 @@ accountHolds(
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE sle{it, key};
 
-    if (isFrozen(backend, sequence, account, currency, issuer))
+    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer))
     {
         amount.clear(ripple::Issue(currency, issuer));
     }
@@ -750,12 +751,14 @@ postProcessOrderBook(
                 }
                 else
                 {
+                    bool zeroIfFrozen = true;
                     saOwnerFunds = accountHolds(
                         backend,
                         ledgerSequence,
                         uOfferOwnerID,
                         book.out.currency,
-                        book.out.account);
+                        book.out.account,
+                        zeroIfFrozen);
 
                     if (saOwnerFunds < beast::zero)
                         saOwnerFunds.clear();

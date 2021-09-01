@@ -848,23 +848,37 @@ async def verifySubscribe(ip,clioPort,ripdPort):
                 start = int(res["result"]["info"]["complete_ledgers"].split("-")[1])
                 end = start + 2
 
-                streams = ["ledger"]
-                await ws1.send(json.dumps({"command":"subscribe","streams":streams,"books":[{"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}}]})),
-                await ws2.send(json.dumps({"command":"subscribe","streams":streams,"books":[{"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}}]}))
+                streams = ["ledger","transactions"]
+                books = [{"both":True,"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}},
+                        {"taker": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59", "taker_gets": {"currency": "XRP"},"taker_pays": {"currency": "USD","issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"}}]
+                accounts = ["rDzTZxa7NwD9vmNf5dvTbW4FQDNSRsfPv6","rrpNnNLKrartuEqfJGpqyDwPj1AFPg9vn1"]
+                await ws1.send(json.dumps({"command":"subscribe","streams":streams,"books":books,"accounts":accounts})),
+                await ws2.send(json.dumps({"command":"subscribe","streams":streams,"books":books,"accounts":accounts}))
 
-                res1 = json.loads(await ws1.recv())["result"]
-                res2 = json.loads(await ws2.recv())["result"]
+                res1 = json.loads(await ws1.recv())
+                res2 = json.loads(await ws2.recv())
+                print(json.dumps(res1,indent=4,sort_keys=True))
+                print(json.dumps(res2,indent=4,sort_keys=True))
+                res1 = res1["result"]
+                res2 = res2["result"]
                 assert("validated_ledgers" in res1 and "validated_ledgers" in res2)
                 res1["validated_ledgers"] = ""
                 res2["validated_ledgers"] = ""
-                print(res1)
-                print(res2)
-                assert(json.dumps(res1,sort_keys=True) == json.dumps(res2,sort_keys=True))
+                assert(res1 == res2)
                 idx = 0
                 def compareObjects(clio,ripd):
                     print("sorting")
                     clio.sort(key = lambda x : x["transaction"]["hash"])
                     ripd.sort(key = lambda x : x["transaction"]["hash"])
+                    clioFiltered = []
+                    ripdFiltered = []
+                    for x in clio:
+                        if x not in clioFiltered:
+                            clioFiltered.append(x)
+                    for x in ripd:
+                        if x not in ripdFiltered:
+                            ripdFiltered.append(x)
+
                     print("comparing")
                     if clio == ripd:
                         return True
@@ -913,41 +927,31 @@ async def verifySubscribe(ip,clioPort,ripdPort):
                     else:
                         break
 
+                async def getAllTxns(ws):
+                    txns = []
+                    while True:
+                        res = json.loads(await ws.recv())
+                        if res["type"] == "transaction":
+                            txns.append(res)
+                        elif res["type"] == "ledgerClosed":
+                            print(json.dumps(res,indent=4,sort_keys=True))
+                            return txns
+                    return txns
+
+
+
 
                 while True:
-                    res1 = json.loads(await ws1.recv())
-                    res2 = json.loads(await ws2.recv())
-                    print(json.dumps(res1,indent=4,sort_keys=True))
-                    print(json.dumps(res2,indent=4,sort_keys=True))
-                    if res1["type"] == "ledgerClosed" and res2["type"] == "ledgerClosed":
-                        print("processing ledger closed")
-                        if idx != 0 and idx in clioTxns:
-                            if not compareObjects(clioTxns[idx],ripdTxns[idx]):
-                                print("failed")
-                                assert(False)
-                            print("matched full ledger " + str(idx))
-                            clioTxns.pop(idx)
-                            ripdTxns.pop(idx)
-                        idx = int(res1["ledger_index"])
-                        assert("validated_ledgers" in res1 and "validated_ledgers" in res2)
-                        res1["validated_ledgers"] = ""
-                        res2["validated_ledgers"] = ""
-                        assert(res1 == res2)
-                    elif res1["type"] == "transaction" and res2["type"] == "transaction":
-                        print("processing transaction")
-                        if idx == 0:
-                            continue
-                        if not idx in clioTxns:
-                            clioTxns[idx] = []
-                        if not idx in ripdTxns:
-                            ripdTxns[idx] = []
-                        clioTxns[idx].append(res1)
-                        ripdTxns[idx].append(res2)
-                    else:
-                        print("mismatched messages")
+                    print("getting clio")
+                    clioTxns = await getAllTxns(ws1)
+                    print("getting ripd")
+                    ripdTxns = await getAllTxns(ws2)
+                    if not compareObjects(clioTxns,ripdTxns):
+                        print("failed")
                         assert(False)
+                    print("matched full ledger")
+                    print("txn count = " + str(len(clioTxns)))
                 
-                print("all good!")
 
     except websockets.exceptions.connectionclosederror as e:
         print(e)

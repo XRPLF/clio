@@ -111,7 +111,8 @@ accountHolds(
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
-    ripple::AccountID const& issuer);
+    ripple::AccountID const& issuer,
+    bool zeroIfFrozen = false);
 
 ripple::Rate
 transferRate(
