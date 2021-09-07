@@ -76,15 +76,14 @@ public:
         bool isFirst) const override;
 
     void
-    doWriteLedgerObject(
-        std::string&& key,
-        uint32_t seq,
-        std::string&& blob) const override;
+    doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
+        const override;
 
     void
     writeTransaction(
         std::string&& hash,
         uint32_t seq,
+        uint32_t date,
         std::string&& transaction,
         std::string&& metadata) const override;
 

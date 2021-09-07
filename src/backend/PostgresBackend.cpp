@@ -85,15 +85,16 @@ void
 PostgresBackend::writeTransaction(
     std::string&& hash,
     uint32_t seq,
+    uint32_t date,
     std::string&& transaction,
     std::string&& metadata) const
 {
     if (abortWrite_)
         return;
     transactionsBuffer_ << "\\\\x" << ripple::strHex(hash) << '\t'
-                        << std::to_string(seq) << '\t' << "\\\\x"
-                        << ripple::strHex(transaction) << '\t' << "\\\\x"
-                        << ripple::strHex(metadata) << '\n';
+                        << std::to_string(seq) << '\t' << std::to_string(date)
+                        << '\t' << "\\\\x" << ripple::strHex(transaction)
+                        << '\t' << "\\\\x" << ripple::strHex(metadata) << '\n';
 }
 
 uint32_t
@@ -275,7 +276,7 @@ PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
-    sql << "SELECT transaction,metadata,ledger_seq FROM transactions "
+    sql << "SELECT transaction,metadata,ledger_seq,date FROM transactions "
            "WHERE hash = "
         << "\'\\x" << ripple::strHex(hash) << "\'";
     auto res = pgQuery(sql.str().data());
@@ -284,7 +285,8 @@ PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
         return {
             {res.asUnHexedBlob(0, 0),
              res.asUnHexedBlob(0, 1),
-             res.asBigInt(0, 2)}};
+             res.asBigInt(0, 2),
+             res.asBigInt(0, 3)}};
     }
 
     return {};
@@ -295,7 +297,8 @@ PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
-    sql << "SELECT transaction, metadata, ledger_seq FROM transactions WHERE "
+    sql << "SELECT transaction, metadata, ledger_seq,date FROM transactions "
+           "WHERE "
         << "ledger_seq = " << std::to_string(ledgerSequence);
     auto res = pgQuery(sql.str().data());
     if (size_t numRows = checkResult(res, 3))
@@ -306,7 +309,8 @@ PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
             txns.push_back(
                 {res.asUnHexedBlob(i, 0),
                  res.asUnHexedBlob(i, 1),
-                 res.asBigInt(i, 2)});
+                 res.asBigInt(i, 2),
+                 res.asBigInt(i, 3)});
         }
         return txns;
     }
@@ -410,7 +414,7 @@ PostgresBackend::fetchTransactions(
                         << __func__ << " getting txn = " << i;
                     PgQuery pgQuery(pgPool_);
                     std::stringstream sql;
-                    sql << "SELECT transaction,metadata,ledger_seq FROM "
+                    sql << "SELECT transaction,metadata,ledger_seq,date FROM "
                            "transactions "
                            "WHERE HASH = \'\\x"
                         << ripple::strHex(hash) << "\'";
@@ -421,7 +425,8 @@ PostgresBackend::fetchTransactions(
                         results[i] = {
                             res.asUnHexedBlob(0, 0),
                             res.asUnHexedBlob(0, 1),
-                            res.asBigInt(0, 2)};
+                            res.asBigInt(0, 2),
+                            res.asBigInt(0, 3)};
                     }
                     if (--numRemaining == 0)
                     {
@@ -447,7 +452,7 @@ PostgresBackend::fetchTransactions(
         for (size_t i = 0; i < hashes.size(); ++i)
         {
             auto const& hash = hashes[i];
-            sql << "SELECT transaction,metadata,ledger_seq FROM "
+            sql << "SELECT transaction,metadata,ledger_seq,date FROM "
                    "transactions "
                    "WHERE HASH = \'\\x"
                 << ripple::strHex(hash) << "\'";
@@ -468,7 +473,8 @@ PostgresBackend::fetchTransactions(
                 results.push_back(
                     {res.asUnHexedBlob(i, 0),
                      res.asUnHexedBlob(i, 1),
-                     res.asBigInt(i, 2)});
+                     res.asBigInt(i, 2),
+                     res.asBigInt(i, 3)});
         }
     }
     return results;

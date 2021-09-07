@@ -79,6 +79,7 @@ ReportingETL::insertTransactions(
         backend_->writeTransaction(
             std::move(keyStr),
             ledger.seq,
+            ledger.closeTime.time_since_epoch().count(),
             std::move(*raw),
             std::move(*txn.mutable_metadata_blob()));
     }

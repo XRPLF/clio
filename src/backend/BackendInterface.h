@@ -36,6 +36,7 @@ struct TransactionAndMetadata
     Blob transaction;
     Blob metadata;
     uint32_t ledgerSequence;
+    uint32_t date;
     bool
     operator==(const TransactionAndMetadata&) const = default;
 };
@@ -201,15 +202,14 @@ protected:
         bool isFirst = false) const = 0;
 
     void
-    writeLedgerObject(
-        std::string&& key,
-        uint32_t seq,
-        std::string&& blob) const;
+    writeLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
+        const;
 
     virtual void
     writeTransaction(
         std::string&& hash,
         uint32_t seq,
+        uint32_t date,
         std::string&& transaction,
         std::string&& metadata) const = 0;
 
@@ -257,10 +257,8 @@ private:
         std::uint32_t limit) const = 0;
 
     virtual void
-    doWriteLedgerObject(
-        std::string&& key,
-        uint32_t seq,
-        std::string&& blob) const = 0;
+    doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
+        const = 0;
 
     virtual bool
     doFinishWrites() const = 0;

@@ -226,6 +226,7 @@ void
 CassandraBackend::writeTransaction(
     std::string&& hash,
     uint32_t seq,
+    uint32_t date,
     std::string&& transaction,
     std::string&& metadata) const
 {
@@ -242,12 +243,17 @@ CassandraBackend::writeTransaction(
     makeAndExecuteAsyncWrite(
         this,
         std::move(std::make_tuple(
-            std::move(hash), seq, std::move(transaction), std::move(metadata))),
+            std::move(hash),
+            seq,
+            date,
+            std::move(transaction),
+            std::move(metadata))),
         [this](auto& params) {
             CassandraStatement statement{insertTransaction_};
-            auto& [hash, sequence, transaction, metadata] = params.data;
+            auto& [hash, sequence, date, transaction, metadata] = params.data;
             statement.bindNextBytes(hash);
             statement.bindNextInt(sequence);
+            statement.bindNextInt(date);
             statement.bindNextBytes(transaction);
             statement.bindNextBytes(metadata);
             return statement;
@@ -346,6 +352,7 @@ CassandraBackend::fetchTransactions(
                     results[i] = {
                         result.getBytes(),
                         result.getBytes(),
+                        result.getUInt32(),
                         result.getUInt32()};
             }));
         executeAsyncRead(statement, processAsyncRead, *cbs[i]);
@@ -1058,11 +1065,11 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
-              << " ( hash blob PRIMARY KEY, ledger_sequence bigint, "
-                 "transaction "
-                 "blob, metadata blob)"
-              << " WITH default_time_to_live = " << std::to_string(ttl);
+        query
+            << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "transactions"
+            << " ( hash blob PRIMARY KEY, ledger_sequence bigint, date bigint, "
+               "transaction blob, metadata blob)"
+            << " WITH default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
         query.str("");
@@ -1079,15 +1086,8 @@ CassandraBackend::open(bool readOnly)
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
-
         query.str("");
-        query << "CREATE INDEX ON " << tablePrefix
-              << "transactions(ledger_sequence)";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-        query.str("");
-        query << "SELECT * FROM " << tablePrefix
-              << "transactions WHERE ledger_sequence = 1"
+        query << "SELECT * FROM " << tablePrefix << "ledger_transactions"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -1179,9 +1179,8 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "transactions"
-              << " (hash, ledger_sequence, transaction, metadata) VALUES "
-                 "(?, ?, "
-                 "?, ?)";
+              << " (hash, ledger_sequence, date, transaction, metadata) VALUES "
+                 "(?, ?, ?, ?, ?)";
         if (!insertTransaction_.prepareStatement(query, session_.get()))
             continue;
         query.str("");
@@ -1213,7 +1212,7 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "SELECT transaction, metadata, ledger_sequence FROM "
+        query << "SELECT transaction, metadata, ledger_sequence, date FROM "
               << tablePrefix << "transactions"
               << " WHERE hash = ?";
         if (!selectTransaction_.prepareStatement(query, session_.get()))

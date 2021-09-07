@@ -256,6 +256,7 @@ TEST(BackendTest, Basic)
             backend->writeTransaction(
                 std::move(std::string{hashBlob}),
                 lgrInfoNext.seq,
+                lgrInfoNext.closeTime.time_since_epoch().count(),
                 std::move(std::string{txnBlob}),
                 std::move(std::string{metaBlob}));
             backend->writeAccountTransactions(std::move(accountTxData));
@@ -470,6 +471,7 @@ TEST(BackendTest, Basic)
                     backend->writeTransaction(
                         std::move(hash),
                         lgrInfo.seq,
+                        lgrInfo.closeTime.time_since_epoch().count(),
                         std::move(txn),
                         std::move(meta));
                 }
@@ -507,7 +509,7 @@ TEST(BackendTest, Basic)
             for (auto [hash, txn, meta] : txns)
             {
                 bool found = false;
-                for (auto [retTxn, retMeta, retSeq] : retTxns)
+                for (auto [retTxn, retMeta, retSeq, retDate] : retTxns)
                 {
                     if (std::strncmp(
                             (const char*)retTxn.data(),
@@ -538,7 +540,7 @@ TEST(BackendTest, Basic)
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i)
                 {
-                    auto [txn, meta, seq] = retData[i];
+                    auto [txn, meta, seq, date] = retData[i];
                     auto [hash, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(
                         (const char*)txn.data(), (const char*)expTxn.data());

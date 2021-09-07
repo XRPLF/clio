@@ -806,7 +806,11 @@ public:
             BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
             return {};
         }
-        return {{result.getBytes(), result.getBytes(), result.getUInt32()}};
+        return {
+            {result.getBytes(),
+             result.getBytes(),
+             result.getUInt32(),
+             result.getUInt32()}};
     }
     LedgerPage
     doFetchLedgerPage(
@@ -841,6 +845,7 @@ public:
     writeTransaction(
         std::string&& hash,
         uint32_t seq,
+        uint32_t date,
         std::string&& transaction,
         std::string&& metadata) const override;
 
