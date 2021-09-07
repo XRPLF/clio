@@ -875,9 +875,11 @@ async def verifySubscribe(ip,clioPort,ripdPort):
                     for x in clio:
                         if x not in clioFiltered:
                             clioFiltered.append(x)
+                    clio = clioFiltered
                     for x in ripd:
                         if x not in ripdFiltered:
                             ripdFiltered.append(x)
+                    ripd = ripdFiltered
 
                     print("comparing")
                     if clio == ripd:
@@ -886,6 +888,12 @@ async def verifySubscribe(ip,clioPort,ripdPort):
                         print("mismatch")
                         if len(clio) != len(ripd):
                             print("length mismatch!")
+                            print(len(ripd))
+                            print(len(clio))
+                            for x in clio:
+                                print(x["transaction"]["hash"])
+                            for x in ripd:
+                                print(x["transaction"]["hash"])
                             return False
                         for ripdElt,clioElt in zip(ripd,clio):
                             if clioElt != ripdElt:

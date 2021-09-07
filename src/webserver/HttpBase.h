@@ -178,7 +178,7 @@ handle_request(
 
             result = error;
 
-            responseStr = boost::json::serialize(error);
+            responseStr = boost::json::serialize(response);
         }
         else
         {

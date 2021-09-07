@@ -21,7 +21,6 @@
 #include <backend/Pg.h>
 #include <rpc/RPCHelpers.h>
 
-
 namespace RPC {
 
 // {
@@ -61,18 +60,22 @@ doTx(Context const& context)
     if (!dbResponse)
         return Status{Error::rpcTXN_NOT_FOUND};
 
+    auto lgrInfo =
+        context.backend->fetchLedgerBySequence(dbResponse->ledgerSequence);
     if (!binary)
     {
         auto [txn, meta] = toExpandedJson(*dbResponse);
         response = txn;
         response["meta"] = meta;
-        response["ledger_index"] = dbResponse->ledgerSequence;
     }
     else
     {
         response["tx"] = ripple::strHex(dbResponse->transaction);
-        response["metadata"] = ripple::strHex(dbResponse->metadata);
+        response["meta"] = ripple::strHex(dbResponse->metadata);
+        response["hash"] = request.at("transaction").as_string();
     }
+    response["date"] = lgrInfo->closeTime.time_since_epoch().count();
+    response["ledger_index"] = dbResponse->ledgerSequence;
 
     return response;
 }
