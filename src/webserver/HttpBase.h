@@ -179,6 +179,8 @@ handle_request(
             result = error;
 
             responseStr = boost::json::serialize(response);
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " Encountered error: " << responseStr;
         }
         else
         {
@@ -197,6 +199,8 @@ handle_request(
     }
     catch (std::exception const& e)
     {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " Caught exception : " << e.what();
         return send(httpResponse(
             http::status::internal_server_error,
             "application/json",

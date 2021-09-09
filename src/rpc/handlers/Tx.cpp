@@ -60,8 +60,6 @@ doTx(Context const& context)
     if (!dbResponse)
         return Status{Error::rpcTXN_NOT_FOUND};
 
-    auto lgrInfo =
-        context.backend->fetchLedgerBySequence(dbResponse->ledgerSequence);
     if (!binary)
     {
         auto [txn, meta] = toExpandedJson(*dbResponse);
@@ -72,9 +70,9 @@ doTx(Context const& context)
     {
         response["tx"] = ripple::strHex(dbResponse->transaction);
         response["meta"] = ripple::strHex(dbResponse->metadata);
-        response["hash"] = request.at("transaction").as_string();
+        response["hash"] = std::move(request.at("transaction").as_string());
     }
-    response["date"] = lgrInfo->closeTime.time_since_epoch().count();
+    response["date"] = dbResponse->date;
     response["ledger_index"] = dbResponse->ledgerSequence;
 
     return response;

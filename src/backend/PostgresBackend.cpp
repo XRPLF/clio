@@ -280,7 +280,7 @@ PostgresBackend::fetchTransaction(ripple::uint256 const& hash) const
            "WHERE hash = "
         << "\'\\x" << ripple::strHex(hash) << "\'";
     auto res = pgQuery(sql.str().data());
-    if (checkResult(res, 3))
+    if (checkResult(res, 4))
     {
         return {
             {res.asUnHexedBlob(0, 0),
@@ -301,7 +301,7 @@ PostgresBackend::fetchAllTransactionsInLedger(uint32_t ledgerSequence) const
            "WHERE "
         << "ledger_seq = " << std::to_string(ledgerSequence);
     auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 3))
+    if (size_t numRows = checkResult(res, 4))
     {
         std::vector<TransactionAndMetadata> txns;
         for (size_t i = 0; i < numRows; ++i)
@@ -420,7 +420,7 @@ PostgresBackend::fetchTransactions(
                         << ripple::strHex(hash) << "\'";
 
                     auto res = pgQuery(sql.str().data());
-                    if (size_t numRows = checkResult(res, 3))
+                    if (size_t numRows = checkResult(res, 4))
                     {
                         results[i] = {
                             res.asUnHexedBlob(0, 0),

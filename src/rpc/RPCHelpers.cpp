@@ -1,3 +1,4 @@
+#include <boost/algorithm/string.hpp>
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 namespace RPC {
@@ -49,6 +50,20 @@ canHaveDeliveredAmount(
         return false;
 
     return true;
+}
+
+std::optional<ripple::AccountID>
+accountFromSeed(std::string const& account)
+{
+    auto const seed = ripple::parseGenericSeed(account);
+
+    if (!seed)
+        return {};
+
+    auto const keypair =
+        ripple::generateKeyPair(ripple::KeyType::secp256k1, *seed);
+
+    return ripple::calcAccountID(keypair.first);
 }
 
 std::optional<ripple::AccountID>
@@ -198,7 +213,17 @@ toJson(ripple::SLE const& sle)
 {
     boost::json::value value = boost::json::parse(
         sle.getJson(ripple::JsonOptions::none).toStyledString());
-
+    if (sle.getType() == ripple::ltACCOUNT_ROOT)
+    {
+        if (sle.isFieldPresent(ripple::sfEmailHash))
+        {
+            auto const& hash = sle.getFieldH128(ripple::sfEmailHash);
+            std::string md5 = strHex(hash);
+            boost::algorithm::to_lower(md5);
+            value.as_object()["urlgravatar"] =
+                str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
+        }
+    }
     return value.as_object();
 }
 

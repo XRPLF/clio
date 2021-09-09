@@ -21,7 +21,6 @@
 #include <backend/Pg.h>
 #include <rpc/RPCHelpers.h>
 
-
 namespace RPC {
 
 Result
@@ -198,12 +197,14 @@ doAccountTx(Context const& context)
             obj["meta"] = meta;
             obj["tx"] = txn;
             obj["tx"].as_object()["ledger_index"] = txnPlusMeta.ledgerSequence;
+            obj["tx"].as_object()["date"] = txnPlusMeta.date;
         }
         else
         {
             obj["meta"] = ripple::strHex(txnPlusMeta.metadata);
             obj["tx_blob"] = ripple::strHex(txnPlusMeta.transaction);
             obj["ledger_index"] = txnPlusMeta.ledgerSequence;
+            obj["date"] = txnPlusMeta.date;
         }
 
         obj["validated"] = true;

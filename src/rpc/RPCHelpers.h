@@ -17,6 +17,8 @@
 namespace RPC {
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
+std::optional<ripple::AccountID>
+accountFromSeed(std::string const& account);
 
 // TODO this function should probably be in a different file and namespace
 std::pair<

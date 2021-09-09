@@ -21,8 +21,8 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
 
-#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 
 // {
 //   account: <ident>,
@@ -39,8 +39,7 @@
 //                         //   error.
 // }
 
-namespace RPC
-{
+namespace RPC {
 
 Result
 doAccountInfo(Context const& context)
@@ -64,6 +63,18 @@ doAccountInfo(Context const& context)
 
     // Get info on account.
     auto accountID = accountFromStringStrict(strIdent);
+    if (!accountID)
+    {
+        if (!request.contains("strict") || !request.at("strict").as_bool())
+        {
+            accountID = accountFromSeed(strIdent);
+            if (!accountID)
+                return Status{Error::rpcBAD_SEED};
+        }
+        else
+            return Status{Error::rpcACT_MALFORMED};
+    }
+    assert(accountID.has_value());
 
     auto key = ripple::keylet::account(accountID.value());
 
@@ -98,26 +109,34 @@ doAccountInfo(Context const& context)
     response["ledger_index"] = lgrInfo.seq;
 
     // Return SignerList(s) if that is requested.
-    /*
-    if (params.isMember(jss::signer_lists) &&
-        params[jss::signer_lists].asBool())
+    if (request.contains("signer_lists") &&
+        request.at("signer_lists").as_bool())
     {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
-        Json::Value jvSignerList = Json::arrayValue;
+        boost::json::array signerList;
+        auto signersKey = ripple::keylet::signers(*accountID);
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const sleSigners = ledger->read(keylet::signers(accountID));
-        if (sleSigners)
-            jvSignerList.append(sleSigners->getJson(JsonOptions::none));
+        auto const signers =
+            context.backend->fetchLedgerObject(signersKey.key, lgrInfo.seq);
+        if (signers)
+        {
+            ripple::STLedgerEntry sleSigners{
+                ripple::SerialIter{signers->data(), signers->size()},
+                signersKey.key};
+            if (!signersKey.check(sleSigners))
+                return Status{Error::rpcDB_DESERIALIZATION};
 
-        result[jss::account_data][jss::signer_lists] =
-            std::move(jvSignerList);
+            signerList.push_back(toJson(sleSigners));
+        }
+
+        response["account_data"].as_object()["signer_lists"] =
+            std::move(signerList);
     }
-    */
 
     return response;
 }
 
-} //namespace RPC
+}  // namespace RPC

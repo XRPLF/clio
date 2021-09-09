@@ -810,6 +810,7 @@ CREATE INDEX IF NOT EXISTS ledgers_ledger_hash_idx ON ledgers
 CREATE TABLE IF NOT EXISTS transactions (
     hash bytea NOT NULL,
     ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    date bigint,
     transaction bytea NOT NULL,
     metadata bytea NOT NULL
 ) PARTITION BY RANGE(ledger_seq);
