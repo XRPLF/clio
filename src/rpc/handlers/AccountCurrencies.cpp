@@ -7,13 +7,10 @@
 #include <boost/json.hpp>
 #include <algorithm>
 
-#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-#include <backend/Pg.h>
+#include <rpc/RPCHelpers.h>
 
-namespace RPC
-{
+namespace RPC {
 
 Result
 doAccountCurrencies(Context const& context)
@@ -27,13 +24,13 @@ doAccountCurrencies(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
         return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
         return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-    
-    auto accountID = 
+
+    auto accountID =
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
@@ -43,36 +40,35 @@ doAccountCurrencies(Context const& context)
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            ripple::STAmount const& balance =
-                 sle.getFieldAmount(ripple::sfBalance);
+            ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
 
             auto lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
             auto highLimit = sle.getFieldAmount(ripple::sfHighLimit);
             bool viewLowest = (lowLimit.getIssuer() == accountID);
             auto lineLimit = viewLowest ? lowLimit : highLimit;
             auto lineLimitPeer = !viewLowest ? lowLimit : highLimit;
+            if (!viewLowest)
+                balance.negate();
 
             if (balance < lineLimit)
                 receive.insert(ripple::to_string(balance.getCurrency()));
             if ((-balance) < lineLimitPeer)
                 send.insert(ripple::to_string(balance.getCurrency()));
         }
-        
+
         return true;
     };
 
     traverseOwnedNodes(
-        *context.backend,
-        *accountID,
-        lgrInfo.seq,
-        beast::zero,
-        addToResponse);
+        *context.backend, *accountID, lgrInfo.seq, beast::zero, addToResponse);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
 
-    response["receive_currencies"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonReceive = response.at("receive_currencies").as_array();
+    response["receive_currencies"] =
+        boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonReceive =
+        response.at("receive_currencies").as_array();
 
     for (auto const& currency : receive)
         jsonReceive.push_back(currency.c_str());
@@ -86,4 +82,4 @@ doAccountCurrencies(Context const& context)
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

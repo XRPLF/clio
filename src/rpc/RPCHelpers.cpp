@@ -331,7 +331,7 @@ traverseOwnedNodes(
 
         if (!ownedNode)
         {
-            throw std::runtime_error("Could not find owned node");
+            break;
         }
 
         ripple::SerialIter it{ownedNode->data(), ownedNode->size()};

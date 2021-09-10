@@ -55,6 +55,9 @@ doAccountInfo(Context const& context)
     else
         return Status{Error::rpcACT_MALFORMED};
 
+    // We only need to fetch the ledger header because the ledger hash is
+    // supposed to be included in the response. The ledger sequence is specified
+    // in the request
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;

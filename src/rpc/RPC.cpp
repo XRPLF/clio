@@ -105,6 +105,7 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"account_objects", &doAccountObjects},
         {"account_offers", &doAccountOffers},
         {"account_tx", &doAccountTx},
+        {"gateway_balances", &doGatewayBalances},
         {"book_offers", &doBookOffers},
         {"channel_authorize", &doChannelAuthorize},
         {"channel_verify", &doChannelVerify},
@@ -145,6 +146,10 @@ shouldForwardToRippled(Context const& ctx)
         }
     }
 
+    if (ctx.method == "account_info" && request.contains("queue") &&
+        request.at("queue").as_bool())
+        return true;
+
     return false;
 }
 
@@ -152,7 +157,12 @@ Result
 buildResponse(Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
-        return ctx.balancer->forwardToRippled(ctx.params);
+    {
+        auto res = ctx.balancer->forwardToRippled(ctx.params);
+        if (res.size() == 0)
+            return Status{Error::rpcFAILED_TO_FORWARD};
+        return res;
+    }
 
     if (handlerTable.find(ctx.method) == handlerTable.end())
         return Status{Error::rpcUNKNOWN_COMMAND};

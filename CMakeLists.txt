@@ -84,6 +84,7 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountLines.cpp
   src/rpc/handlers/AccountOffers.cpp
   src/rpc/handlers/AccountObjects.cpp
+  src/rpc/handlers/GatewayBalances.cpp
   # Ledger
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp

@@ -27,6 +27,9 @@ doAccountObjects(Context const& context);
 Result
 doAccountOffers(Context const& context);
 
+Result
+doGatewayBalances(Context const& context);
+
 // channels methods
 
 Result

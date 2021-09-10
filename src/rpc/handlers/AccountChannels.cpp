@@ -6,13 +6,12 @@
 #include <ripple/protocol/jss.h>
 #include <boost/json.hpp>
 #include <algorithm>
-#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
 #include <backend/Pg.h>
+#include <rpc/RPCHelpers.h>
 
-namespace RPC
-{
+namespace RPC {
 
 void
 addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
@@ -20,7 +19,8 @@ addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
     boost::json::object jDst;
     jDst["channel_id"] = ripple::to_string(line.key());
     jDst["account"] = ripple::to_string(line.getAccountID(ripple::sfAccount));
-    jDst["destination_account"] = ripple::to_string(line.getAccountID(ripple::sfDestination));
+    jDst["destination_account"] =
+        ripple::to_string(line.getAccountID(ripple::sfDestination));
     jDst["amount"] = line[ripple::sfAmount].getText();
     jDst["balance"] = line[ripple::sfBalance].getText();
     if (publicKeyType(line[ripple::sfPublicKey]))
@@ -54,13 +54,13 @@ doAccountChannels(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
         return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
         return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-    
-    auto accountID = 
+
+    auto accountID =
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
@@ -82,7 +82,7 @@ doAccountChannels(Context const& context)
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
 
         limit = request.at("limit").as_int64();
@@ -90,13 +90,13 @@ doAccountChannels(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
     }
 
-    ripple::uint256 cursor;
-    if (request.contains("cursor"))
+    ripple::uint256 marker;
+    if (request.contains("marker"))
     {
-        if(!request.at("cursor").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
+        if (!request.at("marker").is_string())
+            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
+        if (!marker.parseHex(request.at("marker").as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
     }
 
@@ -108,26 +108,21 @@ doAccountChannels(Context const& context)
         if (sle.getType() == ripple::ltPAYCHAN &&
             sle.getAccountID(ripple::sfAccount) == *accountID &&
             (!destAccount ||
-                *destAccount == sle.getAccountID(ripple::sfDestination)))
+             *destAccount == sle.getAccountID(ripple::sfDestination)))
         {
             if (limit-- == 0)
             {
                 return false;
             }
-            
+
             addChannel(jsonChannels, sle);
         }
 
         return true;
     };
 
-    auto nextCursor = 
-        traverseOwnedNodes(
-            *context.backend,
-            *accountID,
-            lgrInfo.seq,
-            cursor,
-            addToResponse);
+    auto nextCursor = traverseOwnedNodes(
+        *context.backend, *accountID, lgrInfo.seq, marker, addToResponse);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
@@ -137,4 +132,4 @@ doAccountChannels(Context const& context)
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC
