@@ -3,6 +3,96 @@
 #include <rpc/RPCHelpers.h>
 namespace RPC {
 
+std::optional<bool>
+getBool(boost::json::object const& request, std::string const& field)
+{
+    if (!request.contains(field))
+        return {};
+    else if (request.at(field).is_bool())
+        return request.at(field).as_bool();
+    else
+        throw InvalidParamsError("Invalid field " + field + ", not bool.");
+}
+bool
+getBool(
+    boost::json::object const& request,
+    std::string const& field,
+    bool dfault)
+{
+    if (auto res = getBool(request, field))
+        return *res;
+    else
+        return dfault;
+}
+bool
+getRequiredBool(boost::json::object const& request, std::string const& field)
+{
+    if (auto res = getBool(request, field))
+        return *res;
+    else
+        throw InvalidParamsError("Missing field " + field);
+}
+std::optional<uint32_t>
+getUInt(boost::json::object const& request, std::string const& field)
+{
+    if (!request.contains(field))
+        return {};
+    else if (request.at(field).is_uint64())
+        return request.at(field).as_uint64();
+    else if (request.at(field).is_int64())
+        return request.at(field).as_int64();
+    else
+        throw InvalidParamsError("Invalid field " + field + ", not uint.");
+}
+uint32_t
+getUInt(
+    boost::json::object const& request,
+    std::string const& field,
+    uint32_t dfault)
+{
+    if (auto res = getUInt(request, field))
+        return *res;
+    else
+        return dfault;
+}
+uint32_t
+getRequiredUInt(boost::json::object const& request, std::string const& field)
+{
+    if (auto res = getUInt(request, field))
+        return *res;
+    else
+        throw InvalidParamsError("Missing field " + field);
+}
+std::optional<std::string>
+getString(boost::json::object const& request, std::string const& field)
+{
+    if (!request.contains(field))
+        return {};
+    else if (request.at(field).is_string())
+        return request.at(field).as_string().c_str();
+    else
+        throw InvalidParamsError("Invalid field " + field + ", not string.");
+}
+std::string
+getRequiredString(boost::json::object const& request, std::string const& field)
+{
+    if (auto res = getString(request, field))
+        return *res;
+    else
+        throw InvalidParamsError("Missing field " + field);
+}
+std::string
+getString(
+    boost::json::object const& request,
+    std::string const& field,
+    std::string dfault)
+{
+    if (auto res = getString(request, field))
+        return *res;
+    else
+        return dfault;
+}
+
 std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
@@ -318,6 +408,9 @@ traverseOwnedNodes(
     ripple::uint256 const& cursor,
     std::function<bool(ripple::SLE)> atOwnedNode)
 {
+    if (!backend.fetchLedgerObject(
+            ripple::keylet::account(accountID).key, sequence))
+        throw AccountNotFoundError(ripple::toBase58(accountID));
     auto const rootIndex = ripple::keylet::ownerDir(accountID);
     auto currentIndex = rootIndex;
 

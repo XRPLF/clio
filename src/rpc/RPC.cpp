@@ -106,6 +106,7 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"account_offers", &doAccountOffers},
         {"account_tx", &doAccountTx},
         {"gateway_balances", &doGatewayBalances},
+        {"noripple_check", &doNoRippleCheck},
         {"book_offers", &doBookOffers},
         {"channel_authorize", &doChannelAuthorize},
         {"channel_verify", &doChannelVerify},
@@ -169,6 +170,23 @@ buildResponse(Context const& ctx)
 
     auto method = handlerTable[ctx.method];
 
-    return method(ctx);
+    try
+    {
+        return method(ctx);
+    }
+    catch (InvalidParamsError const& err)
+    {
+        return Status{Error::rpcINVALID_PARAMS, err.what()};
+    }
+    catch (AccountNotFoundError const& err)
+    {
+        return Status{Error::rpcACT_NOT_FOUND, err.what()};
+    }
+    catch (std::exception const& err)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " caught exception : " << err.what();
+        return Status{Error::rpcINTERNAL, err.what()};
+    }
 }
 }  // namespace RPC

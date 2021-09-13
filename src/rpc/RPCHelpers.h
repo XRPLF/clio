@@ -141,5 +141,40 @@ parseBook(boost::json::object const& request);
 std::variant<Status, ripple::AccountID>
 parseTaker(boost::json::value const& request);
 
+std::optional<uint32_t>
+getUInt(boost::json::object const& request, std::string const& field);
+
+uint32_t
+getUInt(
+    boost::json::object const& request,
+    std::string const& field,
+    uint32_t dfault);
+
+uint32_t
+getRequiredUInt(boost::json::object const& request, std::string const& field);
+
+std::optional<bool>
+getBool(boost::json::object const& request, std::string const& field);
+
+bool
+getBool(
+    boost::json::object const& request,
+    std::string const& field,
+    bool dfault);
+
+bool
+getRequiredBool(boost::json::object const& request, std::string const& field);
+
+std::optional<std::string>
+getString(boost::json::object const& request, std::string const& field);
+
+std::string
+getRequiredString(boost::json::object const& request, std::string const& field);
+
+std::string
+getString(
+    boost::json::object const& request,
+    std::string const& field,
+    std::string dfault);
 }  // namespace RPC
 #endif

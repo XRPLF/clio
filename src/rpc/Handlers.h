@@ -30,6 +30,9 @@ doAccountOffers(Context const& context);
 Result
 doGatewayBalances(Context const& context);
 
+Result
+doNoRippleCheck(Context const& context);
+
 // channels methods
 
 Result
