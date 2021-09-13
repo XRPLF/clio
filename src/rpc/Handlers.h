@@ -63,6 +63,9 @@ Result
 doTx(Context const& context);
 
 Result
+doTransactionEntry(Context const& context);
+
+Result
 doAccountTx(Context const& context);
 
 // subscriptions

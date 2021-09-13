@@ -93,6 +93,7 @@ target_sources(clio PRIVATE
   src/rpc/handlers/LedgerRange.cpp
   # Transaction
   src/rpc/handlers/Tx.cpp
+  src/rpc/handlers/TransactionEntry.cpp
   src/rpc/handlers/AccountTx.cpp
   # Dex
   src/rpc/handlers/BookOffers.cpp

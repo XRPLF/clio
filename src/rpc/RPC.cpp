@@ -119,7 +119,7 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"server_info", &doServerInfo},
         {"unsubscribe", &doUnsubscribe},
         {"tx", &doTx},
-    };
+        {"transaction_entry", &doTransactionEntry}};
 
 static std::unordered_set<std::string> forwardCommands{
     "submit",
