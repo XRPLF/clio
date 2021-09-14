@@ -155,17 +155,22 @@ public:
     }
 
     void
-    send(std::string const& msg)
+    send(std::string&& msg)
     {
         size_t left = 0;
         {
             std::lock_guard<std::mutex> lck(mtx_);
-            messages_.push(msg);
+            messages_.push(std::move(msg));
             left = messages_.size();
         }
         // if the queue was previously empty, start the send chain
         if (left == 1)
             sendNext();
+    }
+    void
+    send(std::string const& msg)
+    {
+        send({msg});
     }
 
     void
@@ -296,7 +301,9 @@ public:
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : " << boost::json::serialize(response);
 
-        send(boost::json::serialize(response));
+        std::string responseStr = boost::json::serialize(response);
+        dosGuard_.add(ip, responseStr.size());
+        send(std::move(responseStr));
         do_read();
     }
 };
