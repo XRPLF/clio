@@ -267,8 +267,7 @@ public:
 
                     if (auto status = std::get_if<RPC::Status>(&v))
                     {
-                        auto error =
-                            RPC::make_error(status->error, status->message);
+                        auto error = RPC::make_error(*status);
 
                         if (!id.is_null())
                             error["id"] = id;

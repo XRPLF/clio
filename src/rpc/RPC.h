@@ -63,6 +63,7 @@ using Error = ripple::error_code_i;
 struct Status
 {
     Error error = Error::rpcSUCCESS;
+    std::string strCode = "";
     std::string message = "";
 
     Status(){};
@@ -71,6 +72,10 @@ struct Status
 
     Status(Error error_, std::string message_)
         : error(error_), message(message_)
+    {
+    }
+    Status(Error error_, std::string strCode_, std::string message_)
+        : error(error_), strCode(strCode_), message(message_)
     {
     }
 
@@ -114,17 +119,12 @@ public:
         return account.c_str();
     }
 };
-void
-inject_error(Error err, boost::json::object& json);
 
-void
-inject_error(Error err, std::string const& message, boost::json::object& json);
+boost::json::object
+make_error(Status const& status);
 
 boost::json::object
 make_error(Error err);
-
-boost::json::object
-make_error(Error err, std::string const& message);
 
 std::optional<Context>
 make_WsContext(

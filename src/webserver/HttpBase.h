@@ -172,7 +172,7 @@ handle_request(
 
         if (auto status = std::get_if<RPC::Status>(&v))
         {
-            auto error = RPC::make_error(status->error);
+            auto error = RPC::make_error(*status);
 
             error["request"] = request;
 

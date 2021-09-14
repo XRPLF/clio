@@ -59,41 +59,32 @@ make_HttpContext(
         range};
 }
 
-void
-inject_error(Error err, boost::json::object& json)
+boost::json::object
+make_error(Error err)
 {
+    boost::json::object json;
     ripple::RPC::ErrorInfo const& info(ripple::RPC::get_error_info(err));
     json["error"] = info.token;
     json["error_code"] = static_cast<std::uint32_t>(err);
     json["error_message"] = info.message;
     json["status"] = "error";
     json["type"] = "response";
-}
-
-void
-inject_error(Error err, std::string const& message, boost::json::object& json)
-{
-    ripple::RPC::ErrorInfo const& info(ripple::RPC::get_error_info(err));
-    json["error"] = info.token;
-    json["error_code"] = static_cast<std::uint32_t>(err);
-    json["error_message"] = message;
-    json["status"] = "error";
-    json["type"] = "response";
-}
-
-boost::json::object
-make_error(Error err)
-{
-    boost::json::object json{};
-    inject_error(err, json);
     return json;
 }
 
 boost::json::object
-make_error(Error err, std::string const& message)
+make_error(Status const& status)
 {
-    boost::json::object json{};
-    inject_error(err, message, json);
+    boost::json::object json;
+    ripple::RPC::ErrorInfo const& info(
+        ripple::RPC::get_error_info(status.error));
+    json["error"] =
+        status.strCode.size() ? status.strCode.c_str() : info.token.c_str();
+    json["error_code"] = static_cast<std::uint32_t>(status.error);
+    json["error_message"] =
+        status.message.size() ? status.message.c_str() : info.message.c_str();
+    json["status"] = "error";
+    json["type"] = "response";
     return json;
 }
 static std::unordered_map<std::string, std::function<Result(Context const&)>>
