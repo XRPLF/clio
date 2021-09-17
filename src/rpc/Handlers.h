@@ -79,5 +79,8 @@ doUnsubscribe(Context const& context);
 Result
 doServerInfo(Context const& context);
 
+// Utility methods
+Result
+doRandom(Context const& context);
 }  // namespace RPC
 #endif

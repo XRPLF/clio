@@ -110,7 +110,8 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"server_info", &doServerInfo},
         {"unsubscribe", &doUnsubscribe},
         {"tx", &doTx},
-        {"transaction_entry", &doTransactionEntry}};
+        {"transaction_entry", &doTransactionEntry},
+        {"random", &doRandom}};
 
 static std::unordered_set<std::string> forwardCommands{
     "submit",
@@ -155,6 +156,8 @@ buildResponse(Context const& ctx)
             return Status{Error::rpcFAILED_TO_FORWARD};
         return res;
     }
+    if (ctx.method == "ping")
+        return boost::json::object{};
 
     if (handlerTable.find(ctx.method) == handlerTable.end())
         return Status{Error::rpcUNKNOWN_COMMAND};

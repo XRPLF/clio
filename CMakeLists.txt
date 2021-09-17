@@ -103,7 +103,9 @@ target_sources(clio PRIVATE
   # Subscribe
   src/rpc/handlers/Subscribe.cpp
   # Server
-  src/rpc/handlers/ServerInfo.cpp)
+  src/rpc/handlers/ServerInfo.cpp
+  # Utility
+  src/rpc/handlers/Random.cpp)
 
 
 message(${Boost_LIBRARIES})

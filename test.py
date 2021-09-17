@@ -24,6 +24,17 @@ def isSubset(sub, sup):
     return True
 
 
+async def call(ip,port,msg):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+                await ws.send(msg)
+                res = json.loads(await ws.recv())
+                print(json.dumps(res,indent=4,sort_keys=True))
+    except websockets.exceptions.ConnectionClosedError as e:
+        print(e)
+
+
 def compareAccountInfo(aldous, p2p):
     p2p = p2p["result"]["account_data"]
     aldous = aldous["object"]
@@ -970,7 +981,7 @@ async def verifySubscribe(ip,clioPort,ripdPort):
     
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe","verify_subscribe"])
+parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe","verify_subscribe","call"])
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
@@ -1004,6 +1015,7 @@ parser.add_argument('--numRunners',default=1)
 parser.add_argument('--count',default=-1)
 parser.add_argument('--streams',default=None)
 parser.add_argument('--accounts',default=None)
+parser.add_argument('--request',default=None)
 
 
 
@@ -1026,6 +1038,9 @@ def run(args):
     elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))
+    elif args.action == "call":
+        asyncio.get_event_loop().run_until_complete(
+                call(args.ip,args.port,args.request))
     elif args.action == "gaps":
         missing = []
         for x in range(rng[0],rng[1]):
