@@ -29,8 +29,8 @@
 #include <webserver/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
 #include <etl/ETLHelpers.h>
+#include <grpcpp/grpcpp.h>
 
 class ETLLoadBalancer;
 class SubscriptionManager;
@@ -321,7 +321,7 @@ public:
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
     getRippledForwardingStub() const;
 
-    boost::json::object
+    std::optional<boost::json::object>
     forwardToRippled(boost::json::object const& request) const;
 };
 /// This class is used to manage connections to transaction processing processes
@@ -428,7 +428,7 @@ public:
     /// Forward a JSON RPC request to a randomly selected rippled node
     /// @param request JSON-RPC request
     /// @return response received from rippled node
-    boost::json::object
+    std::optional<boost::json::object>
     forwardToRippled(boost::json::object const& request) const;
 
 private:

@@ -647,29 +647,21 @@ ETLLoadBalancer::getRippledForwardingStub() const
     return nullptr;
 }
 
-boost::json::object
+std::optional<boost::json::object>
 ETLLoadBalancer::forwardToRippled(boost::json::object const& request) const
 {
-    boost::json::object res;
-    if (sources_.size() == 0)
-        return res;
     srand((unsigned)time(0));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        res = sources_[sourceIdx]->forwardToRippled(request);
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request))
+            return res;
 
-        if (!res.contains("forwarded") || res.at("forwarded") != true)
-        {
-            sourceIdx = (sourceIdx + 1) % sources_.size();
-            ++numAttempts;
-            continue;
-        }
-        return res;
+        sourceIdx = (sourceIdx + 1) % sources_.size();
+        ++numAttempts;
     }
-    res["error"] = "Failed to forward";
-    return res;
+    return {};
 }
 
 std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
@@ -693,7 +685,7 @@ ETLSource::getRippledForwardingStub() const
     }
 }
 
-boost::json::object
+std::optional<boost::json::object>
 ETLSource::forwardToRippled(boost::json::object const& request) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
@@ -704,7 +696,7 @@ ETLSource::forwardToRippled(boost::json::object const& request) const
     {
         BOOST_LOG_TRIVIAL(error)
             << "Attempted to proxy but failed to connect to tx";
-        return response;
+        return {};
     }
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
@@ -764,9 +756,9 @@ ETLSource::forwardToRippled(boost::json::object const& request) const
 
         if (!parsed.is_object())
         {
-            BOOST_LOG_TRIVIAL(error) << "Error parsing response";
-            response["error"] = "Error parsing response from tx";
-            return response;
+            BOOST_LOG_TRIVIAL(error)
+                << "Error parsing response: " << std::string{begin, end};
+            return {};
         }
         BOOST_LOG_TRIVIAL(debug) << "Successfully forward request";
 
@@ -778,7 +770,7 @@ ETLSource::forwardToRippled(boost::json::object const& request) const
     catch (std::exception const& e)
     {
         BOOST_LOG_TRIVIAL(error) << "Encountered exception : " << e.what();
-        return response;
+        return {};
     }
 }
 

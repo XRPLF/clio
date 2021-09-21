@@ -152,9 +152,9 @@ buildResponse(Context const& ctx)
     if (shouldForwardToRippled(ctx))
     {
         auto res = ctx.balancer->forwardToRippled(ctx.params);
-        if (res.size() == 0)
+        if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
-        return res;
+        return *res;
     }
     if (ctx.method == "ping")
         return boost::json::object{};

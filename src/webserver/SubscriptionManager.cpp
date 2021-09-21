@@ -18,8 +18,7 @@ getLedgerPubMessage(
 
     pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
     pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
-    pubMsg["reserve_base"] =
-        RPC::toBoostJson(fees.accountReserve(0).jsonClipped());
+    pubMsg["reserve_base"] = RPC::toBoostJson(fees.reserve.jsonClipped());
     pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
 
     pubMsg["validated_ledgers"] = ledgerRange;
