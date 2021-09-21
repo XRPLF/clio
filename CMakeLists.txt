@@ -20,7 +20,8 @@ if ((NOT DEFINED BOOST_ROOT) AND (DEFINED ENV{BOOST_ROOT}))
 endif ()
 file (TO_CMAKE_PATH "${BOOST_ROOT}" BOOST_ROOT)
 
-FIND_PACKAGE( Boost 1.75 COMPONENTS filesystem log log_setup thread system REQUIRED )
+FIND_PACKAGE( Boost 1.75 COMPONENTS filesystem log_setup log thread system REQUIRED )
+message(${Boost_LIBRARIES})
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -108,7 +109,6 @@ target_sources(clio PRIVATE
   src/rpc/handlers/Random.cpp)
 
 
-message(${Boost_LIBRARIES})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 TARGET_LINK_LIBRARIES(clio PUBLIC ${Boost_LIBRARIES})
 TARGET_LINK_LIBRARIES(clio_server PUBLIC clio)

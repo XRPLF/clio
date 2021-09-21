@@ -16,14 +16,21 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/json.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/support/date_time.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/file.hpp>
 #include <algorithm>
 #include <backend/BackendFactory.h>
 #include <cstdlib>
@@ -62,8 +69,18 @@ parse_config(const char* filename)
 }
 
 void
-initLogLevel(boost::json::object const& config)
+initLogging(boost::json::object const& config)
 {
+    boost::log::add_common_attributes();
+    std::string format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%";
+    boost::log::add_console_log(
+        std::cout, boost::log::keywords::format = format);
+    if (config.contains("log_file"))
+    {
+        boost::log::add_file_log(
+            config.at("log_file").as_string().c_str(),
+            boost::log::keywords::format = format);
+    }
     auto const logLevel = config.contains("log_level")
         ? config.at("log_level").as_string()
         : "info";
@@ -126,7 +143,7 @@ main(int argc, char* argv[])
         std::cerr << "Couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
-    initLogLevel(*config);
+    initLogging(*config);
     auto const threads = config->contains("workers")
         ? config->at("workers").as_int64()
         : std::thread::hardware_concurrency();
