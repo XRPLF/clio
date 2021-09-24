@@ -636,7 +636,7 @@ ReportingETL::monitor()
         // the ledger that has been validated by the network. In this
         // manner, a reporting processing running in read-only mode does not
         // need to restart if the database is wiped.
-        constexpr size_t timeoutSeconds = 10;
+        constexpr size_t timeoutSeconds = 2;
         bool success = publishLedger(nextSequence, timeoutSeconds);
         if (!success)
         {
