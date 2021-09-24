@@ -1,10 +1,12 @@
 # clio
 clio is an XRP Ledger RPC server. clio is optimized for RPC calls. Validated 
 historical ledger and transaction data is stored in a more space efficient format,
-using up to 4 times less space than rippled.
+using up to 4 times less space than rippled. clio stores data in either Postgres
+or Cassandra, allowing for scalable read throughput. Multiple clio nodes can share
+access to the same dataset, allowing for a highly available cluster of clio nodes,
+without the need for redundant data storage or computation.
 
-clio offers the full rippled API (this is still in development at the time of writing),
-with the caveat that clio by default only returns validated data.
+clio offers the full rippled API, with the caveat that clio by default only returns validated data.
 This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
 Other non-validated data is also not returned, such as information about queued transactions. 
 For requests that require access to the p2p network, such as `fee` or `submit`, clio automatically forwards the request to a rippled node, and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and clio will forward the request to rippled.
