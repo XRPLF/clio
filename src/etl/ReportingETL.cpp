@@ -169,7 +169,9 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 }
 
 bool
-ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
+ReportingETL::publishLedger(
+    uint32_t ledgerSequence,
+    std::optional<uint32_t> maxAttempts)
 {
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " : "
@@ -189,25 +191,13 @@ ReportingETL::publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts)
                                          << ledgerSequence;
                 // We try maxAttempts times to publish the ledger, waiting one
                 // second in between each attempt.
-                // If the ledger is not present in the database after
-                // maxAttempts, we attempt to take over as the writer. If the
-                // takeover fails, doContinuousETL will return, and this node
-                // will go back to publishing. If the node is in strict read
-                // only mode, we simply skip publishing this ledger and return
-                // false indicating the publish failed
-                if (numAttempts >= maxAttempts)
+                if (maxAttempts && numAttempts >= maxAttempts)
                 {
                     BOOST_LOG_TRIVIAL(debug)
                         << __func__ << " : "
                         << "Failed to publish ledger after " << numAttempts
                         << " attempts.";
-                    if (!readOnly_)
-                    {
-                        BOOST_LOG_TRIVIAL(info)
-                            << __func__ << " : "
-                            << "Attempting to become ETL writer";
-                        return false;
-                    }
+                    return false;
                 }
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 ++numAttempts;
@@ -620,7 +610,7 @@ ReportingETL::monitor()
                                 << "Ledger with sequence = " << nextSequence
                                 << " has been validated by the network. "
                                 << "Attempting to find in database and publish";
-        // Attempt to take over responsibility of ETL writer after 10 failed
+        // Attempt to take over responsibility of ETL writer after 2 failed
         // attempts to publish the ledger. publishLedger() fails if the
         // ledger that has been validated by the network is not found in the
         // database after the specified number of attempts. publishLedger()
@@ -671,11 +661,10 @@ ReportingETL::monitorReadOnly()
     if (!mostRecent)
         return;
     uint32_t sequence = *mostRecent;
-    bool success = true;
     while (!stopping_ &&
            networkValidatedLedgers_->waitUntilValidatedByNetwork(sequence))
     {
-        publishLedger(sequence, 30);
+        publishLedger(sequence, {});
         ++sequence;
     }
 }

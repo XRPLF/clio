@@ -222,7 +222,7 @@ private:
     /// from the database. 1 attempt per second
     /// @return whether the ledger was found in the database and published
     bool
-    publishLedger(uint32_t ledgerSequence, uint32_t maxAttempts = 10);
+    publishLedger(uint32_t ledgerSequence, std::optional<uint32_t> maxAttempts);
 
     /// Publish the passed in ledger
     /// @param ledger the ledger to publish
