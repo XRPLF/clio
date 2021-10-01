@@ -1125,7 +1125,7 @@ $$ LANGUAGE plpgsql;
     //  , R"(Full idempotent text of schema version n)"
 };
 
-static constexpr char* accountTxSchema = R"(
+static constexpr char const* accountTxSchema = R"(
 
 -- account_tx() RPC helper. From the rippled reporting process, only the
 -- parameters without defaults are required. For the parameters with
