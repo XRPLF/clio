@@ -43,7 +43,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message(${CMAKE_CURRENT_BINARY_DIR})
 message(${CMAKE_MODULE_PATH})
-add_subdirectory(rippled)
+FetchContent_Declare(rippled
+  GIT_REPOSITORY https://github.com/cjcobb23/rippled.git
+  GIT_TAG clio
+)
+FetchContent_MakeAvailable(rippled)
 target_link_libraries(clio PUBLIC xrpl_core grpc_pbufs)
 add_dependencies(clio xrpl_core)
 add_dependencies(clio grpc_pbufs)
