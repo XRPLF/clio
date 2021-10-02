@@ -191,7 +191,7 @@ SubscriptionManager::pubTransaction(
 
     std::unordered_set<ripple::Book> alreadySent;
 
-    for (auto const& node : meta->peekNodes())
+    for (auto const& node : meta->getNodes())
     {
         if (!node.isFieldPresent(ripple::sfLedgerEntryType))
             assert(false);
