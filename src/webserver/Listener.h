@@ -6,7 +6,6 @@
 #include <boost/beast/websocket.hpp>
 #include <server/HttpSession.h>
 #include <server/PlainWsSession.h>
-#include <server/Ssl.h>
 #include <server/SslHttpSession.h>
 #include <server/SslWsSession.h>
 #include <server/SubscriptionManager.h>
@@ -147,7 +146,7 @@ class Listener
         Listener<PlainSession, SslSession>>::shared_from_this;
 
     net::io_context& ioc_;
-    std::optional<ssl::context> ctx_;
+    std::optional<std::reference_wrapper<ssl::context>>  ctx_;
     tcp::acceptor acceptor_;
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
@@ -157,14 +156,14 @@ class Listener
 public:
     Listener(
         net::io_context& ioc,
-        std::optional<ssl::context>&& ctx,
+        std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard)
         : ioc_(ioc)
-        , ctx_(std::move(ctx))
+        , ctx_(ctx)
         , acceptor_(net::make_strand(ioc))
         , backend_(backend)
         , subscriptions_(subscriptions)
@@ -262,6 +261,7 @@ static std::shared_ptr<HttpServer>
 make_HttpServer(
     boost::json::object const& config,
     boost::asio::io_context& ioc,
+    std::optional<std::reference_wrapper<ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
@@ -271,14 +271,6 @@ make_HttpServer(
         return nullptr;
 
     auto const& serverConfig = config.at("server").as_object();
-    std::optional<ssl::context> sslCtx;
-    if (serverConfig.contains("ssl_cert_file") &&
-        serverConfig.contains("ssl_key_file"))
-    {
-        sslCtx = parse_certs(
-            serverConfig.at("ssl_cert_file").as_string().c_str(),
-            serverConfig.at("ssl_key_file").as_string().c_str());
-    }
 
     auto const address = boost::asio::ip::make_address(
         serverConfig.at("ip").as_string().c_str());
@@ -287,7 +279,7 @@ make_HttpServer(
 
     auto server = std::make_shared<HttpServer>(
         ioc,
-        std::move(sslCtx),
+        sslCtx,
         boost::asio::ip::tcp::endpoint{address, port},
         backend,
         subscriptions,
