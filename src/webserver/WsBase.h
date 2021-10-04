@@ -149,7 +149,7 @@ public:
             sendNext();
     }
     void
-    send(std::string const& msg)
+    send(std::string const& msg) override
     {
         send({msg});
     }
