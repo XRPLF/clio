@@ -53,7 +53,7 @@ public:
     virtual std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
     getRippledForwardingStub() const = 0;
 
-    virtual boost::json::object
+    virtual std::optional<boost::json::object>
     forwardToRippled(boost::json::object const& request) const = 0;
 
     virtual
@@ -320,7 +320,7 @@ public:
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
     getRippledForwardingStub() const override;
 
-    boost::json::object
+    std::optional<boost::json::object>
     forwardToRippled(boost::json::object const& request) const override;
 };
 
