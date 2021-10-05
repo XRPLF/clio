@@ -806,7 +806,7 @@ ETLSourceImpl<Derived>::getRippledForwardingStub() const
 }
 
 template <class Derived>
-boost::json::object
+std::optional<boost::json::object>
 ETLSourceImpl<Derived>::forwardToRippled(boost::json::object const& request) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "

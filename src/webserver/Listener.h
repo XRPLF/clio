@@ -4,11 +4,11 @@
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include <server/HttpSession.h>
-#include <server/PlainWsSession.h>
-#include <server/SslHttpSession.h>
-#include <server/SslWsSession.h>
-#include <server/SubscriptionManager.h>
+#include <webserver/HttpSession.h>
+#include <webserver/PlainWsSession.h>
+#include <webserver/SslHttpSession.h>
+#include <webserver/SslWsSession.h>
+#include <webserver/SubscriptionManager.h>
 
 #include <iostream>
 
