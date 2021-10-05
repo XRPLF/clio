@@ -197,8 +197,15 @@ BackendInterface::fetchLedgerPage(
     LedgerPage page;
     page.cursor = cursor;
     long totalTime = 0;
+    long maxTime = 5000;
+    bool timedOut = false;
     do
     {
+        if (totalTime >= maxTime)
+        {
+            timedOut = true;
+            break;
+        }
         adjustedLimit = adjustedLimit >= 8192 ? 8192 : adjustedLimit * 2;
         auto start = std::chrono::system_clock::now();
         auto partial =
@@ -219,7 +226,7 @@ BackendInterface::fetchLedgerPage(
         page.objects.insert(
             page.objects.end(), partial.objects.begin(), partial.objects.end());
         page.cursor = partial.cursor;
-    } while (page.objects.size() < limit && page.cursor && totalTime < 5000);
+    } while (page.objects.size() < limit && page.cursor);
     if (incomplete)
     {
         auto rng = fetchLedgerRange();
@@ -263,7 +270,15 @@ BackendInterface::fetchLedgerPage(
         });
         if (page.objects.size() > limit)
             page.objects.resize(limit);
-        if (page.objects.size() && page.objects.size() >= limit)
+        if (timedOut)
+        {
+            if (page.cursor && lowerPage.cursor)
+                page.cursor =
+                    std::min(page.cursor.value(), lowerPage.cursor.value());
+            else if (lowerPage.cursor)
+                page.cursor = lowerPage.cursor;
+        }
+        else if (page.objects.size() && page.objects.size() >= limit)
             page.cursor = page.objects.back().key;
     }
     return page;
