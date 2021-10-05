@@ -192,7 +192,6 @@ BackendInterface::fetchLedgerPage(
     assert(limit != 0);
     bool incomplete = !isLedgerIndexed(ledgerSequence);
     BOOST_LOG_TRIVIAL(debug) << __func__ << " incomplete = " << incomplete;
-    std::cout << ledgerSequence << " - " << incomplete << std::endl;
     // really low limits almost always miss
     uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
@@ -222,7 +221,6 @@ BackendInterface::fetchLedgerPage(
     } while (page.objects.size() < limit && page.cursor);
     if (incomplete)
     {
-        std::cout << "recursing" << std::endl;
         auto rng = fetchLedgerRange();
         if (!rng)
             return page;

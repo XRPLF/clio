@@ -1200,7 +1200,7 @@ BEGIN
 
 
     _sql := format('SELECT hash, ledger_seq, transaction_index FROM account_transactions WHERE account = $1
-        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq %s, transaction_index %s');
+        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq %s, transaction_index %s',_sort_order,_sort_order);
 
     OPEN _cursor FOR EXECUTE _sql USING _in_account_id, _between_min, _between_max;
     LOOP

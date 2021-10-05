@@ -13,7 +13,7 @@
 TEST(BackendTest, Basic)
 {
     boost::log::core::get()->set_filter(
-        boost::log::trivial::severity >= boost::log::trivial::warning);
+        boost::log::trivial::severity >= boost::log::trivial::debug);
     std::string keyspace =
         "oceand_test_" +
         std::to_string(
@@ -40,7 +40,8 @@ TEST(BackendTest, Basic)
             {"password", "postgres"},
             {"indexer_key_shift", 2},
             {"threads", 8}}}}}};
-    std::vector<boost::json::object> configs = {cassandraConfig};
+    std::vector<boost::json::object> configs = {
+        cassandraConfig, postgresConfig};
     for (auto& config : configs)
     {
         std::cout << keyspace << std::endl;
@@ -581,14 +582,6 @@ TEST(BackendTest, Basic)
                 ++numLoops;
                 ASSERT_FALSE(page.warning.has_value());
             } while (page.cursor);
-            std::cout << numLoops << std::endl;
-            std::cout << "base" << std::endl;
-            for (auto obj : objs)
-                if (obj.second.size() != 0)
-                    std::cout << ripple::strHex(obj.first) << std::endl;
-            std::cout << "clio" << std::endl;
-            for (auto retObj : retObjs)
-                std::cout << ripple::strHex(retObj.key) << std::endl;
             for (auto obj : objs)
             {
                 bool found = false;
