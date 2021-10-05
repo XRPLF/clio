@@ -84,7 +84,7 @@ std::vector<ripple::AccountID>
 getAccountsFromTransaction(boost::json::object const& transaction);
 
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info);
+ledgerInfoToBlob(ripple::LedgerInfo const& info, bool includeHash = false);
 
 bool
 isGlobalFrozen(

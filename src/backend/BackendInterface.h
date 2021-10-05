@@ -233,7 +233,7 @@ protected:
     // Tell the database we have finished writing all data for a particular
     // ledger
     bool
-    finishWrites(uint32_t ledgerSequence) const;
+    finishWrites(uint32_t ledgerSequence);
 
     virtual bool
     doOnlineDelete(uint32_t numLedgersToKeep) const = 0;

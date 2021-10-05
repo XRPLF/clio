@@ -384,7 +384,7 @@ ledgerInfoFromRequest(Context const& ctx)
 }
 
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info)
+ledgerInfoToBlob(ripple::LedgerInfo const& info, bool includeHash)
 {
     ripple::Serializer s;
     s.add32(info.seq);
@@ -396,7 +396,8 @@ ledgerInfoToBlob(ripple::LedgerInfo const& info)
     s.add32(info.closeTime.time_since_epoch().count());
     s.add8(info.closeTimeResolution.count());
     s.add8(info.closeFlags);
-    // s.addBitString(info.hash);
+    if (includeHash)
+        s.addBitString(info.hash);
     return s.peekData();
 }
 

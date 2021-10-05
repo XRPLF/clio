@@ -3,7 +3,7 @@
 #include <backend/BackendInterface.h>
 namespace Backend {
 bool
-BackendInterface::finishWrites(uint32_t ledgerSequence) const
+BackendInterface::finishWrites(uint32_t ledgerSequence)
 {
     indexer_.finish(ledgerSequence, *this);
     auto commitRes = doFinishWrites();
@@ -14,6 +14,7 @@ BackendInterface::finishWrites(uint32_t ledgerSequence) const
         if (indexer_.isKeyFlagLedger(ledgerSequence))
             indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
         isFirst_ = false;
+        updateRange(ledgerSequence);
     }
     else
     {
@@ -191,6 +192,7 @@ BackendInterface::fetchLedgerPage(
     assert(limit != 0);
     bool incomplete = !isLedgerIndexed(ledgerSequence);
     BOOST_LOG_TRIVIAL(debug) << __func__ << " incomplete = " << incomplete;
+    std::cout << ledgerSequence << " - " << incomplete << std::endl;
     // really low limits almost always miss
     uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
@@ -220,6 +222,7 @@ BackendInterface::fetchLedgerPage(
     } while (page.objects.size() < limit && page.cursor);
     if (incomplete)
     {
+        std::cout << "recursing" << std::endl;
         auto rng = fetchLedgerRange();
         if (!rng)
             return page;
@@ -247,6 +250,7 @@ BackendInterface::fetchLedgerPage(
             std::move_iterator(lowerPage.objects.end()),
             std::back_inserter(keys),
             [](auto&& elt) { return std::move(elt.key); });
+        size_t upperPageSize = page.objects.size();
         auto objs = fetchLedgerObjects(keys, ledgerSequence);
         for (size_t i = 0; i < keys.size(); ++i)
         {
@@ -258,7 +262,10 @@ BackendInterface::fetchLedgerPage(
         std::sort(page.objects.begin(), page.objects.end(), [](auto a, auto b) {
             return a.key < b.key;
         });
-        page.warning = "Data may be incomplete";
+        if (page.objects.size() > limit)
+            page.objects.resize(limit);
+        if (page.objects.size() && page.objects.size() >= limit)
+            page.cursor = page.objects.back().key;
     }
     return page;
 }

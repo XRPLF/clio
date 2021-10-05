@@ -586,7 +586,7 @@ CassandraBackend::doFetchLedgerPage(
             }
         }
 
-        if (!cursor && (!keys.size() || !keys[0].isZero()))
+        if (!cursorIn && (!keys.size() || !keys[0].isZero()))
         {
             page.warning = "Data may be incomplete";
         }

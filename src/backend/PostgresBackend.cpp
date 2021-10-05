@@ -544,7 +544,7 @@ PostgresBackend::fetchAccountTransactions(
     char const*& command = dbParams.first;
     std::vector<std::optional<std::string>>& values = dbParams.second;
     command =
-        "SELECT account_tx($1::bytea, $2::bigint, $3::bool"
+        "SELECT account_tx($1::bytea, $2::bigint, $3::bool, "
         "$4::bigint, $5::bigint)";
     values.resize(5);
     values[0] = "\\x" + strHex(account);
