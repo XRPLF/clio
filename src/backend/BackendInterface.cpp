@@ -196,6 +196,7 @@ BackendInterface::fetchLedgerPage(
     uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
     page.cursor = cursor;
+    long totalTime = 0;
     do
     {
         adjustedLimit = adjustedLimit >= 8192 ? 8192 : adjustedLimit * 2;
@@ -207,18 +208,18 @@ BackendInterface::fetchLedgerPage(
             page.cursor ? ripple::strHex(*page.cursor) : "";
         std::string partialCursorStr =
             partial.cursor ? ripple::strHex(*partial.cursor) : "";
+        auto thisTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+                .count();
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " " << std::to_string(ledgerSequence) << " "
             << std::to_string(adjustedLimit) << " " << pageCursorStr << " - "
-            << partialCursorStr << " - time = "
-            << std::to_string(
-                   std::chrono::duration_cast<std::chrono::milliseconds>(
-                       end - start)
-                       .count());
+            << partialCursorStr << " - time = " << std::to_string(thisTime);
+        totalTime += thisTime;
         page.objects.insert(
             page.objects.end(), partial.objects.begin(), partial.objects.end());
         page.cursor = partial.cursor;
-    } while (page.objects.size() < limit && page.cursor);
+    } while (page.objects.size() < limit && page.cursor && totalTime < 5000);
     if (incomplete)
     {
         auto rng = fetchLedgerRange();
