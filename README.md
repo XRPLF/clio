@@ -27,12 +27,26 @@ The different clio servers that are using the same dataset do not know about eac
 
 ## Building
 clio is built with cmake. clio requires c++20, and boost 1.75.0 or later.
+Use these instructions to build a clio executable from source. These instructions were tested on Ubuntu 20.04 LTS
 
 ```
-mdkir build
-cd build
-cmake -DCMAKE_C_COMPILER=<your c compiler> -DCMAKE_CXX_COMPILER=<your c++ compiler that supports c++20> -DBOOST_ROOT=<location of boost> ..
-cmake --build . -- -j <number of parallel jobs>
+1. sudo apt-get update
+2. sudo apt-get -y upgrade
+3. sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf
+4. cmake step
+5. Boost:
+  wget https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
+  tar xvzf boost_1_75_0.tar.gz
+  cd boost_1_75_0
+  ./bootstrap.sh
+  ./b2 -j 4
+  export BOOST_ROOT=/home/my_user/boost_1_75_0
+  source ~/.profile
+6. git clone https://github.com/cjcobb23/clio.git
+7. mdkir build
+8. cd build
+9. cmake ../clio
+10. cmake --build . -- -j <number of parallel jobs>
 ```
 
 ## Running
