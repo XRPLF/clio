@@ -26,10 +26,9 @@ The different clio servers that are using the same dataset do not know about eac
 2. Access to one or more rippled nodes. Can be local or remote.
 
 ## Building
-clio is built with cmake. clio requires c++20, and boost 1.75.0 or later. clio includes rippled as a submodule.
+clio is built with cmake. clio requires c++20, and boost 1.75.0 or later.
 
 ```
-git submodule update --init --recursive
 mdkir build
 cd build
 cmake -DCMAKE_C_COMPILER=<your c compiler> -DCMAKE_CXX_COMPILER=<your c++ compiler that supports c++20> -DBOOST_ROOT=<location of boost> ..
