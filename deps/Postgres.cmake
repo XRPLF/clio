@@ -61,7 +61,5 @@ else()
 
     include_directories(clio INTERFACE "${PostgreSQL_INCLUDE_DIRS}")
 
-    target_link_libraries(clio PUBLIC ${PostgreSQL_LIBRARIES})
+    # target_link_libraries(clio PUBLIC ${PostgreSQL_LIBRARIES})
 endif()
-
-
