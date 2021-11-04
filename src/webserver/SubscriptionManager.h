@@ -14,6 +14,8 @@ class SubscriptionManager
         Ledgers,
         Transactions,
         TransactionsProposed,
+        Manifests,
+        Validations,
 
         finalEntry
     };
@@ -79,7 +81,25 @@ public:
     unsubBook(ripple::Book const& book, std::shared_ptr<WsBase>& session);
 
     void
+    subManifest(std::shared_ptr<WsBase>& session);
+
+    void
+    unsubManifest(std::shared_ptr<WsBase>& session);
+
+    void
+    subValidation(std::shared_ptr<WsBase>& session);
+
+    void
+    unsubValidation(std::shared_ptr<WsBase>& session);
+
+    void
     forwardProposedTransaction(boost::json::object const& response);
+
+    void
+    forwardManifest(boost::json::object const& response);
+
+    void
+    forwardValidation(boost::json::object const& response);
 
     void
     subProposedAccount(

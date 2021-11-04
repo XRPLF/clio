@@ -245,6 +245,20 @@ SubscriptionManager::forwardProposedTransaction(
         sendAll(pubMsg, accountProposedSubscribers_[account]);
 }
 
+void 
+SubscriptionManager::forwardManifest(boost::json::object const& response)
+{
+    std::string pubMsg{boost::json::serialize(response)};
+    sendAll(pubMsg, streamSubscribers_[Manifests]);
+}
+
+void 
+SubscriptionManager::forwardValidation(boost::json::object const& response)
+{
+    std::string pubMsg{boost::json::serialize(response)};
+    sendAll(pubMsg, streamSubscribers_[Validations]);
+}
+
 void
 SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
@@ -252,6 +266,34 @@ SubscriptionManager::subProposedAccount(
 {
     std::lock_guard lk(m_);
     accountProposedSubscribers_[account].emplace(session);
+}
+
+void
+SubscriptionManager::subManifest(std::shared_ptr<WsBase>& session)
+{
+    std::lock_guard lk(m_);
+    streamSubscribers_[Manifests].emplace(session);
+}
+
+void
+SubscriptionManager::unsubManifest(std::shared_ptr<WsBase>& session)
+{
+    std::lock_guard lk(m_);
+    streamSubscribers_[Manifests].erase(session);
+}
+
+void
+SubscriptionManager::subValidation(std::shared_ptr<WsBase>& session)
+{
+    std::lock_guard lk(m_);
+    streamSubscribers_[Validations].emplace(session);
+}
+
+void
+SubscriptionManager::unsubValidation(std::shared_ptr<WsBase>& session)
+{
+    std::lock_guard lk(m_);
+    streamSubscribers_[Validations].emplace(session);
 }
 
 void

@@ -335,7 +335,12 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
     {
         boost::json::object jv{
             {"command", "subscribe"},
-            {"streams", {"ledger", "transactions_proposed"}}};
+            {"streams", {
+                "ledger", 
+                "transactions_proposed",
+                "manifests",
+                "validations"}
+            }};
         std::string s = boost::json::serialize(jv);
         BOOST_LOG_TRIVIAL(trace) << "Sending subscribe stream message";
         // Send the message
@@ -428,11 +433,23 @@ ETLSourceImpl<Derived>::handleMessage()
         }
         else
         {
-            if (response.contains("transaction"))
+            if (balancer_.shouldPropagateTxnStream(this))
             {
-                if (balancer_.shouldPropagateTxnStream(this))
+                if (response.contains("transaction"))
                 {
                     subscriptions_->forwardProposedTransaction(response);
+                }
+                else if (
+                    response.contains("type") &&
+                    response["type"] == "validationReceived")
+                {
+                    subscriptions_->forwardValidation(response);
+                }
+                else if (
+                    response.contains("type") &&
+                    response["type"] == "manifestReceived")
+                {
+                    subscriptions_->forwardManifest(response);
                 }
             }
             else
