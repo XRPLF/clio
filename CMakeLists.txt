@@ -8,33 +8,25 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 
 find_package(Boost 1.75 COMPONENTS filesystem log_setup log thread system REQUIRED)
-find_package(ZLIB REQUIRED)
 
 include(ExternalProject)
 include(FetchContent)
-include(deps/rippled.cmake)
-include(deps/cassandra.cmake)
-include(deps/Postgres.cmake)
-include(deps/gtest.cmake)
+include(CMake/deps/rippled.cmake)
+include(CMake/deps/cassandra.cmake)
+include(CMake/deps/Postgres.cmake)
+include(CMake/deps/gtest.cmake)
 
-configure_file(CMake/version-config.h include/version.h)
+# configure_file(CMake/version-config.h include/version.h) # Not used, but an idea how to handle versioning.
 
 add_library(clio)
 target_include_directories(clio PUBLIC src)
 target_link_libraries(clio PUBLIC cassandra ${PostgreSQL_LIBRARIES})
 
-target_include_directories(clio PUBLIC ${rippled_SOURCE_DIR}/src ) # TODO: xrpl_core should have transitive include dirs
+target_include_directories(clio PUBLIC ${rippled_SOURCE_DIR}/src ) # TODO: Seems like this shouldn't be needed?
 target_link_libraries(clio PUBLIC xrpl_core grpc_pbufs)
-# add_dependencies(clio xrpl_core) # TODO: This shouldn't be needed now that rippled is included through FetchContent()
-# add_dependencies(clio grpc_pbufs)
-# get_target_property(grpc_includes grpc_pbufs INCLUDE_DIRECTORIES)
 
-message("GRPC includes: ${grpc_includes}")
-message("Proto includes: ${proto_includes}")
-message("Source dir: ${SOURCE_DIR}")
-include_directories(${grpc_includes})
-include_directories(${SOURCE_DIR}/src)
-include_directories(${SOURCE_DIR}/include)
+set(CLIO_INSTALL_DIR /opt/clio)
+set(CMAKE_INSTALL_PREFIX ${CLIO_INSTALL_DIR})
 
 target_sources(clio PRIVATE
   ## Backend
@@ -85,7 +77,6 @@ target_sources(clio PRIVATE
   src/rpc/handlers/Random.cpp)
 
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(clio PUBLIC ${Boost_LIBRARIES})
 
 add_executable(clio_server src/main.cpp)
@@ -99,3 +90,4 @@ target_link_libraries(clio_tests PUBLIC clio gtest_main)
 install(FILES example-config.json DESTINATION etc/clio)
 
 gtest_discover_tests(clio_tests)
+install (SCRIPT "${CMAKE_SOURCE_DIR}/CMake/PostInstall.cmake")
