@@ -9,6 +9,7 @@ class WsBase;
 class SubscriptionManager
 {
     using subscriptions = std::unordered_set<std::shared_ptr<WsBase>>;
+    using strand = boost::asio::strand<boost::asio::executor>;
 
     enum SubscriptionType {
         Ledgers,
@@ -19,9 +20,11 @@ class SubscriptionManager
 
         finalEntry
     };
-    std::mutex m_;
     std::array<subscriptions, finalEntry> streamSubscribers_;
+    std::array<strand, finalEntry> streams_;
+    
     std::unordered_map<ripple::AccountID, subscriptions> accountSubscribers_;
+    strand strand_;
     std::unordered_map<ripple::AccountID, subscriptions>
         accountProposedSubscribers_;
     std::unordered_map<ripple::Book, subscriptions> bookSubscribers_;

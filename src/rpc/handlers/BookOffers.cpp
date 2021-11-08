@@ -14,12 +14,24 @@
 
 namespace RPC {
 
+
+Result
+doValidatedBookOffers(Context const& context)
+{
+    
+}
+
 Result
 doBookOffers(Context const& context)
 {
     auto request = context.params;
-    boost::json::object response = {};
+    if (!request.contains("ledger_index") 
+      || request.at("ledger_index") == "validated")
+    {
+        return doValidatedBookOffers(context);
+    }
 
+    boost::json::object response = {};
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
