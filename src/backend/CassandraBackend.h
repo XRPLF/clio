@@ -553,8 +553,10 @@ private:
     CassandraPreparedStatement selectLedgerPage_;
     CassandraPreparedStatement upperBound2_;
     CassandraPreparedStatement getToken_;
-    CassandraPreparedStatement insertKey_;
-    CassandraPreparedStatement selectKeys_;
+    CassandraPreparedStatement insertSuccessor_;
+    CassandraPreparedStatement selectSuccessor_;
+    CassandraPreparedStatement insertDiff_;
+    CassandraPreparedStatement selectDiff_;
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement selectAccountTxForward_;
@@ -640,7 +642,7 @@ public:
         std::optional<AccountTransactionsCursor> const& cursor) const override;
 
     bool
-    doFinishWrites() const override
+    doFinishWrites() override
     {
         // wait for all other writes to finish
         sync();
@@ -672,7 +674,7 @@ public:
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& header,
-        bool isFirst = false) const override;
+        bool isFirst = false) override;
 
     std::optional<uint32_t>
     fetchLatestLedgerSequence() const override
@@ -737,24 +739,8 @@ public:
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence
     std::optional<Blob>
-    fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
-        const override
-    {
-        BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
-        CassandraStatement statement{selectObject_};
-        statement.bindNextBytes(key);
-        statement.bindNextInt(sequence);
-        CassandraResult result = executeSyncRead(statement);
-        if (!result)
-        {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
-            return {};
-        }
-        auto res = result.getBytes();
-        if (res.size())
-            return res;
-        return {};
-    }
+    doFetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
+        const override;
 
     std::optional<int64_t>
     getToken(void const* key) const
@@ -793,34 +779,33 @@ public:
              result.getUInt32(),
              result.getUInt32()}};
     }
-    LedgerPage
-    doFetchLedgerPage(
-        std::optional<ripple::uint256> const& cursor,
-        std::uint32_t ledgerSequence,
-        std::uint32_t limit) const override;
-
-    bool
-    writeKeys(
-        std::unordered_set<ripple::uint256> const& keys,
-        KeyIndex const& index,
-        bool isAsync = false) const override;
+    std::optional<ripple::uint256>
+    doFetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence)
+        const override;
 
     std::vector<TransactionAndMetadata>
     fetchTransactions(
         std::vector<ripple::uint256> const& hashes) const override;
 
     std::vector<Blob>
-    fetchLedgerObjects(
+    doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const override;
 
+    std::vector<LedgerObject>
+    fetchLedgerDiff(uint32_t ledgerSequence) const override;
+
     void
     doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
-        const override;
+        override;
+
+    void
+    writeSuccessor(std::string&& key, uint32_t seq, std::string&& successor)
+        override;
 
     void
     writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data) const override;
+        std::vector<AccountTransactionsData>&& data) override;
 
     void
     writeTransaction(
@@ -828,10 +813,10 @@ public:
         uint32_t seq,
         uint32_t date,
         std::string&& transaction,
-        std::string&& metadata) const override;
+        std::string&& metadata) override;
 
     void
-    startWrites() const override
+    startWrites() override
     {
     }
 

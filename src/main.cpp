@@ -53,13 +53,12 @@ parse_config(const char* filename)
 std::optional<ssl::context>
 parse_certs(boost::json::object const& config)
 {
-
     if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
         return {};
 
     auto certFilename = config.at("ssl_cert_file").as_string().c_str();
     auto keyFilename = config.at("ssl_key_file").as_string().c_str();
-    
+
     std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
     if (!readCert)
         return {};
@@ -104,7 +103,8 @@ initLogging(boost::json::object const& config)
     {
         boost::log::add_file_log(
             config.at("log_file").as_string().c_str(),
-            boost::log::keywords::format = format);
+            boost::log::keywords::format = format,
+            boost::log::keywords::open_mode = std::ios_base::app);
     }
     auto const logLevel = config.contains("log_level")
         ? config.at("log_level").as_string()
@@ -168,7 +168,7 @@ main(int argc, char* argv[])
         std::cerr << "Couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
-    
+
     initLogging(*config);
 
     auto ctx = parse_certs(*config);

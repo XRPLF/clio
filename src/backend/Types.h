@@ -1,0 +1,75 @@
+#ifndef CLIO_TYPES_H_INCLUDED
+#define CLIO_TYPES_H_INCLUDED
+#include <ripple/basics/base_uint.h>
+#include <optional>
+#include <string>
+#include <vector>
+
+namespace Backend {
+
+// *** return types
+
+using Blob = std::vector<unsigned char>;
+
+struct LedgerObject
+{
+    ripple::uint256 key;
+    Blob blob;
+    bool
+    operator==(const LedgerObject& other) const
+    {
+        return key == other.key && blob == other.blob;
+    }
+};
+
+struct LedgerPage
+{
+    std::vector<LedgerObject> objects;
+    std::optional<ripple::uint256> cursor;
+    std::optional<std::string> warning;
+};
+struct BookOffersPage
+{
+    std::vector<LedgerObject> offers;
+    std::optional<ripple::uint256> cursor;
+    std::optional<std::string> warning;
+};
+struct TransactionAndMetadata
+{
+    Blob transaction;
+    Blob metadata;
+    uint32_t ledgerSequence;
+    uint32_t date;
+    bool
+    operator==(const TransactionAndMetadata& other) const
+    {
+        return transaction == other.transaction && metadata == other.metadata &&
+            ledgerSequence == other.ledgerSequence && date == other.date;
+    }
+};
+
+struct AccountTransactionsCursor
+{
+    uint32_t ledgerSequence;
+    uint32_t transactionIndex;
+};
+
+struct AccountTransactions
+{
+    std::vector<TransactionAndMetadata> txns;
+    std::optional<AccountTransactionsCursor> cursor;
+};
+
+struct LedgerRange
+{
+    uint32_t minSequence;
+    uint32_t maxSequence;
+};
+constexpr ripple::uint256 firstKey{
+    "0000000000000000000000000000000000000000000000000000000000000000"};
+constexpr ripple::uint256 lastKey{
+    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
+constexpr ripple::uint256 hi192{
+    "0000000000000000000000000000000000000000000000001111111111111111"};
+}  // namespace Backend
+#endif

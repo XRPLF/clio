@@ -16,9 +16,8 @@ public:
     Subscription(Subscription&) = delete;
     Subscription(Subscription&&) = delete;
 
-    explicit 
-    Subscription(boost::asio::io_context& ioc) : strand_(ioc)
-    {    
+    explicit Subscription(boost::asio::io_context& ioc) : strand_(ioc)
+    {
     }
 
     ~Subscription() = default;
@@ -46,27 +45,20 @@ public:
     SubscriptionMap(SubscriptionMap&) = delete;
     SubscriptionMap(SubscriptionMap&&) = delete;
 
-    explicit 
-    SubscriptionMap(boost::asio::io_context& ioc) : strand_(ioc) 
+    explicit SubscriptionMap(boost::asio::io_context& ioc) : strand_(ioc)
     {
     }
 
     ~SubscriptionMap() = default;
 
     void
-    subscribe(
-        std::shared_ptr<WsBase> const& session,
-        Key const& key);
+    subscribe(std::shared_ptr<WsBase> const& session, Key const& key);
 
     void
-    unsubscribe(
-        std::shared_ptr<WsBase> const& session,
-        Key const& key);
+    unsubscribe(std::shared_ptr<WsBase> const& session, Key const& key);
 
     void
-    publish(
-        std::string const& message,
-        Key const& key);
+    publish(std::string const& message, Key const& key);
 };
 
 class SubscriptionManager
@@ -80,18 +72,18 @@ class SubscriptionManager
     Subscription txProposedSubscribers_;
     Subscription manifestSubscribers_;
     Subscription validationsSubscribers_;
-    
+
     SubscriptionMap<ripple::AccountID> accountSubscribers_;
     SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
     SubscriptionMap<ripple::Book> bookSubscribers_;
 
-    std::shared_ptr<Backend::BackendInterface> backend_;
+    std::shared_ptr<Backend::BackendInterface const> backend_;
 
 public:
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager(
         boost::json::object const& config,
-        std::shared_ptr<Backend::BackendInterface> const& b)
+        std::shared_ptr<Backend::BackendInterface const> const& b)
     {
         auto numThreads = 1;
 
@@ -106,7 +98,7 @@ public:
 
     SubscriptionManager(
         std::uint64_t numThreads,
-        std::shared_ptr<Backend::BackendInterface> const& b)
+        std::shared_ptr<Backend::BackendInterface const> const& b)
         : ledgerSubscribers_(ioc_)
         , txSubscribers_(ioc_)
         , txProposedSubscribers_(ioc_)
@@ -119,10 +111,11 @@ public:
     {
         work_.emplace(ioc_);
 
-        // We will eventually want to clamp this to be the number of strands, since
-        // adding more threads than we have strands won't see any performance benefits
-        BOOST_LOG_TRIVIAL(info)
-             << "Starting subscription manager with " << numThreads << " workers";
+        // We will eventually want to clamp this to be the number of strands,
+        // since adding more threads than we have strands won't see any
+        // performance benefits
+        BOOST_LOG_TRIVIAL(info) << "Starting subscription manager with "
+                                << numThreads << " workers";
 
         workers_.reserve(numThreads);
         for (auto i = numThreads; i > 0; --i)
@@ -132,7 +125,7 @@ public:
     ~SubscriptionManager()
     {
         work_.reset();
-        
+
         ioc_.stop();
         for (auto& worker : workers_)
             worker.join();

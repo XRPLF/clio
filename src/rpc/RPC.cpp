@@ -6,7 +6,7 @@ namespace RPC {
 std::optional<Context>
 make_WsContext(
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<WsBase> const& session,
@@ -24,7 +24,7 @@ make_WsContext(
 std::optional<Context>
 make_HttpContext(
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     Backend::LedgerRange const& range)

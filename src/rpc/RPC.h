@@ -29,7 +29,7 @@ struct Context
     std::string method;
     std::uint32_t version;
     boost::json::object const& params;
-    std::shared_ptr<BackendInterface> const& backend;
+    std::shared_ptr<BackendInterface const> const& backend;
     std::shared_ptr<ETLLoadBalancer> const& balancer;
     // this needs to be an actual shared_ptr, not a reference. The above
     // references refer to shared_ptr members of WsBase, but WsBase contains
@@ -42,7 +42,7 @@ struct Context
         std::string const& command_,
         std::uint32_t version_,
         boost::json::object const& params_,
-        std::shared_ptr<BackendInterface> const& backend_,
+        std::shared_ptr<BackendInterface const> const& backend_,
         std::shared_ptr<SubscriptionManager> const& subscriptions_,
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
         std::shared_ptr<WsBase> const& session_,
@@ -129,7 +129,7 @@ make_error(Error err);
 std::optional<Context>
 make_WsContext(
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<WsBase> const& session,
@@ -138,7 +138,7 @@ make_WsContext(
 std::optional<Context>
 make_HttpContext(
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     Backend::LedgerRange const& range);

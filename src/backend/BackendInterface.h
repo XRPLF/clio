@@ -2,66 +2,10 @@
 #define RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 #include <ripple/ledger/ReadView.h>
 #include <boost/asio.hpp>
-#include <backend/BackendIndexer.h>
 #include <backend/DBHelpers.h>
-class ReportingETL;
-class AsyncCallData;
-class BackendTest_Basic_Test;
+#include <backend/SimpleCache.h>
+#include <backend/Types.h>
 namespace Backend {
-
-// *** return types
-
-using Blob = std::vector<unsigned char>;
-
-struct LedgerObject
-{
-    ripple::uint256 key;
-    Blob blob;
-};
-
-struct LedgerPage
-{
-    std::vector<LedgerObject> objects;
-    std::optional<ripple::uint256> cursor;
-    std::optional<std::string> warning;
-};
-struct BookOffersPage
-{
-    std::vector<LedgerObject> offers;
-    std::optional<ripple::uint256> cursor;
-    std::optional<std::string> warning;
-};
-struct TransactionAndMetadata
-{
-    Blob transaction;
-    Blob metadata;
-    uint32_t ledgerSequence;
-    uint32_t date;
-    bool
-    operator==(const TransactionAndMetadata& other) const
-    {
-        return transaction == other.transaction && metadata == other.metadata &&
-            ledgerSequence == other.ledgerSequence && date == other.date;
-    }
-};
-
-struct AccountTransactionsCursor
-{
-    uint32_t ledgerSequence;
-    uint32_t transactionIndex;
-};
-
-struct AccountTransactions
-{
-    std::vector<TransactionAndMetadata> txns;
-    std::optional<AccountTransactionsCursor> cursor;
-};
-
-struct LedgerRange
-{
-    uint32_t minSequence;
-    uint32_t maxSequence;
-};
 
 class DatabaseTimeout : public std::exception
 {
@@ -75,22 +19,16 @@ class DatabaseTimeout : public std::exception
 class BackendInterface
 {
 protected:
-    mutable BackendIndexer indexer_;
-    mutable bool isFirst_ = true;
-    mutable std::optional<LedgerRange> range;
+    bool isFirst_ = true;
+    std::optional<LedgerRange> range;
+    SimpleCache cache_;
 
 public:
-    BackendInterface(boost::json::object const& config) : indexer_(config)
+    BackendInterface(boost::json::object const& config)
     {
     }
     virtual ~BackendInterface()
     {
-    }
-
-    BackendIndexer&
-    getIndexer() const
-    {
-        return indexer_;
     }
 
     // *** public read methods ***
@@ -99,6 +37,19 @@ public:
     // results in a timeout, an error is returned to the client
 public:
     // *** ledger methods
+    //
+
+    SimpleCache const&
+    cache() const
+    {
+        return cache_;
+    }
+
+    SimpleCache&
+    cache()
+    {
+        return cache_;
+    }
 
     virtual std::optional<ripple::LedgerInfo>
     fetchLedgerBySequence(uint32_t sequence) const = 0;
@@ -139,14 +90,24 @@ public:
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const = 0;
 
     // *** state data methods
+    std::optional<Blob>
+    fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence) const;
 
-    virtual std::optional<Blob>
-    fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence) const = 0;
-
-    virtual std::vector<Blob>
+    std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
+        uint32_t sequence) const;
+    virtual std::optional<Blob>
+    doFetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
+        const = 0;
+
+    virtual std::vector<Blob>
+    doFetchLedgerObjects(
+        std::vector<ripple::uint256> const& keys,
         uint32_t sequence) const = 0;
+
+    virtual std::vector<LedgerObject>
+    fetchLedgerDiff(uint32_t ledgerSequence) const = 0;
 
     // Fetches a page of ledger objects, ordered by key/index.
     // Used by ledger_data
@@ -157,10 +118,15 @@ public:
         std::uint32_t limit,
         std::uint32_t limitHint = 0) const;
 
-    // Fetches the successor to key/index. key need not actually be a valid
-    // key/index.
+    // Fetches the successor to key/index
     std::optional<LedgerObject>
-    fetchSuccessor(ripple::uint256 key, uint32_t ledgerSequence) const;
+    fetchSuccessorObject(ripple::uint256 key, uint32_t ledgerSequence) const;
+
+    std::optional<ripple::uint256>
+    fetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence) const;
+    // Fetches the successor to key/index
+    virtual std::optional<ripple::uint256>
+    doFetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence) const = 0;
 
     BookOffersPage
     fetchBookOffers(
@@ -169,21 +135,6 @@ public:
         std::uint32_t limit,
         std::optional<ripple::uint256> const& cursor = {}) const;
 
-    // Methods related to the indexer
-    bool
-    isLedgerIndexed(std::uint32_t ledgerSequence) const;
-
-    std::optional<KeyIndex>
-    getKeyIndexOfSeq(uint32_t seq) const;
-
-    // *** protected write methods
-protected:
-    friend class ::ReportingETL;
-    friend class BackendIndexer;
-    friend class ::AsyncCallData;
-    friend std::shared_ptr<BackendInterface>
-    make_Backend(boost::json::object const& config);
-    friend class ::BackendTest_Basic_Test;
     virtual std::optional<LedgerRange>
     hardFetchLedgerRange() const = 0;
     // Doesn't throw DatabaseTimeout. Should be used with care.
@@ -203,11 +154,10 @@ protected:
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
         std::string&& ledgerHeader,
-        bool isFirst = false) const = 0;
+        bool isFirst = false) = 0;
 
     void
-    writeLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
-        const;
+    writeLedgerObject(std::string&& key, uint32_t seq, std::string&& blob);
 
     virtual void
     writeTransaction(
@@ -215,24 +165,20 @@ protected:
         uint32_t seq,
         uint32_t date,
         std::string&& transaction,
-        std::string&& metadata) const = 0;
+        std::string&& metadata) = 0;
 
     virtual void
-    writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data) const = 0;
+    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
 
-    // TODO: this function, or something similar, could be called internally by
-    // writeLedgerObject
-    virtual bool
-    writeKeys(
-        std::unordered_set<ripple::uint256> const& keys,
-        KeyIndex const& index,
-        bool isAsync = false) const = 0;
-
+    virtual void
+    writeSuccessor(
+        std::string&& key,
+        uint32_t seq,
+        std::string&& successor) = 0;
     // Tell the database we are about to begin writing data for a particular
     // ledger.
     virtual void
-    startWrites() const = 0;
+    startWrites() = 0;
 
     // Tell the database we have finished writing all data for a particular
     // ledger
@@ -254,21 +200,14 @@ protected:
 
     // *** private helper methods
 private:
-    virtual LedgerPage
-    doFetchLedgerPage(
-        std::optional<ripple::uint256> const& cursor,
-        std::uint32_t ledgerSequence,
-        std::uint32_t limit) const = 0;
-
     virtual void
-    doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
-        const = 0;
+    doWriteLedgerObject(
+        std::string&& key,
+        uint32_t seq,
+        std::string&& blob) = 0;
 
     virtual bool
-    doFinishWrites() const = 0;
-
-    void
-    checkFlagLedgers() const;
+    doFinishWrites() = 0;
 };
 
 }  // namespace Backend

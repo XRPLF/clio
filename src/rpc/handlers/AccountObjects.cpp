@@ -61,12 +61,12 @@ doAccountObjects(Context const& context)
     }
 
     ripple::uint256 cursor;
-    if (request.contains("cursor"))
+    if (request.contains("marker"))
     {
-        if (!request.at("cursor").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
+        if (!request.at("marker").is_string())
+            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
+        if (!cursor.parseHex(request.at("marker").as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
     }
 

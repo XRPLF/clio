@@ -68,7 +68,7 @@ handle_request(
     boost::beast::http::
         request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
-    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard,
     std::string const& ip)
@@ -239,7 +239,7 @@ class HttpBase
 
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
-    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
@@ -250,7 +250,7 @@ protected:
 
 public:
     HttpBase(
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,

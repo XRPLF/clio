@@ -208,7 +208,7 @@ unsubscribeToAccountsProposed(
 std::variant<Status, std::pair<std::vector<ripple::Book>, boost::json::array>>
 validateAndGetBooks(
     boost::json::object const& request,
-    std::shared_ptr<Backend::BackendInterface> const& backend)
+    std::shared_ptr<Backend::BackendInterface const> const& backend)
 {
     if (!request.at("books").is_array())
         return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};

@@ -29,7 +29,7 @@ public:
     // Take ownership of the socket
     explicit SslWsSession(
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
@@ -62,7 +62,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
@@ -72,7 +72,7 @@ public:
     SslWsUpgrader(
         boost::asio::ip::tcp::socket&& socket,
         ssl::context& ctx,
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
@@ -87,7 +87,7 @@ public:
     }
     SslWsUpgrader(
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,

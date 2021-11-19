@@ -79,7 +79,7 @@ class WsSession : public WsBase,
 
     boost::beast::flat_buffer buffer_;
 
-    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<BackendInterface const> backend_;
     // has to be a weak ptr because SubscriptionManager maintains collections
     // of std::shared_ptr<WsBase> objects. If this were shared, there would be
     // a cyclical dependency that would block destruction
@@ -91,7 +91,7 @@ class WsSession : public WsBase,
 
 public:
     explicit WsSession(
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,

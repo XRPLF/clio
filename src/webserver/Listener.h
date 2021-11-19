@@ -23,7 +23,7 @@ class Detector
 
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
-    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
@@ -33,7 +33,7 @@ public:
     Detector(
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard)
@@ -101,7 +101,7 @@ make_websocket_session(
     boost::beast::tcp_stream stream,
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
-    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard)
@@ -122,7 +122,7 @@ make_websocket_session(
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
-    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard)
@@ -146,9 +146,9 @@ class Listener
         Listener<PlainSession, SslSession>>::shared_from_this;
 
     net::io_context& ioc_;
-    std::optional<std::reference_wrapper<ssl::context>>  ctx_;
+    std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
-    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
@@ -158,7 +158,7 @@ public:
         net::io_context& ioc,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard)
@@ -262,7 +262,7 @@ make_HttpServer(
     boost::json::object const& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<ssl::context>> sslCtx,
-    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard)

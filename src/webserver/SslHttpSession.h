@@ -19,7 +19,7 @@ public:
     explicit SslHttpSession(
         tcp::socket&& socket,
         ssl::context& ctx,
-        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,

@@ -148,9 +148,19 @@ void
 CassandraBackend::doWriteLedgerObject(
     std::string&& key,
     uint32_t seq,
-    std::string&& blob) const
+    std::string&& blob)
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
+    if (!isFirst_)
+        makeAndExecuteAsyncWrite(
+            this, std::move(std::make_tuple(seq, key)), [this](auto& params) {
+                auto& [sequence, key] = params.data;
+
+                CassandraStatement statement{insertDiff_};
+                statement.bindNextInt(sequence);
+                statement.bindNextBytes(key);
+                return statement;
+            });
     makeAndExecuteAsyncWrite(
         this,
         std::move(std::make_tuple(std::move(key), seq, std::move(blob))),
@@ -165,10 +175,34 @@ CassandraBackend::doWriteLedgerObject(
         });
 }
 void
+CassandraBackend::writeSuccessor(
+    std::string&& key,
+    uint32_t seq,
+    std::string&& successor)
+{
+    BOOST_LOG_TRIVIAL(trace)
+        << "Writing successor. key = " << key
+        << " seq = " << std::to_string(seq) << " successor = " << successor;
+    assert(key.size());
+    assert(successor.size());
+    makeAndExecuteAsyncWrite(
+        this,
+        std::move(std::make_tuple(std::move(key), seq, std::move(successor))),
+        [this](auto& params) {
+            auto& [key, sequence, successor] = params.data;
+
+            CassandraStatement statement{insertSuccessor_};
+            statement.bindNextBytes(key);
+            statement.bindNextInt(sequence);
+            statement.bindNextBytes(successor);
+            return statement;
+        });
+}
+void
 CassandraBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
     std::string&& header,
-    bool isFirst) const
+    bool isFirst)
 {
     makeAndExecuteAsyncWrite(
         this,
@@ -195,7 +229,7 @@ CassandraBackend::writeLedger(
 }
 void
 CassandraBackend::writeAccountTransactions(
-    std::vector<AccountTransactionsData>&& data) const
+    std::vector<AccountTransactionsData>&& data)
 {
     for (auto& record : data)
     {
@@ -228,7 +262,7 @@ CassandraBackend::writeTransaction(
     uint32_t seq,
     uint32_t date,
     std::string&& transaction,
-    std::string&& metadata) const
+    std::string&& metadata)
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
     std::string hashCpy = hash;
@@ -517,89 +551,49 @@ CassandraBackend::fetchAccountTransactions(
     }
     return {txns, {}};
 }
-
-LedgerPage
-CassandraBackend::doFetchLedgerPage(
-    std::optional<ripple::uint256> const& cursorIn,
-    std::uint32_t ledgerSequence,
-    std::uint32_t limit) const
+std::optional<ripple::uint256>
+CassandraBackend::doFetchSuccessorKey(
+    ripple::uint256 key,
+    uint32_t ledgerSequence) const
 {
-    std::optional<ripple::uint256> cursor = cursorIn;
-    auto index = getKeyIndexOfSeq(ledgerSequence);
-    if (!index)
-        return {};
-    LedgerPage page;
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " ledgerSequence = " << std::to_string(ledgerSequence)
-        << " index = " << std::to_string(index->keyIndex);
-    if (cursor)
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - Cursor = " << ripple::strHex(*cursor);
-    CassandraStatement statement{selectKeys_};
-    statement.bindNextInt(index->keyIndex);
-    if (!cursor)
-    {
-        ripple::uint256 zero;
-        cursor = zero;
-    }
-    statement.bindNextBytes(cursor->data(), 1);
-    statement.bindNextBytes(*cursor);
-    statement.bindNextUInt(limit + 1);
+    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+    CassandraStatement statement{selectSuccessor_};
+    statement.bindNextBytes(key);
+    statement.bindNextInt(ledgerSequence);
     CassandraResult result = executeSyncRead(statement);
-    if (!!result)
+    if (!result)
     {
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " - got keys - size = " << result.numRows();
-
-        std::vector<ripple::uint256> keys;
-        do
-        {
-            keys.push_back(result.getUInt256());
-        } while (result.nextRow());
-
-        if (keys.size() && keys.size() >= limit)
-        {
-            page.cursor = keys.back();
-            ++(*page.cursor);
-        }
-        else if (cursor->data()[0] != 0xFF)
-        {
-            ripple::uint256 zero;
-            zero.data()[0] = cursor->data()[0] + 1;
-            page.cursor = zero;
-        }
-        auto objects = fetchLedgerObjects(keys, ledgerSequence);
-        if (objects.size() != keys.size())
-            throw std::runtime_error("Mismatch in size of objects and keys");
-
-        if (cursor)
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " Cursor = " << ripple::strHex(*page.cursor);
-
-        for (size_t i = 0; i < objects.size(); ++i)
-        {
-            auto& obj = objects[i];
-            auto& key = keys[i];
-            if (obj.size())
-            {
-                page.objects.push_back({std::move(key), std::move(obj)});
-            }
-        }
-
-        if (!cursorIn && (!keys.size() || !keys[0].isZero()))
-        {
-            page.warning = "Data may be incomplete";
-        }
-
-        return page;
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
+        return {};
     }
-    if (!cursor)
-        return {{}, {}, "Data may be incomplete"};
-
+    auto next = result.getUInt256();
+    if (next == lastKey)
+        return {};
+    return next;
+}
+std::optional<Blob>
+CassandraBackend::doFetchLedgerObject(
+    ripple::uint256 const& key,
+    uint32_t sequence) const
+{
+    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+    CassandraStatement statement{selectObject_};
+    statement.bindNextBytes(key);
+    statement.bindNextInt(sequence);
+    CassandraResult result = executeSyncRead(statement);
+    if (!result)
+    {
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
+        return {};
+    }
+    auto res = result.getBytes();
+    if (res.size())
+        return res;
     return {};
 }
+
 std::vector<Blob>
-CassandraBackend::fetchLedgerObjects(
+CassandraBackend::doFetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
     uint32_t sequence) const
 {
@@ -638,63 +632,42 @@ CassandraBackend::fetchLedgerObjects(
         << "Fetched " << numKeys << " records from Cassandra";
     return results;
 }
-
-bool
-CassandraBackend::writeKeys(
-    std::unordered_set<ripple::uint256> const& keys,
-    KeyIndex const& index,
-    bool isAsync) const
+std::vector<LedgerObject>
+CassandraBackend::fetchLedgerDiff(uint32_t ledgerSequence) const
 {
-    auto bind = [this](auto& params) {
-        auto& [lgrSeq, key] = params.data;
-        CassandraStatement statement{insertKey_};
-        statement.bindNextInt(lgrSeq);
-        statement.bindNextBytes(key.data(), 1);
-        statement.bindNextBytes(key);
-        return statement;
-    };
-    std::atomic_int numOutstanding = 0;
-    std::condition_variable cv;
-    std::mutex mtx;
-    std::vector<std::shared_ptr<BulkWriteCallbackData<
-        std::pair<uint32_t, ripple::uint256>,
-        typename std::remove_reference<decltype(bind)>::type>>>
-        cbs;
-    cbs.reserve(keys.size());
-    uint32_t concurrentLimit =
-        isAsync ? indexerMaxRequestsOutstanding : maxRequestsOutstanding;
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " Ledger = " << std::to_string(index.keyIndex)
-        << " . num keys = " << std::to_string(keys.size())
-        << " . concurrentLimit = "
-        << std::to_string(indexerMaxRequestsOutstanding);
-    uint32_t numSubmitted = 0;
-    for (auto& key : keys)
+    CassandraStatement statement{selectDiff_};
+    statement.bindNextInt(ledgerSequence);
+    auto start = std::chrono::system_clock::now();
+    CassandraResult result = executeSyncRead(statement);
+    auto end = std::chrono::system_clock::now();
+    if (!result)
     {
-        cbs.push_back(makeAndExecuteBulkAsyncWrite(
-            this,
-            std::make_pair(index.keyIndex, std::move(key)),
-            bind,
-            numOutstanding,
-            mtx,
-            cv));
-        ++numOutstanding;
-        ++numSubmitted;
-        std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&numOutstanding, concurrentLimit, &keys]() {
-            // keys.size() - i is number submitted. keys.size() -
-            // numRemaining is number completed Difference is num
-            // outstanding
-            return numOutstanding < concurrentLimit;
-        });
-        if (numSubmitted % 100000 == 0)
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " Submitted " << std::to_string(numSubmitted);
+        BOOST_LOG_TRIVIAL(error)
+            << __func__
+            << " - no rows . ledger = " << std::to_string(ledgerSequence);
+        return {};
     }
-
-    std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });
-    return true;
+    std::vector<ripple::uint256> keys;
+    do
+    {
+        keys.push_back(result.getUInt256());
+    } while (result.nextRow());
+    BOOST_LOG_TRIVIAL(debug)
+        << "Fetched " << keys.size() << " diff hashes from Cassandra in "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+               .count()
+        << " milliseconds";
+    auto objs = fetchLedgerObjects(keys, ledgerSequence);
+    std::vector<LedgerObject> results;
+    std::transform(
+        keys.begin(),
+        keys.end(),
+        objs.begin(),
+        std::back_inserter(results),
+        [](auto const& k, auto const& o) {
+            return LedgerObject{k, o};
+        });
+    return results;
 }
 
 bool
@@ -971,17 +944,8 @@ CassandraBackend::open(bool readOnly)
     cass_cluster_set_connect_timeout(cluster, 10000);
 
     int ttl = getInt("ttl") ? *getInt("ttl") * 2 : 0;
-    int keysTtl = (ttl != 0 ? pow(2, indexer_.getKeyShift()) * 4 * 2 : 0);
-    int incr = keysTtl;
-    while (keysTtl < ttl)
-    {
-        keysTtl += incr;
-    }
-    int booksTtl = 0;
     BOOST_LOG_TRIVIAL(info)
-        << __func__ << " setting ttl to " << std::to_string(ttl)
-        << " , books ttl to " << std::to_string(booksTtl) << " , keys ttl to "
-        << std::to_string(keysTtl);
+        << __func__ << " setting ttl to " << std::to_string(ttl);
 
     auto executeSimpleStatement = [this](std::string const& query) {
         CassStatement* statement = makeStatement(query.c_str(), 0);
@@ -1093,16 +1057,28 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "keys"
-              << " ( sequence bigint, first_byte blob, key blob, PRIMARY KEY "
-                 "((sequence,first_byte), key))"
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "successor"
+              << " (key blob, seq bigint, next blob, PRIMARY KEY (key, seq)) "
                  " WITH default_time_to_live = "
-              << std::to_string(keysTtl);
+              << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
 
         query.str("");
-        query << "SELECT * FROM " << tablePrefix << "keys"
+        query << "SELECT * FROM " << tablePrefix << "successor"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "diff"
+              << " (seq bigint, key blob, PRIMARY KEY (seq, key)) "
+                 " WITH default_time_to_live = "
+              << std::to_string(ttl);
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "diff"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -1191,16 +1167,27 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "INSERT INTO " << tablePrefix << "keys"
-              << " (sequence,first_byte, key) VALUES (?, ?, ?)";
-        if (!insertKey_.prepareStatement(query, session_.get()))
+        query << "INSERT INTO " << tablePrefix << "successor"
+              << " (key,seq,next) VALUES (?, ?, ?)";
+        if (!insertSuccessor_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");
-        query << "SELECT key FROM " << tablePrefix << "keys"
-              << " WHERE sequence = ? AND first_byte = ? AND key >= ? ORDER BY "
-                 "key ASC LIMIT ?";
-        if (!selectKeys_.prepareStatement(query, session_.get()))
+        query << "INSERT INTO " << tablePrefix << "diff"
+              << " (seq,key) VALUES (?, ?)";
+        if (!insertDiff_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT next FROM " << tablePrefix << "successor"
+              << " WHERE key = ? AND seq <= ? ORDER BY seq DESC LIMIT 1";
+        if (!selectSuccessor_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT key FROM " << tablePrefix << "diff"
+              << " WHERE seq = ?";
+        if (!selectDiff_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

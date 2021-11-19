@@ -17,7 +17,7 @@ void
 PostgresBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
     std::string&& ledgerHeader,
-    bool isFirst) const
+    bool isFirst)
 {
     auto cmd = boost::format(
         R"(INSERT INTO ledgers
@@ -38,7 +38,7 @@ PostgresBackend::writeLedger(
 
 void
 PostgresBackend::writeAccountTransactions(
-    std::vector<AccountTransactionsData>&& data) const
+    std::vector<AccountTransactionsData>&& data)
 {
     if (abortWrite_)
         return;
@@ -60,7 +60,7 @@ void
 PostgresBackend::doWriteLedgerObject(
     std::string&& key,
     uint32_t seq,
-    std::string&& blob) const
+    std::string&& blob)
 {
     if (abortWrite_)
         return;
@@ -82,12 +82,33 @@ PostgresBackend::doWriteLedgerObject(
 }
 
 void
+PostgresBackend::writeSuccessor(
+    std::string&& key,
+    uint32_t seq,
+    std::string&& successor)
+{
+    successorBuffer_ << "\\\\x" << ripple::strHex(key) << '\t'
+                     << std::to_string(seq) << '\t' << "\\\\x"
+                     << ripple::strHex(successor) << '\n';
+    numRowsInSuccessorBuffer_++;
+    if (numRowsInSuccessorBuffer_ % writeInterval_ == 0)
+    {
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " Flushing large buffer. num successors = "
+            << numRowsInSuccessorBuffer_;
+        writeConnection_.bulkInsert("successor", successorBuffer_.str());
+        BOOST_LOG_TRIVIAL(info) << __func__ << " Flushed large buffer";
+        successorBuffer_.str("");
+    }
+}
+
+void
 PostgresBackend::writeTransaction(
     std::string&& hash,
     uint32_t seq,
     uint32_t date,
     std::string&& transaction,
-    std::string&& metadata) const
+    std::string&& metadata)
 {
     if (abortWrite_)
         return;
@@ -247,7 +268,7 @@ PostgresBackend::hardFetchLedgerRange() const
 }
 
 std::optional<Blob>
-PostgresBackend::fetchLedgerObject(
+PostgresBackend::doFetchLedgerObject(
     ripple::uint256 const& key,
     uint32_t sequence) const
 {
@@ -337,56 +358,27 @@ PostgresBackend::fetchAllTransactionHashesInLedger(
     }
     return {};
 }
-
-LedgerPage
-PostgresBackend::doFetchLedgerPage(
-    std::optional<ripple::uint256> const& cursor,
-    std::uint32_t ledgerSequence,
-    std::uint32_t limit) const
+std::optional<ripple::uint256>
+PostgresBackend::doFetchSuccessorKey(
+    ripple::uint256 key,
+    uint32_t ledgerSequence) const
 {
-    auto index = getKeyIndexOfSeq(ledgerSequence);
-    if (!index)
-        return {};
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
     std::stringstream sql;
-    sql << "SELECT key FROM keys WHERE ledger_seq = "
-        << std::to_string(index->keyIndex);
-    if (cursor)
-        sql << " AND key >= \'\\x" << ripple::strHex(*cursor) << "\'";
-    sql << " ORDER BY key ASC LIMIT " << std::to_string(limit);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << sql.str();
+    sql << "SELECT next FROM successor WHERE key = "
+        << "\'\\x" << ripple::strHex(key) << "\'"
+        << " AND ledger_seq <= " << std::to_string(ledgerSequence)
+        << " ORDER BY ledger_seq DESC LIMIT 1";
     auto res = pgQuery(sql.str().data());
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched keys";
-    std::optional<ripple::uint256> returnCursor;
-    if (size_t numRows = checkResult(res, 1))
+    if (checkResult(res, 1))
     {
-        std::vector<ripple::uint256> keys;
-        for (size_t i = 0; i < numRows; ++i)
-        {
-            keys.push_back({res.asUInt256(i, 0)});
-        }
-        if (numRows >= limit)
-        {
-            returnCursor = keys.back();
-            ++(*returnCursor);
-        }
-
-        auto objs = fetchLedgerObjects(keys, ledgerSequence);
-        std::vector<LedgerObject> results;
-        for (size_t i = 0; i < objs.size(); ++i)
-        {
-            if (objs[i].size())
-            {
-                results.push_back({keys[i], objs[i]});
-            }
-        }
-        if (!cursor && !keys[0].isZero())
-            return {results, returnCursor, "Data may be incomplete"};
-        return {results, returnCursor};
+        auto next = res.asUInt256(0, 0);
+        if (next == lastKey)
+            return {};
+        return next;
     }
-    if (!cursor)
-        return {{}, {}, "Data may be incomplete"};
+
     return {};
 }
 
@@ -481,7 +473,7 @@ PostgresBackend::fetchTransactions(
 }
 
 std::vector<Blob>
-PostgresBackend::fetchLedgerObjects(
+PostgresBackend::doFetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
     uint32_t sequence) const
 {
@@ -528,6 +520,27 @@ PostgresBackend::fetchLedgerObjects(
         << __func__ << " fetched " << std::to_string(keys.size())
         << " objects with threadpool. took " << std::to_string(duration);
     return results;
+}
+std::vector<LedgerObject>
+PostgresBackend::fetchLedgerDiff(uint32_t ledgerSequence) const
+{
+    PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
+    std::stringstream sql;
+    sql << "SELECT key,object FROM objects "
+           "WHERE "
+        << "ledger_seq = " << std::to_string(ledgerSequence);
+    auto res = pgQuery(sql.str().data());
+    if (size_t numRows = checkResult(res, 4))
+    {
+        std::vector<LedgerObject> objects;
+        for (size_t i = 0; i < numRows; ++i)
+        {
+            objects.push_back({res.asUInt256(i, 0), res.asUnHexedBlob(i, 1)});
+        }
+        return objects;
+    }
+    return {};
 }
 
 AccountTransactions
@@ -621,7 +634,7 @@ PostgresBackend::close()
 }
 
 void
-PostgresBackend::startWrites() const
+PostgresBackend::startWrites()
 {
     numRowsInObjectsBuffer_ = 0;
     abortWrite_ = false;
@@ -635,7 +648,7 @@ PostgresBackend::startWrites() const
 }
 
 bool
-PostgresBackend::doFinishWrites() const
+PostgresBackend::doFinishWrites()
 {
     if (!abortWrite_)
     {
@@ -649,6 +662,9 @@ PostgresBackend::doFinishWrites() const
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " objects size = " << objectsStr.size()
             << " txns size = " << txStr.size();
+        std::string successorStr = successorBuffer_.str();
+        if (successorStr.size())
+            writeConnection_.bulkInsert("successor", successorStr);
     }
     auto res = writeConnection_("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)
@@ -661,76 +677,14 @@ PostgresBackend::doFinishWrites() const
     transactionsBuffer_.clear();
     objectsBuffer_.str("");
     objectsBuffer_.clear();
+    successorBuffer_.str("");
+    successorBuffer_.clear();
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
     return !abortWrite_;
 }
-bool
-PostgresBackend::writeKeys(
-    std::unordered_set<ripple::uint256> const& keys,
-    KeyIndex const& index,
-    bool isAsync) const
-{
-    if (abortWrite_)
-        return false;
-    PgQuery pgQuery(pgPool_);
-    PgQuery& conn = isAsync ? pgQuery : writeConnection_;
-    std::stringstream sql;
-    size_t numRows = 0;
-    for (auto& key : keys)
-    {
-        numRows++;
-        sql << "INSERT INTO keys (ledger_seq, key) VALUES ("
-            << std::to_string(index.keyIndex) << ", \'\\x"
-            << ripple::strHex(key) << "\') ON CONFLICT DO NOTHING; ";
-        if (numRows > 10000)
-        {
-            conn(sql.str().c_str());
-            sql.str("");
-            sql.clear();
-            numRows = 0;
-        }
-    }
-    if (numRows > 0)
-        conn(sql.str().c_str());
-    return true;
-    /*
-    BOOST_LOG_TRIVIAL(debug) << __func__;
-    std::condition_variable cv;
-    std::mutex mtx;
-    std::atomic_uint numRemaining = keys.size();
-    auto start = std::chrono::system_clock::now();
-    for (auto& key : keys)
-    {
-        boost::asio::post(
-            pool_, [this, key, &numRemaining, &cv, &mtx, &index]() {
-                PgQuery pgQuery(pgPool_);
-                std::stringstream sql;
-                sql << "INSERT INTO keys (ledger_seq, key) VALUES ("
-                    << std::to_string(index.keyIndex) << ", \'\\x"
-                    << ripple::strHex(key) << "\') ON CONFLICT DO NOTHING";
 
-                auto res = pgQuery(sql.str().data());
-                if (--numRemaining == 0)
-                {
-                    std::unique_lock lck(mtx);
-                    cv.notify_one();
-                }
-            });
-    }
-    std::unique_lock lck(mtx);
-    cv.wait(lck, [&numRemaining]() { return numRemaining == 0; });
-    auto end = std::chrono::system_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-            .count();
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " wrote " << std::to_string(keys.size())
-        << " keys with threadpool. took " << std::to_string(duration);
-        */
-    return true;
-}
 bool
 PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
 {
