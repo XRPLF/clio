@@ -75,7 +75,6 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     if (ec.category() == boost::asio::error::get_ssl_category()) {
         err = std::string(" (")
                 +boost::lexical_cast<std::string>(ERR_GET_LIB(ec.value()))+","
-                +boost::lexical_cast<std::string>(ERR_GET_FUNC(ec.value()))+","
                 +boost::lexical_cast<std::string>(ERR_GET_REASON(ec.value()))+") "
         ;
         //ERR_PACK /* crypto/err/err.h */
@@ -335,11 +334,7 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
     {
         boost::json::object jv{
             {"command", "subscribe"},
-            {"streams", {
-                "ledger", 
-                "transactions_proposed",
-                "manifests",
-                "validations"}
+            {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}
             }};
         std::string s = boost::json::serialize(jv);
         BOOST_LOG_TRIVIAL(trace) << "Sending subscribe stream message";
@@ -405,9 +400,9 @@ ETLSourceImpl<Derived>::handleMessage()
         std::string msg{
             static_cast<char const*>(readBuffer_.data().data()),
             readBuffer_.size()};
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
+        BOOST_LOG_TRIVIAL(trace) << __func__ << msg;
         boost::json::value raw = boost::json::parse(msg);
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << " parsed";
         boost::json::object response = raw.as_object();
 
         uint32_t ledgerIndex = 0;
@@ -422,6 +417,12 @@ ETLSourceImpl<Derived>::handleMessage()
             {
                 boost::json::string const& validatedLedgers =
                     result["validated_ledgers"].as_string();
+
+                // if (validatedLedgers == "empty")
+                // {
+                //     reconnect(boost::beast::error_code());
+                // }
+                
                 setValidatedRange(
                     {validatedLedgers.c_str(), validatedLedgers.size()});
             }

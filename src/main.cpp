@@ -199,7 +199,7 @@ main(int argc, char* argv[])
 
     // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager(backend)};
+        SubscriptionManager::make_SubscriptionManager(backend, ioc)};
 
     // Tracks which ledgers have been validated by the
     // network

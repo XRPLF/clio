@@ -2,6 +2,146 @@
 #include <webserver/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
+void
+Subscription::sendAll(std::string const& pubMsg)
+{
+    for (auto it = subscribers_.begin(); it != subscribers_.end();)
+    {
+        auto& session = *it;
+        if (session->dead())
+        {
+            it = subscribers_.erase(it);
+        }
+        else
+        {
+            session->send(pubMsg);
+            ++it;
+        }
+    }
+}
+
+void
+Subscription::subscribe(std::shared_ptr<WsBase> const& session)
+{
+    boost::asio::post(strand_, [this, session](){
+        subscribers_.emplace(session);
+    });
+}
+
+void
+Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
+{
+    boost::asio::post(strand_, [this, session](){
+        subscribers_.erase(session);
+    });
+}
+
+void
+Subscription::publish(std::string const& message)
+{
+    boost::asio::post(strand_, [this, message](){
+        sendAll(message);
+    });
+}
+
+void
+AccountSubscription::subscribe(
+    std::shared_ptr<WsBase> const& session,
+    ripple::AccountID const& account)
+{
+    boost::asio::post(strand_, [this, session, account](){
+        subscribers_[account].emplace(session);
+    });
+}
+
+void
+AccountSubscription::unsubscribe(
+    std::shared_ptr<WsBase> const& session,
+    ripple::AccountID const& account)
+{
+    boost::asio::post(strand_, [this, session, account](){
+        subscribers_[account].erase(session);
+    });
+}
+
+void
+AccountSubscription::publish(
+    std::string const& message,
+    ripple::AccountID const& account)
+{
+    boost::asio::post(strand_, [this, message, account]() {
+        sendAll(message, account);
+    });
+}
+
+void
+AccountSubscription::sendAll(
+    std::string const& pubMsg,
+    ripple::AccountID const& account)
+{
+    for (auto it = subscribers_[account].begin(); it != subscribers_[account].end();)
+    {
+        auto& session = *it;
+        if (session->dead())
+        {
+            it = subscribers_[account].erase(it);
+        }
+        else
+        {
+            session->send(pubMsg);
+            ++it;
+        }
+    }
+}
+
+void
+BookSubscription::sendAll(std::string const& pubMsg, ripple::Book const& book)
+{
+    for (auto it = subscribers_[book].begin(); it != subscribers_[book].end();)
+    {
+        auto& session = *it;
+        if (session->dead())
+        {
+            it = subscribers_[book].erase(it);
+        }
+        else
+        {
+            session->send(pubMsg);
+            ++it;
+        }
+    }
+}
+
+void
+BookSubscription::subscribe(
+    std::shared_ptr<WsBase> const& session,
+    ripple::Book const& book)
+{
+    boost::asio::post(strand_, [this, session, book](){
+        subscribers_[book].emplace(session);
+    });
+}
+
+void
+BookSubscription::unsubscribe(
+    std::shared_ptr<WsBase> const& session,
+    ripple::Book const& book)
+{
+    boost::asio::post(strand_, [this, session, book](){
+        subscribers_[book].erase(session);
+    });
+}
+
+void
+BookSubscription::publish(
+    std::string const& message,
+    ripple::Book const& book)
+{
+    boost::asio::post(strand_, [this, message, book](){
+        sendAll(message, book);
+    });
+}
+
 boost::json::object
 getLedgerPubMessage(
     ripple::LedgerInfo const& lgrInfo,
@@ -29,9 +169,7 @@ getLedgerPubMessage(
 boost::json::object
 SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 {
-    streams_[Ledgers].post([this, session](){
-        streamSubscribers_[Ledgers].emplace(session);
-    });
+        streamSubscribers_[Ledgers]->subscribe(session);
     
     auto ledgerRange = backend_->fetchLedgerRange();
     assert(ledgerRange);
@@ -54,25 +192,19 @@ SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 void
 SubscriptionManager::unsubLedger(std::shared_ptr<WsBase>& session)
 {
-    streams_[Ledgers].post([this, session](){
-        streamSubscribers_[Ledgers].erase(session);
-    });
+    streamSubscribers_[Ledgers]->unsubscribe(session);
 }
 
 void
 SubscriptionManager::subTransactions(std::shared_ptr<WsBase>& session)
 {
-    streams_[Transactions].post([this, session](){
-        streamSubscribers_[Transactions].emplace(session);
-    });
+    streamSubscribers_[Transactions]->subscribe(session);
 }
 
 void
 SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase>& session)
 {
-    streams_[Transactions].post([this, session](){
-        streamSubscribers_[Transactions].erase(session);
-    });
+    streamSubscribers_[Transactions]->unsubscribe(session);
 }
 
 void
@@ -80,9 +212,7 @@ SubscriptionManager::subAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
-    strand_.post([this, session](){
-        accountSubscribers_[account].emplace(session);
-    });
+    accountSubscribers_->subscribe(session, account);
 }
 
 void
@@ -90,9 +220,7 @@ SubscriptionManager::unsubAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
-    strand_.post([this, session](){
-        accountSubscribers_[account].erase(session);
-    });
+    accountSubscribers_->unsubscribe(session, account);
 }
 
 void
@@ -100,9 +228,7 @@ SubscriptionManager::subBook(
     ripple::Book const& book,
     std::shared_ptr<WsBase>& session)
 {
-    strand_.post([this, session](){
-        bookSubscribers_[book].emplace(session);
-    });
+    bookSubscribers_->subscribe(session, book);
 }
 
 void
@@ -110,30 +236,7 @@ SubscriptionManager::unsubBook(
     ripple::Book const& book,
     std::shared_ptr<WsBase>& session)
 {
-    strand_.post([this, &session](){
-        bookSubscribers_[book].erase(session);
-    });
-}
-
-void
-SubscriptionManager::sendAll(
-    std::string const& pubMsg,
-    std::unordered_set<std::shared_ptr<WsBase>>& subs
-    )
-{
-    for (auto it = subs.begin(); it != subs.end();)
-    {
-        auto& session = *it;
-        if (session->dead())
-        {
-            it = subs.erase(it);
-        }
-        else
-        {
-            session->send(pubMsg);
-            ++it;
-        }
-    }
+    bookSubscribers_->unsubscribe(session, book);
 }
 
 void
@@ -143,12 +246,8 @@ SubscriptionManager::pubLedger(
     std::string const& ledgerRange,
     std::uint32_t txnCount)
 {
-    streams_[Ledgers].post([this, lgrInfo, fees, ledgerRange, txnCount](){
-        sendAll(
-            boost::json::serialize(
-                getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)),
-            streamSubscribers_[Ledgers]);
-    });
+    streamSubscribers_[Ledgers]->publish(boost::json::serialize(
+        getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
 }
 
 void
@@ -190,17 +289,13 @@ SubscriptionManager::pubTransaction(
     }
 
     std::string pubMsg{boost::json::serialize(pubObj)};
-    streams_[Transactions].post([this, pubMsg](){
-        sendAll(pubMsg, streamSubscribers_[Transactions]);
-    });
+    streamSubscribers_[Transactions]->publish(pubMsg);
 
     auto journal = ripple::debugLog();
     auto accounts = meta->getAffectedAccounts(journal);
 
-    for (ripple::AccountID const& account : accounts)
-        strand_.post([this, account, pubMsg](){
-            sendAll(pubMsg, accountSubscribers_[account]);
-        });
+    for (auto const& account : accounts)
+        accountSubscribers_->publish(pubMsg, account);
 
     std::unordered_set<ripple::Book> alreadySent;
 
@@ -235,9 +330,7 @@ SubscriptionManager::pubTransaction(
                         data->getFieldAmount(ripple::sfTakerPays).issue()};
                     if (!alreadySent.contains(book))
                     {
-                        strand_.post([pubMsg, book, this](){
-                            sendAll(pubMsg, bookSubscribers_[book]);
-                        });
+                        bookSubscribers_->publish(pubMsg, book);
                         alreadySent.insert(book);
                     }
                 }
@@ -251,35 +344,27 @@ SubscriptionManager::forwardProposedTransaction(
     boost::json::object const& response)
 {
     std::string pubMsg{boost::json::serialize(response)};
-    streams_[TransactionsProposed].post([account, pubMsg, this](){
-        sendAll(pubMsg, streamSubscribers_[TransactionsProposed]);
-    });
+    streamSubscribers_[TransactionsProposed]->publish(pubMsg);
 
     auto transaction = response.at("transaction").as_object();
     auto accounts = RPC::getAccountsFromTransaction(transaction);
 
     for (ripple::AccountID const& account : accounts)
-        strand_.post([account, pubMsg, this](){
-            sendAll(pubMsg, accountProposedSubscribers_[account]);
-        });
+       accountProposedSubscribers_->publish(pubMsg, account);
 }
 
 void 
 SubscriptionManager::forwardManifest(boost::json::object const& response)
 {
     std::string pubMsg{boost::json::serialize(response)};
-    streams_[Manifests].post([m = std::move(pubMsg), this](){
-        sendAll(m, streamSubscribers_[Manifests]);
-    });
+    streamSubscribers_[Manifests]->publish(pubMsg);
 }
 
 void 
 SubscriptionManager::forwardValidation(boost::json::object const& response)
 {
     std::string pubMsg{boost::json::serialize(response)};
-    streams_[Validations].post([m = std::move(pubMsg), this](){
-        sendAll(m, streamSubscribers_[Validations]);
-    });
+    streamSubscribers_[Validations]->publish(std::move(pubMsg));
 }
 
 void
@@ -287,36 +372,31 @@ SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    accountProposedSubscribers_[account].emplace(session);
+    accountProposedSubscribers_->subscribe(session, account);
 }
 
 void
 SubscriptionManager::subManifest(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[Manifests].emplace(session);
+    streamSubscribers_[Manifests]->subscribe(session);
 }
 
 void
 SubscriptionManager::unsubManifest(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[Manifests].erase(session);
+    streamSubscribers_[Manifests]->unsubscribe(session);
 }
 
 void
 SubscriptionManager::subValidation(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[Validations].emplace(session);
+    streamSubscribers_[Validations]->subscribe(session);
 }
 
 void
 SubscriptionManager::unsubValidation(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[Validations].emplace(session);
+    streamSubscribers_[Validations]->subscribe(session);
 }
 
 void
@@ -324,21 +404,18 @@ SubscriptionManager::unsubProposedAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    accountProposedSubscribers_[account].erase(session);
+    accountProposedSubscribers_->unsubscribe(session, account);
 }
 
 void
 SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[TransactionsProposed].emplace(session);
+    streamSubscribers_[TransactionsProposed]->subscribe(session);
 }
 
 void
 SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase>& session)
 {
-    std::lock_guard lk(m_);
-    streamSubscribers_[TransactionsProposed].erase(session);
+    streamSubscribers_[TransactionsProposed]->unsubscribe(session);
 }
 
