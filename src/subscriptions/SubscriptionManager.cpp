@@ -7,18 +7,15 @@ Subscription::sendAll(std::string const& pubMsg)
 {
     for (auto it = subscribers_.begin(); it != subscribers_.end();)
     {
-        std::cout << "PUBLISHING TO SUBSCRIBER" << std::endl;
         auto& session = *it;
         if (session->dead())
         {
-            std::cout << "SESSION IS DEAD" << std::endl;
             it = subscribers_.erase(it);
         }
         else
         {
-            session->send(msg);
+            session->send(pubMsg);
             ++it;
-            std::cout << "DONE SENDING" << std::endl;
         }
     }
 }
@@ -26,11 +23,8 @@ Subscription::sendAll(std::string const& pubMsg)
 void
 Subscription::subscribe(std::shared_ptr<WsBase> const& session)
 {
-    std::cout << "SUBSCRIBING" << std::endl;
     boost::asio::post(strand_, [this, session](){
-        std::cout << "EMPLACING " << std::endl;
         subscribers_.emplace(session);
-        std::cout << "EMPLACED" << std::endl;
     });
 }
 
@@ -38,9 +32,7 @@ void
 Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
 {
     boost::asio::post(strand_, [this, session](){
-        std::cout << "ERASING" << std::endl;
         subscribers_.erase(session);
-        std::cout << "ERASED" << std::endl;
     });
 }
 
@@ -57,9 +49,6 @@ AccountSubscription::subscribe(
     std::shared_ptr<WsBase> const& session,
     ripple::AccountID const& account)
 {
-    if (strand_.running_in_this_thread())
-        return;
-
     boost::asio::post(strand_, [this, session, account](){
         subscribers_[account].emplace(session);
     });
@@ -70,9 +59,6 @@ AccountSubscription::unsubscribe(
     std::shared_ptr<WsBase> const& session,
     ripple::AccountID const& account)
 {
-    if (strand_.running_in_this_thread())
-        return;
-
     boost::asio::post(strand_, [this, session, account](){
         subscribers_[account].erase(session);
     });
@@ -83,9 +69,6 @@ AccountSubscription::publish(
     std::string const& message,
     ripple::AccountID const& account)
 {
-    if (strand_.running_in_this_thread())
-        return;
-
     boost::asio::post(strand_, [this, message, account]() {
         sendAll(message, account);
     });
@@ -134,9 +117,6 @@ BookSubscription::subscribe(
     std::shared_ptr<WsBase> const& session,
     ripple::Book const& book)
 {
-    if (strand_.running_in_this_thread())
-        return;
-
     boost::asio::post(strand_, [this, session, book](){
         subscribers_[book].emplace(session);
     });
@@ -147,9 +127,6 @@ BookSubscription::unsubscribe(
     std::shared_ptr<WsBase> const& session,
     ripple::Book const& book)
 {
-    if (strand_.running_in_this_thread())
-        return;
-
     boost::asio::post(strand_, [this, session, book](){
         subscribers_[book].erase(session);
     });
@@ -160,9 +137,6 @@ BookSubscription::publish(
     std::string const& message,
     ripple::Book const& book)
 {
-    if (strand_.running_in_this_thread())
-        return;
-
     boost::asio::post(strand_, [this, message, book](){
         sendAll(message, book);
     });

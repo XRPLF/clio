@@ -11,6 +11,9 @@ class Subscription
     boost::asio::io_context::strand strand_;
     std::unordered_set<std::shared_ptr<WsBase>> subscribers_ = {};
 
+    void
+    sendAll(std::string const& pubMsg);
+
 public:
     static std::unique_ptr<Subscription>
     make_Subscription(boost::asio::io_context& ioc) {
