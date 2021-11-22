@@ -76,8 +76,8 @@ target_sources(clio PRIVATE
   ## ETL
   src/etl/ETLSource.cpp
   src/etl/ReportingETL.cpp
-  ## Server
-  src/webserver/SubscriptionManager.cpp
+  ## Subscriptions
+  src/subscriptions/SubscriptionManager.cpp
   ## RPC
   src/rpc/RPC.cpp
   src/rpc/RPCHelpers.cpp

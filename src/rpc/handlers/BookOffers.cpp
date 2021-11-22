@@ -16,20 +16,9 @@ namespace RPC {
 
 
 Result
-doValidatedBookOffers(Context const& context)
-{
-    
-}
-
-Result
 doBookOffers(Context const& context)
 {
     auto request = context.params;
-    if (!request.contains("ledger_index") 
-      || request.at("ledger_index") == "validated")
-    {
-        return doValidatedBookOffers(context);
-    }
 
     boost::json::object response = {};
     auto v = ledgerInfoFromRequest(context);

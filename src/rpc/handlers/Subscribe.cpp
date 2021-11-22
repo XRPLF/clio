@@ -1,5 +1,5 @@
 #include <boost/json.hpp>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
 #include <rpc/RPCHelpers.h>

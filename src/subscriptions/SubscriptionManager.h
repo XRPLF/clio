@@ -8,11 +8,8 @@ class WsBase;
 
 class Subscription
 {
-    boost::asio::strand<boost::asio::executor> strand_;
+    boost::asio::io_context::strand strand_;
     std::unordered_set<std::shared_ptr<WsBase>> subscribers_ = {};
-
-    void
-    sendAll(std::string const& pubMsg);
 
 public:
     static std::unique_ptr<Subscription>
@@ -25,8 +22,8 @@ public:
     Subscription(Subscription&&) = delete;
 
     explicit 
-    Subscription(boost::asio::io_context& ioc) : strand_(ioc.get_executor()) 
-    {
+    Subscription(boost::asio::io_context& ioc) : strand_(ioc)
+    {    
     }
 
     ~Subscription() = default;
@@ -43,7 +40,7 @@ public:
 
 class AccountSubscription
 {
-    boost::asio::strand<boost::asio::executor> strand_;
+    boost::asio::io_context::strand strand_;
     std::unordered_map<
         ripple::AccountID,
         std::unordered_set<std::shared_ptr<WsBase>>> subscribers_ = {};
@@ -62,7 +59,7 @@ public:
     AccountSubscription(AccountSubscription&&) = delete;
 
     explicit 
-    AccountSubscription(boost::asio::io_context& ioc) : strand_(ioc.get_executor()) 
+    AccountSubscription(boost::asio::io_context& ioc) : strand_(ioc) 
     {
     }
 
@@ -87,7 +84,7 @@ public:
 class BookSubscription
 {
 
-    boost::asio::strand<boost::asio::executor> strand_;
+    boost::asio::io_context::strand strand_;
     std::unordered_map<
         ripple::Book,
         std::unordered_set<std::shared_ptr<WsBase>>> subscribers_ = {};
@@ -106,7 +103,7 @@ public:
     BookSubscription(BookSubscription&&) = delete;
 
     explicit 
-    BookSubscription(boost::asio::io_context& ioc) : strand_(ioc.get_executor()) 
+    BookSubscription(boost::asio::io_context& ioc) : strand_(ioc) 
     {
     }
 
@@ -142,6 +139,10 @@ class SubscriptionManager
         finalEntry
     };
     
+    boost::asio::io_context ioc_;
+    std::optional<boost::asio::io_context::work> work_;
+    std::thread thread_;
+
     std::vector<subscription_ptr> streamSubscribers_;
     
     std::unique_ptr<AccountSubscription> accountSubscribers_;
@@ -149,30 +150,34 @@ class SubscriptionManager
     std::unique_ptr<BookSubscription> bookSubscribers_;
     std::shared_ptr<Backend::BackendInterface> backend_;
 
-    boost::asio::io_context& ioc_;
-
 public:
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager(
-        std::shared_ptr<Backend::BackendInterface> const& b,
-        boost::asio::io_context& ioc)
+        std::shared_ptr<Backend::BackendInterface> const& b)
     {
-        return std::make_shared<SubscriptionManager>(b, ioc);
+        return std::make_shared<SubscriptionManager>(b);
     }
 
     SubscriptionManager(
-        std::shared_ptr<Backend::BackendInterface> const& b, 
-        boost::asio::io_context& ioc)
-        : accountSubscribers_(AccountSubscription::make_Subscription(ioc))
-        , accountProposedSubscribers_(AccountSubscription::make_Subscription(ioc))
-        , bookSubscribers_(BookSubscription::make_Subscription(ioc))
+        std::shared_ptr<Backend::BackendInterface> const& b)
+        : accountSubscribers_(AccountSubscription::make_Subscription(ioc_))
+        , accountProposedSubscribers_(AccountSubscription::make_Subscription(ioc_))
+        , bookSubscribers_(BookSubscription::make_Subscription(ioc_))
         , backend_(b)
-        , ioc_(ioc)
     {
         for (auto i = 0; i < finalEntry; ++i)
         {
             streamSubscribers_.push_back(Subscription::make_Subscription(ioc_));
         }
+
+        work_.emplace(ioc_);
+        thread_ = std::thread{[this]() { ioc_.run(); }};
+    }
+
+    ~SubscriptionManager()
+    {
+        work_.reset();
+        thread_.join();
     }
 
     boost::json::object

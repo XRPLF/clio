@@ -11,7 +11,7 @@
 #include <etl/ETLSource.h>
 #include <rpc/RPC.h>
 #include <webserver/DOSGuard.h>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -119,6 +119,7 @@ public:
     sendNext()
     {
         std::lock_guard<std::mutex> lck(mtx_);
+        std::cout << "SENDING NEXT" << std::endl;
         derived().ws().async_write(
             boost::asio::buffer(messages_.front()),
             [shared = shared_from_this()](auto ec, size_t size) {
@@ -127,6 +128,7 @@ public:
                 size_t left = 0;
                 {
                     std::lock_guard<std::mutex> lck(shared->mtx_);
+                    std::cout << "IN SENDNEXT CALLBACK" << std::endl;
                     shared->messages_.pop();
                     left = shared->messages_.size();
                 }
@@ -141,13 +143,16 @@ public:
         size_t left = 0;
         {
             std::lock_guard<std::mutex> lck(mtx_);
+            std::cout << "GRABBED SEND LOCK" << std::endl;
             messages_.push(std::move(msg));
             left = messages_.size();
+            std::cout << "ENDING SEND LOCK" << std::endl;
         }
         // if the queue was previously empty, start the send chain
         if (left == 1)
             sendNext();
     }
+
     void
     send(std::string const& msg) override
     {
