@@ -483,11 +483,32 @@ class AsyncCallData
 
     grpc::Status status_;
 
+    unsigned char nextPrefix_;
+
 public:
-    AsyncCallData(uint32_t seq)
+    AsyncCallData(
+        uint32_t seq,
+        ripple::uint256& marker,
+        std::optional<ripple::uint256> nextMarker)
     {
         request_.mutable_ledger()->set_sequence(seq);
+        if (marker.isNonZero())
+        {
+            request_.set_marker(marker.data(), marker.size());
+        }
         request_.set_user("ETL");
+        nextPrefix_ = 0x00;
+        if (nextMarker)
+            nextPrefix_ = nextMarker->data()[0];
+
+        unsigned char prefix = marker.data()[0];
+
+        BOOST_LOG_TRIVIAL(debug)
+            << "Setting up AsyncCallData. marker = " << ripple::strHex(marker)
+            << " . prefix = " << ripple::strHex(std::string(1, prefix))
+            << " . nextPrefix_ = " << ripple::strHex(std::string(1, nextPrefix_));
+
+        assert(nextPrefix_ > prefix || nextPrefix_ == 0x00);
 
         cur_ = std::make_unique<org::xrpl::rpc::v1::GetLedgerDataResponse>();
 
@@ -501,11 +522,10 @@ public:
     process(
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq,
-        BackendInterface& backend,
+        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& queue,
         bool abort = false)
     {
-        BOOST_LOG_TRIVIAL(info) << "Processing response. "
-                                << "Marker prefix = " << getMarkerPrefix();
+        BOOST_LOG_TRIVIAL(debug) << "Processing calldata";
         if (abort)
         {
             BOOST_LOG_TRIVIAL(error) << "AsyncCallData aborted";
@@ -513,10 +533,9 @@ public:
         }
         if (!status_.ok())
         {
-            BOOST_LOG_TRIVIAL(error)
-                << "AsyncCallData status_ not ok: "
-                << " code = " << status_.error_code()
-                << " message = " << status_.error_message();
+            BOOST_LOG_TRIVIAL(debug) << "AsyncCallData status_ not ok: "
+                                   << " code = " << status_.error_code()
+                                   << " message = " << status_.error_message();
             return CallStatus::ERRORED;
         }
         if (!next_->is_unlimited())
@@ -535,6 +554,11 @@ public:
         if (cur_->marker().size() == 0)
             more = false;
 
+        // if returned marker is greater than our end, we are done
+        unsigned char prefix = cur_->marker()[0];
+        if (nextPrefix_ != 0x00 && prefix >= nextPrefix_)
+            more = false;
+
         // if we are not done, make the next async call
         if (more)
         {
@@ -542,15 +566,16 @@ public:
             call(stub, cq);
         }
 
-        BOOST_LOG_TRIVIAL(trace) << "Writing objects";
-        for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
+        for (auto& obj : cur_->ledger_objects().objects())
         {
-            backend.writeLedgerObject(
-                std::move(*obj.mutable_key()),
-                request_.ledger().sequence(),
-                std::move(*obj.mutable_data()));
+            auto key = ripple::uint256::fromVoid(obj.key().data());
+            auto& data = obj.data();
+
+            ripple::SerialIter it{data.data(), data.size()};
+            std::shared_ptr<ripple::SLE> sle = std::make_shared<ripple::SLE>(it, key);
+
+            queue.push(sle);
         }
-        BOOST_LOG_TRIVIAL(trace) << "Wrote objects";
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
@@ -560,7 +585,6 @@ public:
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq)
     {
-        BOOST_LOG_TRIVIAL(info) << "Making next request. " << getMarkerPrefix();
         context_ = std::make_unique<grpc::ClientContext>();
 
         std::unique_ptr<grpc::ClientAsyncResponseReader<
@@ -584,7 +608,9 @@ public:
 
 template <class Derived>
 bool
-ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence)
+ETLSourceImpl<Derived>::loadInitialLedger(
+    uint32_t sequence,
+    ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue)
 {
     if (!stub_)
         return false;
@@ -596,17 +622,26 @@ ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence)
     bool ok = false;
 
     std::vector<AsyncCallData> calls;
-    calls.emplace_back(sequence);
+    auto markers = getMarkers(256);
 
-    BOOST_LOG_TRIVIAL(info) << "Starting data download for ledger " << sequence
-                            << ". Using source = " << toString();
+    for (size_t i = 0; i < markers.size(); ++i)
+    {
+        std::optional<ripple::uint256> nextMarker;
+        if (i + 1 < markers.size())
+            nextMarker = markers[i + 1];
+        calls.emplace_back(sequence, markers[i], nextMarker);
+    }
+
+    BOOST_LOG_TRIVIAL(debug) << "Starting data download for ledger " << sequence
+                           << ". Using source = " << toString();
 
     for (auto& c : calls)
         c.call(stub_, cq);
 
     size_t numFinished = 0;
     bool abort = false;
-    while (numFinished < calls.size() && cq.Next(&tag, &ok))
+    while (numFinished < calls.size() &&
+           cq.Next(&tag, &ok))
     {
         assert(tag);
 
@@ -620,13 +655,13 @@ ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence)
         }
         else
         {
-            BOOST_LOG_TRIVIAL(info)
+            BOOST_LOG_TRIVIAL(debug)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
-            auto result = ptr->process(stub_, cq, *backend_, abort);
+            auto result = ptr->process(stub_, cq, writeQueue, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
-                BOOST_LOG_TRIVIAL(info)
+                BOOST_LOG_TRIVIAL(debug)
                     << "Finished a marker. "
                     << "Current number of finished = " << numFinished;
             }
@@ -638,6 +673,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence)
     }
     return !abort;
 }
+
 
 template <class Derived>
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
@@ -694,11 +730,13 @@ ETLLoadBalancer::ETLLoadBalancer(
 }
 
 void
-ETLLoadBalancer::loadInitialLedger(uint32_t sequence)
+ETLLoadBalancer::loadInitialLedger(
+    uint32_t sequence,
+    ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue)
 {
     execute(
-        [this, &sequence](auto& source) {
-            bool res = source->loadInitialLedger(sequence);
+        [this, &sequence, &writeQueue](auto& source) {
+            bool res = source->loadInitialLedger(sequence, writeQueue);
             if (!res)
             {
                 BOOST_LOG_TRIVIAL(error) << "Failed to download initial ledger."

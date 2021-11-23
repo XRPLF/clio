@@ -88,7 +88,7 @@ private:
     /// being written to the database more than once. It is recommended to use
     /// the default value of 0 for this variable; however, different values can
     /// be experimented with if better performance is desired.
-    size_t flushInterval_ = 0;
+    size_t flushInterval_ = 1000000;
 
     /// This variable controls the number of GetLedgerData calls that will be
     /// executed in parallel during the initial ledger download. GetLedgerData
@@ -137,6 +137,12 @@ private:
         std::unique_lock<std::mutex> lck(publishTimeMtx_);
         lastPublish_ = std::chrono::system_clock::now();
     }
+
+
+    void
+    consumeLedgerData(
+        std::uint32_t sequence, 
+        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue);
 
     /// Download a ledger with specified sequence in full, via GetLedgerData,
     /// and write the data to the databases. This takes several minutes or
