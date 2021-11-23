@@ -88,7 +88,7 @@ private:
     /// being written to the database more than once. It is recommended to use
     /// the default value of 0 for this variable; however, different values can
     /// be experimented with if better performance is desired.
-    size_t flushInterval_ = 1000000;
+    size_t flushInterval_ = 0;
 
     /// This variable controls the number of GetLedgerData calls that will be
     /// executed in parallel during the initial ledger download. GetLedgerData
