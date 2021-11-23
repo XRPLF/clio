@@ -142,6 +142,7 @@ class SubscriptionManager
         finalEntry
     };
     
+    std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
     std::optional<boost::asio::io_context::work> work_;
     std::thread thread_;
@@ -156,12 +157,22 @@ class SubscriptionManager
 public:
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager(
+        boost::json::object const& config,
         std::shared_ptr<Backend::BackendInterface> const& b)
     {
-        return std::make_shared<SubscriptionManager>(b);
+        auto numThreads = 1;
+
+        if (config.contains("subscription_workers") &&
+            config.at("subscription_workers").is_int64())
+        {
+            numThreads = config.at("subscription_workers").as_int64();
+        }
+
+        return std::make_shared<SubscriptionManager>(numThreads, b);
     }
 
     SubscriptionManager(
+        std::uint64_t numThreads,
         std::shared_ptr<Backend::BackendInterface> const& b)
         : accountSubscribers_(AccountSubscription::make_Subscription(ioc_))
         , accountProposedSubscribers_(AccountSubscription::make_Subscription(ioc_))
@@ -174,13 +185,22 @@ public:
         }
 
         work_.emplace(ioc_);
-        thread_ = std::thread{[this]() { ioc_.run(); }};
+
+        BOOST_LOG_TRIVIAL(info)
+             << "Starting subscription manager with " << numThreads << " workers";
+
+        workers_.reserve(numThreads);
+        for (auto i = numThreads; i > 0; --i)
+            workers_.emplace_back([this] { ioc_.run(); });
     }
 
     ~SubscriptionManager()
     {
         work_.reset();
-        thread_.join();
+        
+        ioc_.stop();
+        for (auto& worker : workers_)
+            worker.join();
     }
 
     boost::json::object
