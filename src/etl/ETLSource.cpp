@@ -610,6 +610,7 @@ template <class Derived>
 bool
 ETLSourceImpl<Derived>::loadInitialLedger(
     uint32_t sequence,
+    uint32_t numMarkers,
     ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue)
 {
     if (!stub_)
@@ -622,7 +623,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
     bool ok = false;
 
     std::vector<AsyncCallData> calls;
-    auto markers = getMarkers(256);
+    auto markers = getMarkers(numMarkers);
 
     for (size_t i = 0; i < markers.size(); ++i)
     {
@@ -705,14 +706,22 @@ ETLSourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects)
 }
 
 ETLLoadBalancer::ETLLoadBalancer(
-    boost::json::array const& config,
+    boost::json::object const& config,
     boost::asio::io_context& ioContext,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl)
 {
-    for (auto& entry : config)
+    if (config.contains("download_ranges") &&
+        config.at("download_ranges").is_int64())
+    {
+        downloadRanges_ = config.at("download_ranges").as_int64();
+
+        downloadRanges_ = std::clamp(downloadRanges_, {1}, {256});
+    }
+
+    for (auto& entry : config.at("etl_sources").as_array())
     {
         std::unique_ptr<ETLSource> source = ETL::make_ETLSource(
             entry.as_object(),
@@ -736,7 +745,8 @@ ETLLoadBalancer::loadInitialLedger(
 {
     execute(
         [this, &sequence, &writeQueue](auto& source) {
-            bool res = source->loadInitialLedger(sequence, writeQueue);
+            bool res = 
+                source->loadInitialLedger(sequence, downloadRanges_, writeQueue);
             if (!res)
             {
                 BOOST_LOG_TRIVIAL(error) << "Failed to download initial ledger."

@@ -50,6 +50,7 @@ public:
     virtual bool
     loadInitialLedger(
         uint32_t sequence,
+        std::uint32_t numMarkers,
         ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue) = 0;
 
     virtual std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
@@ -284,6 +285,7 @@ public:
     bool
     loadInitialLedger(
         std::uint32_t ledgerSequence,
+        std::uint32_t numMarkers,
         ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue) override;
 
     /// Attempt to reconnect to the ETL source
@@ -455,10 +457,6 @@ namespace ETL
     }
 }
 
-
-
-
-
 /// This class is used to manage connections to transaction processing processes
 /// This class spawns a listener for each etl source, which listens to messages
 /// on the ledgers stream (to keep track of which ledgers have been validated by
@@ -470,9 +468,11 @@ class ETLLoadBalancer
 private:
     std::vector<std::unique_ptr<ETLSource>> sources_;
 
+    std::uint32_t downloadRanges_ = 16;
+
 public:
     ETLLoadBalancer(
-        boost::json::array const& config,
+        boost::json::object const& config,
         boost::asio::io_context& ioContext,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
@@ -489,7 +489,7 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
     {
         return std::make_shared<ETLLoadBalancer>(
-            config.at("etl_sources").as_array(),
+            config,
             ioc,
             sslCtx,
             backend,
