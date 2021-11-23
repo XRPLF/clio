@@ -484,7 +484,6 @@ class AsyncCallData
     grpc::Status status_;
 
     unsigned char nextPrefix_;
-
 public:
     AsyncCallData(
         uint32_t seq,
@@ -522,7 +521,7 @@ public:
     process(
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
         grpc::CompletionQueue& cq,
-        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& queue,
+        BackendInterface const& backend,
         bool abort = false)
     {
         BOOST_LOG_TRIVIAL(debug) << "Processing calldata";
@@ -566,15 +565,12 @@ public:
             call(stub, cq);
         }
 
-        for (auto& obj : cur_->ledger_objects().objects())
+        for (auto& obj : *(cur_->mutable_ledger_objects()->mutable_objects()))
         {
-            auto key = ripple::uint256::fromVoid(obj.key().data());
-            auto& data = obj.data();
-
-            ripple::SerialIter it{data.data(), data.size()};
-            std::shared_ptr<ripple::SLE> sle = std::make_shared<ripple::SLE>(it, key);
-
-            queue.push(sle);
+            backend.writeLedgerObject(
+                std::move(*obj.mutable_key()),
+                request_.ledger().sequence(),
+                std::move(*obj.mutable_data()));
         }
 
         return more ? CallStatus::MORE : CallStatus::DONE;
@@ -610,8 +606,7 @@ template <class Derived>
 bool
 ETLSourceImpl<Derived>::loadInitialLedger(
     uint32_t sequence,
-    uint32_t numMarkers,
-    ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue)
+    uint32_t numMarkers)
 {
     if (!stub_)
         return false;
@@ -658,7 +653,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
         {
             BOOST_LOG_TRIVIAL(debug)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
-            auto result = ptr->process(stub_, cq, writeQueue, abort);
+            auto result = ptr->process(stub_, cq, *backend_, abort);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
@@ -739,14 +734,12 @@ ETLLoadBalancer::ETLLoadBalancer(
 }
 
 void
-ETLLoadBalancer::loadInitialLedger(
-    uint32_t sequence,
-    ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue)
+ETLLoadBalancer::loadInitialLedger(uint32_t sequence)
 {
     execute(
-        [this, &sequence, &writeQueue](auto& source) {
+        [this, &sequence](auto& source) {
             bool res = 
-                source->loadInitialLedger(sequence, downloadRanges_, writeQueue);
+                source->loadInitialLedger(sequence, downloadRanges_);
             if (!res)
             {
                 BOOST_LOG_TRIVIAL(error) << "Failed to download initial ledger."

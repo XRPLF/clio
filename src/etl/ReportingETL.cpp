@@ -67,27 +67,6 @@ ReportingETL::insertTransactions(
     return accountTxData;
 }
 
-void
-ReportingETL::consumeLedgerData(
-    std::uint32_t sequence,
-    ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue)
-{
-    std::shared_ptr<ripple::SLE> sle;
-    size_t num = 0;
-    while (!stopping_ && (sle = writeQueue.pop()))
-    {
-        ripple::Serializer s;
-        sle->add(s);
-        std::string bytes{s.peekData().data(), s.peekData().data() + s.getLength()};
-        std::string key{sle->key().data(), sle->key().data() + sle->key().size()};
-
-        backend_->writeLedgerObject(
-            std::move(key),
-            sequence,
-            std::move(bytes));
-    }
-}
-
 std::optional<ripple::LedgerInfo>
 ReportingETL::loadInitialLedger(uint32_t startingSequence)
 {
@@ -127,22 +106,12 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         insertTransactions(lgrInfo, *ledgerData);
     BOOST_LOG_TRIVIAL(debug) << __func__ << " inserted txns";
 
-    ThreadSafeQueue<std::shared_ptr<ripple::SLE>> writeQueue;
-    std::thread asyncWriter{[this, &startingSequence, &writeQueue]() {
-        consumeLedgerData(startingSequence, writeQueue);
-    }};
-
     // download the full account state map. This function downloads full ledger
     // data and pushes the downloaded data into the writeQueue. asyncWriter
     // consumes from the queue and inserts the data into the Ledger object.
     // Once the below call returns, all data has been pushed into the queue
-    loadBalancer_->loadInitialLedger(startingSequence, writeQueue);
+    loadBalancer_->loadInitialLedger(startingSequence);
 
-    // null is used to respresent the end of the queue
-    std::shared_ptr<ripple::SLE> null;
-    writeQueue.push({});
-    // wait for the writer to finish
-    asyncWriter.join();
     BOOST_LOG_TRIVIAL(debug) << __func__ << " loaded initial ledger";
 
     if (!stopping_)
