@@ -138,12 +138,6 @@ private:
         lastPublish_ = std::chrono::system_clock::now();
     }
 
-
-    void
-    consumeLedgerData(
-        std::uint32_t sequence, 
-        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue);
-
     /// Download a ledger with specified sequence in full, via GetLedgerData,
     /// and write the data to the databases. This takes several minutes or
     /// longer.

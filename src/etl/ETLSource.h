@@ -50,8 +50,7 @@ public:
     virtual bool
     loadInitialLedger(
         uint32_t sequence,
-        std::uint32_t numMarkers,
-        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue) = 0;
+        std::uint32_t numMarkers) = 0;
 
     virtual std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
     getRippledForwardingStub() const = 0;
@@ -285,8 +284,7 @@ public:
     bool
     loadInitialLedger(
         std::uint32_t ledgerSequence,
-        std::uint32_t numMarkers,
-        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue) override;
+        std::uint32_t numMarkers) override;
 
     /// Attempt to reconnect to the ETL source
     void
@@ -504,11 +502,8 @@ public:
 
     /// Load the initial ledger, writing data to the queue
     /// @param sequence sequence of ledger to download
-    /// @param writeQueue queue to push downloaded data to
     void
-    loadInitialLedger(
-        uint32_t sequence,
-        ThreadSafeQueue<std::shared_ptr<ripple::SLE>>& writeQueue);
+    loadInitialLedger(uint32_t sequence);
 
     /// Fetch data for a specific ledger. This function will continuously try
     /// to fetch data for the specified ledger until the fetch succeeds, the
