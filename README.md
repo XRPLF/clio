@@ -28,8 +28,8 @@ The different clio servers that are using the same dataset do not know about eac
 2. Access to one or more rippled nodes. Can be local or remote.
 
 ## Building
-clio is built with cmake. clio requires c++20, and boost 1.75.0 or later.
-Use these instructions to build a clio executable from source. These instructions were tested on Ubuntu 20.04 LTS
+clio is built with cmake. clio requires c++20, and boost 1.75.0 or later. protobuf v2 is required and must be manually built on systems that ship with v3, including Debian 11 and Ubuntu 21.10.
+Use these instructions to build a clio executable from source. These instructions were tested on Ubuntu 20.04 LTS.
 
 ```
 1. sudo apt-get update
