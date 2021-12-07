@@ -22,7 +22,7 @@ doServerInfo(Context const& context)
     {
         response["info"] = boost::json::object{};
         response["info"].as_object()["complete_ledgers"] =
-            std::to_string(range->minSequence) + " - " +
+            std::to_string(range->minSequence) + "-" +
             std::to_string(range->maxSequence);
     }
 
