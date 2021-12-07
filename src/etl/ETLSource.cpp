@@ -708,10 +708,10 @@ ETLLoadBalancer::ETLLoadBalancer(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl)
 {
-    if (config.contains("download_ranges") &&
-        config.at("download_ranges").is_int64())
+    if (config.contains("num_markers") &&
+        config.at("num_markers").is_int64())
     {
-        downloadRanges_ = config.at("download_ranges").as_int64();
+        downloadRanges_ = config.at("num_markers").as_int64();
 
         downloadRanges_ = std::clamp(downloadRanges_, {1}, {256});
     }
