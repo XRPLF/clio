@@ -37,7 +37,7 @@ make_HttpContext(
     if (command == "subscribe" || command == "unsubscribe")
         return {};
 
-    if (!request.contains("params") || !request.at("params").is_array())
+    if (!request.at("params").is_array())
         return {};
 
     boost::json::array const& array = request.at("params").as_array();
