@@ -48,13 +48,10 @@ make_HttpContext(
     if (!array.at(0).is_object())
         return {};
 
-    boost::json::object const& params = array.at(0).as_object();
-
-
     return Context{
         command,
         1,
-        params,
+        array.at(0).as_object();,
         backend,
         subscriptions,
         balancer,
