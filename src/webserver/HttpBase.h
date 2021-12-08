@@ -111,6 +111,9 @@ handle_request(
         try
         {
             request = boost::json::parse(req.body()).as_object();
+            
+            if (!request.contains("params"))
+                request["params"] = boost::json::array({ boost::json::object {} });
         }
         catch (std::runtime_error const& e)
         {
