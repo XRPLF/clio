@@ -51,7 +51,7 @@ make_HttpContext(
     return Context{
         command,
         1,
-        array.at(0).as_object();,
+        array.at(0).as_object(),
         backend,
         subscriptions,
         balancer,
