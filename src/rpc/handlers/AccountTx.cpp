@@ -4,6 +4,8 @@
 
 namespace RPC {
 
+using boost::json::value_to;
+
 Result
 doAccountTx(Context const& context)
 {

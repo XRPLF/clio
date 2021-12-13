@@ -13,6 +13,8 @@
 namespace RPC 
 {
 
+using boost::json::value_to;
+
 Result
 doLedgerEntry(Context const& context)
 {

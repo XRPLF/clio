@@ -11,15 +11,7 @@ class Subscription
     boost::asio::io_context::strand strand_;
     std::unordered_set<std::shared_ptr<WsBase>> subscribers_ = {};
 
-    void
-    sendAll(std::string const& pubMsg);
-
 public:
-    static std::unique_ptr<Subscription>
-    make_Subscription(boost::asio::io_context& ioc) {
-        return std::make_unique<Subscription>(ioc);
-    }
-
     Subscription() = delete;
     Subscription(Subscription&) = delete;
     Subscription(Subscription&&) = delete;
@@ -41,117 +33,58 @@ public:
     publish(std::string const& message);
 };
 
-class AccountSubscription
+template <class Key>
+class SubscriptionMap
 {
-    boost::asio::io_context::strand strand_;
-    std::unordered_map<
-        ripple::AccountID,
-        std::unordered_set<std::shared_ptr<WsBase>>> subscribers_ = {};
+    using subscribers = std::unordered_set<std::shared_ptr<WsBase>>;
 
-    void
-    sendAll(std::string const& pubMsg, ripple::AccountID const& account);
+    boost::asio::io_context::strand strand_;
+    std::unordered_map<Key, subscribers> subscribers_ = {};
 
 public:
-    static std::unique_ptr<AccountSubscription>
-    make_Subscription(boost::asio::io_context& ioc) {
-        return std::make_unique<AccountSubscription>(ioc);
-    }
-
-    AccountSubscription() = delete;
-    AccountSubscription(AccountSubscription&) = delete;
-    AccountSubscription(AccountSubscription&&) = delete;
+    SubscriptionMap() = delete;
+    SubscriptionMap(SubscriptionMap&) = delete;
+    SubscriptionMap(SubscriptionMap&&) = delete;
 
     explicit 
-    AccountSubscription(boost::asio::io_context& ioc) : strand_(ioc) 
+    SubscriptionMap(boost::asio::io_context& ioc) : strand_(ioc) 
     {
     }
 
-    ~AccountSubscription() = default;
+    ~SubscriptionMap() = default;
 
     void
     subscribe(
         std::shared_ptr<WsBase> const& session,
-        ripple::AccountID const& account);
+        Key const& key);
 
     void
     unsubscribe(
         std::shared_ptr<WsBase> const& session,
-        ripple::AccountID const& account);
+        Key const& key);
 
     void
     publish(
         std::string const& message,
-        ripple::AccountID const& account);
-};
-
-class BookSubscription
-{
-
-    boost::asio::io_context::strand strand_;
-    std::unordered_map<
-        ripple::Book,
-        std::unordered_set<std::shared_ptr<WsBase>>> subscribers_ = {};
-
-    void
-    sendAll(std::string const& pubMsg, ripple::Book const& book);
-
-public:
-    static std::unique_ptr<BookSubscription>
-    make_Subscription(boost::asio::io_context& ioc) {
-        return std::make_unique<BookSubscription>(ioc);
-    }
-
-    BookSubscription() = delete;
-    BookSubscription(BookSubscription&) = delete;
-    BookSubscription(BookSubscription&&) = delete;
-
-    explicit 
-    BookSubscription(boost::asio::io_context& ioc) : strand_(ioc) 
-    {
-    }
-
-    ~BookSubscription() = default;
-
-    void
-    subscribe(
-        std::shared_ptr<WsBase> const& session,
-        ripple::Book const& book);
-
-    void
-    unsubscribe(
-        std::shared_ptr<WsBase> const& session,
-        ripple::Book const& book);
-
-    void
-    publish(
-        std::string const& message,
-        ripple::Book const& book);
+        Key const& key);
 };
 
 class SubscriptionManager
 {
-    using subscription_ptr = std::unique_ptr<Subscription>;
-
-    enum SubscriptionType {
-        Ledgers,
-        Transactions,
-        TransactionsProposed,
-        Manifests,
-        Validations,
-
-        finalEntry
-    };
-    
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
     std::optional<boost::asio::io_context::work> work_;
-    std::thread thread_;
 
-    std::vector<subscription_ptr> streamSubscribers_;
+    Subscription ledgerSubscribers_;
+    Subscription txSubscribers_;
+    Subscription txProposedSubscribers_;
+    Subscription manifestSubscribers_;
+    Subscription validationsSubscribers_;
     
-    std::unique_ptr<AccountSubscription> accountSubscribers_;
-    std::unique_ptr<AccountSubscription> accountProposedSubscribers_;
-    std::unique_ptr<BookSubscription> bookSubscribers_;
+    SubscriptionMap<ripple::AccountID> accountSubscribers_;
+    SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
+    SubscriptionMap<ripple::Book> bookSubscribers_;
+
     std::shared_ptr<Backend::BackendInterface> backend_;
 
 public:
@@ -174,18 +107,20 @@ public:
     SubscriptionManager(
         std::uint64_t numThreads,
         std::shared_ptr<Backend::BackendInterface> const& b)
-        : accountSubscribers_(AccountSubscription::make_Subscription(ioc_))
-        , accountProposedSubscribers_(AccountSubscription::make_Subscription(ioc_))
-        , bookSubscribers_(BookSubscription::make_Subscription(ioc_))
+        : ledgerSubscribers_(ioc_)
+        , txSubscribers_(ioc_)
+        , txProposedSubscribers_(ioc_)
+        , manifestSubscribers_(ioc_)
+        , validationsSubscribers_(ioc_)
+        , accountSubscribers_(ioc_)
+        , accountProposedSubscribers_(ioc_)
+        , bookSubscribers_(ioc_)
         , backend_(b)
     {
-        for (auto i = 0; i < finalEntry; ++i)
-        {
-            streamSubscribers_.push_back(Subscription::make_Subscription(ioc_));
-        }
-
         work_.emplace(ioc_);
 
+        // We will eventually want to clamp this to be the number of strands, since
+        // adding more threads than we have strands won't see any performance benefits
         BOOST_LOG_TRIVIAL(info)
              << "Starting subscription manager with " << numThreads << " workers";
 
