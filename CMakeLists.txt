@@ -10,7 +10,7 @@
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 project(clio)
 cmake_minimum_required(VERSION 3.16)
-set (CMAKE_CXX_STANDARD 20)
+set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-narrowing")
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
@@ -76,8 +76,8 @@ target_sources(clio PRIVATE
   ## ETL
   src/etl/ETLSource.cpp
   src/etl/ReportingETL.cpp
-  ## Server
-  src/webserver/SubscriptionManager.cpp
+  ## Subscriptions
+  src/subscriptions/SubscriptionManager.cpp
   ## RPC
   src/rpc/RPC.cpp
   src/rpc/RPCHelpers.cpp

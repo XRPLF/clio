@@ -75,7 +75,6 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     if (ec.category() == boost::asio::error::get_ssl_category()) {
         err = std::string(" (")
                 +boost::lexical_cast<std::string>(ERR_GET_LIB(ec.value()))+","
-                +boost::lexical_cast<std::string>(ERR_GET_FUNC(ec.value()))+","
                 +boost::lexical_cast<std::string>(ERR_GET_REASON(ec.value()))+") "
         ;
         //ERR_PACK /* crypto/err/err.h */
@@ -335,7 +334,8 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
     {
         boost::json::object jv{
             {"command", "subscribe"},
-            {"streams", {"ledger", "transactions_proposed"}}};
+            {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}
+            }};
         std::string s = boost::json::serialize(jv);
         BOOST_LOG_TRIVIAL(trace) << "Sending subscribe stream message";
         // Send the message
@@ -400,9 +400,9 @@ ETLSourceImpl<Derived>::handleMessage()
         std::string msg{
             static_cast<char const*>(readBuffer_.data().data()),
             readBuffer_.size()};
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << msg;
+        BOOST_LOG_TRIVIAL(trace) << __func__ << msg;
         boost::json::value raw = boost::json::parse(msg);
-        // BOOST_LOG_TRIVIAL(debug) << __func__ << " parsed";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << " parsed";
         boost::json::object response = raw.as_object();
 
         uint32_t ledgerIndex = 0;
@@ -417,6 +417,7 @@ ETLSourceImpl<Derived>::handleMessage()
             {
                 boost::json::string const& validatedLedgers =
                     result["validated_ledgers"].as_string();
+                
                 setValidatedRange(
                     {validatedLedgers.c_str(), validatedLedgers.size()});
             }
@@ -426,32 +427,49 @@ ETLSourceImpl<Derived>::handleMessage()
                 << " subscription stream. Message : " << response << " - "
                 << toString();
         }
+        else if (
+            response.contains("type") &&
+            response["type"] == "ledgerClosed")
+        {
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " : "
+                << "Received a message on ledger "
+                << " subscription stream. Message : " << response << " - "
+                << toString();
+            if (response.contains("ledger_index"))
+            {
+                ledgerIndex = response["ledger_index"].as_int64();
+            }
+            if (response.contains("validated_ledgers"))
+            {
+                boost::json::string const& validatedLedgers =
+                    response["validated_ledgers"].as_string();
+                setValidatedRange(
+                    {validatedLedgers.c_str(), validatedLedgers.size()});
+            }
+        }
         else
         {
-            if (response.contains("transaction"))
+            if (balancer_.shouldPropagateTxnStream(this))
             {
-                if (balancer_.shouldPropagateTxnStream(this))
+                if (response.contains("transaction"))
                 {
+                    // std::cout << "FORWARDING TX" << std::endl;
                     subscriptions_->forwardProposedTransaction(response);
                 }
-            }
-            else
-            {
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__ << " : "
-                    << "Received a message on ledger "
-                    << " subscription stream. Message : " << response << " - "
-                    << toString();
-                if (response.contains("ledger_index"))
+                else if (
+                    response.contains("type") &&
+                    response["type"] == "validationReceived")
                 {
-                    ledgerIndex = response["ledger_index"].as_int64();
+                    // std::cout << "FORWARDING VAL" << std::endl;
+                    subscriptions_->forwardValidation(response);
                 }
-                if (response.contains("validated_ledgers"))
+                else if (
+                    response.contains("type") &&
+                    response["type"] == "manifestReceived")
                 {
-                    boost::json::string const& validatedLedgers =
-                        response["validated_ledgers"].as_string();
-                    setValidatedRange(
-                        {validatedLedgers.c_str(), validatedLedgers.size()});
+                    // std::cout << "FORWARDING MAN" << std::endl;
+                    subscriptions_->forwardManifest(response);
                 }
             }
         }

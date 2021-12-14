@@ -14,12 +14,13 @@
 
 namespace RPC {
 
+
 Result
 doBookOffers(Context const& context)
 {
     auto request = context.params;
-    boost::json::object response = {};
 
+    boost::json::object response = {};
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;

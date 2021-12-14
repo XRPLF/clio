@@ -8,7 +8,7 @@
 #include <webserver/PlainWsSession.h>
 #include <webserver/SslHttpSession.h>
 #include <webserver/SslWsSession.h>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 
 #include <iostream>
 

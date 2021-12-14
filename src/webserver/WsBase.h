@@ -11,7 +11,7 @@
 #include <etl/ETLSource.h>
 #include <rpc/RPC.h>
 #include <webserver/DOSGuard.h>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -136,7 +136,7 @@ public:
     }
 
     void
-    send(std::string&& msg)
+    enqueueMessage(std::string&& msg)
     {
         size_t left = 0;
         {
@@ -148,10 +148,11 @@ public:
         if (left == 1)
             sendNext();
     }
+
     void
     send(std::string const& msg) override
     {
-        send({msg});
+        enqueueMessage(std::string(msg));
     }
 
     void

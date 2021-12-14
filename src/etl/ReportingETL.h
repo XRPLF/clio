@@ -8,7 +8,7 @@
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>

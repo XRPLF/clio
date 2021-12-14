@@ -1,5 +1,5 @@
 #include <boost/json.hpp>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
 #include <rpc/RPCHelpers.h>
@@ -10,7 +10,9 @@ namespace RPC {
 static std::unordered_set<std::string> validCommonStreams{
     "ledger",
     "transactions",
-    "transactions_proposed"};
+    "transactions_proposed",
+    "validations",
+    "manifests"};
 
 Status
 validateStreams(boost::json::object const& request)
@@ -50,6 +52,10 @@ subscribeToStreams(
             manager.subTransactions(session);
         else if (s == "transactions_proposed")
             manager.subProposedTransactions(session);
+        else if (s == "validations")
+            manager.subValidation(session);
+        else if (s == "manifests")
+            manager.subManifest(session);
         else
             assert(false);
     }
@@ -74,6 +80,10 @@ unsubscribeToStreams(
             manager.unsubTransactions(session);
         else if (s == "transactions_proposed")
             manager.unsubProposedTransactions(session);
+        else if (s == "validations")
+            manager.unsubValidation(session);
+        else if (s == "manifests")
+            manager.unsubManifest(session);
         else
             assert(false);
     }
