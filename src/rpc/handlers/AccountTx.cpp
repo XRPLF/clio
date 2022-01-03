@@ -75,10 +75,20 @@ doAccountTx(Context const& context)
     auto minIndex = context.range.minSequence;
     if (request.contains("ledger_index_min"))
     {
-        if (!request.at("ledger_index_min").is_int64())
+        auto& min = request.at("ledger_index_min");
+
+        if (!min.is_int64())
             return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
 
-        minIndex = value_to<std::uint32_t>(request.at("ledger_index_min"));
+        if (min.as_int64() != -1)
+        {
+            if (context.range.maxSequence < min.as_int64() ||
+                context.range.minSequence > min.as_int64())
+                return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+            else
+                minIndex = value_to<std::uint32_t>(min);
+        }
+
         if (forward && !cursor)
             cursor = {minIndex, 0};
     }
@@ -86,16 +96,27 @@ doAccountTx(Context const& context)
     auto maxIndex = context.range.maxSequence;
     if (request.contains("ledger_index_max"))
     {
-        if (!request.at("ledger_index_max").is_int64())
+        auto& max = request.at("ledger_index_max");
+
+        if (!max.is_int64())
             return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
 
-        maxIndex = value_to<std::uint32_t>(request.at("ledger_index_max"));
+        if (max.as_int64() != -1)
+        {
+            if (context.range.maxSequence < max.as_int64() ||
+                context.range.minSequence > max.as_int64())
+                return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+            else
+                maxIndex = value_to<std::uint32_t>(max);
+        }
 
         if (minIndex > maxIndex)
             return Status{Error::rpcINVALID_PARAMS, "invalidIndex"};
+
         if (!forward && !cursor)
             cursor = {maxIndex, INT32_MAX};
     }
+
     if (request.contains("ledger_index"))
     {
         if (!request.at("ledger_index").is_int64())
@@ -104,6 +125,7 @@ doAccountTx(Context const& context)
         auto ledgerIndex = value_to<uint32_t>(request.at("ledger_index"));
         maxIndex = minIndex = ledgerIndex;
     }
+
     if (request.contains("ledger_hash"))
     {
         if (!request.at("ledger_hash").is_string())
@@ -118,6 +140,7 @@ doAccountTx(Context const& context)
         auto lgrInfo = context.backend->fetchLedgerByHash(ledgerHash);
         maxIndex = minIndex = lgrInfo->seq;
     }
+
     if (!cursor)
     {
         if (forward)
