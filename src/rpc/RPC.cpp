@@ -10,7 +10,8 @@ make_WsContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<WsBase> const& session,
-    Backend::LedgerRange const& range)
+    Backend::LedgerRange const& range,
+    Counters& counters)
 {
     if (!request.contains("command"))
         return {};
@@ -18,7 +19,15 @@ make_WsContext(
     std::string command = request.at("command").as_string().c_str();
 
     return Context{
-        command, 1, request, backend, subscriptions, balancer, session, range};
+        command,
+        1,
+        request,
+        backend,
+        subscriptions,
+        balancer,
+        session,
+        range,
+        counters};
 }
 
 std::optional<Context>
@@ -27,7 +36,8 @@ make_HttpContext(
     std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
-    Backend::LedgerRange const& range)
+    Backend::LedgerRange const& range,
+    RPC::Counters& counters)
 {
     if (!request.contains("method") || !request.at("method").is_string())
         return {};
@@ -56,7 +66,8 @@ make_HttpContext(
         subscriptions,
         balancer,
         nullptr,
-        range};
+        range,
+        counters};
 }
 
 boost::json::object
@@ -152,10 +163,14 @@ buildResponse(Context const& ctx)
     if (shouldForwardToRippled(ctx))
     {
         auto res = ctx.balancer->forwardToRippled(ctx.params);
+
+        ctx.counters.rpcForwarded(ctx.method);
+
         if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
         return *res;
     }
+    
     if (ctx.method == "ping")
         return boost::json::object{};
 

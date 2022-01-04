@@ -4,6 +4,7 @@
 #include <ripple/protocol/ErrorCodes.h>
 #include <boost/json.hpp>
 #include <backend/BackendInterface.h>
+#include <rpc/Counters.h>
 #include <optional>
 #include <string>
 #include <variant>
@@ -37,6 +38,7 @@ struct Context
     std::shared_ptr<SubscriptionManager> subscriptions;
     std::shared_ptr<WsBase> session;
     Backend::LedgerRange const& range;
+    Counters& counters;
 
     Context(
         std::string const& command_,
@@ -46,7 +48,8 @@ struct Context
         std::shared_ptr<SubscriptionManager> const& subscriptions_,
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
         std::shared_ptr<WsBase> const& session_,
-        Backend::LedgerRange const& range_)
+        Backend::LedgerRange const& range_,
+        Counters& counters_)
         : method(command_)
         , version(version_)
         , params(params_)
@@ -55,6 +58,7 @@ struct Context
         , balancer(balancer_)
         , session(session_)
         , range(range_)
+        , counters(counters_)
     {
     }
 };
@@ -133,7 +137,8 @@ make_WsContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<WsBase> const& session,
-    Backend::LedgerRange const& range);
+    Backend::LedgerRange const& range,
+    Counters& counters);
 
 std::optional<Context>
 make_HttpContext(
@@ -141,7 +146,8 @@ make_HttpContext(
     std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
-    Backend::LedgerRange const& range);
+    Backend::LedgerRange const& range,
+    Counters& counters);
 
 Result
 buildResponse(Context const& ctx);
