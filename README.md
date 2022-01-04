@@ -1,7 +1,7 @@
 **Status:** This software is still in development. We are working hard towards a beta release, after which we will release version 1.0. If you would like to contribute, take a look at the issues to find something to work on.
 
 # clio
-clio is an XRP Ledger RPC server. clio is optimized for RPC calls. Validated 
+clio is an XRP Ledger API server. clio is optimized for RPC calls, over websocket or JSON-RPC. Validated 
 historical ledger and transaction data is stored in a more space efficient format,
 using up to 4 times less space than rippled. clio stores data in either Postgres
 or Cassandra, allowing for scalable read throughput. Multiple clio nodes can share
