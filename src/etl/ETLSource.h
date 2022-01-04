@@ -55,11 +55,8 @@ public:
         std::uint32_t numMarkers,
         bool cacheOnly = false) = 0;
 
-    virtual std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    getRippledForwardingStub() const = 0;
-
     virtual std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request) const = 0;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const = 0;
 
     virtual ~ETLSource()
     {
@@ -325,13 +322,8 @@ public:
     bool
     handleMessage();
 
-    /// Get grpc stub to forward requests to rippled node
-    /// @return stub to send requests to ETL source
-    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    getRippledForwardingStub() const override;
-
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request) const override;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const override;
 };
 
 class PlainETLSource : public ETLSourceImpl<PlainETLSource>
@@ -560,16 +552,11 @@ public:
         return ret;
     }
 
-    /// Randomly select a rippled node to forward a gRPC request to
-    /// @return gRPC stub to forward requests to rippled node
-    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-    getRippledForwardingStub() const;
-
     /// Forward a JSON RPC request to a randomly selected rippled node
     /// @param request JSON-RPC request
     /// @return response received from rippled node
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request) const;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

@@ -11,7 +11,9 @@ endif()
 add_library(clio)
 target_include_directories(clio PUBLIC src)
 
+
 include(FetchContent)
+include(ExternalProject)
 #include(CMake/deps/) # TODO: see if this works...
 include(CMake/settings.cmake)
 include(CMake/deps/rippled.cmake)

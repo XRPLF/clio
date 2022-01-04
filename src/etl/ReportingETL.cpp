@@ -12,6 +12,7 @@
 #include <string>
 #include <subscriptions/SubscriptionManager.h>
 #include <variant>
+#include <thread>
 
 namespace detail {
 /// Convenience function for printing out basic ledger info
