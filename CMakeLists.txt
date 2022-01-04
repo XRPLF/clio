@@ -44,6 +44,7 @@ include(ExternalProject)
 message("Current binary dir: ${CMAKE_CURRENT_BINARY_DIR}")
 message("Module path: ${CMAKE_MODULE_PATH}")
 
+set(FETCHCONTENT_QUIET FALSE)
 set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
 FetchContent_Declare(rippled
   GIT_REPOSITORY https://github.com/cjcobb23/rippled.git
