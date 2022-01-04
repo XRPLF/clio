@@ -11,6 +11,7 @@
 #include <etl/ETLSource.h>
 #include <rpc/RPC.h>
 #include <webserver/DOSGuard.h>
+#include <rpc/Counters.h>
 #include <subscriptions/SubscriptionManager.h>
 
 namespace http = boost::beast::http;
@@ -86,6 +87,7 @@ class WsSession : public WsBase,
     std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    RPC::Counters& counters_;
     std::mutex mtx_;
     std::queue<std::string> messages_;
 
@@ -95,11 +97,13 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& buffer)
         : backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
         , buffer_(std::move(buffer))
     {
     }
@@ -238,7 +242,8 @@ public:
                         subscriptions_.lock(),
                         balancer_,
                         shared_from_this(),
-                        *range);
+                        *range,
+                        counters_);
 
                     if (!context)
                         return sendError(RPC::Error::rpcBAD_SYNTAX);
@@ -250,10 +255,16 @@ public:
                     boost::json::object& result =
                         response["result"].as_object();
 
+                    auto start = std::chrono::system_clock::now();
                     auto v = RPC::buildResponse(*context);
+                    auto end = std::chrono::system_clock::now();
+                    auto us = 
+                        std::chrono::duration_cast<std::chrono::microseconds>(
+                            end - start);
 
                     if (auto status = std::get_if<RPC::Status>(&v))
                     {
+                        counters_.rpcErrored(context->method);
                         auto error = RPC::make_error(*status);
 
                         if (!id.is_null())
@@ -263,6 +274,7 @@ public:
                     }
                     else
                     {
+                        counters_.rpcComplete(context->method, us);
                         result = std::get<boost::json::object>(v);
                     }
                 }

@@ -21,9 +21,14 @@ doServerInfo(Context const& context)
     else
     {
         response["info"] = boost::json::object{};
-        response["info"].as_object()["complete_ledgers"] =
+        boost::json::object& info = response["info"].as_object();
+
+        info["complete_ledgers"] =
             std::to_string(range->minSequence) + "-" +
             std::to_string(range->maxSequence);
+
+        info["counters"] = boost::json::object{};
+        info["counters"].as_object()["rpc"] = context.counters.report();
     }
 
     auto serverInfoRippled = context.balancer->forwardToRippled(context.params);

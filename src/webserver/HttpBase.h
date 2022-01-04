@@ -20,6 +20,7 @@
 #include <rpc/RPC.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
+#include <rpc/Counters.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -71,6 +72,7 @@ handle_request(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<ETLLoadBalancer> balancer,
     DOSGuard& dosGuard,
+    RPC::Counters& counters,
     std::string const& ip)
 {
     auto const httpResponse = [&req](
@@ -140,7 +142,7 @@ handle_request(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
 
         std::optional<RPC::Context> context =
-            RPC::make_HttpContext(request, backend, nullptr, balancer, *range);
+            RPC::make_HttpContext(request, backend, nullptr, balancer, *range, counters);
 
         if (!context)
             return send(httpResponse(
@@ -151,11 +153,16 @@ handle_request(
 
         boost::json::object response{{"result", boost::json::object{}}};
         boost::json::object& result = response["result"].as_object();
-
+        
+        auto start = std::chrono::system_clock::now();
         auto v = RPC::buildResponse(*context);
+        auto end = std::chrono::system_clock::now();
+        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+            end - start);
 
         if (auto status = std::get_if<RPC::Status>(&v))
         {
+            counters.rpcErrored(context->method);
             auto error = RPC::make_error(*status);
 
             error["request"] = request;
@@ -168,6 +175,7 @@ handle_request(
         }
         else
         {
+            counters.rpcComplete(context->method, us);
             result = std::get<boost::json::object>(v);
             result["status"] = "success";
             result["validated"] = true;
@@ -243,6 +251,7 @@ class HttpBase
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    RPC::Counters& counters_;
     send_lambda lambda_;
 
 protected:
@@ -254,11 +263,13 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
         : backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {
@@ -308,14 +319,21 @@ public:
                 backend_,
                 subscriptions_,
                 balancer_,
-                dosGuard_);
+                dosGuard_,
+                counters_);
         }
 
         auto ip = derived().ip();
 
         // Send the response
         handle_request(
-            std::move(req_), lambda_, backend_, balancer_, dosGuard_, ip);
+            std::move(req_),
+            lambda_,
+            backend_,
+            balancer_, 
+            dosGuard_,
+            counters_,
+            ip);
     }
 
     void
