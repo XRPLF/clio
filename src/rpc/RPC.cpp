@@ -151,7 +151,10 @@ buildResponse(Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
     {
-        auto res = ctx.balancer->forwardToRippled(ctx.params);
+        boost::json::object toForward = ctx.params;
+        toForward["command"] = ctx.method;
+
+        auto res = ctx.balancer->forwardToRippled(toForward);
         if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
         return *res;
