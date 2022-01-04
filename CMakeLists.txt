@@ -43,6 +43,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 include(ExternalProject)
 message("Current binary dir: ${CMAKE_CURRENT_BINARY_DIR}")
 message("Module path: ${CMAKE_MODULE_PATH}")
+
+set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
 FetchContent_Declare(rippled
   GIT_REPOSITORY https://github.com/cjcobb23/rippled.git
   GIT_TAG clio
@@ -121,4 +123,3 @@ TARGET_LINK_LIBRARIES(clio_tests PUBLIC clio gtest_main)
 
 
 gtest_discover_tests(clio_tests)
-
