@@ -1,6 +1,7 @@
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
 #include <backend/PostgresBackend.h>
+#include <thread>
 namespace Backend {
 
 PostgresBackend::PostgresBackend(boost::json::object const& config)
