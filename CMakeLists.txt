@@ -1,9 +1,21 @@
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-project(clio)
 cmake_minimum_required(VERSION 3.16)
+
+project(clio VERSION 0.1.0)
+
+option(VERBOSE "Verbose build" TRUE)
+if(VERBOSE)
+  set(CMAKE_VERBOSE_MAKEFILE TRUE)
+  set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
+endif()
+
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-narrowing")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
+
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 

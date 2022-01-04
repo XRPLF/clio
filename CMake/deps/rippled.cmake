@@ -1,6 +1,6 @@
 FetchContent_Declare(rippled
-  GIT_REPOSITORY https://github.com/legleux/rippled.git
-  GIT_TAG CXX17
+  GIT_REPOSITORY https://github.com/cjcobb23/rippled.git
+  GIT_TAG clio
   GIT_SHALLOW ON
 )
 
