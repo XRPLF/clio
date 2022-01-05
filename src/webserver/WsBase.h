@@ -243,7 +243,8 @@ public:
                         balancer_,
                         shared_from_this(),
                         *range,
-                        counters_);
+                        counters_,
+                        ip);
 
                     if (!context)
                         return sendError(RPC::Error::rpcBAD_SYNTAX);

@@ -11,7 +11,8 @@ make_WsContext(
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<WsBase> const& session,
     Backend::LedgerRange const& range,
-    Counters& counters)
+    Counters& counters,
+    std::string const& clientIp)
 {
     if (!request.contains("command"))
         return {};
@@ -27,7 +28,8 @@ make_WsContext(
         balancer,
         session,
         range,
-        counters};
+        counters,
+        clientIp};
 }
 
 std::optional<Context>
@@ -37,7 +39,8 @@ make_HttpContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     Backend::LedgerRange const& range,
-    RPC::Counters& counters)
+    RPC::Counters& counters,
+    std::string const& clientIp)
 {
     if (!request.contains("method") || !request.at("method").is_string())
         return {};
@@ -67,7 +70,8 @@ make_HttpContext(
         balancer,
         nullptr,
         range,
-        counters};
+        counters,
+        clientIp};
 }
 
 boost::json::object
@@ -165,7 +169,7 @@ buildResponse(Context const& ctx)
         boost::json::object toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res = ctx.balancer->forwardToRippled(toForward);
+        auto res = ctx.balancer->forwardToRippled(toForward, ctx.clientIp);
 
         ctx.counters.rpcForwarded(ctx.method);
 
