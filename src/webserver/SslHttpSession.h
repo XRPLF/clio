@@ -23,12 +23,14 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
         : HttpBase<SslHttpSession>(
               backend,
               subscriptions,
               balancer,
               dosGuard,
+              counters,
               std::move(buffer))
         , stream_(std::move(socket), ctx)
     {

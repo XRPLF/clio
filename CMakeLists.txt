@@ -38,6 +38,7 @@ src/backend/PostgresBackend.cpp
   ## RPC
   src/rpc/RPC.cpp
   src/rpc/RPCHelpers.cpp
+  src/rpc/Counters.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp

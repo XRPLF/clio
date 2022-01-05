@@ -27,6 +27,7 @@ class Detector
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    RPC::Counters& counters_;
     boost::beast::flat_buffer buffer_;
 
 public:
@@ -36,13 +37,15 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
-        DOSGuard& dosGuard)
+        DOSGuard& dosGuard,
+        RPC::Counters& counters)
         : stream_(std::move(socket))
         , ctx_(ctx)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
     {
     }
 
@@ -79,6 +82,7 @@ public:
                 subscriptions_,
                 balancer_,
                 dosGuard_,
+                counters_,
                 std::move(buffer_))
                 ->run();
             return;
@@ -91,6 +95,7 @@ public:
             subscriptions_,
             balancer_,
             dosGuard_,
+            counters_,
             std::move(buffer_))
             ->run();
     }
@@ -104,7 +109,8 @@ make_websocket_session(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
-    DOSGuard& dosGuard)
+    DOSGuard& dosGuard,
+    RPC::Counters& counters)
 {
     std::make_shared<WsUpgrader>(
         std::move(stream),
@@ -112,6 +118,7 @@ make_websocket_session(
         subscriptions,
         balancer,
         dosGuard,
+        counters,
         std::move(buffer),
         std::move(req))
         ->run();
@@ -125,7 +132,8 @@ make_websocket_session(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
-    DOSGuard& dosGuard)
+    DOSGuard& dosGuard,
+    RPC::Counters& counters)
 {
     std::make_shared<SslWsUpgrader>(
         std::move(stream),
@@ -133,6 +141,7 @@ make_websocket_session(
         subscriptions,
         balancer,
         dosGuard,
+        counters,
         std::move(buffer),
         std::move(req))
         ->run();
@@ -152,6 +161,7 @@ class Listener
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    RPC::Counters counters_;
 
 public:
     Listener(
@@ -243,7 +253,8 @@ private:
                 backend_,
                 subscriptions_,
                 balancer_,
-                dosGuard_)
+                dosGuard_,
+                counters_)
                 ->run();
         }
 
