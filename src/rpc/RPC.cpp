@@ -157,6 +157,10 @@ buildResponse(Context const& ctx)
         auto res = ctx.balancer->forwardToRippled(toForward);
         if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
+
+        if (res->contains("result") && res->at("result").is_object())
+            return res->at("result").as_object();
+
         return *res;
     }
     if (ctx.method == "ping")
