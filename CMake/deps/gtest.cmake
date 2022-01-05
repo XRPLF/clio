@@ -15,3 +15,5 @@ target_link_libraries(clio_tests PUBLIC clio gtest_main)
 enable_testing()
 
 include(GoogleTest)
+
+gtest_discover_tests(clio_tests)
