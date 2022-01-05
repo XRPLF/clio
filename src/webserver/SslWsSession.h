@@ -33,8 +33,15 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
-        : WsSession(backend, subscriptions, balancer, dosGuard, std::move(b))
+        : WsSession(
+            backend,
+            subscriptions,
+            balancer,
+            dosGuard,
+            counters,
+            std::move(b))
         , ws_(std::move(stream))
     {
     }
@@ -66,6 +73,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    RPC::Counters& counters_;
     http::request<http::string_body> req_;
 
 public:
@@ -76,12 +84,14 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
         : https_(std::move(socket), ctx)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
         , buffer_(std::move(b))
     {
     }
@@ -91,6 +101,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
         : https_(std::move(stream))
@@ -98,6 +109,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
         , buffer_(std::move(b))
         , req_(std::move(req))
     {
@@ -166,6 +178,7 @@ private:
             subscriptions_,
             balancer_,
             dosGuard_,
+            counters_,
             std::move(buffer_))
             ->run(std::move(req_));
     }

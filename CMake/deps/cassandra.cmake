@@ -1,8 +1,8 @@
+find_package(ZLIB REQUIRED)
+
 find_library(cassandra NAMES cassandra)
 if(NOT cassandra)
-
     message("System installed Cassandra cpp driver not found. Will build")
-
     find_library(zlib NAMES zlib1g-dev zlib-devel zlib z)
     if(NOT zlib)
         message("zlib not found. will build")
@@ -14,28 +14,19 @@ if(NOT cassandra)
             INSTALL_COMMAND ""
             BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}z.a
             )
-
-
         ExternalProject_Get_Property (zlib_src SOURCE_DIR)
         ExternalProject_Get_Property (zlib_src BINARY_DIR)
         set (zlib_src_SOURCE_DIR "${SOURCE_DIR}")
         file (MAKE_DIRECTORY ${zlib_src_SOURCE_DIR}/include)
-
         set_target_properties (zlib PROPERTIES
             IMPORTED_LOCATION
             ${BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}z.a
             INTERFACE_INCLUDE_DIRECTORIES
             ${SOURCE_DIR}/include)
         add_dependencies(zlib zlib_src)
-
         file(TO_CMAKE_PATH "${zlib_src_SOURCE_DIR}" zlib_src_SOURCE_DIR)
     endif()
-
-
-
-
     find_library(krb5 NAMES krb5-dev libkrb5-dev)
-
     if(NOT krb5)
         message("krb5 not found. will build")
         add_library(krb5 STATIC IMPORTED GLOBAL)
@@ -48,23 +39,20 @@ if(NOT cassandra)
             BUILD_IN_SOURCE 1
             BUILD_COMMAND make
             INSTALL_COMMAND ""
-	    BUILD_BYPRODUCTS <SOURCE_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a
+            BUILD_BYPRODUCTS <SOURCE_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a
             )
         message(${ep_lib_prefix}/krb5.a)
-	message(${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a)
-
+        message(${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a)
         ExternalProject_Get_Property (krb5_src SOURCE_DIR)
         ExternalProject_Get_Property (krb5_src BINARY_DIR)
         set (krb5_src_SOURCE_DIR "${SOURCE_DIR}")
         file (MAKE_DIRECTORY ${krb5_src_SOURCE_DIR}/include)
-
         set_target_properties (krb5 PROPERTIES
             IMPORTED_LOCATION
 	    ${SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}krb5.a
             INTERFACE_INCLUDE_DIRECTORIES
             ${SOURCE_DIR}/include)
         add_dependencies(krb5 krb5_src)
-
         file(TO_CMAKE_PATH "${krb5_src_SOURCE_DIR}" krb5_src_SOURCE_DIR)
     endif()
 

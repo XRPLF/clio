@@ -35,12 +35,14 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& buffer)
         : WsSession(
               backend,
               subscriptions,
               balancer,
               dosGuard,
+              counters,
               std::move(buffer))
         , ws_(std::move(socket))
     {
@@ -75,6 +77,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     DOSGuard& dosGuard_;
+    RPC::Counters& counters_;
     http::request<http::string_body> req_;
 
 public:
@@ -84,12 +87,14 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
         : http_(std::move(socket))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
         , buffer_(std::move(b))
     {
     }
@@ -99,6 +104,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
         : http_(std::move(stream))
@@ -106,6 +112,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
+        , counters_(counters)
         , buffer_(std::move(b))
         , req_(std::move(req))
     {
@@ -159,6 +166,7 @@ private:
             subscriptions_,
             balancer_,
             dosGuard_,
+            counters_,
             std::move(buffer_))
             ->run(std::move(req_));
     }
