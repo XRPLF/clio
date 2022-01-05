@@ -31,7 +31,7 @@ doServerInfo(Context const& context)
         info["counters"].as_object()["rpc"] = context.counters.report();
     }
 
-    auto serverInfoRippled = context.balancer->forwardToRippled(context.params);
+    auto serverInfoRippled = context.balancer->forwardToRippled(context.params, context.clientIp);
     if (serverInfoRippled && !serverInfoRippled->contains("error"))
         response["info"].as_object()["load_factor"] = 1;
 

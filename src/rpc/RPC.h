@@ -39,6 +39,7 @@ struct Context
     std::shared_ptr<WsBase> session;
     Backend::LedgerRange const& range;
     Counters& counters;
+    std::string clientIp;
 
     Context(
         std::string const& command_,
@@ -49,7 +50,8 @@ struct Context
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
         std::shared_ptr<WsBase> const& session_,
         Backend::LedgerRange const& range_,
-        Counters& counters_)
+        Counters& counters_,
+        std::string const& clientIp_)
         : method(command_)
         , version(version_)
         , params(params_)
@@ -59,6 +61,7 @@ struct Context
         , session(session_)
         , range(range_)
         , counters(counters_)
+        , clientIp(clientIp_)
     {
     }
 };
@@ -138,7 +141,8 @@ make_WsContext(
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<WsBase> const& session,
     Backend::LedgerRange const& range,
-    Counters& counters);
+    Counters& counters,
+    std::string const& clientIp);
 
 std::optional<Context>
 make_HttpContext(
@@ -147,7 +151,8 @@ make_HttpContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     Backend::LedgerRange const& range,
-    Counters& counters);
+    Counters& counters,
+    std::string const& clientIp);
 
 Result
 buildResponse(Context const& ctx);
