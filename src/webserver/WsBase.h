@@ -271,7 +271,7 @@ public:
                         if (!id.is_null())
                             error["id"] = id;
                         error["request"] = request;
-                        response = error;
+                        result = error;
                     }
                     else
                     {

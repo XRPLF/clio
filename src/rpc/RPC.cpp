@@ -166,12 +166,19 @@ buildResponse(Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
     {
-        auto res = ctx.balancer->forwardToRippled(ctx.params, ctx.clientIp);
+        boost::json::object toForward = ctx.params;
+        toForward["command"] = ctx.method;
+
+        auto res = ctx.balancer->forwardToRippled(toForward, ctx.clientIp);
 
         ctx.counters.rpcForwarded(ctx.method);
 
         if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
+
+        if (res->contains("result") && res->at("result").is_object())
+            return res->at("result").as_object();
+
         return *res;
     }
     
