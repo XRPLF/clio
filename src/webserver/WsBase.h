@@ -238,7 +238,8 @@ public:
                         subscriptions_.lock(),
                         balancer_,
                         shared_from_this(),
-                        *range);
+                        *range,
+                        ip);
 
                     if (!context)
                         return sendError(RPC::Error::rpcBAD_SYNTAX);

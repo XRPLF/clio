@@ -124,13 +124,6 @@ handle_request(
                     RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
         }
 
-        if (!dosGuard.isOk(ip))
-            return send(httpResponse(
-                http::status::ok,
-                "application/json",
-                boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
-
         auto range = backend->fetchLedgerRange();
         if (!range)
             return send(httpResponse(
@@ -140,7 +133,7 @@ handle_request(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
 
         std::optional<RPC::Context> context =
-            RPC::make_HttpContext(request, backend, nullptr, balancer, *range);
+            RPC::make_HttpContext(request, backend, nullptr, balancer, *range, ip);
 
         if (!context)
             return send(httpResponse(
@@ -175,8 +168,7 @@ handle_request(
             responseStr = boost::json::serialize(response);
         }
 
-        if (!dosGuard.add(ip, responseStr.size()))
-            result["warning"] = "Too many requests";
+        dosGuard.add(ip, responseStr.size());
 
         return send(
             httpResponse(http::status::ok, "application/json", responseStr));

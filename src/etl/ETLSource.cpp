@@ -922,37 +922,15 @@ ETLLoadBalancer::fetchLedger(
         return {};
 }
 
-std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-ETLLoadBalancer::getRippledForwardingStub() const
-{
-    if (sources_.size() == 0)
-        return nullptr;
-    srand((unsigned)time(0));
-    auto sourceIdx = rand() % sources_.size();
-    auto numAttempts = 0;
-    while (numAttempts < sources_.size())
-    {
-        auto stub = sources_[sourceIdx]->getRippledForwardingStub();
-        if (!stub)
-        {
-            sourceIdx = (sourceIdx + 1) % sources_.size();
-            ++numAttempts;
-            continue;
-        }
-        return stub;
-    }
-    return nullptr;
-}
-
 std::optional<boost::json::object>
-ETLLoadBalancer::forwardToRippled(boost::json::object const& request) const
+ETLLoadBalancer::forwardToRippled(boost::json::object const& request, std::string const& clientIp) const
 {
     srand((unsigned)time(0));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request))
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp))
             return res;
 
         sourceIdx = (sourceIdx + 1) % sources_.size();
@@ -962,31 +940,9 @@ ETLLoadBalancer::forwardToRippled(boost::json::object const& request) const
 }
 
 template <class Derived>
-std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>
-ETLSourceImpl<Derived>::getRippledForwardingStub() const
-{
-    if (!connected_)
-        return nullptr;
-    try
-    {
-        return org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-            grpc::CreateChannel(
-                beast::IP::Endpoint(
-                    boost::asio::ip::make_address(ip_), std::stoi(grpcPort_))
-                    .to_string(),
-                grpc::InsecureChannelCredentials()));
-    }
-    catch (std::exception const&)
-    {
-        BOOST_LOG_TRIVIAL(error) << "Failed to create grpc stub";
-        return nullptr;
-    }
-}
-
-template <class Derived>
 std::optional<boost::json::object>
 ETLSourceImpl<Derived>::forwardToRippled(
-    boost::json::object const& request) const
+    boost::json::object const& request, std::string const& clientIp) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
                              << "request = " << boost::json::serialize(request);
@@ -1027,17 +983,17 @@ ETLSourceImpl<Derived>::forwardToRippled(
         //
         // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator(
-            [&request](websocket::request_type& req) {
+            [&request,&clientIp] (websocket::request_type& req) {
                 req.set(
                     http::field::user_agent,
                     std::string(BOOST_BEAST_VERSION_STRING) +
                         " websocket-client-coro");
                 req.set(
                     http::field::forwarded,
-                    "for=" + boost::json::serialize(request));
+                    "for=" + clientIp);
             }));
         BOOST_LOG_TRIVIAL(debug)
-            << "client ip: " << boost::json::serialize(request);
+            << "client ip: " << clientIp;
 
         BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
         // Perform the websocket handshake

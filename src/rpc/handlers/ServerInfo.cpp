@@ -26,7 +26,7 @@ doServerInfo(Context const& context)
             std::to_string(range->maxSequence);
     }
 
-    auto serverInfoRippled = context.balancer->forwardToRippled(context.params);
+    auto serverInfoRippled = context.balancer->forwardToRippled(context.params, context.clientIp);
     if (serverInfoRippled && !serverInfoRippled->contains("error"))
         response["info"].as_object()["load_factor"] = 1;
 
