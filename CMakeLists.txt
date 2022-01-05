@@ -1,73 +1,30 @@
-set(CMAKE_VERBOSE_MAKEFILE TRUE)
-
-project(clio)
 cmake_minimum_required(VERSION 3.16)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-narrowing")
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME ON)
-if((NOT DEFINED BOOST_ROOT) AND(DEFINED ENV{BOOST_ROOT}))
-  set(BOOST_ROOT $ENV{BOOST_ROOT})
-endif()
-file(TO_CMAKE_PATH "${BOOST_ROOT}" BOOST_ROOT)
 
-find_package( Boost 1.75 COMPONENTS filesystem log_setup log thread system REQUIRED )
-message("Boost libraries: ${Boost_LIBRARIES}")
+project(clio VERSION 0.1.0)
+
+option(VERBOSE "Verbose build" FALSE)
+if(VERBOSE)
+  set(CMAKE_VERBOSE_MAKEFILE TRUE)
+  set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
+endif()
+
+add_library(clio)
+target_include_directories(clio PUBLIC src)
 
 include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-)
-FetchContent_MakeAvailable(googletest)
+#include(CMake/deps/) # TODO: see if this works...
+include(CMake/settings.cmake)
+include(CMake/deps/rippled.cmake)
+include(CMake/deps/Boost.cmake)
+include(CMake/deps/cassandra.cmake)
+include(CMake/deps/Postgres.cmake)
 
-enable_testing()
-include(GoogleTest)
-
-add_executable(clio_server
-    src/main.cpp
-)
-add_executable(clio_tests
-    unittests/main.cpp
-)
-add_library(clio)
-include_directories(src)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/deps")
-
-message("Current binary dir: ${CMAKE_CURRENT_BINARY_DIR}")
-message("Module path: ${CMAKE_MODULE_PATH}")
-
-set(FETCHCONTENT_QUIET FALSE)
-set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
-FetchContent_Declare(rippled
-  GIT_REPOSITORY https://github.com/cjcobb23/rippled.git
-  GIT_TAG clio
-)
-FetchContent_MakeAvailable(rippled)
-
-target_link_libraries(clio PUBLIC xrpl_core grpc_pbufs)
-add_dependencies(clio xrpl_core)
-add_dependencies(clio grpc_pbufs)
-get_target_property(grpc_includes grpc_pbufs INCLUDE_DIRECTORIES)
-
-message("GRPC includes: ${grpc_includes}")
-message("Proto includes: ${proto_includes}")
-message("Source dir: ${SOURCE_DIR}")
-include_directories(${grpc_includes})
-include_directories(${SOURCE_DIR}/src)
-include_directories(${SOURCE_DIR}/include)
-get_target_property(xrpl_core_includes xrpl_core INCLUDE_DIRECTORIES)
-message("XRPL core includes: ${xrpl_core_includes}")
-include_directories(${xrpl_core_includes})
-
-include(cassandra)
-include(Postgres)
+# configure_file(CMake/version-config.h include/version.h) # NOTE: Not used, but an idea how to handle versioning.
 
 target_sources(clio PRIVATE
-  ## Backend
-  src/backend/CassandraBackend.cpp
-  src/backend/PostgresBackend.cpp
+## Backend
+src/backend/CassandraBackend.cpp
+src/backend/PostgresBackend.cpp
   src/backend/BackendInterface.cpp
   src/backend/Pg.cpp
   src/backend/DBHelpers.cpp
@@ -112,9 +69,16 @@ target_sources(clio PRIVATE
   # Utility
   src/rpc/handlers/Random.cpp)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(clio PUBLIC ${Boost_LIBRARIES})
+add_executable(clio_server src/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
-target_link_libraries(clio_tests PUBLIC clio gtest_main)
 
+#install(TARGETS clio_server DESTINATION bin)
+
+add_executable(clio_tests unittests/main.cpp)
+include(CMake/deps/gtest.cmake)
+## install(TARGETS clio_tests DESTINATION bin) # NOTE: Do we want to install the tests?
+
+#install(FILES example-config.json DESTINATION etc/clio)
+include(CMake/install/install.cmake)
 gtest_discover_tests(clio_tests)
+#install(SCRIPT "${CMAKE_SOURCE_DIR}/CMake/install/PostInstall.cmake")
