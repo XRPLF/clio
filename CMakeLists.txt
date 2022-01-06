@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(clio VERSION 0.1.0)
 
-option(VERBOSE "Verbose build" FALSE)
+option(VERBOSE "Verbose build" TRUE)
 if(VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
   set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
@@ -13,8 +13,9 @@ target_include_directories(clio PUBLIC src)
 
 
 include(FetchContent)
-include(ExternalProject)
-#include(CMake/deps/) # TODO: see if this works...
+if(${CMAKE_VERSION} VERSION_LESS "3.20.0")
+  include(ExternalProject)
+endif()
 include(CMake/settings.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
@@ -24,14 +25,14 @@ include(CMake/deps/Postgres.cmake)
 # configure_file(CMake/version-config.h include/version.h) # NOTE: Not used, but an idea how to handle versioning.
 
 target_sources(clio PRIVATE
-## Backend
-src/backend/CassandraBackend.cpp
-src/backend/PostgresBackend.cpp
+  ## Backend
   src/backend/BackendInterface.cpp
-  src/backend/Pg.cpp
+  src/backend/CassandraBackend.cpp
   src/backend/DBHelpers.cpp
-  src/backend/SimpleCache.cpp
   src/backend/LayeredCache.cpp
+  src/backend/Pg.cpp
+  src/backend/PostgresBackend.cpp
+  src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
   src/etl/ReportingETL.cpp
@@ -75,13 +76,7 @@ src/backend/PostgresBackend.cpp
 add_executable(clio_server src/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
-#install(TARGETS clio_server DESTINATION bin)
-
 add_executable(clio_tests unittests/main.cpp)
-include(CMake/deps/gtest.cmake)
-## install(TARGETS clio_tests DESTINATION bin) # NOTE: Do we want to install the tests?
 
-#install(FILES example-config.json DESTINATION etc/clio)
+include(CMake/deps/gtest.cmake)
 include(CMake/install/install.cmake)
-gtest_discover_tests(clio_tests)
-#install(SCRIPT "${CMAKE_SOURCE_DIR}/CMake/install/PostInstall.cmake")
