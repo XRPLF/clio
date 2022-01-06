@@ -11,7 +11,6 @@ private:
     mutable std::stringstream objectsBuffer_;
     mutable size_t numRowsInSuccessorBuffer_ = 0;
     mutable std::stringstream successorBuffer_;
-    mutable std::stringstream keysBuffer_;
     mutable std::stringstream transactionsBuffer_;
     mutable std::stringstream accountTxBuffer_;
     std::shared_ptr<PgPool> pgPool_;
@@ -19,6 +18,8 @@ private:
     mutable bool abortWrite_ = false;
     mutable boost::asio::thread_pool pool_{16};
     uint32_t writeInterval_ = 1000000;
+    uint32_t inProcessLedger = 0;
+    std::unordered_set<std::string> successors_;
 
 public:
     PostgresBackend(boost::json::object const& config);

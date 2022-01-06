@@ -11,8 +11,8 @@
 #include <iostream>
 #include <string>
 #include <subscriptions/SubscriptionManager.h>
-#include <variant>
 #include <thread>
+#include <variant>
 
 namespace detail {
 /// Convenience function for printing out basic ledger info
@@ -864,14 +864,14 @@ ReportingETL::monitorReadOnly()
     if (!mostRecent)
         return;
     uint32_t sequence = *mostRecent;
+    std::thread t{[this, sequence]() {
+        BOOST_LOG_TRIVIAL(info) << "Loading cache";
+        loadBalancer_->loadInitialLedger(sequence, true);
+    }};
+    t.detach();
     while (!stopping_ &&
            networkValidatedLedgers_->waitUntilValidatedByNetwork(sequence))
     {
-        std::thread t{[this, sequence]() {
-            BOOST_LOG_TRIVIAL(info) << "Loading cache";
-            loadBalancer_->loadInitialLedger(sequence, true);
-        }};
-        t.detach();
         publishLedger(sequence, {});
         ++sequence;
     }

@@ -19,7 +19,6 @@ class DatabaseTimeout : public std::exception
 class BackendInterface
 {
 protected:
-    bool isFirst_ = true;
     std::optional<LedgerRange> range;
     SimpleCache cache_;
 

@@ -151,7 +151,7 @@ CassandraBackend::doWriteLedgerObject(
     std::string&& blob)
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
-    if (!isFirst_)
+    if (range)
         makeAndExecuteAsyncWrite(
             this, std::move(std::make_tuple(seq, key)), [this](auto& params) {
                 auto& [sequence, key] = params.data;
@@ -462,10 +462,9 @@ CassandraBackend::fetchAccountTransactions(
     {
         statement.bindNextIntTuple(
             cursor->ledgerSequence, cursor->transactionIndex);
-        BOOST_LOG_TRIVIAL(debug)
-            << " account = " << ripple::strHex(account)
-            << " tuple = " << cursor->ledgerSequence << " : "
-            << cursor->transactionIndex;
+        BOOST_LOG_TRIVIAL(debug) << " account = " << ripple::strHex(account)
+                                 << " tuple = " << cursor->ledgerSequence
+                                 << " : " << cursor->transactionIndex;
     }
     else
     {
@@ -474,8 +473,8 @@ CassandraBackend::fetchAccountTransactions(
 
         statement.bindNextIntTuple(placeHolder, placeHolder);
         BOOST_LOG_TRIVIAL(debug)
-            << " account = " << ripple::strHex(account)
-            << " idx = " << seq << " tuple = " << placeHolder;
+            << " account = " << ripple::strHex(account) << " idx = " << seq
+            << " tuple = " << placeHolder;
     }
     statement.bindNextUInt(limit);
 
