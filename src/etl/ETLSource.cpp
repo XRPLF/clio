@@ -861,6 +861,10 @@ ETLLoadBalancer::ETLLoadBalancer(
 
         downloadRanges_ = std::clamp(downloadRanges_, {1}, {256});
     }
+    else if (backend->fetchLedgerRange())
+    {
+        downloadRanges_ = 4;
+    }
 
     for (auto& entry : config.at("etl_sources").as_array())
     {
