@@ -11,8 +11,8 @@
 #include <iostream>
 #include <string>
 #include <subscriptions/SubscriptionManager.h>
-#include <variant>
 #include <thread>
+#include <variant>
 
 namespace detail {
 /// Convenience function for printing out basic ledger info
@@ -101,7 +101,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     backend_->startWrites();
     BOOST_LOG_TRIVIAL(debug) << __func__ << " started writes";
     backend_->writeLedger(
-        lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
+        lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
@@ -864,14 +864,14 @@ ReportingETL::monitorReadOnly()
     if (!mostRecent)
         return;
     uint32_t sequence = *mostRecent;
+    std::thread t{[this, sequence]() {
+        BOOST_LOG_TRIVIAL(info) << "Loading cache";
+        loadBalancer_->loadInitialLedger(sequence, true);
+    }};
+    t.detach();
     while (!stopping_ &&
            networkValidatedLedgers_->waitUntilValidatedByNetwork(sequence))
     {
-        std::thread t{[this, sequence]() {
-            BOOST_LOG_TRIVIAL(info) << "Loading cache";
-            loadBalancer_->loadInitialLedger(sequence, true);
-        }};
-        t.detach();
         publishLedger(sequence, {});
         ++sequence;
     }

@@ -85,7 +85,7 @@ TEST(BackendTest, Basic)
             deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend->startWrites();
-        backend->writeLedger(lgrInfo, std::move(rawHeaderBlob), true);
+        backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         backend->writeSuccessor(
             uint256ToString(Backend::firstKey),
             lgrInfo.seq,
@@ -1590,7 +1590,7 @@ TEST(Backend, CacheIntegration)
             deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend->startWrites();
-        backend->writeLedger(lgrInfo, std::move(rawHeaderBlob), true);
+        backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         backend->writeSuccessor(
             uint256ToString(Backend::firstKey),
             lgrInfo.seq,

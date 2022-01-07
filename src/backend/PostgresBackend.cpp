@@ -17,8 +17,7 @@ PostgresBackend::PostgresBackend(boost::json::object const& config)
 void
 PostgresBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
-    std::string&& ledgerHeader,
-    bool isFirst)
+    std::string&& ledgerHeader)
 {
     auto cmd = boost::format(
         R"(INSERT INTO ledgers
@@ -35,6 +34,7 @@ PostgresBackend::writeLedger(
 
     auto res = writeConnection_(ledgerInsert.data());
     abortWrite_ = !res;
+    inProcessLedger = ledgerInfo.seq;
 }
 
 void
@@ -88,9 +88,17 @@ PostgresBackend::writeSuccessor(
     uint32_t seq,
     std::string&& successor)
 {
+    if (range)
+    {
+        if (successors_.count(key) > 0)
+            return;
+        successors_.insert(key);
+    }
     successorBuffer_ << "\\\\x" << ripple::strHex(key) << '\t'
                      << std::to_string(seq) << '\t' << "\\\\x"
                      << ripple::strHex(successor) << '\n';
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << ripple::strHex(key) << " - " << std::to_string(seq);
     numRowsInSuccessorBuffer_++;
     if (numRowsInSuccessorBuffer_ % writeInterval_ == 0)
     {
@@ -532,7 +540,7 @@ PostgresBackend::fetchLedgerDiff(uint32_t ledgerSequence) const
            "WHERE "
         << "ledger_seq = " << std::to_string(ledgerSequence);
     auto res = pgQuery(sql.str().data());
-    if (size_t numRows = checkResult(res, 4))
+    if (size_t numRows = checkResult(res, 2))
     {
         std::vector<LedgerObject> objects;
         for (size_t i = 0; i < numRows; ++i)
@@ -666,6 +674,17 @@ PostgresBackend::doFinishWrites()
         std::string successorStr = successorBuffer_.str();
         if (successorStr.size())
             writeConnection_.bulkInsert("successor", successorStr);
+        successors_.clear();
+        if (!range)
+        {
+            std::stringstream indexCreate;
+            indexCreate
+                << "CREATE INDEX diff ON objects USING hash(ledger_seq) "
+                   "WHERE NOT "
+                   "ledger_seq = "
+                << std::to_string(inProcessLedger);
+            writeConnection_(indexCreate.str().data());
+        }
     }
     auto res = writeConnection_("COMMIT");
     if (!res || res.status() != PGRES_COMMAND_OK)

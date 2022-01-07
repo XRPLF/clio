@@ -773,8 +773,6 @@ CREATE TABLE IF NOT EXISTS objects (
 
 CREATE INDEX objects_idx ON objects USING btree(key,ledger_seq);
 
-CREATE INDEX diff ON objects USING hash(ledger_seq);
-
 create table if not exists objects1 partition of objects for values from (0) to (10000000);
 create table if not exists objects2 partition of objects for values from (10000000) to (20000000);
 create table if not exists objects3 partition of objects for values from (20000000) to (30000000);

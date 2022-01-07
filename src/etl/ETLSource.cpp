@@ -599,6 +599,11 @@ public:
         for (int i = 0; i < cur_->ledger_objects().objects_size(); ++i)
         {
             auto& obj = *(cur_->mutable_ledger_objects()->mutable_objects(i));
+            if (!more)
+            {
+                if (((unsigned char)obj.key()[0]) >= nextPrefix_)
+                    continue;
+            }
             cacheUpdates.push_back(
                 {*ripple::uint256::fromVoidChecked(obj.key()),
                  {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
@@ -743,6 +748,9 @@ ETLSourceImpl<Derived>::loadInitialLedger(
             auto start = std::chrono::system_clock::now();
             for (auto& key : edgeKeys)
             {
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__
+                    << " writing edge key = " << ripple::strHex(key);
                 auto succ = backend_->cache().getSuccessor(
                     *ripple::uint256::fromVoidChecked(key), sequence);
                 if (succ)
@@ -761,18 +769,23 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 if (isBookDir(cur->key, cur->blob))
                 {
                     auto base = getBookBase(cur->key);
-                    auto succ = backend_->cache().getSuccessor(base, sequence);
-                    assert(succ);
-                    if (succ->key == cur->key)
+                    // make sure the base is not an actual object
+                    if (!backend_->cache().get(cur->key, sequence))
                     {
-                        BOOST_LOG_TRIVIAL(debug)
-                            << __func__ << " Writing book successor = "
-                            << ripple::strHex(base) << " - "
-                            << ripple::strHex(cur->key);
-                        backend_->writeSuccessor(
-                            uint256ToString(base),
-                            sequence,
-                            uint256ToString(cur->key));
+                        auto succ =
+                            backend_->cache().getSuccessor(base, sequence);
+                        assert(succ);
+                        if (succ->key == cur->key)
+                        {
+                            BOOST_LOG_TRIVIAL(debug)
+                                << __func__ << " Writing book successor = "
+                                << ripple::strHex(base) << " - "
+                                << ripple::strHex(cur->key);
+                            backend_->writeSuccessor(
+                                uint256ToString(base),
+                                sequence,
+                                uint256ToString(cur->key));
+                        }
                     }
                     ++numWrites;
                 }
@@ -847,6 +860,10 @@ ETLLoadBalancer::ETLLoadBalancer(
         downloadRanges_ = config.at("num_markers").as_int64();
 
         downloadRanges_ = std::clamp(downloadRanges_, {1}, {256});
+    }
+    else if (backend->fetchLedgerRange())
+    {
+        downloadRanges_ = 4;
     }
 
     for (auto& entry : config.at("etl_sources").as_array())
@@ -923,7 +940,9 @@ ETLLoadBalancer::fetchLedger(
 }
 
 std::optional<boost::json::object>
-ETLLoadBalancer::forwardToRippled(boost::json::object const& request, std::string const& clientIp) const
+ETLLoadBalancer::forwardToRippled(
+    boost::json::object const& request,
+    std::string const& clientIp) const
 {
     srand((unsigned)time(0));
     auto sourceIdx = rand() % sources_.size();
@@ -942,7 +961,8 @@ ETLLoadBalancer::forwardToRippled(boost::json::object const& request, std::strin
 template <class Derived>
 std::optional<boost::json::object>
 ETLSourceImpl<Derived>::forwardToRippled(
-    boost::json::object const& request, std::string const& clientIp) const
+    boost::json::object const& request,
+    std::string const& clientIp) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
                              << "request = " << boost::json::serialize(request);
@@ -983,17 +1003,14 @@ ETLSourceImpl<Derived>::forwardToRippled(
         //
         // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator(
-            [&request,&clientIp] (websocket::request_type& req) {
+            [&request, &clientIp](websocket::request_type& req) {
                 req.set(
                     http::field::user_agent,
                     std::string(BOOST_BEAST_VERSION_STRING) +
                         " websocket-client-coro");
-                req.set(
-                    http::field::forwarded,
-                    "for=" + clientIp);
+                req.set(http::field::forwarded, "for=" + clientIp);
             }));
-        BOOST_LOG_TRIVIAL(debug)
-            << "client ip: " << clientIp;
+        BOOST_LOG_TRIVIAL(debug) << "client ip: " << clientIp;
 
         BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
         // Perform the websocket handshake

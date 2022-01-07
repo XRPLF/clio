@@ -8,15 +8,7 @@ BackendInterface::finishWrites(uint32_t ledgerSequence)
     auto commitRes = doFinishWrites();
     if (commitRes)
     {
-        isFirst_ = false;
         updateRange(ledgerSequence);
-    }
-    else
-    {
-        // if commitRes is false, we are relinquishing control of ETL. We
-        // reset isFirst_ to true so that way if we later regain control of
-        // ETL, we trigger the index repair
-        isFirst_ = true;
     }
     return commitRes;
 }
@@ -242,8 +234,9 @@ BackendInterface::fetchLedgerPage(
     std::vector<ripple::uint256> keys;
     while (keys.size() < limit)
     {
-        ripple::uint256 const& curCursor =
-            keys.size() ? keys.back() : cursor ? *cursor : firstKey;
+        ripple::uint256 const& curCursor = keys.size() ? keys.back()
+            : cursor                                   ? *cursor
+                                                       : firstKey;
         auto succ = fetchSuccessorKey(curCursor, ledgerSequence);
         if (!succ)
             break;
