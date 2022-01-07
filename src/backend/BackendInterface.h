@@ -152,8 +152,7 @@ public:
     virtual void
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
-        std::string&& ledgerHeader,
-        bool isFirst = false) = 0;
+        std::string&& ledgerHeader) = 0;
 
     void
     writeLedgerObject(std::string&& key, uint32_t seq, std::string&& blob);

@@ -76,8 +76,7 @@ public:
     void
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
-        std::string&& ledgerHeader,
-        bool isFirst) override;
+        std::string&& ledgerHeader) override;
 
     void
     doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)

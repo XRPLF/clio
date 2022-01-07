@@ -101,7 +101,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     backend_->startWrites();
     BOOST_LOG_TRIVIAL(debug) << __func__ << " started writes";
     backend_->writeLedger(
-        lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
+        lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);

@@ -597,7 +597,6 @@ private:
     boost::json::object config_;
 
     mutable uint32_t ledgerSequence_ = 0;
-    mutable bool isFirstLedger_ = false;
 
 public:
     CassandraBackend(boost::json::object const& config)
@@ -648,7 +647,7 @@ public:
         // wait for all other writes to finish
         sync();
         // write range
-        if (isFirstLedger_)
+        if (!range)
         {
             CassandraStatement statement{updateLedgerRange_};
             statement.bindNextInt(ledgerSequence_);
@@ -672,10 +671,8 @@ public:
         return true;
     }
     void
-    writeLedger(
-        ripple::LedgerInfo const& ledgerInfo,
-        std::string&& header,
-        bool isFirst = false) override;
+    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header)
+        override;
 
     std::optional<uint32_t>
     fetchLatestLedgerSequence() const override

@@ -201,8 +201,7 @@ CassandraBackend::writeSuccessor(
 void
 CassandraBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
-    std::string&& header,
-    bool isFirst)
+    std::string&& header)
 {
     makeAndExecuteAsyncWrite(
         this,
@@ -225,7 +224,6 @@ CassandraBackend::writeLedger(
             return statement;
         });
     ledgerSequence_ = ledgerInfo.seq;
-    isFirstLedger_ = isFirst;
 }
 void
 CassandraBackend::writeAccountTransactions(

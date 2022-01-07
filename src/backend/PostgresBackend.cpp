@@ -17,8 +17,7 @@ PostgresBackend::PostgresBackend(boost::json::object const& config)
 void
 PostgresBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
-    std::string&& ledgerHeader,
-    bool isFirst)
+    std::string&& ledgerHeader)
 {
     auto cmd = boost::format(
         R"(INSERT INTO ledgers
