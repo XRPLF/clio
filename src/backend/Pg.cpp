@@ -780,6 +780,9 @@ create table if not exists objects4 partition of objects for values from (300000
 create table if not exists objects5 partition of objects for values from (40000000) to (50000000);
 create table if not exists objects6 partition of objects for values from (50000000) to (60000000);
 create table if not exists objects7 partition of objects for values from (60000000) to (70000000);
+create table if not exists objects8 partition of objects for values from (70000000) to (80000000);
+create table if not exists objects9 partition of objects for values from (80000000) to (90000000);
+create table if not exists objects10 partition of objects for values from (90000000) to (100000000);
 
 
 -- Index for lookups by ledger hash.
@@ -802,6 +805,9 @@ create table if not exists transactions4 partition of transactions for values fr
 create table if not exists transactions5 partition of transactions for values from (40000000) to (50000000);
 create table if not exists transactions6 partition of transactions for values from (50000000) to (60000000);
 create table if not exists transactions7 partition of transactions for values from (60000000) to (70000000);
+create table if not exists transactions8 partition of transactions for values from (70000000) to (80000000);
+create table if not exists transactions9 partition of transactions for values from (80000000) to (90000000);
+create table if not exists transactions10 partition of transactions for values from (90000000) to (100000000);
 
 create index if not exists tx_by_hash on transactions using hash (hash);
 create index if not exists tx_by_lgr_seq on transactions using hash (ledger_seq);
@@ -822,6 +828,9 @@ create table if not exists account_transactions4 partition of account_transactio
 create table if not exists account_transactions5 partition of account_transactions for values from (40000000) to (50000000);
 create table if not exists account_transactions6 partition of account_transactions for values from (50000000) to (60000000);
 create table if not exists account_transactions7 partition of account_transactions for values from (60000000) to (70000000);
+create table if not exists account_transactions8 partition of account_transactions for values from (70000000) to (80000000);
+create table if not exists account_transactions9 partition of account_transactions for values from (80000000) to (90000000);
+create table if not exists account_transactions10 partition of account_transactions for values from (90000000) to (100000000);
 
 
 CREATE TABLE IF NOT EXISTS successor (
@@ -829,7 +838,18 @@ CREATE TABLE IF NOT EXISTS successor (
     ledger_seq bigint NOT NULL,
     next bytea NOT NULL,
     PRIMARY KEY(key, ledger_seq)
-);
+) PARTITION BY RANGE(ledger_seq);
+
+create table if not exists successor1 partition of successor for values from (0) to (10000000);
+create table if not exists successor2 partition of successor for values from (10000000) to (20000000);
+create table if not exists successor3 partition of successor for values from (20000000) to (30000000);
+create table if not exists successor4 partition of successor for values from (30000000) to (40000000);
+create table if not exists successor5 partition of successor for values from (40000000) to (50000000);
+create table if not exists successor6 partition of successor for values from (50000000) to (60000000);
+create table if not exists successor7 partition of successor for values from (60000000) to (70000000);
+create table if not exists successor8 partition of successor for values from (70000000) to (80000000);
+create table if not exists successor9 partition of successor for values from (80000000) to (90000000);
+create table if not exists successor10 partition of successor for values from (90000000) to (100000000);
 
 
 -- Avoid inadvertent administrative tampering with committed data.
