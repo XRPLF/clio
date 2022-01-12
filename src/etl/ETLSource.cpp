@@ -247,7 +247,9 @@ PlainETLSource::onConnect(
                     req.set(
                         boost::beast::http::field::user_agent,
                         std::string(BOOST_BEAST_VERSION_STRING) +
-                            " websocket-client-async");
+                            " coro-client");
+
+                        req.set("X-User", "coro-client");
                 }));
 
         // Update the host_ string. This will provide the value of the
@@ -291,7 +293,9 @@ SslETLSource::onConnect(
                     req.set(
                         boost::beast::http::field::user_agent,
                         std::string(BOOST_BEAST_VERSION_STRING) +
-                            " websocket-client-async");
+                            " clio-client");
+
+                    req.set("X-User", "coro-client");
                 }));
 
         // Update the host_ string. This will provide the value of the
@@ -342,6 +346,18 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
              {"ledger", "manifests", "validations", "transactions_proposed"}}};
         std::string s = boost::json::serialize(jv);
         BOOST_LOG_TRIVIAL(trace) << "Sending subscribe stream message";
+
+        derived().ws().set_option(
+            boost::beast::websocket::stream_base::decorator(
+                [](boost::beast::websocket::request_type& req) {
+                    req.set(
+                        boost::beast::http::field::user_agent,
+                        std::string(BOOST_BEAST_VERSION_STRING) +
+                            "clio-client");
+
+                    req.set("X-User", "coro-client");
+                }));
+
         // Send the message
         derived().ws().async_write(
             boost::asio::buffer(s),
