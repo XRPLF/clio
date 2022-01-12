@@ -599,7 +599,7 @@ public:
         for (int i = 0; i < cur_->ledger_objects().objects_size(); ++i)
         {
             auto& obj = *(cur_->mutable_ledger_objects()->mutable_objects(i));
-            if (!more)
+            if (!more && nextPrefix_ != 0x00)
             {
                 if (((unsigned char)obj.key()[0]) >= nextPrefix_)
                     continue;
@@ -721,7 +721,9 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 BOOST_LOG_TRIVIAL(debug)
                     << "Finished a marker. "
                     << "Current number of finished = " << numFinished;
-                edgeKeys.push_back(ptr->getLastKey());
+                std::string lastKey = ptr->getLastKey();
+                if (lastKey.size())
+                    edgeKeys.push_back(ptr->getLastKey());
             }
             if (result == AsyncCallData::CallStatus::ERRORED)
             {

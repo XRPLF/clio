@@ -349,6 +349,9 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         assert(key);
         cacheUpdates.push_back(
             {*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " key = " << ripple::strHex(*key)
+            << " - mod type = " << obj.mod_type();
 
         if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED &&
             !rawData.object_neighbors_included())
@@ -356,9 +359,13 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " object neighbors not included. using cache";
             assert(backend_->cache().isFull());
+            if (!backend_->cache().isFull())
+                throw std::runtime_error(
+                    "Cache is not full, but object neighbors were not "
+                    "included");
             auto blob = obj.mutable_data();
             bool checkBookBase = false;
-            bool isDeleted = blob->size() == 0;
+            bool isDeleted = (blob->size() == 0);
             if (isDeleted)
             {
                 auto old = backend_->cache().get(*key, lgrInfo.seq - 1);
