@@ -78,7 +78,8 @@ doLedger(Context const& context)
         if (expand)
         {
             auto txns =
-                context.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
+                context.backend->fetchAllTransactionsInLedger(
+                    lgrInfo.seq, context.yield);
 
             std::transform(
                 std::move_iterator(txns.begin()),
@@ -104,7 +105,8 @@ doLedger(Context const& context)
         else
         {
             auto hashes =
-                context.backend->fetchAllTransactionHashesInLedger(lgrInfo.seq);
+                context.backend->fetchAllTransactionHashesInLedger(
+                    lgrInfo.seq, context.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),

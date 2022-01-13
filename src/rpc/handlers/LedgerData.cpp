@@ -43,7 +43,7 @@ doLedgerData(Context const& context)
         if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInteger"};
 
-        limit = value_to<int>(request.at("limit"));
+        limit = boost::json::value_to<int>(request.at("limit"));
     }
 
     std::optional<ripple::uint256> cursor;
@@ -67,7 +67,8 @@ doLedgerData(Context const& context)
 
     Backend::LedgerPage page;
     auto start = std::chrono::system_clock::now();
-    page = context.backend->fetchLedgerPage(cursor, lgrInfo.seq, limit);
+    page = context.backend->fetchLedgerPage(
+        cursor, lgrInfo.seq, limit, 0, context.yield);
 
     auto end = std::chrono::system_clock::now();
 

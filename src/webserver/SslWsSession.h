@@ -28,6 +28,7 @@ class SslWsSession : public WsSession<SslWsSession>
 public:
     // Take ownership of the socket
     explicit SslWsSession(
+        boost::asio::io_context& ioc,
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -36,6 +37,7 @@ public:
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
         : WsSession(
+            ioc,
             backend,
             subscriptions,
             balancer,
@@ -66,6 +68,7 @@ public:
 
 class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
 {
+    boost::asio::io_context& ioc_;
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
@@ -78,6 +81,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
 
 public:
     SslWsUpgrader(
+        boost::asio::io_context& ioc,
         boost::asio::ip::tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface const> backend,
@@ -86,7 +90,8 @@ public:
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
-        : https_(std::move(socket), ctx)
+        : ioc_(ioc)
+        , https_(std::move(socket), ctx)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
@@ -96,6 +101,7 @@ public:
     {
     }
     SslWsUpgrader(
+        boost::asio::io_context& ioc,
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -104,7 +110,8 @@ public:
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
-        : https_(std::move(stream))
+        : ioc_(ioc)
+        , https_(std::move(stream))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
@@ -173,6 +180,7 @@ private:
         boost::beast::get_lowest_layer(https_).expires_never();
 
         std::make_shared<SslWsSession>(
+            ioc_,
             std::move(https_),
             backend_,
             subscriptions_,

@@ -122,7 +122,12 @@ doAccountChannels(Context const& context)
     };
 
     auto nextCursor = traverseOwnedNodes(
-        *context.backend, *accountID, lgrInfo.seq, marker, addToResponse);
+        *context.backend,
+        *accountID,
+        lgrInfo.seq,
+        marker,
+        context.yield,
+        addToResponse);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;

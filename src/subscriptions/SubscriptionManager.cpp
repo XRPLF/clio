@@ -111,17 +111,20 @@ getLedgerPubMessage(
 }
 
 boost::json::object
-SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
+SubscriptionManager::subLedger(
+    boost::asio::yield_context& yield, 
+    std::shared_ptr<WsBase>& session)
 {
     ledgerSubscribers_.subscribe(session);
     
     auto ledgerRange = backend_->fetchLedgerRange();
     assert(ledgerRange);
-    auto lgrInfo = backend_->fetchLedgerBySequence(ledgerRange->maxSequence);
+    auto lgrInfo = 
+        backend_->fetchLedgerBySequence(ledgerRange->maxSequence, yield);
     assert(lgrInfo);
 
     std::optional<ripple::Fees> fees;
-    fees = backend_->fetchFees(lgrInfo->seq);
+    fees = backend_->fetchFees(lgrInfo->seq, yield);
     assert(fees);
 
     std::string range = std::to_string(ledgerRange->minSequence) + "-" +
@@ -185,6 +188,7 @@ SubscriptionManager::unsubBook(
 
 void
 SubscriptionManager::pubLedger(
+    boost::asio::yield_context& yield, 
     ripple::LedgerInfo const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
@@ -223,13 +227,13 @@ SubscriptionManager::pubTransaction(
     {
         auto account = tx->getAccountID(ripple::sfAccount);
         auto amount = tx->getFieldAmount(ripple::sfTakerGets);
-        if (account != amount.issue().account)
-        {
-            auto ownerFunds =
-                RPC::accountFunds(*backend_, lgrInfo.seq, amount, account);
-            pubObj["transaction"].as_object()["owner_funds"] =
-                ownerFunds.getText();
-        }
+        // if (account != amount.issue().account)
+        // {
+        //     auto ownerFunds =
+        //         RPC::accountFunds(*backend_, lgrInfo.seq, amount, account);
+        //     pubObj["transaction"].as_object()["owner_funds"] =
+        //         ownerFunds.getText();
+        // }
     }
 
     std::string pubMsg{boost::json::serialize(pubObj)};

@@ -21,9 +21,16 @@ class BackendInterface
 protected:
     std::optional<LedgerRange> range;
     SimpleCache cache_;
+    boost::asio::io_context& ioContext_;
+    
+    // mutex used for open() and close()
+    mutable std::mutex mutex_;
+
 
 public:
-    BackendInterface(boost::json::object const& config)
+    BackendInterface(
+        boost::asio::io_context& ioc,
+        boost::json::object const& config) : ioContext_(ioc)
     {
     }
     virtual ~BackendInterface()
@@ -50,63 +57,95 @@ public:
         return cache_;
     }
 
-    virtual std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t sequence) const = 0;
+    boost::asio::io_context&
+    getIOContext() const
+    {
+        return ioContext_;
+    }
 
     virtual std::optional<ripple::LedgerInfo>
-    fetchLedgerByHash(ripple::uint256 const& hash) const = 0;
+    fetchLedgerBySequence(
+        uint32_t sequence,
+        boost::asio::yield_context& yield) const = 0;
+
+    virtual std::optional<ripple::LedgerInfo>
+    fetchLedgerByHash(
+        ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::optional<uint32_t>
-    fetchLatestLedgerSequence() const = 0;
+    fetchLatestLedgerSequence(boost::asio::yield_context& yield) const = 0;
 
     std::optional<LedgerRange>
     fetchLedgerRange() const
     {
+        std::lock_guard lk(mutex_);
         return range;
     }
 
     std::optional<ripple::Fees>
-    fetchFees(std::uint32_t seq) const;
+    fetchFees(
+        std::uint32_t seq,
+        boost::asio::yield_context& yield) const;
 
     // *** transaction methods
     virtual std::optional<TransactionAndMetadata>
-    fetchTransaction(ripple::uint256 const& hash) const = 0;
+    fetchTransaction(
+        ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
-    fetchTransactions(std::vector<ripple::uint256> const& hashes) const = 0;
+    fetchTransactions(
+        std::vector<ripple::uint256> const& hashes,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t limit,
-        bool forward = false,
-        std::optional<AccountTransactionsCursor> const& cursor = {}) const = 0;
+        bool forward,
+        std::optional<AccountTransactionsCursor> const& cursor,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(uint32_t ledgerSequence) const = 0;
+    fetchAllTransactionsInLedger(
+        uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const = 0;
+    fetchAllTransactionHashesInLedger(
+        uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
 
     // *** state data methods
     std::optional<Blob>
-    fetchLedgerObject(ripple::uint256 const& key, uint32_t sequence) const;
+    fetchLedgerObject(
+        ripple::uint256 const& key,
+        uint32_t sequence,
+        boost::asio::yield_context& yield) const;
 
     std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const;
+        uint32_t sequence,
+        boost::asio::yield_context& yield) const;
+
     virtual std::optional<Blob>
-    doFetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
-        const = 0;
+    doFetchLedgerObject(
+        ripple::uint256 const& key,
+        uint32_t sequence,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const = 0;
+        uint32_t sequence,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence) const = 0;
+    fetchLedgerDiff(
+        uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
 
     // Fetches a page of ledger objects, ordered by key/index.
     // Used by ledger_data
@@ -115,34 +154,54 @@ public:
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit,
-        std::uint32_t limitHint = 0) const;
+        std::uint32_t limitHint,
+        boost::asio::yield_context& yield) const;
 
     // Fetches the successor to key/index
     std::optional<LedgerObject>
-    fetchSuccessorObject(ripple::uint256 key, uint32_t ledgerSequence) const;
+    fetchSuccessorObject(
+        ripple::uint256 key,
+        uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const;
 
     std::optional<ripple::uint256>
-    fetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence) const;
+    fetchSuccessorKey(
+        ripple::uint256 key,
+        uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const;
     // Fetches the successor to key/index
+
     virtual std::optional<ripple::uint256>
-    doFetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence) const = 0;
+    doFetchSuccessorKey(
+        ripple::uint256 key,
+        uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
 
     BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
         uint32_t ledgerSequence,
         std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursor = {}) const;
+        std::optional<ripple::uint256> const& cursor,
+        boost::asio::yield_context& yield) const;
+
 
     virtual std::optional<LedgerRange>
     hardFetchLedgerRange() const = 0;
+    virtual std::optional<LedgerRange>
+    hardFetchLedgerRange(boost::asio::yield_context& yield) const = 0;
+
     // Doesn't throw DatabaseTimeout. Should be used with care.
     std::optional<LedgerRange>
     hardFetchLedgerRangeNoThrow() const;
+    // Doesn't throw DatabaseTimeout. Should be used with care.
+    std::optional<LedgerRange>
+    hardFetchLedgerRangeNoThrow(boost::asio::yield_context& yield) const;
 
     void
     updateRange(uint32_t newMax)
     {
+        std::lock_guard lk(mutex_);
         if (!range)
             range = {newMax, newMax};
         else
@@ -152,10 +211,15 @@ public:
     virtual void
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
-        std::string&& ledgerHeader) = 0;
+        std::string&& ledgerHeader,
+        boost::asio::yield_context& yield) = 0;
 
-    void
-    writeLedgerObject(std::string&& key, uint32_t seq, std::string&& blob);
+    virtual void
+    writeLedgerObject(
+        std::string&& key,
+        uint32_t seq,
+        std::string&& blob,
+        boost::asio::yield_context& yield);
 
     virtual void
     writeTransaction(
@@ -163,28 +227,34 @@ public:
         uint32_t seq,
         uint32_t date,
         std::string&& transaction,
-        std::string&& metadata) = 0;
+        std::string&& metadata,
+        boost::asio::yield_context& yield) = 0;
 
     virtual void
-    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
+    writeAccountTransactions(
+        std::vector<AccountTransactionsData>&& data,
+        boost::asio::yield_context& yield) = 0;
 
     virtual void
     writeSuccessor(
         std::string&& key,
         uint32_t seq,
-        std::string&& successor) = 0;
+        std::string&& successor,
+        boost::asio::yield_context& yield) = 0;
     // Tell the database we are about to begin writing data for a particular
     // ledger.
     virtual void
-    startWrites() = 0;
+    startWrites(boost::asio::yield_context& yield) const = 0;
 
     // Tell the database we have finished writing all data for a particular
     // ledger
-    bool
-    finishWrites(uint32_t ledgerSequence);
+    bool    
+    finishWrites(uint32_t ledgerSequence, boost::asio::yield_context& yield);
 
     virtual bool
-    doOnlineDelete(uint32_t numLedgersToKeep) const = 0;
+    doOnlineDelete(
+        uint32_t numLedgersToKeep,
+        boost::asio::yield_context& yield) const = 0;
 
     // Open the database. Set up all of the necessary objects and
     // datastructures. After this call completes, the database is ready for
@@ -194,7 +264,9 @@ public:
 
     // Close the database, releasing any resources
     virtual void
-    close() = 0;
+    close()
+    {
+    };
 
     // *** private helper methods
 private:
@@ -202,10 +274,11 @@ private:
     doWriteLedgerObject(
         std::string&& key,
         uint32_t seq,
-        std::string&& blob) = 0;
+        std::string&& blob,
+        boost::asio::yield_context& yield) = 0;
 
     virtual bool
-    doFinishWrites() = 0;
+    doFinishWrites(boost::asio::yield_context& yield) const = 0;
 };
 
 }  // namespace Backend

@@ -132,10 +132,11 @@ public:
     }
 
     boost::json::object
-    subLedger(std::shared_ptr<WsBase>& session);
+    subLedger(boost::asio::yield_context& yield, std::shared_ptr<WsBase>& session);
 
     void
     pubLedger(
+        boost::asio::yield_context& yield,
         ripple::LedgerInfo const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
