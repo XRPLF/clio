@@ -61,89 +61,290 @@ PgResult::msg() const
  https://www.postgresql.org/docs/10/libpq-connect.html
  */
 void
-Pg::connect()
+Pg::connect(boost::asio::yield_context& yield)
 {
+    std::function <PostgresPollingStatusType (PGconn*)> poller;
     if (conn_)
     {
-        // Nothing to do if we already have a good connection.
         if (PQstatus(conn_.get()) == CONNECTION_OK)
             return;
-        /* Try resetting connection. */
-        PQreset(conn_.get());
+        /* Try resetting connection, or disconnect and retry if that fails.
+           PQfinish() is synchronous so first try to asynchronously reset. */
+        if (PQresetStart(conn_.get()))
+            poller = PQresetPoll;
+        else
+            disconnect();
     }
-    else  // Make new connection.
+
+    if (!conn_)
     {
-        conn_.reset(PQconnectdbParams(
+        conn_.reset(PQconnectStartParams(
             reinterpret_cast<char const* const*>(&config_.keywordsIdx[0]),
             reinterpret_cast<char const* const*>(&config_.valuesIdx[0]),
             0));
-        if (!conn_)
-            throw std::runtime_error("No db connection struct");
+        poller = PQconnectPoll;
     }
 
-    /** Results from a synchronous connection attempt can only be either
-     * CONNECTION_OK or CONNECTION_BAD. */
+    if (!conn_)
+        throw std::runtime_error("No db connection object");
+
     if (PQstatus(conn_.get()) == CONNECTION_BAD)
     {
         std::stringstream ss;
         ss << "DB connection status " << PQstatus(conn_.get()) << ": "
-           << PQerrorMessage(conn_.get());
+            << PQerrorMessage(conn_.get());
         throw std::runtime_error(ss.str());
     }
 
-    // Log server session console messages.
     PQsetNoticeReceiver(conn_.get(), noticeReceiver, nullptr);
+
+    /* Asynchronously connecting entails several messages between
+     * client and server. */
+    PostgresPollingStatusType poll = PGRES_POLLING_WRITING;
+    while (poll != PGRES_POLLING_OK)
+    {
+        auto& socket = getSocket();
+
+        switch (poll)
+        {
+            case PGRES_POLLING_FAILED:
+            {
+                std::stringstream ss;
+                ss << "DB connection failed" ;
+                char* err = PQerrorMessage(conn_.get());
+                if (err)
+                    ss << ":" <<  err;
+                else
+                    ss << '.';
+                throw std::runtime_error(ss.str());
+            }
+
+            case PGRES_POLLING_READING:
+                socket.async_wait(boost::asio::ip::tcp::socket::wait_read,
+                    yield);
+                break;
+
+            case PGRES_POLLING_WRITING:
+                socket.async_wait(boost::asio::ip::tcp::socket::wait_write,
+                    yield);
+                break;
+
+            default:
+            {
+                assert(false);
+                std::stringstream ss;
+                ss << "unknown DB polling status: " << poll;
+                throw std::runtime_error(ss.str());
+            }
+        }
+        poll = poller(conn_.get());
+    }
+
+    /* Enable asynchronous writes. */
+    if (PQsetnonblocking(conn_.get(), 1) == -1)
+    {
+        std::stringstream ss;
+        char* err = PQerrorMessage(conn_.get());
+        if (err)
+            ss << "Error setting connection to non-blocking: " << err;  
+        else
+            ss << "Unknown error setting connection to non-blocking";
+        throw std::runtime_error(ss.str());
+    }
+
+    if (PQstatus(conn_.get()) != CONNECTION_OK)
+    {
+        std::stringstream ss;
+        ss << "bad connection" << std::to_string(PQstatus(conn_.get()));
+        char* err = PQerrorMessage(conn_.get());
+        if (err)
+            ss << ": " << err;
+        else
+            ss << '.';
+        throw std::runtime_error(ss.str());
+    }
+}
+
+inline void
+Pg::flush(boost::asio::yield_context& yield)
+{
+    auto& socket = getSocket();
+
+    // non-blocking connection requires manually flushing write.
+    int flushed;
+    do
+    {
+        flushed = PQflush(conn_.get());
+        if (flushed == 1)
+        {
+            socket.async_wait(
+                boost::asio::ip::tcp::socket::wait_write, yield);
+        }
+        else if (flushed == -1)
+        {
+            std::stringstream ss;
+            ss << "error flushing query " << PQerrorMessage(conn_.get());
+            throw std::runtime_error(ss.str());
+        }
+    }
+    while (flushed);
+}
+
+inline PgResult
+Pg::waitForStatus(boost::asio::yield_context& yield, ExecStatusType expected)
+{
+    auto& socket = getSocket();
+
+    PgResult ret;
+    while (true)
+    {
+        if (PQisBusy(conn_.get()))
+        {
+            socket.async_wait(boost::asio::ip::tcp::socket::wait_read,
+                yield);
+        }
+
+        if (!PQconsumeInput(conn_.get()))
+        {
+            std::stringstream ss;
+            ss << "query consume input error: "
+                << PQerrorMessage(conn_.get());
+            throw std::runtime_error(ss.str());
+        }
+
+        if (PQisBusy(conn_.get()))
+            continue;
+        
+        pg_result_type res{PQgetResult(conn_.get()),
+                            [](PGresult *result)
+                            { PQclear(result); }};
+        
+        if (!res)
+            break;
+
+        auto status = PQresultStatus(res.get());
+        ret = PgResult(std::move(res));
+        
+        if (status == expected)
+            break;
+    }
+
+    return ret;
+}
+
+inline boost::asio::ip::tcp::socket&
+Pg::getSocket()
+{
+    if (!socket_ || socketNum_ != PQsocket(conn_.get()))
+    {
+        socketNum_ = PQsocket(conn_.get());
+        socket_ = std::make_unique<boost::asio::ip::tcp::socket>(strand_,
+            boost::asio::ip::tcp::v4(), PQsocket(conn_.get()));
+    }
+
+    return *socket_;
 }
 
 PgResult
-Pg::query(char const* command, std::size_t nParams, char const* const* values)
+Pg::query(
+    char const* command,
+    std::size_t nParams, 
+    char const* const* values,
+    boost::asio::yield_context& yield)
 {
-    // The result object must be freed using the libpq API PQclear() call.
-    pg_result_type ret{nullptr, [](PGresult* result) { PQclear(result); }};
+    pg_result_type ret {nullptr, [](PGresult* result){ PQclear(result); }};
     // Connect then submit query.
-    while (true)
+    try
     {
+        connect(yield);
+
+        int sent;
+        if (nParams)
         {
-            std::lock_guard<std::mutex> lock(mutex_);
-            if (stop_)
-                return PgResult();
+            sent = PQsendQueryParams(conn_.get(), command, nParams, nullptr,
+                values, nullptr, nullptr, 0);
         }
-        try
+        else 
         {
-            connect();
-            if (nParams)
+            sent = PQsendQuery(conn_.get(), command);
+        }
+
+        if (!sent)
+        {
+            std::stringstream ss;
+            ss << "Can't send query: " << PQerrorMessage(conn_.get());
+            throw std::runtime_error(ss.str());
+        }
+
+        auto& socket = getSocket();
+
+        flush(yield);
+
+        /* Only read response if query was submitted successfully.
+           Only a single response is expected, but the API requires
+           responses to be read until nullptr is returned.
+           It is possible for pending reads on the connection to interfere
+           with the current query. For simplicity, this implementation
+           only flushes pending writes and assumes there are no pending reads.
+           To avoid this, all pending reads from each query must be consumed,
+           and all connections with any type of error be severed. */
+        while (true)
+        {
+            if (PQisBusy(conn_.get()))
+                socket.async_wait(boost::asio::ip::tcp::socket::wait_read,
+                    yield);
+
+            if (!PQconsumeInput(conn_.get()))
             {
-                // PQexecParams can process only a single command.
-                ret.reset(PQexecParams(
-                    conn_.get(),
-                    command,
-                    nParams,
-                    nullptr,
-                    values,
-                    nullptr,
-                    nullptr,
-                    0));
+                std::stringstream ss;
+                ss << "query consume input error: "
+                   << PQerrorMessage(conn_.get());
+                throw std::runtime_error(ss.str());
             }
-            else
+
+            if (PQisBusy(conn_.get()))
+                continue;
+            
+            pg_result_type res{PQgetResult(conn_.get()),
+                               [](PGresult *result)
+                               { PQclear(result); }};
+
+            if (!res)
+                break;
+
+            ret.reset(res.release());
+
+            // ret is never null in these cases, so need to break.
+            bool copyStatus = false;
+            switch (PQresultStatus(ret.get()))
             {
-                // PQexec can process multiple commands separated by
-                // semi-colons. Returns the response from the last
-                // command processed.
-                ret.reset(PQexec(conn_.get(), command));
+                case PGRES_COPY_IN:
+                case PGRES_COPY_OUT:
+                case PGRES_COPY_BOTH:
+                    copyStatus = true;
+                    break;
+                default:
+                    ;
             }
-            if (!ret)
-                throw std::runtime_error("no result structure returned");
-            break;
+            if (copyStatus)
+                break;
         }
-        catch (std::exception const& e)
-        {
-            // Sever connection and retry until successful.
-            disconnect();
-            BOOST_LOG_TRIVIAL(error)
-                << "database error, retrying: " << e.what();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
+
     }
+    catch (std::exception const& e)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " "
+            << "error, severing connection"
+            << "error = " << e.what();
+        // Sever connection upon any error.
+        disconnect();
+        std::stringstream ss;
+        ss << "query error: " << e.what();
+        throw std::runtime_error(ss.str());
+    }
+
+    if (!ret)
+        throw std::runtime_error("no result structure returned");
 
     // Ensure proper query execution.
     switch (PQresultStatus(ret.get()))
@@ -154,13 +355,19 @@ Pg::query(char const* command, std::size_t nParams, char const* const* values)
         case PGRES_COPY_OUT:
         case PGRES_COPY_BOTH:
             break;
-        default: {
+        default:
+        {
             std::stringstream ss;
-            ss << "bad query result: " << PQresStatus(PQresultStatus(ret.get()))
-               << " error message: " << PQerrorMessage(conn_.get())
-               << ", number of tuples: " << PQntuples(ret.get())
-               << ", number of fields: " << PQnfields(ret.get());
+            ss << "bad query result: "
+               << PQresStatus(PQresultStatus(ret.get()))
+               << " error message: "
+               << PQerrorMessage(conn_.get())
+               << ", number of tuples: "
+               << PQntuples(ret.get())
+               << ", number of fields: "
+               << PQnfields(ret.get());
             BOOST_LOG_TRIVIAL(error) << ss.str();
+            
             PgResult retRes(ret.get(), conn_.get());
             disconnect();
 
@@ -206,7 +413,7 @@ formatParams(pg_params const& dbParams)
 }
 
 PgResult
-Pg::query(pg_params const& dbParams)
+Pg::query(pg_params const& dbParams, boost::asio::yield_context& yield)
 {
     char const* const& command = dbParams.first;
     auto const formattedParams = formatParams(dbParams);
@@ -215,18 +422,21 @@ Pg::query(pg_params const& dbParams)
         formattedParams.size(),
         formattedParams.size()
             ? reinterpret_cast<char const* const*>(&formattedParams[0])
-            : nullptr);
+            : nullptr,
+        yield);
 }
 
 void
-Pg::bulkInsert(char const* table, std::string const& records)
+Pg::bulkInsert(
+    char const* table,
+    std::string const& records,
+    boost::asio::yield_context& yield)
 {
     // https://www.postgresql.org/docs/12/libpq-copy.html#LIBPQ-COPY-SEND
     assert(conn_.get());
     auto copyCmd = boost::format(R"(COPY %s FROM stdin)");
     auto formattedCmd = boost::str(copyCmd % table);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " " << formattedCmd;
-    auto res = query(formattedCmd.c_str());
+    auto res = query(formattedCmd.c_str(), yield);
     if (!res || res.status() != PGRES_COPY_IN)
     {
         std::stringstream ss;
@@ -238,38 +448,87 @@ Pg::bulkInsert(char const* table, std::string const& records)
         throw std::runtime_error(ss.str());
     }
 
-    if (PQputCopyData(conn_.get(), records.c_str(), records.size()) == -1)
+    auto& socket = getSocket();
+
+    std::int32_t putCopy = 0;
+    while (putCopy == 0)
+    {
+        putCopy = PQputCopyData(conn_.get(), records.c_str(), records.size());
+        
+        if (putCopy == -1)
+        {
+            std::stringstream ss;
+            ss << "bulkInsert to " << table
+            << ". PQputCopyData error: " << PQerrorMessage(conn_.get());
+            disconnect();
+            BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
+            throw std::runtime_error(ss.str());
+        }
+
+        // If the value is zero, wait for write-ready and try again.
+        if(putCopy == 0)
+            socket.async_wait(boost::asio::ip::tcp::socket::wait_write, yield);
+    }
+
+    flush(yield);
+    auto copyRes = waitForStatus(yield, PGRES_COPY_IN);
+    if (!copyRes || copyRes.status() != PGRES_COPY_IN)
     {
         std::stringstream ss;
         ss << "bulkInsert to " << table
-           << ". PQputCopyData error: " << PQerrorMessage(conn_.get());
-        disconnect();
+           << ". Postgres insert error: " << copyRes.msg();
+        if (res)
+            ss << ". CopyPut status not PGRES_COPY_IN: " << copyRes.status();
         BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 
-    if (PQputCopyEnd(conn_.get(), nullptr) == -1)
+    std::int32_t copyEnd = 0;
+    while (copyEnd == 0)
+    {
+        copyEnd = PQputCopyEnd(conn_.get(), nullptr);
+        
+        if (copyEnd == -1)
+        {
+            std::stringstream ss;
+            ss << "bulkInsert to " << table
+            << ". PQputCopyEnd error: " << PQerrorMessage(conn_.get());
+            disconnect();
+            BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
+            throw std::runtime_error(ss.str());
+        }
+            
+        // If the value is zero, wait for write-ready and try again.
+        if (copyEnd == 0)
+            socket.async_wait(boost::asio::ip::tcp::socket::wait_write,
+                yield);
+    }
+
+    flush(yield);
+    auto endRes = waitForStatus(yield, PGRES_COMMAND_OK);
+    
+    if (!endRes || endRes.status() != PGRES_COMMAND_OK)
     {
         std::stringstream ss;
         ss << "bulkInsert to " << table
-           << ". PQputCopyEnd error: " << PQerrorMessage(conn_.get());
-        disconnect();
+           << ". Postgres insert error: " << endRes.msg();
+        if (res)
+            ss << ". CopyEnd status not PGRES_COMMAND_OK: " << endRes.status();
         BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
 
-    // The result object must be freed using the libpq API PQclear() call.
-    pg_result_type copyEndResult{
-        nullptr, [](PGresult* result) { PQclear(result); }};
-    copyEndResult.reset(PQgetResult(conn_.get()));
-    ExecStatusType status = PQresultStatus(copyEndResult.get());
-    if (status != PGRES_COMMAND_OK)
+    pg_result_type finalRes {PQgetResult(conn_.get()),
+            [](PGresult *result)
+            { PQclear(result); }};
+    
+    if (finalRes)
     {
         std::stringstream ss;
         ss << "bulkInsert to " << table
-           << ". PQputCopyEnd status not PGRES_COMMAND_OK: " << status
-           << " message = " << PQerrorMessage(conn_.get());
-        disconnect();
+           << ". Postgres insert error: " << res.msg();
+        if (res)
+            ss << ". Query status not NULL: " << res.status();
         BOOST_LOG_TRIVIAL(error) << __func__ << " " << records;
         throw std::runtime_error(ss.str());
     }
@@ -311,7 +570,9 @@ Pg::clear()
 
 //-----------------------------------------------------------------------------
 
-PgPool::PgPool(boost::json::object const& config)
+PgPool::PgPool(
+    boost::asio::io_context& ioc,
+    boost::json::object const& config) : ioc_(ioc)
 {
     // Make sure that boost::asio initializes the SSL library.
     {
@@ -477,7 +738,7 @@ PgPool::PgPool(boost::json::object const& config)
     config_.valuesIdx.push_back(nullptr);
 
     if (config.contains("max_connections"))
-        config_.max_connections = config.at("max_connections").as_uint64();
+        config_.max_connections = config.at("max_connections").as_int64();
     std::size_t timeout;
     if (config.contains("timeout"))
         config_.timeout =
@@ -563,7 +824,7 @@ PgPool::checkout()
         else if (connections_ < config_.max_connections)
         {
             ++connections_;
-            ret = std::make_unique<Pg>(config_, stop_, mutex_);
+            ret = std::make_unique<Pg>(config_, ioc_, stop_, mutex_);
         }
         // Otherwise, wait until a connection becomes available or we stop.
         else
@@ -600,11 +861,11 @@ PgPool::checkin(std::unique_ptr<Pg>& pg)
 //-----------------------------------------------------------------------------
 
 std::shared_ptr<PgPool>
-make_PgPool(boost::json::object const& config)
+make_PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
 {
     try
     {
-        auto ret = std::make_shared<PgPool>(config);
+        auto ret = std::make_shared<PgPool>(ioc, config);
         ret->setup();
         return ret;
     }
@@ -612,13 +873,15 @@ make_PgPool(boost::json::object const& config)
     {
         boost::json::object configCopy = config;
         configCopy["database"] = "postgres";
-        auto ret = std::make_shared<PgPool>(configCopy);
+        auto ret = std::make_shared<PgPool>(ioc, configCopy);
         ret->setup();
-        PgQuery pgQuery{ret};
+
+        PgQuerySync pgQuery{ret->config()};
         std::string query = "CREATE DATABASE " +
             std::string{config.at("database").as_string().c_str()};
         pgQuery(query.c_str());
-        ret = std::make_shared<PgPool>(config);
+        ret = std::make_shared<PgPool>(ioc, config);
+
         ret->setup();
         return ret;
     }
@@ -767,7 +1030,7 @@ CREATE TABLE IF NOT EXISTS ledgers (
 
 CREATE TABLE IF NOT EXISTS objects (
     key bytea NOT NULL,
-    ledger_seq bigint NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    ledger_seq bigint NOT NULL,
     object bytea
 ) PARTITION BY RANGE (ledger_seq);
 
@@ -1295,7 +1558,7 @@ std::array<char const*, LATEST_SCHEMA_VERSION> upgrade_schemata = {
  */
 void
 applySchema(
-    std::shared_ptr<PgPool> const& pool,
+    PgConfig const& config,
     char const* schema,
     std::uint32_t currentVersion,
     std::uint32_t schemaVersion)
@@ -1310,7 +1573,7 @@ applySchema(
         throw std::runtime_error(ss.str());
     }
 
-    auto res = PgQuery(pool)({schema, {}});
+    auto res = PgQuerySync(config)(schema);
     if (!res)
     {
         std::stringstream ss;
@@ -1320,7 +1583,7 @@ applySchema(
     }
 
     auto cmd = boost::format(R"(SELECT set_schema_version(%u, 0))");
-    res = PgQuery(pool)({boost::str(cmd % schemaVersion).c_str(), {}});
+    res = PgQuerySync(config)(boost::str(cmd % schemaVersion).c_str());
     if (!res)
     {
         std::stringstream ss;
@@ -1331,9 +1594,9 @@ applySchema(
 }
 
 void
-initAccountTx(std::shared_ptr<PgPool> const& pool)
+initAccountTx(PgConfig const& config)
 {
-    auto res = PgQuery(pool)(accountTxSchema);
+    auto res = PgQuerySync(config)(accountTxSchema);
     if (!res)
     {
         std::stringstream ss;
@@ -1343,10 +1606,105 @@ initAccountTx(std::shared_ptr<PgPool> const& pool)
 }
 
 void
-initSchema(std::shared_ptr<PgPool> const& pool)
+PgQuerySync::disconnect()
+{
+    conn_.reset();
+}
+
+void
+PgQuerySync::connect()
+{
+    if (conn_)
+    {
+        // Nothing to do if we already have a good connection.
+        if (PQstatus(conn_.get()) == CONNECTION_OK)
+            return;
+        /* Try resetting connection. */
+        PQreset(conn_.get());
+    }
+    else  // Make new connection.
+    {
+        conn_.reset(PQconnectdbParams(
+            reinterpret_cast<char const* const*>(&config_.keywordsIdx[0]),
+            reinterpret_cast<char const* const*>(&config_.valuesIdx[0]),
+            0));
+        if (!conn_)
+            throw std::runtime_error("No db connection struct");
+    }
+
+    /** Results from a synchronous connection attempt can only be either
+     * CONNECTION_OK or CONNECTION_BAD. */
+    if (PQstatus(conn_.get()) == CONNECTION_BAD)
+    {
+        std::stringstream ss;
+        ss << "DB connection status " << PQstatus(conn_.get()) << ": "
+           << PQerrorMessage(conn_.get());
+        throw std::runtime_error(ss.str());
+    }
+
+    // Log server session console messages.
+    PQsetNoticeReceiver(conn_.get(), noticeReceiver, nullptr);
+}
+
+PgResult
+PgQuerySync::operator()(char const* command)
+{
+    // The result object must be freed using the libpq API PQclear() call.
+    pg_result_type ret{nullptr, [](PGresult* result) { PQclear(result); }};
+    // Connect then submit query.
+    while (true)
+    {
+        try
+        {
+            connect();
+
+            // PQexec can process multiple commands separated by
+            // semi-colons. Returns the response from the last
+            // command processed.
+            ret.reset(PQexec(conn_.get(), command));
+            
+            if (!ret)
+                throw std::runtime_error("no result structure returned");
+            break;
+        }
+        catch (std::exception const& e)
+        {
+            // Sever connection and retry until successful.
+            disconnect();
+            BOOST_LOG_TRIVIAL(error)
+                << "database error, retrying: " << e.what();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }
+
+    // Ensure proper query execution.
+    switch (PQresultStatus(ret.get()))
+    {
+        case PGRES_TUPLES_OK:
+        case PGRES_COMMAND_OK:
+            break;
+        default: {
+            std::stringstream ss;
+            ss << "bad query result: " << PQresStatus(PQresultStatus(ret.get()))
+               << " error message: " << PQerrorMessage(conn_.get())
+               << ", number of tuples: " << PQntuples(ret.get())
+               << ", number of fields: " << PQnfields(ret.get());
+            BOOST_LOG_TRIVIAL(error) << ss.str();
+            PgResult retRes(ret.get(), conn_.get());
+            disconnect();
+
+            return retRes;
+        }
+    }
+
+    return PgResult(std::move(ret));
+}
+
+void
+initSchema(PgConfig const& config)
 {
     // Figure out what schema version, if any, is already installed.
-    auto res = PgQuery(pool)({version_query, {}});
+    auto res = PgQuerySync(config)(version_query);
     if (!res)
     {
         std::stringstream ss;
@@ -1370,7 +1728,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
         // This protects against corruption in an aborted install that is
         // followed by a fresh installation attempt with a new schema.
         auto cmd = boost::format(R"(SELECT set_schema_version(0, %u))");
-        res = PgQuery(pool)({boost::str(cmd % freshVersion).c_str(), {}});
+        res = PgQuerySync(config)(boost::str(cmd % freshVersion).c_str());
         if (!res)
         {
             std::stringstream ss;
@@ -1381,7 +1739,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
 
         // Install the full latest schema.
         applySchema(
-            pool,
+            config,
             full_schemata[freshVersion],
             currentSchemaVersion,
             freshVersion);
@@ -1392,7 +1750,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
     for (; currentSchemaVersion < LATEST_SCHEMA_VERSION; ++currentSchemaVersion)
     {
         applySchema(
-            pool,
+            config,
             upgrade_schemata[currentSchemaVersion],
             currentSchemaVersion,
             currentSchemaVersion + 1);
@@ -1405,6 +1763,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
 // @return LedgerInfo
 std::optional<ripple::LedgerInfo>
 getLedger(
+    boost::asio::yield_context yield,
     std::variant<std::monostate, ripple::uint256, uint32_t> const& whichLedger,
     std::shared_ptr<PgPool>& pgPool)
 {
@@ -1432,7 +1791,7 @@ getLedger(
 
     BOOST_LOG_TRIVIAL(trace) << __func__ << " : sql = " << sql.str();
 
-    auto res = PgQuery(pgPool)(sql.str().data());
+    auto res = PgQuery(pgPool)(sql.str().data(), yield);
     if (!res)
     {
         BOOST_LOG_TRIVIAL(error)

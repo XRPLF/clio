@@ -1,3 +1,11 @@
+#include <grpc/impl/codegen/port_platform.h>
+#ifdef GRPC_TSAN_ENABLED
+#  undef GRPC_TSAN_ENABLED
+#endif
+#ifdef GRPC_ASAN_ENABLED
+#  undef GRPC_ASAN_ENABLED
+#endif
+
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/websocket.hpp>
@@ -144,7 +152,9 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
     std::vector<std::thread> v;
     v.reserve(numThreads - 1);
     for (auto i = numThreads - 1; i > 0; --i)
-        v.emplace_back([&ioc] { ioc.run(); });
+        v.emplace_back([&ioc] { 
+            ioc.run(); 
+        });
 
     ioc.run();
 }
@@ -195,7 +205,8 @@ main(int argc, char* argv[])
     DOSGuard dosGuard{config.value(), ioc};
 
     // Interface to the database
-    std::shared_ptr<BackendInterface> backend{Backend::make_Backend(*config)};
+    std::shared_ptr<BackendInterface> backend{
+        Backend::make_Backend(ioc, *config)};
 
     // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{

@@ -3,6 +3,7 @@
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
@@ -59,139 +60,6 @@ httpFail(boost::beast::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
-// This function produces an HTTP response for the given
-// request. The type of the response object depends on the
-// contents of the request, so the interface requires the
-// caller to pass a generic lambda for receiving the response.
-template <class Body, class Allocator, class Send>
-void
-handle_request(
-    boost::beast::http::
-        request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
-    Send&& send,
-    std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    std::string const& ip)
-{
-    auto const httpResponse = [&req](
-                                  http::status status,
-                                  std::string content_type,
-                                  std::string message) {
-        http::response<http::string_body> res{status, req.version()};
-        res.set(http::field::server, "xrpl-reporting-server-v0.0.0");
-        res.set(http::field::content_type, content_type);
-        res.keep_alive(req.keep_alive());
-        res.body() = std::string(message);
-        res.prepare_payload();
-        return res;
-    };
-
-    if (req.method() == http::verb::get && req.body() == "")
-    {
-        send(httpResponse(http::status::ok, "text/html", defaultResponse));
-        return;
-    }
-
-    if (req.method() != http::verb::post)
-        return send(httpResponse(
-            http::status::bad_request, "text/html", "Expected a POST request"));
-
-    if (!dosGuard.isOk(ip))
-        return send(httpResponse(
-            http::status::ok,
-            "application/json",
-            boost::json::serialize(RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
-
-    try
-    {
-        BOOST_LOG_TRIVIAL(info) << "Received request: " << req.body();
-
-        boost::json::object request;
-        std::string responseStr = "";
-        try
-        {
-            request = boost::json::parse(req.body()).as_object();
-            
-            if (!request.contains("params"))
-                request["params"] = boost::json::array({ boost::json::object {} });
-        }
-        catch (std::runtime_error const& e)
-        {
-            return send(httpResponse(
-                http::status::ok,
-                "application/json",
-                boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
-        }
-
-        auto range = backend->fetchLedgerRange();
-        if (!range)
-            return send(httpResponse(
-                http::status::ok,
-                "application/json",
-                boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcNOT_READY))));
-
-        std::optional<RPC::Context> context =
-            RPC::make_HttpContext(request, backend, nullptr, balancer, *range, counters, ip);
-
-        if (!context)
-            return send(httpResponse(
-                http::status::ok,
-                "application/json",
-                boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
-
-        boost::json::object response{{"result", boost::json::object{}}};
-        boost::json::object& result = response["result"].as_object();
-        
-        auto start = std::chrono::system_clock::now();
-        auto v = RPC::buildResponse(*context);
-        auto end = std::chrono::system_clock::now();
-        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-            end - start);
-
-        if (auto status = std::get_if<RPC::Status>(&v))
-        {
-            counters.rpcErrored(context->method);
-            auto error = RPC::make_error(*status);
-
-            error["request"] = request;
-
-            result = error;
-
-            responseStr = boost::json::serialize(response);
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " Encountered error: " << responseStr;
-        }
-        else
-        {
-            counters.rpcComplete(context->method, us);
-            result = std::get<boost::json::object>(v);
-            result["status"] = "success";
-            result["validated"] = true;
-
-            responseStr = boost::json::serialize(response);
-        }
-
-        dosGuard.add(ip, responseStr.size());
-
-        return send(
-            httpResponse(http::status::ok, "application/json", responseStr));
-    }
-    catch (std::exception const& e)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " Caught exception : " << e.what();
-        return send(httpResponse(
-            http::status::internal_server_error,
-            "application/json",
-            boost::json::serialize(RPC::make_error(RPC::Error::rpcINTERNAL))));
-    }
-}
-
 // From Boost Beast examples http_server_flex.cpp
 template <class Derived>
 class HttpBase
@@ -237,6 +105,7 @@ class HttpBase
         }
     };
 
+    boost::asio::io_context& ioc_;
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
     std::shared_ptr<BackendInterface const> backend_;
@@ -251,13 +120,15 @@ protected:
 
 public:
     HttpBase(
+        boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
-        : backend_(backend)
+        : ioc_(ioc)
+        , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
@@ -316,16 +187,27 @@ public:
         }
 
         auto ip = derived().ip();
+        auto session = derived().shared_from_this();
 
-        // Send the response
-        handle_request(
-            std::move(req_),
-            lambda_,
-            backend_,
-            balancer_, 
-            dosGuard_,
-            counters_,
-            ip);
+
+        // Requests are handed using coroutines. Here we spawn a coroutine 
+        // which will asynchronously handle a request.
+        boost::asio::spawn(
+            ioc_,
+            [this, ip, session]
+                (boost::asio::yield_context yc)
+            {
+                handle_request(
+                    yc,
+                    std::move(req_),
+                    lambda_,
+                    backend_,
+                    balancer_,
+                    dosGuard_,
+                    counters_, 
+                    ip,
+                    session);
+            });
     }
 
     void
@@ -353,5 +235,150 @@ public:
         do_read();
     }
 };
+
+// This function produces an HTTP response for the given
+// request. The type of the response object depends on the
+// contents of the request, so the interface requires the
+// caller to pass a generic lambda for receiving the response.
+template <class Body, class Allocator, class Send, class Session>
+void
+handle_request(
+    boost::asio::yield_context& yc,
+    boost::beast::http::
+        request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
+    Send&& send,
+    std::shared_ptr<BackendInterface const> backend,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    DOSGuard& dosGuard,
+    RPC::Counters& counters,
+    std::string const& ip,
+    std::shared_ptr<Session> http)
+{
+    auto const httpResponse = [&req](
+                                  http::status status,
+                                  std::string content_type,
+                                  std::string message) {
+        http::response<http::string_body> res{status, req.version()};
+        res.set(http::field::server, "xrpl-reporting-server-v0.0.0");
+        res.set(http::field::content_type, content_type);
+        res.keep_alive(req.keep_alive());
+        res.body() = std::string(message);
+        res.prepare_payload();
+        return res;
+    };
+
+    if (req.method() == http::verb::get && req.body() == "")
+    {
+        send(httpResponse(http::status::ok, "text/html", defaultResponse));
+        return;
+    }
+
+    if (req.method() != http::verb::post)
+        return send(httpResponse(
+            http::status::bad_request, "text/html", "Expected a POST request"));
+
+    if (!dosGuard.isOk(ip))
+        return send(httpResponse(
+            http::status::ok,
+            "application/json",
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
+
+    try
+    {
+        BOOST_LOG_TRIVIAL(info) << "Received request: " << req.body();
+
+        boost::json::object request;
+        std::string responseStr = "";
+        try
+        {
+            request = boost::json::parse(req.body()).as_object();
+            
+            if (!request.contains("params"))
+                request["params"] = boost::json::array({ boost::json::object {} });
+        }
+        catch (std::runtime_error const& e)
+        {
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(
+                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+        }
+
+        if (!dosGuard.isOk(ip))
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(
+                    RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
+
+        auto range = backend->fetchLedgerRange();
+        if (!range)
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(
+                    RPC::make_error(RPC::Error::rpcNOT_READY))));
+
+        std::optional<RPC::Context> context =
+            RPC::make_HttpContext(
+                yc,
+                request,
+                backend,
+                nullptr,
+                balancer,
+                *range,
+                counters,
+                ip);
+
+        if (!context)
+            return send(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(
+                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+
+        boost::json::object response{{"result", boost::json::object{}}};
+        boost::json::object& result = response["result"].as_object();
+
+        auto v = RPC::buildResponse(*context);
+
+        if (auto status = std::get_if<RPC::Status>(&v))
+        {
+            auto error = RPC::make_error(*status);
+
+            error["request"] = request;
+
+            result = error;
+
+            responseStr = boost::json::serialize(response);
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " Encountered error: " << responseStr;
+        }
+        else
+        {
+            result = std::get<boost::json::object>(v);
+            result["status"] = "success";
+            result["validated"] = true;
+
+            responseStr = boost::json::serialize(response);
+        }
+
+        if (!dosGuard.add(ip, responseStr.size()))
+            result["warning"] = "Too many requests";
+
+        return send(
+            httpResponse(http::status::ok, "application/json", responseStr));
+    }
+    catch (std::exception const& e)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " Caught exception : " << e.what();
+        return send(httpResponse(
+            http::status::internal_server_error,
+            "application/json",
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcINTERNAL))));
+    }
+}
 
 #endif  // RIPPLE_REPORTING_HTTP_BASE_SESSION_H

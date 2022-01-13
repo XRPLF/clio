@@ -136,6 +136,7 @@ doAccountOffers(Context const& context)
             *accountID,
             lgrInfo.seq,
             cursor,
+            context.yield,
             addToResponse);
 
     if (nextCursor)

@@ -2,29 +2,29 @@
 #include <backend/DBHelpers.h>
 #include <memory>
 
-static bool
-writeToLedgersDB(ripple::LedgerInfo const& info, PgQuery& pgQuery)
-{
-    BOOST_LOG_TRIVIAL(debug) << __func__;
-    auto cmd = boost::format(
-        R"(INSERT INTO ledgers
-           VALUES (%u,'\x%s', '\x%s',%u,%u,%u,%u,%u,'\x%s','\x%s'))");
+// static bool
+// writeToLedgersDB(boost::asio::yield_context yield, ripple::LedgerInfo const& info, PgQuery& pgQuery)
+// {
+//     BOOST_LOG_TRIVIAL(debug) << __func__;
+//     auto cmd = boost::format(
+//         R"(INSERT INTO ledgers
+//            VALUES (%u,'\x%s', '\x%s',%u,%u,%u,%u,%u,'\x%s','\x%s'))");
 
-    auto ledgerInsert = boost::str(
-        cmd % info.seq % ripple::strHex(info.hash) %
-        ripple::strHex(info.parentHash) % info.drops.drops() %
-        info.closeTime.time_since_epoch().count() %
-        info.parentCloseTime.time_since_epoch().count() %
-        info.closeTimeResolution.count() % info.closeFlags %
-        ripple::strHex(info.accountHash) % ripple::strHex(info.txHash));
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
-                             << " : "
-                             << "query string = " << ledgerInsert;
+//     auto ledgerInsert = boost::str(
+//         cmd % info.seq % ripple::strHex(info.hash) %
+//         ripple::strHex(info.parentHash) % info.drops.drops() %
+//         info.closeTime.time_since_epoch().count() %
+//         info.parentCloseTime.time_since_epoch().count() %
+//         info.closeTimeResolution.count() % info.closeFlags %
+//         ripple::strHex(info.accountHash) % ripple::strHex(info.txHash));
+//     BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
+//                              << " : "
+//                              << "query string = " << ledgerInsert;
 
-    auto res = pgQuery(ledgerInsert.data());
+//     auto res = pgQuery(yield, ledgerInsert.data());
 
-    return res;
-}
+//     return res;
+// }
 
 /*
 bool

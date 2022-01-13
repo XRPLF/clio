@@ -53,10 +53,14 @@ public:
     loadInitialLedger(
         uint32_t sequence,
         std::uint32_t numMarkers,
-        bool cacheOnly = false) = 0;
+        bool cacheOnly,
+        boost::asio::yield_context& yield) = 0;
 
     virtual std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const = 0;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual ~ETLSource()
     {
@@ -286,7 +290,8 @@ public:
     loadInitialLedger(
         std::uint32_t ledgerSequence,
         std::uint32_t numMarkers,
-        bool cacheOnly = false) override;
+        bool cacheOnly,
+        boost::asio::yield_context& yield) override;
 
     /// Attempt to reconnect to the ETL source
     void
@@ -323,7 +328,10 @@ public:
     handleMessage();
 
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const override;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const override;
 };
 
 class PlainETLSource : public ETLSourceImpl<PlainETLSource>
@@ -497,7 +505,10 @@ public:
     /// Load the initial ledger, writing data to the queue
     /// @param sequence sequence of ledger to download
     void
-    loadInitialLedger(uint32_t sequence, bool cacheOnly = false);
+    loadInitialLedger(
+        std::uint32_t sequence,
+        bool cacheOnly,
+        boost::asio::yield_context& yield);
 
     /// Fetch data for a specific ledger. This function will continuously try
     /// to fetch data for the specified ledger until the fetch succeeds, the
@@ -556,7 +567,10 @@ public:
     /// @param request JSON-RPC request
     /// @return response received from rippled node
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const;
+    forwardToRippled(
+        boost::json::object const& request, 
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

@@ -1,10 +1,13 @@
 #include <etl/ETLSource.h>
 #include <rpc/Handlers.h>
 #include <unordered_map>
+#include <boost/asio/spawn.hpp>
+
 namespace RPC {
 
 std::optional<Context>
 make_WsContext(
+    boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
@@ -20,6 +23,7 @@ make_WsContext(
     std::string command = request.at("command").as_string().c_str();
 
     return Context{
+        yc,
         command,
         1,
         request,
@@ -34,6 +38,7 @@ make_WsContext(
 
 std::optional<Context>
 make_HttpContext(
+    boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
@@ -62,6 +67,7 @@ make_HttpContext(
         return {};
 
     return Context{
+        yc,
         command,
         1,
         array.at(0).as_object(),
@@ -169,7 +175,8 @@ buildResponse(Context const& ctx)
         boost::json::object toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res = ctx.balancer->forwardToRippled(toForward, ctx.clientIp);
+        auto res = 
+            ctx.balancer->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
 
         ctx.counters.rpcForwarded(ctx.method);
 

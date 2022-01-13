@@ -145,7 +145,9 @@ private:
     /// @return The ledger downloaded, with a full transaction and account state
     /// map
     std::optional<ripple::LedgerInfo>
-    loadInitialLedger(uint32_t sequence);
+    loadInitialLedger(
+        uint32_t sequence,
+        boost::asio::yield_context& yield);
 
     /// Run ETL. Extracts ledgers and writes them to the database, until a write
     /// conflict occurs (or the server shuts down).
@@ -153,7 +155,10 @@ private:
     /// @param startSequence the first ledger to extract
     /// @return the last ledger written to the database, if any
     std::optional<uint32_t>
-    runETLPipeline(uint32_t startSequence, int offset);
+    runETLPipeline(
+        uint32_t startSequence,
+        int offset,
+        boost::asio::yield_context& yield);
 
     /// Monitor the network for newly validated ledgers. Also monitor the
     /// database to see if any process is writing those ledgers. This function
@@ -164,14 +169,14 @@ private:
     /// runETLPipeline(). Otherwise, this function publishes ledgers as they are
     /// written to the database.
     void
-    monitor();
+    monitor(boost::asio::yield_context& yield);
 
     /// Monitor the database for newly written ledgers.
     /// Similar to the monitor(), except this function will never call
     /// runETLPipeline() or loadInitialLedger(). This function only publishes
     /// ledgers as they are written to the database.
     void
-    monitorReadOnly();
+    monitorReadOnly(boost::asio::yield_context& yield);
 
     /// Extract data for a particular ledger from an ETL source. This function
     /// continously tries to extract the specified ledger (using all available
@@ -202,7 +207,8 @@ private:
     std::vector<AccountTransactionsData>
     insertTransactions(
         ripple::LedgerInfo const& ledger,
-        org::xrpl::rpc::v1::GetLedgerResponse& data);
+        org::xrpl::rpc::v1::GetLedgerResponse& data,
+        boost::asio::yield_context& yield);
 
     // TODO update this documentation
     /// Build the next ledger using the previous ledger and the extracted data.
@@ -213,7 +219,9 @@ private:
     /// @param rawData data extracted from an ETL source
     /// @return the newly built ledger and data to write to Postgres
     std::pair<ripple::LedgerInfo, bool>
-    buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData);
+    buildNextLedger(
+        org::xrpl::rpc::v1::GetLedgerResponse& rawData,
+        boost::asio::yield_context& yield);
 
     /// Attempt to read the specified ledger from the database, and then publish
     /// that ledger to the ledgers stream.
@@ -222,12 +230,17 @@ private:
     /// from the database. 1 attempt per second
     /// @return whether the ledger was found in the database and published
     bool
-    publishLedger(uint32_t ledgerSequence, std::optional<uint32_t> maxAttempts);
+    publishLedger(
+        uint32_t ledgerSequence,
+        std::optional<uint32_t> maxAttempts,
+        boost::asio::yield_context& yield);
 
     /// Publish the passed in ledger
     /// @param ledger the ledger to publish
     void
-    publishLedger(ripple::LedgerInfo const& lgrInfo);
+    publishLedger(
+        ripple::LedgerInfo const& lgrInfo,
+        boost::asio::yield_context& yield);
 
     bool
     isStopping()
