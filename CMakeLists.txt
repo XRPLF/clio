@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(clio VERSION 0.1.0)
 
+option(BUILD_TESTS "Build tests" TRUE)
+
 option(VERBOSE "Verbose build" TRUE)
 if(VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -76,7 +78,9 @@ target_sources(clio PRIVATE
 add_executable(clio_server src/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
-add_executable(clio_tests unittests/main.cpp)
+if(BUILD_TESTS)
+  add_executable(clio_tests unittests/main.cpp)
+  include(CMake/deps/gtest.cmake)
+endif()
 
-include(CMake/deps/gtest.cmake)
 include(CMake/install/install.cmake)
