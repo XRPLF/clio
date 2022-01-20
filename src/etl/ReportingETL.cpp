@@ -935,4 +935,3 @@ ReportingETL::ReportingETL(
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
 }
-

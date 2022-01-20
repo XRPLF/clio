@@ -63,4 +63,4 @@ parse_certs(const char* certFilename, const char* keyFilename)
     return ctx;
 }
 
-# endif // REPORTING_SSL_H
+#endif  // REPORTING_SSL_H

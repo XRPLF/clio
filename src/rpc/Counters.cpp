@@ -1,14 +1,13 @@
 #include <rpc/Counters.h>
 
-namespace RPC
-{
+namespace RPC {
 
 void
 Counters::initializeCounter(std::string const& method)
 {
     std::shared_lock lk(mutex_);
-    if(methodInfo_.count(method) == 0)
-    {        
+    if (methodInfo_.count(method) == 0)
+    {
         lk.unlock();
         std::unique_lock ulk(mutex_);
 
@@ -57,7 +56,7 @@ Counters::report()
 {
     std::shared_lock lk(mutex_);
     boost::json::object obj = {};
-    
+
     for (auto const& [method, info] : methodInfo_)
     {
         boost::json::object counters = {};
@@ -73,4 +72,4 @@ Counters::report()
     return obj;
 }
 
-} // namespace RPC
+}  // namespace RPC

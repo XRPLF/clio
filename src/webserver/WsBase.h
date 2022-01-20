@@ -9,10 +9,10 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <rpc/RPC.h>
-#include <webserver/DOSGuard.h>
 #include <rpc/Counters.h>
+#include <rpc/RPC.h>
 #include <subscriptions/SubscriptionManager.h>
+#include <webserver/DOSGuard.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -259,7 +259,7 @@ public:
                     auto start = std::chrono::system_clock::now();
                     auto v = RPC::buildResponse(*context);
                     auto end = std::chrono::system_clock::now();
-                    auto us = 
+                    auto us =
                         std::chrono::duration_cast<std::chrono::microseconds>(
                             end - start);
 

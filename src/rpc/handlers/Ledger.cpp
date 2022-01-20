@@ -1,7 +1,6 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
-
 namespace RPC {
 
 Result
@@ -97,7 +96,7 @@ doLedger(Context const& context)
                         entry["tx_blob"] = ripple::strHex(obj.transaction);
                         entry["meta"] = ripple::strHex(obj.metadata);
                     }
-                    //entry["ledger_index"] = obj.ledgerSequence;
+                    // entry["ledger_index"] = obj.ledgerSequence;
                     return entry;
                 });
         }

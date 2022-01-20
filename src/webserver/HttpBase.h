@@ -17,10 +17,10 @@
 #include <string>
 #include <thread>
 
+#include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
-#include <rpc/Counters.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -113,9 +113,9 @@ handle_request(
         try
         {
             request = boost::json::parse(req.body()).as_object();
-            
+
             if (!request.contains("params"))
-                request["params"] = boost::json::array({ boost::json::object {} });
+                request["params"] = boost::json::array({boost::json::object{}});
         }
         catch (std::runtime_error const& e)
         {
@@ -134,8 +134,8 @@ handle_request(
                 boost::json::serialize(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
 
-        std::optional<RPC::Context> context =
-            RPC::make_HttpContext(request, backend, nullptr, balancer, *range, counters, ip);
+        std::optional<RPC::Context> context = RPC::make_HttpContext(
+            request, backend, nullptr, balancer, *range, counters, ip);
 
         if (!context)
             return send(httpResponse(
@@ -146,12 +146,12 @@ handle_request(
 
         boost::json::object response{{"result", boost::json::object{}}};
         boost::json::object& result = response["result"].as_object();
-        
+
         auto start = std::chrono::system_clock::now();
         auto v = RPC::buildResponse(*context);
         auto end = std::chrono::system_clock::now();
-        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-            end - start);
+        auto us =
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
         if (auto status = std::get_if<RPC::Status>(&v))
         {
@@ -322,7 +322,7 @@ public:
             std::move(req_),
             lambda_,
             backend_,
-            balancer_, 
+            balancer_,
             dosGuard_,
             counters_,
             ip);

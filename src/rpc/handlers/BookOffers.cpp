@@ -14,7 +14,6 @@
 
 namespace RPC {
 
-
 Result
 doBookOffers(Context const& context)
 {

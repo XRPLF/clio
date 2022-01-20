@@ -36,12 +36,12 @@ public:
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
         : WsSession(
-            backend,
-            subscriptions,
-            balancer,
-            dosGuard,
-            counters,
-            std::move(b))
+              backend,
+              subscriptions,
+              balancer,
+              dosGuard,
+              counters,
+              std::move(b))
         , ws_(std::move(stream))
     {
     }

@@ -4,8 +4,8 @@
 #include <ripple/protocol/ErrorCodes.h>
 #include <boost/json.hpp>
 #include <backend/BackendInterface.h>
-#include <rpc/Counters.h>
 #include <optional>
+#include <rpc/Counters.h>
 #include <string>
 #include <variant>
 /*
