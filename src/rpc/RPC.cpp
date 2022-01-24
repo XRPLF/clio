@@ -181,7 +181,7 @@ buildResponse(Context const& ctx)
 
         return *res;
     }
-    
+
     if (ctx.method == "ping")
         return boost::json::object{};
 

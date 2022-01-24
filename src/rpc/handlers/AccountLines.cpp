@@ -1,5 +1,5 @@
-#include <ripple/app/paths/RippleState.h>
 #include <ripple/app/ledger/Ledger.h>
+#include <ripple/app/paths/RippleState.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -8,13 +8,11 @@
 #include <boost/json.hpp>
 
 #include <algorithm>
-#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
+#include <rpc/RPCHelpers.h>
 
-
-namespace RPC
-{
+namespace RPC {
 
 void
 addLine(
@@ -47,13 +45,19 @@ addLine(
     if (!viewLowest)
         balance.negate();
 
-    bool lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineAuthPeer = flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineAuth =
+        flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineAuthPeer =
+        flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineNoRipple =
+        flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
     bool lineDefaultRipple = flags & ripple::lsfDefaultRipple;
-    bool lineNoRipplePeer = flags & (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool lineFreezePeer = flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineNoRipplePeer = flags &
+        (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineFreeze =
+        flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineFreezePeer =
+        flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
 
     ripple::STAmount const& saBalance(balance);
     ripple::STAmount const& saLimit(lineLimit);
@@ -83,7 +87,7 @@ addLine(
     jsonLines.push_back(jPeer);
 }
 
-Result 
+Result
 doAccountLines(Context const& context)
 {
     auto request = context.params;
@@ -95,13 +99,13 @@ doAccountLines(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
         return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
         return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-    
-    auto accountID = 
+
+    auto accountID =
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
@@ -113,8 +117,8 @@ doAccountLines(Context const& context)
         if (!request.at("peer").is_string())
             return Status{Error::rpcINVALID_PARAMS, "peerNotString"};
 
-        peerAccount = accountFromStringStrict(
-            request.at("peer").as_string().c_str());
+        peerAccount =
+            accountFromStringStrict(request.at("peer").as_string().c_str());
 
         if (!peerAccount)
             return Status{Error::rpcINVALID_PARAMS, "peerMalformed"};
@@ -123,7 +127,7 @@ doAccountLines(Context const& context)
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
 
         limit = request.at("limit").as_int64();
@@ -134,7 +138,7 @@ doAccountLines(Context const& context)
     ripple::uint256 cursor;
     if (request.contains("cursor"))
     {
-        if(!request.at("cursor").is_string())
+        if (!request.at("cursor").is_string())
             return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
 
         if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
@@ -154,20 +158,15 @@ doAccountLines(Context const& context)
             {
                 return false;
             }
-            
+
             addLine(jsonLines, sle, *accountID, peerAccount);
         }
 
         return true;
     };
 
-    auto nextCursor = 
-        traverseOwnedNodes(
-            *context.backend,
-            *accountID,
-            lgrInfo.seq,
-            cursor,
-            addToResponse);
+    auto nextCursor = traverseOwnedNodes(
+        *context.backend, *accountID, lgrInfo.seq, cursor, addToResponse);
 
     if (nextCursor)
         response["marker"] = ripple::strHex(*nextCursor);
@@ -175,4 +174,4 @@ doAccountLines(Context const& context)
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

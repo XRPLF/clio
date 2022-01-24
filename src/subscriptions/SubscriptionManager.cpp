@@ -4,9 +4,12 @@
 
 template <class T>
 inline void
-sendToSubscribers(std::string const& message, T& subscribers, boost::asio::io_context::strand& strand)
+sendToSubscribers(
+    std::string const& message,
+    T& subscribers,
+    boost::asio::io_context::strand& strand)
 {
-    boost::asio::post(strand, [&subscribers, message](){
+    boost::asio::post(strand, [&subscribers, message]() {
         for (auto it = subscribers.begin(); it != subscribers.end();)
         {
             auto& session = *it;
@@ -25,18 +28,24 @@ sendToSubscribers(std::string const& message, T& subscribers, boost::asio::io_co
 
 template <class T>
 inline void
-addSession(std::shared_ptr<WsBase> session, T& subscribers, boost::asio::io_context::strand& strand)
+addSession(
+    std::shared_ptr<WsBase> session,
+    T& subscribers,
+    boost::asio::io_context::strand& strand)
 {
-    boost::asio::post(strand, [&subscribers, s = std::move(session)](){
+    boost::asio::post(strand, [&subscribers, s = std::move(session)]() {
         subscribers.emplace(s);
     });
 }
 
 template <class T>
 inline void
-removeSession(std::shared_ptr<WsBase> session, T& subscribers, boost::asio::io_context::strand& strand)
+removeSession(
+    std::shared_ptr<WsBase> session,
+    T& subscribers,
+    boost::asio::io_context::strand& strand)
 {
-    boost::asio::post(strand, [&subscribers, s = std::move(session)](){
+    boost::asio::post(strand, [&subscribers, s = std::move(session)]() {
         subscribers.erase(s);
     });
 }
@@ -79,9 +88,7 @@ SubscriptionMap<Key>::unsubscribe(
 
 template <class Key>
 void
-SubscriptionMap<Key>::publish(
-    std::string const& message,
-    Key const& account)
+SubscriptionMap<Key>::publish(std::string const& message, Key const& account)
 {
     sendToSubscribers(message, subscribers_[account], strand_);
 }
@@ -114,7 +121,7 @@ boost::json::object
 SubscriptionManager::subLedger(std::shared_ptr<WsBase>& session)
 {
     ledgerSubscribers_.subscribe(session);
-    
+
     auto ledgerRange = backend_->fetchLedgerRange();
     assert(ledgerRange);
     auto lgrInfo = backend_->fetchLedgerBySequence(ledgerRange->maxSequence);
@@ -294,17 +301,17 @@ SubscriptionManager::forwardProposedTransaction(
     auto accounts = RPC::getAccountsFromTransaction(transaction);
 
     for (ripple::AccountID const& account : accounts)
-       accountProposedSubscribers_.publish(pubMsg, account);
+        accountProposedSubscribers_.publish(pubMsg, account);
 }
 
-void 
+void
 SubscriptionManager::forwardManifest(boost::json::object const& response)
 {
     std::string pubMsg{boost::json::serialize(response)};
     manifestSubscribers_.publish(pubMsg);
 }
 
-void 
+void
 SubscriptionManager::forwardValidation(boost::json::object const& response)
 {
     std::string pubMsg{boost::json::serialize(response)};
@@ -362,4 +369,3 @@ SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase>& session)
 {
     txProposedSubscribers_.unsubscribe(session);
 }
-

@@ -84,7 +84,8 @@ doAccountTx(Context const& context)
         {
             if (context.range.maxSequence < min.as_int64() ||
                 context.range.minSequence > min.as_int64())
-                return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+                return Status{
+                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
             else
                 minIndex = value_to<std::uint32_t>(min);
         }
@@ -105,7 +106,8 @@ doAccountTx(Context const& context)
         {
             if (context.range.maxSequence < max.as_int64() ||
                 context.range.minSequence > max.as_int64())
-                return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+                return Status{
+                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
             else
                 maxIndex = value_to<std::uint32_t>(max);
         }

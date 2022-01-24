@@ -234,9 +234,8 @@ BackendInterface::fetchLedgerPage(
     std::vector<ripple::uint256> keys;
     while (keys.size() < limit)
     {
-        ripple::uint256 const& curCursor = keys.size() ? keys.back()
-            : cursor                                   ? *cursor
-                                                       : firstKey;
+        ripple::uint256 const& curCursor =
+            keys.size() ? keys.back() : cursor ? *cursor : firstKey;
         auto succ = fetchSuccessorKey(curCursor, ledgerSequence);
         if (!succ)
             break;

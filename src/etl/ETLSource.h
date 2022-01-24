@@ -56,7 +56,9 @@ public:
         bool cacheOnly = false) = 0;
 
     virtual std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const = 0;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::string const& clientIp) const = 0;
 
     virtual ~ETLSource()
     {
@@ -323,7 +325,9 @@ public:
     handleMessage();
 
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const override;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::string const& clientIp) const override;
 };
 
 class PlainETLSource : public ETLSourceImpl<PlainETLSource>
@@ -556,7 +560,9 @@ public:
     /// @param request JSON-RPC request
     /// @return response received from rippled node
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp) const;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::string const& clientIp) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

@@ -23,15 +23,15 @@ doServerInfo(Context const& context)
         response["info"] = boost::json::object{};
         boost::json::object& info = response["info"].as_object();
 
-        info["complete_ledgers"] =
-            std::to_string(range->minSequence) + "-" +
+        info["complete_ledgers"] = std::to_string(range->minSequence) + "-" +
             std::to_string(range->maxSequence);
 
         info["counters"] = boost::json::object{};
         info["counters"].as_object()["rpc"] = context.counters.report();
     }
 
-    auto serverInfoRippled = context.balancer->forwardToRippled(context.params, context.clientIp);
+    auto serverInfoRippled =
+        context.balancer->forwardToRippled(context.params, context.clientIp);
     if (serverInfoRippled && !serverInfoRippled->contains("error"))
         response["info"].as_object()["load_factor"] = 1;
 

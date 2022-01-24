@@ -1,14 +1,13 @@
 #ifndef RPC_COUNTERS_H
 #define RPC_COUNTERS_H
 
+#include <boost/json.hpp>
 #include <chrono>
 #include <cstdint>
-#include <string>
 #include <shared_mutex>
-#include <boost/json.hpp>
+#include <string>
 
-namespace RPC
-{
+namespace RPC {
 
 class Counters
 {
@@ -23,14 +22,14 @@ private:
         std::atomic_uint forwarded{0};
         std::atomic_uint duration{0};
     };
-    
+
     void
     initializeCounter(std::string const& method);
 
     std::shared_mutex mutex_;
     std::unordered_map<std::string, MethodInfo> methodInfo_;
 
-public: 
+public:
     Counters() = default;
 
     void
@@ -48,6 +47,6 @@ public:
     report();
 };
 
-} // namespace RPCs
+}  // namespace RPC
 
-#endif // RPC_COUNTERS_H
+#endif  // RPC_COUNTERS_H
