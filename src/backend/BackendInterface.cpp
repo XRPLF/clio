@@ -27,17 +27,7 @@ std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
-    while (true)
-    {
-        try
-        {
-            return hardFetchLedgerRange();
-        }
-        catch (DatabaseTimeout& t)
-        {
-            ;
-        }
-    }
+    return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
 }
 // *** state data methods
 std::optional<Blob>

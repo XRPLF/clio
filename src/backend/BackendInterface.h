@@ -5,6 +5,8 @@
 #include <backend/DBHelpers.h>
 #include <backend/SimpleCache.h>
 #include <backend/Types.h>
+#include <thread>
+#include <type_traits>
 namespace Backend {
 
 class DatabaseTimeout : public std::exception
@@ -15,6 +17,25 @@ class DatabaseTimeout : public std::exception
         return "Database read timed out. Please retry the request";
     }
 };
+
+template <class F>
+auto
+retryOnTimeout(F func, size_t waitMs = 500)
+{
+    while (true)
+    {
+        try
+        {
+            return func();
+        }
+        catch (DatabaseTimeout& t)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " function timed out. Retrying ... ";
+        }
+    }
+}
 
 class BackendInterface
 {

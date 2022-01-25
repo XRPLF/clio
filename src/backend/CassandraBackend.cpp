@@ -690,48 +690,39 @@ CassandraBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
     std::optional<ripple::uint256> cursor;
     while (true)
     {
-        try
-        {
-            auto [objects, curCursor, warning] =
-                fetchLedgerPage(cursor, minLedger, 256);
-            if (warning)
-            {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__
-                    << " online delete running but flag ledger is not complete";
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                continue;
-            }
-
-            for (auto& obj : objects)
-            {
-                ++numOutstanding;
-                cbs.push_back(makeAndExecuteBulkAsyncWrite(
-                    this,
-                    std::make_tuple(
-                        std::move(obj.key), minLedger, std::move(obj.blob)),
-                    bind,
-                    numOutstanding,
-                    mtx,
-                    cv));
-
-                std::unique_lock<std::mutex> lck(mtx);
-                BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
-                cv.wait(lck, [&numOutstanding, concurrentLimit]() {
-                    return numOutstanding < concurrentLimit;
-                });
-            }
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
-            cursor = curCursor;
-            if (!cursor)
-                break;
-        }
-        catch (DatabaseTimeout const& e)
+        auto [objects, curCursor, warning] = retryOnTimeout(
+            [&]() { return fetchLedgerPage(cursor, minLedger, 256); });
+        if (warning)
         {
             BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " Database timeout fetching keys";
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+                << __func__
+                << " online delete running but flag ledger is not complete";
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+            continue;
         }
+
+        for (auto& obj : objects)
+        {
+            ++numOutstanding;
+            cbs.push_back(makeAndExecuteBulkAsyncWrite(
+                this,
+                std::make_tuple(
+                    std::move(obj.key), minLedger, std::move(obj.blob)),
+                bind,
+                numOutstanding,
+                mtx,
+                cv));
+
+            std::unique_lock<std::mutex> lck(mtx);
+            BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
+            cv.wait(lck, [&numOutstanding, concurrentLimit]() {
+                return numOutstanding < concurrentLimit;
+            });
+        }
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+        cursor = curCursor;
+        if (!cursor)
+            break;
     }
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&numOutstanding]() { return numOutstanding == 0; });

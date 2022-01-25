@@ -282,6 +282,8 @@ public:
                 catch (Backend::DatabaseTimeout const& t)
                 {
                     BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+                    // TODO this should be a diff error code. Rippled probably
+                    // does not have an analagous error code
                     return sendError(RPC::Error::rpcNOT_READY);
                 }
             }

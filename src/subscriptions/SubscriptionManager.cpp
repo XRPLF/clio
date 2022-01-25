@@ -232,8 +232,11 @@ SubscriptionManager::pubTransaction(
         auto amount = tx->getFieldAmount(ripple::sfTakerGets);
         if (account != amount.issue().account)
         {
-            auto ownerFunds =
-                RPC::accountFunds(*backend_, lgrInfo.seq, amount, account);
+            auto ownerFunds = Backend::retryOnTimeout([&]() {
+                return RPC::accountFunds(
+                    *backend_, lgrInfo.seq, amount, account);
+            });
+
             pubObj["transaction"].as_object()["owner_funds"] =
                 ownerFunds.getText();
         }

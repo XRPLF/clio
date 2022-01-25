@@ -131,37 +131,23 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " - Publishing ledger " << std::to_string(lgrInfo.seq);
+
     if (!writing_)
     {
         BOOST_LOG_TRIVIAL(debug) << __func__ << " - Updating cache";
-        auto diff = backend_->fetchLedgerDiff(lgrInfo.seq);
+        auto diff = Backend::retryOnTimeout(
+            [&]() { return backend_->fetchLedgerDiff(lgrInfo.seq); });
         backend_->cache().update(diff, lgrInfo.seq);
     }
     backend_->updateRange(lgrInfo.seq);
+    auto fees = Backend::retryOnTimeout(
+        [&]() { return backend_->fetchFees(lgrInfo.seq); });
+    auto transactions = Backend::retryOnTimeout(
+        [&]() { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq); });
+
     auto ledgerRange = backend_->fetchLedgerRange();
-
-    std::optional<ripple::Fees> fees;
-    std::vector<Backend::TransactionAndMetadata> transactions;
-    while (true)
-    {
-        try
-        {
-            fees = backend_->fetchFees(lgrInfo.seq);
-            transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
-            break;
-        }
-        catch (Backend::DatabaseTimeout const&)
-        {
-            BOOST_LOG_TRIVIAL(warning) << "Read timeout fetching transactions";
-        }
-    }
-
-    if (!fees || !ledgerRange)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " - could not fetch from database";
-        return;
-    }
+    assert(ledgerRange);
+    assert(fees);
 
     std::string range = std::to_string(ledgerRange->minSequence) + "-" +
         std::to_string(ledgerRange->maxSequence);
@@ -172,7 +158,7 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
         subscriptions_->pubTransaction(txAndMeta, lgrInfo);
 
     setLastPublish();
-    BOOST_LOG_TRIVIAL(debug)
+    BOOST_LOG_TRIVIAL(info)
         << __func__ << " - Published ledger " << std::to_string(lgrInfo.seq);
 }
 
@@ -187,42 +173,36 @@ ReportingETL::publishLedger(
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        try
-        {
-            auto range = backend_->hardFetchLedgerRangeNoThrow();
+        auto range = backend_->hardFetchLedgerRangeNoThrow();
 
-            if (!range || range->maxSequence < ledgerSequence)
+        if (!range || range->maxSequence < ledgerSequence)
+        {
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                                     << "Trying to publish. Could not find "
+                                        "ledger with sequence = "
+                                     << ledgerSequence;
+            // We try maxAttempts times to publish the ledger, waiting one
+            // second in between each attempt.
+            if (maxAttempts && numAttempts >= maxAttempts)
             {
                 BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
-                                         << "Trying to publish. Could not find "
-                                            "ledger with sequence = "
-                                         << ledgerSequence;
-                // We try maxAttempts times to publish the ledger, waiting one
-                // second in between each attempt.
-                if (maxAttempts && numAttempts >= maxAttempts)
-                {
-                    BOOST_LOG_TRIVIAL(debug)
-                        << __func__ << " : "
-                        << "Failed to publish ledger after " << numAttempts
-                        << " attempts.";
-                    return false;
-                }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                ++numAttempts;
-                continue;
+                                         << "Failed to publish ledger after "
+                                         << numAttempts << " attempts.";
+                return false;
             }
-            else
-            {
-                auto lgr = backend_->fetchLedgerBySequence(ledgerSequence);
-                assert(lgr);
-                publishLedger(*lgr);
-
-                return true;
-            }
-        }
-        catch (Backend::DatabaseTimeout const& e)
-        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ++numAttempts;
             continue;
+        }
+        else
+        {
+            auto lgr = Backend::retryOnTimeout([&]() {
+                return backend_->fetchLedgerBySequence(ledgerSequence);
+            });
+            assert(lgr);
+            publishLedger(*lgr);
+
+            return true;
         }
     }
     return false;
@@ -678,9 +658,12 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // success is false if the ledger was already written
             if (success)
             {
+                /*
                 boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
                     publishLedger(lgrInfo);
                 });
+                */
+                backend_->updateRange(lgrInfo.seq);
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;

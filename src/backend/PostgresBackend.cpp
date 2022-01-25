@@ -720,38 +720,29 @@ PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep) const
     std::optional<ripple::uint256> cursor;
     while (true)
     {
-        try
+        auto [objects, curCursor, warning] = retryOnTimeout(
+            [&]() { return fetchLedgerPage(cursor, minLedger, 256); });
+        if (warning)
         {
-            auto [objects, curCursor, warning] =
-                fetchLedgerPage(cursor, minLedger, 256);
-            if (warning)
-            {
-                BOOST_LOG_TRIVIAL(warning) << __func__
-                                           << " online delete running but "
-                                              "flag ledger is not complete";
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                continue;
-            }
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
-            std::stringstream objectsBuffer;
+            BOOST_LOG_TRIVIAL(warning) << __func__
+                                       << " online delete running but "
+                                          "flag ledger is not complete";
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+            continue;
+        }
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+        std::stringstream objectsBuffer;
 
-            for (auto& obj : objects)
-            {
-                objectsBuffer << "\\\\x" << ripple::strHex(obj.key) << '\t'
-                              << std::to_string(minLedger) << '\t' << "\\\\x"
-                              << ripple::strHex(obj.blob) << '\n';
-            }
-            pgQuery.bulkInsert("objects", objectsBuffer.str());
-            cursor = curCursor;
-            if (!cursor)
-                break;
-        }
-        catch (DatabaseTimeout const& e)
+        for (auto& obj : objects)
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " Database timeout fetching keys";
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+            objectsBuffer << "\\\\x" << ripple::strHex(obj.key) << '\t'
+                          << std::to_string(minLedger) << '\t' << "\\\\x"
+                          << ripple::strHex(obj.blob) << '\n';
         }
+        pgQuery.bulkInsert("objects", objectsBuffer.str());
+        cursor = curCursor;
+        if (!cursor)
+            break;
     }
     BOOST_LOG_TRIVIAL(info) << __func__ << " finished inserting into objects";
     {
