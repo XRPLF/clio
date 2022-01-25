@@ -36,6 +36,15 @@ doLedger(Context const& context)
         expand = params.at("expand").as_bool();
     }
 
+    bool diff = false;
+    if (params.contains("diff"))
+    {
+        if (!params.at("diff").is_bool())
+            return Status{Error::rpcINVALID_PARAMS, "diffFlagNotBool"};
+
+        diff = params.at("diff").as_bool();
+    }
+
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
@@ -112,6 +121,30 @@ doLedger(Context const& context)
                     boost::json::object entry;
                     return boost::json::string(ripple::strHex(hash));
                 });
+        }
+    }
+
+    if (diff)
+    {
+        header["diff"] = boost::json::value(boost::json::array_kind);
+        boost::json::array& jsonDiff = header.at("diff").as_array();
+        auto diff = context.backend->fetchLedgerDiff(lgrInfo.seq);
+        for (auto const& obj : diff)
+        {
+            boost::json::object entry;
+            entry["id"] = ripple::strHex(obj.key);
+            if (binary)
+                entry["object"] = ripple::strHex(obj.blob);
+            else if (obj.blob.size())
+            {
+                ripple::STLedgerEntry sle{
+                    ripple::SerialIter{obj.blob.data(), obj.blob.size()},
+                    obj.key};
+                entry["object"] = toJson(sle);
+            }
+            else
+                entry["object"] = "";
+            jsonDiff.push_back(std::move(entry));
         }
     }
 
