@@ -825,17 +825,7 @@ async def subscribe(ip, port):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"server_info"}));
-            print(json.loads(await ws.recv()))
-            await ws.send(json.dumps({"command":"server_info"}));
-            print(json.loads(await ws.recv()))
-            await ws.send(json.dumps({"command":"server_info"}));
-            await ws.send(json.dumps({"command":"server_info"}));
-            await ws.send(json.dumps({"command":"server_info"}));
-            print(json.loads(await ws.recv()))
-            print(json.loads(await ws.recv()))
-            print(json.loads(await ws.recv()))
-            await ws.send(json.dumps({"command":"subscribe","streams":["ledger"],"books":[{"snapshot":True,"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}}]}))
+            await ws.send(json.dumps({"command":"subscribe","streams":["ledger"]}))
             #await ws.send(json.dumps({"command":"subscribe","streams":["manifests"]}))
             while True:
                 res = json.loads(await ws.recv())

@@ -120,4 +120,6 @@ uint256ToString(ripple::uint256 const& uint)
 {
     return {reinterpret_cast<const char*>(uint.data()), uint.size()};
 }
+
+static constexpr uint32_t rippleEpochStart = 946684800;
 #endif

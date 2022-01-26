@@ -658,11 +658,22 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // success is false if the ledger was already written
             if (success)
             {
-                /*
-                boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
-                    publishLedger(lgrInfo);
-                });
-                */
+                auto now =
+                    std::chrono::duration_cast<std::chrono::seconds>(
+                        std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+                auto closeTime = lgrInfo.closeTime.time_since_epoch().count();
+                auto age = now - (rippleEpochStart + closeTime);
+                // if the ledger closed over 10 seconds ago, assume we are still
+                // catching up and don't publish
+                if (age < 10)
+                {
+                    boost::asio::post(
+                        publishStrand_, [this, lgrInfo = lgrInfo]() {
+                            publishLedger(lgrInfo);
+                        });
+                }
+
                 backend_->updateRange(lgrInfo.seq);
                 lastPublishedSequence = lgrInfo.seq;
             }
