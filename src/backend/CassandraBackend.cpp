@@ -141,7 +141,7 @@ makeAndExecuteAsyncWrite(
     B bind,
     std::string const& id)
 {
-    auto* cb = new WriteCallbackData(b, std::move(d), bind, id);
+    auto* cb = new WriteCallbackData<T,B>(b, std::move(d), bind, id);
     cb->start();
 }
 template <class T, class B>
