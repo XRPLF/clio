@@ -1,7 +1,7 @@
 **Status:** This software is still in development. We are working hard towards a beta release, after which we will release version 1.0. If you would like to contribute, take a look at the issues to find something to work on.
 
 # clio
-clio is an XRP Ledger API server. clio is optimized for RPC calls, over websocket or JSON-RPC. Validated 
+clio is an XRP Ledger API server. clio is optimized for RPC calls, over websocket or JSON-RPC. Validated
 historical ledger and transaction data is stored in a more space efficient format,
 using up to 4 times less space than rippled. clio stores data in either Postgres
 or Cassandra, allowing for scalable read throughput. Multiple clio nodes can share
@@ -10,14 +10,14 @@ without the need for redundant data storage or computation.
 
 clio offers the full rippled API, with the caveat that clio by default only returns validated data.
 This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
-Other non-validated data is also not returned, such as information about queued transactions. 
+Other non-validated data is also not returned, such as information about queued transactions.
 For requests that require access to the p2p network, such as `fee` or `submit`, clio automatically forwards the request to a rippled node, and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and clio will forward the request to rippled.
 
 clio does not connect to the peer to peer network. Instead, clio extracts data from a specified rippled node. Running clio requires access to a rippled node
 from which data can be extracted. The rippled node does not need to be running on the same machine as clio.
 
 
-clio is designed with scalability and availability as a first principle. 
+clio is designed with scalability and availability as a first principle.
 Data is stored in either Postgres or Cassandra,
 and multiple clio servers can share access to the same dataset.
 The different clio servers that are using the same dataset do not know about each other or talk to each other.
@@ -40,14 +40,17 @@ Use these instructions to build a clio executable from source. These instruction
   tar xvzf boost_1_75_0.tar.gz
   cd boost_1_75_0
   ./bootstrap.sh
-  ./b2 -j 4
+  ./b2 -j$((`nproc`+1))
+  # Add the following 'export' command
+  # to your profile file (/~.profile):
+  # -------------------------------
   export BOOST_ROOT=/home/my_user/boost_1_75_0
   source ~/.profile
 5. git clone https://github.com/cjcobb23/clio.git
 6. mkdir build
 7. cd build
-8. cmake ../clio
-9. cmake --build . -- -j <number of parallel jobs>
+8. cmake ..
+9. cmake --build . -- -j$((`nproc`+1))
 ```
 
 ## Running
@@ -100,7 +103,7 @@ in this list. As long as one rippled server is up and synced, clio will continue
 extracting ledgers.
 
 In contrast to rippled, clio will answer RPC requests for the data already in the
-database as soon as the server starts. clio doesn't wait to sync to the network, or 
+database as soon as the server starts. clio doesn't wait to sync to the network, or
 for rippled to sync.
 
 When starting clio with a fresh database, clio needs to download a ledger in full.
@@ -143,4 +146,3 @@ are doing this, be aware that database traffic will be flowing across regions,
 which can cause high latencies. A possible alternative to this is to just deploy
 a database in each region, and the clio nodes in each region use their region's database.
 This is effectively two systems.
-
