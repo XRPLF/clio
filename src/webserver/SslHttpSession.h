@@ -17,6 +17,7 @@ class SslHttpSession : public HttpBase<SslHttpSession>,
 public:
     // Take ownership of the socket
     explicit SslHttpSession(
+        boost::asio::io_context& ioc,
         tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface const> backend,
@@ -26,6 +27,7 @@ public:
         RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
         : HttpBase<SslHttpSession>(
+              ioc,
               backend,
               subscriptions,
               balancer,

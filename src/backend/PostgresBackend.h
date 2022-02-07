@@ -16,62 +16,84 @@ private:
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
-    mutable boost::asio::thread_pool pool_{16};
-    uint32_t writeInterval_ = 1000000;
-    uint32_t inProcessLedger = 0;
-    std::unordered_set<std::string> successors_;
+    std::uint32_t writeInterval_ = 1000000;
+    std::uint32_t inProcessLedger = 0;
+    mutable std::unordered_set<std::string> successors_;
+
+    const char* const set_timeout = "SET statement_timeout TO 10000";
 
 public:
-    PostgresBackend(boost::json::object const& config);
+    PostgresBackend(
+        boost::asio::io_context& ioc,
+        boost::json::object const& config);
 
-    std::optional<uint32_t>
-    fetchLatestLedgerSequence() const override;
+    std::optional<std::uint32_t>
+    fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t sequence) const override;
+    fetchLedgerBySequence(
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerByHash(ripple::uint256 const& hash) const override;
+    fetchLedgerByHash(
+        ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<Blob>
-    doFetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
-        const override;
+    doFetchLedgerObject(
+        ripple::uint256 const& key,
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const override;
 
     // returns a transaction, metadata pair
     std::optional<TransactionAndMetadata>
-    fetchTransaction(ripple::uint256 const& hash) const override;
+    fetchTransaction(
+        ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(uint32_t ledgerSequence) const override;
+    fetchAllTransactionsInLedger(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
+    fetchAllTransactionHashesInLedger(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence) const override;
+    fetchLedgerDiff(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<LedgerRange>
-    hardFetchLedgerRange() const override;
+    hardFetchLedgerRange(boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::uint256>
-    doFetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence)
-        const override;
+    doFetchSuccessorKey(
+        ripple::uint256 key,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
     fetchTransactions(
-        std::vector<ripple::uint256> const& hashes) const override;
+        std::vector<ripple::uint256> const& hashes,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const override;
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const override;
 
     AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::uint32_t limit,
+        std::uint32_t const limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor) const override;
+        std::optional<AccountTransactionsCursor> const& cursor,
+        boost::asio::yield_context& yield) const override;
 
     void
     writeLedger(
@@ -79,18 +101,22 @@ public:
         std::string&& ledgerHeader) override;
 
     void
-    doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
-        override;
+    doWriteLedgerObject(
+        std::string&& key,
+        std::uint32_t const seq,
+        std::string&& blob) override;
 
     void
-    writeSuccessor(std::string&& key, uint32_t seq, std::string&& successor)
-        override;
+    writeSuccessor(
+        std::string&& key,
+        std::uint32_t const seq,
+        std::string&& successor) override;
 
     void
     writeTransaction(
         std::string&& hash,
-        uint32_t seq,
-        uint32_t date,
+        std::uint32_t const seq,
+        std::uint32_t const date,
         std::string&& transaction,
         std::string&& metadata) override;
 
@@ -105,13 +131,15 @@ public:
     close() override;
 
     void
-    startWrites() override;
+    startWrites() const override;
 
     bool
-    doFinishWrites() override;
+    doFinishWrites() const override;
 
     bool
-    doOnlineDelete(uint32_t numLedgersToKeep) const override;
+    doOnlineDelete(
+        std::uint32_t const numLedgersToKeep,
+        boost::asio::yield_context& yield) const override;
 };
 }  // namespace Backend
 #endif

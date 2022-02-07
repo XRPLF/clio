@@ -3,6 +3,8 @@
 
 #include <ripple/basics/base_uint.h>
 #include <boost/asio.hpp>
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/json.hpp>
 #include <boost/log/trivial.hpp>
@@ -97,6 +99,7 @@ public:
         curBindingIndex_ = other.curBindingIndex_;
         other.curBindingIndex_ = 0;
     }
+
     CassandraStatement(CassandraStatement const& other) = delete;
 
     CassStatement*
@@ -125,9 +128,9 @@ public:
     }
 
     void
-    bindNextBytes(const char* data, uint32_t size)
+    bindNextBytes(const char* data, std::uint32_t const size)
     {
-        bindNextBytes((unsigned char*)data, size);
+        bindNextBytes((unsigned const char*)(data), size);
     }
 
     void
@@ -153,13 +156,13 @@ public:
     }
 
     void
-    bindNextBytes(void const* key, uint32_t size)
+    bindNextBytes(void const* key, std::uint32_t const size)
     {
         bindNextBytes(static_cast<const unsigned char*>(key), size);
     }
 
     void
-    bindNextBytes(const unsigned char* data, uint32_t size)
+    bindNextBytes(const unsigned char* data, std::uint32_t const size)
     {
         if (!statement_)
             throw std::runtime_error(
@@ -181,7 +184,7 @@ public:
     }
 
     void
-    bindNextUInt(uint32_t value)
+    bindNextUInt(std::uint32_t const value)
     {
         if (!statement_)
             throw std::runtime_error(
@@ -202,9 +205,9 @@ public:
     }
 
     void
-    bindNextInt(uint32_t value)
+    bindNextInt(std::uint32_t const value)
     {
-        bindNextInt((int64_t)value);
+        bindNextInt(static_cast<std::int64_t>(value));
     }
 
     void
@@ -227,7 +230,7 @@ public:
     }
 
     void
-    bindNextIntTuple(uint32_t first, uint32_t second)
+    bindNextIntTuple(std::uint32_t const first, std::uint32_t const second)
     {
         CassTuple* tuple = cass_tuple_new(2);
         CassError rc = cass_tuple_set_int64(tuple, 0, first);
@@ -366,26 +369,6 @@ public:
         curGetIndex_++;
         return {buf, buf + bufSize};
     }
-    /*
-    uint32_t
-    getNumBytes()
-    {
-        if (!row_)
-            throw std::runtime_error("CassandraResult::getBytes - no result");
-        cass_byte_t const* buf;
-        std::size_t bufSize;
-        CassError rc = cass_value_get_bytes(
-            cass_row_get_column(row_, curGetIndex_), &buf, &bufSize);
-        if (rc != CASS_OK)
-        {
-            std::stringstream msg;
-            msg << "CassandraResult::getBytes - error getting value: " << rc
-                << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << msg.str();
-            throw std::runtime_error(msg.str());
-        }
-        return bufSize;
-    }*/
 
     ripple::uint256
     getUInt256()
@@ -428,13 +411,13 @@ public:
         return val;
     }
 
-    uint32_t
+    std::uint32_t
     getUInt32()
     {
-        return (uint32_t)getInt64();
+        return static_cast<std::uint32_t>(getInt64());
     }
 
-    std::pair<int64_t, int64_t>
+    std::pair<std::int64_t, std::int64_t>
     getInt64Tuple()
     {
         if (!row_)
@@ -446,13 +429,13 @@ public:
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - failed to iterate tuple");
         CassValue const* value = cass_iterator_get_value(tupleIter);
-        int64_t first;
+        std::int64_t first;
         cass_value_get_int64(value, &first);
         if (!cass_iterator_next(tupleIter))
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - failed to iterate tuple");
         value = cass_iterator_get_value(tupleIter);
-        int64_t second;
+        std::int64_t second;
         cass_value_get_int64(value, &second);
         ++curGetIndex_;
         return {first, second};
@@ -506,6 +489,52 @@ isTimeout(CassError rc)
     return false;
 }
 
+template <typename CompletionToken>
+CassError
+cass_future_error_code(CassFuture* fut, CompletionToken&& token)
+{
+    using function_type = void(boost::system::error_code, CassError);
+    using result_type =
+        boost::asio::async_result<CompletionToken, function_type>;
+    using handler_type = typename result_type::completion_handler_type;
+
+    handler_type handler(std::forward<decltype(token)>(token));
+    result_type result(handler);
+
+    struct HandlerWrapper
+    {
+        handler_type handler;
+
+        HandlerWrapper(handler_type&& handler_) : handler(std::move(handler_))
+        {
+        }
+    };
+
+    auto resume = [](CassFuture* fut, void* data) -> void {
+        HandlerWrapper* hw = (HandlerWrapper*)data;
+
+        boost::asio::post(
+            boost::asio::get_associated_executor(hw->handler),
+            [fut, hw, handler = std::move(hw->handler)]() mutable {
+                delete hw;
+
+                handler(
+                    boost::system::error_code{}, cass_future_error_code(fut));
+            });
+    };
+
+    HandlerWrapper* wrapper = new HandlerWrapper(std::move(handler));
+
+    cass_future_set_callback(fut, resume, wrapper);
+
+    // Suspend the coroutine until completion handler is called.
+    // The handler will populate rc, the error code describing
+    // the state of the cassandra future.
+    auto rc = result.get();
+
+    return rc;
+}
+
 class CassandraBackend : public BackendInterface
 {
 private:
@@ -528,9 +557,6 @@ private:
     }
 
     std::atomic<bool> open_{false};
-
-    // mutex used for open() and close()
-    std::mutex mutex_;
 
     std::unique_ptr<CassSession, void (*)(CassSession*)> session_{
         nullptr,
@@ -571,17 +597,12 @@ private:
     CassandraPreparedStatement selectLatestLedger_;
     CassandraPreparedStatement selectLedgerRange_;
 
-    // io_context used for exponential backoff for write retries
-    mutable boost::asio::io_context ioContext_;
-    std::optional<boost::asio::io_context::work> work_;
-    std::thread ioThread_;
-
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
-    uint32_t maxRequestsOutstanding = 10000;
+    std::uint32_t maxRequestsOutstanding = 10000;
     // we keep this small because the indexer runs in the background, and we
     // don't want the database to be swamped when the indexer is running
-    uint32_t indexerMaxRequestsOutstanding = 10;
+    std::uint32_t indexerMaxRequestsOutstanding = 10;
     mutable std::atomic_uint32_t numRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
@@ -594,20 +615,38 @@ private:
     mutable std::mutex syncMutex_;
     mutable std::condition_variable syncCv_;
 
+    // io_context for read/write retries
+    mutable boost::asio::io_context ioContext_;
+    std::optional<boost::asio::io_context::work> work_;
+    std::thread ioThread_;
+
     boost::json::object config_;
 
-    mutable uint32_t ledgerSequence_ = 0;
+    mutable std::uint32_t ledgerSequence_ = 0;
 
 public:
-    CassandraBackend(boost::json::object const& config)
+    CassandraBackend(
+        boost::asio::io_context& ioc,
+        boost::json::object const& config)
         : BackendInterface(config), config_(config)
     {
+        work_.emplace(ioContext_);
+        ioThread_ = std::thread([this]() { ioContext_.run(); });
     }
 
     ~CassandraBackend() override
     {
+        work_.reset();
+        ioThread_.join();
+
         if (open_)
             close();
+    }
+
+    boost::asio::io_context&
+    getIOContext() const
+    {
+        return ioContext_;
     }
 
     bool
@@ -626,23 +665,19 @@ public:
     void
     close() override
     {
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            work_.reset();
-            ioThread_.join();
-        }
         open_ = false;
     }
 
     AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::uint32_t limit,
+        std::uint32_t const limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor) const override;
+        std::optional<AccountTransactionsCursor> const& cursor,
+        boost::asio::yield_context& yield) const override;
 
     bool
-    doFinishWrites() override
+    doFinishWrites() const override
     {
         // wait for all other writes to finish
         sync();
@@ -674,12 +709,12 @@ public:
     writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header)
         override;
 
-    std::optional<uint32_t>
-    fetchLatestLedgerSequence() const override
+    std::optional<std::uint32_t>
+    fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectLatestLedger_};
-        CassandraResult result = executeSyncRead(statement);
+        CassandraResult result = executeAsyncRead(statement, yield);
         if (!result.hasResult())
         {
             BOOST_LOG_TRIVIAL(error)
@@ -690,13 +725,14 @@ public:
     }
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t sequence) const override
+    fetchLedgerBySequence(
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectLedgerBySeq_};
         statement.bindNextInt(sequence);
-        CassandraResult result = executeSyncRead(statement);
-
+        CassandraResult result = executeAsyncRead(statement, yield);
         if (!result)
         {
             BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
@@ -707,46 +743,57 @@ public:
     }
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerByHash(ripple::uint256 const& hash) const override
+    fetchLedgerByHash(
+        ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const override
     {
         CassandraStatement statement{selectLedgerByHash_};
 
         statement.bindNextBytes(hash);
 
-        CassandraResult result = executeSyncRead(statement);
+        CassandraResult result = executeAsyncRead(statement, yield);
+
         if (!result.hasResult())
         {
             BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
             return {};
         }
 
-        std::uint32_t sequence = result.getInt64();
+        std::uint32_t const sequence = result.getInt64();
 
-        return fetchLedgerBySequence(sequence);
+        return fetchLedgerBySequence(sequence, yield);
     }
 
     std::optional<LedgerRange>
-    hardFetchLedgerRange() const override;
+    hardFetchLedgerRange(boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(uint32_t ledgerSequence) const override;
+    fetchAllTransactionsInLedger(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
+    fetchAllTransactionHashesInLedger(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence
     std::optional<Blob>
-    doFetchLedgerObject(ripple::uint256 const& key, uint32_t sequence)
-        const override;
+    doFetchLedgerObject(
+        ripple::uint256 const& key,
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<int64_t>
-    getToken(void const* key) const
+    getToken(void const* key, boost::asio::yield_context& yield) const
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         CassandraStatement statement{getToken_};
         statement.bindNextBytes(key, 32);
-        CassandraResult result = executeSyncRead(statement);
+
+        CassandraResult result = executeAsyncRead(statement, yield);
+
         if (!result)
         {
             BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
@@ -760,12 +807,15 @@ public:
     }
 
     std::optional<TransactionAndMetadata>
-    fetchTransaction(ripple::uint256 const& hash) const override
+    fetchTransaction(
+        ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectTransaction_};
         statement.bindNextBytes(hash);
-        CassandraResult result = executeSyncRead(statement);
+        CassandraResult result = executeAsyncRead(statement, yield);
+
         if (!result)
         {
             BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
@@ -777,29 +827,40 @@ public:
              result.getUInt32(),
              result.getUInt32()}};
     }
+
     std::optional<ripple::uint256>
-    doFetchSuccessorKey(ripple::uint256 key, uint32_t ledgerSequence)
-        const override;
+    doFetchSuccessorKey(
+        ripple::uint256 key,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
     fetchTransactions(
-        std::vector<ripple::uint256> const& hashes) const override;
+        std::vector<ripple::uint256> const& hashes,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence) const override;
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence) const override;
+    fetchLedgerDiff(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     void
-    doWriteLedgerObject(std::string&& key, uint32_t seq, std::string&& blob)
-        override;
+    doWriteLedgerObject(
+        std::string&& key,
+        std::uint32_t const seq,
+        std::string&& blob) override;
 
     void
-    writeSuccessor(std::string&& key, uint32_t seq, std::string&& successor)
-        override;
+    writeSuccessor(
+        std::string&& key,
+        std::uint32_t const seq,
+        std::string&& successor) override;
 
     void
     writeAccountTransactions(
@@ -808,13 +869,13 @@ public:
     void
     writeTransaction(
         std::string&& hash,
-        uint32_t seq,
-        uint32_t date,
+        std::uint32_t const seq,
+        std::uint32_t const date,
         std::string&& transaction,
         std::string&& metadata) override;
 
     void
-    startWrites() override
+    startWrites() const override
     {
     }
 
@@ -825,14 +886,11 @@ public:
 
         syncCv_.wait(lck, [this]() { return finishedAllRequests(); });
     }
-    bool
-    doOnlineDelete(uint32_t numLedgersToKeep) const override;
 
-    boost::asio::io_context&
-    getIOContext() const
-    {
-        return ioContext_;
-    }
+    bool
+    doOnlineDelete(
+        std::uint32_t const numLedgersToKeep,
+        boost::asio::yield_context& yield) const override;
 
     inline void
     incremementOutstandingRequestCount() const
@@ -904,8 +962,10 @@ public:
 
         cass_future_set_callback(
             fut, callback, static_cast<void*>(&callbackData));
+
         cass_future_free(fut);
     }
+
     template <class T, class S>
     void
     executeAsyncWrite(
@@ -918,6 +978,7 @@ public:
             incremementOutstandingRequestCount();
         executeAsyncHelper(statement, callback, callbackData);
     }
+
     template <class T, class S>
     void
     executeAsyncRead(
@@ -927,6 +988,7 @@ public:
     {
         executeAsyncHelper(statement, callback, callbackData);
     }
+
     void
     executeSyncWrite(CassandraStatement const& statement) const
     {
@@ -1003,18 +1065,32 @@ public:
     }
 
     CassandraResult
-    executeSyncRead(CassandraStatement const& statement) const
+    executeAsyncRead(
+        CassandraStatement const& statement,
+        boost::asio::yield_context& yield) const
     {
+        using result = boost::asio::async_result<
+            boost::asio::yield_context,
+            void(boost::system::error_code, CassError)>;
+
         CassFuture* fut;
         CassError rc;
         do
         {
             fut = cass_session_execute(session_.get(), statement.get());
-            rc = cass_future_error_code(fut);
+
+            boost::system::error_code ec;
+            rc = cass_future_error_code(fut, yield[ec]);
+
+            if (ec)
+            {
+                BOOST_LOG_TRIVIAL(error)
+                    << "Cannot read async cass_future_error_code";
+            }
             if (rc != CASS_OK)
             {
                 std::stringstream ss;
-                ss << "Cassandra executeSyncRead error";
+                ss << "Cassandra executeAsyncRead error";
                 ss << ": " << cass_error_desc(rc);
                 BOOST_LOG_TRIVIAL(error) << ss.str();
             }
@@ -1030,6 +1106,8 @@ public:
             }
         } while (rc != CASS_OK);
 
+        // The future should have returned at the earlier cass_future_error_code
+        // so we can use the sync version of this function.
         CassResult const* res = cass_future_get_result(fut);
         cass_future_free(fut);
         return {res};
