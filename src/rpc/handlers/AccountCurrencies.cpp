@@ -60,7 +60,12 @@ doAccountCurrencies(Context const& context)
     };
 
     traverseOwnedNodes(
-        *context.backend, *accountID, lgrInfo.seq, beast::zero, addToResponse);
+        *context.backend,
+        *accountID,
+        lgrInfo.seq,
+        beast::zero,
+        context.yield,
+        addToResponse);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;

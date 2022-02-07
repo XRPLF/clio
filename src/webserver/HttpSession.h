@@ -17,6 +17,7 @@ class HttpSession : public HttpBase<HttpSession>,
 public:
     // Take ownership of the socket
     explicit HttpSession(
+        boost::asio::io_context& ioc,
         tcp::socket&& socket,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -25,6 +26,7 @@ public:
         RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
         : HttpBase<HttpSession>(
+              ioc,
               backend,
               subscriptions,
               balancer,

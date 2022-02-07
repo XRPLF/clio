@@ -58,6 +58,7 @@ isDirNode(T const& object)
     short spaceKey = (object.data()[1] << 8) | object.data()[2];
     return spaceKey == 0x0064;
 }
+
 template <class T, class R>
 inline bool
 isBookDir(T const& key, R const& object)
@@ -69,6 +70,7 @@ isBookDir(T const& key, R const& object)
         ripple::SerialIter{object.data(), object.size()}, key};
     return !sle[~ripple::sfOwner].has_value();
 }
+
 template <class T>
 inline ripple::uint256
 getBook(T const& offer)

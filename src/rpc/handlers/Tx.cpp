@@ -37,7 +37,7 @@ doTx(Context const& context)
     if (!range)
         return Status{Error::rpcNOT_READY};
 
-    auto dbResponse = context.backend->fetchTransaction(hash);
+    auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
     if (!dbResponse)
         return Status{Error::rpcTXN_NOT_FOUND};
 

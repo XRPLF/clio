@@ -82,8 +82,8 @@ doBookOffers(Context const& context)
     }
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, retCursor, warning] =
-        context.backend->fetchBookOffers(bookBase, lgrInfo.seq, limit, cursor);
+    auto [offers, retCursor, warning] = context.backend->fetchBookOffers(
+        bookBase, lgrInfo.seq, limit, cursor, context.yield);
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning)
@@ -93,7 +93,7 @@ doBookOffers(Context const& context)
     response["ledger_index"] = lgrInfo.seq;
 
     response["offers"] = postProcessOrderBook(
-        offers, book, takerID, *context.backend, lgrInfo.seq);
+        offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
 
     end = std::chrono::system_clock::now();
 
