@@ -179,4 +179,22 @@ getMarkers(size_t numMarkers)
     return markers;
 }
 
-#endif
+template <class F>
+void
+synchronous(F&& f)
+{
+    boost::asio::io_context ctx;
+    std::optional<boost::asio::io_context::work> work;
+
+    work.emplace(ctx);
+
+    boost::asio::spawn(ctx, [&f, &work](boost::asio::yield_context yield) {
+        f(yield);
+
+        work.reset();
+    });
+
+    ctx.run();
+}
+
+#endif  // RIPPLE_APP_REPORTING_ETLHELPERS_H_INCLUDED

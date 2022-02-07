@@ -58,7 +58,8 @@ public:
     virtual std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
-        std::string const& clientIp) const = 0;
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual ~ETLSource()
     {
@@ -327,7 +328,8 @@ public:
     std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
-        std::string const& clientIp) const override;
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const override;
 };
 
 class PlainETLSource : public ETLSourceImpl<PlainETLSource>
@@ -562,7 +564,8 @@ public:
     std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
-        std::string const& clientIp) const;
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

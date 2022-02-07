@@ -609,16 +609,20 @@ public:
                  {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
             if (!cacheOnly)
             {
-                if (lastKey_.size())
-                    backend.writeSuccessor(
-                        std::move(lastKey_),
+                synchronous([&](boost::asio::yield_context yield) {
+                    if (lastKey_.size())
+                        backend.writeSuccessor(
+                            std::move(lastKey_),
+                            request_.ledger().sequence(),
+                            std::string{obj.key()},
+                            yield);
+                    lastKey_ = obj.key();
+                    backend.writeLedgerObject(
+                        std::move(*obj.mutable_key()),
                         request_.ledger().sequence(),
-                        std::string{obj.key()});
-                lastKey_ = obj.key();
-                backend.writeLedgerObject(
-                    std::move(*obj.mutable_key()),
-                    request_.ledger().sequence(),
-                    std::move(*obj.mutable_data()));
+                        std::move(*obj.mutable_data()),
+                        yield);
+                });
             }
         }
         backend.cache().update(
@@ -756,18 +760,29 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 auto succ = backend_->cache().getSuccessor(
                     *ripple::uint256::fromVoidChecked(key), sequence);
                 if (succ)
-                    backend_->writeSuccessor(
-                        std::move(key), sequence, uint256ToString(succ->key));
+                    synchronous([&](boost::asio::yield_context yield) {
+                        backend_->writeSuccessor(
+                            std::move(key),
+                            sequence,
+                            uint256ToString(succ->key),
+                            yield);
+                    });
             }
             ripple::uint256 prev = Backend::firstKey;
             while (auto cur = backend_->cache().getSuccessor(prev, sequence))
             {
                 assert(cur);
                 if (prev == Backend::firstKey)
-                    backend_->writeSuccessor(
-                        uint256ToString(prev),
-                        sequence,
-                        uint256ToString(cur->key));
+                {
+                    synchronous([&](boost::asio::yield_context yield) {
+                        backend_->writeSuccessor(
+                            uint256ToString(prev),
+                            sequence,
+                            uint256ToString(cur->key),
+                            yield);
+                    });
+                }
+
                 if (isBookDir(cur->key, cur->blob))
                 {
                     auto base = getBookBase(cur->key);
@@ -783,10 +798,14 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                                 << __func__ << " Writing book successor = "
                                 << ripple::strHex(base) << " - "
                                 << ripple::strHex(cur->key);
-                            backend_->writeSuccessor(
-                                uint256ToString(base),
-                                sequence,
-                                uint256ToString(cur->key));
+
+                            synchronous([&](boost::asio::yield_context yield) {
+                                backend_->writeSuccessor(
+                                    uint256ToString(base),
+                                    sequence,
+                                    uint256ToString(cur->key),
+                                    yield);
+                            });
                         }
                     }
                     ++numWrites;
@@ -796,10 +815,15 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                     BOOST_LOG_TRIVIAL(info) << __func__ << " Wrote "
                                             << numWrites << " book successors";
             }
-            backend_->writeSuccessor(
-                uint256ToString(prev),
-                sequence,
-                uint256ToString(Backend::lastKey));
+
+            synchronous([&](boost::asio::yield_context yield) {
+                backend_->writeSuccessor(
+                    uint256ToString(prev),
+                    sequence,
+                    uint256ToString(Backend::lastKey),
+                    yield);
+            });
+
             ++numWrites;
             auto end = std::chrono::system_clock::now();
             auto seconds =
@@ -944,14 +968,16 @@ ETLLoadBalancer::fetchLedger(
 std::optional<boost::json::object>
 ETLLoadBalancer::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp) const
+    std::string const& clientIp,
+    boost::asio::yield_context& yield) const
 {
     srand((unsigned)time(0));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp))
+        if (auto res =
+                sources_[sourceIdx]->forwardToRippled(request, clientIp, yield))
             return res;
 
         sourceIdx = (sourceIdx + 1) % sources_.size();
@@ -964,7 +990,8 @@ template <class Derived>
 std::optional<boost::json::object>
 ETLSourceImpl<Derived>::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp) const
+    std::string const& clientIp,
+    boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
                              << "request = " << boost::json::serialize(request);
@@ -983,21 +1010,25 @@ ETLSourceImpl<Derived>::forwardToRippled(
     using tcp = boost::asio::ip::tcp;        // from
     try
     {
-        // The io_context is required for all I/O
-        net::io_context ioc;
-
+        boost::beast::error_code ec;
         // These objects perform our I/O
-        tcp::resolver resolver{ioc};
+        tcp::resolver resolver{ioc_};
 
         BOOST_LOG_TRIVIAL(debug) << "Creating websocket";
-        auto ws = std::make_unique<websocket::stream<tcp::socket>>(ioc);
+        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioc_);
 
         // Look up the domain name
-        auto const results = resolver.resolve(ip_, wsPort_);
+        auto const results = resolver.async_resolve(ip_, wsPort_, yield[ec]);
+        if (ec)
+            return {};
+
+        ws->next_layer().expires_after(std::chrono::seconds(30));
 
         BOOST_LOG_TRIVIAL(debug) << "Connecting websocket";
         // Make the connection on the IP address we get from a lookup
-        net::connect(ws->next_layer(), results.begin(), results.end());
+        ws->next_layer().async_connect(results, yield[ec]);
+        if (ec)
+            return {};
 
         // Set a decorator to change the User-Agent of the handshake
         // and to tell rippled to charge the client IP for RPC
@@ -1016,14 +1047,21 @@ ETLSourceImpl<Derived>::forwardToRippled(
 
         BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
         // Perform the websocket handshake
-        ws->handshake(ip_, "/");
+        ws->async_handshake(ip_, "/", yield[ec]);
+        if (ec)
+            return {};
 
         BOOST_LOG_TRIVIAL(debug) << "Sending request";
         // Send the message
-        ws->write(net::buffer(boost::json::serialize(request)));
+        ws->async_write(
+            net::buffer(boost::json::serialize(request)), yield[ec]);
+        if (ec)
+            return {};
 
         beast::flat_buffer buffer;
-        ws->read(buffer);
+        ws->async_read(buffer, yield[ec]);
+        if (ec)
+            return {};
 
         auto begin = static_cast<char const*>(buffer.data().data());
         auto end = begin + buffer.data().size();

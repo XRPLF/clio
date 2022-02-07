@@ -358,7 +358,7 @@ ledgerInfoFromRequest(Context const& ctx)
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-        lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash);
+        lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
     }
     else if (!indexValue.is_null())
     {
@@ -370,11 +370,12 @@ ledgerInfoFromRequest(Context const& ctx)
         else
             return Status{Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
-        lgrInfo = ctx.backend->fetchLedgerBySequence(ledgerSequence);
+        lgrInfo = ctx.backend->fetchLedgerBySequence(ledgerSequence, ctx.yield);
     }
     else
     {
-        lgrInfo = ctx.backend->fetchLedgerBySequence(ctx.range.maxSequence);
+        lgrInfo = ctx.backend->fetchLedgerBySequence(
+            ctx.range.maxSequence, ctx.yield);
     }
 
     if (!lgrInfo)
@@ -407,10 +408,11 @@ traverseOwnedNodes(
     ripple::AccountID const& accountID,
     std::uint32_t sequence,
     ripple::uint256 const& cursor,
+    boost::asio::yield_context& yield,
     std::function<bool(ripple::SLE)> atOwnedNode)
 {
     if (!backend.fetchLedgerObject(
-            ripple::keylet::account(accountID).key, sequence))
+            ripple::keylet::account(accountID).key, sequence, yield))
         throw AccountNotFoundError(ripple::toBase58(accountID));
     auto const rootIndex = ripple::keylet::ownerDir(accountID);
     auto currentIndex = rootIndex;
@@ -421,7 +423,8 @@ traverseOwnedNodes(
     auto start = std::chrono::system_clock::now();
     for (;;)
     {
-        auto ownedNode = backend.fetchLedgerObject(currentIndex.key, sequence);
+        auto ownedNode =
+            backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
         if (!ownedNode)
         {
@@ -449,7 +452,7 @@ traverseOwnedNodes(
                              << ((end - start).count() / 1000000000.0);
 
     start = std::chrono::system_clock::now();
-    auto objects = backend.fetchLedgerObjects(keys, sequence);
+    auto objects = backend.fetchLedgerObjects(keys, sequence, yield);
     end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(debug) << "Time loading owned entries: "
@@ -639,13 +642,14 @@ bool
 isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& issuer)
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context& yield)
 {
     if (ripple::isXRP(issuer))
         return false;
 
     auto key = ripple::keylet::account(issuer).key;
-    auto blob = backend.fetchLedgerObject(key, sequence);
+    auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
         return false;
@@ -662,13 +666,14 @@ isFrozen(
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
-    ripple::AccountID const& issuer)
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context& yield)
 {
     if (ripple::isXRP(currency))
         return false;
 
     auto key = ripple::keylet::account(issuer).key;
-    auto blob = backend.fetchLedgerObject(key, sequence);
+    auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
         return false;
@@ -682,7 +687,7 @@ isFrozen(
     if (issuer != account)
     {
         key = ripple::keylet::line(account, issuer, currency).key;
-        blob = backend.fetchLedgerObject(key, sequence);
+        blob = backend.fetchLedgerObject(key, sequence, yield);
 
         if (!blob)
             return false;
@@ -704,10 +709,11 @@ ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& id)
+    ripple::AccountID const& id,
+    boost::asio::yield_context& yield)
 {
     auto key = ripple::keylet::account(id).key;
-    auto blob = backend.fetchLedgerObject(key, sequence);
+    auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
         return beast::zero;
@@ -718,7 +724,7 @@ xrpLiquid(
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
 
     auto const reserve =
-        backend.fetchFees(sequence)->accountReserve(ownerCount);
+        backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
 
     auto const balance = sle.getFieldAmount(ripple::sfBalance);
 
@@ -734,7 +740,8 @@ accountFunds(
     BackendInterface const& backend,
     uint32_t sequence,
     ripple::STAmount const& amount,
-    ripple::AccountID const& id)
+    ripple::AccountID const& id,
+    boost::asio::yield_context& yield)
 {
     if (!amount.native() && amount.getIssuer() == id)
     {
@@ -743,7 +750,13 @@ accountFunds(
     else
     {
         return accountHolds(
-            backend, sequence, id, amount.getCurrency(), amount.getIssuer());
+            backend,
+            sequence,
+            id,
+            amount.getCurrency(),
+            amount.getIssuer(),
+            true,
+            yield);
     }
 }
 
@@ -754,16 +767,17 @@ accountHolds(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    bool zeroIfFrozen)
+    bool zeroIfFrozen,
+    boost::asio::yield_context& yield)
 {
     ripple::STAmount amount;
     if (ripple::isXRP(currency))
     {
-        return {xrpLiquid(backend, sequence, account)};
+        return {xrpLiquid(backend, sequence, account, yield)};
     }
     auto key = ripple::keylet::line(account, issuer, currency).key;
 
-    auto const blob = backend.fetchLedgerObject(key, sequence);
+    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
     {
@@ -774,7 +788,8 @@ accountHolds(
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE sle{it, key};
 
-    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer))
+    if (zeroIfFrozen &&
+        isFrozen(backend, sequence, account, currency, issuer, yield))
     {
         amount.clear(ripple::Issue(currency, issuer));
     }
@@ -796,10 +811,11 @@ ripple::Rate
 transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& issuer)
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context& yield)
 {
     auto key = ripple::keylet::account(issuer).key;
-    auto blob = backend.fetchLedgerObject(key, sequence);
+    auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (blob)
     {
@@ -819,17 +835,18 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     Backend::BackendInterface const& backend,
-    uint32_t ledgerSequence)
+    uint32_t ledgerSequence,
+    boost::asio::yield_context& yield)
 {
     boost::json::array jsonOffers;
 
     std::map<ripple::AccountID, ripple::STAmount> umBalance;
 
     bool globalFreeze =
-        isGlobalFrozen(backend, ledgerSequence, book.out.account) ||
-        isGlobalFrozen(backend, ledgerSequence, book.out.account);
+        isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
+        isGlobalFrozen(backend, ledgerSequence, book.out.account, yield);
 
-    auto rate = transferRate(backend, ledgerSequence, book.out.account);
+    auto rate = transferRate(backend, ledgerSequence, book.out.account, yield);
 
     for (auto const& obj : offers)
     {
@@ -877,7 +894,8 @@ postProcessOrderBook(
                         uOfferOwnerID,
                         book.out.currency,
                         book.out.account,
-                        zeroIfFrozen);
+                        zeroIfFrozen,
+                        yield);
 
                     if (saOwnerFunds < beast::zero)
                         saOwnerFunds.clear();
