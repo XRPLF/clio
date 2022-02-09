@@ -916,6 +916,12 @@ CassandraBackend::open(bool readOnly)
     if (getInt("max_requests_outstanding"))
         maxRequestsOutstanding = *getInt("max_requests_outstanding");
 
+    if (getInt("sync_interval"))
+        syncInterval_ = *getInt("sync_interval");
+    BOOST_LOG_TRIVIAL(info)
+        << __func__ << " sync interval is " << syncInterval_
+        << ". max requests outstanding is " << maxRequestsOutstanding;
+
     cass_cluster_set_request_timeout(cluster, 10000);
 
     rc = cass_cluster_set_queue_size_io(
