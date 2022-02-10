@@ -217,6 +217,7 @@ public:
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
+        bool outOfOrder,
         boost::asio::yield_context& yield) const;
 
     // Fetches the successor to key/index
