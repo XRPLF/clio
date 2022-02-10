@@ -3,8 +3,8 @@
 # clio
 clio is an XRP Ledger API server. clio is optimized for RPC calls, over websocket or JSON-RPC. Validated
 historical ledger and transaction data is stored in a more space efficient format,
-using up to 4 times less space than rippled. clio stores data in either Postgres
-or Cassandra, allowing for scalable read throughput. Multiple clio nodes can share
+using up to 4 times less space than rippled. clio can be configured to store data in Postgres, Cassandra or ScyllaDB,
+allowing for scalable read throughput. Multiple clio nodes can share
 access to the same dataset, allowing for a highly available cluster of clio nodes,
 without the need for redundant data storage or computation.
 
@@ -18,12 +18,12 @@ from which data can be extracted. The rippled node does not need to be running o
 
 
 clio is designed with scalability and availability as a first principle.
-Data is stored in either Postgres or Cassandra,
+Data is stored in either Postgres, Cassandra,or ScyllaDB,
 and multiple clio servers can share access to the same dataset.
 The different clio servers that are using the same dataset do not know about each other or talk to each other.
 
 ## Requirements
-1. Access to a Postgres server or Cassandra/Scylla cluster. Can be local or remote.
+1. Access to a Postgres server, Cassandra cluster or ScyllaDB cluster. Can be local or remote.
 
 2. Access to one or more rippled nodes. Can be local or remote.
 
