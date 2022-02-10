@@ -244,6 +244,7 @@ BackendInterface::fetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
+    bool outOfOrder,
     boost::asio::yield_context& yield) const
 {
     LedgerPage page;
@@ -254,8 +255,8 @@ BackendInterface::fetchLedgerPage(
         ripple::uint256 const& curCursor = keys.size() ? keys.back()
             : cursor                                   ? *cursor
                                                        : firstKey;
-        auto succ = fetchSuccessorKey(curCursor, ledgerSequence, yield);
-
+        uint32_t seq = outOfOrder ? range->maxSequence : ledgerSequence;
+        auto succ = fetchSuccessorKey(curCursor, seq, yield);
         if (!succ)
             break;
         BOOST_LOG_TRIVIAL(trace) << ripple::strHex(*succ);
