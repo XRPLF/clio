@@ -32,7 +32,8 @@ getRequiredBool(boost::json::object const& request, std::string const& field)
     else
         throw InvalidParamsError("Missing field " + field);
 }
-std::optional<uint32_t>
+
+std::optional<std::uint32_t>
 getUInt(boost::json::object const& request, std::string const& field)
 {
     if (!request.contains(field))
@@ -44,18 +45,20 @@ getUInt(boost::json::object const& request, std::string const& field)
     else
         throw InvalidParamsError("Invalid field " + field + ", not uint.");
 }
-uint32_t
+
+std::uint32_t
 getUInt(
     boost::json::object const& request,
     std::string const& field,
-    uint32_t dfault)
+    std::uint32_t const dfault)
 {
     if (auto res = getUInt(request, field))
         return *res;
     else
         return dfault;
 }
-uint32_t
+
+std::uint32_t
 getRequiredUInt(boost::json::object const& request, std::string const& field)
 {
     if (auto res = getUInt(request, field))
@@ -63,6 +66,7 @@ getRequiredUInt(boost::json::object const& request, std::string const& field)
     else
         throw InvalidParamsError("Missing field " + field);
 }
+
 std::optional<std::string>
 getString(boost::json::object const& request, std::string const& field)
 {
@@ -97,7 +101,7 @@ std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
-    uint32_t ledgerSequence)
+    std::uint32_t const ledgerSequence)
 {
     if (meta->hasDeliveredAmount())
         return meta->getDeliveredAmount();
@@ -738,7 +742,7 @@ xrpLiquid(
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
-    uint32_t sequence,
+    std::uint32_t const sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
     boost::asio::yield_context& yield)
@@ -767,7 +771,7 @@ accountHolds(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    bool zeroIfFrozen,
+    bool const zeroIfFrozen,
     boost::asio::yield_context& yield)
 {
     ripple::STAmount amount;
@@ -835,7 +839,7 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     Backend::BackendInterface const& backend,
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield)
 {
     boost::json::array jsonOffers;

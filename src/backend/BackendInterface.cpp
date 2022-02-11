@@ -3,11 +3,9 @@
 #include <backend/BackendInterface.h>
 namespace Backend {
 bool
-BackendInterface::finishWrites(
-    uint32_t ledgerSequence,
-    boost::asio::yield_context& yield)
+BackendInterface::finishWrites(uint32_t ledgerSequence)
 {
-    auto commitRes = doFinishWrites(yield);
+    auto commitRes = doFinishWrites();
     if (commitRes)
     {
         updateRange(ledgerSequence);
@@ -18,12 +16,11 @@ void
 BackendInterface::writeLedgerObject(
     std::string&& key,
     uint32_t seq,
-    std::string&& blob,
-    boost::asio::yield_context& yield)
+    std::string&& blob)
 {
     assert(key.size() == sizeof(ripple::uint256));
     ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
-    doWriteLedgerObject(std::move(key), seq, std::move(blob), yield);
+    doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
 
 std::optional<LedgerRange>
@@ -55,7 +52,7 @@ BackendInterface::hardFetchLedgerRangeNoThrow() const
 std::optional<Blob>
 BackendInterface::fetchLedgerObject(
     ripple::uint256 const& key,
-    uint32_t sequence,
+    uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     auto obj = cache_.get(key, sequence);
@@ -83,7 +80,7 @@ BackendInterface::fetchLedgerObject(
 std::vector<Blob>
 BackendInterface::fetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
-    uint32_t sequence,
+    uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     std::vector<Blob> results;

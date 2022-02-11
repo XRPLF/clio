@@ -170,9 +170,8 @@ makeAndExecuteBulkAsyncWrite(
 void
 CassandraBackend::doWriteLedgerObject(
     std::string&& key,
-    uint32_t seq,
-    std::string&& blob,
-    boost::asio::yield_context& yield)
+    uint32_t const seq,
+    std::string&& blob)
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
     if (range)
@@ -205,9 +204,8 @@ CassandraBackend::doWriteLedgerObject(
 void
 CassandraBackend::writeSuccessor(
     std::string&& key,
-    uint32_t seq,
-    std::string&& successor,
-    boost::asio::yield_context& yield)
+    uint32_t const seq,
+    std::string&& successor)
 {
     BOOST_LOG_TRIVIAL(trace)
         << "Writing successor. key = " << key
@@ -231,8 +229,7 @@ CassandraBackend::writeSuccessor(
 void
 CassandraBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
-    std::string&& header,
-    boost::asio::yield_context& yield)
+    std::string&& header)
 {
     makeAndExecuteAsyncWrite(
         this,
@@ -260,8 +257,7 @@ CassandraBackend::writeLedger(
 }
 void
 CassandraBackend::writeAccountTransactions(
-    std::vector<AccountTransactionsData>&& data,
-    boost::asio::yield_context& yield)
+    std::vector<AccountTransactionsData>&& data)
 {
     for (auto& record : data)
     {
@@ -289,11 +285,10 @@ CassandraBackend::writeAccountTransactions(
 void
 CassandraBackend::writeTransaction(
     std::string&& hash,
-    uint32_t seq,
+    uint32_t const seq,
     uint32_t date,
     std::string&& transaction,
-    std::string&& metadata,
-    boost::asio::yield_context& yield)
+    std::string&& metadata)
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
     std::string hashCpy = hash;
@@ -330,30 +325,6 @@ CassandraBackend::writeTransaction(
 }
 
 std::optional<LedgerRange>
-CassandraBackend::hardFetchLedgerRange() const
-{
-    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
-    CassandraStatement statement{selectLedgerRange_};
-    CassandraResult result = executeSyncRead(statement);
-    if (!result)
-    {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
-        return {};
-    }
-    LedgerRange range;
-    range.maxSequence = range.minSequence = result.getUInt32();
-    if (result.nextRow())
-    {
-        range.maxSequence = result.getUInt32();
-    }
-    if (range.minSequence > range.maxSequence)
-    {
-        std::swap(range.minSequence, range.maxSequence);
-    }
-    return range;
-}
-
-std::optional<LedgerRange>
 CassandraBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
@@ -380,7 +351,7 @@ CassandraBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 
 std::vector<TransactionAndMetadata>
 CassandraBackend::fetchAllTransactionsInLedger(
-    uint32_t ledgerSequence,
+    uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
@@ -499,7 +470,7 @@ CassandraBackend::fetchTransactions(
 
 std::vector<ripple::uint256>
 CassandraBackend::fetchAllTransactionHashesInLedger(
-    uint32_t ledgerSequence,
+    uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectAllTransactionHashesInLedger_};
@@ -533,8 +504,8 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
 AccountTransactions
 CassandraBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
-    std::uint32_t limit,
-    bool forward,
+    std::uint32_t const limit,
+    bool const forward,
     std::optional<AccountTransactionsCursor> const& cursorIn,
     boost::asio::yield_context& yield) const
 {
@@ -611,7 +582,7 @@ CassandraBackend::fetchAccountTransactions(
 std::optional<ripple::uint256>
 CassandraBackend::doFetchSuccessorKey(
     ripple::uint256 key,
-    uint32_t ledgerSequence,
+    uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
@@ -635,7 +606,7 @@ CassandraBackend::doFetchSuccessorKey(
 std::optional<Blob>
 CassandraBackend::doFetchLedgerObject(
     ripple::uint256 const& key,
-    uint32_t sequence,
+    uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
@@ -659,7 +630,7 @@ CassandraBackend::doFetchLedgerObject(
 std::vector<Blob>
 CassandraBackend::doFetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
-    uint32_t sequence,
+    uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     if (keys.size() == 0)
@@ -705,7 +676,7 @@ CassandraBackend::doFetchLedgerObjects(
 
 std::vector<LedgerObject>
 CassandraBackend::fetchLedgerDiff(
-    uint32_t ledgerSequence,
+    uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectDiff_};
