@@ -20,6 +20,8 @@ private:
     uint32_t inProcessLedger = 0;
     std::unordered_set<std::string> successors_;
 
+    static constexpr std::string_view set_timeout = "SET statement_timeout TO 10000";
+
 public:
     PostgresBackend(
         boost::asio::io_context& ioc,
@@ -29,7 +31,7 @@ public:
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t sequence, boost::asio::yield_context& yield)
+    fetchLedgerBySequence(uint32_t const sequence, boost::asio::yield_context& yield)
         const override;
 
     std::optional<ripple::LedgerInfo>
@@ -40,7 +42,7 @@ public:
     std::optional<Blob>
     doFetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
     // returns a transaction, metadata pair
@@ -51,21 +53,18 @@ public:
 
     std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
     fetchLedgerDiff(
-        std::uint32_t ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
-
-    std::optional<LedgerRange>
-    hardFetchLedgerRange() const override;
 
     std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context& yield) const override;
@@ -73,7 +72,7 @@ public:
     std::optional<ripple::uint256>
     doFetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
@@ -84,13 +83,13 @@ public:
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
     AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::uint32_t limit,
+        std::uint32_t const limit,
         bool forward,
         std::optional<AccountTransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const override;
@@ -98,36 +97,31 @@ public:
     void
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
-        std::string&& ledgerHeader,
-        boost::asio::yield_context& yield) override;
+        std::string&& ledgerHeader) override;
 
     void
     doWriteLedgerObject(
         std::string&& key,
-        uint32_t seq,
-        std::string&& blob,
-        boost::asio::yield_context& yield) override;
+        uint32_t const seq,
+        std::string&& blob) override;
 
     void
     writeSuccessor(
         std::string&& key,
-        uint32_t seq,
-        std::string&& successor,
-        boost::asio::yield_context& yield) override;
+        uint32_t const seq,
+        std::string&& successor) override;
 
     void
     writeTransaction(
         std::string&& hash,
-        uint32_t seq,
+        uint32_t const seq,
         uint32_t date,
         std::string&& transaction,
-        std::string&& metadata,
-        boost::asio::yield_context& yield) override;
+        std::string&& metadata) override;
 
     void
     writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data,
-        boost::asio::yield_context& yield) override;
+        std::vector<AccountTransactionsData>&& data) override;
 
     void
     open(bool readOnly) override;
@@ -136,13 +130,15 @@ public:
     close() override;
 
     void
-    startWrites(boost::asio::yield_context& yield) const override;
+    startWrites() const override;
 
     bool
-    doFinishWrites(boost::asio::yield_context& yield) const override;
+    doFinishWrites() const override;
 
     bool
-    doOnlineDelete(uint32_t numLedgersToKeep, boost::asio::yield_context& yield)
+    doOnlineDelete(
+        uint32_t const numLedgersToKeep,
+        boost::asio::yield_context& yield)
         const override;
 };
 }  // namespace Backend

@@ -697,7 +697,7 @@ public:
         boost::asio::yield_context& yield) const override;
 
     bool
-    doFinishWrites(boost::asio::yield_context& yield) const override
+    doFinishWrites() const override
     {
         // wait for all other writes to finish
         sync();
@@ -728,8 +728,7 @@ public:
     void
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
-        std::string&& header,
-        boost::asio::yield_context& yield) override;
+        std::string&& header) override;
 
     std::optional<uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
@@ -747,7 +746,7 @@ public:
     }
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t sequence, boost::asio::yield_context& yield)
+    fetchLedgerBySequence(uint32_t const sequence, boost::asio::yield_context& yield)
         const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
@@ -786,18 +785,16 @@ public:
     }
 
     std::optional<LedgerRange>
-    hardFetchLedgerRange() const override;
-    std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
@@ -805,11 +802,11 @@ public:
     std::optional<Blob>
     doFetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
     std::optional<int64_t>
-    getToken(boost::asio::yield_context& yield, void const* key) const
+    getToken(void const* key, boost::asio::yield_context& yield) const
     {
         BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
         CassandraStatement statement{getToken_};
@@ -854,7 +851,7 @@ public:
     std::optional<ripple::uint256>
     doFetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
@@ -865,43 +862,40 @@ public:
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence, boost::asio::yield_context& yield)
-        const override;
+    fetchLedgerDiff(
+        uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     void
     doWriteLedgerObject(
         std::string&& key,
-        uint32_t seq,
-        std::string&& blob,
-        boost::asio::yield_context& yield) override;
+        uint32_t const seq,
+        std::string&& blob) override;
 
     void
     writeSuccessor(
         std::string&& key,
-        uint32_t seq,
-        std::string&& successor,
-        boost::asio::yield_context& yield) override;
+        uint32_t const seq,
+        std::string&& successor) override;
 
     void
     writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data,
-        boost::asio::yield_context& yield) override;
+        std::vector<AccountTransactionsData>&& data) override;
 
     void
     writeTransaction(
         std::string&& hash,
-        uint32_t seq,
+        uint32_t const seq,
         uint32_t date,
         std::string&& transaction,
-        std::string&& metadata,
-        boost::asio::yield_context& yield) override;
+        std::string&& metadata) override;
 
     void
-    startWrites(boost::asio::yield_context& yield) const override
+    startWrites() const override
     {
     }
 
@@ -1087,39 +1081,6 @@ public:
         // background. We can't differentiate between an async success and
         // another writer, so we just return true here
         return success == cass_true || timedOut;
-    }
-
-    CassandraResult
-    executeSyncRead(CassandraStatement const& statement) const
-    {
-        CassFuture* fut;
-        CassError rc;
-        do
-        {
-            fut = cass_session_execute(session_.get(), statement.get());
-            rc = cass_future_error_code(fut);
-            if (rc != CASS_OK)
-            {
-                std::stringstream ss;
-                ss << "Cassandra executeSyncRead error";
-                ss << ": " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
-            }
-            if (isTimeout(rc))
-            {
-                cass_future_free(fut);
-                throw DatabaseTimeout();
-            }
-
-            if (rc == CASS_ERROR_SERVER_INVALID_QUERY)
-            {
-                throw std::runtime_error("invalid query");
-            }
-        } while (rc != CASS_OK);
-
-        CassResult const* res = cass_future_get_result(fut);
-        cass_future_free(fut);
-        return {res};
     }
 
     CassandraResult

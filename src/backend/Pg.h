@@ -323,7 +323,7 @@ class Pg
     PgResult
     query(
         char const* command,
-        std::size_t nParams,
+        std::size_t const,
         char const* const* values,
         boost::asio::yield_context& yield);
 
@@ -534,27 +534,6 @@ public:
     }
 };
 
-class PgQuerySync
-{
-    PgConfig config_;
-
-    pg_connection_type conn_{nullptr, [](PGconn* conn) { PQfinish(conn); }};
-
-    void
-    disconnect();
-
-    void
-    connect();
-
-public:
-    PgQuerySync(PgConfig const& config) : config_(config)
-    {
-    }
-
-    PgResult
-    operator()(const char* command);
-};
-
 //-----------------------------------------------------------------------------
 
 /** Create Postgres connection pool manager.
@@ -575,9 +554,9 @@ make_PgPool(boost::asio::io_context& ioc, boost::json::object const& pgConfig);
  * @param pool Postgres connection pool manager.
  */
 void
-initSchema(PgConfig const& config);
+initSchema(std::shared_ptr<PgPool> const& pool);
 void
-initAccountTx(PgConfig const& config);
+initAccountTx(std::shared_ptr<PgPool> const& pool);
 
 // Load the ledger info for the specified ledger/s from the database
 // @param whichLedger specifies the ledger to load via ledger sequence, ledger

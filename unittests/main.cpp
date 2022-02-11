@@ -96,14 +96,13 @@ TEST(BackendTest, Basic)
                 ripple::LedgerInfo lgrInfo =
                     deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
-                backend->startWrites(yield);
-                backend->writeLedger(lgrInfo, std::move(rawHeaderBlob), yield);
+                backend->startWrites();
+                backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
                 backend->writeSuccessor(
                     uint256ToString(Backend::firstKey),
                     lgrInfo.seq,
-                    uint256ToString(Backend::lastKey),
-                    yield);
-                ASSERT_TRUE(backend->finishWrites(lgrInfo.seq, yield));
+                    uint256ToString(Backend::lastKey));
+                ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
                 {
                     auto rng = backend->fetchLedgerRange();
                     EXPECT_TRUE(rng.has_value());
@@ -142,10 +141,10 @@ TEST(BackendTest, Basic)
                     std::string rawHeaderBlob =
                         ledgerInfoToBinaryString(lgrInfoNext);
 
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     backend->writeLedger(
-                        lgrInfoNext, std::move(rawHeaderBlob), yield);
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                        lgrInfoNext, std::move(rawHeaderBlob));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -305,7 +304,7 @@ TEST(BackendTest, Basic)
                 std::vector<ripple::AccountID> affectedAccounts;
 
                 {
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     lgrInfoNext.seq = lgrInfoNext.seq + 1;
                     lgrInfoNext.txHash = ~lgrInfo.txHash;
                     lgrInfoNext.accountHash =
@@ -327,34 +326,28 @@ TEST(BackendTest, Basic)
                     accountTxData.emplace_back(txMeta, hash256, journal);
                     backend->writeLedger(
                         lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
                     backend->writeTransaction(
                         std::move(std::string{hashBlob}),
                         lgrInfoNext.seq,
                         lgrInfoNext.closeTime.time_since_epoch().count(),
                         std::move(std::string{txnBlob}),
-                        std::move(std::string{metaBlob}),
-                        yield);
-                    backend->writeAccountTransactions(
-                        std::move(accountTxData), yield);
+                        std::move(std::string{metaBlob}));
+                    backend->writeAccountTransactions(std::move(accountTxData));
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}),
-                        yield);
+                        std::move(std::string{accountBlob}));
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
-                        std::string{accountIndexBlob},
-                        yield);
+                        std::string{accountIndexBlob});
                     backend->writeSuccessor(
                         std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey),
-                        yield);
+                        uint256ToString(Backend::lastKey));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
 
                 {
@@ -413,7 +406,7 @@ TEST(BackendTest, Basic)
                     std::chrono::system_clock::now().time_since_epoch().count();
                 std::string accountBlobOld = accountBlob;
                 {
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     lgrInfoNext.seq = lgrInfoNext.seq + 1;
                     lgrInfoNext.parentHash = lgrInfoNext.hash;
                     lgrInfoNext.hash++;
@@ -424,8 +417,7 @@ TEST(BackendTest, Basic)
 
                     backend->writeLedger(
                         lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
                     std::shuffle(
                         accountBlob.begin(),
                         accountBlob.end(),
@@ -433,10 +425,9 @@ TEST(BackendTest, Basic)
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}),
-                        yield);
+                        std::move(std::string{accountBlob}));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -478,7 +469,7 @@ TEST(BackendTest, Basic)
                     EXPECT_FALSE(obj);
                 }
                 {
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     lgrInfoNext.seq = lgrInfoNext.seq + 1;
                     lgrInfoNext.parentHash = lgrInfoNext.hash;
                     lgrInfoNext.hash++;
@@ -489,20 +480,17 @@ TEST(BackendTest, Basic)
 
                     backend->writeLedger(
                         lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
-                        std::move(std::string{}),
-                        yield);
+                        std::move(std::string{}));
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey),
-                        yield);
+                        uint256ToString(Backend::lastKey));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -642,12 +630,11 @@ TEST(BackendTest, Basic)
                                        auto state) {
                     std::cout << "writing ledger = "
                               << std::to_string(lgrInfo.seq);
-                    backend->startWrites(yield);
+                    backend->startWrites();
 
                     backend->writeLedger(
                         lgrInfo,
-                        std::move(ledgerInfoToBinaryString(lgrInfo)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfo)));
                     for (auto [hash, txn, meta] : txns)
                     {
                         backend->writeTransaction(
@@ -655,16 +642,14 @@ TEST(BackendTest, Basic)
                             lgrInfo.seq,
                             lgrInfo.closeTime.time_since_epoch().count(),
                             std::move(txn),
-                            std::move(meta),
-                            yield);
+                            std::move(meta));
                     }
                     for (auto [key, obj] : objs)
                     {
                         backend->writeLedgerObject(
                             std::string{key},
                             lgrInfo.seq,
-                            std::string{obj},
-                            yield);
+                            std::string{obj});
                     }
                     if (state.count(lgrInfo.seq - 1) == 0 ||
                         std::find_if(
@@ -680,34 +665,29 @@ TEST(BackendTest, Basic)
                                 backend->writeSuccessor(
                                     std::string{objs[i].first},
                                     lgrInfo.seq,
-                                    std::string{objs[i + 1].first},
-                                    yield);
+                                    std::string{objs[i + 1].first});
                             else
                                 backend->writeSuccessor(
                                     std::string{objs[i].first},
                                     lgrInfo.seq,
-                                    uint256ToString(Backend::lastKey),
-                                    yield);
+                                    uint256ToString(Backend::lastKey));
                         }
                         if (state.count(lgrInfo.seq - 1))
                             backend->writeSuccessor(
                                 std::string{
                                     state[lgrInfo.seq - 1].back().first},
                                 lgrInfo.seq,
-                                std::string{objs[0].first},
-                                yield);
+                                std::string{objs[0].first});
                         else
                             backend->writeSuccessor(
                                 uint256ToString(Backend::firstKey),
                                 lgrInfo.seq,
-                                std::string{objs[0].first},
-                                yield);
+                                std::string{objs[0].first});
                     }
 
-                    backend->writeAccountTransactions(
-                        std::move(accountTx), yield);
+                    backend->writeAccountTransactions(std::move(accountTx));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfo.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
                 };
 
                 auto checkLedger = [&](auto lgrInfo,
@@ -1767,14 +1747,13 @@ TEST(Backend, CacheIntegration)
                 ripple::LedgerInfo lgrInfo =
                     deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
-                backend->startWrites(yield);
-                backend->writeLedger(lgrInfo, std::move(rawHeaderBlob), yield);
+                backend->startWrites();
+                backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
                 backend->writeSuccessor(
                     uint256ToString(Backend::firstKey),
                     lgrInfo.seq,
-                    uint256ToString(Backend::lastKey),
-                    yield);
-                ASSERT_TRUE(backend->finishWrites(lgrInfo.seq, yield));
+                    uint256ToString(Backend::lastKey));
+                ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
                 {
                     auto rng = backend->fetchLedgerRange();
                     EXPECT_TRUE(rng.has_value());
@@ -1799,12 +1778,10 @@ TEST(Backend, CacheIntegration)
                         RPC::ledgerInfoToBlob(*retLgr));
                 }
 
-                std::cout << "HIIII" << std::endl;
                 EXPECT_FALSE(
                     backend->fetchLedgerBySequence(lgrInfo.seq + 1, yield)
                         .has_value());
                 auto lgrInfoOld = lgrInfo;
-                std::cout << "DONE" << std::endl;
 
                 auto lgrInfoNext = lgrInfo;
                 lgrInfoNext.seq = lgrInfo.seq + 1;
@@ -1815,10 +1792,10 @@ TEST(Backend, CacheIntegration)
                     std::string rawHeaderBlob =
                         ledgerInfoToBinaryString(lgrInfoNext);
 
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     backend->writeLedger(
-                        lgrInfoNext, std::move(rawHeaderBlob), yield);
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                        lgrInfoNext, std::move(rawHeaderBlob));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -1868,7 +1845,7 @@ TEST(Backend, CacheIntegration)
                 }
 
                 {
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     lgrInfoNext.seq = lgrInfoNext.seq + 1;
                     lgrInfoNext.txHash = ~lgrInfo.txHash;
                     lgrInfoNext.accountHash =
@@ -1878,13 +1855,11 @@ TEST(Backend, CacheIntegration)
 
                     backend->writeLedger(
                         lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}),
-                        yield);
+                        std::move(std::string{accountBlob}));
                     auto key =
                         ripple::uint256::fromVoidChecked(accountIndexBlob);
                     backend->cache().update(
@@ -1893,15 +1868,13 @@ TEST(Backend, CacheIntegration)
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
-                        std::string{accountIndexBlob},
-                        yield);
+                        std::string{accountIndexBlob});
                     backend->writeSuccessor(
                         std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey),
-                        yield);
+                        uint256ToString(Backend::lastKey));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
 
                 {
@@ -1938,7 +1911,7 @@ TEST(Backend, CacheIntegration)
                     std::chrono::system_clock::now().time_since_epoch().count();
                 std::string accountBlobOld = accountBlob;
                 {
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     lgrInfoNext.seq = lgrInfoNext.seq + 1;
                     lgrInfoNext.parentHash = lgrInfoNext.hash;
                     lgrInfoNext.hash++;
@@ -1949,8 +1922,7 @@ TEST(Backend, CacheIntegration)
 
                     backend->writeLedger(
                         lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
                     std::shuffle(
                         accountBlob.begin(),
                         accountBlob.end(),
@@ -1963,10 +1935,9 @@ TEST(Backend, CacheIntegration)
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}),
-                        yield);
+                        std::move(std::string{accountBlob}));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -2002,7 +1973,7 @@ TEST(Backend, CacheIntegration)
                     EXPECT_FALSE(obj);
                 }
                 {
-                    backend->startWrites(yield);
+                    backend->startWrites();
                     lgrInfoNext.seq = lgrInfoNext.seq + 1;
                     lgrInfoNext.parentHash = lgrInfoNext.hash;
                     lgrInfoNext.hash++;
@@ -2013,23 +1984,20 @@ TEST(Backend, CacheIntegration)
 
                     backend->writeLedger(
                         lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
                     auto key =
                         ripple::uint256::fromVoidChecked(accountIndexBlob);
                     backend->cache().update({{*key, {}}}, lgrInfoNext.seq);
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
-                        std::move(std::string{}),
-                        yield);
+                        std::move(std::string{}));
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey),
-                        yield);
+                        uint256ToString(Backend::lastKey));
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -2105,20 +2073,18 @@ TEST(Backend, CacheIntegration)
                 auto writeLedger = [&](auto lgrInfo, auto objs, auto state) {
                     std::cout << "writing ledger = "
                               << std::to_string(lgrInfo.seq);
-                    backend->startWrites(yield);
+                    backend->startWrites();
 
                     backend->writeLedger(
                         lgrInfo,
-                        std::move(ledgerInfoToBinaryString(lgrInfo)),
-                        yield);
+                        std::move(ledgerInfoToBinaryString(lgrInfo)));
                     std::vector<Backend::LedgerObject> cacheUpdates;
                     for (auto [key, obj] : objs)
                     {
                         backend->writeLedgerObject(
                             std::string{key},
                             lgrInfo.seq,
-                            std::string{obj},
-                            yield);
+                            std::string{obj});
                         auto key256 = ripple::uint256::fromVoidChecked(key);
                         cacheUpdates.push_back(
                             {*key256, {obj.begin(), obj.end()}});
@@ -2138,31 +2104,27 @@ TEST(Backend, CacheIntegration)
                                 backend->writeSuccessor(
                                     std::string{objs[i].first},
                                     lgrInfo.seq,
-                                    std::string{objs[i + 1].first},
-                                    yield);
+                                    std::string{objs[i + 1].first});
                             else
                                 backend->writeSuccessor(
                                     std::string{objs[i].first},
                                     lgrInfo.seq,
-                                    uint256ToString(Backend::lastKey),
-                                    yield);
+                                    uint256ToString(Backend::lastKey));
                         }
                         if (state.count(lgrInfo.seq - 1))
                             backend->writeSuccessor(
                                 std::string{
                                     state[lgrInfo.seq - 1].back().first},
                                 lgrInfo.seq,
-                                std::string{objs[0].first},
-                                yield);
+                                std::string{objs[0].first});
                         else
                             backend->writeSuccessor(
                                 uint256ToString(Backend::firstKey),
                                 lgrInfo.seq,
-                                std::string{objs[0].first},
-                                yield);
+                                std::string{objs[0].first});
                     }
 
-                    ASSERT_TRUE(backend->finishWrites(lgrInfo.seq, yield));
+                    ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
                 };
 
                 auto checkLedger = [&](auto lgrInfo, auto objs) {

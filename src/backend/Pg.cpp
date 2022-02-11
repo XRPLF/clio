@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <backend/Pg.h>
+#include <backend/BackendInterface.h>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -257,7 +258,7 @@ Pg::getSocket(boost::asio::yield_context& yield)
 PgResult
 Pg::query(
     char const* command,
-    std::size_t nParams,
+    std::size_t const nParams,
     char const* const* values,
     boost::asio::yield_context& yield)
 {
@@ -267,15 +268,27 @@ Pg::query(
     {
         connect(yield);
 
-        int sent = PQsendQueryParams(
-            conn_.get(),
-            command,
-            nParams,
-            nullptr,
-            values,
-            nullptr,
-            nullptr,
-            0);
+        int sent;
+        if (nParams)
+        {
+            // PQexecParams can process only a single command.
+            sent = PQsendQueryParams(
+                conn_.get(),
+                command,
+                nParams,
+                nullptr,
+                values,
+                nullptr,
+                nullptr,
+                0);
+        }
+        else
+        {
+            // PQexec can process multiple commands separated by
+            // semi-colons. Returns the response from the last
+            // command processed.
+            sent = PQsendQuery(conn_.get(), command);
+        }
 
         if (!sent)
         {
@@ -449,10 +462,9 @@ Pg::bulkInsert(
 
     try
     {
-        std::int32_t putCopy;
-        do
+        while (true)
         {
-            putCopy =
+            std::int32_t const putCopy =
                 PQputCopyData(conn_.get(), records.c_str(), records.size());
 
             if (putCopy == -1)
@@ -465,11 +477,13 @@ Pg::bulkInsert(
                 throw std::runtime_error(ss.str());
             }
 
-            // If the value is zero, wait for write-ready and try again.
-            if (putCopy == 0)
+            else if (putCopy == 0)
+                // If the value is zero, wait for write-ready and try again.
                 socket_->async_wait(
                     boost::asio::ip::tcp::socket::wait_write, yield);
-        } while (putCopy == 0);
+            else
+                break;
+        }
 
         flush(yield);
         auto copyRes = waitForStatus(yield, PGRES_COPY_IN);
@@ -873,10 +887,14 @@ make_PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
         auto ret = std::make_shared<PgPool>(ioc, configCopy);
         ret->setup();
 
-        PgQuerySync pgQuery{ret->config()};
-        std::string query = "CREATE DATABASE " +
-            std::string{config.at("database").as_string().c_str()};
-        pgQuery(query.c_str());
+        Backend::synchronous([&](boost::asio::yield_context yield)
+        {
+            PgQuery pgQuery(ret);
+            std::string query = "CREATE DATABASE " +
+                std::string{config.at("database").as_string().c_str()};
+            pgQuery(query.c_str(), yield);
+        });
+
         ret = std::make_shared<PgPool>(ioc, config);
 
         ret->setup();
@@ -1555,7 +1573,7 @@ std::array<char const*, LATEST_SCHEMA_VERSION> upgrade_schemata = {
  */
 void
 applySchema(
-    PgConfig const& config,
+    std::shared_ptr<PgPool> const& pool,
     char const* schema,
     std::uint32_t currentVersion,
     std::uint32_t schemaVersion)
@@ -1570,7 +1588,12 @@ applySchema(
         throw std::runtime_error(ss.str());
     }
 
-    auto res = PgQuerySync(config)(schema);
+    PgResult res;
+    Backend::synchronous([&](boost::asio::yield_context yield)
+    {
+        res = PgQuery(pool)(schema, yield);
+    });
+
     if (!res)
     {
         std::stringstream ss;
@@ -1580,7 +1603,11 @@ applySchema(
     }
 
     auto cmd = boost::format(R"(SELECT set_schema_version(%u, 0))");
-    res = PgQuerySync(config)(boost::str(cmd % schemaVersion).c_str());
+    Backend::synchronous([&](boost::asio::yield_context yield)
+    {
+        res = PgQuery(pool)(boost::str(cmd % schemaVersion).c_str(), yield);
+    });
+
     if (!res)
     {
         std::stringstream ss;
@@ -1591,9 +1618,14 @@ applySchema(
 }
 
 void
-initAccountTx(PgConfig const& config)
+initAccountTx(std::shared_ptr<PgPool> const& pool)
 {
-    auto res = PgQuerySync(config)(accountTxSchema);
+    PgResult res;
+    Backend::synchronous([&](boost::asio::yield_context yield)
+    {
+        res = PgQuery(pool)(accountTxSchema, yield);
+    });
+
     if (!res)
     {
         std::stringstream ss;
@@ -1603,105 +1635,15 @@ initAccountTx(PgConfig const& config)
 }
 
 void
-PgQuerySync::disconnect()
-{
-    conn_.reset();
-}
-
-void
-PgQuerySync::connect()
-{
-    if (conn_)
-    {
-        // Nothing to do if we already have a good connection.
-        if (PQstatus(conn_.get()) == CONNECTION_OK)
-            return;
-        /* Try resetting connection. */
-        PQreset(conn_.get());
-    }
-    else  // Make new connection.
-    {
-        conn_.reset(PQconnectdbParams(
-            reinterpret_cast<char const* const*>(&config_.keywordsIdx[0]),
-            reinterpret_cast<char const* const*>(&config_.valuesIdx[0]),
-            0));
-        if (!conn_)
-            throw std::runtime_error("No db connection struct");
-    }
-
-    /** Results from a synchronous connection attempt can only be either
-     * CONNECTION_OK or CONNECTION_BAD. */
-    if (PQstatus(conn_.get()) == CONNECTION_BAD)
-    {
-        std::stringstream ss;
-        ss << "DB connection status " << PQstatus(conn_.get()) << ": "
-           << PQerrorMessage(conn_.get());
-        throw std::runtime_error(ss.str());
-    }
-
-    // Log server session console messages.
-    PQsetNoticeReceiver(conn_.get(), noticeReceiver, nullptr);
-}
-
-PgResult
-PgQuerySync::operator()(char const* command)
-{
-    // The result object must be freed using the libpq API PQclear() call.
-    pg_result_type ret{nullptr, [](PGresult* result) { PQclear(result); }};
-    // Connect then submit query.
-    while (true)
-    {
-        try
-        {
-            connect();
-
-            // PQexec can process multiple commands separated by
-            // semi-colons. Returns the response from the last
-            // command processed.
-            ret.reset(PQexec(conn_.get(), command));
-
-            if (!ret)
-                throw std::runtime_error("no result structure returned");
-            break;
-        }
-        catch (std::exception const& e)
-        {
-            // Sever connection and retry until successful.
-            disconnect();
-            BOOST_LOG_TRIVIAL(error)
-                << "database error, retrying: " << e.what();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    }
-
-    // Ensure proper query execution.
-    switch (PQresultStatus(ret.get()))
-    {
-        case PGRES_TUPLES_OK:
-        case PGRES_COMMAND_OK:
-            break;
-        default: {
-            std::stringstream ss;
-            ss << "bad query result: " << PQresStatus(PQresultStatus(ret.get()))
-               << " error message: " << PQerrorMessage(conn_.get())
-               << ", number of tuples: " << PQntuples(ret.get())
-               << ", number of fields: " << PQnfields(ret.get());
-            BOOST_LOG_TRIVIAL(error) << ss.str();
-            PgResult retRes(ret.get(), conn_.get());
-            disconnect();
-
-            return retRes;
-        }
-    }
-
-    return PgResult(std::move(ret));
-}
-
-void
-initSchema(PgConfig const& config)
+initSchema(std::shared_ptr<PgPool> const& pool)
 {
     // Figure out what schema version, if any, is already installed.
-    auto res = PgQuerySync(config)(version_query);
+    PgResult res;
+    Backend::synchronous([&](boost::asio::yield_context yield)
+    {
+        res = PgQuery(pool)(version_query, yield);
+    });
+
     if (!res)
     {
         std::stringstream ss;
@@ -1725,7 +1667,11 @@ initSchema(PgConfig const& config)
         // This protects against corruption in an aborted install that is
         // followed by a fresh installation attempt with a new schema.
         auto cmd = boost::format(R"(SELECT set_schema_version(0, %u))");
-        res = PgQuerySync(config)(boost::str(cmd % freshVersion).c_str());
+        Backend::synchronous([&](boost::asio::yield_context yield)
+        {
+            res = PgQuery(pool)(boost::str(cmd % freshVersion).c_str(), yield);
+        });
+
         if (!res)
         {
             std::stringstream ss;
@@ -1736,7 +1682,7 @@ initSchema(PgConfig const& config)
 
         // Install the full latest schema.
         applySchema(
-            config,
+            pool,
             full_schemata[freshVersion],
             currentSchemaVersion,
             freshVersion);
@@ -1747,7 +1693,7 @@ initSchema(PgConfig const& config)
     for (; currentSchemaVersion < LATEST_SCHEMA_VERSION; ++currentSchemaVersion)
     {
         applySchema(
-            config,
+            pool,
             upgrade_schemata[currentSchemaVersion],
             currentSchemaVersion,
             currentSchemaVersion + 1);

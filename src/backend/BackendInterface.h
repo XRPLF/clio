@@ -37,6 +37,27 @@ retryOnTimeout(F func, size_t waitMs = 500)
     }
 }
 
+
+// Please note, this function only works w/ non-void return type. Writes are
+// synchronous anyways, so 
+template <class F>
+void
+synchronous(F&& f)
+{
+    boost::asio::io_context ctx;
+    std::optional<boost::asio::io_context::work> work;
+
+    work.emplace(ctx);
+
+    boost::asio::spawn(ctx, [&f, &work](boost::asio::yield_context yield) {
+        f(yield);
+
+        work.reset();
+    });
+
+    ctx.run();
+}
+
 class BackendInterface
 {
 protected:
@@ -129,25 +150,25 @@ public:
     std::optional<Blob>
     fetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const;
 
     std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const;
 
     virtual std::optional<Blob>
     doFetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t sequence,
+        uint32_t const sequence,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<LedgerObject>
@@ -159,7 +180,7 @@ public:
     LedgerPage
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
-        std::uint32_t ledgerSequence,
+        std::uint32_t const ledgerSequence,
         std::uint32_t limit,
         std::uint32_t limitHint,
         boost::asio::yield_context& yield) const;
@@ -168,32 +189,42 @@ public:
     std::optional<LedgerObject>
     fetchSuccessorObject(
         ripple::uint256 key,
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const;
 
     std::optional<ripple::uint256>
     fetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const;
     // Fetches the successor to key/index
 
     virtual std::optional<ripple::uint256>
     doFetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
     BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
-        uint32_t ledgerSequence,
+        uint32_t const ledgerSequence,
         std::uint32_t limit,
         std::optional<ripple::uint256> const& cursor,
         boost::asio::yield_context& yield) const;
 
-    virtual std::optional<LedgerRange>
-    hardFetchLedgerRange() const = 0;
+    std::optional<LedgerRange>
+    hardFetchLedgerRange() const
+    {
+        std::optional<LedgerRange> range = {};
+        synchronous([&](boost::asio::yield_context yield)
+        {
+            range = hardFetchLedgerRange(yield);
+        });
+
+        return range;
+    }
+
     virtual std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context& yield) const = 0;
 
@@ -217,45 +248,40 @@ public:
     virtual void
     writeLedger(
         ripple::LedgerInfo const& ledgerInfo,
-        std::string&& ledgerHeader,
-        boost::asio::yield_context& yield) = 0;
+        std::string&& ledgerHeader) = 0;
 
     virtual void
     writeLedgerObject(
         std::string&& key,
-        uint32_t seq,
-        std::string&& blob,
-        boost::asio::yield_context& yield);
+        uint32_t const seq,
+        std::string&& blob);
 
     virtual void
     writeTransaction(
         std::string&& hash,
-        uint32_t seq,
+        uint32_t const seq,
         uint32_t date,
         std::string&& transaction,
-        std::string&& metadata,
-        boost::asio::yield_context& yield) = 0;
+        std::string&& metadata) = 0;
 
     virtual void
-    writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data,
-        boost::asio::yield_context& yield) = 0;
+    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
 
     virtual void
     writeSuccessor(
         std::string&& key,
-        uint32_t seq,
-        std::string&& successor,
-        boost::asio::yield_context& yield) = 0;
+        uint32_t const seq,
+        std::string&& successor) = 0;
+        
     // Tell the database we are about to begin writing data for a particular
     // ledger.
     virtual void
-    startWrites(boost::asio::yield_context& yield) const = 0;
+    startWrites() const = 0;
 
     // Tell the database we have finished writing all data for a particular
     // ledger
     bool
-    finishWrites(uint32_t ledgerSequence, boost::asio::yield_context& yield);
+    finishWrites(uint32_t const ledgerSequence);
 
     virtual bool
     doOnlineDelete(uint32_t numLedgersToKeep, boost::asio::yield_context& yield)
@@ -276,12 +302,11 @@ private:
     virtual void
     doWriteLedgerObject(
         std::string&& key,
-        uint32_t seq,
-        std::string&& blob,
-        boost::asio::yield_context& yield) = 0;
+        uint32_t const seq,
+        std::string&& blob) = 0;
 
     virtual bool
-    doFinishWrites(boost::asio::yield_context& yield) const = 0;
+    doFinishWrites() const = 0;
 };
 
 }  // namespace Backend

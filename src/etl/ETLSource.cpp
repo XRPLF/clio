@@ -609,20 +609,16 @@ public:
                  {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
             if (!cacheOnly)
             {
-                synchronous([&](boost::asio::yield_context yield) {
-                    if (lastKey_.size())
-                        backend.writeSuccessor(
-                            std::move(lastKey_),
-                            request_.ledger().sequence(),
-                            std::string{obj.key()},
-                            yield);
-                    lastKey_ = obj.key();
-                    backend.writeLedgerObject(
-                        std::move(*obj.mutable_key()),
+                if (lastKey_.size())
+                    backend.writeSuccessor(
+                        std::move(lastKey_),
                         request_.ledger().sequence(),
-                        std::move(*obj.mutable_data()),
-                        yield);
-                });
+                        std::string{obj.key()});
+                lastKey_ = obj.key();
+                backend.writeLedgerObject(
+                    std::move(*obj.mutable_key()),
+                    request_.ledger().sequence(),
+                    std::move(*obj.mutable_data()));
             }
         }
         backend.cache().update(
@@ -760,13 +756,10 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 auto succ = backend_->cache().getSuccessor(
                     *ripple::uint256::fromVoidChecked(key), sequence);
                 if (succ)
-                    synchronous([&](boost::asio::yield_context yield) {
-                        backend_->writeSuccessor(
-                            std::move(key),
-                            sequence,
-                            uint256ToString(succ->key),
-                            yield);
-                    });
+                    backend_->writeSuccessor(
+                        std::move(key),
+                        sequence,
+                        uint256ToString(succ->key));
             }
             ripple::uint256 prev = Backend::firstKey;
             while (auto cur = backend_->cache().getSuccessor(prev, sequence))
@@ -774,13 +767,10 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 assert(cur);
                 if (prev == Backend::firstKey)
                 {
-                    synchronous([&](boost::asio::yield_context yield) {
-                        backend_->writeSuccessor(
-                            uint256ToString(prev),
-                            sequence,
-                            uint256ToString(cur->key),
-                            yield);
-                    });
+                    backend_->writeSuccessor(
+                        uint256ToString(prev),
+                        sequence,
+                        uint256ToString(cur->key));
                 }
 
                 if (isBookDir(cur->key, cur->blob))
@@ -799,13 +789,10 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                                 << ripple::strHex(base) << " - "
                                 << ripple::strHex(cur->key);
 
-                            synchronous([&](boost::asio::yield_context yield) {
-                                backend_->writeSuccessor(
-                                    uint256ToString(base),
-                                    sequence,
-                                    uint256ToString(cur->key),
-                                    yield);
-                            });
+                            backend_->writeSuccessor(
+                                uint256ToString(base),
+                                sequence,
+                                uint256ToString(cur->key));
                         }
                     }
                     ++numWrites;
@@ -816,13 +803,10 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                                             << numWrites << " book successors";
             }
 
-            synchronous([&](boost::asio::yield_context yield) {
-                backend_->writeSuccessor(
-                    uint256ToString(prev),
-                    sequence,
-                    uint256ToString(Backend::lastKey),
-                    yield);
-            });
+            backend_->writeSuccessor(
+                uint256ToString(prev),
+                sequence,
+                uint256ToString(Backend::lastKey));
 
             ++numWrites;
             auto end = std::chrono::system_clock::now();
