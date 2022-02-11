@@ -20,7 +20,8 @@ private:
     uint32_t inProcessLedger = 0;
     std::unordered_set<std::string> successors_;
 
-    static constexpr std::string_view set_timeout = "SET statement_timeout TO 10000";
+    static constexpr std::string_view set_timeout =
+        "SET statement_timeout TO 10000";
 
 public:
     PostgresBackend(
@@ -31,8 +32,9 @@ public:
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t const sequence, boost::asio::yield_context& yield)
-        const override;
+    fetchLedgerBySequence(
+        uint32_t const sequence,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::LedgerInfo>
     fetchLedgerByHash(
@@ -138,8 +140,7 @@ public:
     bool
     doOnlineDelete(
         uint32_t const numLedgersToKeep,
-        boost::asio::yield_context& yield)
-        const override;
+        boost::asio::yield_context& yield) const override;
 };
 }  // namespace Backend
 #endif

@@ -332,10 +332,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                         << ripple::strHex(*predPtr) << " - "
                         << ripple::strHex(*succPtr);
 
-                        backend_->writeSuccessor(
-                            std::move(*predPtr),
-                            lgrInfo.seq,
-                            std::move(*succPtr));
+                    backend_->writeSuccessor(
+                        std::move(*predPtr), lgrInfo.seq, std::move(*succPtr));
                 }
                 else
                 {

@@ -726,9 +726,8 @@ public:
         return true;
     }
     void
-    writeLedger(
-        ripple::LedgerInfo const& ledgerInfo,
-        std::string&& header) override;
+    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header)
+        override;
 
     std::optional<uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
@@ -746,8 +745,9 @@ public:
     }
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t const sequence, boost::asio::yield_context& yield)
-        const override
+    fetchLedgerBySequence(
+        uint32_t const sequence,
+        boost::asio::yield_context& yield) const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
         CassandraStatement statement{selectLedgerBySeq_};

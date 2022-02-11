@@ -757,9 +757,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                     *ripple::uint256::fromVoidChecked(key), sequence);
                 if (succ)
                     backend_->writeSuccessor(
-                        std::move(key),
-                        sequence,
-                        uint256ToString(succ->key));
+                        std::move(key), sequence, uint256ToString(succ->key));
             }
             ripple::uint256 prev = Backend::firstKey;
             while (auto cur = backend_->cache().getSuccessor(prev, sequence))
