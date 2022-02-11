@@ -14,8 +14,8 @@
 #include <boost/log/trivial.hpp>
 #include <algorithm>
 #include <array>
-#include <backend/Pg.h>
 #include <backend/BackendInterface.h>
+#include <backend/Pg.h>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -887,8 +887,7 @@ make_PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
         auto ret = std::make_shared<PgPool>(ioc, configCopy);
         ret->setup();
 
-        Backend::synchronous([&](boost::asio::yield_context yield)
-        {
+        Backend::synchronous([&](boost::asio::yield_context yield) {
             PgQuery pgQuery(ret);
             std::string query = "CREATE DATABASE " +
                 std::string{config.at("database").as_string().c_str()};
@@ -1589,8 +1588,7 @@ applySchema(
     }
 
     PgResult res;
-    Backend::synchronous([&](boost::asio::yield_context yield)
-    {
+    Backend::synchronous([&](boost::asio::yield_context yield) {
         res = PgQuery(pool)(schema, yield);
     });
 
@@ -1603,8 +1601,7 @@ applySchema(
     }
 
     auto cmd = boost::format(R"(SELECT set_schema_version(%u, 0))");
-    Backend::synchronous([&](boost::asio::yield_context yield)
-    {
+    Backend::synchronous([&](boost::asio::yield_context yield) {
         res = PgQuery(pool)(boost::str(cmd % schemaVersion).c_str(), yield);
     });
 
@@ -1621,8 +1618,7 @@ void
 initAccountTx(std::shared_ptr<PgPool> const& pool)
 {
     PgResult res;
-    Backend::synchronous([&](boost::asio::yield_context yield)
-    {
+    Backend::synchronous([&](boost::asio::yield_context yield) {
         res = PgQuery(pool)(accountTxSchema, yield);
     });
 
@@ -1639,8 +1635,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
 {
     // Figure out what schema version, if any, is already installed.
     PgResult res;
-    Backend::synchronous([&](boost::asio::yield_context yield)
-    {
+    Backend::synchronous([&](boost::asio::yield_context yield) {
         res = PgQuery(pool)(version_query, yield);
     });
 
@@ -1667,8 +1662,7 @@ initSchema(std::shared_ptr<PgPool> const& pool)
         // This protects against corruption in an aborted install that is
         // followed by a fresh installation attempt with a new schema.
         auto cmd = boost::format(R"(SELECT set_schema_version(0, %u))");
-        Backend::synchronous([&](boost::asio::yield_context yield)
-        {
+        Backend::synchronous([&](boost::asio::yield_context yield) {
             res = PgQuery(pool)(boost::str(cmd % freshVersion).c_str(), yield);
         });
 

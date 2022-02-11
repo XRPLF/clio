@@ -37,9 +37,8 @@ retryOnTimeout(F func, size_t waitMs = 500)
     }
 }
 
-
 // Please note, this function only works w/ non-void return type. Writes are
-// synchronous anyways, so 
+// synchronous anyways, so
 template <class F>
 void
 synchronous(F&& f)
@@ -217,8 +216,7 @@ public:
     hardFetchLedgerRange() const
     {
         std::optional<LedgerRange> range = {};
-        synchronous([&](boost::asio::yield_context yield)
-        {
+        synchronous([&](boost::asio::yield_context yield) {
             range = hardFetchLedgerRange(yield);
         });
 
@@ -272,7 +270,7 @@ public:
         std::string&& key,
         uint32_t const seq,
         std::string&& successor) = 0;
-        
+
     // Tell the database we are about to begin writing data for a particular
     // ledger.
     virtual void

@@ -21,8 +21,7 @@ PostgresBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,
     std::string&& ledgerHeader)
 {
-    synchronous([&](boost::asio::yield_context yield)
-    {
+    synchronous([&](boost::asio::yield_context yield) {
         auto cmd = boost::format(
             R"(INSERT INTO ledgers
             VALUES (%u,'\x%s', '\x%s',%u,%u,%u,%u,%u,'\x%s','\x%s'))");
@@ -69,13 +68,12 @@ PostgresBackend::doWriteLedgerObject(
     uint32_t seq,
     std::string&& blob)
 {
-    synchronous([&](boost::asio::yield_context yield)
-    {
+    synchronous([&](boost::asio::yield_context yield) {
         if (abortWrite_)
             return;
         objectsBuffer_ << "\\\\x" << ripple::strHex(key) << '\t'
-                    << std::to_string(seq) << '\t' << "\\\\x"
-                    << ripple::strHex(blob) << '\n';
+                       << std::to_string(seq) << '\t' << "\\\\x"
+                       << ripple::strHex(blob) << '\n';
         numRowsInObjectsBuffer_++;
         // If the buffer gets too large, the insert fails. Not sure why. So we
         // insert after 1 million records
@@ -97,8 +95,7 @@ PostgresBackend::writeSuccessor(
     uint32_t seq,
     std::string&& successor)
 {
-    synchronous([&](boost::asio::yield_context yield)
-    {
+    synchronous([&](boost::asio::yield_context yield) {
         if (range)
         {
             if (successors_.count(key) > 0)
@@ -106,8 +103,8 @@ PostgresBackend::writeSuccessor(
             successors_.insert(key);
         }
         successorBuffer_ << "\\\\x" << ripple::strHex(key) << '\t'
-                        << std::to_string(seq) << '\t' << "\\\\x"
-                        << ripple::strHex(successor) << '\n';
+                         << std::to_string(seq) << '\t' << "\\\\x"
+                         << ripple::strHex(successor) << '\n';
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << ripple::strHex(key) << " - " << std::to_string(seq);
         numRowsInSuccessorBuffer_++;
@@ -116,7 +113,8 @@ PostgresBackend::writeSuccessor(
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " Flushing large buffer. num successors = "
                 << numRowsInSuccessorBuffer_;
-            writeConnection_.bulkInsert("successor", successorBuffer_.str(), yield);
+            writeConnection_.bulkInsert(
+                "successor", successorBuffer_.str(), yield);
             BOOST_LOG_TRIVIAL(info) << __func__ << " Flushed large buffer";
             successorBuffer_.str("");
         }
@@ -219,10 +217,10 @@ PostgresBackend::fetchLatestLedgerSequence(
 {
     PgQuery pgQuery(pgPool_);
     pgQuery(set_timeout.data(), yield);
-    
-    auto const query = 
+
+    auto const query =
         "SELECT ledger_seq FROM ledgers ORDER BY ledger_seq DESC LIMIT 1";
-    
+
     if (auto res = pgQuery(query, yield); checkResult(res, 1))
         return res.asBigInt(0, 0);
 
@@ -240,7 +238,7 @@ PostgresBackend::fetchLedgerBySequence(
     std::stringstream sql;
     sql << "SELECT * FROM ledgers WHERE ledger_seq = "
         << std::to_string(sequence);
-    
+
     if (auto res = pgQuery(sql.str().data(), yield); checkResult(res, 10))
         return parseLedgerInfo(res);
 
@@ -258,7 +256,6 @@ PostgresBackend::fetchLedgerByHash(
     std::stringstream sql;
     sql << "SELECT * FROM ledgers WHERE ledger_hash = "
         << ripple::to_string(hash);
-
 
     if (auto res = pgQuery(sql.str().data(), yield); checkResult(res, 10))
         return parseLedgerInfo(res);
@@ -363,7 +360,7 @@ PostgresBackend::fetchAllTransactionsInLedger(
     sql << "SELECT transaction, metadata, ledger_seq,date FROM transactions "
            "WHERE "
         << "ledger_seq = " << std::to_string(ledgerSequence);
-        
+
     auto res = pgQuery(sql.str().data(), yield);
     if (size_t numRows = checkResult(res, 4))
     {
@@ -647,8 +644,7 @@ PostgresBackend::close()
 void
 PostgresBackend::startWrites() const
 {
-    synchronous([&](boost::asio::yield_context yield)
-    {
+    synchronous([&](boost::asio::yield_context yield) {
         numRowsInObjectsBuffer_ = 0;
         abortWrite_ = false;
         auto res = writeConnection_("BEGIN", yield);
@@ -664,8 +660,7 @@ PostgresBackend::startWrites() const
 bool
 PostgresBackend::doFinishWrites() const
 {
-    synchronous([&](boost::asio::yield_context yield)
-    {
+    synchronous([&](boost::asio::yield_context yield) {
         if (!abortWrite_)
         {
             std::string txStr = transactionsBuffer_.str();
@@ -686,8 +681,8 @@ PostgresBackend::doFinishWrites() const
                 std::stringstream indexCreate;
                 indexCreate
                     << "CREATE INDEX diff ON objects USING hash(ledger_seq) "
-                    "WHERE NOT "
-                    "ledger_seq = "
+                       "WHERE NOT "
+                       "ledger_seq = "
                     << std::to_string(inProcessLedger);
                 writeConnection_(indexCreate.str().data(), yield);
             }
@@ -708,14 +703,15 @@ PostgresBackend::doFinishWrites() const
         accountTxBuffer_.str("");
         accountTxBuffer_.clear();
         numRowsInObjectsBuffer_ = 0;
-
     });
 
     return !abortWrite_;
 }
 
 bool
-PostgresBackend::doOnlineDelete(uint32_t numLedgersToKeep, boost::asio::yield_context& yield) const
+PostgresBackend::doOnlineDelete(
+    uint32_t numLedgersToKeep,
+    boost::asio::yield_context& yield) const
 {
     auto rng = fetchLedgerRange();
     if (!rng)

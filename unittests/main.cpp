@@ -142,8 +142,7 @@ TEST(BackendTest, Basic)
                         ledgerInfoToBinaryString(lgrInfoNext);
 
                     backend->startWrites();
-                    backend->writeLedger(
-                        lgrInfoNext, std::move(rawHeaderBlob));
+                    backend->writeLedger(lgrInfoNext, std::move(rawHeaderBlob));
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
@@ -633,8 +632,7 @@ TEST(BackendTest, Basic)
                     backend->startWrites();
 
                     backend->writeLedger(
-                        lgrInfo,
-                        std::move(ledgerInfoToBinaryString(lgrInfo)));
+                        lgrInfo, std::move(ledgerInfoToBinaryString(lgrInfo)));
                     for (auto [hash, txn, meta] : txns)
                     {
                         backend->writeTransaction(
@@ -647,9 +645,7 @@ TEST(BackendTest, Basic)
                     for (auto [key, obj] : objs)
                     {
                         backend->writeLedgerObject(
-                            std::string{key},
-                            lgrInfo.seq,
-                            std::string{obj});
+                            std::string{key}, lgrInfo.seq, std::string{obj});
                     }
                     if (state.count(lgrInfo.seq - 1) == 0 ||
                         std::find_if(
@@ -1793,8 +1789,7 @@ TEST(Backend, CacheIntegration)
                         ledgerInfoToBinaryString(lgrInfoNext);
 
                     backend->startWrites();
-                    backend->writeLedger(
-                        lgrInfoNext, std::move(rawHeaderBlob));
+                    backend->writeLedger(lgrInfoNext, std::move(rawHeaderBlob));
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
                 {
@@ -2076,15 +2071,12 @@ TEST(Backend, CacheIntegration)
                     backend->startWrites();
 
                     backend->writeLedger(
-                        lgrInfo,
-                        std::move(ledgerInfoToBinaryString(lgrInfo)));
+                        lgrInfo, std::move(ledgerInfoToBinaryString(lgrInfo)));
                     std::vector<Backend::LedgerObject> cacheUpdates;
                     for (auto [key, obj] : objs)
                     {
                         backend->writeLedgerObject(
-                            std::string{key},
-                            lgrInfo.seq,
-                            std::string{obj});
+                            std::string{key}, lgrInfo.seq, std::string{obj});
                         auto key256 = ripple::uint256::fromVoidChecked(key);
                         cacheUpdates.push_back(
                             {*key256, {obj.begin(), obj.end()}});
