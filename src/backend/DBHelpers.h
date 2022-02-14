@@ -14,8 +14,8 @@
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
-    uint32_t ledgerSequence;
-    uint32_t transactionIndex;
+    std::uint32_t ledgerSequence;
+    std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
     AccountTransactionsData(
@@ -39,6 +39,7 @@ isOffer(T const& object)
     short offer_bytes = (object[1] << 8) | object[2];
     return offer_bytes == 0x006f;
 }
+
 template <class T>
 inline bool
 isOfferHex(T const& object)
@@ -51,6 +52,7 @@ isOfferHex(T const& object)
     }
     return false;
 }
+
 template <class T>
 inline bool
 isDirNode(T const& object)
@@ -117,11 +119,12 @@ deserializeHeader(ripple::Slice data)
 
     return info;
 }
+
 inline std::string
 uint256ToString(ripple::uint256 const& uint)
 {
     return {reinterpret_cast<const char*>(uint.data()), uint.size()};
 }
 
-static constexpr uint32_t rippleEpochStart = 946684800;
+static constexpr std::uint32_t rippleEpochStart = 946684800;
 #endif

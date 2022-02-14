@@ -1574,8 +1574,8 @@ void
 applySchema(
     std::shared_ptr<PgPool> const& pool,
     char const* schema,
-    std::uint32_t currentVersion,
-    std::uint32_t schemaVersion)
+    std::uint32_t const currentVersion,
+    std::uint32_t const schemaVersion)
 {
     if (currentVersion != 0 && schemaVersion != currentVersion + 1)
     {
@@ -1701,7 +1701,8 @@ initSchema(std::shared_ptr<PgPool> const& pool)
 std::optional<ripple::LedgerInfo>
 getLedger(
     boost::asio::yield_context yield,
-    std::variant<std::monostate, ripple::uint256, uint32_t> const& whichLedger,
+    std::variant<std::monostate, ripple::uint256, std::uint32_t> const&
+        whichLedger,
     std::shared_ptr<PgPool>& pgPool)
 {
     ripple::LedgerInfo lgrInfo;
@@ -1710,9 +1711,9 @@ getLedger(
            "total_coins, closing_time, prev_closing_time, close_time_res, "
            "close_flags, ledger_seq FROM ledgers ";
 
-    uint32_t expNumResults = 1;
+    std::uint32_t expNumResults = 1;
 
-    if (auto ledgerSeq = std::get_if<uint32_t>(&whichLedger))
+    if (auto ledgerSeq = std::get_if<std::uint32_t>(&whichLedger))
     {
         sql << "WHERE ledger_seq = " + std::to_string(*ledgerSeq);
     }

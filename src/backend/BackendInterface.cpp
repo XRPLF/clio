@@ -3,7 +3,7 @@
 #include <backend/BackendInterface.h>
 namespace Backend {
 bool
-BackendInterface::finishWrites(uint32_t ledgerSequence)
+BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
     auto commitRes = doFinishWrites();
     if (commitRes)
@@ -15,7 +15,7 @@ BackendInterface::finishWrites(uint32_t ledgerSequence)
 void
 BackendInterface::writeLedgerObject(
     std::string&& key,
-    uint32_t seq,
+    std::uint32_t const seq,
     std::string&& blob)
 {
     assert(key.size() == sizeof(ripple::uint256));
@@ -52,7 +52,7 @@ BackendInterface::hardFetchLedgerRangeNoThrow() const
 std::optional<Blob>
 BackendInterface::fetchLedgerObject(
     ripple::uint256 const& key,
-    uint32_t const sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     auto obj = cache_.get(key, sequence);
@@ -80,7 +80,7 @@ BackendInterface::fetchLedgerObject(
 std::vector<Blob>
 BackendInterface::fetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
-    uint32_t const sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     std::vector<Blob> results;
@@ -116,7 +116,7 @@ BackendInterface::fetchLedgerObjects(
 std::optional<ripple::uint256>
 BackendInterface::fetchSuccessorKey(
     ripple::uint256 key,
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     auto succ = cache_.getSuccessor(key, ledgerSequence);
@@ -132,7 +132,7 @@ BackendInterface::fetchSuccessorKey(
 std::optional<LedgerObject>
 BackendInterface::fetchSuccessorObject(
     ripple::uint256 key,
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     auto succ = fetchSuccessorKey(key, ledgerSequence, yield);
@@ -148,8 +148,8 @@ BackendInterface::fetchSuccessorObject(
 BookOffersPage
 BackendInterface::fetchBookOffers(
     ripple::uint256 const& book,
-    uint32_t ledgerSequence,
-    std::uint32_t limit,
+    std::uint32_t const ledgerSequence,
+    std::uint32_t const limit,
     std::optional<ripple::uint256> const& cursor,
     boost::asio::yield_context& yield) const
 {
@@ -165,8 +165,8 @@ BackendInterface::fetchBookOffers(
             .count();
     };
     auto begin = std::chrono::system_clock::now();
-    uint32_t numSucc = 0;
-    uint32_t numPages = 0;
+    std::uint32_t numSucc = 0;
+    std::uint32_t numPages = 0;
     long succMillis = 0;
     long pageMillis = 0;
     while (keys.size() < limit)
@@ -242,9 +242,9 @@ BackendInterface::fetchBookOffers(
 LedgerPage
 BackendInterface::fetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,
-    std::uint32_t ledgerSequence,
-    std::uint32_t limit,
-    std::uint32_t limitHint,
+    std::uint32_t const ledgerSequence,
+    std::uint32_t const limit,
+    std::uint32_t const limitHint,
     boost::asio::yield_context& yield) const
 {
     LedgerPage page;
@@ -275,7 +275,7 @@ BackendInterface::fetchLedgerPage(
 
 std::optional<ripple::Fees>
 BackendInterface::fetchFees(
-    std::uint32_t seq,
+    std::uint32_t const seq,
     boost::asio::yield_context& yield) const
 {
     ripple::Fees fees;
