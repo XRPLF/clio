@@ -65,7 +65,7 @@ PostgresBackend::writeAccountTransactions(
 void
 PostgresBackend::doWriteLedgerObject(
     std::string&& key,
-    uint32_t seq,
+    std::uint32_t const seq,
     std::string&& blob)
 {
     synchronous([&](boost::asio::yield_context yield) {
@@ -92,7 +92,7 @@ PostgresBackend::doWriteLedgerObject(
 void
 PostgresBackend::writeSuccessor(
     std::string&& key,
-    uint32_t seq,
+    std::uint32_t const seq,
     std::string&& successor)
 {
     synchronous([&](boost::asio::yield_context yield) {
@@ -124,8 +124,8 @@ PostgresBackend::writeSuccessor(
 void
 PostgresBackend::writeTransaction(
     std::string&& hash,
-    uint32_t seq,
-    uint32_t date,
+    std::uint32_t const seq,
+    std::uint32_t const date,
     std::string&& transaction,
     std::string&& metadata)
 {
@@ -137,8 +137,8 @@ PostgresBackend::writeTransaction(
                         << '\t' << "\\\\x" << ripple::strHex(metadata) << '\n';
 }
 
-uint32_t
-checkResult(PgResult const& res, uint32_t numFieldsExpected)
+std::uint32_t
+checkResult(PgResult const& res, std::uint32_t const numFieldsExpected)
 {
     if (!res)
     {
@@ -211,12 +211,12 @@ parseLedgerInfo(PgResult const& res)
     info.validated = true;
     return info;
 }
-std::optional<uint32_t>
+std::optional<std::uint32_t>
 PostgresBackend::fetchLatestLedgerSequence(
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     auto const query =
         "SELECT ledger_seq FROM ledgers ORDER BY ledger_seq DESC LIMIT 1";
@@ -229,11 +229,11 @@ PostgresBackend::fetchLatestLedgerSequence(
 
 std::optional<ripple::LedgerInfo>
 PostgresBackend::fetchLedgerBySequence(
-    uint32_t sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT * FROM ledgers WHERE ledger_seq = "
@@ -251,7 +251,7 @@ PostgresBackend::fetchLedgerByHash(
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT * FROM ledgers WHERE ledger_hash = "
@@ -301,11 +301,11 @@ PostgresBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 std::optional<Blob>
 PostgresBackend::doFetchLedgerObject(
     ripple::uint256 const& key,
-    uint32_t sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT object FROM objects WHERE key = "
@@ -330,7 +330,7 @@ PostgresBackend::fetchTransaction(
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT transaction,metadata,ledger_seq,date FROM transactions "
@@ -350,11 +350,11 @@ PostgresBackend::fetchTransaction(
 }
 std::vector<TransactionAndMetadata>
 PostgresBackend::fetchAllTransactionsInLedger(
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT transaction, metadata, ledger_seq,date FROM transactions "
@@ -379,11 +379,11 @@ PostgresBackend::fetchAllTransactionsInLedger(
 }
 std::vector<ripple::uint256>
 PostgresBackend::fetchAllTransactionHashesInLedger(
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT hash FROM transactions WHERE "
@@ -406,11 +406,11 @@ PostgresBackend::fetchAllTransactionHashesInLedger(
 std::optional<ripple::uint256>
 PostgresBackend::doFetchSuccessorKey(
     ripple::uint256 key,
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT next FROM successor WHERE key = "
@@ -441,7 +441,7 @@ PostgresBackend::fetchTransactions(
     results.reserve(hashes.size());
 
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     for (size_t i = 0; i < hashes.size(); ++i)
@@ -480,7 +480,7 @@ PostgresBackend::fetchTransactions(
 std::vector<Blob>
 PostgresBackend::doFetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
-    uint32_t const sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     if (!keys.size())
@@ -490,7 +490,7 @@ PostgresBackend::doFetchLedgerObjects(
     results.reserve(keys.size());
 
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     for (size_t i = 0; i < keys.size(); ++i)
@@ -524,11 +524,11 @@ PostgresBackend::doFetchLedgerObjects(
 
 std::vector<LedgerObject>
 PostgresBackend::fetchLedgerDiff(
-    uint32_t ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
 
     std::stringstream sql;
     sql << "SELECT key,object FROM objects "
@@ -552,13 +552,13 @@ PostgresBackend::fetchLedgerDiff(
 AccountTransactions
 PostgresBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
-    std::uint32_t limit,
+    std::uint32_t const limit,
     bool forward,
     std::optional<AccountTransactionsCursor> const& cursor,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout.data(), yield);
+    pgQuery(set_timeout, yield);
     pg_params dbParams;
 
     char const*& command = dbParams.first;
@@ -710,16 +710,16 @@ PostgresBackend::doFinishWrites() const
 
 bool
 PostgresBackend::doOnlineDelete(
-    uint32_t numLedgersToKeep,
+    std::uint32_t const numLedgersToKeep,
     boost::asio::yield_context& yield) const
 {
     auto rng = fetchLedgerRange();
     if (!rng)
         return false;
-    uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
+    std::uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
     if (minLedger <= rng->minSequence)
         return false;
-    uint32_t limit = 2048;
+    std::uint32_t limit = 2048;
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 0", yield);
     std::optional<ripple::uint256> cursor;

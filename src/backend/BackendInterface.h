@@ -95,15 +95,16 @@ public:
     }
 
     virtual std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(uint32_t sequence, boost::asio::yield_context& yield)
-        const = 0;
+    fetchLedgerBySequence(
+        std::uint32_t const sequence,
+        boost::asio::yield_context& yield) const = 0;
 
     virtual std::optional<ripple::LedgerInfo>
     fetchLedgerByHash(
         ripple::uint256 const& hash,
         boost::asio::yield_context& yield) const = 0;
 
-    virtual std::optional<uint32_t>
+    virtual std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const = 0;
 
     std::optional<LedgerRange>
@@ -114,7 +115,7 @@ public:
     }
 
     std::optional<ripple::Fees>
-    fetchFees(std::uint32_t seq, boost::asio::yield_context& yield) const;
+    fetchFees(std::uint32_t const seq, boost::asio::yield_context& yield) const;
 
     // *** transaction methods
     virtual std::optional<TransactionAndMetadata>
@@ -130,49 +131,50 @@ public:
     virtual AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::uint32_t limit,
+        std::uint32_t const limit,
         bool forward,
         std::optional<AccountTransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(
-        uint32_t ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(
-        uint32_t ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
     // *** state data methods
     std::optional<Blob>
     fetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const;
 
     std::vector<Blob>
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const;
 
     virtual std::optional<Blob>
     doFetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<LedgerObject>
-    fetchLedgerDiff(uint32_t ledgerSequence, boost::asio::yield_context& yield)
-        const = 0;
+    fetchLedgerDiff(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
 
     // Fetches a page of ledger objects, ordered by key/index.
     // Used by ledger_data
@@ -180,35 +182,35 @@ public:
     fetchLedgerPage(
         std::optional<ripple::uint256> const& cursor,
         std::uint32_t const ledgerSequence,
-        std::uint32_t limit,
-        std::uint32_t limitHint,
+        std::uint32_t const limit,
+        std::uint32_t const limitHint,
         boost::asio::yield_context& yield) const;
 
     // Fetches the successor to key/index
     std::optional<LedgerObject>
     fetchSuccessorObject(
         ripple::uint256 key,
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const;
 
     std::optional<ripple::uint256>
     fetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const;
     // Fetches the successor to key/index
 
     virtual std::optional<ripple::uint256>
     doFetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
     BookOffersPage
     fetchBookOffers(
         ripple::uint256 const& book,
-        uint32_t const ledgerSequence,
-        std::uint32_t limit,
+        std::uint32_t const ledgerSequence,
+        std::uint32_t const limit,
         std::optional<ripple::uint256> const& cursor,
         boost::asio::yield_context& yield) const;
 
@@ -234,7 +236,7 @@ public:
     hardFetchLedgerRangeNoThrow(boost::asio::yield_context& yield) const;
 
     void
-    updateRange(uint32_t newMax)
+    updateRange(std::uint32_t const newMax)
     {
         std::lock_guard lk(mutex_);
         if (!range)
@@ -251,14 +253,14 @@ public:
     virtual void
     writeLedgerObject(
         std::string&& key,
-        uint32_t const seq,
+        std::uint32_t const seq,
         std::string&& blob);
 
     virtual void
     writeTransaction(
         std::string&& hash,
-        uint32_t const seq,
-        uint32_t date,
+        std::uint32_t const seq,
+        std::uint32_t const date,
         std::string&& transaction,
         std::string&& metadata) = 0;
 
@@ -268,7 +270,7 @@ public:
     virtual void
     writeSuccessor(
         std::string&& key,
-        uint32_t const seq,
+        std::uint32_t const seq,
         std::string&& successor) = 0;
 
     // Tell the database we are about to begin writing data for a particular
@@ -279,11 +281,12 @@ public:
     // Tell the database we have finished writing all data for a particular
     // ledger
     bool
-    finishWrites(uint32_t const ledgerSequence);
+    finishWrites(std::uint32_t const ledgerSequence);
 
     virtual bool
-    doOnlineDelete(uint32_t numLedgersToKeep, boost::asio::yield_context& yield)
-        const = 0;
+    doOnlineDelete(
+        std::uint32_t numLedgersToKeep,
+        boost::asio::yield_context& yield) const = 0;
 
     // Open the database. Set up all of the necessary objects and
     // datastructures. After this call completes, the database is ready for
@@ -300,7 +303,7 @@ private:
     virtual void
     doWriteLedgerObject(
         std::string&& key,
-        uint32_t const seq,
+        std::uint32_t const seq,
         std::string&& blob) = 0;
 
     virtual bool

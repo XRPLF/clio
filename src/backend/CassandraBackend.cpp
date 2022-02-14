@@ -57,7 +57,7 @@ struct WriteCallbackData
     CassandraBackend const* backend;
     T data;
     std::function<void(WriteCallbackData<T, B>&, bool)> retry;
-    uint32_t currentRetries;
+    std::uint32_t currentRetries;
     std::atomic<int> refs = 1;
     std::string id;
 
@@ -170,7 +170,7 @@ makeAndExecuteBulkAsyncWrite(
 void
 CassandraBackend::doWriteLedgerObject(
     std::string&& key,
-    uint32_t const seq,
+    std::uint32_t const seq,
     std::string&& blob)
 {
     BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
@@ -204,7 +204,7 @@ CassandraBackend::doWriteLedgerObject(
 void
 CassandraBackend::writeSuccessor(
     std::string&& key,
-    uint32_t const seq,
+    std::uint32_t const seq,
     std::string&& successor)
 {
     BOOST_LOG_TRIVIAL(trace)
@@ -285,8 +285,8 @@ CassandraBackend::writeAccountTransactions(
 void
 CassandraBackend::writeTransaction(
     std::string&& hash,
-    uint32_t const seq,
-    uint32_t date,
+    std::uint32_t const seq,
+    std::uint32_t const date,
     std::string&& transaction,
     std::string&& metadata)
 {
@@ -351,7 +351,7 @@ CassandraBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 
 std::vector<TransactionAndMetadata>
 CassandraBackend::fetchAllTransactionsInLedger(
-    uint32_t const ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
@@ -470,7 +470,7 @@ CassandraBackend::fetchTransactions(
 
 std::vector<ripple::uint256>
 CassandraBackend::fetchAllTransactionHashesInLedger(
-    uint32_t const ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectAllTransactionHashesInLedger_};
@@ -535,7 +535,8 @@ CassandraBackend::fetchAccountTransactions(
     else
     {
         int seq = forward ? rng->minSequence : rng->maxSequence;
-        int placeHolder = forward ? 0 : std::numeric_limits<uint32_t>::max();
+        int placeHolder =
+            forward ? 0 : std::numeric_limits<std::uint32_t>::max();
 
         statement.bindNextIntTuple(placeHolder, placeHolder);
         BOOST_LOG_TRIVIAL(debug)
@@ -562,7 +563,10 @@ CassandraBackend::fetchAccountTransactions(
         {
             BOOST_LOG_TRIVIAL(debug) << __func__ << " setting cursor";
             auto [lgrSeq, txnIdx] = result.getInt64Tuple();
-            cursor = {(uint32_t)lgrSeq, (uint32_t)txnIdx};
+            cursor = {
+                static_cast<std::uint32_t>(lgrSeq),
+                static_cast<std::uint32_t>(txnIdx)};
+
             if (forward)
                 ++cursor->transactionIndex;
         }
@@ -582,7 +586,7 @@ CassandraBackend::fetchAccountTransactions(
 std::optional<ripple::uint256>
 CassandraBackend::doFetchSuccessorKey(
     ripple::uint256 key,
-    uint32_t const ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
@@ -606,7 +610,7 @@ CassandraBackend::doFetchSuccessorKey(
 std::optional<Blob>
 CassandraBackend::doFetchLedgerObject(
     ripple::uint256 const& key,
-    uint32_t const sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
@@ -630,7 +634,7 @@ CassandraBackend::doFetchLedgerObject(
 std::vector<Blob>
 CassandraBackend::doFetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
-    uint32_t const sequence,
+    std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
     if (keys.size() == 0)
@@ -676,7 +680,7 @@ CassandraBackend::doFetchLedgerObjects(
 
 std::vector<LedgerObject>
 CassandraBackend::fetchLedgerDiff(
-    uint32_t const ledgerSequence,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectDiff_};
@@ -719,7 +723,7 @@ CassandraBackend::fetchLedgerDiff(
 
 bool
 CassandraBackend::doOnlineDelete(
-    uint32_t numLedgersToKeep,
+    std::uint32_t const numLedgersToKeep,
     boost::asio::yield_context& yield) const
 {
     // calculate TTL
@@ -729,7 +733,7 @@ CassandraBackend::doOnlineDelete(
     auto rng = fetchLedgerRange();
     if (!rng)
         return false;
-    uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
+    std::uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
     if (minLedger <= rng->minSequence)
         return false;
     auto bind = [this](auto& params) {
@@ -746,7 +750,7 @@ CassandraBackend::doOnlineDelete(
         std::tuple<ripple::uint256, uint32_t, Blob>,
         typename std::remove_reference<decltype(bind)>::type>>>
         cbs;
-    uint32_t concurrentLimit = 10;
+    std::uint32_t concurrentLimit = 10;
     std::atomic_int numOutstanding = 0;
 
     // iterate through latest ledger, updating TTL

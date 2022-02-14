@@ -128,9 +128,9 @@ public:
     }
 
     void
-    bindNextBytes(const char* data, uint32_t size)
+    bindNextBytes(const char* data, std::uint32_t const size)
     {
-        bindNextBytes((unsigned char*)data, size);
+        bindNextBytes((unsigned const char*)(data), size);
     }
 
     void
@@ -156,13 +156,13 @@ public:
     }
 
     void
-    bindNextBytes(void const* key, uint32_t size)
+    bindNextBytes(void const* key, std::uint32_t const size)
     {
         bindNextBytes(static_cast<const unsigned char*>(key), size);
     }
 
     void
-    bindNextBytes(const unsigned char* data, uint32_t size)
+    bindNextBytes(const unsigned char* data, std::uint32_t const size)
     {
         if (!statement_)
             throw std::runtime_error(
@@ -184,7 +184,7 @@ public:
     }
 
     void
-    bindNextUInt(uint32_t value)
+    bindNextUInt(std::uint32_t const value)
     {
         if (!statement_)
             throw std::runtime_error(
@@ -205,9 +205,9 @@ public:
     }
 
     void
-    bindNextInt(uint32_t value)
+    bindNextInt(std::uint32_t const value)
     {
-        bindNextInt((int64_t)value);
+        bindNextInt(static_cast<std::int64_t>(value));
     }
 
     void
@@ -230,7 +230,7 @@ public:
     }
 
     void
-    bindNextIntTuple(uint32_t first, uint32_t second)
+    bindNextIntTuple(std::uint32_t const first, std::uint32_t const second)
     {
         CassTuple* tuple = cass_tuple_new(2);
         CassError rc = cass_tuple_set_int64(tuple, 0, first);
@@ -369,26 +369,6 @@ public:
         curGetIndex_++;
         return {buf, buf + bufSize};
     }
-    /*
-    uint32_t
-    getNumBytes()
-    {
-        if (!row_)
-            throw std::runtime_error("CassandraResult::getBytes - no result");
-        cass_byte_t const* buf;
-        std::size_t bufSize;
-        CassError rc = cass_value_get_bytes(
-            cass_row_get_column(row_, curGetIndex_), &buf, &bufSize);
-        if (rc != CASS_OK)
-        {
-            std::stringstream msg;
-            msg << "CassandraResult::getBytes - error getting value: " << rc
-                << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << msg.str();
-            throw std::runtime_error(msg.str());
-        }
-        return bufSize;
-    }*/
 
     ripple::uint256
     getUInt256()
@@ -431,13 +411,13 @@ public:
         return val;
     }
 
-    uint32_t
+    std::uint32_t
     getUInt32()
     {
-        return (uint32_t)getInt64();
+        return static_cast<uint32_t>(getInt64());
     }
 
-    std::pair<int64_t, int64_t>
+    std::pair<std::int64_t, std::int64_t>
     getInt64Tuple()
     {
         if (!row_)
@@ -449,13 +429,13 @@ public:
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - failed to iterate tuple");
         CassValue const* value = cass_iterator_get_value(tupleIter);
-        int64_t first;
+        std::int64_t first;
         cass_value_get_int64(value, &first);
         if (!cass_iterator_next(tupleIter))
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - failed to iterate tuple");
         value = cass_iterator_get_value(tupleIter);
-        int64_t second;
+        std::int64_t second;
         cass_value_get_int64(value, &second);
         ++curGetIndex_;
         return {first, second};
@@ -619,10 +599,10 @@ private:
 
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
-    uint32_t maxRequestsOutstanding = 10000;
+    std::uint32_t maxRequestsOutstanding = 10000;
     // we keep this small because the indexer runs in the background, and we
     // don't want the database to be swamped when the indexer is running
-    uint32_t indexerMaxRequestsOutstanding = 10;
+    std::uint32_t indexerMaxRequestsOutstanding = 10;
     mutable std::atomic_uint32_t numRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
@@ -642,7 +622,7 @@ private:
 
     boost::json::object config_;
 
-    mutable uint32_t ledgerSequence_ = 0;
+    mutable std::uint32_t ledgerSequence_ = 0;
 
 public:
     CassandraBackend(
@@ -691,7 +671,7 @@ public:
     AccountTransactions
     fetchAccountTransactions(
         ripple::AccountID const& account,
-        std::uint32_t limit,
+        std::uint32_t const limit,
         bool forward,
         std::optional<AccountTransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const override;
@@ -729,7 +709,7 @@ public:
     writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header)
         override;
 
-    std::optional<uint32_t>
+    std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
@@ -746,7 +726,7 @@ public:
 
     std::optional<ripple::LedgerInfo>
     fetchLedgerBySequence(
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override
     {
         BOOST_LOG_TRIVIAL(trace) << __func__;
@@ -779,7 +759,7 @@ public:
             return {};
         }
 
-        std::uint32_t sequence = result.getInt64();
+        std::uint32_t const sequence = result.getInt64();
 
         return fetchLedgerBySequence(sequence, yield);
     }
@@ -789,12 +769,12 @@ public:
 
     std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
@@ -802,7 +782,7 @@ public:
     std::optional<Blob>
     doFetchLedgerObject(
         ripple::uint256 const& key,
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
     std::optional<int64_t>
@@ -851,7 +831,7 @@ public:
     std::optional<ripple::uint256>
     doFetchSuccessorKey(
         ripple::uint256 key,
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
@@ -862,24 +842,24 @@ public:
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
-        uint32_t const sequence,
+        std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
     fetchLedgerDiff(
-        uint32_t const ledgerSequence,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     void
     doWriteLedgerObject(
         std::string&& key,
-        uint32_t const seq,
+        std::uint32_t const seq,
         std::string&& blob) override;
 
     void
     writeSuccessor(
         std::string&& key,
-        uint32_t const seq,
+        std::uint32_t const seq,
         std::string&& successor) override;
 
     void
@@ -889,8 +869,8 @@ public:
     void
     writeTransaction(
         std::string&& hash,
-        uint32_t const seq,
-        uint32_t date,
+        std::uint32_t const seq,
+        std::uint32_t const date,
         std::string&& transaction,
         std::string&& metadata) override;
 
@@ -908,8 +888,9 @@ public:
     }
 
     bool
-    doOnlineDelete(uint32_t numLedgersToKeep, boost::asio::yield_context& yield)
-        const override;
+    doOnlineDelete(
+        std::uint32_t const numLedgersToKeep,
+        boost::asio::yield_context& yield) const override;
 
     inline void
     incremementOutstandingRequestCount() const

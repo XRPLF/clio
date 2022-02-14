@@ -323,7 +323,7 @@ class Pg
     PgResult
     query(
         char const* command,
-        std::size_t const,
+        std::size_t const nParams,
         char const* const* values,
         boost::asio::yield_context& yield);
 
@@ -564,7 +564,8 @@ initAccountTx(std::shared_ptr<PgPool> const& pool);
 // @return vector of LedgerInfos
 std::optional<ripple::LedgerInfo>
 getLedger(
-    std::variant<std::monostate, ripple::uint256, uint32_t> const& whichLedger,
+    std::variant<std::monostate, ripple::uint256, std::uint32_t> const&
+        whichLedger,
     std::shared_ptr<PgPool>& pgPool);
 
 #endif  // RIPPLE_CORE_PG_H_INCLUDED
