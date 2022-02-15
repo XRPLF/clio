@@ -76,7 +76,6 @@ target_sources(clio PRIVATE
 
 add_executable(clio_server src/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
-set_property (TARGET clio_server PROPERTY CXX_STANDARD 20)
 
 if(BUILD_TESTS)
   add_executable(clio_tests unittests/main.cpp)

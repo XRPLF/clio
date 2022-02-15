@@ -159,7 +159,6 @@ BackendInterface::fetchBookOffers(
     BookOffersPage page;
     const ripple::uint256 bookEnd = ripple::getQualityNext(book);
     ripple::uint256 uTipIndex = book;
-    bool done = false;
     std::vector<ripple::uint256> keys;
     auto getMillis = [](auto diff) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(diff)

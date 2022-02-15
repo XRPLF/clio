@@ -781,7 +781,6 @@ PostgresBackend::doOnlineDelete(
     std::uint32_t minLedger = rng->maxSequence - numLedgersToKeep;
     if (minLedger <= rng->minSequence)
         return false;
-    std::uint32_t limit = 2048;
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 0", yield);
     std::optional<ripple::uint256> cursor;

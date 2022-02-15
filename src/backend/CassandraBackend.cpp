@@ -106,9 +106,9 @@ struct WriteCallbackData
 template <class T, class B>
 struct BulkWriteCallbackData : public WriteCallbackData<T, B>
 {
+    std::atomic_int& numRemaining;
     std::mutex& mtx;
     std::condition_variable& cv;
-    std::atomic_int& numRemaining;
     BulkWriteCallbackData(
         CassandraBackend const* b,
         T&& d,
@@ -1006,7 +1006,6 @@ CassandraBackend::open(bool readOnly)
         }
         return true;
     };
-    CassStatement* statement;
     CassFuture* fut;
     bool setupSessionAndTable = false;
     while (!setupSessionAndTable)
