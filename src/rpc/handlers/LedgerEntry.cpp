@@ -347,9 +347,6 @@ doLedgerEntry(Context const& context)
     auto dbResponse =
         context.backend->fetchLedgerObject(key, lgrInfo.seq, context.yield);
     auto end = std::chrono::system_clock::now();
-    auto time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
 
     if (!dbResponse or dbResponse->size() == 0)
         return Status{Error::rpcLGR_NOT_FOUND};

@@ -819,7 +819,6 @@ TEST(BackendTest, Basic)
                     for (auto obj : objs)
                     {
                         bool found = false;
-                        bool correct = false;
                         for (auto retObj : retObjs)
                         {
                             if (ripple::strHex(obj.first) ==
@@ -2201,7 +2200,6 @@ TEST(Backend, CacheIntegration)
                     for (auto obj : objs)
                     {
                         bool found = false;
-                        bool correct = false;
                         for (auto retObj : retObjs)
                         {
                             if (ripple::strHex(obj.first) ==

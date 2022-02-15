@@ -95,12 +95,12 @@ public:
         boost::beast::flat_buffer&& b)
         : ioc_(ioc)
         , http_(std::move(socket))
+        , buffer_(std::move(b))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , counters_(counters)
-        , buffer_(std::move(b))
     {
     }
     WsUpgrader(
@@ -115,12 +115,12 @@ public:
         http::request<http::string_body> req)
         : ioc_(ioc)
         , http_(std::move(stream))
+        , buffer_(std::move(b))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , counters_(counters)
-        , buffer_(std::move(b))
         , req_(std::move(req))
     {
     }

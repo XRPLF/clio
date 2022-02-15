@@ -420,46 +420,6 @@ public:
     }
 };
 
-namespace ETL {
-static std::unique_ptr<ETLSource>
-make_ETLSource(
-    boost::json::object const& config,
-    boost::asio::io_context& ioContext,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-    ETLLoadBalancer& balancer)
-{
-    std::unique_ptr<ETLSource> src = nullptr;
-    if (sslCtx)
-    {
-        src = std::make_unique<SslETLSource>(
-            config,
-            ioContext,
-            sslCtx,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
-    }
-    else
-    {
-        src = std::make_unique<PlainETLSource>(
-            config,
-            ioContext,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
-    }
-
-    src->run();
-
-    return src;
-}
-}  // namespace ETL
-
 /// This class is used to manage connections to transaction processing processes
 /// This class spawns a listener for each etl source, which listens to messages
 /// on the ledgers stream (to keep track of which ledgers have been validated by
