@@ -16,8 +16,8 @@ private:
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
-    uint32_t writeInterval_ = 1000000;
-    uint32_t inProcessLedger = 0;
+    std::uint32_t writeInterval_ = 1000000;
+    std::uint32_t inProcessLedger = 0;
     std::unordered_set<std::string> successors_;
 
     const char* const set_timeout = "SET statement_timeout TO 10000";

@@ -38,8 +38,8 @@ struct TransactionAndMetadata
 {
     Blob transaction;
     Blob metadata;
-    uint32_t ledgerSequence;
-    uint32_t date;
+    std::uint32_t ledgerSequence;
+    std::uint32_t date;
     bool
     operator==(const TransactionAndMetadata& other) const
     {
@@ -50,8 +50,8 @@ struct TransactionAndMetadata
 
 struct AccountTransactionsCursor
 {
-    uint32_t ledgerSequence;
-    uint32_t transactionIndex;
+    std::uint32_t ledgerSequence;
+    std::uint32_t transactionIndex;
 };
 
 struct AccountTransactions
@@ -62,8 +62,8 @@ struct AccountTransactions
 
 struct LedgerRange
 {
-    uint32_t minSequence;
-    uint32_t maxSequence;
+    std::uint32_t minSequence;
+    std::uint32_t maxSequence;
 };
 constexpr ripple::uint256 firstKey{
     "0000000000000000000000000000000000000000000000000000000000000000"};

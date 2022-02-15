@@ -43,8 +43,8 @@ private:
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> loadBalancer_;
-    std::optional<uint32_t> onlineDeleteInterval_;
-    uint32_t extractorThreads_ = 1;
+    std::optional<std::uint32_t> onlineDeleteInterval_;
+    std::uint32_t extractorThreads_ = 1;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -239,7 +239,7 @@ private:
     /// This is equivelent to the degree of parallelism during the initial
     /// ledger download
     /// @return the number of markers
-    uint32_t
+    std::uint32_t
     getNumMarkers()
     {
         return numMarkers_;
