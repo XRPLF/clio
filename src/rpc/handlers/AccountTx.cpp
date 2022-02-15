@@ -127,7 +127,7 @@ doAccountTx(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "ledgerIndexNotNumber"};
 
         auto ledgerIndex =
-            boost::json::value_to<uint32_t>(request.at("ledger_index"));
+            boost::json::value_to<std::uint32_t>(request.at("ledger_index"));
         maxIndex = minIndex = ledgerIndex;
     }
 
