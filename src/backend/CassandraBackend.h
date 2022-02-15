@@ -414,7 +414,7 @@ public:
     std::uint32_t
     getUInt32()
     {
-        return static_cast<uint32_t>(getInt64());
+        return static_cast<std::uint32_t>(getInt64());
     }
 
     std::pair<std::int64_t, std::int64_t>

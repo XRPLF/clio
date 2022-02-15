@@ -27,7 +27,7 @@ public:
         boost::asio::io_context& ioc,
         boost::json::object const& config);
 
-    std::optional<uint32_t>
+    std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override;
 
     std::optional<ripple::LedgerInfo>
