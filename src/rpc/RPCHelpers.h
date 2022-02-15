@@ -64,7 +64,7 @@ generatePubLedgerMessage(
     ripple::LedgerInfo const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    uint32_t txnCount);
+    std::uint32_t txnCount);
 
 std::variant<Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(Context const& ctx);
@@ -106,7 +106,7 @@ isFrozen(
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
-    uint32_t sequence,
+    std::uint32_t sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
     boost::asio::yield_context& yield);
@@ -141,7 +141,7 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     Backend::BackendInterface const& backend,
-    uint32_t ledgerSequence,
+    std::uint32_t ledgerSequence,
     boost::asio::yield_context& yield);
 
 std::variant<Status, ripple::Book>
@@ -150,16 +150,16 @@ parseBook(boost::json::object const& request);
 std::variant<Status, ripple::AccountID>
 parseTaker(boost::json::value const& request);
 
-std::optional<uint32_t>
+std::optional<std::uint32_t>
 getUInt(boost::json::object const& request, std::string const& field);
 
-uint32_t
+std::uint32_t
 getUInt(
     boost::json::object const& request,
     std::string const& field,
-    uint32_t dfault);
+    std::uint32_t dfault);
 
-uint32_t
+std::uint32_t
 getRequiredUInt(boost::json::object const& request, std::string const& field);
 
 std::optional<bool>

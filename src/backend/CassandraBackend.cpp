@@ -747,7 +747,7 @@ CassandraBackend::doOnlineDelete(
     std::condition_variable cv;
     std::mutex mtx;
     std::vector<std::shared_ptr<BulkWriteCallbackData<
-        std::tuple<ripple::uint256, uint32_t, Blob>,
+        std::tuple<ripple::uint256, std::uint32_t, Blob>,
         typename std::remove_reference<decltype(bind)>::type>>>
         cbs;
     std::uint32_t concurrentLimit = 10;
