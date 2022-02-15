@@ -1,3 +1,11 @@
+#include <grpc/impl/codegen/port_platform.h>
+#ifdef GRPC_TSAN_ENABLED
+#undef GRPC_TSAN_ENABLED
+#endif
+#ifdef GRPC_ASAN_ENABLED
+#undef GRPC_ASAN_ENABLED
+#endif
+
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/websocket.hpp>
@@ -195,7 +203,8 @@ main(int argc, char* argv[])
     DOSGuard dosGuard{config.value(), ioc};
 
     // Interface to the database
-    std::shared_ptr<BackendInterface> backend{Backend::make_Backend(*config)};
+    std::shared_ptr<BackendInterface> backend{
+        Backend::make_Backend(ioc, *config)};
 
     // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{

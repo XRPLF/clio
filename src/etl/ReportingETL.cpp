@@ -99,9 +99,12 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     auto start = std::chrono::system_clock::now();
 
     backend_->startWrites();
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " started writes";
+
     backend_->writeLedger(
         lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
@@ -116,10 +119,10 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     BOOST_LOG_TRIVIAL(debug) << __func__ << " loaded initial ledger";
 
     if (!stopping_)
-    {
         backend_->writeAccountTransactions(std::move(accountTxData));
-    }
+
     backend_->finishWrites(startingSequence);
+
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
                              << ((end - start).count()) / 1000000000.0;
@@ -135,15 +138,38 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     if (!writing_)
     {
         BOOST_LOG_TRIVIAL(debug) << __func__ << " - Updating cache";
-        auto diff = Backend::retryOnTimeout(
-            [&]() { return backend_->fetchLedgerDiff(lgrInfo.seq); });
+
+        std::vector<Backend::LedgerObject> diff;
+        auto fetchDiffSynchronous = [&]() {
+            Backend::synchronous([&](boost::asio::yield_context yield) {
+                diff = backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+            });
+        };
+
+        Backend::retryOnTimeout(fetchDiffSynchronous);
+
         backend_->cache().update(diff, lgrInfo.seq);
     }
+
     backend_->updateRange(lgrInfo.seq);
-    auto fees = Backend::retryOnTimeout(
-        [&]() { return backend_->fetchFees(lgrInfo.seq); });
-    auto transactions = Backend::retryOnTimeout(
-        [&]() { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq); });
+    std::optional<ripple::Fees> fees = {};
+    std::vector<Backend::TransactionAndMetadata> transactions = {};
+
+    auto fetchFeesSynchronous = [&]() {
+        Backend::synchronous([&](boost::asio::yield_context yield) {
+            fees = backend_->fetchFees(lgrInfo.seq, yield);
+        });
+    };
+
+    auto fetchTxSynchronous = [&]() {
+        Backend::synchronous([&](boost::asio::yield_context yield) {
+            transactions =
+                backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
+        });
+    };
+
+    Backend::retryOnTimeout(fetchFeesSynchronous);
+    Backend::retryOnTimeout(fetchTxSynchronous);
 
     auto ledgerRange = backend_->fetchLedgerRange();
     assert(ledgerRange);
@@ -196,9 +222,16 @@ ReportingETL::publishLedger(
         }
         else
         {
-            auto lgr = Backend::retryOnTimeout([&]() {
-                return backend_->fetchLedgerBySequence(ledgerSequence);
-            });
+            std::optional<ripple::LedgerInfo> lgr = {};
+            auto fetchLedgerSynchronous = [&]() {
+                Backend::synchronous([&](boost::asio::yield_context yield) {
+                    lgr =
+                        backend_->fetchLedgerBySequence(ledgerSequence, yield);
+                });
+            };
+
+            Backend::retryOnTimeout(fetchLedgerSynchronous);
+
             assert(lgr);
             publishLedger(*lgr);
 
@@ -248,11 +281,14 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
+
     backend_->startWrites();
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "started writes";
+
     backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote ledger header";
 
@@ -265,10 +301,12 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             auto firstBook = std::move(*obj.mutable_first_book());
             if (!firstBook.size())
                 firstBook = uint256ToString(Backend::lastKey);
+
             backend_->writeSuccessor(
                 std::move(*obj.mutable_book_base()),
                 lgrInfo.seq,
                 std::move(firstBook));
+
             BOOST_LOG_TRIVIAL(debug) << __func__ << " writing book successor "
                                      << ripple::strHex(obj.book_base()) << " - "
                                      << ripple::strHex(firstBook);
@@ -293,6 +331,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                         << ripple::strHex(obj.key()) << " - "
                         << ripple::strHex(*predPtr) << " - "
                         << ripple::strHex(*succPtr);
+
                     backend_->writeSuccessor(
                         std::move(*predPtr), lgrInfo.seq, std::move(*succPtr));
                 }
@@ -303,6 +342,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                         << ripple::strHex(obj.key()) << " - "
                         << ripple::strHex(*predPtr) << " - "
                         << ripple::strHex(*succPtr);
+
                     backend_->writeSuccessor(
                         std::move(*predPtr),
                         lgrInfo.seq,
@@ -412,6 +452,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                     << ripple::strHex(obj.key) << " - "
                     << ripple::strHex(lb->key) << " - "
                     << ripple::strHex(ub->key);
+
                 backend_->writeSuccessor(
                     uint256ToString(lb->key),
                     lgrInfo.seq,
@@ -427,6 +468,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                     uint256ToString(obj.key),
                     lgrInfo.seq,
                     uint256ToString(ub->key));
+
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " writing successor for new object "
                     << ripple::strHex(lb->key) << " - "
@@ -443,6 +485,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                     uint256ToString(base),
                     lgrInfo.seq,
                     uint256ToString(succ->key));
+
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " Updating book successor "
                     << ripple::strHex(base) << " - "
@@ -454,6 +497,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                     uint256ToString(base),
                     lgrInfo.seq,
                     uint256ToString(Backend::lastKey));
+
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " Updating book successor "
                     << ripple::strHex(base) << " - "
@@ -472,11 +516,15 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << __func__ << " : "
         << "Inserted all transactions. Number of transactions  = "
         << rawData.transactions_list().transactions_size();
+
     backend_->writeAccountTransactions(std::move(accountTxData));
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote account_tx";
     auto start = std::chrono::system_clock::now();
+
     bool success = backend_->finishWrites(lgrInfo.seq);
+
     auto end = std::chrono::system_clock::now();
 
     auto duration = ((end - start).count()) / 1000000000.0;
@@ -685,7 +733,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 deleting_ = true;
                 ioContext_.post([this, &minSequence]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
-                    backend_->doOnlineDelete(*onlineDeleteInterval_);
+
+                    Backend::synchronous([&](boost::asio::yield_context yield) {
+                        backend_->doOnlineDelete(*onlineDeleteInterval_, yield);
+                    });
+
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
                     auto rng = backend_->fetchLedgerRange();
                     minSequence = rng->minSequence;
@@ -729,8 +781,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 void
 ReportingETL::monitor()
 {
-    std::optional<uint32_t> latestSequence =
-        backend_->fetchLatestLedgerSequence();
+    std::optional<uint32_t> latestSequence = {};
+    Backend::synchronous([&](boost::asio::yield_context yield) {
+        latestSequence = backend_->fetchLatestLedgerSequence(yield);
+    });
+
     if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "

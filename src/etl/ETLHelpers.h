@@ -179,4 +179,4 @@ getMarkers(size_t numMarkers)
     return markers;
 }
 
-#endif
+#endif  // RIPPLE_APP_REPORTING_ETLHELPERS_H_INCLUDED

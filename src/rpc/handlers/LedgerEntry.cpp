@@ -128,7 +128,8 @@ doLedgerEntry(Context const& context)
         {
             auto directory = request.at("directory").as_object();
             std::uint64_t subIndex = directory.contains("sub_index")
-                ? value_to<std::uint64_t>(directory.at("sub_index"))
+                ? boost::json::value_to<std::uint64_t>(
+                      directory.at("sub_index"))
                 : 0;
 
             if (directory.contains("dir_root"))
@@ -242,7 +243,8 @@ doLedgerEntry(Context const& context)
                 return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
             else
             {
-                std::uint32_t seq = value_to<std::uint32_t>(offer.at("seq"));
+                std::uint32_t seq =
+                    boost::json::value_to<std::uint32_t>(offer.at("seq"));
                 key = ripple::keylet::offer(*id, seq).key;
             }
         }
@@ -342,7 +344,8 @@ doLedgerEntry(Context const& context)
     }
 
     auto start = std::chrono::system_clock::now();
-    auto dbResponse = context.backend->fetchLedgerObject(key, lgrInfo.seq);
+    auto dbResponse =
+        context.backend->fetchLedgerObject(key, lgrInfo.seq, context.yield);
     auto end = std::chrono::system_clock::now();
     auto time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)

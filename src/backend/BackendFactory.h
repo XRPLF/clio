@@ -8,7 +8,7 @@
 
 namespace Backend {
 std::shared_ptr<BackendInterface>
-make_Backend(boost::json::object const& config)
+make_Backend(boost::asio::io_context& ioc, boost::json::object const& config)
 {
     BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
 
@@ -27,13 +27,13 @@ make_Backend(boost::json::object const& config)
         if (config.contains("online_delete"))
             dbConfig.at(type).as_object()["ttl"] =
                 config.at("online_delete").as_int64() * 4;
-        backend =
-            std::make_shared<CassandraBackend>(dbConfig.at(type).as_object());
+        backend = std::make_shared<CassandraBackend>(
+            ioc, dbConfig.at(type).as_object());
     }
     else if (boost::iequals(type, "postgres"))
     {
-        backend =
-            std::make_shared<PostgresBackend>(dbConfig.at(type).as_object());
+        backend = std::make_shared<PostgresBackend>(
+            ioc, dbConfig.at(type).as_object());
     }
 
     if (!backend)

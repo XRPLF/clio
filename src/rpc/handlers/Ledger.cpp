@@ -85,8 +85,8 @@ doLedger(Context const& context)
         boost::json::array& jsonTxs = header.at("transactions").as_array();
         if (expand)
         {
-            auto txns =
-                context.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
+            auto txns = context.backend->fetchAllTransactionsInLedger(
+                lgrInfo.seq, context.yield);
 
             std::transform(
                 std::move_iterator(txns.begin()),
@@ -111,8 +111,8 @@ doLedger(Context const& context)
         }
         else
         {
-            auto hashes =
-                context.backend->fetchAllTransactionHashesInLedger(lgrInfo.seq);
+            auto hashes = context.backend->fetchAllTransactionHashesInLedger(
+                lgrInfo.seq, context.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
@@ -128,7 +128,8 @@ doLedger(Context const& context)
     {
         header["diff"] = boost::json::value(boost::json::array_kind);
         boost::json::array& jsonDiff = header.at("diff").as_array();
-        auto diff = context.backend->fetchLedgerDiff(lgrInfo.seq);
+        auto diff =
+            context.backend->fetchLedgerDiff(lgrInfo.seq, context.yield);
         for (auto const& obj : diff)
         {
             boost::json::object entry;
