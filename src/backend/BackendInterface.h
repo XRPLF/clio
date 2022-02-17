@@ -38,7 +38,7 @@ retryOnTimeout(F func, size_t waitMs = 500)
 }
 
 template <class F>
-void
+auto
 synchronous(F&& f)
 {
     boost::asio::io_context ctx;
@@ -47,18 +47,42 @@ synchronous(F&& f)
 
     work.emplace(ctx);
 
-    boost::asio::spawn(strand, [&f, &work](boost::asio::yield_context yield) {
-        f(yield);
+    using R = typename std::result_of<F(boost::asio::yield_context&)>::type;
+    if constexpr (!std::is_same<R, void>::value)
+    {
+        R res;
+        boost::asio::spawn(
+            strand, [&f, &work, &res](boost::asio::yield_context yield) {
+                res = f(yield);
+                work.reset();
+            });
 
-        work.reset();
-    });
+        ctx.run();
+        return res;
+    }
+    else
+    {
+        boost::asio::spawn(
+            strand, [&f, &work](boost::asio::yield_context yield) {
+                f(yield);
+                work.reset();
+            });
 
-    ctx.run();
+        ctx.run();
+    }
+}
+
+template <class F>
+auto
+synchronousAndRetryOnTimeout(F&& f)
+{
+    return retryOnTimeout([&]() { return synchronous(f); });
 }
 
 class BackendInterface
 {
 protected:
+    mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
     SimpleCache cache_;
 
@@ -109,8 +133,19 @@ public:
     std::optional<LedgerRange>
     fetchLedgerRange() const
     {
-        std::lock_guard lk(mutex_);
+        std::shared_lock lck(rngMtx_);
         return range;
+    }
+
+    void
+    updateRange(uint32_t newMax)
+    {
+        std::unique_lock lck(rngMtx_);
+        assert(!range || newMax >= range->maxSequence);
+        if (!range)
+            range = {newMax, newMax};
+        else
+            range->maxSequence = newMax;
     }
 
     std::optional<ripple::Fees>
@@ -216,12 +251,9 @@ public:
     std::optional<LedgerRange>
     hardFetchLedgerRange() const
     {
-        std::optional<LedgerRange> range = {};
-        synchronous([&](boost::asio::yield_context& yield) {
-            range = hardFetchLedgerRange(yield);
+        return synchronous([&](boost::asio::yield_context yield) {
+            return hardFetchLedgerRange(yield);
         });
-
-        return range;
     }
 
     virtual std::optional<LedgerRange>
@@ -233,16 +265,6 @@ public:
     // Doesn't throw DatabaseTimeout. Should be used with care.
     std::optional<LedgerRange>
     hardFetchLedgerRangeNoThrow(boost::asio::yield_context& yield) const;
-
-    void
-    updateRange(std::uint32_t const newMax)
-    {
-        std::lock_guard lk(mutex_);
-        if (!range)
-            range = {newMax, newMax};
-        else
-            range->maxSequence = newMax;
-    }
 
     virtual void
     writeLedger(
@@ -306,7 +328,7 @@ private:
         std::string&& blob) = 0;
 
     virtual bool
-    doFinishWrites() const = 0;
+    doFinishWrites() = 0;
 };
 
 }  // namespace Backend
