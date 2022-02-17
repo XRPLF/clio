@@ -149,9 +149,9 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
         Backend::retryOnTimeout(fetchDiffSynchronous);
 
         backend_->cache().update(diff, lgrInfo.seq);
+        backend_->updateRange(lgrInfo.seq);
     }
 
-    backend_->updateRange(lgrInfo.seq);
     std::optional<ripple::Fees> fees = {};
     std::vector<Backend::TransactionAndMetadata> transactions = {};
 
@@ -721,7 +721,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                         });
                 }
 
-                backend_->updateRange(lgrInfo.seq);
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
@@ -781,10 +780,13 @@ void
 ReportingETL::monitor()
 {
     std::optional<uint32_t> latestSequence = {};
-    Backend::synchronous([&](boost::asio::yield_context yield) {
-        latestSequence = backend_->fetchLatestLedgerSequence(yield);
-    });
 
+    auto fetchLatest = [&]() {
+        Backend::synchronous([&](boost::asio::yield_context yield) {
+            latestSequence = backend_->fetchLatestLedgerSequence(yield);
+        });
+    };
+    Backend::retryOnTimeout(fetchLatest);
     if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
@@ -914,21 +916,41 @@ void
 ReportingETL::monitorReadOnly()
 {
     BOOST_LOG_TRIVIAL(debug) << "Starting reporting in strict read only mode";
-    std::optional<uint32_t> mostRecent =
-        networkValidatedLedgers_->getMostRecent();
-    if (!mostRecent)
+    std::optional<uint32_t> latestSequence = Backend::retryOnTimeout([&]() {
+        return Backend::synchronous([&](boost::asio::yield_context yield) {
+            return backend_->fetchLatestLedgerSequence(yield);
+        });
+    });
+    if (!latestSequence)
+        latestSequence = networkValidatedLedgers_->getMostRecent();
+    if (!latestSequence)
         return;
-    uint32_t sequence = *mostRecent;
-    std::thread t{[this, sequence]() {
+    std::thread t{[this, latestSequence]() {
         BOOST_LOG_TRIVIAL(info) << "Loading cache";
-        loadBalancer_->loadInitialLedger(sequence, true);
+        loadBalancer_->loadInitialLedger(*latestSequence, true);
     }};
     t.detach();
-    while (!stopping_ &&
-           networkValidatedLedgers_->waitUntilValidatedByNetwork(sequence))
+    latestSequence = *latestSequence + 1;
+    while (true)
     {
-        publishLedger(sequence, {});
-        ++sequence;
+        // try to grab the next ledger
+        if (Backend::retryOnTimeout([&]() {
+                return Backend::synchronous(
+                    [&](boost::asio::yield_context yield) {
+                        return backend_->fetchLedgerBySequence(
+                            *latestSequence, yield);
+                    });
+            }))
+        {
+            publishLedger(*latestSequence, {});
+            latestSequence = *latestSequence + 1;
+        }
+        else  // if we can't, wait until it's validated by the network, or 1
+              // second passes, whichever occurs first. Even if we don't hear
+              // from rippled, if ledgers are being written to the db, we
+              // publish them
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(
+                *latestSequence, 1000);
     }
 }
 
