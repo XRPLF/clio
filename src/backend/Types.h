@@ -1,6 +1,7 @@
 #ifndef CLIO_TYPES_H_INCLUDED
 #define CLIO_TYPES_H_INCLUDED
 #include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
 #include <optional>
 #include <string>
 #include <vector>
@@ -46,16 +47,34 @@ struct TransactionAndMetadata
     }
 };
 
-struct AccountTransactionsCursor
+struct TransactionsCursor
 {
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
 };
 
-struct AccountTransactions
+struct TransactionsAndCursor
 {
     std::vector<TransactionAndMetadata> txns;
-    std::optional<AccountTransactionsCursor> cursor;
+    std::optional<TransactionsCursor> cursor;
+};
+
+struct NFT
+{
+    ripple::uint256 tokenID;
+    std::uint32_t ledgerSequence;
+    ripple::AccountID owner;
+    bool isBurned;
+
+    // clearly two tokens are the same if they have the same ID, but this
+    // struct stores the state of a given token at a given ledger sequence, so
+    // we also need to compare with ledgerSequence
+    bool
+    operator==(NFT const& other) const
+    {
+        return tokenID == other.tokenID &&
+            ledgerSequence == other.ledgerSequence;
+    }
 };
 
 struct LedgerRange

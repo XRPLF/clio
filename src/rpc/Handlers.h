@@ -55,6 +55,9 @@ doNFTBuyOffers(Context const& context);
 Result
 doNFTSellOffers(Context const& context);
 
+Result
+doNFTInfo(Context const& context);
+
 // ledger methods
 Result
 doLedger(Context const& context);

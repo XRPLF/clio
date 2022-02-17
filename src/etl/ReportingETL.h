@@ -19,7 +19,22 @@
 
 #include <chrono>
 
+/**
+ * Helper function for the ReportingETL, implemented in NFTHelpers.cpp, to
+ * pull to-write data out of a transaction that relates to NFTs.
+ */
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+
 struct AccountTransactionsData;
+struct NFTTransactionsData;
+struct NFTsData;
+struct FormattedTransactionsData
+{
+    std::vector<AccountTransactionsData> accountTxData;
+    std::vector<NFTTransactionsData> nfTokenTxData;
+    std::vector<NFTsData> nfTokensData;
+};
 class SubscriptionManager;
 
 /**
@@ -213,14 +228,16 @@ private:
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedgerDataAndDiff(uint32_t sequence);
 
-    /// Insert all of the extracted transactions into the ledger
+    /// Insert all of the extracted transactions into the ledger, returning
+    /// transactions related to accounts, transactions related to NFTs, and
+    /// NFTs themselves for later processsing.
     /// @param ledger ledger to insert transactions into
     /// @param data data extracted from an ETL source
     /// @return struct that contains the neccessary info to write to the
-    /// transctions and account_transactions tables in Postgres (mostly
-    /// transaction hashes, corresponding nodestore hashes and affected
+    /// account_transactions/account_tx and nft_token_transactions tables
+    /// (mostly transaction hashes, corresponding nodestore hashes and affected
     /// accounts)
-    std::vector<AccountTransactionsData>
+    FormattedTransactionsData
     insertTransactions(
         ripple::LedgerInfo const& ledger,
         org::xrpl::rpc::v1::GetLedgerResponse& data);

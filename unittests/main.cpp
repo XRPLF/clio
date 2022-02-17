@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <backend/DBHelpers.h>
+#include <etl/ReportingETL.h>
 #include <gtest/gtest.h>
 #include <rpc/RPCHelpers.h>
 
@@ -296,6 +297,122 @@ TEST(BackendTest, Basic)
                     "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C"
                     "004F06";
 
+                // An NFTokenMint tx
+                std::string nftTxnHex =
+                    "1200192200000008240011CC9B201B001F71D6202A0000000168400000"
+                    "000000000C7321ED475D1452031E8F9641AF1631519A58F7B8681E172E"
+                    "4838AA0E59408ADA1727DD74406960041F34F10E0CBB39444B4D4E577F"
+                    "C0B7E8D843D091C2917E96E7EE0E08B30C91413EC551A2B8A1D405E8BA"
+                    "34FE185D8B10C53B40928611F2DE3B746F0303751868747470733A2F2F"
+                    "677265677765697362726F642E636F6D81146203F49C21D5D6E022CB16"
+                    "DE3538F248662FC73C";
+
+                std::string nftTxnMeta =
+                    "201C00000001F8E511005025001F71B3556ED9C9459001E4F4A9121F4E"
+                    "07AB6D14898A5BBEF13D85C25D743540DB59F3CF566203F49C21D5D6E0"
+                    "22CB16DE3538F248662FC73CFFFFFFFFFFFFFFFFFFFFFFFFE6FAEC5A00"
+                    "0800006203F49C21D5D6E022CB16DE3538F248662FC73C8962EFA00000"
+                    "0006751868747470733A2F2F677265677765697362726F642E636F6DE1"
+                    "EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC73C93E8B1"
+                    "C200000028751868747470733A2F2F677265677765697362726F642E63"
+                    "6F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC73C"
+                    "9808B6B90000001D751868747470733A2F2F677265677765697362726F"
+                    "642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F24866"
+                    "2FC73C9C28BBAC00000012751868747470733A2F2F6772656777656973"
+                    "62726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538"
+                    "F248662FC73CA048C0A300000007751868747470733A2F2F6772656777"
+                    "65697362726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16"
+                    "DE3538F248662FC73CAACE82C500000029751868747470733A2F2F6772"
+                    "65677765697362726F642E636F6DE1EC5A000800006203F49C21D5D6E0"
+                    "22CB16DE3538F248662FC73CAEEE87B80000001E751868747470733A2F"
+                    "2F677265677765697362726F642E636F6DE1EC5A000800006203F49C21"
+                    "D5D6E022CB16DE3538F248662FC73CB30E8CAF00000013751868747470"
+                    "733A2F2F677265677765697362726F642E636F6DE1EC5A000800006203"
+                    "F49C21D5D6E022CB16DE3538F248662FC73CB72E91A200000008751868"
+                    "747470733A2F2F677265677765697362726F642E636F6DE1EC5A000800"
+                    "006203F49C21D5D6E022CB16DE3538F248662FC73CC1B453C40000002A"
+                    "751868747470733A2F2F677265677765697362726F642E636F6DE1EC5A"
+                    "000800006203F49C21D5D6E022CB16DE3538F248662FC73CC5D458BB00"
+                    "00001F751868747470733A2F2F677265677765697362726F642E636F6D"
+                    "E1EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC73CC9F4"
+                    "5DAE00000014751868747470733A2F2F677265677765697362726F642E"
+                    "636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC7"
+                    "3CCE1462A500000009751868747470733A2F2F67726567776569736272"
+                    "6F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F248"
+                    "662FC73CD89A24C70000002B751868747470733A2F2F67726567776569"
+                    "7362726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE35"
+                    "38F248662FC73CDCBA29BA00000020751868747470733A2F2F67726567"
+                    "7765697362726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB"
+                    "16DE3538F248662FC73CE0DA2EB100000015751868747470733A2F2F67"
+                    "7265677765697362726F642E636F6DE1EC5A000800006203F49C21D5D6"
+                    "E022CB16DE3538F248662FC73CE4FA33A40000000A751868747470733A"
+                    "2F2F677265677765697362726F642E636F6DE1EC5A000800006203F49C"
+                    "21D5D6E022CB16DE3538F248662FC73CF39FFABD000000217518687474"
+                    "70733A2F2F677265677765697362726F642E636F6DE1EC5A0008000062"
+                    "03F49C21D5D6E022CB16DE3538F248662FC73CF7BFFFB0000000167518"
+                    "68747470733A2F2F677265677765697362726F642E636F6DE1EC5A0008"
+                    "00006203F49C21D5D6E022CB16DE3538F248662FC73CFBE004A7000000"
+                    "0B751868747470733A2F2F677265677765697362726F642E636F6DE1F1"
+                    "E1E72200000000501A6203F49C21D5D6E022CB16DE3538F248662FC73C"
+                    "662FC73C8962EFA000000006FAEC5A000800006203F49C21D5D6E022CB"
+                    "16DE3538F248662FC73C8962EFA000000006751868747470733A2F2F67"
+                    "7265677765697362726F642E636F6DE1EC5A000800006203F49C21D5D6"
+                    "E022CB16DE3538F248662FC73C93E8B1C200000028751868747470733A"
+                    "2F2F677265677765697362726F642E636F6DE1EC5A000800006203F49C"
+                    "21D5D6E022CB16DE3538F248662FC73C9808B6B90000001D7518687474"
+                    "70733A2F2F677265677765697362726F642E636F6DE1EC5A0008000062"
+                    "03F49C21D5D6E022CB16DE3538F248662FC73C9C28BBAC000000127518"
+                    "68747470733A2F2F677265677765697362726F642E636F6DE1EC5A0008"
+                    "00006203F49C21D5D6E022CB16DE3538F248662FC73CA048C0A3000000"
+                    "07751868747470733A2F2F677265677765697362726F642E636F6DE1EC"
+                    "5A000800006203F49C21D5D6E022CB16DE3538F248662FC73CAACE82C5"
+                    "00000029751868747470733A2F2F677265677765697362726F642E636F"
+                    "6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC73CAE"
+                    "EE87B80000001E751868747470733A2F2F677265677765697362726F64"
+                    "2E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F248662F"
+                    "C73CB30E8CAF00000013751868747470733A2F2F677265677765697362"
+                    "726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F2"
+                    "48662FC73CB72E91A200000008751868747470733A2F2F677265677765"
+                    "697362726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE"
+                    "3538F248662FC73CC1B453C40000002A751868747470733A2F2F677265"
+                    "677765697362726F642E636F6DE1EC5A000800006203F49C21D5D6E022"
+                    "CB16DE3538F248662FC73CC5D458BB0000001F751868747470733A2F2F"
+                    "677265677765697362726F642E636F6DE1EC5A000800006203F49C21D5"
+                    "D6E022CB16DE3538F248662FC73CC9F45DAE0000001475186874747073"
+                    "3A2F2F677265677765697362726F642E636F6DE1EC5A000800006203F4"
+                    "9C21D5D6E022CB16DE3538F248662FC73CCE1462A50000000975186874"
+                    "7470733A2F2F677265677765697362726F642E636F6DE1EC5A00080000"
+                    "6203F49C21D5D6E022CB16DE3538F248662FC73CD89A24C70000002B75"
+                    "1868747470733A2F2F677265677765697362726F642E636F6DE1EC5A00"
+                    "0800006203F49C21D5D6E022CB16DE3538F248662FC73CDCBA29BA0000"
+                    "0020751868747470733A2F2F677265677765697362726F642E636F6DE1"
+                    "EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC73CE0DA2E"
+                    "B100000015751868747470733A2F2F677265677765697362726F642E63"
+                    "6F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F248662FC73C"
+                    "E4FA33A40000000A751868747470733A2F2F677265677765697362726F"
+                    "642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538F24866"
+                    "2FC73CEF7FF5C60000002C751868747470733A2F2F6772656777656973"
+                    "62726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16DE3538"
+                    "F248662FC73CF39FFABD00000021751868747470733A2F2F6772656777"
+                    "65697362726F642E636F6DE1EC5A000800006203F49C21D5D6E022CB16"
+                    "DE3538F248662FC73CF7BFFFB000000016751868747470733A2F2F6772"
+                    "65677765697362726F642E636F6DE1EC5A000800006203F49C21D5D6E0"
+                    "22CB16DE3538F248662FC73CFBE004A70000000B751868747470733A2F"
+                    "2F677265677765697362726F642E636F6DE1F1E1E1E511006125001F71"
+                    "B3556ED9C9459001E4F4A9121F4E07AB6D14898A5BBEF13D85C25D7435"
+                    "40DB59F3CF56BE121B82D5812149D633F605EB07265A80B762A365CE94"
+                    "883089FEEE4B955701E6240011CC9B202B0000002C6240000002540BE3"
+                    "ECE1E72200000000240011CC9C2D0000000A202B0000002D202C000000"
+                    "066240000002540BE3E081146203F49C21D5D6E022CB16DE3538F24866"
+                    "2FC73CE1E1F1031000";
+                std::string nftTxnHashHex =
+                    "6C7F69A6D25A13AC4A2E9145999F45D4674F939900017A96885FDC2757"
+                    "E9284E";
+                ripple::uint256 nftID;
+                EXPECT_TRUE(
+                    nftID.parseHex("000800006203F49C21D5D6E022CB16DE3538F248662"
+                                   "FC73CEF7FF5C60000002C"));
+
                 std::string metaBlob = hexStringToBinaryString(metaHex);
                 std::string txnBlob = hexStringToBinaryString(txnHex);
                 std::string hashBlob = hexStringToBinaryString(hashHex);
@@ -303,6 +420,10 @@ TEST(BackendTest, Basic)
                 std::string accountIndexBlob =
                     hexStringToBinaryString(accountIndexHex);
                 std::vector<ripple::AccountID> affectedAccounts;
+
+                std::string nftTxnBlob = hexStringToBinaryString(nftTxnHex);
+                std::string nftTxnMetaBlob =
+                    hexStringToBinaryString(nftTxnMeta);
 
                 {
                     backend->startWrites();
@@ -322,9 +443,29 @@ TEST(BackendTest, Basic)
                     {
                         affectedAccounts.push_back(a);
                     }
-
                     std::vector<AccountTransactionsData> accountTxData;
                     accountTxData.emplace_back(txMeta, hash256, journal);
+
+                    ripple::uint256 nftHash256;
+                    EXPECT_TRUE(nftHash256.parseHex(nftTxnHashHex));
+                    ripple::TxMeta nftTxMeta{
+                        nftHash256, lgrInfoNext.seq, nftTxnMetaBlob};
+                    ripple::SerialIter it{nftTxnBlob.data(), nftTxnBlob.size()};
+                    ripple::STTx sttx{it};
+                    auto const [parsedNFTTxsRef, parsedNFT] =
+                        getNFTData(nftTxMeta, sttx);
+                    // need to copy the nft txns so we can std::move later
+                    std::vector<NFTTransactionsData> parsedNFTTxs;
+                    parsedNFTTxs.insert(
+                        parsedNFTTxs.end(),
+                        parsedNFTTxsRef.begin(),
+                        parsedNFTTxsRef.end());
+                    EXPECT_EQ(parsedNFTTxs.size(), 1);
+                    EXPECT_TRUE(parsedNFT.has_value());
+                    EXPECT_EQ(parsedNFT->tokenID, nftID);
+                    std::vector<NFTsData> nftData;
+                    nftData.push_back(*parsedNFT);
+
                     backend->writeLedger(
                         lgrInfoNext,
                         std::move(ledgerInfoToBinaryString(lgrInfoNext)));
@@ -335,6 +476,26 @@ TEST(BackendTest, Basic)
                         std::move(std::string{txnBlob}),
                         std::move(std::string{metaBlob}));
                     backend->writeAccountTransactions(std::move(accountTxData));
+
+                    // NFT writing not yet implemented for pg
+                    if (config == cassandraConfig)
+                    {
+                        backend->writeNFTs(std::move(nftData));
+                        backend->writeNFTTransactions(std::move(parsedNFTTxs));
+                    }
+                    else
+                    {
+                        EXPECT_THROW(
+                            { backend->writeNFTs(std::move(nftData)); },
+                            std::runtime_error);
+                        EXPECT_THROW(
+                            {
+                                backend->writeNFTTransactions(
+                                    std::move(parsedNFTTxs));
+                            },
+                            std::runtime_error);
+                    }
+
                     backend->writeLedgerObject(
                         std::move(std::string{accountIndexBlob}),
                         lgrInfoNext.seq,
@@ -382,6 +543,34 @@ TEST(BackendTest, Basic)
                         EXPECT_EQ(txns.size(), 1);
                         EXPECT_EQ(txns[0], txns[0]);
                         EXPECT_FALSE(cursor);
+                    }
+
+                    // NFT fetching not yet implemented for pg
+                    if (config == cassandraConfig)
+                    {
+                        auto nft =
+                            backend->fetchNFT(nftID, lgrInfoNext.seq, yield);
+                        EXPECT_TRUE(nft.has_value());
+                        auto [nftTxns, cursor] = backend->fetchNFTTransactions(
+                            nftID, 100, true, {}, yield);
+                        EXPECT_EQ(nftTxns.size(), 1);
+                        EXPECT_EQ(nftTxns[0], nftTxns[0]);
+                        EXPECT_FALSE(cursor);
+                    }
+                    else
+                    {
+                        EXPECT_THROW(
+                            {
+                                backend->fetchNFT(
+                                    nftID, lgrInfoNext.seq, yield);
+                            },
+                            std::runtime_error);
+                        EXPECT_THROW(
+                            {
+                                backend->fetchNFTTransactions(
+                                    nftID, 100, true, {}, yield);
+                            },
+                            std::runtime_error);
                     }
 
                     ripple::uint256 key256;
@@ -729,8 +918,7 @@ TEST(BackendTest, Basic)
                     for (auto [account, data] : accountTx)
                     {
                         std::vector<Backend::TransactionAndMetadata> retData;
-                        std::optional<Backend::AccountTransactionsCursor>
-                            cursor;
+                        std::optional<Backend::TransactionsCursor> cursor;
                         do
                         {
                             uint32_t limit = 10;

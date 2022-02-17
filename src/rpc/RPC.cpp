@@ -191,6 +191,7 @@ static HandlerTable handlerTable{
     {"ledger", &doLedger, {}},
     {"ledger_data", &doLedgerData, LimitRange{1, 100, 2048}},
     {"nft_buy_offers", &doNFTBuyOffers, LimitRange{1, 50, 100}},
+    {"nft_info", &doNFTInfo},
     {"nft_sell_offers", &doNFTSellOffers, LimitRange{1, 50, 100}},
     {"ledger_entry", &doLedgerEntry, {}},
     {"ledger_range", &doLedgerRange, {}},

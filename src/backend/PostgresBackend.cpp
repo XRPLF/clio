@@ -2,6 +2,7 @@
 #include <boost/format.hpp>
 #include <backend/PostgresBackend.h>
 #include <thread>
+
 namespace Backend {
 
 // Type alias for async completion handlers
@@ -78,6 +79,12 @@ PostgresBackend::writeAccountTransactions(
 }
 
 void
+PostgresBackend::writeNFTTransactions(std::vector<NFTTransactionsData>&& data)
+{
+    throw std::runtime_error("Not implemented");
+}
+
+void
 PostgresBackend::doWriteLedgerObject(
     std::string&& key,
     std::uint32_t const seq,
@@ -150,6 +157,12 @@ PostgresBackend::writeTransaction(
                         << std::to_string(seq) << '\t' << std::to_string(date)
                         << '\t' << "\\\\x" << ripple::strHex(transaction)
                         << '\t' << "\\\\x" << ripple::strHex(metadata) << '\n';
+}
+
+void
+PostgresBackend::writeNFTs(std::vector<NFTsData>&& data)
+{
+    throw std::runtime_error("Not implemented");
 }
 
 std::uint32_t
@@ -419,6 +432,15 @@ PostgresBackend::fetchAllTransactionHashesInLedger(
     return {};
 }
 
+std::optional<NFT>
+PostgresBackend::fetchNFT(
+    ripple::uint256 const& tokenID,
+    std::uint32_t const ledgerSequence,
+    boost::asio::yield_context& yield) const
+{
+    throw std::runtime_error("Not implemented");
+}
+
 std::optional<ripple::uint256>
 PostgresBackend::doFetchSuccessorKey(
     ripple::uint256 key,
@@ -637,12 +659,25 @@ PostgresBackend::fetchLedgerDiff(
     return {};
 }
 
-AccountTransactions
+// TODO this implementation and fetchAccountTransactions should be
+// generalized
+TransactionsAndCursor
+PostgresBackend::fetchNFTTransactions(
+    ripple::uint256 const& tokenID,
+    std::uint32_t const limit,
+    bool forward,
+    std::optional<TransactionsCursor> const& cursor,
+    boost::asio::yield_context& yield) const
+{
+    throw std::runtime_error("Not implemented");
+}
+
+TransactionsAndCursor
 PostgresBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
     std::uint32_t const limit,
     bool forward,
-    std::optional<AccountTransactionsCursor> const& cursor,
+    std::optional<TransactionsCursor> const& cursor,
     boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
