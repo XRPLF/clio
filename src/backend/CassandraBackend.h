@@ -692,7 +692,7 @@ public:
         boost::asio::yield_context& yield) const override;
 
     bool
-    doFinishWrites() const override
+    doFinishWrites() override
     {
         if (!range || lastSync_ == 0 ||
             ledgerSequence_ - syncInterval_ == lastSync_)

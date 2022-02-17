@@ -134,7 +134,7 @@ public:
     startWrites() const override;
 
     bool
-    doFinishWrites() const override;
+    doFinishWrites() override;
 
     bool
     doOnlineDelete(

@@ -717,7 +717,7 @@ PostgresBackend::startWrites() const
 }
 
 bool
-PostgresBackend::doFinishWrites() const
+PostgresBackend::doFinishWrites()
 {
     synchronous([&](boost::asio::yield_context yield) {
         if (!abortWrite_)

@@ -249,7 +249,7 @@ PlainETLSource::onConnect(
                         std::string(BOOST_BEAST_VERSION_STRING) +
                             " coro-client");
 
-                        req.set("X-User", "coro-client");
+                    req.set("X-User", "coro-client");
                 }));
 
         // Update the host_ string. This will provide the value of the
