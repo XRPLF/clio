@@ -1124,6 +1124,86 @@ CassandraBackend::open(bool readOnly)
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
+
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "nf_tokens"
+              << "  ("
+              << "    token_id blob,"
+              << "    sequence bigint,"
+              << "    issuer blob,"
+              << "    owner blob,"
+              << "    is_burned boolean,"
+              << "    PRIMARY KEY (token_id, sequence)"
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "    AND default_time_to_live = " << std::to_string(ttl);
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "nf_tokens"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "issuer_nf_tokens"
+              << "  ("
+              << "    issuer blob,"
+              << "    sequence bigint,"
+              << "    token_id blob,"
+              << "    PRIMARY KEY (issuer, sequence)"
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "    AND default_time_to_live = " << std::to_string(ttl);
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "issuer_nf_tokens"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "owner_nf_tokens"
+              << "  ("
+              << "    owner blob,"
+              << "    sequence bigint,"
+              << "    token_id blob,"
+              << "    PRIMARY KEY (owner, sequence)"
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "    AND default_time_to_live = " << std::to_string(ttl);
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "owner_nf_tokens"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "nf_token_transactions"
+              << "  ("
+              << "    token_id blob,"
+              << "    sequence bigint,"
+              << "    transaction_index bigint,"
+              << "    hash blob,"
+              << "    PRIMARY KEY (token_id, sequence, transaction_index, hash)"
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "    AND default_time_to_live = " << std::to_string(ttl);
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "nf_token_transactions"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
         setupSessionAndTable = true;
     }
 
