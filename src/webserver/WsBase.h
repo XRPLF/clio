@@ -315,8 +315,9 @@ public:
         {
             boost::asio::spawn(
                 ioc_,
-                [m = std::move(msg), this](boost::asio::yield_context yc) {
-                    handle_request(std::move(m), yc);
+                [m = std::move(msg), shared_this = shared_from_this()]
+                (boost::asio::yield_context yield) {
+                    shared_this->handle_request(std::move(m), yield);
                 });
         }
 
