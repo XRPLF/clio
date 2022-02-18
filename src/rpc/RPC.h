@@ -33,11 +33,11 @@ struct Context
     std::uint32_t version;
     boost::json::object const& params;
     std::shared_ptr<BackendInterface const> const& backend;
-    std::shared_ptr<ETLLoadBalancer> const& balancer;
     // this needs to be an actual shared_ptr, not a reference. The above
     // references refer to shared_ptr members of WsBase, but WsBase contains
     // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
     std::shared_ptr<SubscriptionManager> subscriptions;
+    std::shared_ptr<ETLLoadBalancer> const& balancer;
     std::shared_ptr<WsBase> session;
     Backend::LedgerRange const& range;
     Counters& counters;

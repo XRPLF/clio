@@ -72,10 +72,6 @@ doLedgerData(Context const& context)
 
     auto end = std::chrono::system_clock::now();
 
-    auto time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-
     boost::json::object header;
     if (!cursor)
     {

@@ -101,13 +101,13 @@ public:
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer&& buffer)
-        : ioc_(ioc)
+        : buffer_(std::move(buffer))
+        , ioc_(ioc)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , counters_(counters)
-        , buffer_(std::move(buffer))
     {
     }
     virtual ~WsSession()

@@ -22,13 +22,13 @@ ETLSourceImpl<Derived>::ETLSourceImpl(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
     ETLLoadBalancer& balancer)
-    : ioc_(ioContext)
-    , resolver_(boost::asio::make_strand(ioContext))
-    , timer_(ioContext)
+    : resolver_(boost::asio::make_strand(ioContext))
     , networkValidatedLedgers_(networkValidatedLedgers)
     , backend_(backend)
     , subscriptions_(subscriptions)
     , balancer_(balancer)
+    , ioc_(ioContext)
+    , timer_(ioContext)
 {
     if (config.contains("ip"))
     {
@@ -852,6 +852,44 @@ ETLSourceImpl<Derived>::fetchLedger(
     return {status, std::move(response)};
 }
 
+static std::unique_ptr<ETLSource>
+make_ETLSource(
+    boost::json::object const& config,
+    boost::asio::io_context& ioContext,
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
+    ETLLoadBalancer& balancer)
+{
+    std::unique_ptr<ETLSource> src = nullptr;
+    if (sslCtx)
+    {
+        src = std::make_unique<SslETLSource>(
+            config,
+            ioContext,
+            sslCtx,
+            backend,
+            subscriptions,
+            networkValidatedLedgers,
+            balancer);
+    }
+    else
+    {
+        src = std::make_unique<PlainETLSource>(
+            config,
+            ioContext,
+            backend,
+            subscriptions,
+            networkValidatedLedgers,
+            balancer);
+    }
+
+    src->run();
+
+    return src;
+}
+
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::object const& config,
     boost::asio::io_context& ioContext,
@@ -873,7 +911,7 @@ ETLLoadBalancer::ETLLoadBalancer(
 
     for (auto& entry : config.at("etl_sources").as_array())
     {
-        std::unique_ptr<ETLSource> source = ETL::make_ETLSource(
+        std::unique_ptr<ETLSource> source = make_ETLSource(
             entry.as_object(),
             ioContext,
             sslCtx,
@@ -914,7 +952,7 @@ ETLLoadBalancer::fetchLedger(
 {
     org::xrpl::rpc::v1::GetLedgerResponse response;
     bool success = execute(
-        [&response, ledgerSequence, getObjects, getObjectNeighbors, this](
+        [&response, ledgerSequence, getObjects, getObjectNeighbors](
             auto& source) {
             auto [status, data] = source->fetchLedger(
                 ledgerSequence, getObjects, getObjectNeighbors);
@@ -1015,7 +1053,7 @@ ETLSourceImpl<Derived>::forwardToRippled(
         //
         // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator(
-            [&request, &clientIp](websocket::request_type& req) {
+            [&clientIp](websocket::request_type& req) {
                 req.set(
                     http::field::user_agent,
                     std::string(BOOST_BEAST_VERSION_STRING) +

@@ -252,7 +252,7 @@ Pg::getSocket(boost::asio::yield_context& yield)
             delete socket;
         }};
 
-    return std::move(s);
+    return s;
 }
 
 PgResult
@@ -775,7 +775,6 @@ PgPool::PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
 
     if (config.contains("max_connections"))
         config_.max_connections = config.at("max_connections").as_int64();
-    std::size_t timeout;
     if (config.contains("timeout"))
         config_.timeout =
             std::chrono::seconds(config.at("timeout").as_uint64());
@@ -1111,7 +1110,7 @@ create table if not exists account_transactions10 partition of account_transacti
 
 
 CREATE TABLE IF NOT EXISTS successor (
-    key bytea NOT NULL, 
+    key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
     next bytea NOT NULL,
     PRIMARY KEY(key, ledger_seq)
@@ -1710,8 +1709,6 @@ getLedger(
     sql << "SELECT ledger_hash, prev_hash, account_set_hash, trans_set_hash, "
            "total_coins, closing_time, prev_closing_time, close_time_res, "
            "close_flags, ledger_seq FROM ledgers ";
-
-    std::uint32_t expNumResults = 1;
 
     if (auto ledgerSeq = std::get_if<std::uint32_t>(&whichLedger))
     {

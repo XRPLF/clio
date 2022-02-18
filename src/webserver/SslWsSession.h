@@ -92,12 +92,12 @@ public:
         boost::beast::flat_buffer&& b)
         : ioc_(ioc)
         , https_(std::move(socket), ctx)
+        , buffer_(std::move(b))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , counters_(counters)
-        , buffer_(std::move(b))
     {
     }
     SslWsUpgrader(
@@ -112,12 +112,12 @@ public:
         http::request<http::string_body> req)
         : ioc_(ioc)
         , https_(std::move(stream))
+        , buffer_(std::move(b))
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , dosGuard_(dosGuard)
         , counters_(counters)
-        , buffer_(std::move(b))
         , req_(std::move(req))
     {
     }

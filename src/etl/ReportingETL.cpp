@@ -434,7 +434,6 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " object neighbors not included. using cache";
         assert(backend_->cache().isFull());
-        size_t idx = 0;
         for (auto const& obj : cacheUpdates)
         {
             if (modified.count(obj.key))
@@ -952,11 +951,11 @@ ReportingETL::ReportingETL(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<NetworkValidatedLedgers> ledgers)
-    : publishStrand_(ioc)
-    , ioContext_(ioc)
-    , backend_(backend)
+    : backend_(backend)
     , subscriptions_(subscriptions)
     , loadBalancer_(balancer)
+    , ioContext_(ioc)
+    , publishStrand_(ioc)
     , networkValidatedLedgers_(ledgers)
 {
     if (config.contains("start_sequence"))

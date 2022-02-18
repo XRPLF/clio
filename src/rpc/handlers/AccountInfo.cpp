@@ -67,10 +67,6 @@ doAccountInfo(Context const& context)
         context.backend->fetchLedgerObject(key.key, lgrInfo.seq, context.yield);
     auto end = std::chrono::system_clock::now();
 
-    auto time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-
     if (!dbResponse)
     {
         return Status{Error::rpcACT_NOT_FOUND};
