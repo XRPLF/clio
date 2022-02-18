@@ -45,6 +45,7 @@ TEST(BackendTest, Basic)
                     {"database", keyspace.c_str()},
                     {"password", "postgres"},
                     {"indexer_key_shift", 2},
+                    {"max_connections", 100},
                     {"threads", 8}}}}}};
             std::vector<boost::json::object> configs = {
                 cassandraConfig, postgresConfig};
@@ -1677,6 +1678,7 @@ TEST(Backend, CacheIntegration)
                     {"database", keyspace.c_str()},
                     {"password", "postgres"},
                     {"indexer_key_shift", 2},
+                    {"max_connections", 100},
                     {"threads", 8}}}}}};
             std::vector<boost::json::object> configs = {
                 cassandraConfig, postgresConfig};
