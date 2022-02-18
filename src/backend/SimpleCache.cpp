@@ -8,29 +8,31 @@ SimpleCache::update(
     bool isBackground)
 {
     deferReads_ = true;
-    std::unique_lock lck{mtx_};
-    if (seq > latestSeq_)
     {
-        assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
-        latestSeq_ = seq;
-    }
-    for (auto const& obj : objs)
-    {
-        if (obj.blob.size())
+        std::unique_lock lck{mtx_};
+        if (seq > latestSeq_)
         {
-            if (isBackground && deletes_.count(obj.key))
-                continue;
-            auto& e = map_[obj.key];
-            if (seq > e.seq)
-            {
-                e = {seq, obj.blob};
-            }
+            assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
+            latestSeq_ = seq;
         }
-        else
+        for (auto const& obj : objs)
         {
-            map_.erase(obj.key);
-            if (!full_ && !isBackground)
-                deletes_.insert(obj.key);
+            if (obj.blob.size())
+            {
+                if (isBackground && deletes_.count(obj.key))
+                    continue;
+                auto& e = map_[obj.key];
+                if (seq > e.seq)
+                {
+                    e = {seq, obj.blob};
+                }
+            }
+            else
+            {
+                map_.erase(obj.key);
+                if (!full_ && !isBackground)
+                    deletes_.insert(obj.key);
+            }
         }
     }
     deferReads_ = false;
