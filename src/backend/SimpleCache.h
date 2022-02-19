@@ -19,6 +19,9 @@ class SimpleCache
     };
     std::map<ripple::uint256, CacheEntry> map_;
     mutable std::shared_mutex mtx_;
+    // flag set in update to prevent reads from starving the update, and to
+    // prevent reads from piling up behind the update
+    std::atomic_bool deferReads_ = false;
     uint32_t latestSeq_ = 0;
     std::atomic_bool full_ = false;
     // temporary set to prevent background thread from writing already deleted

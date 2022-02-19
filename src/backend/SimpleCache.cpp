@@ -7,35 +7,41 @@ SimpleCache::update(
     uint32_t seq,
     bool isBackground)
 {
-    std::unique_lock lck{mtx_};
-    if (seq > latestSeq_)
+    deferReads_ = true;
     {
-        assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
-        latestSeq_ = seq;
-    }
-    for (auto const& obj : objs)
-    {
-        if (obj.blob.size())
+        std::unique_lock lck{mtx_};
+        if (seq > latestSeq_)
         {
-            if (isBackground && deletes_.count(obj.key))
-                continue;
-            auto& e = map_[obj.key];
-            if (seq > e.seq)
+            assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
+            latestSeq_ = seq;
+        }
+        for (auto const& obj : objs)
+        {
+            if (obj.blob.size())
             {
-                e = {seq, obj.blob};
+                if (isBackground && deletes_.count(obj.key))
+                    continue;
+                auto& e = map_[obj.key];
+                if (seq > e.seq)
+                {
+                    e = {seq, obj.blob};
+                }
+            }
+            else
+            {
+                map_.erase(obj.key);
+                if (!full_ && !isBackground)
+                    deletes_.insert(obj.key);
             }
         }
-        else
-        {
-            map_.erase(obj.key);
-            if (!full_ && !isBackground)
-                deletes_.insert(obj.key);
-        }
     }
+    deferReads_ = false;
 }
 std::optional<LedgerObject>
 SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
+    if (deferReads_)
+        return {};
     if (!full_)
         return {};
     std::shared_lock{mtx_};
@@ -49,6 +55,8 @@ SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<LedgerObject>
 SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 {
+    if (deferReads_)
+        return {};
     if (!full_)
         return {};
     std::shared_lock lck{mtx_};
@@ -63,6 +71,8 @@ SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<Blob>
 SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
+    if (deferReads_)
+        return {};
     if (seq > latestSeq_)
         return {};
     std::shared_lock lck{mtx_};
