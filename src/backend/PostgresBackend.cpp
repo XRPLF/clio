@@ -484,7 +484,7 @@ PostgresBackend::fetchTransactions(
                     << ripple::strHex(hash) << "\'";
 
                 auto res = pgQuery(sql.str().data(), yield);
-                if (size_t numRows = checkResult(res, 4))
+                if (checkResult(res, 4))
                 {
                     results[i] = {
                         res.asUnHexedBlob(0, 0),
@@ -557,7 +557,7 @@ PostgresBackend::doFetchLedgerObjects(
 
                 auto res = pgQuery(sql.str().data(), yield);
 
-                if (size_t numRows = checkResult(res, 1))
+                if (checkResult(res, 1))
                     results[i] = res.asUnHexedBlob();
 
                 if (--numRemaining == 0)
