@@ -483,8 +483,8 @@ PostgresBackend::fetchTransactions(
                        "WHERE HASH = \'\\x"
                     << ripple::strHex(hash) << "\'";
 
-                auto res = pgQuery(sql.str().data(), yield);
-                if (size_t numRows = checkResult(res, 4))
+                if (auto const res = pgQuery(sql.str().data(), yield);
+                    checkResult(res, 4))
                 {
                     results[i] = {
                         res.asUnHexedBlob(0, 0),
@@ -555,9 +555,8 @@ PostgresBackend::doFetchLedgerObjects(
                     << " AND ledger_seq <= " << std::to_string(sequence)
                     << " ORDER BY ledger_seq DESC LIMIT 1";
 
-                auto res = pgQuery(sql.str().data(), yield);
-
-                if (size_t numRows = checkResult(res, 1))
+                if (auto const res = pgQuery(sql.str().data(), yield);
+                    checkResult(res, 1))
                     results[i] = res.asUnHexedBlob();
 
                 if (--numRemaining == 0)
