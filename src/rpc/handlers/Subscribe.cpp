@@ -281,7 +281,7 @@ subscribeToBooks(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    for (auto const book : books)
+    for (auto const& book : books)
     {
         manager.subBook(book, session);
     }
