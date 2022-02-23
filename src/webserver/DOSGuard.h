@@ -29,8 +29,14 @@ class DOSGuard
         std::string const& key,
         std::uint32_t const fallback) const
     {
-        if (auto const c = getConfig(config); c)
-            return c->at(key).as_int64();
+        try
+        {
+            if (auto const c = getConfig(config))
+                return c->at(key).as_int64();
+        }
+        catch (std::exception const& e)
+        {
+        }
 
         return fallback;
     }
@@ -40,22 +46,26 @@ class DOSGuard
     {
         using T = std::unordered_set<std::string> const;
 
-        auto const& c = getConfig(config);
-        if (!c)
+        try
+        {
+            auto const& c = getConfig(config);
+            if (!c)
+                return T();
+
+            auto const& w = c->at("whitelist").as_array();
+
+            auto const transform = [](auto const& elem) {
+                return std::string(elem.as_string().c_str());
+            };
+
+            return T(
+                boost::transform_iterator(w.begin(), transform),
+                boost::transform_iterator(w.end(), transform));
+        }
+        catch (std::exception const& e)
+        {
             return T();
-
-        if (!c->contains("whitelist"))
-            return T();
-
-        auto const& w = c->at("whitelist").as_array();
-
-        auto const transform = [](auto const& elem) {
-            return std::string(elem.as_string().c_str());
-        };
-
-        return T(
-            boost::transform_iterator(w.begin(), transform),
-            boost::transform_iterator(w.end(), transform));
+        }
     }
 
 public:
