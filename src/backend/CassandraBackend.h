@@ -423,20 +423,32 @@ public:
         if (!row_)
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - no result");
+
         CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
         CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
+        
         if (!cass_iterator_next(tupleIter))
+        {
+            cass_iterator_free(tupleIter);
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - failed to iterate tuple");
+        }
+
         CassValue const* value = cass_iterator_get_value(tupleIter);
         std::int64_t first;
         cass_value_get_int64(value, &first);
         if (!cass_iterator_next(tupleIter))
+        {
+            cass_iterator_free(tupleIter);
             throw std::runtime_error(
                 "CassandraResult::getInt64Tuple - failed to iterate tuple");
+        }
+
         value = cass_iterator_get_value(tupleIter);
         std::int64_t second;
         cass_value_get_int64(value, &second);
+        cass_iterator_free(tupleIter);
+
         ++curGetIndex_;
         return {first, second};
     }
