@@ -9,8 +9,8 @@
 #include <backend/Pg.h>
 #include <backend/Types.h>
 
-/// Struct used to keep track of what to write to transactions and
-/// account_transactions tables in Postgres
+/// Struct used to keep track of what to write to
+/// account_transactions table in Postgres
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
@@ -30,6 +30,55 @@ struct AccountTransactionsData
     }
 
     AccountTransactionsData() = default;
+};
+
+/// Struct used to keep track of what to write to
+/// nf_token_transactions table in Postgres
+struct NFTokenTransactionsData
+{
+    std::string tokenID;
+    uint32_t ledgerSequence;
+    uint32_t transactionIndex;
+    ripple::uint256 txHash;
+
+    NFTokenTransactionsData(
+        std::string const& tokenID,
+        ripple::TxMeta& meta,
+        ripple::uint256 const& txHash)
+        : tokenID(tokenID)
+        , ledgerSequence(meta.getLgrSeq())
+        , transactionIndex(meta.getIndex())
+        , txHash(txHash)
+    {
+    }
+
+    NFTokenTransactionsData() = default;
+};
+
+/// Struct used to keep track of what to write to
+/// nf_tokens table
+struct NFTokensData
+{
+    std::string tokenID;
+    uint32_t ledgerSequence;
+    std::string issuer;
+    std::string owner;
+    bool isBurned;
+
+    NFTokensData(
+        std::string const& tokenID,
+        std::optional<std::string> const& newOwner,
+        ripple::TxMeta& meta,
+        bool isBurnedArg)
+        : tokenID(tokenID)
+        , ledgerSequence(meta.getLgrSeq())
+        , issuer(tokenID.substr(8, 40))
+        , owner(newOwner.value_or(tokenID.substr(8, 40)))
+        , isBurned(isBurnedArg)
+    {
+    }
+
+    NFTokensData() = default;
 };
 
 template <class T>
