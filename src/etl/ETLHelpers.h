@@ -7,6 +7,14 @@
 #include <queue>
 #include <sstream>
 
+namespace etl {
+std::string
+getNFTokenID(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+
+std::optional<std::string>
+getNFTokenNewOwner(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+} // namespace etl
+
 /// This datastructure is used to keep track of the sequence of the most recent
 /// ledger validated by the network. There are two methods that will wait until
 /// certain conditions are met. This datastructure is able to be "stopped". When

@@ -20,6 +20,13 @@
 #include <chrono>
 
 struct AccountTransactionsData;
+struct NFTokenTransactionsData;
+struct NFTokensData;
+struct InsertTransactionsResult {
+    std::vector<AccountTransactionsData> accountTxData;
+    std::vector<NFTokenTransactionsData> nfTokenTxData;
+    std::vector<NFTokensData> nfTokensData;
+};
 class SubscriptionManager;
 
 /**
@@ -192,14 +199,15 @@ private:
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedgerDataAndDiff(uint32_t sequence);
 
-    /// Insert all of the extracted transactions into the ledger
+    /// Insert all of the extracted transactions into the ledger, returning
+    /// transactions related to accounts and NFTs.
     /// @param ledger ledger to insert transactions into
     /// @param data data extracted from an ETL source
     /// @return struct that contains the neccessary info to write to the
-    /// transctions and account_transactions tables in Postgres (mostly
+    /// account_transactions and nft_token_transactions tables in Postgres (mostly
     /// transaction hashes, corresponding nodestore hashes and affected
     /// accounts)
-    std::vector<AccountTransactionsData>
+    InsertTransactionsResult
     insertTransactions(
         ripple::LedgerInfo const& ledger,
         org::xrpl::rpc::v1::GetLedgerResponse& data);

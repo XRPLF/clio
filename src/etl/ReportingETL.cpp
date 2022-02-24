@@ -1,8 +1,10 @@
 #include <ripple/basics/StringUtilities.h>
 #include <backend/DBHelpers.h>
 #include <etl/ReportingETL.h>
+#include <etl/ETLHelpers.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
+#include <ripple/protocol/STBase.h>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
@@ -28,12 +30,16 @@ toString(ripple::LedgerInfo const& info)
 }
 }  // namespace detail
 
-std::vector<AccountTransactionsData>
+InsertTransactionsResult
 ReportingETL::insertTransactions(
     ripple::LedgerInfo const& ledger,
     org::xrpl::rpc::v1::GetLedgerResponse& data)
 {
-    std::vector<AccountTransactionsData> accountTxData;
+    InsertTransactionsResult result;
+
+    // Token ID -> <transaction index, NFTokensData>
+    std::map<std::string, std::tuple<uint32_t, NFTokensData>> nfTokensCache;
+
     for (auto& txn :
          *(data.mutable_transactions_list()->mutable_transactions()))
     {
@@ -42,11 +48,49 @@ ReportingETL::insertTransactions(
         ripple::SerialIter it{raw->data(), raw->size()};
         ripple::STTx sttx{it};
 
+        // TODO what is this for
         auto txSerializer =
             std::make_shared<ripple::Serializer>(sttx.getSerializer());
 
         ripple::TxMeta txMeta{
             sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
+
+        ripple::TxType txType = sttx.getTxnType();
+        // Only successful NFTokenMint, NFTokenBurn, and NFTokenAcceptOffer can change
+        // the state of an NFToken as far as clio is concerned.
+        if (txMeta.getResultTER() == ripple::tesSUCCESS && (
+              txType == ripple::TxType::ttNFTOKEN_MINT ||
+              txType == ripple::TxType::ttNFTOKEN_BURN ||
+              txType == ripple::TxType::ttNFTOKEN_ACCEPT_OFFER))
+        {
+            std::string tokenID = etl::getNFTokenID(txMeta, sttx);
+
+            result.nfTokenTxData.emplace_back(tokenID, txMeta, sttx.getTransactionID());
+
+            NFTokensData toInsert = NFTokensData(
+                tokenID,
+                etl::getNFTokenNewOwner(txMeta, sttx),
+                txMeta,
+                txType == ripple::TxType::ttNFTOKEN_BURN);
+
+            auto search = nfTokensCache.find(tokenID);
+            if (search == nfTokensCache.end())
+            {
+                // The nf_token resulting from this transaction hasn't been seen
+                // yet this ledger, so add it
+                nfTokensCache.insert({
+                    tokenID,
+                    std::make_tuple(txMeta.getIndex(), toInsert)});
+            }
+            else if (txMeta.getIndex() > std::get<0>(search->second))
+            {
+                // The nf_token resulting from this transaction should overwrite
+                // the existing one for this token ID
+                nfTokensCache.insert_or_assign(
+                    tokenID,
+                    std::make_tuple(txMeta.getIndex(), toInsert));
+            }
+        }
 
         auto metaSerializer = std::make_shared<ripple::Serializer>(
             txMeta.getAsObject().getSerializer());
@@ -56,7 +100,7 @@ ReportingETL::insertTransactions(
             << "Inserting transaction = " << sttx.getTransactionID();
 
         auto journal = ripple::debugLog();
-        accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
+        result.accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
         backend_->writeTransaction(
             std::move(keyStr),
@@ -65,7 +109,13 @@ ReportingETL::insertTransactions(
             std::move(*raw),
             std::move(*txn.mutable_metadata_blob()));
     }
-    return accountTxData;
+
+    // Move nfTokensCache tokens into result
+    for (auto iter : nfTokensCache)
+    {
+        result.nfTokensData.push_back(std::move(std::get<1>(iter.second)));
+    }
+    return result;
 }
 
 std::optional<ripple::LedgerInfo>
@@ -103,8 +153,7 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     backend_->writeLedger(
         lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
-    std::vector<AccountTransactionsData> accountTxData =
-        insertTransactions(lgrInfo, *ledgerData);
+    InsertTransactionsResult insertTxResult = insertTransactions(lgrInfo, *ledgerData);
     BOOST_LOG_TRIVIAL(debug) << __func__ << " inserted txns";
 
     // download the full account state map. This function downloads full ledger
@@ -117,7 +166,9 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
     if (!stopping_)
     {
-        backend_->writeAccountTransactions(std::move(accountTxData));
+        backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
+        backend_->writeNFTokens(std::move(insertTxResult.nfTokensData));
+        backend_->writeNFTokenTransactions(std::move(insertTxResult.nfTokenTxData));
     }
     backend_->finishWrites(startingSequence);
     auto end = std::chrono::system_clock::now();
@@ -486,13 +537,14 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "
         << rawData.ledger_objects().objects_size();
-    std::vector<AccountTransactionsData> accountTxData{
-        insertTransactions(lgrInfo, rawData)};
+    InsertTransactionsResult insertTxResult = insertTransactions(lgrInfo, rawData);
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted all transactions. Number of transactions  = "
         << rawData.transactions_list().transactions_size();
-    backend_->writeAccountTransactions(std::move(accountTxData));
+    backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
+    backend_->writeNFTokens(std::move(insertTxResult.nfTokensData));
+    backend_->writeNFTokenTransactions(std::move(insertTxResult.nfTokenTxData));
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote account_tx";
     auto start = std::chrono::system_clock::now();

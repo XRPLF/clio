@@ -806,12 +806,18 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     void
+    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) override;
+
+    void
     writeTransaction(
         std::string&& hash,
         uint32_t seq,
         uint32_t date,
         std::string&& transaction,
         std::string&& metadata) override;
+
+    virtual void
+    writeNFTokens(std::vector<NFTokensData>&& data) override;
 
     void
     startWrites() override

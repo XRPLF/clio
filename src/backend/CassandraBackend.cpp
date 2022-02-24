@@ -247,6 +247,7 @@ CassandraBackend::writeLedger(
         "ledger_hash");
     ledgerSequence_ = ledgerInfo.seq;
 }
+
 void
 CassandraBackend::writeAccountTransactions(
     std::vector<AccountTransactionsData>&& data)
@@ -274,6 +275,14 @@ CassandraBackend::writeAccountTransactions(
         }
     }
 }
+
+void
+CassandraBackend::writeNFTokenTransactions(
+    std::vector<NFTokenTransactionsData>&& data)
+{
+  // TODO
+}
+
 void
 CassandraBackend::writeTransaction(
     std::string&& hash,
@@ -314,6 +323,13 @@ CassandraBackend::writeTransaction(
             return statement;
         },
         "transaction");
+}
+
+void
+CassandraBackend::writeNFTokens(
+    std::vector<NFTokensData> && data)
+{
+  // TODO
 }
 
 std::optional<LedgerRange>

@@ -57,6 +57,26 @@ PostgresBackend::writeAccountTransactions(
         }
     }
 }
+
+void
+PostgresBackend::writeNFTokenTransactions(
+    std::vector<NFTokenTransactionsData>&& data)
+{
+    if (abortWrite_)
+    {
+        return;
+    }
+    PgQuery pg(pgPool_);
+    for (NFTokenTransactionsData const& record : data)
+    {
+        nfTokenTxBuffer_ << "\\\\x" << record.tokenID << '\t'
+                         << std::to_string(record.ledgerSequence) << '\t'
+                         << std::to_string(record.transactionIndex) << '\t'
+                         << "\\\\x" << ripple::strHex(record.txHash)
+                         << '\n';
+    }
+}
+
 void
 PostgresBackend::doWriteLedgerObject(
     std::string&& key,
@@ -125,6 +145,25 @@ PostgresBackend::writeTransaction(
                         << std::to_string(seq) << '\t' << std::to_string(date)
                         << '\t' << "\\\\x" << ripple::strHex(transaction)
                         << '\t' << "\\\\x" << ripple::strHex(metadata) << '\n';
+}
+
+void
+PostgresBackend::writeNFTokens(
+    std::vector<NFTokensData> && data)
+{
+    if (abortWrite_)
+    {
+        return;
+    }
+    PgQuery pg(pgPool_);
+    for (NFTokensData const& record : data)
+    {
+        nfTokensBuffer_ << "\\\\x" << record.tokenID << '\t'
+                        << std::to_string(record.ledgerSequence) << '\t'
+                        << "\\\\x" << record.issuer << '\t'
+                        << "\\\\x" << record.owner << '\t'
+                        << (record.isBurned ? "true" : "false") << '\n';
+    }
 }
 
 uint32_t
@@ -664,7 +703,11 @@ PostgresBackend::doFinishWrites()
         std::string txStr = transactionsBuffer_.str();
         writeConnection_.bulkInsert("transactions", txStr);
         writeConnection_.bulkInsert(
+            "nf_tokens", nfTokensBuffer_.str());
+        writeConnection_.bulkInsert(
             "account_transactions", accountTxBuffer_.str());
+        writeConnection_.bulkInsert(
+            "nf_token_transactions", nfTokenTxBuffer_.str());
         std::string objectsStr = objectsBuffer_.str();
         if (objectsStr.size())
             writeConnection_.bulkInsert("objects", objectsStr);
@@ -695,12 +738,16 @@ PostgresBackend::doFinishWrites()
     }
     transactionsBuffer_.str("");
     transactionsBuffer_.clear();
+    nfTokensBuffer_.str("");
+    nfTokensBuffer_.clear();
     objectsBuffer_.str("");
     objectsBuffer_.clear();
     successorBuffer_.str("");
     successorBuffer_.clear();
     accountTxBuffer_.str("");
     accountTxBuffer_.clear();
+    nfTokenTxBuffer_.str("");
+    nfTokenTxBuffer_.clear();
     numRowsInObjectsBuffer_ = 0;
     return !abortWrite_;
 }
