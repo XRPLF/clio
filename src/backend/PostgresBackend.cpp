@@ -81,12 +81,6 @@ PostgresBackend::writeAccountTransactions(
 }
 
 void
-PostgresBackend::writeNFTTransactions(std::vector<NFTTransactionsData>&& data)
-{
-    throw std::runtime_error("Not implemented");
-}
-
-void
 PostgresBackend::doWriteLedgerObject(
     std::string&& key,
     std::uint32_t const seq,
@@ -162,9 +156,22 @@ PostgresBackend::writeTransaction(
 }
 
 void
-PostgresBackend::writeNFTs(std::vector<NFTsData>&& data)
+PostgresBackend::writeNFTokens(
+    std::vector<NFTokensData> && data)
 {
-    throw std::runtime_error("Not implemented");
+    if (abortWrite_)
+    {
+        return;
+    }
+    PgQuery pg(pgPool_);
+    for (NFTokensData const& record : data)
+    {
+        nfTokensBuffer_ << "\\\\x" << record.tokenID << '\t'
+                        << std::to_string(record.ledgerSequence) << '\t'
+                        << "\\\\x" << record.issuer << '\t'
+                        << "\\\\x" << record.owner << '\t'
+                        << (record.isBurned ? "true" : "false") << '\n';
+    }
 }
 
 std::uint32_t
@@ -790,7 +797,11 @@ PostgresBackend::doFinishWrites()
             std::string txStr = transactionsBuffer_.str();
             writeConnection_.bulkInsert("transactions", txStr, yield);
             writeConnection_.bulkInsert(
+                "nf_tokens", nfTokensBuffer_.str());
+            writeConnection_.bulkInsert(
                 "account_transactions", accountTxBuffer_.str(), yield);
+            writeConnection_.bulkInsert(
+                "nf_token_transactions", nfTokenTxBuffer_.str());
             std::string objectsStr = objectsBuffer_.str();
             if (objectsStr.size())
                 writeConnection_.bulkInsert("objects", objectsStr, yield);
@@ -820,6 +831,8 @@ PostgresBackend::doFinishWrites()
         }
         transactionsBuffer_.str("");
         transactionsBuffer_.clear();
+        nfTokensBuffer_.str("");
+        nfTokensBuffer_.clear();
         objectsBuffer_.str("");
         objectsBuffer_.clear();
         successorBuffer_.str("");
@@ -827,6 +840,8 @@ PostgresBackend::doFinishWrites()
         successors_.clear();
         accountTxBuffer_.str("");
         accountTxBuffer_.clear();
+        nfTokenTxBuffer_.str("");
+        nfTokenTxBuffer_.clear();
         numRowsInObjectsBuffer_ = 0;
     });
 

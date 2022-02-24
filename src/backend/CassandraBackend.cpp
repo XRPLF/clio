@@ -287,27 +287,10 @@ CassandraBackend::writeAccountTransactions(
 }
 
 void
-CassandraBackend::writeNFTTransactions(std::vector<NFTTransactionsData>&& data)
+CassandraBackend::writeNFTokenTransactions(
+    std::vector<NFTokenTransactionsData>&& data)
 {
-    for (NFTTransactionsData const& record : data)
-    {
-        makeAndExecuteAsyncWrite(
-            this,
-            std::make_tuple(
-                record.tokenID,
-                record.ledgerSequence,
-                record.transactionIndex,
-                record.txHash),
-            [this](auto const& params) {
-                CassandraStatement statement(insertNFTTx_);
-                auto const& [tokenID, lgrSeq, txnIdx, txHash] = params.data;
-                statement.bindNextBytes(tokenID);
-                statement.bindNextIntTuple(lgrSeq, txnIdx);
-                statement.bindNextBytes(txHash);
-                return statement;
-            },
-            "nf_token_transactions");
-    }
+  // TODO
 }
 
 void
@@ -353,41 +336,10 @@ CassandraBackend::writeTransaction(
 }
 
 void
-CassandraBackend::writeNFTs(std::vector<NFTsData>&& data)
+CassandraBackend::writeNFTokens(
+    std::vector<NFTokensData> && data)
 {
-    for (NFTsData const& record : data)
-    {
-        makeAndExecuteAsyncWrite(
-            this,
-            std::make_tuple(
-                record.tokenID,
-                record.ledgerSequence,
-                record.owner,
-                record.isBurned),
-            [this](auto const& params) {
-                CassandraStatement statement{insertNFT_};
-                auto const& [tokenID, lgrSeq, owner, isBurned] = params.data;
-                statement.bindNextBytes(tokenID);
-                statement.bindNextInt(lgrSeq);
-                statement.bindNextBytes(owner);
-                statement.bindNextBoolean(isBurned);
-                return statement;
-            },
-            "nf_tokens");
-
-        if (record.isFirstSeq)
-            makeAndExecuteAsyncWrite(
-                this,
-                std::make_tuple(record.tokenID),
-                [this](auto const& params) {
-                    CassandraStatement statement{insertIssuerNFT_};
-                    auto const& [tokenID] = params.data;
-                    statement.bindNextBytes(ripple::nft::getIssuer(tokenID));
-                    statement.bindNextBytes(tokenID);
-                    return statement;
-                },
-                "issuer_nf_tokens");
-    }
+  // TODO
 }
 
 std::optional<LedgerRange>

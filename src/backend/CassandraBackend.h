@@ -989,7 +989,11 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     void
+<<<<<<< HEAD
     writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;
+=======
+    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) override;
+>>>>>>> b94e57e... add new nft data into dbs
 
     void
     writeTransaction(
@@ -998,6 +1002,9 @@ public:
         std::uint32_t const date,
         std::string&& transaction,
         std::string&& metadata) override;
+
+    virtual void
+    writeNFTokens(std::vector<NFTokensData>&& data) override;
 
     void
     writeNFTs(std::vector<NFTsData>&& data) override;

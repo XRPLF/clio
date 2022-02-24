@@ -301,13 +301,13 @@ public:
         std::string&& metadata) = 0;
 
     virtual void
-    writeNFTs(std::vector<NFTsData>&& data) = 0;
+    writeNFTokens(std::vector<NFTokensData>&& data) = 0;
 
     virtual void
     writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
 
     virtual void
-    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) = 0;
+    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) = 0;
 
     virtual void
     writeSuccessor(

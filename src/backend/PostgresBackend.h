@@ -12,7 +12,9 @@ private:
     mutable size_t numRowsInSuccessorBuffer_ = 0;
     mutable std::stringstream successorBuffer_;
     mutable std::stringstream transactionsBuffer_;
+    mutable std::stringstream nfTokensBuffer_;
     mutable std::stringstream accountTxBuffer_;
+    mutable std::stringstream nfTokenTxBuffer_;
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
@@ -134,12 +136,18 @@ public:
         std::string&& transaction,
         std::string&& metadata) override;
 
+    virtual void
+    writeNFTokens(std::vector<NFTokensData>&& data) override;
+
     void
     writeNFTs(std::vector<NFTsData>&& data) override;
 
     void
     writeAccountTransactions(
         std::vector<AccountTransactionsData>&& data) override;
+
+    virtual void
+    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) override;
 
     void
     writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;

@@ -10,7 +10,7 @@
 #include <backend/Types.h>
 
 /// Struct used to keep track of what to write to
-/// account_transactions/account_tx tables
+/// account_transactions table in Postgres
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
@@ -29,18 +29,18 @@ struct AccountTransactionsData
     AccountTransactionsData() = default;
 };
 
-/// Represents a link from a tx to an NFT that was targeted/modified/created
-/// by it. Gets written to nf_token_transactions table and the like.
-struct NFTTransactionsData
+/// Struct used to keep track of what to write to
+/// nf_token_transactions table in Postgres
+struct NFTokenTransactionsData
 {
-    ripple::uint256 tokenID;
-    std::uint32_t ledgerSequence;
-    std::uint32_t transactionIndex;
+    std::string tokenID;
+    uint32_t ledgerSequence;
+    uint32_t transactionIndex;
     ripple::uint256 txHash;
 
-    NFTTransactionsData(
-        ripple::uint256 const& tokenID,
-        ripple::TxMeta const& meta,
+    NFTokenTransactionsData(
+        std::string const& tokenID,
+        ripple::TxMeta& meta,
         ripple::uint256 const& txHash)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
@@ -48,43 +48,34 @@ struct NFTTransactionsData
         , txHash(txHash)
     {
     }
+
+    NFTokenTransactionsData() = default;
 };
 
-/// Represents an NFT state at a particular ledger. Gets written to nf_tokens
-/// table and the like.
-struct NFTsData
+/// Struct used to keep track of what to write to
+/// nf_tokens table
+struct NFTokensData
 {
-    ripple::uint256 tokenID;
-    std::uint32_t ledgerSequence;
-
-    // The transaction index is only stored because we want to store only the
-    // final state of an NFT per ledger. Since we pull this from transactions
-    // we keep track of which tx index created this so we can de-duplicate, as
-    // it is possible for one ledger to have multiple txs that change the
-    // state of the same NFT.
-    std::uint32_t transactionIndex;
-    ripple::AccountID owner;
+    std::string tokenID;
+    uint32_t ledgerSequence;
+    std::string issuer;
+    std::string owner;
     bool isBurned;
-    // Similar to transactionIndex, this is only used to prevent needing to
-    // continually re-write to `issuer_nf_tokens` table in cassandra. We only
-    // need to write to that table for the first sequence in which a token
-    // appears.
-    bool isFirstSeq;
 
-    NFTsData(
-        ripple::uint256 const& tokenID,
-        ripple::AccountID const& owner,
-        ripple::TxMeta const& meta,
-        bool isBurned,
-        bool isFirstSeq)
+    NFTokensData(
+        std::string const& tokenID,
+        std::optional<std::string> const& newOwner,
+        ripple::TxMeta& meta,
+        bool isBurnedArg)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
-        , transactionIndex(meta.getIndex())
-        , owner(owner)
-        , isBurned(isBurned)
-        , isFirstSeq(isFirstSeq)
+        , issuer(tokenID.substr(8, 40))
+        , owner(newOwner.value_or(tokenID.substr(8, 40)))
+        , isBurned(isBurnedArg)
     {
     }
+
+    NFTokensData() = default;
 };
 
 template <class T>
