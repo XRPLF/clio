@@ -14,6 +14,13 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPC.h>
 
+// Useful macro for borrowing from ripple::jss
+// static strings. (J)son (S)trings
+#define JS(x) ripple::jss::x.c_str()
+
+// Access (SF)ield name (S)trings
+#define SFS(x) ripple::x.jsonName.c_str()
+
 namespace RPC {
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
@@ -92,6 +99,24 @@ traverseOwnedNodes(
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE)> atOwnedNode);
+
+std::variant<Status, AccountCursor>
+traverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::Keylet const& owner,
+    ripple::uint256 const& hexMarker,
+    std::uint32_t const startHint,
+    std::uint32_t sequence,
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE)> atOwnedNode);
+
+std::shared_ptr<ripple::SLE const>
+read(
+    ripple::Keylet const& keylet,
+    ripple::LedgerInfo const& lgrInfo,
+    Context const& context);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -200,5 +225,27 @@ getString(
     boost::json::object const& request,
     std::string const& field,
     std::string dfault);
+
+Status
+getHexMarker(boost::json::object const& request, ripple::uint256& marker);
+
+Status
+getLimit(boost::json::object const& request, std::uint32_t& limit);
+
+Status
+getAccount(boost::json::object const& request, ripple::AccountID& accountId);
+
+Status
+getAccount(
+    boost::json::object const& request,
+    ripple::AccountID& destAccount,
+    boost::string_view const& field);
+
+Status
+getTaker(boost::json::object const& request, ripple::AccountID& takerID);
+
+Status
+getChannelId(boost::json::object const& request, ripple::uint256& channelId);
+
 }  // namespace RPC
 #endif

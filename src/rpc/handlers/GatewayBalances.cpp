@@ -9,17 +9,9 @@ doGatewayBalances(Context const& context)
     auto request = context.params;
     boost::json::object response = {};
 
-    if (!request.contains("account"))
-        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
-
-    if (!request.at("account").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-
-    auto accountID =
-        accountFromStringStrict(request.at("account").as_string().c_str());
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
@@ -81,7 +73,7 @@ doGatewayBalances(Context const& context)
 
         if (!valid)
         {
-            response["error"] = "invalidHotWallet";
+            response[JS(error)] = "invalidHotWallet";
             return response;
         }
     }
@@ -148,7 +140,7 @@ doGatewayBalances(Context const& context)
 
     traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
@@ -162,7 +154,7 @@ doGatewayBalances(Context const& context)
         {
             obj[ripple::to_string(k)] = v.getText();
         }
-        response["obligations"] = std::move(obj);
+        response[JS(obligations)] = std::move(obj);
     }
 
     auto toJson =
@@ -177,9 +169,9 @@ doGatewayBalances(Context const& context)
                     for (auto const& balance : accBalances)
                     {
                         boost::json::object entry;
-                        entry["currency"] =
+                        entry[JS(currency)] =
                             ripple::to_string(balance.issue().currency);
-                        entry["value"] = balance.getText();
+                        entry[JS(value)] = balance.getText();
                         arr.push_back(std::move(entry));
                     }
                     obj[ripple::to_string(accId)] = std::move(arr);
@@ -189,14 +181,14 @@ doGatewayBalances(Context const& context)
         };
 
     if (auto balances = toJson(hotBalances); balances.size())
-        response["balances"] = balances;
+        response[JS(balances)] = balances;
     if (auto balances = toJson(frozenBalances); balances.size())
-        response["frozen_balances"] = balances;
+        response[JS(frozen_balances)] = balances;
     if (auto balances = toJson(assets); assets.size())
-        response["assets"] = toJson(assets);
-    response["account"] = request.at("account");
-    response["ledger_index"] = lgrInfo.seq;
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+        response[JS(assets)] = toJson(assets);
+    response[JS(account)] = request.at(JS(account));
+    response[JS(ledger_index)] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     return response;
 }
 }  // namespace RPC

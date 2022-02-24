@@ -24,17 +24,9 @@ doAccountCurrencies(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if (!request.contains("account"))
-        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
-
-    if (!request.at("account").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-
-    auto accountID =
-        accountFromStringStrict(request.at("account").as_string().c_str());
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
     std::set<std::string> send, receive;
     auto const addToResponse = [&](ripple::SLE const& sle) {
@@ -61,26 +53,26 @@ doAccountCurrencies(Context const& context)
 
     traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
         context.yield,
         addToResponse);
 
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
 
-    response["receive_currencies"] =
+    response[JS(receive_currencies)] =
         boost::json::value(boost::json::array_kind);
     boost::json::array& jsonReceive =
-        response.at("receive_currencies").as_array();
+        response.at(JS(receive_currencies)).as_array();
 
     for (auto const& currency : receive)
         jsonReceive.push_back(currency.c_str());
 
-    response["send_currencies"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonSend = response.at("send_currencies").as_array();
+    response[JS(send_currencies)] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonSend = response.at(JS(send_currencies)).as_array();
 
     for (auto const& currency : send)
         jsonSend.push_back(currency.c_str());

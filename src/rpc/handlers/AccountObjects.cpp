@@ -1,10 +1,12 @@
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/app/paths/TrustLine.h>
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/jss.h>
+#include <ripple/protocol/nftPageMask.h>
 #include <boost/json.hpp>
 #include <algorithm>
 #include <rpc/RPCHelpers.h>
@@ -23,7 +25,126 @@ std::unordered_map<std::string, ripple::LedgerEntryType> types{
     {"escrow", ripple::ltESCROW},
     {"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
     {"check", ripple::ltCHECK},
-};
+    {"nft_page", ripple::ltNFTOKEN_PAGE},
+    {"nft_offer", ripple::ltNFTOKEN_OFFER}};
+
+Result
+doAccountNFTs(Context const& context)
+{
+    auto request = context.params;
+    boost::json::object response = {};
+
+    auto v = ledgerInfoFromRequest(context);
+    if (auto status = std::get_if<Status>(&v))
+        return *status;
+
+    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
+
+    if (!accountID)
+        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+
+    // TODO: just check for existence without pulling
+    if (!context.backend->fetchLedgerObject(
+            ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield))
+        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+
+    std::uint32_t limit = 200;
+    if (auto const status = getLimit(request, limit); status)
+        return status;
+
+    ripple::uint256 marker;
+    if (auto const status = getHexMarker(request, marker); status)
+        return status;
+
+    auto const first =
+        ripple::keylet::nftpage(ripple::keylet::nftpage_min(accountID), marker);
+    auto const last = ripple::keylet::nftpage_max(accountID);
+
+    auto const key =
+        context.backend
+            ->fetchSuccessorKey(first.key, lgrInfo.seq, context.yield)
+            .value_or(last.key);
+    auto const blob = context.backend->fetchLedgerObject(
+        ripple::Keylet(ripple::ltNFTOKEN_PAGE, key).key,
+        lgrInfo.seq,
+        context.yield);
+
+    std::optional<ripple::SLE const> cp{
+        ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, key}};
+
+    std::uint32_t cnt = 0;
+    response[JS(account_nfts)] = boost::json::value(boost::json::array_kind);
+    auto& nfts = response.at(JS(account_nfts)).as_array();
+
+    bool pastMarker = marker.isZero();
+    ripple::uint256 const maskedMarker = marker & ripple::nft::pageMask;
+
+    // Continue iteration from the current page:
+    while (true)
+    {
+        auto arr = cp->getFieldArray(ripple::sfNFTokens);
+
+        for (auto const& o : arr)
+        {
+            ripple::uint256 const nftokenID = o[ripple::sfNFTokenID];
+            ripple::uint256 const maskedNftokenID =
+                nftokenID & ripple::nft::pageMask;
+
+            if (!pastMarker && maskedNftokenID < maskedMarker)
+                continue;
+
+            if (!pastMarker && maskedNftokenID == maskedMarker &&
+                nftokenID <= marker)
+                continue;
+
+            {
+                nfts.push_back(
+                    toBoostJson(o.getJson(ripple::JsonOptions::none)));
+                auto& obj = nfts.back().as_object();
+
+                // Pull out the components of the nft ID.
+                obj[SFS(sfFlags)] = ripple::nft::getFlags(nftokenID);
+                obj[SFS(sfIssuer)] =
+                    to_string(ripple::nft::getIssuer(nftokenID));
+                obj[SFS(sfNFTokenTaxon)] =
+                    ripple::nft::toUInt32(ripple::nft::getTaxon(nftokenID));
+                obj[JS(nft_serial)] = ripple::nft::getSerial(nftokenID);
+
+                if (std::uint16_t xferFee = {
+                        ripple::nft::getTransferFee(nftokenID)})
+                    obj[SFS(sfTransferFee)] = xferFee;
+            }
+
+            if (++cnt == limit)
+            {
+                response[JS(limit)] = limit;
+                response[JS(marker)] =
+                    to_string(o.getFieldH256(ripple::sfNFTokenID));
+                return response;
+            }
+        }
+
+        if (auto npm = (*cp)[~ripple::sfNextPageMin])
+        {
+            auto const nextKey = ripple::Keylet(ripple::ltNFTOKEN_PAGE, *npm);
+            auto const nextBlob = context.backend->fetchLedgerObject(
+                nextKey.key, lgrInfo.seq, context.yield);
+
+            cp.emplace(ripple::SLE{
+                ripple::SerialIter{nextBlob->data(), nextBlob->size()},
+                nextKey.key});
+        }
+        else
+            break;
+    }
+
+    response[JS(account)] = ripple::toBase58(accountID);
+    return response;
+}
 
 Result
 doAccountObjects(Context const& context)
@@ -37,54 +158,40 @@ doAccountObjects(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if (!request.contains("account"))
-        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
-
-    if (!request.at("account").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-
-    auto accountID =
-        accountFromStringStrict(request.at("account").as_string().c_str());
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
     std::uint32_t limit = 200;
-    if (request.contains("limit"))
-    {
-        if (!request.at("limit").is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
-        limit = request.at("limit").as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
-    }
-
-    std::optional<std::string> cursor = {};
+    std::optional<std::string> marker = {};
     if (request.contains("marker"))
     {
         if (!request.at("marker").is_string())
             return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        cursor = request.at("marker").as_string().c_str();
+        marker = request.at("marker").as_string().c_str();
     }
 
     std::optional<ripple::LedgerEntryType> objectType = {};
-    if (request.contains("type"))
+    if (request.contains(JS(type)))
     {
-        if (!request.at("type").is_string())
+        if (!request.at(JS(type)).is_string())
             return Status{Error::rpcINVALID_PARAMS, "typeNotString"};
 
-        std::string typeAsString = request.at("type").as_string().c_str();
+        std::string typeAsString = request.at(JS(type)).as_string().c_str();
         if (types.find(typeAsString) == types.end())
             return Status{Error::rpcINVALID_PARAMS, "typeInvalid"};
 
         objectType = types[typeAsString];
     }
 
-    response["account"] = ripple::to_string(*accountID);
-    response["account_objects"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonObjects = response.at("account_objects").as_array();
+    response[JS(account)] = ripple::to_string(accountID);
+    response[JS(account_objects)] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonObjects =
+        response.at(JS(account_objects)).as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (!objectType || objectType == sle.getType())
@@ -95,23 +202,23 @@ doAccountObjects(Context const& context)
 
     auto next = traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         limit,
-        cursor,
+        marker,
         context.yield,
         addToResponse);
 
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
 
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;
 
-    auto nextCursor = std::get<RPC::AccountCursor>(next);
+    auto nextMarker = std::get<RPC::AccountCursor>(next);
 
-    if (nextCursor.isNonZero())
-        response["marker"] = nextCursor.toString();
+    if (nextMarker.isNonZero())
+        response[JS(marker)] = nextMarker.toString();
 
     return response;
 }

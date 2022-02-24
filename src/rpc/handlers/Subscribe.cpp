@@ -17,7 +17,7 @@ static std::unordered_set<std::string> validCommonStreams{
 Status
 validateStreams(boost::json::object const& request)
 {
-    boost::json::array const& streams = request.at("streams").as_array();
+    boost::json::array const& streams = request.at(JS(streams)).as_array();
 
     for (auto const& stream : streams)
     {
@@ -40,7 +40,7 @@ subscribeToStreams(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& streams = request.at("streams").as_array();
+    boost::json::array const& streams = request.at(JS(streams)).as_array();
 
     boost::json::object response;
     for (auto const& stream : streams)
@@ -69,7 +69,7 @@ unsubscribeToStreams(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& streams = request.at("streams").as_array();
+    boost::json::array const& streams = request.at(JS(streams)).as_array();
 
     for (auto const& stream : streams)
     {
@@ -114,7 +114,7 @@ subscribeToAccounts(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& accounts = request.at("accounts").as_array();
+    boost::json::array const& accounts = request.at(JS(accounts)).as_array();
 
     for (auto const& account : accounts)
     {
@@ -138,7 +138,7 @@ unsubscribeToAccounts(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    boost::json::array const& accounts = request.at("accounts").as_array();
+    boost::json::array const& accounts = request.at(JS(accounts)).as_array();
 
     for (auto const& account : accounts)
     {
@@ -163,7 +163,7 @@ subscribeToAccountsProposed(
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts =
-        request.at("accounts_proposed").as_array();
+        request.at(JS(accounts_proposed)).as_array();
 
     for (auto const& account : accounts)
     {
@@ -188,7 +188,7 @@ unsubscribeToAccountsProposed(
     SubscriptionManager& manager)
 {
     boost::json::array const& accounts =
-        request.at("accounts_proposed").as_array();
+        request.at(JS(accounts_proposed)).as_array();
 
     for (auto const& account : accounts)
     {
@@ -212,68 +212,57 @@ validateAndGetBooks(
     boost::json::object const& request,
     std::shared_ptr<Backend::BackendInterface const> const& backend)
 {
-    if (!request.at("books").is_array())
+    if (!request.at(JS(books)).is_array())
         return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
-    boost::json::array const& books = request.at("books").as_array();
+    boost::json::array const& books = request.at(JS(books)).as_array();
 
     std::vector<ripple::Book> booksToSub;
     std::optional<Backend::LedgerRange> rng;
     boost::json::array snapshot;
     for (auto const& book : books)
     {
-        auto parsed = parseBook(book.as_object());
-        if (auto status = std::get_if<Status>(&parsed))
+        auto parsedBook = parseBook(book.as_object());
+        if (auto status = std::get_if<Status>(&parsedBook))
             return *status;
-        else
+
+        auto b = std::get<ripple::Book>(parsedBook);
+        booksToSub.push_back(b);
+        bool both = book.as_object().contains(JS(both));
+        if (both)
+            booksToSub.push_back(ripple::reversed(b));
+
+        if (book.as_object().contains(JS(snapshot)))
         {
-            auto b = std::get<ripple::Book>(parsed);
-            booksToSub.push_back(b);
-            bool both = book.as_object().contains("both");
+            if (!rng)
+                rng = backend->fetchLedgerRange();
+            ripple::AccountID takerID = beast::zero;
+            if (book.as_object().contains(JS(taker)))
+                if (auto const status = getTaker(book.as_object(), takerID);
+                    status)
+                    return status;
+
+            auto getOrderBook = [&snapshot, &backend, &rng, &takerID](
+                                    auto book,
+                                    boost::asio::yield_context& yield) {
+                auto bookBase = getBookBase(book);
+                auto [offers, retMarker] = backend->fetchBookOffers(
+                    bookBase, rng->maxSequence, 200, {}, yield);
+
+                auto orderBook = postProcessOrderBook(
+                    offers, book, takerID, *backend, rng->maxSequence, yield);
+                std::copy(
+                    orderBook.begin(),
+                    orderBook.end(),
+                    std::back_inserter(snapshot));
+            };
+            getOrderBook(b, yield);
             if (both)
-                booksToSub.push_back(ripple::reversed(b));
-
-            if (book.as_object().contains("snapshot"))
-            {
-                if (!rng)
-                    rng = backend->fetchLedgerRange();
-                ripple::AccountID takerID = beast::zero;
-                if (book.as_object().contains("taker"))
-                {
-                    auto parsed = parseTaker(request.at("taker"));
-                    if (auto status = std::get_if<Status>(&parsed))
-                        return *status;
-                    else
-                    {
-                        takerID = std::get<ripple::AccountID>(parsed);
-                    }
-                }
-                auto getOrderBook = [&snapshot, &backend, &rng, &takerID](
-                                        auto book,
-                                        boost::asio::yield_context& yield) {
-                    auto bookBase = getBookBase(book);
-                    auto [offers, retCursor] = backend->fetchBookOffers(
-                        bookBase, rng->maxSequence, 200, {}, yield);
-
-                    auto orderBook = postProcessOrderBook(
-                        offers,
-                        book,
-                        takerID,
-                        *backend,
-                        rng->maxSequence,
-                        yield);
-                    std::copy(
-                        orderBook.begin(),
-                        orderBook.end(),
-                        std::back_inserter(snapshot));
-                };
-                getOrderBook(b, yield);
-                if (both)
-                    getOrderBook(ripple::reversed(b), yield);
-            }
+                getOrderBook(ripple::reversed(b), yield);
         }
     }
     return std::make_pair(booksToSub, snapshot);
 }
+
 void
 subscribeToBooks(
     std::vector<ripple::Book> const& books,
@@ -285,14 +274,15 @@ subscribeToBooks(
         manager.subBook(book, session);
     }
 }
+
 Result
 doSubscribe(Context const& context)
 {
     auto request = context.params;
 
-    if (request.contains("streams"))
+    if (request.contains(JS(streams)))
     {
-        if (!request.at("streams").is_array())
+        if (!request.at(JS(streams)).is_array())
             return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
@@ -301,25 +291,25 @@ doSubscribe(Context const& context)
             return status;
     }
 
-    if (request.contains("accounts"))
+    if (request.contains(JS(accounts)))
     {
-        if (!request.at("accounts").is_array())
+        if (!request.at(JS(accounts)).is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
-        boost::json::array accounts = request.at("accounts").as_array();
+        boost::json::array accounts = request.at(JS(accounts)).as_array();
         auto status = validateAccounts(accounts);
 
         if (status)
             return status;
     }
 
-    if (request.contains("accounts_proposed"))
+    if (request.contains(JS(accounts_proposed)))
     {
-        if (!request.at("accounts_proposed").is_array())
+        if (!request.at(JS(accounts_proposed)).is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
         boost::json::array accounts =
-            request.at("accounts_proposed").as_array();
+            request.at(JS(accounts_proposed)).as_array();
         auto status = validateAccounts(accounts);
 
         if (status)
@@ -327,7 +317,7 @@ doSubscribe(Context const& context)
     }
     std::vector<ripple::Book> books;
     boost::json::array snapshot;
-    if (request.contains("books"))
+    if (request.contains(JS(books)))
     {
         auto parsed =
             validateAndGetBooks(context.yield, request, context.backend);
@@ -341,22 +331,22 @@ doSubscribe(Context const& context)
     }
 
     boost::json::object response;
-    if (request.contains("streams"))
+    if (request.contains(JS(streams)))
         response = subscribeToStreams(
             context.yield, request, context.session, *context.subscriptions);
 
-    if (request.contains("accounts"))
+    if (request.contains(JS(accounts)))
         subscribeToAccounts(request, context.session, *context.subscriptions);
 
-    if (request.contains("accounts_proposed"))
+    if (request.contains(JS(accounts_proposed)))
         subscribeToAccountsProposed(
             request, context.session, *context.subscriptions);
 
-    if (request.contains("books"))
+    if (request.contains(JS(books)))
         subscribeToBooks(books, context.session, *context.subscriptions);
 
     if (snapshot.size())
-        response["offers"] = snapshot;
+        response[JS(offers)] = snapshot;
     return response;
 }
 
@@ -365,9 +355,9 @@ doUnsubscribe(Context const& context)
 {
     auto request = context.params;
 
-    if (request.contains("streams"))
+    if (request.contains(JS(streams)))
     {
-        if (!request.at("streams").is_array())
+        if (!request.at(JS(streams)).is_array())
             return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
@@ -376,38 +366,38 @@ doUnsubscribe(Context const& context)
             return status;
     }
 
-    if (request.contains("accounts"))
+    if (request.contains(JS(accounts)))
     {
-        if (!request.at("accounts").is_array())
+        if (!request.at(JS(accounts)).is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
-        boost::json::array accounts = request.at("accounts").as_array();
+        boost::json::array accounts = request.at(JS(accounts)).as_array();
         auto status = validateAccounts(accounts);
 
         if (status)
             return status;
     }
 
-    if (request.contains("accounts_proposed"))
+    if (request.contains(JS(accounts_proposed)))
     {
-        if (!request.at("accounts_proposed").is_array())
+        if (!request.at(JS(accounts_proposed)).is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
         boost::json::array accounts =
-            request.at("accounts_proposed").as_array();
+            request.at(JS(accounts_proposed)).as_array();
         auto status = validateAccounts(accounts);
 
         if (status)
             return status;
     }
 
-    if (request.contains("streams"))
+    if (request.contains(JS(streams)))
         unsubscribeToStreams(request, context.session, *context.subscriptions);
 
-    if (request.contains("accounts"))
+    if (request.contains(JS(accounts)))
         unsubscribeToAccounts(request, context.session, *context.subscriptions);
 
-    if (request.contains("accounts_proposed"))
+    if (request.contains(JS(accounts_proposed)))
         unsubscribeToAccountsProposed(
             request, context.session, *context.subscriptions);
 

@@ -14,23 +14,23 @@ doTx(Context const& context)
     auto request = context.params;
     boost::json::object response = {};
 
-    if (!request.contains("transaction"))
+    if (!request.contains(JS(transaction)))
         return Status{Error::rpcINVALID_PARAMS, "specifyTransaction"};
 
-    if (!request.at("transaction").is_string())
+    if (!request.at(JS(transaction)).is_string())
         return Status{Error::rpcINVALID_PARAMS, "transactionNotString"};
 
     ripple::uint256 hash;
-    if (!hash.parseHex(request.at("transaction").as_string().c_str()))
+    if (!hash.parseHex(request.at(JS(transaction)).as_string().c_str()))
         return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
 
     bool binary = false;
-    if (request.contains("binary"))
+    if (request.contains(JS(binary)))
     {
-        if (!request.at("binary").is_bool())
+        if (!request.at(JS(binary)).is_bool())
             return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
 
-        binary = request.at("binary").as_bool();
+        binary = request.at(JS(binary)).as_bool();
     }
 
     auto range = context.backend->fetchLedgerRange();
@@ -45,16 +45,16 @@ doTx(Context const& context)
     {
         auto [txn, meta] = toExpandedJson(*dbResponse);
         response = txn;
-        response["meta"] = meta;
+        response[JS(meta)] = meta;
     }
     else
     {
-        response["tx"] = ripple::strHex(dbResponse->transaction);
-        response["meta"] = ripple::strHex(dbResponse->metadata);
-        response["hash"] = std::move(request.at("transaction").as_string());
+        response[JS(tx)] = ripple::strHex(dbResponse->transaction);
+        response[JS(meta)] = ripple::strHex(dbResponse->metadata);
+        response[JS(hash)] = std::move(request.at(JS(transaction)).as_string());
     }
-    response["date"] = dbResponse->date;
-    response["ledger_index"] = dbResponse->ledgerSequence;
+    response[JS(date)] = dbResponse->date;
+    response[JS(ledger_index)] = dbResponse->ledgerSequence;
 
     return response;
 }

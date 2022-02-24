@@ -49,41 +49,20 @@ doBookOffers(Context const& context)
     }
 
     std::uint32_t limit = 200;
-    if (request.contains("limit"))
-    {
-        if (!request.at("limit").is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
-
-        limit = request.at("limit").as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
-    }
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
     ripple::AccountID takerID = beast::zero;
-    if (request.contains("taker"))
-    {
-        auto parsed = parseTaker(request["taker"]);
-        if (auto status = std::get_if<Status>(&parsed))
-            return *status;
-        else
-        {
-            takerID = std::get<ripple::AccountID>(parsed);
-        }
-    }
+    if (auto const status = getTaker(request, takerID); status)
+        return status;
 
-    ripple::uint256 cursor = beast::zero;
-    if (request.contains("cursor"))
-    {
-        if (!request.at("cursor").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
-
-        if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
-    }
+    ripple::uint256 marker = beast::zero;
+    if (auto const status = getHexMarker(request, marker); status)
+        return status;
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, retCursor] = context.backend->fetchBookOffers(
-        bookBase, lgrInfo.seq, limit, cursor, context.yield);
+    auto [offers, retMarker] = context.backend->fetchBookOffers(
+        bookBase, lgrInfo.seq, limit, marker, context.yield);
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning)
@@ -92,10 +71,10 @@ doBookOffers(Context const& context)
                .count()
         << " milliseconds - request = " << request;
 
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
 
-    response["offers"] = postProcessOrderBook(
+    response[JS(offers)] = postProcessOrderBook(
         offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
 
     auto end2 = std::chrono::system_clock::now();
@@ -106,8 +85,8 @@ doBookOffers(Context const& context)
                .count()
         << " milliseconds - request = " << request;
 
-    if (retCursor)
-        response["marker"] = ripple::strHex(*retCursor);
+    if (retMarker)
+        response["marker"] = ripple::strHex(*retMarker);
 
     return response;
 }

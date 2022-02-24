@@ -64,25 +64,25 @@ addLine(
     ripple::STAmount const& saLimitPeer(lineLimitPeer);
 
     boost::json::object jPeer;
-    jPeer["account"] = ripple::to_string(lineAccountIDPeer);
-    jPeer["balance"] = saBalance.getText();
-    jPeer["currency"] = ripple::to_string(saBalance.issue().currency);
-    jPeer["limit"] = saLimit.getText();
-    jPeer["limit_peer"] = saLimitPeer.getText();
-    jPeer["quality_in"] = lineQualityIn;
-    jPeer["quality_out"] = lineQualityOut;
+    jPeer[JS(account)] = ripple::to_string(lineAccountIDPeer);
+    jPeer[JS(balance)] = saBalance.getText();
+    jPeer[JS(currency)] = ripple::to_string(saBalance.issue().currency);
+    jPeer[JS(limit)] = saLimit.getText();
+    jPeer[JS(limit_peer)] = saLimitPeer.getText();
+    jPeer[JS(quality_in)] = lineQualityIn;
+    jPeer[JS(quality_out)] = lineQualityOut;
     if (lineAuth)
-        jPeer["authorized"] = true;
+        jPeer[JS(authorized)] = true;
     if (lineAuthPeer)
-        jPeer["peer_authorized"] = true;
+        jPeer[JS(peer_authorized)] = true;
     if (lineNoRipple || !lineDefaultRipple)
-        jPeer["no_ripple"] = lineNoRipple;
+        jPeer[JS(no_ripple)] = lineNoRipple;
     if (lineNoRipple || !lineDefaultRipple)
-        jPeer["no_ripple_peer"] = lineNoRipplePeer;
+        jPeer[JS(no_ripple_peer)] = lineNoRipplePeer;
     if (lineFreeze)
-        jPeer["freeze"] = true;
+        jPeer[JS(freeze)] = true;
     if (lineFreezePeer)
-        jPeer["freeze_peer"] = true;
+        jPeer[JS(freeze_peer)] = true;
 
     jsonLines.push_back(jPeer);
 }
@@ -99,80 +99,56 @@ doAccountLines(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if (!request.contains("account"))
-        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
-    if (!request.at("account").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-
-    auto accountID =
-        accountFromStringStrict(request.at("account").as_string().c_str());
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
-
-    std::optional<ripple::AccountID> peerAccount;
-    if (request.contains("peer"))
-    {
-        if (!request.at("peer").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "peerNotString"};
-
-        peerAccount =
-            accountFromStringStrict(request.at("peer").as_string().c_str());
-
-        if (!peerAccount)
-            return Status{Error::rpcINVALID_PARAMS, "peerMalformed"};
-    }
+    ripple::AccountID peerAccount;
+    if (auto const status = getAccount(request, peerAccount, JS(peer)); status)
+        return status;
 
     std::uint32_t limit = 200;
-    if (request.contains("limit"))
-    {
-        if (!request.at("limit").is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
-        limit = request.at("limit").as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
-    }
-
-    std::optional<std::string> cursor = {};
-    if (request.contains("marker"))
+    std::optional<std::string> marker = {};
+    if (request.contains(JS(marker)))
     {
-        if (!request.at("marker").is_string())
+        if (!request.at(JS(marker)).is_string())
             return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        cursor = request.at("marker").as_string().c_str();
+        marker = request.at(JS(marker)).as_string().c_str();
     }
 
-    response["account"] = ripple::to_string(*accountID);
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
-    response["lines"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonLines = response.at("lines").as_array();
+    response[JS(account)] = ripple::to_string(accountID);
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
+    response[JS(lines)] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonLines = response.at(JS(lines)).as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) -> void {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            addLine(jsonLines, sle, *accountID, peerAccount);
+            addLine(jsonLines, sle, accountID, peerAccount);
         }
     };
 
     auto next = traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         limit,
-        cursor,
+        marker,
         context.yield,
         addToResponse);
 
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;
 
-    auto nextCursor = std::get<RPC::AccountCursor>(next);
+    auto nextMarker = std::get<RPC::AccountCursor>(next);
 
-    if (nextCursor.isNonZero())
-        response["marker"] = nextCursor.toString();
+    if (nextMarker.isNonZero())
+        response[JS(marker)] = nextMarker.toString();
 
     return response;
 }

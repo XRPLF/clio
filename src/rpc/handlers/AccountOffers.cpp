@@ -27,37 +27,39 @@ addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
 
     if (!takerPays.native())
     {
-        obj["taker_pays"] = boost::json::value(boost::json::object_kind);
-        boost::json::object& takerPaysJson = obj.at("taker_pays").as_object();
+        obj[JS(taker_pays)] = boost::json::value(boost::json::object_kind);
+        boost::json::object& takerPaysJson = obj.at(JS(taker_pays)).as_object();
 
-        takerPaysJson["value"] = takerPays.getText();
-        takerPaysJson["currency"] = ripple::to_string(takerPays.getCurrency());
-        takerPaysJson["issuer"] = ripple::to_string(takerPays.getIssuer());
+        takerPaysJson[JS(value)] = takerPays.getText();
+        takerPaysJson[JS(currency)] =
+            ripple::to_string(takerPays.getCurrency());
+        takerPaysJson[JS(issuer)] = ripple::to_string(takerPays.getIssuer());
     }
     else
     {
-        obj["taker_pays"] = takerPays.getText();
+        obj[JS(taker_pays)] = takerPays.getText();
     }
 
     if (!takerGets.native())
     {
-        obj["taker_gets"] = boost::json::value(boost::json::object_kind);
-        boost::json::object& takerGetsJson = obj.at("taker_gets").as_object();
+        obj[JS(taker_gets)] = boost::json::value(boost::json::object_kind);
+        boost::json::object& takerGetsJson = obj.at(JS(taker_gets)).as_object();
 
-        takerGetsJson["value"] = takerGets.getText();
-        takerGetsJson["currency"] = ripple::to_string(takerGets.getCurrency());
-        takerGetsJson["issuer"] = ripple::to_string(takerGets.getIssuer());
+        takerGetsJson[JS(value)] = takerGets.getText();
+        takerGetsJson[JS(currency)] =
+            ripple::to_string(takerGets.getCurrency());
+        takerGetsJson[JS(issuer)] = ripple::to_string(takerGets.getIssuer());
     }
     else
     {
-        obj["taker_gets"] = takerGets.getText();
+        obj[JS(taker_gets)] = takerGets.getText();
     }
 
-    obj["seq"] = offer.getFieldU32(ripple::sfSequence);
-    obj["flags"] = offer.getFieldU32(ripple::sfFlags);
-    obj["quality"] = rate.getText();
+    obj[JS(seq)] = offer.getFieldU32(ripple::sfSequence);
+    obj[JS(flags)] = offer.getFieldU32(ripple::sfFlags);
+    obj[JS(quality)] = rate.getText();
     if (offer.isFieldPresent(ripple::sfExpiration))
-        obj["expiration"] = offer.getFieldU32(ripple::sfExpiration);
+        obj[JS(expiration)] = offer.getFieldU32(ripple::sfExpiration);
 
     offersJson.push_back(obj);
 };
@@ -74,43 +76,28 @@ doAccountOffers(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if (!request.contains("account"))
-        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
-
-    if (!request.at("account").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-
-    auto accountID =
-        accountFromStringStrict(request.at("account").as_string().c_str());
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
     std::uint32_t limit = 200;
-    if (request.contains("limit"))
-    {
-        if (!request.at("limit").is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
-        limit = request.at("limit").as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
-    }
-
-    std::optional<std::string> cursor = {};
-    if (request.contains("marker"))
+    std::optional<std::string> marker = {};
+    if (request.contains(JS(marker)))
     {
-        if (!request.at("marker").is_string())
+        if (!request.at(JS(marker)).is_string())
             return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        cursor = request.at("marker").as_string().c_str();
+        marker = request.at(JS(marker)).as_string().c_str();
     }
 
-    response["account"] = ripple::to_string(*accountID);
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
-    response["offers"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonLines = response.at("offers").as_array();
+    response[JS(account)] = ripple::to_string(accountID);
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
+    response[JS(offers)] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonLines = response.at(JS(offers)).as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltOFFER)
@@ -128,20 +115,20 @@ doAccountOffers(Context const& context)
 
     auto next = traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         limit,
-        cursor,
+        marker,
         context.yield,
         addToResponse);
 
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;
 
-    auto nextCursor = std::get<RPC::AccountCursor>(next);
+    auto nextMarker = std::get<RPC::AccountCursor>(next);
 
-    if (nextCursor.isNonZero())
-        response["marker"] = nextCursor.toString();
+    if (nextMarker.isNonZero())
+        response[JS(marker)] = nextMarker.toString();
 
     return response;
 }

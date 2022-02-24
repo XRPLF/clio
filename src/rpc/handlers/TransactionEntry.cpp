@@ -13,7 +13,7 @@ doTransactionEntry(Context const& context)
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     ripple::uint256 hash;
-    if (!hash.parseHex(getRequiredString(context.params, "tx_hash")))
+    if (!hash.parseHex(getRequiredString(context.params, JS(tx_hash))))
         return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
 
     auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
@@ -33,10 +33,10 @@ doTransactionEntry(Context const& context)
             "Transaction not found."};
 
     auto [txn, meta] = toExpandedJson(*dbResponse);
-    response["tx_json"] = std::move(txn);
-    response["metadata"] = std::move(meta);
-    response["ledger_index"] = lgrInfo.seq;
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response[JS(tx_json)] = std::move(txn);
+    response[JS(metadata)] = std::move(meta);
+    response[JS(ledger_index)] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     return response;
 }
 

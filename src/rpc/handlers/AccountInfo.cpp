@@ -29,10 +29,10 @@ doAccountInfo(Context const& context)
     boost::json::object response = {};
 
     std::string strIdent;
-    if (request.contains("account"))
-        strIdent = request.at("account").as_string().c_str();
-    else if (request.contains("ident"))
-        strIdent = request.at("ident").as_string().c_str();
+    if (request.contains(JS(account)))
+        strIdent = request.at(JS(account)).as_string().c_str();
+    else if (request.contains(JS(ident)))
+        strIdent = request.at(JS(ident)).as_string().c_str();
     else
         return Status{Error::rpcACT_MALFORMED};
 
@@ -71,18 +71,18 @@ doAccountInfo(Context const& context)
         return Status{Error::rpcDB_DESERIALIZATION};
 
     // if (!binary)
-    //     response["account_data"] = getJson(sle);
+    //     response[JS(account_data)] = getJson(sle);
     // else
-    //     response["account_data"] = ripple::strHex(*dbResponse);
-    // response["db_time"] = time;
+    //     response[JS(account_data)] = ripple::strHex(*dbResponse);
+    // response[JS(db_time)] = time;
 
-    response["account_data"] = toJson(sle);
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+    response[JS(account_data)] = toJson(sle);
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
 
     // Return SignerList(s) if that is requested.
-    if (request.contains("signer_lists") &&
-        request.at("signer_lists").as_bool())
+    if (request.contains(JS(signer_lists)) &&
+        request.at(JS(signer_lists)).as_bool())
     {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
@@ -104,7 +104,7 @@ doAccountInfo(Context const& context)
             signerList.push_back(toJson(sleSigners));
         }
 
-        response["account_data"].as_object()["signer_lists"] =
+        response[JS(account_data)].as_object()[JS(signer_lists)] =
             std::move(signerList);
     }
 

@@ -13,6 +13,7 @@ getBool(boost::json::object const& request, std::string const& field)
     else
         throw InvalidParamsError("Invalid field " + field + ", not bool.");
 }
+
 bool
 getBool(
     boost::json::object const& request,
@@ -24,6 +25,7 @@ getBool(
     else
         return dfault;
 }
+
 bool
 getRequiredBool(boost::json::object const& request, std::string const& field)
 {
@@ -152,6 +154,7 @@ getString(boost::json::object const& request, std::string const& field)
     else
         throw InvalidParamsError("Invalid field " + field + ", not string.");
 }
+
 std::string
 getRequiredString(boost::json::object const& request, std::string const& field)
 {
@@ -160,6 +163,7 @@ getRequiredString(boost::json::object const& request, std::string const& field)
     else
         throw InvalidParamsError("Missing field " + field);
 }
+
 std::string
 getString(
     boost::json::object const& request,
@@ -170,6 +174,112 @@ getString(
         return *res;
     else
         return dfault;
+}
+
+Status
+getHexMarker(boost::json::object const& request, ripple::uint256& marker)
+{
+    if (request.contains(JS(marker)))
+    {
+        if (!request.at(JS(marker)).is_string())
+            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+
+        if (!marker.parseHex(request.at(JS(marker)).as_string().c_str()))
+            return Status{Error::rpcINVALID_PARAMS, "malformedMarker"};
+    }
+
+    return {};
+}
+
+Status
+getLimit(boost::json::object const& request, std::uint32_t& limit)
+{
+    if (request.contains(JS(limit)))
+    {
+        if (!request.at(JS(limit)).is_int64())
+            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
+
+        limit = request.at(JS(limit)).as_int64();
+        if (limit <= 0)
+            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
+    }
+
+    return {};
+}
+
+Status
+getAccount(
+    boost::json::object const& request,
+    ripple::AccountID& account,
+    boost::string_view const& field,
+    bool required)
+{
+    if (!request.contains(field))
+    {
+        if (required)
+            return Status{
+                Error::rpcINVALID_PARAMS, field.to_string() + "Missing"};
+
+        return {};
+    }
+
+    if (!request.at(field).is_string())
+        return Status{
+            Error::rpcINVALID_PARAMS, field.to_string() + "NotString"};
+
+    if (auto a = accountFromStringStrict(request.at(field).as_string().c_str());
+        a)
+    {
+        account = a.value();
+        return {};
+    }
+
+    return Status{Error::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
+}
+
+Status
+getAccount(boost::json::object const& request, ripple::AccountID& accountId)
+{
+    return getAccount(request, accountId, JS(account), true);
+}
+
+Status
+getAccount(
+    boost::json::object const& request,
+    ripple::AccountID& destAccount,
+    boost::string_view const& field)
+{
+    return getAccount(request, destAccount, field, false);
+}
+
+Status
+getTaker(boost::json::object const& request, ripple::AccountID& takerID)
+{
+    if (request.contains(JS(taker)))
+    {
+        auto parsed = parseTaker(request.at(JS(taker)));
+        if (auto status = std::get_if<Status>(&parsed))
+            return *status;
+        else
+            takerID = std::get<ripple::AccountID>(parsed);
+    }
+
+    return {};
+}
+
+Status
+getChannelId(boost::json::object const& request, ripple::uint256& channelId)
+{
+    if (!request.contains(JS(channel_id)))
+        return Status{Error::rpcINVALID_PARAMS, "missingChannelID"};
+
+    if (!request.at(JS(channel_id)).is_string())
+        return Status{Error::rpcINVALID_PARAMS, "channelIDNotString"};
+
+    if (!channelId.parseHex(request.at(JS(channel_id)).as_string().c_str()))
+        return Status{Error::rpcCHANNEL_MALFORMED, "malformedChannelID"};
+
+    return {};
 }
 
 std::optional<ripple::STAmount>
@@ -537,11 +647,35 @@ traverseOwnedNodes(
     if (!parsedCursor)
         return Status(ripple::rpcINVALID_PARAMS, "Malformed cursor");
 
-    auto cursor = AccountCursor({beast::zero, 0});
-
     auto [hexCursor, startHint] = *parsedCursor;
 
-    auto const rootIndex = ripple::keylet::ownerDir(accountID);
+    return traverseOwnedNodes(
+        backend,
+        ripple::keylet::ownerDir(accountID),
+        hexCursor,
+        startHint,
+        sequence,
+        limit,
+        jsonCursor,
+        yield,
+        atOwnedNode);
+}
+
+std::variant<Status, AccountCursor>
+traverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::Keylet const& owner,
+    ripple::uint256 const& hexMarker,
+    std::uint32_t const startHint,
+    std::uint32_t sequence,
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE)> atOwnedNode)
+{
+    auto cursor = AccountCursor({beast::zero, 0});
+
+    auto const rootIndex = owner;
     auto currentIndex = rootIndex;
 
     std::vector<ripple::uint256> keys;
@@ -550,7 +684,7 @@ traverseOwnedNodes(
     auto start = std::chrono::system_clock::now();
 
     // If startAfter is not zero try jumping to that page using the hint
-    if (hexCursor.isNonZero())
+    if (hexMarker.isNonZero())
     {
         auto const hintIndex = ripple::keylet::page(rootIndex, startHint);
         auto hintDir =
@@ -563,7 +697,7 @@ traverseOwnedNodes(
 
             for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
             {
-                if (key == hexCursor)
+                if (key == hexMarker)
                 {
                     // We found the hint, we can start here
                     currentIndex = hintIndex;
@@ -589,7 +723,7 @@ traverseOwnedNodes(
             {
                 if (!found)
                 {
-                    if (key == hexCursor)
+                    if (key == hexMarker)
                         found = true;
                 }
                 else
@@ -676,6 +810,23 @@ traverseOwnedNodes(
         return cursor;
 
     return AccountCursor({beast::zero, 0});
+}
+
+std::shared_ptr<ripple::SLE const>
+read(
+    ripple::Keylet const& keylet,
+    ripple::LedgerInfo const& lgrInfo,
+    Context const& context)
+{
+    if (auto const blob = context.backend->fetchLedgerObject(
+            keylet.key, lgrInfo.seq, context.yield);
+        blob)
+    {
+        return std::make_shared<ripple::SLE const>(
+            ripple::SerialIter{blob->data(), blob->size()}, keylet.key);
+    }
+
+    return nullptr;
 }
 
 std::optional<ripple::Seed>
@@ -1280,6 +1431,7 @@ parseBook(boost::json::object const& request)
 
     return ripple::Book{{pay_currency, pay_issuer}, {get_currency, get_issuer}};
 }
+
 std::variant<Status, ripple::AccountID>
 parseTaker(boost::json::value const& taker)
 {

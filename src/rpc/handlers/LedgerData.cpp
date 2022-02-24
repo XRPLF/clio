@@ -28,23 +28,12 @@ doLedgerData(Context const& context)
     auto request = context.params;
     boost::json::object response = {};
 
-    bool binary = false;
-    if (request.contains("binary"))
-    {
-        if (!request.at("binary").is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+    bool const binary = getBool(request, "binary", false);
 
-        binary = request.at("binary").as_bool();
-    }
+    std::uint32_t limit = binary ? 2048 : 256;
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
-    std::size_t limit = binary ? 2048 : 256;
-    if (request.contains("limit"))
-    {
-        if (!request.at("limit").is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInteger"};
-
-        limit = boost::json::value_to<int>(request.at("limit"));
-    }
     bool outOfOrder = false;
     if (request.contains("out_of_order"))
     {
@@ -53,18 +42,18 @@ doLedgerData(Context const& context)
         outOfOrder = request.at("out_of_order").as_bool();
     }
 
-    std::optional<ripple::uint256> cursor;
-    std::optional<uint32_t> diffCursor;
-    if (request.contains("marker"))
+    std::optional<ripple::uint256> marker;
+    std::optional<uint32_t> diffMarker;
+    if (request.contains(JS(marker)))
     {
-        if (!request.at("marker").is_string())
+        if (!request.at(JS(marker)).is_string())
         {
             if (outOfOrder)
             {
-                if (!request.at("marker").is_int64())
+                if (!request.at(JS(marker)).is_int64())
                     return Status{
                         Error::rpcINVALID_PARAMS, "markerNotStringOrInt"};
-                diffCursor = value_to<uint32_t>(request.at("marker"));
+                diffMarker = value_to<uint32_t>(request.at(JS(marker)));
             }
             else
                 return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
@@ -73,8 +62,8 @@ doLedgerData(Context const& context)
         {
             BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
 
-            cursor = ripple::uint256{};
-            if (!cursor->parseHex(request.at("marker").as_string().c_str()))
+            marker = ripple::uint256{};
+            if (!marker->parseHex(request.at(JS(marker)).as_string().c_str()))
                 return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
         }
     }
@@ -85,48 +74,49 @@ doLedgerData(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
     boost::json::object header;
-    // no cursor means this is the first call, so we return header info
-    if (!cursor)
+    // no marker means this is the first call, so we return header info
+    if (!marker)
     {
         if (binary)
         {
-            header["ledger_data"] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
+            header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
         }
         else
         {
-            header["accepted"] = true;
-            header["account_hash"] = ripple::strHex(lgrInfo.accountHash);
-            header["close_flags"] = lgrInfo.closeFlags;
-            header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
-            header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);
-            ;
-            header["close_time_resolution"] =
+            header[JS(accepted)] = true;
+            header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
+            header[JS(close_flags)] = lgrInfo.closeFlags;
+            header[JS(close_time)] =
+                lgrInfo.closeTime.time_since_epoch().count();
+            header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
+            header[JS(close_time_resolution)] =
                 lgrInfo.closeTimeResolution.count();
-            header["closed"] = true;
-            header["hash"] = ripple::strHex(lgrInfo.hash);
-            header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-            header["ledger_index"] = std::to_string(lgrInfo.seq);
-            header["parent_close_time"] =
+            header[JS(closed)] = true;
+            header[JS(hash)] = ripple::strHex(lgrInfo.hash);
+            header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+            header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+            header[JS(parent_close_time)] =
                 lgrInfo.parentCloseTime.time_since_epoch().count();
-            header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
-            header["seqNum"] = std::to_string(lgrInfo.seq);
-            header["totalCoins"] = ripple::to_string(lgrInfo.drops);
-            header["total_coins"] = ripple::to_string(lgrInfo.drops);
-            header["transaction_hash"] = ripple::strHex(lgrInfo.txHash);
+            header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
+            header[JS(seqNum)] = std::to_string(lgrInfo.seq);
+            header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
+            header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
+            header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
 
-            response["ledger"] = header;
+            response[JS(ledger)] = header;
         }
     }
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
 
     auto start = std::chrono::system_clock::now();
     std::vector<Backend::LedgerObject> results;
-    if (diffCursor)
+    if (diffMarker)
     {
         assert(outOfOrder);
         auto diff =
-            context.backend->fetchLedgerDiff(*diffCursor, context.yield);
+            context.backend->fetchLedgerDiff(*diffMarker, context.yield);
         std::vector<ripple::uint256> keys;
         for (auto&& [key, object] : diff)
         {
@@ -143,13 +133,13 @@ doLedgerData(Context const& context)
             if (obj.size())
                 results.push_back({std::move(keys[i]), std::move(obj)});
         }
-        if (*diffCursor > lgrInfo.seq)
-            response["marker"] = *diffCursor - 1;
+        if (*diffMarker > lgrInfo.seq)
+            response["marker"] = *diffMarker - 1;
     }
     else
     {
         auto page = context.backend->fetchLedgerPage(
-            cursor, lgrInfo.seq, limit, outOfOrder, context.yield);
+            marker, lgrInfo.seq, limit, outOfOrder, context.yield);
         results = std::move(page.objects);
         if (page.cursor)
             response["marker"] = ripple::strHex(*(page.cursor));
@@ -175,14 +165,14 @@ doLedgerData(Context const& context)
         if (binary)
         {
             boost::json::object entry;
-            entry["data"] = ripple::serializeHex(sle);
-            entry["index"] = ripple::to_string(sle.key());
+            entry[JS(data)] = ripple::serializeHex(sle);
+            entry[JS(index)] = ripple::to_string(sle.key());
             objects.push_back(std::move(entry));
         }
         else
             objects.push_back(toJson(sle));
     }
-    response["state"] = std::move(objects);
+    response[JS(state)] = std::move(objects);
     auto end2 = std::chrono::system_clock::now();
 
     time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)

@@ -259,7 +259,8 @@ BackendInterface::fetchLedgerPage(
         ripple::uint256 const& curCursor = keys.size() ? keys.back()
             : cursor                                   ? *cursor
                                                        : firstKey;
-        uint32_t seq = outOfOrder ? range->maxSequence : ledgerSequence;
+        std::uint32_t const seq =
+            outOfOrder ? range->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
         if (!succ)
             reachedEnd = true;
