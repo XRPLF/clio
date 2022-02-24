@@ -62,6 +62,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountTx.cpp
   # Dex
   src/rpc/handlers/BookOffers.cpp
+  # NFT
+  src/rpc/handlers/NFTOffers.cpp
   # Payment Channel
   src/rpc/handlers/ChannelAuthorize.cpp
   src/rpc/handlers/ChannelVerify.cpp

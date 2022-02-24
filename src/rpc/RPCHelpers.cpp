@@ -476,6 +476,107 @@ traverseOwnedNodes(
     return nextCursor;
 }
 
+bool
+forEachItemAfter(
+    ripple::LedgerInfo const& lgrInfo,
+    ripple::Keylet const& root,
+    ripple::uint256 const& after,
+    std::uint64_t const hint,
+    std::uint64_t limit,
+    Context const& context,
+    std::function<bool(std::shared_ptr<ripple::SLE const> const&)>const f)
+{
+    assert(root.type == ripple::ltDIR_NODE);
+
+    if (root.type != ripple::ltDIR_NODE)
+        return false;
+
+    auto currentIndex = root;
+
+    // If startAfter is not zero try jumping to that page using the hint
+    if (after.isNonZero())
+    {
+        auto const hintIndex = ripple::keylet::page(root, hint);
+
+        if (auto const hintDir = read(hintIndex, lgrInfo, context))
+        {
+            for (auto const& key : hintDir->getFieldV256(ripple::sfIndexes))
+            {
+                if (key == after)
+                {
+                    // We found the hint, we can start here
+                    currentIndex = hintIndex;
+                    break;
+                }
+            }
+        }
+
+        bool found = false;
+        for (;;)
+        {
+            auto const ownerDir = read(currentIndex, lgrInfo, context);
+            if (!ownerDir)
+                return found;
+
+            for (auto const& key : ownerDir->getFieldV256(ripple::sfIndexes))
+            {
+                if (!found)
+                {
+                    if (key == after)
+                        found = true;
+                }
+                else if (
+                    f(read(ripple::keylet::child(key), lgrInfo, context)) &&
+                    limit-- <= 1)
+                {
+                    return found;
+                }
+            }
+
+            auto const uNodeNext = ownerDir->getFieldU64(ripple::sfIndexNext);
+            if (uNodeNext == 0)
+                return found;
+            currentIndex = ripple::keylet::page(root, uNodeNext);
+        }
+    }
+    else
+    {
+        for (;;)
+        {
+            auto const ownerDir = read(currentIndex, lgrInfo, context);
+            if (!ownerDir)
+                return true;
+
+            for (auto const& key : ownerDir->getFieldV256(ripple::sfIndexes))
+                if (f(read(ripple::keylet::child(key), lgrInfo, context)) &&
+                    limit-- <= 1)
+                    return true;
+
+            auto const uNodeNext = ownerDir->getFieldU64(ripple::sfIndexNext);
+            if (uNodeNext == 0)
+                return true;
+            currentIndex = ripple::keylet::page(root, uNodeNext);
+        }
+    }
+}
+
+std::shared_ptr<ripple::SLE const>
+read(
+    ripple::Keylet const& keylet,
+    ripple::LedgerInfo const& lgrInfo,
+    Context const& context)
+{
+    if (auto const blob = context.backend->fetchLedgerObject(
+            keylet.key, lgrInfo.seq, context.yield);
+        blob)
+    {
+        return std::make_shared<ripple::SLE const>(
+            ripple::SerialIter{blob->data(), blob->size()}, keylet.key);
+    }
+
+    return nullptr;
+}
+
 std::optional<ripple::Seed>
 parseRippleLibSeed(boost::json::value const& value)
 {

@@ -22,6 +22,9 @@ Result
 doAccountLines(Context const& context);
 
 Result
+doAccountNFTs(Context const& context);
+
+Result
 doAccountObjects(Context const& context);
 
 Result
@@ -44,6 +47,13 @@ doChannelVerify(Context const& context);
 // offers methods
 Result
 doBookOffers(Context const& context);
+
+// NFT methods
+Result
+doNFTBuyOffers(Context const& context);
+
+Result
+doNFTSellOffers(Context const& context);
 
 // ledger methods
 Result

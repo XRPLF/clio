@@ -78,6 +78,22 @@ traverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<bool(ripple::SLE)> atOwnedNode);
 
+bool
+forEachItemAfter(
+    ripple::LedgerInfo const& lgrInfo,
+    ripple::Keylet const& root,
+    ripple::uint256 const& after,
+    std::uint64_t const hint,
+    std::uint64_t limit,
+    Context const& context,
+    std::function<bool(std::shared_ptr<ripple::SLE const> const&)> const f);
+
+std::shared_ptr<ripple::SLE const>
+read(
+    ripple::Keylet const& keylet,
+    ripple::LedgerInfo const& lgrInfo,
+    Context const& context);
+
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
 

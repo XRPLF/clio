@@ -1,5 +1,5 @@
-set(RIPPLED_REPO "https://github.com/cjcobb23/rippled.git")
-set(RIPPLED_BRANCH "clio")
+set(RIPPLED_REPO "https://github.com/undertome/rippled.git")
+set(RIPPLED_BRANCH "clio_pr_duplicate")
 set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
 message(STATUS "Cloning ${RIPPLED_REPO} branch ${RIPPLED_BRANCH}")
 FetchContent_Declare(rippled
