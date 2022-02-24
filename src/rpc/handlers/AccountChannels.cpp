@@ -17,27 +17,27 @@ void
 addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
 {
     boost::json::object jDst;
-    jDst["channel_id"] = ripple::to_string(line.key());
-    jDst["account"] = ripple::to_string(line.getAccountID(ripple::sfAccount));
-    jDst["destination_account"] =
+    jDst[JS(channel_id)] = ripple::to_string(line.key());
+    jDst[JS(account)] = ripple::to_string(line.getAccountID(ripple::sfAccount));
+    jDst[JS(destination_account)] =
         ripple::to_string(line.getAccountID(ripple::sfDestination));
-    jDst["amount"] = line[ripple::sfAmount].getText();
-    jDst["balance"] = line[ripple::sfBalance].getText();
+    jDst[JS(amount)] = line[ripple::sfAmount].getText();
+    jDst[JS(balance)] = line[ripple::sfBalance].getText();
     if (publicKeyType(line[ripple::sfPublicKey]))
     {
         ripple::PublicKey const pk(line[ripple::sfPublicKey]);
-        jDst["public_key"] = toBase58(ripple::TokenType::AccountPublic, pk);
-        jDst["public_key_hex"] = strHex(pk);
+        jDst[JS(public_key)] = toBase58(ripple::TokenType::AccountPublic, pk);
+        jDst[JS(public_key_hex)] = strHex(pk);
     }
-    jDst["settle_delay"] = line[ripple::sfSettleDelay];
+    jDst[JS(settle_delay)] = line[ripple::sfSettleDelay];
     if (auto const& v = line[~ripple::sfExpiration])
-        jDst["expiration"] = *v;
+        jDst[JS(expiration)] = *v;
     if (auto const& v = line[~ripple::sfCancelAfter])
-        jDst["cancel_after"] = *v;
+        jDst[JS(cancel_after)] = *v;
     if (auto const& v = line[~ripple::sfSourceTag])
-        jDst["source_tag"] = *v;
+        jDst[JS(source_tag)] = *v;
     if (auto const& v = line[~ripple::sfDestinationTag])
-        jDst["destination_tag"] = *v;
+        jDst[JS(destination_tag)] = *v;
 
     jsonLines.push_back(jDst);
 }
@@ -54,60 +54,38 @@ doAccountChannels(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if (!request.contains("account"))
-        return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
-    if (!request.at("account").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-
-    auto accountID =
-        accountFromStringStrict(request.at("account").as_string().c_str());
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
-
-    std::optional<ripple::AccountID> destAccount = {};
-    if (request.contains("destination_account"))
-    {
-        if (!request.at("destination_account").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "destinationNotString"};
-
-        destAccount = accountFromStringStrict(
-            request.at("destination_account").as_string().c_str());
-
-        if (!destAccount)
-            return Status{Error::rpcINVALID_PARAMS, "destinationMalformed"};
-    }
+    ripple::AccountID destAccount;
+    if (auto const status =
+            getAccount(request, destAccount, JS(destination_account));
+        status)
+        return status;
 
     std::uint32_t limit = 200;
-    if (request.contains("limit"))
-    {
-        if (!request.at("limit").is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
-
-        limit = request.at("limit").as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
-    }
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
     std::optional<std::string> marker = {};
-    if (request.contains("marker"))
+    if (request.contains(JS(marker)))
     {
-        if (!request.at("marker").is_string())
+        if (!request.at(JS(marker)).is_string())
             return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        marker = request.at("marker").as_string().c_str();
+        marker = request.at(JS(marker)).as_string().c_str();
     }
 
-    response["account"] = ripple::to_string(*accountID);
-    response["channels"] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonChannels = response.at("channels").as_array();
+    response[JS(account)] = ripple::to_string(accountID);
+    response[JS(channels)] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonChannels = response.at(JS(channels)).as_array();
 
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltPAYCHAN &&
-            sle.getAccountID(ripple::sfAccount) == *accountID &&
+            sle.getAccountID(ripple::sfAccount) == accountID &&
             (!destAccount ||
-             *destAccount == sle.getAccountID(ripple::sfDestination)))
+             destAccount == sle.getAccountID(ripple::sfDestination)))
         {
             if (limit-- == 0)
             {
@@ -122,23 +100,23 @@ doAccountChannels(Context const& context)
 
     auto next = traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         limit,
         marker,
         context.yield,
         addToResponse);
 
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
 
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;
 
-    auto nextCursor = std::get<RPC::AccountCursor>(next);
+    auto nextMarker = std::get<RPC::AccountCursor>(next);
 
-    if (nextCursor.isNonZero())
-        response["marker"] = nextCursor.toString();
+    if (nextMarker.isNonZero())
+        response[JS(marker)] = nextMarker.toString();
 
     return response;
 }

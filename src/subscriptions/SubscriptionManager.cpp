@@ -253,7 +253,6 @@ SubscriptionManager::pubTransaction(
     std::string pubMsg{boost::json::serialize(pubObj)};
     txSubscribers_.publish(pubMsg);
 
-    auto journal = ripple::debugLog();
     auto accounts = meta->getAffectedAccounts();
 
     for (auto const& account : accounts)

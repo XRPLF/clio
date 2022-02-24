@@ -36,42 +36,42 @@ doServerInfo(Context const& context)
     if (age < 0)
         age = 0;
 
-    response["info"] = boost::json::object{};
-    boost::json::object& info = response["info"].as_object();
+    response[JS(info)] = boost::json::object{};
+    boost::json::object& info = response[JS(info)].as_object();
 
-    info["complete_ledgers"] = std::to_string(range->minSequence) + "-" +
+    info[JS(complete_ledgers)] = std::to_string(range->minSequence) + "-" +
         std::to_string(range->maxSequence);
 
-    info["counters"] = boost::json::object{};
-    info["counters"].as_object()["rpc"] = context.counters.report();
+    info[JS(counters)] = boost::json::object{};
+    info[JS(counters)].as_object()[JS(rpc)] = context.counters.report();
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
-        {{"command", "server_info"}}, context.clientIp, context.yield);
+        {{"counters", "server_info"}}, context.clientIp, context.yield);
 
-    info["load_factor"] = 1;
-    if (serverInfoRippled && !serverInfoRippled->contains("error"))
+    info[JS(load_factor)] = 1;
+    if (serverInfoRippled && !serverInfoRippled->contains(JS(error)))
     {
         try
         {
-            auto& rippledResult = serverInfoRippled->at("result").as_object();
-            auto& rippledInfo = rippledResult.at("info").as_object();
-            info["load_factor"] = rippledInfo["load_factor"];
-            info["validation_quorum"] = rippledInfo["validation_quorum"];
+            auto& rippledResult = serverInfoRippled->at(JS(result)).as_object();
+            auto& rippledInfo = rippledResult.at(JS(info)).as_object();
+            info[JS(load_factor)] = rippledInfo[JS(load_factor)];
+            info[JS(validation_quorum)] = rippledInfo[JS(validation_quorum)];
         }
         catch (std::exception const&)
         {
         }
     }
 
-    info["validated_ledger"] = boost::json::object{};
-    boost::json::object& validated = info["validated_ledger"].as_object();
+    info[JS(validated_ledger)] = boost::json::object{};
+    boost::json::object& validated = info[JS(validated_ledger)].as_object();
 
-    validated["age"] = age;
-    validated["hash"] = ripple::strHex(lgrInfo->hash);
-    validated["seq"] = lgrInfo->seq;
-    validated["base_fee_xrp"] = fees->base.decimalXRP();
-    validated["reserve_base_xrp"] = fees->reserve.decimalXRP();
-    validated["reserve_inc_xrp"] = fees->increment.decimalXRP();
+    validated[JS(age)] = age;
+    validated[JS(hash)] = ripple::strHex(lgrInfo->hash);
+    validated[JS(seq)] = lgrInfo->seq;
+    validated[JS(base_fee_xrp)] = fees->base.decimalXRP();
+    validated[JS(reserve_base_xrp)] = fees->reserve.decimalXRP();
+    validated[JS(reserve_inc_xrp)] = fees->increment.decimalXRP();
 
     response["cache"] = boost::json::object{};
     auto& cache = response["cache"].as_object();

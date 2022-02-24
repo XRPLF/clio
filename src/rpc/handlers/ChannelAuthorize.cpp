@@ -27,19 +27,13 @@ doChannelAuthorize(Context const& context)
     auto request = context.params;
     boost::json::object response = {};
 
-    if (!request.contains("channel_id"))
-        return Status{Error::rpcINVALID_PARAMS, "missingChannelID"};
-
-    if (!request.at("channel_id").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "channelIDNotString"};
-
-    if (!request.contains("amount"))
+    if (!request.contains(JS(amount)))
         return Status{Error::rpcINVALID_PARAMS, "missingAmount"};
 
-    if (!request.at("amount").is_string())
+    if (!request.at(JS(amount)).is_string())
         return Status{Error::rpcINVALID_PARAMS, "amountNotString"};
 
-    if (!request.contains("key_type") && !request.contains("secret"))
+    if (!request.contains(JS(key_type)) && !request.contains(JS(secret)))
         return Status{Error::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
 
     auto v = keypairFromRequst(request);
@@ -50,10 +44,11 @@ doChannelAuthorize(Context const& context)
         std::get<std::pair<ripple::PublicKey, ripple::SecretKey>>(v);
 
     ripple::uint256 channelId;
-    if (!channelId.parseHex(request.at("channel_id").as_string().c_str()))
-        return Status{Error::rpcCHANNEL_MALFORMED, "malformedChannelID"};
+    if (auto const status = getChannelId(request, channelId); status)
+        return status;
 
-    auto optDrops = ripple::to_uint64(request.at("amount").as_string().c_str());
+    auto optDrops =
+        ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
 
     if (!optDrops)
         return Status{Error::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
@@ -67,7 +62,7 @@ doChannelAuthorize(Context const& context)
     try
     {
         auto const buf = ripple::sign(pk, sk, msg.slice());
-        response["signature"] = ripple::strHex(buf);
+        response[JS(signature)] = ripple::strHex(buf);
     }
     catch (std::exception&)
     {

@@ -10,9 +10,9 @@ getBaseTx(
     ripple::Fees const& fees)
 {
     boost::json::object tx;
-    tx["Sequence"] = accountSeq;
-    tx["Account"] = ripple::toBase58(accountID);
-    tx["Fee"] = RPC::toBoostJson(fees.units.jsonClipped());
+    tx[JS(Sequence)] = accountSeq;
+    tx[JS(Account)] = ripple::toBase58(accountID);
+    tx[JS(Fee)] = RPC::toBoostJson(fees.units.jsonClipped());
     return tx;
 }
 
@@ -21,11 +21,9 @@ doNoRippleCheck(Context const& context)
 {
     auto const& request = context.params;
 
-    auto accountID =
-        accountFromStringStrict(getRequiredString(request, "account"));
-
-    if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+    ripple::AccountID accountID;
+    if (auto const status = getAccount(request, accountID); status)
+        return status;
 
     std::string role = getRequiredString(request, "role");
     bool roleGateway = false;
@@ -36,7 +34,9 @@ doNoRippleCheck(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "role field is invalid"};
     }
 
-    size_t limit = getUInt(request, "limit", 300);
+    std::uint32_t limit = 300;
+    if (auto const status = getLimit(request, limit); status)
+        return status;
 
     bool includeTxs = getBool(request, "transactions", false);
 
@@ -51,11 +51,11 @@ doNoRippleCheck(Context const& context)
 
     boost::json::array transactions;
 
-    auto keylet = ripple::keylet::account(*accountID);
+    auto keylet = ripple::keylet::account(accountID);
     auto accountObj = context.backend->fetchLedgerObject(
         keylet.key, lgrInfo.seq, context.yield);
     if (!accountObj)
-        throw AccountNotFoundError(ripple::toBase58(*accountID));
+        throw AccountNotFoundError(ripple::toBase58(accountID));
 
     ripple::SerialIter it{accountObj->data(), accountObj->size()};
     ripple::SLE sle{it, keylet.key};
@@ -79,16 +79,16 @@ doNoRippleCheck(Context const& context)
             "You should immediately set your default ripple flag");
         if (includeTxs)
         {
-            auto tx = getBaseTx(*accountID, accountSeq++, *fees);
-            tx["TransactionType"] = "AccountSet";
-            tx["SetFlag"] = 8;
+            auto tx = getBaseTx(accountID, accountSeq++, *fees);
+            tx[JS(TransactionType)] = JS(AccountSet);
+            tx[JS(SetFlag)] = 8;
             transactions.push_back(tx);
         }
     }
 
     traverseOwnedNodes(
         *context.backend,
-        *accountID,
+        accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
@@ -141,12 +141,12 @@ doNoRippleCheck(Context const& context)
                         ripple::STAmount limitAmount(ownedItem.getFieldAmount(
                             bLow ? ripple::sfLowLimit : ripple::sfHighLimit));
                         limitAmount.setIssuer(peer);
-                        auto tx = getBaseTx(*accountID, accountSeq++, *fees);
-                        tx["TransactionType"] = "TrustSet";
-                        tx["LimitAmount"] = RPC::toBoostJson(
+                        auto tx = getBaseTx(accountID, accountSeq++, *fees);
+                        tx[JS(TransactionType)] = JS(TrustSet);
+                        tx[JS(LimitAmount)] = RPC::toBoostJson(
                             limitAmount.getJson(ripple::JsonOptions::none));
-                        tx["Flags"] = bNoRipple ? ripple::tfClearNoRipple
-                                                : ripple::tfSetNoRipple;
+                        tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple
+                                                  : ripple::tfSetNoRipple;
                         transactions.push_back(tx);
                     }
 
@@ -158,11 +158,11 @@ doNoRippleCheck(Context const& context)
         });
 
     boost::json::object response;
-    response["ledger_index"] = lgrInfo.seq;
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response["problems"] = std::move(problems);
     if (includeTxs)
-        response["transactions"] = std::move(transactions);
+        response[JS(transactions)] = std::move(transactions);
 
     return response;
 }

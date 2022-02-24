@@ -107,6 +107,7 @@ struct Status
         : error(error_), message(message_)
     {
     }
+
     Status(Error error_, std::string strCode_, std::string message_)
         : error(error_), strCode(strCode_), message(message_)
     {

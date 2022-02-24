@@ -16,8 +16,8 @@ doLedgerRange(Context const& context)
     }
     else
     {
-        response["ledger_index_min"] = range->minSequence;
-        response["ledger_index_max"] = range->maxSequence;
+        response[JS(ledger_index_min)] = range->minSequence;
+        response[JS(ledger_index_max)] = range->maxSequence;
     }
 
     return response;

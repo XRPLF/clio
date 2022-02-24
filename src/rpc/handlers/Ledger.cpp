@@ -10,30 +10,30 @@ doLedger(Context const& context)
     boost::json::object response = {};
 
     bool binary = false;
-    if (params.contains("binary"))
+    if (params.contains(JS(binary)))
     {
-        if (!params.at("binary").is_bool())
+        if (!params.at(JS(binary)).is_bool())
             return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
 
-        binary = params.at("binary").as_bool();
+        binary = params.at(JS(binary)).as_bool();
     }
 
     bool transactions = false;
-    if (params.contains("transactions"))
+    if (params.contains(JS(transactions)))
     {
-        if (!params.at("transactions").is_bool())
+        if (!params.at(JS(transactions)).is_bool())
             return Status{Error::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
 
-        transactions = params.at("transactions").as_bool();
+        transactions = params.at(JS(transactions)).as_bool();
     }
 
     bool expand = false;
-    if (params.contains("expand"))
+    if (params.contains(JS(expand)))
     {
-        if (!params.at("expand").is_bool())
+        if (!params.at(JS(expand)).is_bool())
             return Status{Error::rpcINVALID_PARAMS, "expandFlagNotBool"};
 
-        expand = params.at("expand").as_bool();
+        expand = params.at(JS(expand)).as_bool();
     }
 
     bool diff = false;
@@ -54,35 +54,34 @@ doLedger(Context const& context)
     boost::json::object header;
     if (binary)
     {
-        header["ledger_data"] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
+        header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
     }
     else
     {
-        header["accepted"] = true;
-        header["account_hash"] = ripple::strHex(lgrInfo.accountHash);
-        header["close_flags"] = lgrInfo.closeFlags;
-        header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
-        header["close_time_human"] = ripple::to_string(lgrInfo.closeTime);
-        ;
-        header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
-        header["closed"] = true;
-        header["hash"] = ripple::strHex(lgrInfo.hash);
-        header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-        header["ledger_index"] = std::to_string(lgrInfo.seq);
-        header["parent_close_time"] =
+        header[JS(accepted)] = true;
+        header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
+        header[JS(close_flags)] = lgrInfo.closeFlags;
+        header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
+        header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
+        header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
+        header[JS(closed)] = true;
+        header[JS(hash)] = ripple::strHex(lgrInfo.hash);
+        header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+        header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+        header[JS(parent_close_time)] =
             lgrInfo.parentCloseTime.time_since_epoch().count();
-        header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
-        header["seqNum"] = std::to_string(lgrInfo.seq);
-        header["totalCoins"] = ripple::to_string(lgrInfo.drops);
-        header["total_coins"] = ripple::to_string(lgrInfo.drops);
-        header["transaction_hash"] = ripple::strHex(lgrInfo.txHash);
+        header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
+        header[JS(seqNum)] = std::to_string(lgrInfo.seq);
+        header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
+        header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
+        header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
     }
-    header["closed"] = true;
+    header[JS(closed)] = true;
 
     if (transactions)
     {
-        header["transactions"] = boost::json::value(boost::json::array_kind);
-        boost::json::array& jsonTxs = header.at("transactions").as_array();
+        header[JS(transactions)] = boost::json::value(boost::json::array_kind);
+        boost::json::array& jsonTxs = header.at(JS(transactions)).as_array();
         if (expand)
         {
             auto txns = context.backend->fetchAllTransactionsInLedger(
@@ -98,14 +97,14 @@ doLedger(Context const& context)
                     {
                         auto [txn, meta] = toExpandedJson(obj);
                         entry = txn;
-                        entry["metaData"] = meta;
+                        entry[JS(metaData)] = meta;
                     }
                     else
                     {
-                        entry["tx_blob"] = ripple::strHex(obj.transaction);
-                        entry["meta"] = ripple::strHex(obj.metadata);
+                        entry[JS(tx_blob)] = ripple::strHex(obj.transaction);
+                        entry[JS(meta)] = ripple::strHex(obj.metadata);
                     }
-                    // entry["ledger_index"] = obj.ledgerSequence;
+                    // entry[JS(ledger_index)] = obj.ledgerSequence;
                     return entry;
                 });
         }
@@ -133,7 +132,7 @@ doLedger(Context const& context)
         for (auto const& obj : diff)
         {
             boost::json::object entry;
-            entry["id"] = ripple::strHex(obj.key);
+            entry[JS(id)] = ripple::strHex(obj.key);
             if (binary)
                 entry["object"] = ripple::strHex(obj.blob);
             else if (obj.blob.size())
@@ -149,9 +148,9 @@ doLedger(Context const& context)
         }
     }
 
-    response["ledger"] = header;
-    response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    response["ledger_index"] = lgrInfo.seq;
+    response[JS(ledger)] = header;
+    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    response[JS(ledger_index)] = lgrInfo.seq;
     return response;
 }
 
