@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(clio VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 20)
-
 option(BUILD_TESTS "Build tests" TRUE)
 
 option(VERBOSE "Verbose build" TRUE)
@@ -13,6 +11,7 @@ if(VERBOSE)
 endif()
 
 add_library(clio)
+target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
 
 
