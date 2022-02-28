@@ -9,7 +9,8 @@ ExternalProject_Add(postgres
     CONFIGURE_COMMAND ./configure --prefix ${POSTGRES_INSTALL_DIR} --without-readline --verbose
     BUILD_COMMAND ${CMAKE_COMMAND} -E env --unset=MAKELEVEL make VERBOSE=${CMAKE_VERBOSE_MAKEFILE} -j32
     BUILD_IN_SOURCE 1
-    INSTALL_COMMAND  ${CMAKE_COMMAND} -E env make install
+    INSTALL_COMMAND  ${CMAKE_COMMAND} -E env make -s --no-print-directory install
+    UPDATE_COMMAND ""
     BUILD_BYPRODUCTS
         ${POSTGRES_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}pq${CMAKE_STATIC_LIBRARY_SUFFIX}}
         ${POSTGRES_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}pgcommon${CMAKE_STATIC_LIBRARY_SUFFIX}}
