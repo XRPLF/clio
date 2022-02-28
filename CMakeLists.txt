@@ -14,11 +14,8 @@ add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
 
-
 include(FetchContent)
-if(${CMAKE_VERSION} VERSION_LESS "3.20.0")
-  include(ExternalProject)
-endif()
+include(ExternalProject)
 include(CMake/settings.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
