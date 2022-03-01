@@ -237,7 +237,7 @@ SubscriptionManager::pubTransaction(
         {
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
-                Backend::synchronous([&](boost::asio::yield_context yield) {
+                Backend::synchronous([&](boost::asio::yield_context& yield) {
                     ownerFunds = RPC::accountFunds(
                         *backend_, lgrInfo.seq, amount, account, yield);
                 });

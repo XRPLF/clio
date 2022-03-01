@@ -37,18 +37,17 @@ retryOnTimeout(F func, size_t waitMs = 500)
     }
 }
 
-// Please note, this function only works w/ non-void return type. Writes are
-// synchronous anyways, so
 template <class F>
 void
 synchronous(F&& f)
 {
     boost::asio::io_context ctx;
+    boost::asio::io_context::strand strand(ctx);
     std::optional<boost::asio::io_context::work> work;
 
     work.emplace(ctx);
 
-    boost::asio::spawn(ctx, [&f, &work](boost::asio::yield_context yield) {
+    boost::asio::spawn(strand, [&f, &work](boost::asio::yield_context yield) {
         f(yield);
 
         work.reset();
@@ -218,7 +217,7 @@ public:
     hardFetchLedgerRange() const
     {
         std::optional<LedgerRange> range = {};
-        synchronous([&](boost::asio::yield_context yield) {
+        synchronous([&](boost::asio::yield_context& yield) {
             range = hardFetchLedgerRange(yield);
         });
 
