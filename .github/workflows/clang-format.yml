@@ -6,7 +6,7 @@ jobs:
   check:
     runs-on: ubuntu-18.04
     env:
-      CLANG_VERSION: 10
+      CLANG_VERSION: 11
     steps:
     - uses: actions/checkout@v2
     - name: Install clang-format
