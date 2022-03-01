@@ -1642,7 +1642,7 @@ TEST(Backend, cacheBackground)
     ASSERT_EQ(idx, allObjs.size());
 }
 
-TEST(Backend, CacheIntegration)
+TEST(Backend, cacheIntegration)
 {
     boost::asio::io_context ioc;
     std::optional<boost::asio::io_context::work> work;

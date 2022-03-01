@@ -42,7 +42,7 @@ Use these instructions to build a clio executable from source. These instruction
   ./bootstrap.sh
   ./b2 -j$((`nproc`+1))
   # Add the following 'export' command
-  # to your profile file (/~.profile):
+  # to your profile file (~/.profile):
   # -------------------------------
   export BOOST_ROOT=/home/my_user/boost_1_75_0
   source ~/.profile
