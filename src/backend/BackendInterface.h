@@ -37,13 +37,12 @@ retryOnTimeout(F func, size_t waitMs = 500)
     }
 }
 
-// Please note, this function only works w/ non-void return type. Writes are
-// synchronous anyways, so
 template <class F>
 auto
 synchronous(F&& f)
 {
     boost::asio::io_context ctx;
+    boost::asio::io_context::strand strand(ctx);
     std::optional<boost::asio::io_context::work> work;
 
     work.emplace(ctx);
@@ -53,9 +52,8 @@ synchronous(F&& f)
     {
         R res;
         boost::asio::spawn(
-            ctx, [&f, &res, &work](boost::asio::yield_context yield) {
+            strand, [&f, &work, &res](boost::asio::yield_context yield) {
                 res = f(yield);
-
                 work.reset();
             });
 
@@ -64,13 +62,21 @@ synchronous(F&& f)
     }
     else
     {
-        boost::asio::spawn(ctx, [&f, &work](boost::asio::yield_context yield) {
-            f(yield);
-            work.reset();
-        });
+        boost::asio::spawn(
+            strand, [&f, &work](boost::asio::yield_context yield) {
+                f(yield);
+                work.reset();
+            });
 
         ctx.run();
     }
+}
+
+template <class F>
+auto
+synchronousAndRetryOnTimeout(F&& f)
+{
+    return retryOnTimeout([&]() { return synchronous(f); });
 }
 
 class BackendInterface

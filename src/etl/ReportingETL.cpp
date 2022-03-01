@@ -139,37 +139,22 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     {
         BOOST_LOG_TRIVIAL(debug) << __func__ << " - Updating cache";
 
-        std::vector<Backend::LedgerObject> diff;
-        auto fetchDiffSynchronous = [&]() {
-            Backend::synchronous([&](boost::asio::yield_context yield) {
-                diff = backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+        std::vector<Backend::LedgerObject> diff =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
             });
-        };
-
-        Backend::retryOnTimeout(fetchDiffSynchronous);
 
         backend_->cache().update(diff, lgrInfo.seq);
         backend_->updateRange(lgrInfo.seq);
     }
 
-    std::optional<ripple::Fees> fees = {};
-    std::vector<Backend::TransactionAndMetadata> transactions = {};
+    std::optional<ripple::Fees> fees = Backend::synchronousAndRetryOnTimeout(
+        [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
 
-    auto fetchFeesSynchronous = [&]() {
-        Backend::synchronous([&](boost::asio::yield_context yield) {
-            fees = backend_->fetchFees(lgrInfo.seq, yield);
+    std::vector<Backend::TransactionAndMetadata> transactions =
+        Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+            return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
         });
-    };
-
-    auto fetchTxSynchronous = [&]() {
-        Backend::synchronous([&](boost::asio::yield_context yield) {
-            transactions =
-                backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
-        });
-    };
-
-    Backend::retryOnTimeout(fetchFeesSynchronous);
-    Backend::retryOnTimeout(fetchTxSynchronous);
 
     auto ledgerRange = backend_->fetchLedgerRange();
     assert(ledgerRange);
@@ -222,15 +207,11 @@ ReportingETL::publishLedger(
         }
         else
         {
-            std::optional<ripple::LedgerInfo> lgr = {};
-            auto fetchLedgerSynchronous = [&]() {
-                Backend::synchronous([&](boost::asio::yield_context yield) {
-                    lgr =
-                        backend_->fetchLedgerBySequence(ledgerSequence, yield);
+            std::optional<ripple::LedgerInfo> lgr =
+                Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                    return backend_->fetchLedgerBySequence(
+                        ledgerSequence, yield);
                 });
-            };
-
-            Backend::retryOnTimeout(fetchLedgerSynchronous);
 
             assert(lgr);
             publishLedger(*lgr);
@@ -779,14 +760,10 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 void
 ReportingETL::monitor()
 {
-    std::optional<uint32_t> latestSequence = {};
-
-    auto fetchLatest = [&]() {
-        Backend::synchronous([&](boost::asio::yield_context yield) {
-            latestSequence = backend_->fetchLatestLedgerSequence(yield);
+    std::optional<uint32_t> latestSequence =
+        Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+            return backend_->fetchLatestLedgerSequence(yield);
         });
-    };
-    Backend::retryOnTimeout(fetchLatest);
     if (!latestSequence)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
@@ -916,11 +893,10 @@ void
 ReportingETL::monitorReadOnly()
 {
     BOOST_LOG_TRIVIAL(debug) << "Starting reporting in strict read only mode";
-    std::optional<uint32_t> latestSequence = Backend::retryOnTimeout([&]() {
-        return Backend::synchronous([&](boost::asio::yield_context yield) {
+    std::optional<uint32_t> latestSequence =
+        Backend::synchronousAndRetryOnTimeout([&](auto yield) {
             return backend_->fetchLatestLedgerSequence(yield);
         });
-    });
     if (!latestSequence)
         latestSequence = networkValidatedLedgers_->getMostRecent();
     if (!latestSequence)
@@ -934,12 +910,8 @@ ReportingETL::monitorReadOnly()
     while (true)
     {
         // try to grab the next ledger
-        if (Backend::retryOnTimeout([&]() {
-                return Backend::synchronous(
-                    [&](boost::asio::yield_context yield) {
-                        return backend_->fetchLedgerBySequence(
-                            *latestSequence, yield);
-                    });
+        if (Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerBySequence(*latestSequence, yield);
             }))
         {
             publishLedger(*latestSequence, {});
