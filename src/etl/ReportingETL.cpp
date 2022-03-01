@@ -141,7 +141,7 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 
         std::vector<Backend::LedgerObject> diff;
         auto fetchDiffSynchronous = [&]() {
-            Backend::synchronous([&](boost::asio::yield_context yield) {
+            Backend::synchronous([&](boost::asio::yield_context& yield) {
                 diff = backend_->fetchLedgerDiff(lgrInfo.seq, yield);
             });
         };
@@ -156,13 +156,13 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     std::vector<Backend::TransactionAndMetadata> transactions = {};
 
     auto fetchFeesSynchronous = [&]() {
-        Backend::synchronous([&](boost::asio::yield_context yield) {
+        Backend::synchronous([&](boost::asio::yield_context& yield) {
             fees = backend_->fetchFees(lgrInfo.seq, yield);
         });
     };
 
     auto fetchTxSynchronous = [&]() {
-        Backend::synchronous([&](boost::asio::yield_context yield) {
+        Backend::synchronous([&](boost::asio::yield_context& yield) {
             transactions =
                 backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
         });
@@ -224,7 +224,7 @@ ReportingETL::publishLedger(
         {
             std::optional<ripple::LedgerInfo> lgr = {};
             auto fetchLedgerSynchronous = [&]() {
-                Backend::synchronous([&](boost::asio::yield_context yield) {
+                Backend::synchronous([&](boost::asio::yield_context& yield) {
                     lgr =
                         backend_->fetchLedgerBySequence(ledgerSequence, yield);
                 });
@@ -733,9 +733,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 ioContext_.post([this, &minSequence]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
 
-                    Backend::synchronous([&](boost::asio::yield_context yield) {
-                        backend_->doOnlineDelete(*onlineDeleteInterval_, yield);
-                    });
+                    Backend::synchronous(
+                        [&](boost::asio::yield_context& yield) {
+                            backend_->doOnlineDelete(
+                                *onlineDeleteInterval_, yield);
+                        });
 
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
                     auto rng = backend_->fetchLedgerRange();
@@ -781,7 +783,7 @@ void
 ReportingETL::monitor()
 {
     std::optional<uint32_t> latestSequence = {};
-    Backend::synchronous([&](boost::asio::yield_context yield) {
+    Backend::synchronous([&](boost::asio::yield_context& yield) {
         latestSequence = backend_->fetchLatestLedgerSequence(yield);
     });
 

@@ -886,7 +886,7 @@ make_PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
         auto ret = std::make_shared<PgPool>(ioc, configCopy);
         ret->setup();
 
-        Backend::synchronous([&](boost::asio::yield_context yield) {
+        Backend::synchronous([&](boost::asio::yield_context& yield) {
             PgQuery pgQuery(ret);
             std::string query = "CREATE DATABASE " +
                 std::string{config.at("database").as_string().c_str()};

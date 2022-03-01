@@ -426,7 +426,7 @@ public:
 
         CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
         CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
-        
+
         if (!cass_iterator_next(tupleIter))
         {
             cass_iterator_free(tupleIter);
