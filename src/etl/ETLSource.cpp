@@ -247,7 +247,7 @@ PlainETLSource::onConnect(
                     req.set(
                         boost::beast::http::field::user_agent,
                         std::string(BOOST_BEAST_VERSION_STRING) +
-                            " coro-client");
+                            " clio-client");
 
                     req.set("X-User", "coro-client");
                 }));
@@ -353,7 +353,7 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
                     req.set(
                         boost::beast::http::field::user_agent,
                         std::string(BOOST_BEAST_VERSION_STRING) +
-                            "clio-client");
+                            " clio-client");
 
                     req.set("X-User", "coro-client");
                 }));
