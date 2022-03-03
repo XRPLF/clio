@@ -55,6 +55,88 @@ PgResult::msg() const
     return "stopping";
 }
 
+PgResult::PgResult()
+{
+}
+
+PgResult::PgResult(pg_result_type&& result) : result_(std::move(result))
+{
+}
+
+PgResult::PgResult(PGresult* result, PGconn* conn)
+    : error_({PQresultStatus(result), PQerrorMessage(conn)})
+{
+}
+
+char const*
+PgResult::c_str(int ntuple, int nfield) const
+{
+    return PQgetvalue(result_.get(), ntuple, nfield);
+}
+
+std::vector<unsigned char>
+PgResult::asUnHexedBlob(int ntuple, int nfield) const
+{
+    std::string_view view{c_str(ntuple, nfield) + 2};
+    auto res = ripple::strUnHex(view.size(),
+                          view.cbegin(), view.cend());
+    if (res)
+        return *res;
+    return {};
+}
+
+ripple::uint256
+PgResult::asUInt256(int ntuple, int nfield) const
+{
+    ripple::uint256 val;
+    if (!val.parseHex(c_str(ntuple, nfield) + 2))
+        throw std::runtime_error("Pg - failed to parse hex into uint256");
+    return val;
+}
+
+std::int32_t
+PgResult::asInt(int ntuple, int nfield) const
+{
+    return boost::lexical_cast<std::int32_t>(
+        PQgetvalue(result_.get(), ntuple, nfield));
+}
+
+std::int64_t
+PgResult::asBigInt(int ntuple, int nfield) const
+{
+    return boost::lexical_cast<std::int64_t>(
+        PQgetvalue(result_.get(), ntuple, nfield));
+}
+
+bool
+PgResult::isNull(int ntuple, int nfield) const
+{
+    return PQgetisnull(result_.get(), ntuple, nfield);
+}
+
+PgResult::operator bool() const
+{
+    return result_ != nullptr;
+}
+
+int
+PgResult::ntuples() const
+{
+    return PQntuples(result_.get());
+}
+
+int
+PgResult::nfields() const
+{
+    return PQnfields(result_.get());
+}
+
+ExecStatusType
+PgResult::status() const
+{
+    return PQresultStatus(result_.get());
+}
+
 //-----------------------------------------------------------------------------
 
 /*
@@ -866,6 +948,17 @@ PgPool::checkin(std::unique_ptr<Pg>& pg)
     }
 
     cond_.notify_all();
+}
+
+PgPool::~PgPool()
+{
+    onStop();
+}
+
+PgConfig&
+PgPool::config()
+{
+    return config_;
 }
 
 //-----------------------------------------------------------------------------
@@ -1786,4 +1879,40 @@ getLedger(
     info.validated = true;
 
     return info;
+}
+
+PgQuery::PgQuery(const std::shared_ptr<PgPool>& pool)
+    : pool_(pool), pg_(pool->checkout())
+{
+}
+
+PgQuery::~PgQuery()
+{
+    pool_->checkin(pg_);
+}
+
+PgResult
+PgQuery::operator()(const char* command, boost::asio::yield_context& yield)
+{
+    return operator()(pg_params{command, {}}, yield);
+}
+
+
+void
+PgQuery::bulkInsert(
+    const char* table,
+    const std::string& records,
+    boost::asio::yield_context& yield)
+{
+    pg_->bulkInsert(table, records, yield);
+}
+
+PgResult
+PgQuery::operator()(
+    const pg_params& dbParams,
+    boost::asio::yield_context& yield)
+{
+    if (!pg_)  // It means we're stopping. Return empty result.
+        return PgResult();
+    return pg_->query(dbParams, yield);
 }

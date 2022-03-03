@@ -246,38 +246,14 @@ private:
     /// ledger download
     /// @return the number of markers
     std::uint32_t
-    getNumMarkers()
-    {
-        return numMarkers_;
-    }
+    getNumMarkers();
 
     boost::json::object
-    getInfo()
-    {
-        boost::json::object result;
-
-        result["etl_sources"] = loadBalancer_->toJson();
-        result["is_writer"] = writing_.load();
-        result["read_only"] = readOnly_;
-        auto last = getLastPublish();
-        if (last.time_since_epoch().count() != 0)
-            result["last_publish_time"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now() - getLastPublish())
-                    .count());
-
-        return result;
-    }
+    getInfo();
 
     /// start all of the necessary components and begin ETL
     void
-    run()
-    {
-        BOOST_LOG_TRIVIAL(info) << "Starting reporting etl";
-        stopping_ = false;
-
-        doWork();
-    }
+    run();
 
     void
     doWork();
@@ -298,27 +274,9 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<NetworkValidatedLedgers> ledgers)
-    {
-        auto etl = std::make_shared<ReportingETL>(
-            config, ioc, backend, subscriptions, balancer, ledgers);
+        std::shared_ptr<NetworkValidatedLedgers> ledgers);
 
-        etl->run();
-
-        return etl;
-    }
-
-    ~ReportingETL()
-    {
-        BOOST_LOG_TRIVIAL(info) << "onStop called";
-        BOOST_LOG_TRIVIAL(debug) << "Stopping Reporting ETL";
-        stopping_ = true;
-
-        if (worker_.joinable())
-            worker_.join();
-
-        BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
-    }
+    ~ReportingETL();
 };
 
 #endif

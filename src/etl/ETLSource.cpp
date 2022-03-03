@@ -146,6 +146,12 @@ PlainETLSource::close(bool startAgain)
     });
 }
 
+boost::beast::websocket::stream<boost::beast::tcp_stream>&
+PlainETLSource::ws()
+{
+    return *ws_;
+}
+
 void
 SslETLSource::close(bool startAgain)
 {
@@ -325,6 +331,13 @@ SslETLSource::onSslHandshake(
         // Perform the websocket handshake
         ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
+}
+
+boost::beast::websocket::stream<
+    boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+SslETLSource::ws()
+{
+    return *ws_;
 }
 
 template <class Derived>
@@ -970,8 +983,8 @@ ETLLoadBalancer::fetchLedger(
     bool success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors](
             auto& source) {
-            auto [status, data] = source->fetchLedger(
-                ledgerSequence, getObjects, getObjectNeighbors);
+            auto [status, data] =
+                source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
             if (status.ok() && (response.validated() || true))
             {
@@ -1178,3 +1191,56 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
     }
     return true;
 }
+
+std::shared_ptr<ETLLoadBalancer>
+ETLLoadBalancer::
+    make_ETLLoadBalancer(
+    const boost::json::object& config,
+    boost::asio::io_context& ioc,
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
+{
+    return std::make_shared<ETLLoadBalancer>(
+        config, ioc, sslCtx, backend, subscriptions, validatedLedgers);
+}
+
+ETLLoadBalancer::~ETLLoadBalancer()
+{
+    sources_.clear();
+}
+
+bool
+ETLLoadBalancer::shouldPropagateTxnStream(ETLSource* in) const
+{
+    for (auto& src : sources_)
+    {
+        assert(src);
+        // We pick the first ETLSource encountered that is connected
+        if (src->isConnected())
+        {
+            if (src.get() == in)
+                return true;
+            else
+                return false;
+        }
+    }
+
+    // If no sources connected, then this stream has not been forwarded
+    return true;
+}
+
+boost::json::value
+ETLLoadBalancer::toJson() const
+{
+    boost::json::array ret;
+    for (auto& src : sources_)
+    {
+        ret.push_back(src->toJson());
+    }
+    return ret;
+}
+
+// ----------------------------------------------------------------------------
+

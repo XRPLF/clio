@@ -106,16 +106,10 @@ public:
     //
 
     SimpleCache const&
-    cache() const
-    {
-        return cache_;
-    }
+    cache() const;
 
     SimpleCache&
-    cache()
-    {
-        return cache_;
-    }
+    cache();
 
     virtual std::optional<ripple::LedgerInfo>
     fetchLedgerBySequence(
@@ -131,22 +125,10 @@ public:
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const = 0;
 
     std::optional<LedgerRange>
-    fetchLedgerRange() const
-    {
-        std::shared_lock lck(rngMtx_);
-        return range;
-    }
+    fetchLedgerRange() const;
 
     void
-    updateRange(uint32_t newMax)
-    {
-        std::unique_lock lck(rngMtx_);
-        assert(!range || newMax >= range->maxSequence);
-        if (!range)
-            range = {newMax, newMax};
-        else
-            range->maxSequence = newMax;
-    }
+    updateRange(uint32_t newMax);
 
     std::optional<ripple::Fees>
     fetchFees(std::uint32_t const seq, boost::asio::yield_context& yield) const;
@@ -248,12 +230,7 @@ public:
         boost::asio::yield_context& yield) const;
 
     std::optional<LedgerRange>
-    hardFetchLedgerRange() const
-    {
-        return synchronous([&](boost::asio::yield_context yield) {
-            return hardFetchLedgerRange(yield);
-        });
-    }
+    hardFetchLedgerRange() const;
 
     virtual std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context& yield) const = 0;

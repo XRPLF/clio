@@ -1046,3 +1046,65 @@ ReportingETL::ReportingETL(
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
 }
+
+std::uint32_t
+ReportingETL::getNumMarkers()
+{
+    return numMarkers_;
+}
+
+boost::json::object
+ReportingETL::getInfo()
+{
+    boost::json::object result;
+
+    result["etl_sources"] = loadBalancer_->toJson();
+    result["is_writer"] = writing_.load();
+    result["read_only"] = readOnly_;
+    auto last = getLastPublish();
+    if (last.time_since_epoch().count() != 0)
+        result["last_publish_time"] = std::to_string(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now() - getLastPublish())
+                .count());
+
+    return result;
+}
+
+void
+ReportingETL::run()
+{
+    BOOST_LOG_TRIVIAL(info) << "Starting reporting etl";
+    stopping_ = false;
+
+    doWork();
+}
+
+std::shared_ptr<ReportingETL>
+ReportingETL::make_ReportingETL(
+    const boost::json::object& config,
+    boost::asio::io_context& ioc,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<NetworkValidatedLedgers> ledgers)
+{
+    auto etl = std::make_shared<ReportingETL>(
+        config, ioc, backend, subscriptions, balancer, ledgers);
+
+    etl->run();
+
+    return etl;
+}
+
+ReportingETL::~ReportingETL()
+{
+    BOOST_LOG_TRIVIAL(info) << "onStop called";
+    BOOST_LOG_TRIVIAL(debug) << "Stopping Reporting ETL";
+    stopping_ = true;
+
+    if (worker_.joinable())
+        worker_.join();
+
+    BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
+}

@@ -216,4 +216,26 @@ buildResponse(Context const& ctx)
         return Status{Error::rpcINTERNAL, err.what()};
     }
 }
+
+const char*
+InvalidParamsError::what() const throw()
+{
+    return msg.c_str();
+}
+
+InvalidParamsError::InvalidParamsError(const std::string& msg) : msg(msg)
+{
+}
+
+AccountNotFoundError::AccountNotFoundError(const std::string& acct)
+    : account(acct)
+{
+}
+
+const char*
+AccountNotFoundError::what() const throw()
+{
+    return account.c_str();
+}
+
 }  // namespace RPC

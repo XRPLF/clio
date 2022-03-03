@@ -89,27 +89,20 @@ public:
     /** Constructor for when the process is stopping.
      *
      */
-    PgResult()
-    {
-    }
+    PgResult();
 
     /** Constructor for successful query results.
      *
      * @param result Query result.
      */
-    explicit PgResult(pg_result_type&& result) : result_(std::move(result))
-    {
-    }
+    explicit PgResult(pg_result_type&& result);
 
     /** Constructor for failed query results.
      *
      * @param result Query result that contains error information.
      * @param conn Postgres connection that contains error information.
      */
-    PgResult(PGresult* result, PGconn* conn)
-        : error_({PQresultStatus(result), PQerrorMessage(conn)})
-    {
-    }
+    PgResult(PGresult* result, PGconn* conn);
 
     /** Return field as a null-terminated string pointer.
      *
@@ -122,29 +115,13 @@ public:
      * @return Field contents.
      */
     char const*
-    c_str(int ntuple = 0, int nfield = 0) const
-    {
-        return PQgetvalue(result_.get(), ntuple, nfield);
-    }
+    c_str(int ntuple = 0, int nfield = 0) const;
 
     std::vector<unsigned char>
-    asUnHexedBlob(int ntuple = 0, int nfield = 0) const
-    {
-        std::string_view view{c_str(ntuple, nfield) + 2};
-        auto res = ripple::strUnHex(view.size(), view.cbegin(), view.cend());
-        if (res)
-            return *res;
-        return {};
-    }
+    asUnHexedBlob(int ntuple = 0, int nfield = 0) const;
 
     ripple::uint256
-    asUInt256(int ntuple = 0, int nfield = 0) const
-    {
-        ripple::uint256 val;
-        if (!val.parseHex(c_str(ntuple, nfield) + 2))
-            throw std::runtime_error("Pg - failed to parse hex into uint256");
-        return val;
-    }
+    asUInt256(int ntuple = 0, int nfield = 0) const;
 
     /** Return field as equivalent to Postgres' INT type (32 bit signed).
      *
@@ -157,11 +134,7 @@ public:
      * @return Field contents.
      */
     std::int32_t
-    asInt(int ntuple = 0, int nfield = 0) const
-    {
-        return boost::lexical_cast<std::int32_t>(
-            PQgetvalue(result_.get(), ntuple, nfield));
-    }
+    asInt(int ntuple = 0, int nfield = 0) const;
 
     /** Return field as equivalent to Postgres' BIGINT type (64 bit signed).
      *
@@ -174,11 +147,7 @@ public:
      * @return Field contents.
      */
     std::int64_t
-    asBigInt(int ntuple = 0, int nfield = 0) const
-    {
-        return boost::lexical_cast<std::int64_t>(
-            PQgetvalue(result_.get(), ntuple, nfield));
-    }
+    asBigInt(int ntuple = 0, int nfield = 0) const;
 
     /** Returns whether the field is NULL or not.
      *
@@ -190,19 +159,13 @@ public:
      * @return Whether field is NULL.
      */
     bool
-    isNull(int ntuple = 0, int nfield = 0) const
-    {
-        return PQgetisnull(result_.get(), ntuple, nfield);
-    }
+    isNull(int ntuple = 0, int nfield = 0) const;
 
     /** Check whether a valid response occurred.
      *
      * @return Whether or not the query returned a valid response.
      */
-    operator bool() const
-    {
-        return result_ != nullptr;
-    }
+    operator bool() const;
 
     /** Message describing the query results suitable for diagnostics.
      *
@@ -222,10 +185,7 @@ public:
      * @return Number of result rows.
      */
     int
-    ntuples() const
-    {
-        return PQntuples(result_.get());
-    }
+    ntuples() const;
 
     /** Get number of fields in result.
      *
@@ -235,10 +195,7 @@ public:
      * @return Number of result fields.
      */
     int
-    nfields() const
-    {
-        return PQnfields(result_.get());
-    }
+    nfields() const;
 
     /** Return result status of the command.
      *
@@ -248,10 +205,7 @@ public:
      * @return
      */
     ExecStatusType
-    status() const
-    {
-        return PQresultStatus(result_.get());
-    }
+    status() const;
 };
 
 /* Class that contains and operates upon a postgres connection. */
@@ -438,16 +392,10 @@ public:
      */
     PgPool(boost::asio::io_context& ioc, boost::json::object const& config);
 
-    ~PgPool()
-    {
-        onStop();
-    }
+    ~PgPool();
 
     PgConfig&
-    config()
-    {
-        return config_;
-    }
+    config();
 
     /** Initiate idle connection timer.
      *
@@ -479,15 +427,9 @@ private:
 public:
     PgQuery() = delete;
 
-    PgQuery(std::shared_ptr<PgPool> const& pool)
-        : pool_(pool), pg_(pool->checkout())
-    {
-    }
+    PgQuery(std::shared_ptr<PgPool> const& pool);
 
-    ~PgQuery()
-    {
-        pool_->checkin(pg_);
-    }
+    ~PgQuery();
 
     // TODO. add sendQuery and getResult, for sending the query and getting the
     // result asynchronously. This could be useful for sending a bunch of
@@ -499,12 +441,7 @@ public:
      * @return Result of query, including errors.
      */
     PgResult
-    operator()(pg_params const& dbParams, boost::asio::yield_context& yield)
-    {
-        if (!pg_)  // It means we're stopping. Return empty result.
-            return PgResult();
-        return pg_->query(dbParams, yield);
-    }
+    operator()(pg_params const& dbParams, boost::asio::yield_context& yield);
 
     /** Execute postgres query with only command statement.
      *
@@ -512,10 +449,7 @@ public:
      * @return Result of query, including errors.
      */
     PgResult
-    operator()(char const* command, boost::asio::yield_context& yield)
-    {
-        return operator()(pg_params{command, {}}, yield);
-    }
+    operator()(char const* command, boost::asio::yield_context& yield);
 
     /** Insert multiple records into a table using Postgres' bulk COPY.
      *
@@ -528,10 +462,7 @@ public:
     bulkInsert(
         char const* table,
         std::string const& records,
-        boost::asio::yield_context& yield)
-    {
-        pg_->bulkInsert(table, records, yield);
-    }
+        boost::asio::yield_context& yield);
 };
 
 //-----------------------------------------------------------------------------

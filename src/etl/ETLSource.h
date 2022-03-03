@@ -364,10 +364,7 @@ public:
     close(bool startAgain);
 
     boost::beast::websocket::stream<boost::beast::tcp_stream>&
-    ws()
-    {
-        return *ws_;
-    }
+    ws();
 };
 
 class SslETLSource : public ETLSourceImpl<SslETLSource>
@@ -414,10 +411,7 @@ public:
 
     boost::beast::websocket::stream<
         boost::beast::ssl_stream<boost::beast::tcp_stream>>&
-    ws()
-    {
-        return *ws_;
-    }
+    ws();
 };
 
 /// This class is used to manage connections to transaction processing processes
@@ -449,16 +443,9 @@ public:
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
-    {
-        return std::make_shared<ETLLoadBalancer>(
-            config, ioc, sslCtx, backend, subscriptions, validatedLedgers);
-    }
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
 
-    ~ETLLoadBalancer()
-    {
-        sources_.clear();
-    }
+    ~ETLLoadBalancer();
 
     /// Load the initial ledger, writing data to the queue
     /// @param sequence sequence of ledger to download
@@ -488,35 +475,10 @@ public:
     /// @param in ETLSource in question
     /// @return true if messages should be forwarded
     bool
-    shouldPropagateTxnStream(ETLSource* in) const
-    {
-        for (auto& src : sources_)
-        {
-            assert(src);
-            // We pick the first ETLSource encountered that is connected
-            if (src->isConnected())
-            {
-                if (src.get() == in)
-                    return true;
-                else
-                    return false;
-            }
-        }
-
-        // If no sources connected, then this stream has not been forwarded
-        return true;
-    }
+    shouldPropagateTxnStream(ETLSource* in) const;
 
     boost::json::value
-    toJson() const
-    {
-        boost::json::array ret;
-        for (auto& src : sources_)
-        {
-            ret.push_back(src->toJson());
-        }
-        return ret;
-    }
+    toJson() const;
 
     /// Forward a JSON RPC request to a randomly selected rippled node
     /// @param request JSON-RPC request

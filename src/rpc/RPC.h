@@ -106,29 +106,19 @@ class InvalidParamsError : public std::exception
     std::string msg;
 
 public:
-    InvalidParamsError(std::string const& msg) : msg(msg)
-    {
-    }
+    InvalidParamsError(std::string const& msg);
 
     const char*
-    what() const throw() override
-    {
-        return msg.c_str();
-    }
+    what() const throw() override;
 };
 class AccountNotFoundError : public std::exception
 {
     std::string account;
 
 public:
-    AccountNotFoundError(std::string const& acct) : account(acct)
-    {
-    }
+    AccountNotFoundError(std::string const& acct);
     const char*
-    what() const throw() override
-    {
-        return account.c_str();
-    }
+    what() const throw() override;
 };
 
 boost::json::object

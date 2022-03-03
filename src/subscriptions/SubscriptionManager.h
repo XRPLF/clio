@@ -83,53 +83,13 @@ public:
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager(
         boost::json::object const& config,
-        std::shared_ptr<Backend::BackendInterface const> const& b)
-    {
-        auto numThreads = 1;
-
-        if (config.contains("subscription_workers") &&
-            config.at("subscription_workers").is_int64())
-        {
-            numThreads = config.at("subscription_workers").as_int64();
-        }
-
-        return std::make_shared<SubscriptionManager>(numThreads, b);
-    }
+        std::shared_ptr<Backend::BackendInterface const> const& b);
 
     SubscriptionManager(
         std::uint64_t numThreads,
-        std::shared_ptr<Backend::BackendInterface const> const& b)
-        : ledgerSubscribers_(ioc_)
-        , txSubscribers_(ioc_)
-        , txProposedSubscribers_(ioc_)
-        , manifestSubscribers_(ioc_)
-        , validationsSubscribers_(ioc_)
-        , accountSubscribers_(ioc_)
-        , accountProposedSubscribers_(ioc_)
-        , bookSubscribers_(ioc_)
-        , backend_(b)
-    {
-        work_.emplace(ioc_);
+        std::shared_ptr<Backend::BackendInterface const> const& b);
 
-        // We will eventually want to clamp this to be the number of strands,
-        // since adding more threads than we have strands won't see any
-        // performance benefits
-        BOOST_LOG_TRIVIAL(info) << "Starting subscription manager with "
-                                << numThreads << " workers";
-
-        workers_.reserve(numThreads);
-        for (auto i = numThreads; i > 0; --i)
-            workers_.emplace_back([this] { ioc_.run(); });
-    }
-
-    ~SubscriptionManager()
-    {
-        work_.reset();
-
-        ioc_.stop();
-        for (auto& worker : workers_)
-            worker.join();
-    }
+    ~SubscriptionManager();
 
     boost::json::object
     subLedger(

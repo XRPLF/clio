@@ -96,7 +96,6 @@ parse_certs(boost::json::object const& config)
     ctx.use_private_key(
         boost::asio::buffer(key.data(), key.size()),
         boost::asio::ssl::context::file_format::pem);
-
     return ctx;
 }
 

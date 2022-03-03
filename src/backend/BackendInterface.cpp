@@ -2,6 +2,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <backend/BackendInterface.h>
 namespace Backend {
+
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
@@ -12,6 +13,7 @@ BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
     }
     return commitRes;
 }
+
 void
 BackendInterface::writeLedgerObject(
     std::string&& key,
@@ -113,6 +115,7 @@ BackendInterface::fetchLedgerObjects(
 
     return results;
 }
+
 // Fetches the successor to key/index
 std::optional<ripple::uint256>
 BackendInterface::fetchSuccessorKey(
@@ -305,6 +308,43 @@ BackendInterface::fetchFees(
         fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
 
     return fees;
+}
+
+SimpleCache const&
+BackendInterface::cache() const
+{
+    return cache_;
+}
+
+SimpleCache&
+BackendInterface::cache()
+{
+    return cache_;
+}
+
+std::optional<LedgerRange>
+BackendInterface::fetchLedgerRange() const
+{
+    std::shared_lock lck(rngMtx_);
+    return range;
+}
+std::optional<LedgerRange>
+BackendInterface::hardFetchLedgerRange() const
+{
+    return synchronous([&](boost::asio::yield_context yield) {
+        return hardFetchLedgerRange(yield);
+    });
+}
+
+void
+BackendInterface::updateRange(std::uint32_t newMax)
+{
+    std::unique_lock lck(rngMtx_);
+    assert(!range || newMax >= range->maxSequence);
+    if (!range)
+        range = {newMax, newMax};
+    else
+        range->maxSequence = newMax;
 }
 
 }  // namespace Backend
