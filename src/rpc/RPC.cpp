@@ -18,10 +18,16 @@ make_WsContext(
     Counters& counters,
     std::string const& clientIp)
 {
-    if (!request.contains("command"))
+    boost::json::value commandValue = nullptr;
+    if (!request.contains("command") && request.contains("method"))
+        commandValue = request.at("method");
+    else if (request.contains("command") && !request.contains("method"))
+        commandValue = request.at("command");
+
+    if (!commandValue.is_string())
         return {};
 
-    std::string command = request.at("command").as_string().c_str();
+    std::string command = commandValue.as_string().c_str();
 
     return Context{
         yc,

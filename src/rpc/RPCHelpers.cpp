@@ -351,7 +351,6 @@ parseStringAsUInt(std::string const& value)
     }
     catch(boost::bad_lexical_cast const&) {}
 
-    std::cout << *index << std::endl;
     return index;
 }
 
