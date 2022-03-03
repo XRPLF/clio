@@ -549,7 +549,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     writing_ = true;
 
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    if (!rng || rng->maxSequence != startSequence - 1)
+    if (!rng || rng->maxSequence < startSequence - 1)
     {
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
@@ -828,6 +828,15 @@ ReportingETL::monitor()
     {
     }
     uint32_t nextSequence = latestSequence.value() + 1;
+    if (!backend_->cache().isFull())
+    {
+        std::thread t{[this, latestSequence]() {
+            BOOST_LOG_TRIVIAL(info) << "Loading cache";
+            loadBalancer_->loadInitialLedger(*latestSequence, true);
+            backend_->cache().setFull();
+        }};
+        t.detach();
+    }
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -840,15 +849,6 @@ ReportingETL::monitor()
                                 << "Ledger with sequence = " << nextSequence
                                 << " has been validated by the network. "
                                 << "Attempting to find in database and publish";
-        if (!backend_->cache().isFull())
-        {
-            std::thread t{[this, latestSequence]() {
-                BOOST_LOG_TRIVIAL(info) << "Loading cache";
-                loadBalancer_->loadInitialLedger(*latestSequence, true);
-                backend_->cache().setFull();
-            }};
-            t.detach();
-        }
         // Attempt to take over responsibility of ETL writer after 2 failed
         // attempts to publish the ledger. publishLedger() fails if the
         // ledger that has been validated by the network is not found in the
