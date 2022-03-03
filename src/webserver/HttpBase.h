@@ -355,7 +355,6 @@ handle_request(
             counters.rpcComplete(context->method, us);
             result = std::get<boost::json::object>(v);
             result["status"] = "success";
-            result["validated"] = true;
 
             responseStr = boost::json::serialize(response);
         }

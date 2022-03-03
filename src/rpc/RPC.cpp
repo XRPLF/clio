@@ -205,7 +205,12 @@ buildResponse(Context const& ctx)
 
     try
     {
-        return method(ctx);
+        auto v = method(ctx);
+
+        if (auto object = std::get_if<boost::json::object>(&v))
+            (*object)["validated"] = true;
+        
+        return v;
     }
     catch (InvalidParamsError const& err)
     {
