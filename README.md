@@ -1,4 +1,4 @@
-**Status:** This software is still in development. We are working hard towards a beta release, after which we will release version 1.0. If you would like to contribute, take a look at the issues to find something to work on.
+**Status:** beta release coming 3/22/2022
 
 # clio
 clio is an XRP Ledger API server. clio is optimized for RPC calls, over websocket or JSON-RPC. Validated
