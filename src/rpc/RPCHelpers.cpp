@@ -341,18 +341,27 @@ toJson(ripple::LedgerInfo const& lgrInfo)
     return header;
 }
 
+std::optional<std::uint32_t>
+parseStringAsUInt(std::string const& value)
+{
+    std::optional<std::uint32_t> index = {};
+    try
+    {
+        index = boost::lexical_cast<std::uint32_t>(value);
+    }
+    catch(boost::bad_lexical_cast const&) {}
+
+    std::cout << *index << std::endl;
+    return index;
+}
+
 std::variant<Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(Context const& ctx)
 {
-    auto indexValue = ctx.params.contains("ledger_index")
-        ? ctx.params.at("ledger_index")
-        : nullptr;
-
     auto hashValue = ctx.params.contains("ledger_hash")
         ? ctx.params.at("ledger_hash")
         : nullptr;
 
-    std::optional<ripple::LedgerInfo> lgrInfo;
     if (!hashValue.is_null())
     {
         if (!hashValue.is_string())
@@ -362,25 +371,37 @@ ledgerInfoFromRequest(Context const& ctx)
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-        lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
+        auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
     }
-    else if (!indexValue.is_null())
-    {
-        std::uint32_t ledgerSequence;
-        if (indexValue.is_string() && indexValue.as_string() == "validated")
-            ledgerSequence = ctx.range.maxSequence;
-        else if (!indexValue.is_string() && indexValue.is_int64())
-            ledgerSequence = indexValue.as_int64();
-        else
-            return Status{Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
-        lgrInfo = ctx.backend->fetchLedgerBySequence(ledgerSequence, ctx.yield);
+    auto indexValue = ctx.params.contains("ledger_index")
+        ? ctx.params.at("ledger_index")
+        : nullptr;
+
+    std::optional<std::uint32_t> ledgerSequence = {};
+    if (!indexValue.is_null())
+    {
+        if (indexValue.is_string())
+        {
+            boost::json::string const& stringIndex = indexValue.as_string();
+            if (stringIndex == "validated")
+                ledgerSequence = ctx.range.maxSequence;
+            else
+                ledgerSequence = parseStringAsUInt(stringIndex.c_str());
+        }
+        else if (indexValue.is_int64())
+            ledgerSequence = indexValue.as_int64();
     }
     else
     {
-        lgrInfo = ctx.backend->fetchLedgerBySequence(
-            ctx.range.maxSequence, ctx.yield);
+       ledgerSequence = ctx.range.maxSequence;
     }
+
+    if (!ledgerSequence)
+        return Status{Error::rpcLGR_NOT_FOUND, "ledgerIndexMalformed"};
+
+    auto lgrInfo = 
+        ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
