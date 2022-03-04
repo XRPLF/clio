@@ -21,7 +21,9 @@ include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
 include(CMake/deps/Postgres.cmake)
-
+if(PACKAGE)
+  include(CMake/packaging/package.cmake)
+endif()
 # configure_file(CMake/version-config.h include/version.h) # NOTE: Not used, but an idea how to handle versioning.
 
 target_sources(clio PRIVATE

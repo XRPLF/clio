@@ -1,2 +1,4 @@
 build/
 .python-version
+_CPack_Packages/
+_packages/
