@@ -58,20 +58,20 @@ BackendInterface::fetchLedgerObject(
     auto obj = cache_.get(key, sequence);
     if (obj)
     {
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " - cache hit - " << ripple::strHex(key);
         return *obj;
     }
     else
     {
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " - cache miss - " << ripple::strHex(key);
         auto dbObj = doFetchLedgerObject(key, sequence, yield);
         if (!dbObj)
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(trace)
                 << __func__ << " - missed cache and missed in db";
         else
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(trace)
                 << __func__ << " - missed cache but found in db";
         return dbObj;
     }
@@ -94,7 +94,7 @@ BackendInterface::fetchLedgerObjects(
         else
             misses.push_back(keys[i]);
     }
-    BOOST_LOG_TRIVIAL(debug)
+    BOOST_LOG_TRIVIAL(trace)
         << __func__ << " - cache hits = " << keys.size() - misses.size()
         << " - cache misses = " << misses.size();
 
@@ -122,10 +122,10 @@ BackendInterface::fetchSuccessorKey(
 {
     auto succ = cache_.getSuccessor(key, ledgerSequence);
     if (succ)
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " - cache hit - " << ripple::strHex(key);
     else
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " - cache miss - " << ripple::strHex(key);
     return succ ? succ->key : doFetchSuccessorKey(key, ledgerSequence, yield);
 }
