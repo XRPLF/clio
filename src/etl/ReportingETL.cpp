@@ -838,50 +838,51 @@ ReportingETL::monitor()
         << __func__ << " : "
         << "Database is populated. "
         << "Starting monitor loop. sequence = " << nextSequence;
-    while (!stopping_ &&
-           networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence))
+    while (true)
     {
-        BOOST_LOG_TRIVIAL(info) << __func__ << " : "
-                                << "Ledger with sequence = " << nextSequence
-                                << " has been validated by the network. "
-                                << "Attempting to find in database and publish";
-        // Attempt to take over responsibility of ETL writer after 2 failed
-        // attempts to publish the ledger. publishLedger() fails if the
-        // ledger that has been validated by the network is not found in the
-        // database after the specified number of attempts. publishLedger()
-        // waits one second between each attempt to read the ledger from the
-        // database
-        //
-        // In strict read-only mode, when the software fails to find a
-        // ledger in the database that has been validated by the network,
-        // the software will only try to publish subsequent ledgers once,
-        // until one of those ledgers is found in the database. Once the
-        // software successfully publishes a ledger, the software will fall
-        // back to the normal behavior of trying several times to publish
-        // the ledger that has been validated by the network. In this
-        // manner, a reporting processing running in read-only mode does not
-        // need to restart if the database is wiped.
-        constexpr size_t timeoutSeconds = 2;
-        bool success = publishLedger(nextSequence, timeoutSeconds);
-        if (!success)
+        if (Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerBySequence(nextSequence, yield);
+            }))
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " : "
-                << "Failed to publish ledger with sequence = " << nextSequence
-                << " . Beginning ETL";
-            // doContinousETLPipelined returns the most recent sequence
-            // published empty optional if no sequence was published
-            std::optional<uint32_t> lastPublished =
-                runETLPipeline(nextSequence, extractorThreads_);
+            publishLedger(nextSequence, {});
+            ++nextSequence;
+        }
+        else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(
+                     nextSequence, 1000))
+        {
             BOOST_LOG_TRIVIAL(info)
                 << __func__ << " : "
-                << "Aborting ETL. Falling back to publishing";
-            // if no ledger was published, don't increment nextSequence
-            if (lastPublished)
-                nextSequence = *lastPublished + 1;
+                << "Ledger with sequence = " << nextSequence
+                << " has been validated by the network. "
+                << "Attempting to find in database and publish";
+            // Attempt to take over responsibility of ETL writer after 2 failed
+            // attempts to publish the ledger. publishLedger() fails if the
+            // ledger that has been validated by the network is not found in the
+            // database after the specified number of attempts. publishLedger()
+            // waits one second between each attempt to read the ledger from the
+            // database
+            constexpr size_t timeoutSeconds = 2;
+            bool success = publishLedger(nextSequence, timeoutSeconds);
+            if (!success)
+            {
+                BOOST_LOG_TRIVIAL(warning)
+                    << __func__ << " : "
+                    << "Failed to publish ledger with sequence = "
+                    << nextSequence << " . Beginning ETL";
+                // doContinousETLPipelined returns the most recent sequence
+                // published empty optional if no sequence was published
+                std::optional<uint32_t> lastPublished =
+                    runETLPipeline(nextSequence, extractorThreads_);
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " : "
+                    << "Aborting ETL. Falling back to publishing";
+                // if no ledger was published, don't increment nextSequence
+                if (lastPublished)
+                    nextSequence = *lastPublished + 1;
+            }
+            else
+                ++nextSequence;
         }
-        else
-            ++nextSequence;
     }
 }
 

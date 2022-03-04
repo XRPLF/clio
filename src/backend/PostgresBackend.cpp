@@ -461,8 +461,6 @@ PostgresBackend::fetchTransactions(
     auto hw = new HandlerWrapper(std::move(handler));
 
     auto start = std::chrono::system_clock::now();
-    auto end = std::chrono::system_clock::now();
-    auto duration = ((end - start).count()) / 1000000000.0;
 
     std::atomic_uint numRemaining = hashes.size();
 
@@ -506,12 +504,14 @@ PostgresBackend::fetchTransactions(
 
     delete hw;
 
-    auto end2 = std::chrono::system_clock::now();
-    duration = ((end2 - end).count()) / 1000000000.0;
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " fetched " << std::to_string(hashes.size())
-        << " transactions with threadpool. took " << std::to_string(duration);
+        << " transactions asynchronously. took "
+        << std::to_string(duration.count());
 
     return results;
 }
@@ -573,11 +573,12 @@ PostgresBackend::doFetchLedgerObjects(
     delete hw;
 
     auto end = std::chrono::system_clock::now();
-    auto duration = ((end - start).count()) / 1000000000.0;
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " fetched " << std::to_string(keys.size())
-        << " objects with threadpool. took " << std::to_string(duration);
+        << " objects asynchronously. ms = " << std::to_string(duration.count());
 
     return results;
 }
