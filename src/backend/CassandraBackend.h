@@ -695,7 +695,7 @@ public:
     doFinishWrites() override
     {
         if (!range || lastSync_ == 0 ||
-            ledgerSequence_ - syncInterval_ == lastSync_)
+            ledgerSequence_ - syncInterval_ >= lastSync_)
         {
             // wait for all other writes to finish
             sync();
@@ -725,6 +725,14 @@ public:
             BOOST_LOG_TRIVIAL(info) << __func__ << " Committed ledger "
                                     << std::to_string(ledgerSequence_);
             lastSync_ = ledgerSequence_;
+        }
+        else
+        {
+            BOOST_LOG_TRIVIAL(info)
+                << __func__ << " Skipping commit. sync interval is "
+                << std::to_string(syncInterval_) << " - last sync is "
+                << std::to_string(lastSync_) << " - ledger sequence is "
+                << std::to_string(ledgerSequence_);
         }
         return true;
     }
