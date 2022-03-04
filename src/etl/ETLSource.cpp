@@ -573,7 +573,7 @@ public:
         }
         if (!status_.ok())
         {
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(error)
                 << "AsyncCallData status_ not ok: "
                 << " code = " << status_.error_code()
                 << " message = " << status_.error_message();
