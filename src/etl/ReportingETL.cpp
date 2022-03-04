@@ -903,16 +903,17 @@ ReportingETL::loadCacheAsync(uint32_t seq)
     }
     std::thread t{[this, seq]() {
         BOOST_LOG_TRIVIAL(info) << "Loading cache";
+        std::optional<ripple::uint256> cursor;
         while (true)
         {
-            std::optional<ripple::uint256> cursor;
             auto res = Backend::synchronousAndRetryOnTimeout(
                 [this, seq, &cursor](auto yield) {
                     return backend_->fetchLedgerPage(cursor, seq, 4096, yield);
                 });
             backend_->cache().update(res.objects, seq, true);
             BOOST_LOG_TRIVIAL(debug)
-                << "Loading cache. cache size = " << backend_->cache().size();
+                << "Loading cache. cache size = " << backend_->cache().size()
+                << " - cursor = " << ripple::strHex(res.cursor.value());
             if (!res.cursor)
                 break;
             cursor = std::move(res.cursor);
