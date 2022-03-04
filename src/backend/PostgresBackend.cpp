@@ -158,11 +158,11 @@ checkResult(PgResult const& res, std::uint32_t const numFieldsExpected)
     if (!res)
     {
         auto msg = res.msg();
-        BOOST_LOG_TRIVIAL(debug) << msg;
+        BOOST_LOG_TRIVIAL(error) << __func__ << " - " << msg;
         if (msg.find("statement timeout"))
             throw DatabaseTimeout();
         assert(false);
-        throw std::runtime_error(msg);
+        throw DatabaseTimeout();
     }
     if (res.status() != PGRES_TUPLES_OK)
     {
@@ -170,8 +170,9 @@ checkResult(PgResult const& res, std::uint32_t const numFieldsExpected)
         msg << " : Postgres response should have been "
                "PGRES_TUPLES_OK but instead was "
             << res.status() << " - msg  = " << res.msg();
+        BOOST_LOG_TRIVIAL(error) << __func__ << " - " << msg.str();
         assert(false);
-        throw std::runtime_error(msg.str());
+        throw DatabaseTimeout();
     }
 
     BOOST_LOG_TRIVIAL(trace)
@@ -461,17 +462,16 @@ PostgresBackend::fetchTransactions(
     auto hw = new HandlerWrapper(std::move(handler));
 
     auto start = std::chrono::system_clock::now();
-    auto end = std::chrono::system_clock::now();
-    auto duration = ((end - start).count()) / 1000000000.0;
 
     std::atomic_uint numRemaining = hashes.size();
+    std::atomic_bool errored = false;
 
     for (size_t i = 0; i < hashes.size(); ++i)
     {
         auto const& hash = hashes[i];
         boost::asio::spawn(
             get_associated_executor(yield),
-            [this, &hash, &results, hw, &numRemaining, i](
+            [this, &hash, &results, hw, &numRemaining, &errored, i](
                 boost::asio::yield_context yield) {
                 BOOST_LOG_TRIVIAL(trace) << __func__ << " getting txn = " << i;
 
@@ -483,14 +483,21 @@ PostgresBackend::fetchTransactions(
                        "WHERE HASH = \'\\x"
                     << ripple::strHex(hash) << "\'";
 
-                if (auto const res = pgQuery(sql.str().data(), yield);
-                    checkResult(res, 4))
+                try
                 {
-                    results[i] = {
-                        res.asUnHexedBlob(0, 0),
-                        res.asUnHexedBlob(0, 1),
-                        res.asBigInt(0, 2),
-                        res.asBigInt(0, 3)};
+                    if (auto const res = pgQuery(sql.str().data(), yield);
+                        checkResult(res, 4))
+                    {
+                        results[i] = {
+                            res.asUnHexedBlob(0, 0),
+                            res.asUnHexedBlob(0, 1),
+                            res.asBigInt(0, 2),
+                            res.asBigInt(0, 3)};
+                    }
+                }
+                catch (DatabaseTimeout const&)
+                {
+                    errored = true;
                 }
 
                 if (--numRemaining == 0)
@@ -506,12 +513,19 @@ PostgresBackend::fetchTransactions(
 
     delete hw;
 
-    auto end2 = std::chrono::system_clock::now();
-    duration = ((end2 - end).count()) / 1000000000.0;
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " fetched " << std::to_string(hashes.size())
-        << " transactions with threadpool. took " << std::to_string(duration);
+        << " transactions asynchronously. took "
+        << std::to_string(duration.count());
+    if (errored)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database fetch timed out";
+        throw DatabaseTimeout();
+    }
 
     return results;
 }
@@ -537,13 +551,14 @@ PostgresBackend::doFetchLedgerObjects(
     auto hw = new HandlerWrapper(std::move(handler));
 
     std::atomic_uint numRemaining = keys.size();
+    std::atomic_bool errored = false;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < keys.size(); ++i)
     {
         auto const& key = keys[i];
         boost::asio::spawn(
             boost::asio::get_associated_executor(yield),
-            [this, &key, &results, &numRemaining, hw, i, sequence](
+            [this, &key, &results, &numRemaining, &errored, hw, i, sequence](
                 boost::asio::yield_context yield) {
                 PgQuery pgQuery(pgPool_);
 
@@ -555,9 +570,16 @@ PostgresBackend::doFetchLedgerObjects(
                     << " AND ledger_seq <= " << std::to_string(sequence)
                     << " ORDER BY ledger_seq DESC LIMIT 1";
 
-                if (auto const res = pgQuery(sql.str().data(), yield);
-                    checkResult(res, 1))
-                    results[i] = res.asUnHexedBlob();
+                try
+                {
+                    if (auto const res = pgQuery(sql.str().data(), yield);
+                        checkResult(res, 1))
+                        results[i] = res.asUnHexedBlob();
+                }
+                catch (DatabaseTimeout const& ex)
+                {
+                    errored = true;
+                }
 
                 if (--numRemaining == 0)
                 {
@@ -573,11 +595,17 @@ PostgresBackend::doFetchLedgerObjects(
     delete hw;
 
     auto end = std::chrono::system_clock::now();
-    auto duration = ((end - start).count()) / 1000000000.0;
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " fetched " << std::to_string(keys.size())
-        << " objects with threadpool. took " << std::to_string(duration);
+        << " objects asynchronously. ms = " << std::to_string(duration.count());
+    if (errored)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database fetch timed out";
+        throw DatabaseTimeout();
+    }
 
     return results;
 }
