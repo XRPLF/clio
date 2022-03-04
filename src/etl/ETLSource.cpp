@@ -1055,7 +1055,7 @@ ETLSourceImpl<Derived>::forwardToRippled(
         if (ec)
             return {};
 
-        ws->next_layer().expires_after(std::chrono::seconds(30));
+        ws->next_layer().expires_after(std::chrono::seconds(3));
 
         BOOST_LOG_TRIVIAL(debug) << "Connecting websocket";
         // Make the connection on the IP address we get from a lookup
