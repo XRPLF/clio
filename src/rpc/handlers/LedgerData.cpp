@@ -68,7 +68,7 @@ doLedgerData(Context const& context)
     Backend::LedgerPage page;
     auto start = std::chrono::system_clock::now();
     page = context.backend->fetchLedgerPage(
-        cursor, lgrInfo.seq, limit, 0, context.yield);
+        cursor, lgrInfo.seq, limit, context.yield);
 
     auto end = std::chrono::system_clock::now();
 
@@ -136,17 +136,6 @@ doLedgerData(Context const& context)
             objects.push_back(toJson(sle));
     }
     response["state"] = objects;
-
-    if (cursor && page.warning)
-    {
-        response["warning"] =
-            "Periodic database update in progress. Data for this ledger may be "
-            "incomplete. Data should be complete "
-            "within a few minutes. Other RPC calls are not affected, "
-            "regardless of ledger. This "
-            "warning is only present on the first "
-            "page of the ledger";
-    }
 
     return response;
 }

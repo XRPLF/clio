@@ -82,7 +82,7 @@ doBookOffers(Context const& context)
     }
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, retCursor, warning] = context.backend->fetchBookOffers(
+    auto [offers, retCursor] = context.backend->fetchBookOffers(
         bookBase, lgrInfo.seq, limit, cursor, context.yield);
     auto end = std::chrono::system_clock::now();
 
@@ -102,11 +102,6 @@ doBookOffers(Context const& context)
 
     if (retCursor)
         response["marker"] = ripple::strHex(*retCursor);
-    if (warning)
-        response["warning"] =
-            "Periodic database update in progress. Data for this book as of "
-            "this ledger "
-            "may be incomplete. Data should be complete within one minute";
 
     return response;
 }

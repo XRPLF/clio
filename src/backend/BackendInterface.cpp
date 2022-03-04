@@ -244,7 +244,6 @@ BackendInterface::fetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
-    std::uint32_t const limitHint,
     boost::asio::yield_context& yield) const
 {
     LedgerPage page;

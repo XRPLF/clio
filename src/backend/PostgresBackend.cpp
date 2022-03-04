@@ -784,17 +784,8 @@ PostgresBackend::doOnlineDelete(
     std::optional<ripple::uint256> cursor;
     while (true)
     {
-        auto [objects, curCursor, warning] = retryOnTimeout([&]() {
-            return fetchLedgerPage(cursor, minLedger, 256, 0, yield);
-        });
-        if (warning)
-        {
-            BOOST_LOG_TRIVIAL(warning) << __func__
-                                       << " online delete running but "
-                                          "flag ledger is not complete";
-            std::this_thread::sleep_for(std::chrono::seconds(10));
-            continue;
-        }
+        auto [objects, curCursor] = retryOnTimeout(
+            [&]() { return fetchLedgerPage(cursor, minLedger, 256, yield); });
         BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
         std::stringstream objectsBuffer;
 
