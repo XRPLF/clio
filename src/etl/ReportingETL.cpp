@@ -229,8 +229,10 @@ ReportingETL::fetchLedgerData(uint32_t idx)
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
         loadBalancer_->fetchLedger(idx, false, false);
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
-                             << "GetLedger reply = " << response->DebugString();
+    if (response)
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " : "
+            << "GetLedger reply = " << response->DebugString();
     return response;
 }
 
@@ -243,8 +245,10 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
         loadBalancer_->fetchLedger(idx, true, !backend_->cache().isFull());
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
-                             << "GetLedger reply = " << response->DebugString();
+    if (response)
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " : "
+            << "GetLedger reply = " << response->DebugString();
     return response;
 }
 
@@ -603,17 +607,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 auto time = ((end - start).count()) / 1000000000.0;
                 totalTime += time;
 
-                auto tps =
-                    fetchResponse->transactions_list().transactions_size() /
-                    time;
-
-                BOOST_LOG_TRIVIAL(info)
-                    << "Extract phase time = " << time
-                    << " . Extract phase tps = " << tps
-                    << " . Avg extract time = "
-                    << totalTime / (currentSequence - startSequence + 1)
-                    << " . thread num = " << i
-                    << " . seq = " << currentSequence;
                 // if the fetch is unsuccessful, stop. fetchLedger only
                 // returns false if the server is shutting down, or if the
                 // ledger was found in the database (which means another
@@ -625,6 +618,17 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 {
                     break;
                 }
+                auto tps =
+                    fetchResponse->transactions_list().transactions_size() /
+                    time;
+
+                BOOST_LOG_TRIVIAL(info)
+                    << "Extract phase time = " << time
+                    << " . Extract phase tps = " << tps
+                    << " . Avg extract time = "
+                    << totalTime / (currentSequence - startSequence + 1)
+                    << " . thread num = " << i
+                    << " . seq = " << currentSequence;
 
                 transformQueue->push(std::move(fetchResponse));
                 currentSequence += numExtractors;
