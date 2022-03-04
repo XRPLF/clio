@@ -832,15 +832,7 @@ ReportingETL::monitor()
     {
     }
     uint32_t nextSequence = latestSequence.value() + 1;
-    if (!backend_->cache().isFull())
-    {
-        std::thread t{[this, latestSequence]() {
-            BOOST_LOG_TRIVIAL(info) << "Loading cache";
-            loadBalancer_->loadInitialLedger(*latestSequence, true);
-            backend_->cache().setFull();
-        }};
-        t.detach();
-    }
+    loadCacheAsync(*latestSequence);
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -894,6 +886,45 @@ ReportingETL::monitor()
 }
 
 void
+ReportingETL::loadCacheAsync(uint32_t seq)
+{
+    // sanity check to make sure we are not calling this multiple times
+    static std::atomic_bool loading = false;
+    if (loading)
+    {
+        assert(false);
+        return;
+    }
+    loading = true;
+    if (backend_->cache().isFull())
+    {
+        assert(false);
+        return;
+    }
+    std::thread t{[this, seq]() {
+        BOOST_LOG_TRIVIAL(info) << "Loading cache";
+        while (true)
+        {
+            std::optional<ripple::uint256> cursor;
+            auto res = Backend::synchronousAndRetryOnTimeout(
+                [this, seq, &cursor](auto yield) {
+                    return backend_->fetchLedgerPage(cursor, seq, 4096, yield);
+                });
+            backend_->cache().update(res.objects, seq, true);
+            BOOST_LOG_TRIVIAL(debug)
+                << "Loading cache. cache size = " << backend_->cache().size();
+            if (!res.cursor)
+                break;
+            cursor = std::move(res.cursor);
+        }
+        BOOST_LOG_TRIVIAL(info) << "Finished loading cache";
+
+        backend_->cache().setFull();
+    }};
+    t.detach();
+}
+
+void
 ReportingETL::monitorReadOnly()
 {
     BOOST_LOG_TRIVIAL(debug) << "Starting reporting in strict read only mode";
@@ -905,11 +936,7 @@ ReportingETL::monitorReadOnly()
         latestSequence = networkValidatedLedgers_->getMostRecent();
     if (!latestSequence)
         return;
-    std::thread t{[this, latestSequence]() {
-        BOOST_LOG_TRIVIAL(info) << "Loading cache";
-        loadBalancer_->loadInitialLedger(*latestSequence, true);
-    }};
-    t.detach();
+    loadCacheAsync(*latestSequence);
     latestSequence = *latestSequence + 1;
     while (true)
     {

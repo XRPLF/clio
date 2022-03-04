@@ -26,13 +26,11 @@ struct LedgerPage
 {
     std::vector<LedgerObject> objects;
     std::optional<ripple::uint256> cursor;
-    std::optional<std::string> warning;
 };
 struct BookOffersPage
 {
     std::vector<LedgerObject> offers;
     std::optional<ripple::uint256> cursor;
-    std::optional<std::string> warning;
 };
 struct TransactionAndMetadata
 {

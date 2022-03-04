@@ -804,7 +804,7 @@ TEST(BackendTest, Basic)
                     {
                         uint32_t limit = 10;
                         page = backend->fetchLedgerPage(
-                            page.cursor, seq, limit, 0, yield);
+                            page.cursor, seq, limit, yield);
                         std::cout << "fetched a page " << page.objects.size()
                                   << std::endl;
                         if (page.cursor)
@@ -817,7 +817,6 @@ TEST(BackendTest, Basic)
                             page.objects.begin(),
                             page.objects.end());
                         ++numLoops;
-                        ASSERT_FALSE(page.warning.has_value());
                     } while (page.cursor);
 
                     for (auto obj : objs)
@@ -2187,7 +2186,7 @@ TEST(Backend, cacheIntegration)
                     {
                         uint32_t limit = 10;
                         page = backend->fetchLedgerPage(
-                            page.cursor, seq, limit, 0, yield);
+                            page.cursor, seq, limit, yield);
                         std::cout << "fetched a page " << page.objects.size()
                                   << std::endl;
                         if (page.cursor)
@@ -2200,7 +2199,6 @@ TEST(Backend, cacheIntegration)
                             page.objects.begin(),
                             page.objects.end());
                         ++numLoops;
-                        ASSERT_FALSE(page.warning.has_value());
                     } while (page.cursor);
                     for (auto obj : objs)
                     {

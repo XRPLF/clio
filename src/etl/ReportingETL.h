@@ -147,9 +147,15 @@ private:
     std::optional<ripple::LedgerInfo>
     loadInitialLedger(uint32_t sequence);
 
-    /// Run ETL. Extracts ledgers and writes them to the database, until a write
-    /// conflict occurs (or the server shuts down).
-    /// @note database must already be populated when this function is called
+    /// Populates the cache by walking through the given ledger. Should only be
+    /// called once
+    void
+    loadCacheAsync(uint32_t seq);
+
+    /// Run ETL. Extracts ledgers and writes them to the database, until a
+    /// write conflict occurs (or the server shuts down).
+    /// @note database must already be populated when this function is
+    /// called
     /// @param startSequence the first ledger to extract
     /// @return the last ledger written to the database, if any
     std::optional<uint32_t>
