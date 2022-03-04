@@ -484,7 +484,7 @@ forEachItemAfter(
     std::uint64_t const hint,
     std::uint64_t limit,
     Context const& context,
-    std::function<bool(std::shared_ptr<ripple::SLE const> const&)>const f)
+    std::function<bool(std::shared_ptr<ripple::SLE const> const&)> const f)
 {
     assert(root.type == ripple::ltDIR_NODE);
 

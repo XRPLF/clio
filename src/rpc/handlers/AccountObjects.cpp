@@ -25,8 +25,7 @@ std::unordered_map<std::string, ripple::LedgerEntryType> types{
     {"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
     {"check", ripple::ltCHECK},
     {"nft_page", ripple::ltNFTOKEN_PAGE},
-    {"nft_offer", ripple::ltNFTOKEN_OFFER}
-};
+    {"nft_offer", ripple::ltNFTOKEN_OFFER}};
 
 Result
 doAccountNFTs(Context const& context)

@@ -49,8 +49,8 @@ enumerateNFTOffers(
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     // TODO: just check for existence without pulling
-    if(!context.backend->fetchLedgerObject(
-        directory.key, lgrInfo.seq, context.yield))
+    if (!context.backend->fetchLedgerObject(
+            directory.key, lgrInfo.seq, context.yield))
         return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
 
     std::uint32_t limit = 200;
@@ -166,7 +166,7 @@ doNFTOffers(Context const& context, bool sells)
         if (sells)
             return ripple::keylet::nft_sells(std::get<ripple::uint256>(v));
 
-       return ripple::keylet::nft_buys(std::get<ripple::uint256>(v));
+        return ripple::keylet::nft_buys(std::get<ripple::uint256>(v));
     };
 
     return enumerateNFTOffers(
@@ -185,4 +185,4 @@ doNFTBuyOffers(Context const& context)
     return doNFTOffers(context, false);
 }
 
-} // namespace RPC
+}  // namespace RPC
