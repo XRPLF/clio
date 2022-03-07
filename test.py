@@ -1014,6 +1014,10 @@ args = parser.parse_args()
 
 def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
+    if args.action == "call":
+        asyncio.get_event_loop().run_until_complete(
+                call(args.ip,args.port,args.request))
+        return
     rng =asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
     if args.ledger is None:
         args.ledger = rng[1]
@@ -1028,9 +1032,6 @@ def run(args):
     elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))
-    elif args.action == "call":
-        asyncio.get_event_loop().run_until_complete(
-                call(args.ip,args.port,args.request))
     elif args.action == "gaps":
         missing = []
         for x in range(rng[0],rng[1]):
