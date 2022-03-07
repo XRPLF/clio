@@ -912,11 +912,11 @@ ReportingETL::loadCacheAsync(uint32_t seq)
                     return backend_->fetchLedgerPage(cursor, seq, 4096, yield);
                 });
             backend_->cache().update(res.objects, seq, true);
+            if (!res.cursor)
+                break;
             BOOST_LOG_TRIVIAL(debug)
                 << "Loading cache. cache size = " << backend_->cache().size()
                 << " - cursor = " << ripple::strHex(res.cursor.value());
-            if (!res.cursor)
-                break;
             cursor = std::move(res.cursor);
         }
         BOOST_LOG_TRIVIAL(info) << "Finished loading cache";
