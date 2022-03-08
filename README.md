@@ -17,11 +17,6 @@ clio does not connect to the peer to peer network. Instead, clio extracts data f
 from which data can be extracted. The rippled node does not need to be running on the same machine as clio.
 
 
-clio is designed with scalability and availability as a first principle.
-Data is stored in either Postgres, Cassandra,or ScyllaDB,
-and multiple clio servers can share access to the same dataset.
-The different clio servers that are using the same dataset do not know about each other or talk to each other.
-
 ## Requirements
 1. Access to a Postgres server, Cassandra cluster or ScyllaDB cluster. Can be local or remote.
 
