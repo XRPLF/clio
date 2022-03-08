@@ -51,6 +51,9 @@ public:
     void
     setFull();
 
+    uint32_t
+    latestLedgerSequence();
+
     // whether the cache has all data for the most recent ledger
     bool
     isFull();

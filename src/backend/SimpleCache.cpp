@@ -1,5 +1,11 @@
 #include <backend/SimpleCache.h>
 namespace Backend {
+uint32_t
+SimpleCache::latestLedgerSequence()
+{
+    std::shared_lock lck{mtx_};
+    return latestSeq_;
+}
 
 void
 SimpleCache::update(

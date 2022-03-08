@@ -694,7 +694,10 @@ public:
     bool
     doFinishWrites() override
     {
-        if (!range || lastSync_ == 0 ||
+        // if db is empty, sync. if sync interval is 1, always sync.
+        // if we've never synced, sync. if its been greater than the configured
+        // sync interval since we last synced, sync.
+        if (!range || syncInterval_ == 1 || lastSync_ == 0 ||
             ledgerSequence_ - syncInterval_ >= lastSync_)
         {
             // wait for all other writes to finish

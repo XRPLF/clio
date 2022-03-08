@@ -300,6 +300,8 @@ public:
 
     // Tell the database we have finished writing all data for a particular
     // ledger
+    // TODO change the return value to represent different results. committed,
+    // write conflict, errored, successful but not committed
     bool
     finishWrites(std::uint32_t const ledgerSequence);
 

@@ -221,14 +221,14 @@ ReportingETL::publishLedger(
 }
 
 std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-ReportingETL::fetchLedgerData(uint32_t idx)
+ReportingETL::fetchLedgerData(uint32_t seq)
 {
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
-        << "Attempting to fetch ledger with sequence = " << idx;
+        << "Attempting to fetch ledger with sequence = " << seq;
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_->fetchLedger(idx, false, false);
+        loadBalancer_->fetchLedger(seq, false, false);
     if (response)
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : "
@@ -237,14 +237,18 @@ ReportingETL::fetchLedgerData(uint32_t idx)
 }
 
 std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
+ReportingETL::fetchLedgerDataAndDiff(uint32_t seq)
 {
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
-        << "Attempting to fetch ledger with sequence = " << idx;
+        << "Attempting to fetch ledger with sequence = " << seq;
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_->fetchLedger(idx, true, !backend_->cache().isFull());
+        loadBalancer_->fetchLedger(
+            seq,
+            true,
+            !backend_->cache().isFull() ||
+                backend_->cache().latestLedgerSequence() >= seq);
     if (response)
         BOOST_LOG_TRIVIAL(trace)
             << __func__ << " : "
@@ -412,7 +416,7 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     }
     backend_->cache().update(cacheUpdates, lgrInfo.seq);
     // rippled didn't send successor information, so use our cache
-    if (!rawData.object_neighbors_included() || backend_->cache().isFull())
+    if (!rawData.object_neighbors_included())
     {
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " object neighbors not included. using cache";
@@ -764,11 +768,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 void
 ReportingETL::monitor()
 {
-    std::optional<uint32_t> latestSequence =
-        Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-            return backend_->fetchLatestLedgerSequence(yield);
-        });
-    if (!latestSequence)
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+    if (!rng)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                                 << "Database is empty. Will download a ledger "
@@ -808,7 +809,14 @@ ReportingETL::monitor()
             }
         }
         if (ledger)
-            latestSequence = ledger->seq;
+            rng = backend_->hardFetchLedgerRangeNoThrow();
+        else
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " : "
+                << "Failed to load initial ledger. Exiting monitor loop";
+            return;
+        }
     }
     else
     {
@@ -821,18 +829,9 @@ ReportingETL::monitor()
             << __func__ << " : "
             << "Database already populated. Picking up from the tip of history";
     }
-    if (!latestSequence)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " : "
-            << "Failed to load initial ledger. Exiting monitor loop";
-        return;
-    }
-    else
-    {
-    }
-    uint32_t nextSequence = latestSequence.value() + 1;
-    loadCacheAsync(*latestSequence);
+    assert(rng);
+    uint32_t nextSequence = rng->maxSequence + 1;
+    loadCacheAsync(rng->maxSequence);
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
@@ -840,9 +839,8 @@ ReportingETL::monitor()
         << "Starting monitor loop. sequence = " << nextSequence;
     while (true)
     {
-        if (Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchLedgerBySequence(nextSequence, yield);
-            }))
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
+            rng && rng->maxSequence > nextSequence)
         {
             publishLedger(nextSequence, {});
             ++nextSequence;
@@ -930,32 +928,29 @@ void
 ReportingETL::monitorReadOnly()
 {
     BOOST_LOG_TRIVIAL(debug) << "Starting reporting in strict read only mode";
-    std::optional<uint32_t> latestSequence =
-        Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-            return backend_->fetchLatestLedgerSequence(yield);
-        });
-    if (!latestSequence)
-        latestSequence = networkValidatedLedgers_->getMostRecent();
-    if (!latestSequence)
-        return;
-    loadCacheAsync(*latestSequence);
-    latestSequence = *latestSequence + 1;
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+    uint32_t latestSequence;
+    if (!rng)
+        if (auto net = networkValidatedLedgers_->getMostRecent())
+            latestSequence = *net;
+        else
+            return;
+    loadCacheAsync(latestSequence);
+    latestSequence++;
     while (true)
     {
-        // try to grab the next ledger
-        if (Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchLedgerBySequence(*latestSequence, yield);
-            }))
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
+            rng && rng->maxSequence > latestSequence)
         {
-            publishLedger(*latestSequence, {});
-            latestSequence = *latestSequence + 1;
+            publishLedger(latestSequence, {});
+            latestSequence = latestSequence + 1;
         }
         else  // if we can't, wait until it's validated by the network, or 1
               // second passes, whichever occurs first. Even if we don't hear
               // from rippled, if ledgers are being written to the db, we
               // publish them
             networkValidatedLedgers_->waitUntilValidatedByNetwork(
-                *latestSequence, 1000);
+                latestSequence, 1000);
     }
 }
 
