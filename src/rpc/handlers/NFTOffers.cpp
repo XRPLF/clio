@@ -12,25 +12,23 @@
 namespace RPC {
 
 static void
-appendNftOfferJson(
-    std::shared_ptr<ripple::SLE const> const& offer,
-    boost::json::array& offers)
+appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
 {
     offers.push_back(boost::json::object_kind);
     boost::json::object& obj(offers.back().as_object());
 
-    obj.at("index") = ripple::to_string(offer->key());
-    obj.at("flags") = (*offer)[ripple::sfFlags];
-    obj.at("owner") = ripple::toBase58(offer->getAccountID(ripple::sfOwner));
+    obj.at("index") = ripple::to_string(offer.key());
+    obj.at("flags") = (offer)[ripple::sfFlags];
+    obj.at("owner") = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
 
-    if (offer->isFieldPresent(ripple::sfDestination))
+    if (offer.isFieldPresent(ripple::sfDestination))
         obj["destination"] =
-            ripple::toBase58(offer->getAccountID(ripple::sfDestination));
+            ripple::toBase58(offer.getAccountID(ripple::sfDestination));
 
-    if (offer->isFieldPresent(ripple::sfExpiration))
-        obj.at("expiration") = offer->getFieldU32(ripple::sfExpiration);
+    if (offer.isFieldPresent(ripple::sfExpiration))
+        obj.at("expiration") = offer.getFieldU32(ripple::sfExpiration);
 
-    obj.at("amount") = toBoostJson(offer->getFieldAmount(ripple::sfAmount)
+    obj.at("amount") = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
                                        .getJson(ripple::JsonOptions::none));
 }
 
@@ -70,10 +68,9 @@ enumerateNFTOffers(
 
     auto& jsonOffers = response["offers"].as_array();
 
-    std::vector<std::shared_ptr<ripple::SLE const>> offers;
+    std::vector<ripple::SLE> offers;
     std::uint64_t reserve(limit);
     ripple::uint256 cursor;
-    std::uint64_t startHint = 0;
 
     if (request.contains("marker"))
     {
@@ -96,8 +93,7 @@ enumerateNFTOffers(
         if (tokenid != sle->getFieldH256(ripple::sfTokenID))
             return Status{Error::rpcINVALID_PARAMS, "invalidTokenid"};
 
-        startHint = sle->getFieldU64(ripple::sfOfferNode);
-        appendNftOfferJson(sle, jsonOffers);
+        appendNftOfferJson(*sle, jsonOffers);
         offers.reserve(reserve);
     }
     else
@@ -106,15 +102,14 @@ enumerateNFTOffers(
         offers.reserve(++reserve);
     }
 
-    if (!forEachItemAfter(
-            lgrInfo,
+    if (!traverseOwnedNodes(
+            *context.backend,
             directory,
+            lgrInfo.seq,
             cursor,
-            startHint,
-            reserve,
-            context,
-            [&offers](std::shared_ptr<ripple::SLE const> const& offer) {
-                if (offer->getType() == ripple::ltNFTOKEN_OFFER)
+            context.yield,
+            [&offers](ripple::SLE const& offer) {
+                if (offer.getType() == ripple::ltNFTOKEN_OFFER)
                 {
                     offers.emplace_back(offer);
                     return true;
@@ -129,7 +124,7 @@ enumerateNFTOffers(
     if (offers.size() == reserve)
     {
         response.at("limit") = limit;
-        response.at("marker") = to_string(offers.back()->key());
+        response.at("marker") = to_string(offers.back().key());
         offers.pop_back();
     }
 

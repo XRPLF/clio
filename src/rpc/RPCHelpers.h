@@ -78,15 +78,14 @@ traverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<bool(ripple::SLE)> atOwnedNode);
 
-bool
-forEachItemAfter(
-    ripple::LedgerInfo const& lgrInfo,
-    ripple::Keylet const& root,
-    ripple::uint256 const& after,
-    std::uint64_t const hint,
-    std::uint64_t limit,
-    Context const& context,
-    std::function<bool(std::shared_ptr<ripple::SLE const> const&)> const f);
+std::optional<ripple::uint256>
+traverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::Keylet const& directory,
+    std::uint32_t sequence,
+    ripple::uint256 const& cursor,
+    boost::asio::yield_context& yield,
+    std::function<bool(ripple::SLE)> atOwnedNode);
 
 std::shared_ptr<ripple::SLE const>
 read(
