@@ -119,19 +119,18 @@ It is possible to run multiple clio nodes that share access to the same database
 The clio nodes don't need to know about each other. You can simply spin up more clio
 nodes pointing to the same database as you wish, and shut them down as you wish.
 On startup, each clio node queries the database for the latest ledger. If this latest
-ledger does not change for 20 seconds, the clio node begins extracting ledgers
+ledger does not change for some time, the clio node begins extracting ledgers
 and writing to the database. If the clio node detects a ledger that it is trying to
 write has already been written, the clio node will backoff and stop writing. If later
-the clio node sees no ledger written for 20 seconds, it will start writing again.
+the clio node sees no ledger written for some time, it will start writing again.
 This algorithm ensures that at any given time, one and only one clio node is writing
 to the database.
 
 It is possible to force clio to only read data, and to never become a writer.
-To do this, set `read_only: true` in the config. Be aware though that this reduces
-fault tolerance, since this clio node will never become the writer in the event that
-the writer fails. It is best to just use a cluster of homogenous nodes, and let them
-figure out automatically who should be the writer. Generally, the first clio node
-you start will be the writer.
+To do this, set `read_only: true` in the config. One common setup is to have a
+small number of writer nodes that are inaccessible to clients, with several
+read only nodes handling client requests. The number of read only nodes can be scaled
+up or down in response to request volume.
 
 When using multiple rippled servers as data sources and multiple clio nodes,
 each clio node should use the same set of rippled servers as sources. The order doesn't matter.
