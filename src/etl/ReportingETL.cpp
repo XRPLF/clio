@@ -974,6 +974,8 @@ ReportingETL::monitorReadOnly()
             latestSequence = *net;
         else
             return;
+    else
+        latestSequence = rng->maxSequence;
     loadCacheAsync(latestSequence);
     latestSequence++;
     while (true)
