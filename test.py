@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from ast import parse
 import websockets
 import asyncio
 import json
@@ -486,7 +487,7 @@ def writeLedgerData(data,filename):
             f.write('\n')
 
 
-async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
+async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1, marker = None):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         blobs = []
@@ -494,7 +495,6 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
         async with websockets.connect(address,max_size=1000000000) as ws:
             if int(limit) < 2048:
                 limit = 2048
-            marker = None
             while True:
                 res = {}
                 if marker is None:
@@ -975,6 +975,7 @@ parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx",
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
+parser.add_argument('--marker')
 parser.add_argument('--hash')
 parser.add_argument('--account')
 parser.add_argument('--ledger')
@@ -993,6 +994,7 @@ parser.add_argument('--transactions',default=False)
 parser.add_argument('--minLedger',default=-1)
 parser.add_argument('--maxLedger',default=-1)
 parser.add_argument('--filename',default=None)
+parser.add_argument('--ledgerIndex', default=-1)
 parser.add_argument('--index')
 parser.add_argument('--numPages',default=3)
 parser.add_argument('--base')
@@ -1257,7 +1259,7 @@ def run(args):
                 args.filename = str(args.port) + "." + str(args.ledger)
 
         res = asyncio.get_event_loop().run_until_complete(
-                ledger_data_full(args.ip, args.port, args.ledger, bool(args.binary), args.limit,args.type, int(args.count)))
+                ledger_data_full(args.ip, args.port, args.ledger, bool(args.binary), args.limit,args.type, int(args.count), args.marker))
         print(len(res[0]))
         if args.verify:
             writeLedgerData(res,args.filename)
