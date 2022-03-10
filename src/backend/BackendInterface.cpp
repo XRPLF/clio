@@ -273,7 +273,7 @@ BackendInterface::fetchLedgerPage(
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j)
             {
-                msg << " - " << ripple::strHex(keys[i]);
+                msg << " - " << ripple::strHex(keys[j]);
             }
             BOOST_LOG_TRIVIAL(error) << __func__ << msg.str();
         }
