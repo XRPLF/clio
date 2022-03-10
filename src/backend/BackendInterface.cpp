@@ -270,6 +270,12 @@ BackendInterface::fetchLedgerPage(
             BOOST_LOG_TRIVIAL(error)
                 << __func__ << " incorrect successor table. key = "
                 << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
+            std::stringstream msg;
+            for (size_t j = 0; j < objects.size(); ++j)
+            {
+                msg << " - " << ripple::strHex(keys[i]);
+            }
+            BOOST_LOG_TRIVIAL(error) << __func__ << msg.str();
         }
         assert(objects[i].size());
         page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
