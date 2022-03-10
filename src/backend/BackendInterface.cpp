@@ -258,12 +258,19 @@ BackendInterface::fetchLedgerPage(
 
         if (!succ)
             break;
+        BOOST_LOG_TRIVIAL(trace) << ripple::strHex(*succ);
         keys.push_back(std::move(*succ));
     }
 
     auto objects = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < objects.size(); ++i)
     {
+        if (!objects[i].size())
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " incorrect successor table. key = "
+                << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
+        }
         assert(objects[i].size());
         page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
     }
