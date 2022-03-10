@@ -1019,6 +1019,38 @@ ETLLoadBalancer::forwardToRippled(
     return {};
 }
 
+void
+ETLLoadBalancer::notifyAll(boost::json::object const& request)
+{
+    boost::asio::io_context ioc;
+    boost::asio::io_context::strand strand{ioc};
+    std::optional<boost::asio::io_context::work> work;
+    work.emplace(ioc);
+
+    std::atomic_int numOutstanding = sources_.size();
+
+    for (auto const& src : sources_)
+    {
+        boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
+            auto response = src->forwardToRippled(request, "", yield);
+
+            if (!response || response->contains("error"))
+                BOOST_LOG_TRIVIAL(debug)
+                    << "error forwarding " << boost::json::serialize(request)
+                    << " to source " << src;
+            else
+                BOOST_LOG_TRIVIAL(debug)
+                    << "successfully forwarded "
+                    << boost::json::serialize(request) << " to source " << src;
+
+            if (--numOutstanding == 0)
+                work.reset();
+        });
+    }
+
+    ioc.run();
+}
+
 template <class Derived>
 std::optional<boost::json::object>
 ETLSourceImpl<Derived>::forwardToRippled(

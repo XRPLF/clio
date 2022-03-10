@@ -537,7 +537,25 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Finished ledger update. " << detail::toString(lgrInfo);
+
+    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
+                            << "Telling rippled it can_delete " << lgrInfo.seq;
+
+    canDelete(lgrInfo.seq);
+
     return {lgrInfo, success};
+}
+
+void
+ReportingETL::canDelete(std::uint32_t seq)
+{
+    auto t = std::thread([this, seq]() {
+        loadBalancer_->notifyAll(
+            {{"command", "can_delete"},
+             {"can_delete", boost::json::value(seq)}});
+    });
+
+    t.detach();
 }
 
 // Database must be populated when this starts

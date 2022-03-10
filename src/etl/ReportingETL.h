@@ -189,6 +189,10 @@ private:
     void
     monitorReadOnly();
 
+    /// Notifies all ETL sources that they can delete a given ledger
+    void
+    canDelete(std::uint32_t seq);
+
     /// Extract data for a particular ledger from an ETL source. This function
     /// continously tries to extract the specified ledger (using all available
     /// ETL sources) until the extraction succeeds, or the server shuts down.

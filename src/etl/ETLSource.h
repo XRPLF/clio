@@ -101,6 +101,8 @@ class ETLSourceImpl : public ETLSource
     std::chrono::system_clock::time_point lastMsgTime_;
     mutable std::mutex lastMsgTimeMtx_;
 
+    std::atomic_bool backfilling_{false};
+
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     ETLLoadBalancer& balancer_;
@@ -232,6 +234,12 @@ public:
         std::lock_guard lck(mtx_);
         validatedLedgers_ = std::move(pairs);
         validatedLedgersRaw_ = range;
+
+        if (backfilling_ || validatedLedgers_.size() == 1)
+            return;
+
+        auto t = std::thread([this]() { backfill(); });
+        t.detach();
     }
 
     /// @return the validated range of this source
@@ -279,6 +287,75 @@ public:
                     std::chrono::system_clock::now() - getLastMsgTime())
                     .count());
         return res;
+    }
+
+    void
+    backfillRange(std::pair<std::uint32_t, std::uint32_t> const& range)
+    {
+        boost::asio::io_context ioc;
+        boost::asio::io_context::strand strand{ioc};
+        std::optional<boost::asio::io_context::work> work;
+        work.emplace(ioc);
+
+        auto const& [lo, hi] = range;
+        std::atomic_int numOutstanding = hi - lo + 1;
+
+        BOOST_LOG_TRIVIAL(debug)
+            << "Backfilling ledger range " << lo << "-" << hi;
+
+        for (auto i = lo; i <= hi; ++i)
+        {
+            boost::asio::spawn(
+                strand,
+                [i, this, &numOutstanding, &work](
+                    boost::asio::yield_context yield) {
+                    forwardToRippled(
+                        {{"command", "ledger_request"},
+                         {"ledger_index", boost::json::value(i)}},
+                        "",
+                        yield);
+
+                    if (--numOutstanding == 0)
+                        work.reset();
+                });
+        }
+
+        ioc.run();
+    }
+
+    void
+    backfill()
+    {
+        backfilling_ = true;
+
+        BOOST_LOG_TRIVIAL(info) << "Ledger range not continuous attempting "
+                                << "backfill of source " << ip_;
+
+        std::vector<std::pair<std::uint32_t, uint32_t>> rangesToBackfill = {};
+        {
+            auto ct = 0;
+
+            std::lock_guard lk(mtx_);
+            rangesToBackfill.reserve(validatedLedgers_.size() - 1);
+            for (auto const& [low, hi] : validatedLedgers_)
+            {
+                if (ct > 0)
+                    rangesToBackfill[ct - 1].second = low - 1;
+
+                rangesToBackfill.push_back({hi + 1, 0});
+
+                ++ct;
+            }
+
+            rangesToBackfill.pop_back();
+        }
+
+        for (auto const& range : rangesToBackfill)
+        {
+            backfillRange(range);
+        }
+
+        backfilling_ = false;
     }
 
     /// Download a ledger in full
@@ -526,6 +603,9 @@ public:
         boost::json::object const& request,
         std::string const& clientIp,
         boost::asio::yield_context& yield) const;
+
+    void
+    notifyAll(boost::json::object const& request);
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a
