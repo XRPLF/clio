@@ -78,8 +78,7 @@ std::vector<unsigned char>
 PgResult::asUnHexedBlob(int ntuple, int nfield) const
 {
     std::string_view view{c_str(ntuple, nfield) + 2};
-    auto res = ripple::strUnHex(view.size(),
-                          view.cbegin(), view.cend());
+    auto res = ripple::strUnHex(view.size(), view.cbegin(), view.cend());
     if (res)
         return *res;
     return {};
@@ -1896,7 +1895,6 @@ PgQuery::operator()(const char* command, boost::asio::yield_context& yield)
 {
     return operator()(pg_params{command, {}}, yield);
 }
-
 
 void
 PgQuery::bulkInsert(

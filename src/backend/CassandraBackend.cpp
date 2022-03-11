@@ -1360,8 +1360,7 @@ CassStatement*
 CassandraBackend::makeStatement(const char* query, std::size_t params)
 {
     CassStatement* ret = cass_statement_new(query, params);
-    CassError rc =
-        cass_statement_set_consistency(ret, CASS_CONSISTENCY_QUORUM);
+    CassError rc = cass_statement_set_consistency(ret, CASS_CONSISTENCY_QUORUM);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
@@ -1401,7 +1400,6 @@ CassandraBackend::isOpen()
 {
     return open_;
 }
-
 
 std::optional<std::uint32_t>
 CassandraBackend::fetchLatestLedgerSequence(
@@ -1569,8 +1567,7 @@ CassandraBackend::executeAsyncHelper(
 {
     CassFuture* fut = cass_session_execute(session_.get(), statement.get());
 
-    cass_future_set_callback(
-        fut, callback, static_cast<void*>(&callbackData));
+    cass_future_set_callback(fut, callback, static_cast<void*>(&callbackData));
 
     cass_future_free(fut);
 }
@@ -1656,9 +1653,8 @@ CassandraBackend::executeSyncUpdate(const CassandraStatement& statement) const
     if (rc != CASS_OK)
     {
         cass_result_free(res);
-        BOOST_LOG_TRIVIAL(error)
-            << "executeSyncUpdate - error getting result " << rc << ", "
-            << cass_error_desc(rc);
+        BOOST_LOG_TRIVIAL(error) << "executeSyncUpdate - error getting result "
+                                 << rc << ", " << cass_error_desc(rc);
         return false;
     }
     cass_result_free(res);
@@ -1729,62 +1725,63 @@ CassandraBackend::incrementOutstandingRequestCount() const
         std::unique_lock<std::mutex> lck(throttleMutex_);
         if (!canAddRequest())
         {
-            BOOST_LOG_TRIVIAL(trace)
-                << __func__ << " : "
-                << "Max outstanding requests reached. "
-                << "Waiting for other requests to finish";
+            BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
+                                     << "Max outstanding requests reached. "
+                                     << "Waiting for other requests to finish";
             throttleCv_.wait(lck, [this]() { return canAddRequest(); });
         }
     }
     ++numRequestsOutstanding_;
 }
 
-    bool CassandraBackend::doFinishWrites() {
-        // if db is empty, sync. if sync interval is 1, always sync.
-        // if we've never synced, sync. if its been greater than the configured
-        // sync interval since we last synced, sync.
-        if (!range || syncInterval_ == 1 || lastSync_ == 0 ||
-            ledgerSequence_ - syncInterval_ >= lastSync_)
+bool
+CassandraBackend::doFinishWrites()
+{
+    // if db is empty, sync. if sync interval is 1, always sync.
+    // if we've never synced, sync. if its been greater than the configured
+    // sync interval since we last synced, sync.
+    if (!range || syncInterval_ == 1 || lastSync_ == 0 ||
+        ledgerSequence_ - syncInterval_ >= lastSync_)
+    {
+        // wait for all other writes to finish
+        sync();
+        // write range
+        if (!range)
         {
-            // wait for all other writes to finish
-            sync();
-            // write range
-            if (!range)
-            {
-                CassandraStatement statement{updateLedgerRange_};
-                statement.bindNextInt(ledgerSequence_);
-                statement.bindNextBoolean(false);
-                statement.bindNextInt(ledgerSequence_);
-                executeSyncWrite(statement);
-            }
             CassandraStatement statement{updateLedgerRange_};
             statement.bindNextInt(ledgerSequence_);
-            statement.bindNextBoolean(true);
-            if (lastSync_ == 0)
-                statement.bindNextInt(ledgerSequence_ - 1);
-            else
-                statement.bindNextInt(lastSync_);
-            if (!executeSyncUpdate(statement))
-            {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__ << " Update failed for ledger "
-                    << std::to_string(ledgerSequence_) << ". Returning";
-                return false;
-            }
-            BOOST_LOG_TRIVIAL(info) << __func__ << " Committed ledger "
-                                    << std::to_string(ledgerSequence_);
-            lastSync_ = ledgerSequence_;
+            statement.bindNextBoolean(false);
+            statement.bindNextInt(ledgerSequence_);
+            executeSyncWrite(statement);
         }
+        CassandraStatement statement{updateLedgerRange_};
+        statement.bindNextInt(ledgerSequence_);
+        statement.bindNextBoolean(true);
+        if (lastSync_ == 0)
+            statement.bindNextInt(ledgerSequence_ - 1);
         else
+            statement.bindNextInt(lastSync_);
+        if (!executeSyncUpdate(statement))
         {
-            BOOST_LOG_TRIVIAL(info)
-                << __func__ << " Skipping commit. sync interval is "
-                << std::to_string(syncInterval_) << " - last sync is "
-                << std::to_string(lastSync_) << " - ledger sequence is "
-                << std::to_string(ledgerSequence_);
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Update failed for ledger "
+                << std::to_string(ledgerSequence_) << ". Returning";
+            return false;
         }
-        return true;
+        BOOST_LOG_TRIVIAL(info) << __func__ << " Committed ledger "
+                                << std::to_string(ledgerSequence_);
+        lastSync_ = ledgerSequence_;
     }
+    else
+    {
+        BOOST_LOG_TRIVIAL(info)
+            << __func__ << " Skipping commit. sync interval is "
+            << std::to_string(syncInterval_) << " - last sync is "
+            << std::to_string(lastSync_) << " - ledger sequence is "
+            << std::to_string(ledgerSequence_);
+    }
+    return true;
+}
 
 CassPrepared const*
 CassandraPreparedStatement::get() const
@@ -1872,8 +1869,8 @@ CassandraStatement::bindNextBoolean(bool val)
     if (!statement_)
         throw std::runtime_error(
             "CassandraStatement::bindNextBoolean - statement_ is null");
-    CassError rc = cass_statement_bind_bool(
-        statement_, 1, static_cast<cass_bool_t>(val));
+    CassError rc =
+        cass_statement_bind_bool(statement_, 1, static_cast<cass_bool_t>(val));
     if (rc != CASS_OK)
     {
         std::stringstream ss;
@@ -1952,11 +1949,9 @@ CassandraStatement::bindNextUInt(const std::uint32_t value)
         throw std::runtime_error(
             "CassandraStatement::bindNextUInt - statement_ is null");
     BOOST_LOG_TRIVIAL(trace)
-        << std::to_string(curBindingIndex_)
-        << " " << std::to_string(value);
+        << std::to_string(curBindingIndex_) << " " << std::to_string(value);
     CassError rc =
-        cass_statement_bind_int32(statement_,
-                                     curBindingIndex_, value);
+        cass_statement_bind_int32(statement_, curBindingIndex_, value);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
@@ -2017,8 +2012,7 @@ CassandraStatement::bindNextIntTuple(
         BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
         throw std::runtime_error(ss.str());
     }
-    rc = cass_statement_bind_tuple(statement_,
-                                      curBindingIndex_, tuple);
+    rc = cass_statement_bind_tuple(statement_, curBindingIndex_, tuple);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
@@ -2097,8 +2091,8 @@ CassandraResult::getBytes()
     if (rc != CASS_OK)
     {
         std::stringstream msg;
-        msg << "CassandraResult::getBytes - error getting value: " << rc
-            << ", " << cass_error_desc(rc);
+        msg << "CassandraResult::getBytes - error getting value: " << rc << ", "
+            << cass_error_desc(rc);
         BOOST_LOG_TRIVIAL(error) << msg.str();
         throw std::runtime_error(msg.str());
     }
@@ -2138,8 +2132,8 @@ CassandraResult::getInt64()
     if (rc != CASS_OK)
     {
         std::stringstream msg;
-        msg << "CassandraResult::getInt64 - error getting value: " << rc
-            << ", " << cass_error_desc(rc);
+        msg << "CassandraResult::getInt64 - error getting value: " << rc << ", "
+            << cass_error_desc(rc);
         BOOST_LOG_TRIVIAL(error) << msg.str();
         throw std::runtime_error(msg.str());
     }
@@ -2157,8 +2151,7 @@ std::pair<std::int64_t, std::int64_t>
 CassandraResult::getInt64Tuple()
 {
     if (!row_)
-        throw std::runtime_error(
-                "CassandraResult::getInt64Tuple - no result");
+        throw std::runtime_error("CassandraResult::getInt64Tuple - no result");
 
     CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
     CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
@@ -2167,7 +2160,7 @@ CassandraResult::getInt64Tuple()
     {
         cass_iterator_free(tupleIter);
         throw std::runtime_error(
-                "CassandraResult::getInt64Tuple - failed to iterate tuple");
+            "CassandraResult::getInt64Tuple - failed to iterate tuple");
     }
 
     CassValue const* value = cass_iterator_get_value(tupleIter);
@@ -2177,7 +2170,7 @@ CassandraResult::getInt64Tuple()
     {
         cass_iterator_free(tupleIter);
         throw std::runtime_error(
-                "CassandraResult::getInt64Tuple - failed to iterate tuple");
+            "CassandraResult::getInt64Tuple - failed to iterate tuple");
     }
 
     value = cass_iterator_get_value(tupleIter);
@@ -2196,8 +2189,7 @@ CassandraResult::getBytesTuple()
     std::size_t bufSize;
 
     if (!row_)
-        throw std::runtime_error(
-            "CassandraResult::getBytesTuple - no result");
+        throw std::runtime_error("CassandraResult::getBytesTuple - no result");
     CassValue const* tuple = cass_row_get_column(row_, curGetIndex_);
     CassIterator* tupleIter = cass_iterator_from_tuple(tuple);
     if (!cass_iterator_next(tupleIter))

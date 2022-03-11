@@ -415,8 +415,8 @@ SubscriptionManager::SubscriptionManager(
     // We will eventually want to clamp this to be the number of strands,
     // since adding more threads than we have strands won't see any
     // performance benefits
-    BOOST_LOG_TRIVIAL(info) << "Starting subscription manager with "
-                            << numThreads << " workers";
+    BOOST_LOG_TRIVIAL(info)
+        << "Starting subscription manager with " << numThreads << " workers";
 
     workers_.reserve(numThreads);
     for (auto i = numThreads; i > 0; --i)

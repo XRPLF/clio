@@ -983,8 +983,8 @@ ETLLoadBalancer::fetchLedger(
     bool success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors](
             auto& source) {
-            auto [status, data] =
-                source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
+            auto [status, data] = source->fetchLedger(
+                ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
             if (status.ok() && (response.validated() || true))
             {
@@ -1193,8 +1193,7 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
 }
 
 std::shared_ptr<ETLLoadBalancer>
-ETLLoadBalancer::
-    make_ETLLoadBalancer(
+ETLLoadBalancer::make_ETLLoadBalancer(
     const boost::json::object& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
@@ -1243,4 +1242,3 @@ ETLLoadBalancer::toJson() const
 }
 
 // ----------------------------------------------------------------------------
-
