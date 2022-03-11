@@ -840,7 +840,7 @@ ReportingETL::monitor()
     while (true)
     {
         if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
-            rng && rng->maxSequence > nextSequence)
+            rng && rng->maxSequence >= nextSequence)
         {
             publishLedger(nextSequence, {});
             ++nextSequence;
@@ -981,7 +981,7 @@ ReportingETL::monitorReadOnly()
     while (true)
     {
         if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
-            rng && rng->maxSequence > latestSequence)
+            rng && rng->maxSequence >= latestSequence)
         {
             publishLedger(latestSequence, {});
             latestSequence = latestSequence + 1;
