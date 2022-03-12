@@ -13,7 +13,6 @@ SimpleCache::update(
     uint32_t seq,
     bool isBackground)
 {
-    deferReads_ = true;
     {
         std::unique_lock lck{mtx_};
         if (seq > latestSeq_)
@@ -41,13 +40,10 @@ SimpleCache::update(
             }
         }
     }
-    deferReads_ = false;
 }
 std::optional<LedgerObject>
 SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
-    if (deferReads_)
-        return {};
     if (!full_)
         return {};
     std::shared_lock{mtx_};
@@ -61,8 +57,6 @@ SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<LedgerObject>
 SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 {
-    if (deferReads_)
-        return {};
     if (!full_)
         return {};
     std::shared_lock lck{mtx_};
@@ -77,8 +71,6 @@ SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<Blob>
 SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
-    if (deferReads_)
-        return {};
     if (seq > latestSeq_)
         return {};
     std::shared_lock lck{mtx_};

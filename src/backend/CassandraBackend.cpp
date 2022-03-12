@@ -969,8 +969,8 @@ CassandraBackend::open(bool readOnly)
     if (keyspace.empty())
     {
         BOOST_LOG_TRIVIAL(warning)
-            << "No keyspace specified. Using keyspace oceand";
-        keyspace = "oceand";
+            << "No keyspace specified. Using keyspace clio";
+        keyspace = "clio";
     }
 
     int rf = getInt("replication_factor") ? *getInt("replication_factor") : 3;

@@ -365,8 +365,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " object neighbors not included. using cache";
-            assert(backend_->cache().isFull());
-            if (!backend_->cache().isFull())
+            if (!backend_->cache().isFull() ||
+                backend_->cache().latestLedgerSequence() != lgrInfo.seq - 1)
                 throw std::runtime_error(
                     "Cache is not full, but object neighbors were not "
                     "included");
@@ -420,7 +420,11 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     {
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " object neighbors not included. using cache";
-        assert(backend_->cache().isFull());
+        if (!backend_->cache().isFull() ||
+            backend_->cache().latestLedgerSequence() != lgrInfo.seq)
+            throw std::runtime_error(
+                "Cache is not full, but object neighbors were not "
+                "included");
         for (auto const& obj : cacheUpdates)
         {
             if (modified.count(obj.key))
