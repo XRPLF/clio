@@ -148,6 +148,8 @@ static std::unordered_set<std::string> forwardCommands{
     "submit",
     "submit_multisigned",
     "fee",
+    "ledger_closed",
+    "ledger_current",
     "ripple_path_find",
     "manifest"};
 
