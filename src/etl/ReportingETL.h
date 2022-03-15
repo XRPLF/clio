@@ -46,6 +46,10 @@ private:
     std::optional<std::uint32_t> onlineDeleteInterval_;
     std::uint32_t extractorThreads_ = 1;
 
+    enum class CacheLoadStyle { ASYNC, SYNC, NOT_AT_ALL };
+
+    CacheLoadStyle cacheLoadStyle_ = CacheLoadStyle::ASYNC;
+
     std::thread worker_;
     boost::asio::io_context& ioContext_;
 
@@ -62,6 +66,8 @@ private:
     /// the application wide asio io_service, and a strand is used to ensure
     /// ledgers are published in order
     boost::asio::io_context::strand publishStrand_;
+
+    std::vector<boost::asio::io_context::strand> cacheDownloadStrands_;
 
     /// Mechanism for communicating with ETL sources. ETLLoadBalancer wraps an
     /// arbitrary number of ETL sources and load balances ETL requests across
@@ -148,9 +154,11 @@ private:
     loadInitialLedger(uint32_t sequence);
 
     /// Populates the cache by walking through the given ledger. Should only be
-    /// called once
+    /// called once. The default behavior is to return immediately and populate
+    /// the cache in the background. This can be overridden via config
+    /// parameter, to populate synchronously, or not at all
     void
-    loadCacheAsync(uint32_t seq);
+    loadCache(uint32_t seq);
 
     /// Run ETL. Extracts ledgers and writes them to the database, until a
     /// write conflict occurs (or the server shuts down).

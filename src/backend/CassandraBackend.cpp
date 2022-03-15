@@ -24,6 +24,7 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
         BOOST_LOG_TRIVIAL(error)
             << "ERROR!!! Cassandra write error: " << rc << ", "
             << cass_error_desc(rc) << " id= " << requestParams.toString()
+            << ", current retries " << requestParams.currentRetries
             << ", retrying in " << wait.count() << " milliseconds";
         ++requestParams.currentRetries;
         std::shared_ptr<boost::asio::steady_timer> timer =
