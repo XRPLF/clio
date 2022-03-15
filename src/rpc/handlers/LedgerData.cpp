@@ -138,7 +138,8 @@ doLedgerData(Context const& context)
         for (size_t i = 0; i < objs.size(); ++i)
         {
             auto&& obj = objs[i];
-            results.push_back({std::move(keys[i]), std::move(obj)});
+            if (obj.size())
+                results.push_back({std::move(keys[i]), std::move(obj)});
         }
         if (*diffCursor > lgrInfo.seq)
             response["marker"] = *diffCursor - 1;
