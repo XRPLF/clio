@@ -152,8 +152,7 @@ static std::unordered_set<std::string> forwardCommands{
 bool
 validHandler(std::string const& method)
 {
-    return handlerTable.contains(method)
-        || forwardCommands.contains(method);
+    return handlerTable.contains(method) || forwardCommands.contains(method);
 }
 
 bool
@@ -217,7 +216,7 @@ buildResponse(Context const& ctx)
 
         if (auto object = std::get_if<boost::json::object>(&v))
             (*object)["validated"] = true;
-        
+
         return v;
     }
     catch (InvalidParamsError const& err)

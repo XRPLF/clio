@@ -19,7 +19,7 @@ Counters::initializeCounter(std::string const& method)
 
 void
 Counters::rpcErrored(std::string const& method)
-{    
+{
     if (!validHandler(method))
         return;
 
