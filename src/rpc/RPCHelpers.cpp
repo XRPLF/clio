@@ -954,7 +954,7 @@ postProcessOrderBook(
             else
             {
                 saTakerGetsFunded = saOwnerFundsLimit;
-                offerJson["taker_gets_funded"] = saTakerGetsFunded.getText();
+                offerJson["taker_gets_funded"] = toBoostJson(saTakerGetsFunded.getJson(ripple::JsonOptions::none));
                 offerJson["taker_pays_funded"] = toBoostJson(
                     std::min(
                         saTakerPays,
