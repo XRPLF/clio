@@ -67,6 +67,81 @@ getRequiredUInt(boost::json::object const& request, std::string const& field)
         throw InvalidParamsError("Missing field " + field);
 }
 
+bool
+isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID)
+{
+    if (sle.getType() == ripple::ltRIPPLE_STATE)
+    {
+        return (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() ==
+                accountID) ||
+            (sle.getFieldAmount(ripple::sfHighLimit).getIssuer() == accountID);
+    }
+    else if (sle.isFieldPresent(ripple::sfAccount))
+    {
+        return sle.getAccountID(ripple::sfAccount) == accountID;
+    }
+    else if (sle.getType() == ripple::ltSIGNER_LIST)
+    {
+        ripple::Keylet const accountSignerList =
+            ripple::keylet::signers(accountID);
+        return sle.key() == accountSignerList.key;
+    }
+
+    return false;
+}
+
+std::optional<AccountCursor>
+parseAccountCursor(
+    BackendInterface const& backend,
+    std::uint32_t seq,
+    std::optional<std::string> jsonCursor,
+    ripple::AccountID const& accountID,
+    boost::asio::yield_context& yield)
+{
+    ripple::uint256 cursorIndex = beast::zero;
+    std::uint64_t startHint = 0;
+
+    if (!jsonCursor)
+        return AccountCursor({cursorIndex, startHint});
+
+    // Cursor is composed of a comma separated index and start hint. The
+    // former will be read as hex, and the latter using boost lexical cast.
+    std::stringstream cursor(*jsonCursor);
+    std::string value;
+    if (!std::getline(cursor, value, ','))
+        return {};
+
+    if (!cursorIndex.parseHex(value))
+        return {};
+
+    if (!std::getline(cursor, value, ','))
+        return {};
+
+    try
+    {
+        startHint = boost::lexical_cast<std::uint64_t>(value);
+    }
+    catch (boost::bad_lexical_cast&)
+    {
+        return {};
+    }
+
+    // We then must check if the object pointed to by the marker is actually
+    // owned by the account in the request.
+    auto const ownedNode = backend.fetchLedgerObject(cursorIndex, seq, yield);
+
+    if (!ownedNode)
+        return {};
+
+    ripple::SerialIter it{ownedNode->data(), ownedNode->size()};
+    ripple::SLE sle{it, cursorIndex};
+
+    if (!isOwnedByAccount(sle, accountID))
+        return {};
+
+    return AccountCursor({cursorIndex, startHint});
+}
+
 std::optional<std::string>
 getString(boost::json::object const& request, std::string const& field)
 {
@@ -349,7 +424,9 @@ parseStringAsUInt(std::string const& value)
     {
         index = boost::lexical_cast<std::uint32_t>(value);
     }
-    catch(boost::bad_lexical_cast const&) {}
+    catch (boost::bad_lexical_cast const&)
+    {
+    }
 
     return index;
 }
@@ -393,13 +470,13 @@ ledgerInfoFromRequest(Context const& ctx)
     }
     else
     {
-       ledgerSequence = ctx.range.maxSequence;
+        ledgerSequence = ctx.range.maxSequence;
     }
 
     if (!ledgerSequence)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerIndexMalformed"};
 
-    auto lgrInfo = 
+    auto lgrInfo =
         ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo)
@@ -426,49 +503,154 @@ ledgerInfoToBlob(ripple::LedgerInfo const& info, bool includeHash)
     return s.peekData();
 }
 
-std::optional<ripple::uint256>
+std::uint64_t
+getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID)
+{
+    if (sle.getType() == ripple::ltRIPPLE_STATE)
+    {
+        if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
+            return sle.getFieldU64(ripple::sfLowNode);
+        else if (
+            sle.getFieldAmount(ripple::sfHighLimit).getIssuer() == accountID)
+            return sle.getFieldU64(ripple::sfHighNode);
+    }
+
+    if (!sle.isFieldPresent(ripple::sfOwnerNode))
+        return 0;
+
+    return sle.getFieldU64(ripple::sfOwnerNode);
+}
+
+std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::AccountID const& accountID,
     std::uint32_t sequence,
-    ripple::uint256 const& cursor,
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<bool(ripple::SLE)> atOwnedNode)
+    std::function<void(ripple::SLE)> atOwnedNode)
 {
-    if (!backend.fetchLedgerObject(
-            ripple::keylet::account(accountID).key, sequence, yield))
-        throw AccountNotFoundError(ripple::toBase58(accountID));
+    auto parsedCursor =
+        parseAccountCursor(backend, sequence, jsonCursor, accountID, yield);
+
+    if (!parsedCursor)
+        return Status(ripple::rpcINVALID_PARAMS, "Malformed cursor");
+
+    auto cursor = AccountCursor({beast::zero, 0});
+
+    auto [hexCursor, startHint] = *parsedCursor;
+
     auto const rootIndex = ripple::keylet::ownerDir(accountID);
     auto currentIndex = rootIndex;
 
     std::vector<ripple::uint256> keys;
-    std::optional<ripple::uint256> nextCursor = {};
+    keys.reserve(limit);
 
     auto start = std::chrono::system_clock::now();
-    for (;;)
+
+    // If startAfter is not zero try jumping to that page using the hint
+    if (hexCursor.isNonZero())
     {
-        auto ownedNode =
-            backend.fetchLedgerObject(currentIndex.key, sequence, yield);
+        auto const hintIndex = ripple::keylet::page(rootIndex, startHint);
+        auto hintDir =
+            backend.fetchLedgerObject(hintIndex.key, sequence, yield);
 
-        if (!ownedNode)
+        if (hintDir)
         {
-            break;
+            ripple::SerialIter it{hintDir->data(), hintDir->size()};
+            ripple::SLE sle{it, hintIndex.key};
+
+            for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
+            {
+                if (key == hexCursor)
+                {
+                    // We found the hint, we can start here
+                    currentIndex = hintIndex;
+                    break;
+                }
+            }
         }
 
-        ripple::SerialIter it{ownedNode->data(), ownedNode->size()};
-        ripple::SLE dir{it, currentIndex.key};
-
-        for (auto const& key : dir.getFieldV256(ripple::sfIndexes))
+        bool found = false;
+        for (;;)
         {
-            if (key >= cursor)
+            auto const ownerDir =
+                backend.fetchLedgerObject(hintIndex.key, sequence, yield);
+
+            if (!ownerDir)
+                return Status(
+                    ripple::rpcINVALID_PARAMS, "Owner directory not found");
+
+            ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
+            ripple::SLE sle{it, hintIndex.key};
+
+            for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
+            {
+                if (!found)
+                {
+                    if (key == hexCursor)
+                        found = true;
+                }
+                else
+                {
+                    keys.push_back(key);
+
+                    if (--limit == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
+
+            if (limit == 0 && uNodeNext != 0)
+            {
+                cursor = AccountCursor({keys.back(), uNodeNext});
+                break;
+            }
+
+            if (uNodeNext == 0)
+                break;
+
+            currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
+        }
+    }
+    else
+    {
+        for (;;)
+        {
+            auto const ownerDir =
+                backend.fetchLedgerObject(currentIndex.key, sequence, yield);
+
+            if (!ownerDir)
+                return Status(ripple::rpcACT_NOT_FOUND);
+
+            ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
+            ripple::SLE sle{it, currentIndex.key};
+
+            for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
+            {
                 keys.push_back(key);
+
+                if (--limit == 0)
+                    break;
+            }
+
+            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
+
+            if (limit == 0)
+            {
+                cursor = AccountCursor({keys.back(), uNodeNext});
+                break;
+            }
+
+            if (uNodeNext == 0)
+                break;
+
+            currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
         }
-
-        auto const uNodeNext = dir.getFieldU64(ripple::sfIndexNext);
-        if (uNodeNext == 0)
-            break;
-
-        currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
     }
     auto end = std::chrono::system_clock::now();
 
@@ -486,14 +668,14 @@ traverseOwnedNodes(
     {
         ripple::SerialIter it{objects[i].data(), objects[i].size()};
         ripple::SLE sle(it, keys[i]);
-        if (!atOwnedNode(sle))
-        {
-            nextCursor = keys[i + 1];
-            break;
-        }
+
+        atOwnedNode(sle);
     }
 
-    return nextCursor;
+    if (limit == 0)
+        return cursor;
+
+    return AccountCursor({beast::zero, 0});
 }
 
 std::optional<ripple::Seed>
@@ -954,7 +1136,8 @@ postProcessOrderBook(
             else
             {
                 saTakerGetsFunded = saOwnerFundsLimit;
-                offerJson["taker_gets_funded"] = toBoostJson(saTakerGetsFunded.getJson(ripple::JsonOptions::none));
+                offerJson["taker_gets_funded"] = toBoostJson(
+                    saTakerGetsFunded.getJson(ripple::JsonOptions::none));
                 offerJson["taker_pays_funded"] = toBoostJson(
                     std::min(
                         saTakerPays,

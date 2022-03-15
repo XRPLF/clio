@@ -63,7 +63,8 @@ doAccountCurrencies(Context const& context)
         *context.backend,
         *accountID,
         lgrInfo.seq,
-        beast::zero,
+        std::numeric_limits<std::uint32_t>::max(),
+        {},
         context.yield,
         addToResponse);
 

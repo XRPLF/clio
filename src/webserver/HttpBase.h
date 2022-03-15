@@ -358,7 +358,7 @@ handle_request(
         }
         else
         {
-            // This can still technically be an error. Clio counts forwarded 
+            // This can still technically be an error. Clio counts forwarded
             // requests as successful.
 
             counters.rpcComplete(context->method, us);
