@@ -250,7 +250,8 @@ BackendInterface::fetchLedgerPage(
     LedgerPage page;
 
     std::vector<ripple::uint256> keys;
-    while (keys.size() < limit)
+    bool reachedEnd = false;
+    while (keys.size() < limit && !reachedEnd)
     {
         ripple::uint256 const& curCursor = keys.size() ? keys.back()
             : cursor                                   ? *cursor
@@ -258,15 +259,17 @@ BackendInterface::fetchLedgerPage(
         uint32_t seq = outOfOrder ? range->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
         if (!succ)
-            break;
-        BOOST_LOG_TRIVIAL(trace) << ripple::strHex(*succ);
-        keys.push_back(std::move(*succ));
+            reachedEnd = true;
+        else
+            keys.push_back(std::move(*succ));
     }
 
     auto objects = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < objects.size(); ++i)
     {
-        if (!objects[i].size())
+        if (objects[i].size())
+            page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
+        else if (!outOfOrder)
         {
             BOOST_LOG_TRIVIAL(error)
                 << __func__ << " incorrect successor table. key = "
@@ -277,12 +280,11 @@ BackendInterface::fetchLedgerPage(
                 msg << " - " << ripple::strHex(keys[j]);
             }
             BOOST_LOG_TRIVIAL(error) << __func__ << msg.str();
+            assert(false);
         }
-        assert(objects[i].size());
-        page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
     }
-    if (page.objects.size() >= limit)
-        page.cursor = page.objects.back().key;
+    if (!reachedEnd)
+        page.cursor = keys.back();
 
     return page;
 }

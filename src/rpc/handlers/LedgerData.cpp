@@ -69,12 +69,14 @@ doLedgerData(Context const& context)
             else
                 return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
         }
+        else
+        {
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
 
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
-
-        cursor = ripple::uint256{};
-        if (!cursor->parseHex(request.at("marker").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
+            cursor = ripple::uint256{};
+            if (!cursor->parseHex(request.at("marker").as_string().c_str()))
+                return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
+        }
     }
 
     auto v = ledgerInfoFromRequest(context);
@@ -163,8 +165,9 @@ doLedgerData(Context const& context)
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " number of results = " << results.size()
-        << " fetched in " << time << "microseconds";
+        << " fetched in " << time << " microseconds";
     boost::json::array objects;
+    objects.reserve(results.size());
     for (auto const& [key, object] : results)
     {
         ripple::STLedgerEntry sle{
@@ -174,12 +177,19 @@ doLedgerData(Context const& context)
             boost::json::object entry;
             entry["data"] = ripple::serializeHex(sle);
             entry["index"] = ripple::to_string(sle.key());
-            objects.push_back(entry);
+            objects.push_back(std::move(entry));
         }
         else
             objects.push_back(toJson(sle));
     }
-    response["state"] = objects;
+    response["state"] = std::move(objects);
+    auto end2 = std::chrono::system_clock::now();
+
+    time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)
+               .count();
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " number of results = " << results.size()
+        << " serialized in " << time << " microseconds";
 
     return response;
 }
