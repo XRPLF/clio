@@ -1,7 +1,7 @@
 #include <backend/SimpleCache.h>
 namespace Backend {
 uint32_t
-SimpleCache::latestLedgerSequence()
+SimpleCache::latestLedgerSequence() const
 {
     std::shared_lock lck{mtx_};
     return latestSeq_;
@@ -91,12 +91,12 @@ SimpleCache::setFull()
 }
 
 bool
-SimpleCache::isFull()
+SimpleCache::isFull() const
 {
     return full_;
 }
 size_t
-SimpleCache::size()
+SimpleCache::size() const
 {
     std::shared_lock lck{mtx_};
     return map_.size();

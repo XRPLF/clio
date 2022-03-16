@@ -937,9 +937,8 @@ ReportingETL::loadCache(uint32_t seq)
     {
         std::optional<ripple::uint256> start = cursors[i];
         std::optional<ripple::uint256> end = cursors[i + 1];
-        cacheDownloadStrands_.emplace_back(ioContext_);
         boost::asio::spawn(
-            cacheDownloadStrands_.back(),
+            ioContext_,
             [this, seq, start, end, numRemaining](
                 boost::asio::yield_context yield) {
                 std::optional<ripple::uint256> cursor = start;
@@ -948,7 +947,7 @@ ReportingETL::loadCache(uint32_t seq)
                     auto res =
                         Backend::retryOnTimeout([this, seq, &cursor, &yield]() {
                             return backend_->fetchLedgerPage(
-                                cursor, seq, 256, yield);
+                                cursor, seq, 256, false, yield);
                         });
                     backend_->cache().update(res.objects, seq, true);
                     if (!res.cursor || (end && *(res.cursor) > *end))

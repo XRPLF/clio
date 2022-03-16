@@ -29,6 +29,11 @@ doServerInfo(Context const& context)
         info["counters"] = boost::json::object{};
         info["counters"].as_object()["rpc"] = context.counters.report();
     }
+    auto& cache = (response["cache"] = boost::json::object{}).as_object();
+    cache["size"] = context.backend->cache().size();
+    cache["is_full"] = context.backend->cache().isFull();
+    cache["latest_ledger_seq"] =
+        context.backend->cache().latestLedgerSequence();
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
         context.params, context.clientIp, context.yield);

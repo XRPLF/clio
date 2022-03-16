@@ -67,8 +67,6 @@ private:
     /// ledgers are published in order
     boost::asio::io_context::strand publishStrand_;
 
-    std::vector<boost::asio::io_context::strand> cacheDownloadStrands_;
-
     /// Mechanism for communicating with ETL sources. ETLLoadBalancer wraps an
     /// arbitrary number of ETL sources and load balances ETL requests across
     /// those sources.
