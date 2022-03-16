@@ -804,7 +804,7 @@ TEST(BackendTest, Basic)
                     {
                         uint32_t limit = 10;
                         page = backend->fetchLedgerPage(
-                            page.cursor, seq, limit, yield);
+                            page.cursor, seq, limit, false, yield);
                         std::cout << "fetched a page " << page.objects.size()
                                   << std::endl;
                         if (page.cursor)
@@ -2186,7 +2186,7 @@ TEST(Backend, cacheIntegration)
                     {
                         uint32_t limit = 10;
                         page = backend->fetchLedgerPage(
-                            page.cursor, seq, limit, yield);
+                            page.cursor, seq, limit, false, yield);
                         std::cout << "fetched a page " << page.objects.size()
                                   << std::endl;
                         if (page.cursor)

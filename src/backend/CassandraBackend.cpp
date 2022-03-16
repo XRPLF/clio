@@ -758,8 +758,9 @@ CassandraBackend::doOnlineDelete(
     std::optional<ripple::uint256> cursor;
     while (true)
     {
-        auto [objects, curCursor] = retryOnTimeout(
-            [&]() { return fetchLedgerPage(cursor, minLedger, 256, yield); });
+        auto [objects, curCursor] = retryOnTimeout([&]() {
+            return fetchLedgerPage(cursor, minLedger, 256, false, yield);
+        });
 
         for (auto& obj : objects)
         {
