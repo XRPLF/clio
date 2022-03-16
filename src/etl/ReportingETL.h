@@ -50,6 +50,10 @@ private:
 
     CacheLoadStyle cacheLoadStyle_ = CacheLoadStyle::ASYNC;
 
+    // number of diffs to use to generate cursors to traverse the ledger in
+    // parallel during initial cache download
+    size_t numDiffs_ = 1;
+
     std::thread worker_;
     boost::asio::io_context& ioContext_;
 
