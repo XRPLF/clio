@@ -49,14 +49,14 @@ public:
     setFull();
 
     uint32_t
-    latestLedgerSequence();
+    latestLedgerSequence() const;
 
     // whether the cache has all data for the most recent ledger
     bool
-    isFull();
+    isFull() const;
 
     size_t
-    size();
+    size() const;
 };
 
 }  // namespace Backend
