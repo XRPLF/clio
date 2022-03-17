@@ -230,7 +230,7 @@ main(int argc, char* argv[])
 
     // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(
-        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
+        *config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

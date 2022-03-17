@@ -23,6 +23,7 @@
 class WsBase;
 class SubscriptionManager;
 class ETLLoadBalancer;
+class ReportingETL;
 
 namespace RPC {
 
@@ -38,6 +39,7 @@ struct Context
     // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
     std::shared_ptr<SubscriptionManager> subscriptions;
     std::shared_ptr<ETLLoadBalancer> const& balancer;
+    std::shared_ptr<ReportingETL const> const& etl;
     std::shared_ptr<WsBase> session;
     Backend::LedgerRange const& range;
     Counters& counters;
@@ -51,6 +53,7 @@ struct Context
         std::shared_ptr<BackendInterface const> const& backend_,
         std::shared_ptr<SubscriptionManager> const& subscriptions_,
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
+        std::shared_ptr<ReportingETL const> const& etl_,
         std::shared_ptr<WsBase> const& session_,
         Backend::LedgerRange const& range_,
         Counters& counters_,
@@ -62,6 +65,7 @@ struct Context
         , backend(backend_)
         , subscriptions(subscriptions_)
         , balancer(balancer_)
+        , etl(etl_)
         , session(session_)
         , range(range_)
         , counters(counters_)
@@ -144,6 +148,7 @@ make_WsContext(
     std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL const> const& etl,
     std::shared_ptr<WsBase> const& session,
     Backend::LedgerRange const& range,
     Counters& counters,
@@ -156,6 +161,7 @@ make_HttpContext(
     std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL const> const& etl,
     Backend::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);

@@ -1,6 +1,7 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
+#include <etl/ReportingETL.h>
 #include <rpc/RPCHelpers.h>
 
 namespace RPC {
@@ -34,6 +35,8 @@ doServerInfo(Context const& context)
     cache["is_full"] = context.backend->cache().isFull();
     cache["latest_ledger_seq"] =
         context.backend->cache().latestLedgerSequence();
+
+    response["etl"] = context.etl->getInfo();
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
         context.params, context.clientIp, context.yield);
