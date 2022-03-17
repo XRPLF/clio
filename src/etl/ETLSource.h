@@ -274,8 +274,8 @@ public:
         res["grpc_port"] = grpcPort_;
         auto last = getLastMsgTime();
         if (last.time_since_epoch().count() != 0)
-            res["last_msg_arrival_time"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::milliseconds>(
+            res["last_msg_age_seconds"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::system_clock::now() - getLastMsgTime())
                     .count());
         return res;

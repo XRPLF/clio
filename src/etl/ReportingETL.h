@@ -322,8 +322,8 @@ public:
         result["read_only"] = readOnly_;
         auto last = getLastPublish();
         if (last.time_since_epoch().count() != 0)
-            result["last_publish_time"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::milliseconds>(
+            result["last_publish_age_seconds"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::system_clock::now() - getLastPublish())
                     .count());
 

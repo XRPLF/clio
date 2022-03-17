@@ -147,30 +147,44 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
         backend_->cache().update(diff, lgrInfo.seq);
         backend_->updateRange(lgrInfo.seq);
     }
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::system_clock::now().time_since_epoch())
+                   .count();
+    auto closeTime = lgrInfo.closeTime.time_since_epoch().count();
+    auto age = now - (rippleEpochStart + closeTime);
+    // if the ledger closed over 10 minutes ago, assume we are still
+    // catching up and don't publish
+    if (age < 600)
+    {
+        std::optional<ripple::Fees> fees =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchFees(lgrInfo.seq, yield);
+            });
 
-    std::optional<ripple::Fees> fees = Backend::synchronousAndRetryOnTimeout(
-        [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
+        std::vector<Backend::TransactionAndMetadata> transactions =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchAllTransactionsInLedger(
+                    lgrInfo.seq, yield);
+            });
 
-    std::vector<Backend::TransactionAndMetadata> transactions =
-        Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-            return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
-        });
+        auto ledgerRange = backend_->fetchLedgerRange();
+        assert(ledgerRange);
+        assert(fees);
 
-    auto ledgerRange = backend_->fetchLedgerRange();
-    assert(ledgerRange);
-    assert(fees);
+        std::string range = std::to_string(ledgerRange->minSequence) + "-" +
+            std::to_string(ledgerRange->maxSequence);
 
-    std::string range = std::to_string(ledgerRange->minSequence) + "-" +
-        std::to_string(ledgerRange->maxSequence);
+        subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
-    subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
-
-    for (auto& txAndMeta : transactions)
-        subscriptions_->pubTransaction(txAndMeta, lgrInfo);
-
+        for (auto& txAndMeta : transactions)
+            subscriptions_->pubTransaction(txAndMeta, lgrInfo);
+        BOOST_LOG_TRIVIAL(info) << __func__ << " - Published ledger "
+                                << std::to_string(lgrInfo.seq);
+    }
+    else
+        BOOST_LOG_TRIVIAL(info) << __func__ << " - Skipping publishing ledger "
+                                << std::to_string(lgrInfo.seq);
     setLastPublish();
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " - Published ledger " << std::to_string(lgrInfo.seq);
 }
 
 bool
@@ -695,23 +709,9 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // success is false if the ledger was already written
             if (success)
             {
-                auto now =
-                    std::chrono::duration_cast<std::chrono::seconds>(
-                        std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-                auto closeTime = lgrInfo.closeTime.time_since_epoch().count();
-                auto age = now - (rippleEpochStart + closeTime);
-                // if the ledger closed over 10 minutes ago, assume we are still
-                // catching up and don't publish
-                if (age < 600)
-                    boost::asio::post(
-                        publishStrand_, [this, lgrInfo = lgrInfo]() {
-                            publishLedger(lgrInfo);
-                        });
-                else
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Skipping publishing old ledger. seq = "
-                        << lgrInfo.seq;
+                boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
+                    publishLedger(lgrInfo);
+                });
 
                 lastPublishedSequence = lgrInfo.seq;
             }
