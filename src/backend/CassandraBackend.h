@@ -692,12 +692,44 @@ public:
         boost::asio::yield_context& yield) const override;
 
     bool
-    doFinishWrites() override
+    doFinishWritesSync()
     {
+        assert(syncInterval_ == 1);
+        // wait for all other writes to finish
+        sync();
+        // write range
+        if (!range)
+        {
+            CassandraStatement statement{updateLedgerRange_};
+            statement.bindNextInt(ledgerSequence_);
+            statement.bindNextBoolean(false);
+            statement.bindNextInt(ledgerSequence_);
+            executeSyncWrite(statement);
+        }
+        CassandraStatement statement{updateLedgerRange_};
+        statement.bindNextInt(ledgerSequence_);
+        statement.bindNextBoolean(true);
+        statement.bindNextInt(ledgerSequence_ - 1);
+        if (!executeSyncUpdate(statement))
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__ << " Update failed for ledger "
+                << std::to_string(ledgerSequence_) << ". Returning";
+            return false;
+        }
+        BOOST_LOG_TRIVIAL(info) << __func__ << " Committed ledger "
+                                << std::to_string(ledgerSequence_);
+        return true;
+    }
+
+    bool
+    doFinishWritesAsync()
+    {
+        assert(syncInterval_ != 1);
         // if db is empty, sync. if sync interval is 1, always sync.
         // if we've never synced, sync. if its been greater than the configured
         // sync interval since we last synced, sync.
-        if (!range || syncInterval_ == 1 || lastSync_ == 0 ||
+        if (!range || lastSync_ == 0 ||
             ledgerSequence_ - syncInterval_ >= lastSync_)
         {
             // wait for all other writes to finish
@@ -738,6 +770,15 @@ public:
                 << std::to_string(ledgerSequence_);
         }
         return true;
+    }
+
+    bool
+    doFinishWrites() override
+    {
+        if (syncInterval_ == 1)
+            return doFinishWritesSync();
+        else
+            return doFinishWritesAsync();
     }
     void
     writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header)
