@@ -701,15 +701,17 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                         .count();
                 auto closeTime = lgrInfo.closeTime.time_since_epoch().count();
                 auto age = now - (rippleEpochStart + closeTime);
-                // if the ledger closed over 10 seconds ago, assume we are still
+                // if the ledger closed over 10 minutes ago, assume we are still
                 // catching up and don't publish
-                if (age < 10)
-                {
+                if (age < 600)
                     boost::asio::post(
                         publishStrand_, [this, lgrInfo = lgrInfo]() {
                             publishLedger(lgrInfo);
                         });
-                }
+                else
+                    BOOST_LOG_TRIVIAL(info)
+                        << "Skipping publishing old ledger. seq = "
+                        << lgrInfo.seq;
 
                 lastPublishedSequence = lgrInfo.seq;
             }
