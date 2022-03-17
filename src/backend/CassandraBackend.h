@@ -1132,11 +1132,17 @@ public:
         {
             BOOST_LOG_TRIVIAL(warning)
                 << __func__ << " Update failed, but timedOut is true";
+            // if there was a timeout, the update may have succeeded in the
+            // background on the first attempt. To determine if this happened,
+            // we query the range from the db, making sure the range is what
+            // we wrote. There's a possibility that another writer actually
+            // applied the update, but there is no way to detect if that
+            // happened. So, we just return true as long as what we tried to
+            // write was what ended up being written.
+            auto rng = hardFetchLedgerRangeNoThrow();
+            return rng && rng->maxSequence == ledgerSequence_;
         }
-        // if there was a timeout, the update may have succeeded in the
-        // background. We can't differentiate between an async success and
-        // another writer, so we just return true here
-        return success == cass_true || timedOut;
+        return success == cass_true;
     }
 
     CassandraResult
