@@ -111,6 +111,7 @@ class HttpBase
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     send_lambda lambda_;
@@ -124,6 +125,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
@@ -131,6 +133,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , lambda_(*this)
@@ -183,6 +186,7 @@ public:
                 backend_,
                 subscriptions_,
                 balancer_,
+                etl_,
                 dosGuard_,
                 counters_);
         }
@@ -201,6 +205,7 @@ public:
                     lambda_,
                     backend_,
                     balancer_,
+                    etl_,
                     dosGuard_,
                     counters_,
                     ip,
@@ -247,6 +252,7 @@ handle_request(
     Send&& send,
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard,
     RPC::Counters& counters,
     std::string const& ip,
@@ -319,7 +325,7 @@ handle_request(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
 
         std::optional<RPC::Context> context = RPC::make_HttpContext(
-            yc, request, backend, nullptr, balancer, *range, counters, ip);
+            yc, request, backend, nullptr, balancer, etl, *range, counters, ip);
 
         if (!context)
             return send(httpResponse(

@@ -27,6 +27,7 @@ class Detector
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     boost::beast::flat_buffer buffer_;
@@ -39,6 +40,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters)
         : ioc_(ioc)
@@ -47,6 +49,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
     {
@@ -85,6 +88,7 @@ public:
                 backend_,
                 subscriptions_,
                 balancer_,
+                etl_,
                 dosGuard_,
                 counters_,
                 std::move(buffer_))
@@ -99,6 +103,7 @@ public:
             backend_,
             subscriptions_,
             balancer_,
+            etl_,
             dosGuard_,
             counters_,
             std::move(buffer_))
@@ -115,6 +120,7 @@ make_websocket_session(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard,
     RPC::Counters& counters)
 {
@@ -124,6 +130,7 @@ make_websocket_session(
         backend,
         subscriptions,
         balancer,
+        etl,
         dosGuard,
         counters,
         std::move(buffer),
@@ -140,6 +147,7 @@ make_websocket_session(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard,
     RPC::Counters& counters)
 {
@@ -149,6 +157,7 @@ make_websocket_session(
         backend,
         subscriptions,
         balancer,
+        etl,
         dosGuard,
         counters,
         std::move(buffer),
@@ -169,6 +178,7 @@ class Listener
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters counters_;
 
@@ -180,6 +190,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard)
         : ioc_(ioc)
         , ctx_(ctx)
@@ -187,6 +198,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
     {
         boost::beast::error_code ec;
@@ -263,6 +275,7 @@ private:
                 backend_,
                 subscriptions_,
                 balancer_,
+                etl_,
                 dosGuard_,
                 counters_)
                 ->run();
@@ -286,6 +299,7 @@ make_HttpServer(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
+    std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard)
 {
     if (!config.contains("server"))
@@ -305,6 +319,7 @@ make_HttpServer(
         backend,
         subscriptions,
         balancer,
+        etl,
         dosGuard);
 
     server->run();

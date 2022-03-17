@@ -87,6 +87,7 @@ class WsSession : public WsBase,
     // a cyclical dependency that would block destruction
     std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     std::mutex mtx_;
@@ -98,6 +99,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer&& buffer)
@@ -106,6 +108,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
     {
@@ -231,6 +234,7 @@ public:
                     backend_,
                     subscriptions_.lock(),
                     balancer_,
+                    etl_,
                     shared_from_this(),
                     *range,
                     counters_,

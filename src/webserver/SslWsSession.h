@@ -33,6 +33,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
@@ -41,6 +42,7 @@ public:
               backend,
               subscriptions,
               balancer,
+              etl,
               dosGuard,
               counters,
               std::move(b))
@@ -75,6 +77,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     http::request<http::string_body> req_;
@@ -87,6 +90,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b)
@@ -96,6 +100,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
     {
@@ -106,6 +111,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer&& b,
@@ -116,6 +122,7 @@ public:
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , req_(std::move(req))
@@ -185,6 +192,7 @@ private:
             backend_,
             subscriptions_,
             balancer_,
+            etl_,
             dosGuard_,
             counters_,
             std::move(buffer_))

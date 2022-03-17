@@ -130,10 +130,10 @@ private:
     /// server_info
     std::chrono::time_point<std::chrono::system_clock> lastPublish_;
 
-    std::mutex publishTimeMtx_;
+    mutable std::mutex publishTimeMtx_;
 
     std::chrono::time_point<std::chrono::system_clock>
-    getLastPublish()
+    getLastPublish() const
     {
         std::unique_lock<std::mutex> lck(publishTimeMtx_);
         return lastPublish_;
@@ -261,24 +261,6 @@ private:
         return numMarkers_;
     }
 
-    boost::json::object
-    getInfo()
-    {
-        boost::json::object result;
-
-        result["etl_sources"] = loadBalancer_->toJson();
-        result["is_writer"] = writing_.load();
-        result["read_only"] = readOnly_;
-        auto last = getLastPublish();
-        if (last.time_since_epoch().count() != 0)
-            result["last_publish_time"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now() - getLastPublish())
-                    .count());
-
-        return result;
-    }
-
     /// start all of the necessary components and begin ETL
     void
     run()
@@ -328,6 +310,24 @@ public:
             worker_.join();
 
         BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
+    }
+
+    boost::json::object
+    getInfo() const
+    {
+        boost::json::object result;
+
+        result["etl_sources"] = loadBalancer_->toJson();
+        result["is_writer"] = writing_.load();
+        result["read_only"] = readOnly_;
+        auto last = getLastPublish();
+        if (last.time_since_epoch().count() != 0)
+            result["last_publish_time"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now() - getLastPublish())
+                    .count());
+
+        return result;
     }
 };
 

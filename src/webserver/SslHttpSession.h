@@ -23,6 +23,7 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         boost::beast::flat_buffer buffer)
@@ -31,6 +32,7 @@ public:
               backend,
               subscriptions,
               balancer,
+              etl,
               dosGuard,
               counters,
               std::move(buffer))
