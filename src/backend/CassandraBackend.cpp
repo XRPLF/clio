@@ -519,108 +519,16 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     return hashes;
 }
 
-std::optional<NFT>
-CassandraBackend::fetchNFT(
-    ripple::uint256 const& tokenID,
-    std::uint32_t const ledgerSequence,
-    boost::asio::yield_context& yield) const
+std::optional<NFToken>
+CassandraBackend::fetchNFToken(
+    ripple::uint256 tokenID,
+    uint32_t ledgerSequence) const
 {
-    CassandraStatement statement{selectNFT_};
-    statement.bindNextBytes(tokenID);
-    statement.bindNextInt(ledgerSequence);
-    CassandraResult response = executeAsyncRead(statement, yield);
-    if (!response)
-        return {};
-
-    NFT result;
-    result.tokenID = tokenID;
-    result.ledgerSequence = response.getUInt32();
-    result.owner = response.getBytes();
-    result.isBurned = response.getBool();
-    return result;
+    // TODO
+    return {};
 }
 
-TransactionsAndCursor
-CassandraBackend::fetchNFTTransactions(
-    ripple::uint256 const& tokenID,
-    std::uint32_t const limit,
-    bool const forward,
-    std::optional<TransactionsCursor> const& cursorIn,
-    boost::asio::yield_context& yield) const
-{
-    auto cursor = cursorIn;
-    auto rng = fetchLedgerRange();
-    if (!rng)
-        return {{}, {}};
-
-    CassandraStatement statement = forward
-        ? CassandraStatement(selectNFTTxForward_)
-        : CassandraStatement(selectNFTTx_);
-
-    statement.bindNextBytes(tokenID);
-
-    if (cursor)
-    {
-        statement.bindNextIntTuple(
-            cursor->ledgerSequence, cursor->transactionIndex);
-        BOOST_LOG_TRIVIAL(debug) << " token_id = " << ripple::strHex(tokenID)
-                                 << " tuple = " << cursor->ledgerSequence
-                                 << " : " << cursor->transactionIndex;
-    }
-    else
-    {
-        int const seq = forward ? rng->minSequence : rng->maxSequence;
-        int const placeHolder =
-            forward ? 0 : std::numeric_limits<std::uint32_t>::max();
-
-        statement.bindNextIntTuple(placeHolder, placeHolder);
-        BOOST_LOG_TRIVIAL(debug)
-            << " token_id = " << ripple::strHex(tokenID) << " idx = " << seq
-            << " tuple = " << placeHolder;
-    }
-
-    statement.bindNextUInt(limit);
-
-    CassandraResult result = executeAsyncRead(statement, yield);
-
-    if (!result.hasResult())
-    {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
-        return {};
-    }
-
-    std::vector<ripple::uint256> hashes = {};
-    auto numRows = result.numRows();
-    BOOST_LOG_TRIVIAL(info) << "num_rows = " << numRows;
-    do
-    {
-        hashes.push_back(result.getUInt256());
-        if (--numRows == 0)
-        {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " setting cursor";
-            auto const [lgrSeq, txnIdx] = result.getInt64Tuple();
-            cursor = {
-                static_cast<std::uint32_t>(lgrSeq),
-                static_cast<std::uint32_t>(txnIdx)};
-
-            if (forward)
-                ++cursor->transactionIndex;
-        }
-    } while (result.nextRow());
-
-    auto txns = fetchTransactions(hashes, yield);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " txns = " << txns.size();
-
-    if (txns.size() == limit)
-    {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " returning cursor";
-        return {txns, cursor};
-    }
-
-    return {txns, {}};
-}
-
-TransactionsAndCursor
+AccountTransactions
 CassandraBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
     std::uint32_t const limit,

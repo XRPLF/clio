@@ -64,19 +64,8 @@ public:
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
-    std::optional<NFT>
-    fetchNFT(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override;
-
-    TransactionsAndCursor
-    fetchNFTTransactions(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const limit,
-        bool const forward,
-        std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context& yield) const override;
+    std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
 
     std::vector<LedgerObject>
     fetchLedgerDiff(

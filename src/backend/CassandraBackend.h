@@ -885,19 +885,8 @@ public:
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
-    std::optional<NFT>
-    fetchNFT(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override;
-
-    TransactionsAndCursor
-    fetchNFTTransactions(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const limit,
-        bool const forward,
-        std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context& yield) const override;
+    std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence
@@ -989,11 +978,7 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     void
-<<<<<<< HEAD
-    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;
-=======
     writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) override;
->>>>>>> b94e57e... add new nft data into dbs
 
     void
     writeTransaction(

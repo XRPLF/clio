@@ -181,19 +181,8 @@ public:
         boost::asio::yield_context& yield) const = 0;
 
     // *** NFT methods
-    virtual std::optional<NFT>
-    fetchNFT(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const = 0;
-
-    virtual TransactionsAndCursor
-    fetchNFTTransactions(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const limit,
-        bool const forward,
-        std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context& yield) const = 0;
+    virtual std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const = 0;
 
     // *** state data methods
     std::optional<Blob>
