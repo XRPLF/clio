@@ -112,6 +112,7 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"account_offers", &doAccountOffers},
         {"account_tx", &doAccountTx},
         {"gateway_balances", &doGatewayBalances},
+        {"nftoken_info", &doNFTokenInfo},
         {"noripple_check", &doNoRippleCheck},
         {"book_offers", &doBookOffers},
         {"channel_authorize", &doChannelAuthorize},

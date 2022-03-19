@@ -80,13 +80,17 @@ public:
         ripple::AccountID const& account,
         std::uint32_t limit,
         bool forward = false,
-        std::optional<AccountTransactionsCursor> const& cursor = {}) const = 0;
+        std::optional<TransactionsCursor> const& cursor = {}) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(uint32_t ledgerSequence) const = 0;
 
     virtual std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const = 0;
+
+    // *** NFT methods
+    virtual std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const = 0;
 
     // *** state data methods
     std::optional<Blob>

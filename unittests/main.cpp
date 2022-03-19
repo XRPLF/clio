@@ -620,7 +620,7 @@ TEST(BackendTest, Basic)
             for (auto [account, data] : accountTx)
             {
                 std::vector<Backend::TransactionAndMetadata> retData;
-                std::optional<Backend::AccountTransactionsCursor> cursor;
+                std::optional<Backend::TransactionsCursor> cursor;
                 do
                 {
                     uint32_t limit = 10;

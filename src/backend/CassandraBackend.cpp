@@ -477,12 +477,21 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     return hashes;
 }
 
+std::optional<NFToken>
+CassandraBackend::fetchNFToken(
+    ripple::uint256 tokenID,
+    uint32_t ledgerSequence) const
+{
+    // TODO
+    return {};
+}
+
 AccountTransactions
 CassandraBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
     std::uint32_t limit,
     bool forward,
-    std::optional<AccountTransactionsCursor> const& cursorIn) const
+    std::optional<TransactionsCursor> const& cursorIn) const
 {
     auto rng = fetchLedgerRange();
     if (!rng)

@@ -49,6 +49,9 @@ public:
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
 
+    std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
+
     std::vector<LedgerObject>
     fetchLedgerDiff(uint32_t ledgerSequence) const override;
 
@@ -73,7 +76,7 @@ public:
         ripple::AccountID const& account,
         std::uint32_t limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor) const override;
+        std::optional<TransactionsCursor> const& cursor) const override;
 
     void
     writeLedger(

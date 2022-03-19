@@ -48,7 +48,7 @@ struct TransactionAndMetadata
     }
 };
 
-struct AccountTransactionsCursor
+struct TransactionsCursor
 {
     uint32_t ledgerSequence;
     uint32_t transactionIndex;
@@ -57,7 +57,29 @@ struct AccountTransactionsCursor
 struct AccountTransactions
 {
     std::vector<TransactionAndMetadata> txns;
-    std::optional<AccountTransactionsCursor> cursor;
+    std::optional<TransactionsCursor> cursor;
+};
+
+struct NFTokenTransactionsCursor
+{
+    std::vector<TransactionAndMetadata> txns;
+    std::optional<TransactionsCursor> cursor;
+};
+
+struct NFToken
+{
+    ripple::uint256 tokenID;
+    uint32_t ledgerSequence;
+    ripple::uint160 owner;
+    bool isBurned;
+    std::optional<LedgerObject> page;
+
+    bool
+    operator==(NFToken const& other) const
+    {
+        return tokenID == other.tokenID &&
+            ledgerSequence == other.ledgerSequence;
+    }
 };
 
 struct LedgerRange

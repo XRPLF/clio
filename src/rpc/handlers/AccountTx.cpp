@@ -41,7 +41,7 @@ doAccountTx(Context const& context)
         forward = request.at("forward").as_bool();
     }
 
-    std::optional<Backend::AccountTransactionsCursor> cursor;
+    std::optional<Backend::TransactionsCursor> cursor;
 
     if (request.contains("marker"))
     {

@@ -639,7 +639,7 @@ public:
         ripple::AccountID const& account,
         std::uint32_t limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor) const override;
+        std::optional<TransactionsCursor> const& cursor) const override;
 
     bool
     doFinishWrites() override
@@ -733,6 +733,9 @@ public:
 
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(uint32_t ledgerSequence) const override;
+
+    std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence
