@@ -52,6 +52,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountObjects.cpp
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/NoRippleCheck.cpp
+  # NFT
+  src/rpc/handlers/NFTokenInfo.cpp
   # Ledger
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp

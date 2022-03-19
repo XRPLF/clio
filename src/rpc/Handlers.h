@@ -45,6 +45,10 @@ doChannelVerify(Context const& context);
 Result
 doBookOffers(Context const& context);
 
+// NFT methods
+Result
+doNFTokenInfo(Context const& context);
+
 // ledger methods
 Result
 doLedger(Context const& context);

@@ -167,7 +167,7 @@ public:
         ripple::AccountID const& account,
         std::uint32_t const limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor,
+        std::optional<TransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
@@ -179,6 +179,10 @@ public:
     fetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
+
+    // *** NFT methods
+    virtual std::optional<NFToken>
+    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const = 0;
 
     // *** state data methods
     std::optional<Blob>
