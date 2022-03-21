@@ -243,6 +243,8 @@ public:
 
                 response = getDefaultWsResponse(id);
 
+                std::cout << response << std::endl;
+
                 auto start = std::chrono::system_clock::now();
                 auto v = RPC::buildResponse(*context);
                 auto end = std::chrono::system_clock::now();
@@ -265,7 +267,7 @@ public:
                 {
                     counters_.rpcComplete(context->method, us);
 
-                    response = std::get<boost::json::object>(v);
+                    response["result"] = std::get<boost::json::object>(v);
                 }
             }
             catch (Backend::DatabaseTimeout const& t)
