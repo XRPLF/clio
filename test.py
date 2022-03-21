@@ -974,7 +974,7 @@ parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
 parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe","verify_subscribe","call"])
 
 parser.add_argument('--ip', default='127.0.0.1')
-parser.add_argument('--port', default='8080')
+parser.add_argument('--port', default='51233')
 parser.add_argument('--hash')
 parser.add_argument('--account')
 parser.add_argument('--ledger')
@@ -1018,6 +1018,10 @@ def run(args):
         asyncio.get_event_loop().run_until_complete(
                 call(args.ip,args.port,args.request))
         return
+    elif args.action == "server_info":
+        asyncio.get_event_loop().run_until_complete(server_info(args.ip, args.port))
+        return
+
     rng =asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
     if args.ledger is None:
         args.ledger = rng[1]
@@ -1027,8 +1031,6 @@ def run(args):
         args.minLedger = rng[0]
     if args.action == "fee":
         asyncio.get_event_loop().run_until_complete(fee(args.ip, args.port))
-    elif args.action == "server_info":
-        asyncio.get_event_loop().run_until_complete(server_info(args.ip, args.port))
     elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))
