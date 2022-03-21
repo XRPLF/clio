@@ -858,13 +858,13 @@ ReportingETL::monitor()
                 << "Ledger with sequence = " << nextSequence
                 << " has been validated by the network. "
                 << "Attempting to find in database and publish";
-            // Attempt to take over responsibility of ETL writer after 2 failed
+            // Attempt to take over responsibility of ETL writer after 10 failed
             // attempts to publish the ledger. publishLedger() fails if the
             // ledger that has been validated by the network is not found in the
             // database after the specified number of attempts. publishLedger()
             // waits one second between each attempt to read the ledger from the
             // database
-            constexpr size_t timeoutSeconds = 2;
+            constexpr size_t timeoutSeconds = 10;
             bool success = publishLedger(nextSequence, timeoutSeconds);
             if (!success)
             {
