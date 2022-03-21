@@ -247,8 +247,6 @@ public:
 
                 response = getDefaultWsResponse(id);
 
-                std::cout << response << std::endl;
-
                 auto start = std::chrono::system_clock::now();
                 auto v = RPC::buildResponse(*context);
                 auto end = std::chrono::system_clock::now();

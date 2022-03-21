@@ -576,14 +576,14 @@ traverseOwnedNodes(
         for (;;)
         {
             auto const ownerDir =
-                backend.fetchLedgerObject(hintIndex.key, sequence, yield);
+                backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
             if (!ownerDir)
                 return Status(
                     ripple::rpcINVALID_PARAMS, "Owner directory not found");
 
             ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
-            ripple::SLE sle{it, hintIndex.key};
+            ripple::SLE sle{it, currentIndex.key};
 
             for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
             {
@@ -605,7 +605,7 @@ traverseOwnedNodes(
 
             auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
 
-            if (limit == 0 && uNodeNext != 0)
+            if (limit == 0)
             {
                 cursor = AccountCursor({keys.back(), uNodeNext});
                 break;
