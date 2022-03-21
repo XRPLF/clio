@@ -219,8 +219,6 @@ doAccountTx(Context const& context)
             obj["date"] = txnPlusMeta.date;
         }
 
-        obj["validated"] = true;
-
         txns.push_back(obj);
         if (!minReturnedIndex || txnPlusMeta.ledgerSequence < *minReturnedIndex)
             minReturnedIndex = txnPlusMeta.ledgerSequence;

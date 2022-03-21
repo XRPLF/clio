@@ -358,10 +358,14 @@ handle_request(
         }
         else
         {
+            // This can still technically be an error. Clio counts forwarded
+            // requests as successful.
+
             counters.rpcComplete(context->method, us);
             result = std::get<boost::json::object>(v);
-            result["status"] = "success";
-            result["validated"] = true;
+
+            if (!result.contains("error"))
+                result["status"] = "success";
 
             responseStr = boost::json::serialize(response);
         }

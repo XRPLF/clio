@@ -20,6 +20,20 @@ accountFromStringStrict(std::string const& account);
 std::optional<ripple::AccountID>
 accountFromSeed(std::string const& account);
 
+bool
+isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID);
+
+std::uint64_t
+getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID);
+
+std::optional<AccountCursor>
+parseAccountCursor(
+    BackendInterface const& backend,
+    std::uint32_t seq,
+    std::optional<std::string> jsonCursor,
+    ripple::AccountID const& accountID,
+    boost::asio::yield_context& yield);
+
 // TODO this function should probably be in a different file and namespace
 std::pair<
     std::shared_ptr<ripple::STTx const>,
@@ -69,14 +83,15 @@ generatePubLedgerMessage(
 std::variant<Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(Context const& ctx);
 
-std::optional<ripple::uint256>
+std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::AccountID const& accountID,
     std::uint32_t sequence,
-    ripple::uint256 const& cursor,
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<bool(ripple::SLE)> atOwnedNode);
+    std::function<void(ripple::SLE)> atOwnedNode);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);

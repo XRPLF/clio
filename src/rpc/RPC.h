@@ -75,6 +75,24 @@ struct Context
 };
 using Error = ripple::error_code_i;
 
+struct AccountCursor
+{
+    ripple::uint256 index;
+    std::uint32_t hint;
+
+    std::string
+    toString()
+    {
+        return ripple::strHex(index) + "," + std::to_string(hint);
+    }
+
+    bool
+    isNonZero()
+    {
+        return index.isNonZero() || hint != 0;
+    }
+};
+
 struct Status
 {
     Error error = Error::rpcSUCCESS;
@@ -168,6 +186,9 @@ make_HttpContext(
 
 Result
 buildResponse(Context const& ctx);
+
+bool
+validHandler(std::string const& method);
 
 }  // namespace RPC
 

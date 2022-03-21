@@ -90,14 +90,13 @@ doAccountChannels(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
     }
 
-    ripple::uint256 marker;
+    std::optional<std::string> marker = {};
     if (request.contains("marker"))
     {
         if (!request.at("marker").is_string())
             return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        if (!marker.parseHex(request.at("marker").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
+        marker = request.at("marker").as_string().c_str();
     }
 
     response["account"] = ripple::to_string(*accountID);
@@ -121,18 +120,25 @@ doAccountChannels(Context const& context)
         return true;
     };
 
-    auto nextCursor = traverseOwnedNodes(
+    auto next = traverseOwnedNodes(
         *context.backend,
         *accountID,
         lgrInfo.seq,
+        limit,
         marker,
         context.yield,
         addToResponse);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
-    if (nextCursor)
-        response["marker"] = ripple::strHex(*nextCursor);
+
+    if (auto status = std::get_if<RPC::Status>(&next))
+        return *status;
+
+    auto nextCursor = std::get<RPC::AccountCursor>(next);
+
+    if (nextCursor.isNonZero())
+        response["marker"] = nextCursor.toString();
 
     return response;
 }

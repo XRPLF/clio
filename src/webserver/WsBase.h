@@ -246,7 +246,6 @@ public:
                 auto id = request.contains("id") ? request.at("id") : nullptr;
 
                 response = getDefaultWsResponse(id);
-                boost::json::object& result = response["result"].as_object();
 
                 auto start = std::chrono::system_clock::now();
                 auto v = RPC::buildResponse(*context);
@@ -262,6 +261,7 @@ public:
 
                     if (!id.is_null())
                         error["id"] = id;
+
                     error["request"] = request;
                     response = error;
                 }
@@ -269,7 +269,7 @@ public:
                 {
                     counters_.rpcComplete(context->method, us);
 
-                    result = std::get<boost::json::object>(v);
+                    response["result"] = std::get<boost::json::object>(v);
                 }
             }
             catch (Backend::DatabaseTimeout const& t)

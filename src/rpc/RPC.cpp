@@ -18,10 +18,16 @@ make_WsContext(
     Counters& counters,
     std::string const& clientIp)
 {
-    if (!request.contains("command"))
+    boost::json::value commandValue = nullptr;
+    if (!request.contains("command") && request.contains("method"))
+        commandValue = request.at("method");
+    else if (request.contains("command") && !request.contains("method"))
+        commandValue = request.at("command");
+
+    if (!commandValue.is_string())
         return {};
 
-    std::string command = request.at("command").as_string().c_str();
+    std::string command = commandValue.as_string().c_str();
 
     return Context{
         yc,
@@ -142,9 +148,16 @@ static std::unordered_set<std::string> forwardCommands{
     "submit",
     "submit_multisigned",
     "fee",
-    "path_find",
+    "ledger_closed",
+    "ledger_current",
     "ripple_path_find",
     "manifest"};
+
+bool
+validHandler(std::string const& method)
+{
+    return handlerTable.contains(method) || forwardCommands.contains(method);
+}
 
 bool
 shouldForwardToRippled(Context const& ctx)
@@ -203,7 +216,12 @@ buildResponse(Context const& ctx)
 
     try
     {
-        return method(ctx);
+        auto v = method(ctx);
+
+        if (auto object = std::get_if<boost::json::object>(&v))
+            (*object)["validated"] = true;
+
+        return v;
     }
     catch (InvalidParamsError const& err)
     {
