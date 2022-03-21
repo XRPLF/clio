@@ -169,6 +169,9 @@ make_HttpContext(
 Result
 buildResponse(Context const& ctx);
 
+bool
+validHandler(std::string const& method);
+
 }  // namespace RPC
 
 #endif  // REPORTING_RPC_H_INCLUDED

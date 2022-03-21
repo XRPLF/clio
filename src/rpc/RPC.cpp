@@ -148,9 +148,15 @@ static std::unordered_set<std::string> forwardCommands{
     "submit",
     "submit_multisigned",
     "fee",
-    "path_find",
     "ripple_path_find",
     "manifest"};
+
+bool
+validHandler(std::string const& method)
+{
+    return handlerTable.contains(method)
+        || forwardCommands.contains(method);
+}
 
 bool
 shouldForwardToRippled(Context const& ctx)
