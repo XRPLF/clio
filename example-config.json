@@ -1,7 +1,7 @@
 {
     "database":
     {
-        "type":"postgres",
+        "type":"cassandra",
         "cassandra":
         {
             "contact_points":"127.0.0.1",
@@ -11,12 +11,6 @@
             "table_prefix":"",
             "max_requests_outstanding":25000,
             "threads":8
-        },
-        "postgres": {
-            "username":"postgres",
-            "password":"postgres",
-            "contact_point":"127.0.0.1",
-            "database":"clio"
         }
     },
     "etl_sources":
