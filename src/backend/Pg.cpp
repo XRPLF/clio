@@ -1078,6 +1078,58 @@ CREATE TABLE IF NOT EXISTS account_transactions (
     PRIMARY KEY (account, ledger_seq, transaction_index, hash)
 ) PARTITION BY RANGE (ledger_seq);
 
+-- Table that stores NFTs, since they are found in pages and we need O(1) access to arbitrary ones.
+-- Deletes from the ledger table cascade here based on ledger_seq.
+CREATE TABLE IF NOT EXISTS nf_tokens (
+    token_id      bytea     NOT NULL,
+    ledger_seq    bigint    NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    issuer        bytea     NOT NULL,
+    owner         bytea     NOT NULL,
+    is_burned     boolean   NOT NULL,
+    PRIMARY KEY (token_id, ledger_seq)
+) PARTITION BY RANGE (ledger_seq);
+CREATE TABLE IF NOT EXISTS nf_tokens1 PARTITION OF nf_tokens FOR VALUES FROM (0) TO (10000000);
+CREATE TABLE IF NOT EXISTS nf_tokens2 PARTITION OF nf_tokens FOR VALUES FROM (10000000) TO (20000000);
+CREATE TABLE IF NOT EXISTS nf_tokens3 PARTITION OF nf_tokens FOR VALUES FROM (20000000) TO (30000000);
+CREATE TABLE IF NOT EXISTS nf_tokens4 PARTITION OF nf_tokens FOR VALUES FROM (30000000) TO (40000000);
+CREATE TABLE IF NOT EXISTS nf_tokens5 PARTITION OF nf_tokens FOR VALUES FROM (40000000) TO (50000000);
+CREATE TABLE IF NOT EXISTS nf_tokens6 PARTITION OF nf_tokens FOR VALUES FROM (50000000) TO (60000000);
+CREATE TABLE IF NOT EXISTS nf_tokens7 PARTITION OF nf_tokens FOR VALUES FROM (60000000) TO (70000000);
+CREATE TABLE IF NOT EXISTS nf_tokens8 PARTITION OF nf_tokens FOR VALUES FROM (70000000) TO (80000000);
+CREATE TABLE IF NOT EXISTS nf_tokens9 PARTITION OF nf_tokens FOR VALUES FROM (80000000) TO (90000000);
+CREATE TABLE IF NOT EXISTS nf_tokens10 PARTITION OF nf_tokens FOR VALUES FROM (90000000) TO (100000000);
+
+CREATE INDEX IF NOT EXISTS nf_tokens_issuer_ledger_seq_idx ON nf_tokens
+    USING btree(issuer, ledger_seq);
+
+CREATE INDEX IF NOT EXISTS nf_tokens_owner_ledger_seq_idx ON nf_tokens
+    USING btree(owner, ledger_seq);
+
+-- Table that maps NFTs to transactions affecting them. Deletes from the
+-- ledger table cascade here based on ledger seq. Deletes from the
+-- nf_tokens table also cascade here.
+CREATE TABLE IF NOT EXISTS nf_token_transactions (
+    token_id              bytea     NOT NULL,
+    ledger_seq            bigint    NOT NULL REFERENCES ledgers ON DELETE CASCADE,
+    transaction_index     bigint    NOT NULL,
+    hash                  bytea     NOT NULL,
+    PRIMARY KEY (token_id, ledger_seq, transaction_index, hash),
+    CONSTRAINT nf_token_transactions_token_id_ledger_seq_fkey
+      FOREIGN KEY (token_id, ledger_seq)
+      REFERENCES nf_tokens (token_id, ledger_seq) ON DELETE CASCADE
+) PARTITION BY RANGE (ledger_seq);
+CREATE TABLE IF NOT EXISTS nf_token_transactions1 PARTITION OF nf_token_transactions FOR VALUES FROM (0) TO (10000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions2 PARTITION OF nf_token_transactions FOR VALUES FROM (10000000) TO (20000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions3 PARTITION OF nf_token_transactions FOR VALUES FROM (20000000) TO (30000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions4 PARTITION OF nf_token_transactions FOR VALUES FROM (30000000) TO (40000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions5 PARTITION OF nf_token_transactions FOR VALUES FROM (40000000) TO (50000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions6 PARTITION OF nf_token_transactions FOR VALUES FROM (50000000) TO (60000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions7 PARTITION OF nf_token_transactions FOR VALUES FROM (60000000) TO (70000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions8 PARTITION OF nf_token_transactions FOR VALUES FROM (70000000) TO (80000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions9 PARTITION OF nf_token_transactions FOR VALUES FROM (80000000) TO (90000000);
+CREATE TABLE IF NOT EXISTS nf_token_transactions10 PARTITION OF nf_token_transactions FOR VALUES FROM (90000000) TO (100000000);
+
+
 CREATE TABLE IF NOT EXISTS successor (
     key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
