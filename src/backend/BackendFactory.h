@@ -32,8 +32,16 @@ make_Backend(boost::asio::io_context& ioc, boost::json::object const& config)
     }
     else if (boost::iequals(type, "postgres"))
     {
-        backend = std::make_shared<PostgresBackend>(
-            ioc, dbConfig.at(type).as_object());
+        if (dbConfig.contains("experimental") &&
+            dbConfig.at("experimental").is_bool() &&
+            dbConfig.at("experimental").as_bool())
+            backend = std::make_shared<PostgresBackend>(
+                ioc, dbConfig.at(type).as_object());
+        else
+            BOOST_LOG_TRIVIAL(fatal)
+                << "Postgres support is experimental at this time. "
+                << "If you would really like to use Postgres, add "
+                   "\"experimental\":true to your database config";
     }
 
     if (!backend)
