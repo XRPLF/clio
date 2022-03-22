@@ -1085,7 +1085,7 @@ CREATE TABLE IF NOT EXISTS nf_tokens (
     ledger_seq    bigint    NOT NULL REFERENCES ledgers ON DELETE CASCADE,
     issuer        bytea     NOT NULL,
     owner         bytea     NOT NULL,
-    is_burned     boolean   NOT NULL DEFAULT false,
+    is_burned     boolean   NOT NULL,
     PRIMARY KEY (token_id, ledger_seq)
 ) PARTITION BY RANGE (ledger_seq);
 CREATE TABLE IF NOT EXISTS nf_tokens1 PARTITION OF nf_tokens FOR VALUES FROM (0) TO (10000000);
