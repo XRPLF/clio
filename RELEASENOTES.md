@@ -2,9 +2,9 @@
 
 This document contains the release notes for `clio_server`, an XRP Ledger API Server.
 
-To build and run `clio_server`, follow the instructions in [README.md](https://github.com/cjcobb23/clio).
+To build and run `clio_server`, follow the instructions in [README.md](https://github.com/XRPLF/clio).
 
-If you find issues or have a new idea, please open [an issue](https://github.com/cjcobb23/clio/issues).
+If you find issues or have a new idea, please open [an issue](https://github.com/XRPLF/clio/issues).
 
 # Releases
 
