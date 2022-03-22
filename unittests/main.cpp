@@ -39,6 +39,7 @@ TEST(BackendTest, Basic)
             boost::json::object postgresConfig{
                 {"database",
                  {{"type", "postgres"},
+                  {"experimental", true},
                   {"postgres",
                    {{"contact_point", "127.0.0.1"},
                     {"username", "postgres"},
@@ -1671,6 +1672,7 @@ TEST(Backend, cacheIntegration)
             boost::json::object postgresConfig{
                 {"database",
                  {{"type", "postgres"},
+                  {"experimental", true},
                   {"postgres",
                    {{"contact_point", "127.0.0.1"},
                     {"username", "postgres"},
