@@ -42,7 +42,7 @@ Use these instructions to build a clio executable from source. These instruction
   # -------------------------------
   export BOOST_ROOT=/home/my_user/boost_1_75_0
   source ~/.profile
-5. git clone https://github.com/cjcobb23/clio.git
+5. git clone https://github.com/XRPLF/clio.git
 6. mkdir build
 7. cd build
 8. cmake ..
