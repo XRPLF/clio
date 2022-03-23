@@ -2,7 +2,6 @@
 #include <backend/DBHelpers.h>
 #include <etl/ETLHelpers.h>
 #include <etl/ReportingETL.h>
-#include <etl/ETLHelpers.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/protocol/STBase.h>
@@ -39,7 +38,8 @@ ReportingETL::insertTransactions(
     FormattedTransactionsData result;
 
     // Token ID -> <transaction index, NFTokensData>
-    std::map<ripple::uint256, std::pair<uint32_t, NFTokensData>> nfTokensCache;
+    std::map<ripple::uint256, std::pair<std::uint32_t, NFTokensData>>
+        nfTokensCache;
 
     for (auto& txn :
          *(data.mutable_transactions_list()->mutable_transactions()))
@@ -53,16 +53,17 @@ ReportingETL::insertTransactions(
             sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
 
         ripple::TxType txType = sttx.getTxnType();
-        // Only successful NFTokenMint, NFTokenBurn, and NFTokenAcceptOffer can change
-        // the state of an NFToken as far as clio is concerned.
-        if (txMeta.getResultTER() == ripple::tesSUCCESS && (
-              txType == ripple::TxType::ttNFTOKEN_MINT ||
-              txType == ripple::TxType::ttNFTOKEN_BURN ||
-              txType == ripple::TxType::ttNFTOKEN_ACCEPT_OFFER))
+        // Only successful NFTokenMint, NFTokenBurn, and NFTokenAcceptOffer can
+        // change the state of an NFToken as far as clio is concerned.
+        if (txMeta.getResultTER() == ripple::tesSUCCESS &&
+            (txType == ripple::TxType::ttNFTOKEN_MINT ||
+             txType == ripple::TxType::ttNFTOKEN_BURN ||
+             txType == ripple::TxType::ttNFTOKEN_ACCEPT_OFFER))
         {
             ripple::uint256 tokenID = etl::getNFTokenID(txMeta, sttx);
 
-            result.nfTokenTxData.emplace_back(tokenID, txMeta, sttx.getTransactionID());
+            result.nfTokenTxData.emplace_back(
+                tokenID, txMeta, sttx.getTransactionID());
 
             NFTokensData toInsert = NFTokensData(
                 tokenID,
@@ -75,17 +76,15 @@ ReportingETL::insertTransactions(
             {
                 // The nf_token resulting from this transaction hasn't been seen
                 // yet this ledger, so add it
-                nfTokensCache.insert({
-                    tokenID,
-                    std::make_pair(txMeta.getIndex(), toInsert)});
+                nfTokensCache.insert(
+                    {tokenID, std::make_pair(txMeta.getIndex(), toInsert)});
             }
             else if (txMeta.getIndex() > std::get<0>(search->second))
             {
                 // The nf_token resulting from this transaction should overwrite
                 // the existing one for this token ID
                 nfTokensCache.insert_or_assign(
-                    tokenID,
-                    std::make_pair(txMeta.getIndex(), toInsert));
+                    tokenID, std::make_pair(txMeta.getIndex(), toInsert));
             }
         }
 
@@ -97,7 +96,8 @@ ReportingETL::insertTransactions(
             << "Inserting transaction = " << sttx.getTransactionID();
 
         auto journal = ripple::debugLog();
-        result.accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
+        result.accountTxData.emplace_back(
+            txMeta, sttx.getTransactionID(), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
         backend_->writeTransaction(
             std::move(keyStr),
@@ -153,7 +153,8 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
-    InsertTransactionsResult insertTxResult = insertTransactions(lgrInfo, *ledgerData);
+    InsertTransactionsResult insertTxResult =
+        insertTransactions(lgrInfo, *ledgerData);
     BOOST_LOG_TRIVIAL(debug) << __func__ << " inserted txns";
 
     // download the full account state map. This function downloads full ledger
@@ -166,9 +167,11 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
     if (!stopping_)
     {
-        backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
+        backend_->writeAccountTransactions(
+            std::move(insertTxResult.accountTxData));
         backend_->writeNFTokens(std::move(insertTxResult.nfTokensData));
-        backend_->writeNFTokenTransactions(std::move(insertTxResult.nfTokenTxData));
+        backend_->writeNFTokenTransactions(
+            std::move(insertTxResult.nfTokenTxData));
     }
     backend_->finishWrites(startingSequence);
 
@@ -562,7 +565,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "
         << rawData.ledger_objects().objects_size();
-    InsertTransactionsResult insertTxResult = insertTransactions(lgrInfo, rawData);
+    InsertTransactionsResult insertTxResult =
+        insertTransactions(lgrInfo, rawData);
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted all transactions. Number of transactions  = "

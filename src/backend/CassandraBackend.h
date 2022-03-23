@@ -115,9 +115,7 @@ public:
             throw std::runtime_error(
                 "CassandraStatement::bindNextBoolean - statement_ is null");
         CassError rc = cass_statement_bind_bool(
-            statement_,
-            curBindingIndex_,
-            static_cast<cass_bool_t>(val));
+            statement_, curBindingIndex_, static_cast<cass_bool_t>(val));
         if (rc != CASS_OK)
         {
             std::stringstream ss;
@@ -499,8 +497,8 @@ public:
         if (rc != CASS_OK)
         {
             std::stringstream msg;
-            msg << __func__ << " - error getting value: " << rc
-                << ", " << cass_error_desc(rc);
+            msg << __func__ << " - error getting value: " << rc << ", "
+                << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << msg.str();
             throw std::runtime_error(msg.str());
         }
@@ -886,13 +884,17 @@ public:
         boost::asio::yield_context& yield) const override;
 
     std::optional<NFToken>
-    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
+    fetchNFToken(
+        ripple::uint256 tokenID,
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<LedgerObject>
     fetchNFTokenPage(
         ripple::uint256 ledgerKeyMin,
         ripple::uint256 ledgerKeyMax,
-        uint32_t ledgerSequence) const override;
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence
@@ -984,7 +986,8 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     void
-    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) override;
+    writeNFTokenTransactions(
+        std::vector<NFTokenTransactionsData>&& data) override;
 
     void
     writeTransaction(

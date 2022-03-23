@@ -290,26 +290,26 @@ void
 CassandraBackend::writeNFTokenTransactions(
     std::vector<NFTokenTransactionsData>&& data)
 {
-  for (NFTokenTransactionsData& record : data)
-  {
-      makeAndExecuteAsyncWrite(
-          this,
-          std::move(std::make_tuple(
-              record.tokenID,
-              record.ledgerSequence,
-              record.transactionIndex,
-              record.txHash)),
-          [this](auto& params) {
-              CassandraStatement statement(insertNFTokenTx_);
-              auto& [tokenID, lgrSeq, txnIdx, txHash] = params.data;
-              statement.bindNextBytes(tokenID);
-              statement.bindNextInt(lgrSeq);
-              statement.bindNextInt(txnIdx);
-              statement.bindNextBytes(txHash);
-              return statement;
-          },
-          "nf_token_transactions");
-  }
+    for (NFTokenTransactionsData& record : data)
+    {
+        makeAndExecuteAsyncWrite(
+            this,
+            std::move(std::make_tuple(
+                record.tokenID,
+                record.ledgerSequence,
+                record.transactionIndex,
+                record.txHash)),
+            [this](auto& params) {
+                CassandraStatement statement(insertNFTokenTx_);
+                auto& [tokenID, lgrSeq, txnIdx, txHash] = params.data;
+                statement.bindNextBytes(tokenID);
+                statement.bindNextInt(lgrSeq);
+                statement.bindNextInt(txnIdx);
+                statement.bindNextBytes(txHash);
+                return statement;
+            },
+            "nf_token_transactions");
+    }
 }
 
 void
@@ -355,8 +355,7 @@ CassandraBackend::writeTransaction(
 }
 
 void
-CassandraBackend::writeNFTokens(
-    std::vector<NFTokensData> && data)
+CassandraBackend::writeNFTokens(std::vector<NFTokensData>&& data)
 {
     for (NFTokensData& record : data)
     {
@@ -382,9 +381,7 @@ CassandraBackend::writeNFTokens(
         makeAndExecuteAsyncWrite(
             this,
             std::move(std::make_tuple(
-                record.issuer,
-                record.ledgerSequence,
-                record.tokenID)),
+                record.issuer, record.ledgerSequence, record.tokenID)),
             [this](auto& params) {
                 CassandraStatement statement{insertIssuerNFToken_};
                 auto& [issuer, lgrSeq, tokenID] = params.data;
@@ -397,9 +394,7 @@ CassandraBackend::writeNFTokens(
         makeAndExecuteAsyncWrite(
             this,
             std::move(std::make_tuple(
-                record.owner,
-                record.ledgerSequence,
-                record.tokenID)),
+                record.owner, record.ledgerSequence, record.tokenID)),
             [this](auto& params) {
                 CassandraStatement statement{insertOwnerNFToken_};
                 auto& [owner, lgrSeq, tokenID] = params.data;
@@ -592,12 +587,13 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
 std::optional<NFToken>
 CassandraBackend::fetchNFToken(
     ripple::uint256 tokenID,
-    uint32_t ledgerSequence) const
+    std::uint32_t ledgerSequence,
+    boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectNFToken_};
     statement.bindNextBytes(tokenID);
     statement.bindNextInt(ledgerSequence);
-    CassandraResult response = executeSyncRead(statement);
+    CassandraResult response = executeAsyncRead(statement, yield);
     if (!response)
     {
         return {};
@@ -615,13 +611,14 @@ std::optional<LedgerObject>
 CassandraBackend::fetchNFTokenPage(
     ripple::uint256 ledgerKeyMin,
     ripple::uint256 ledgerKeyMax,
-    uint32_t ledgerSequence) const
+    std::uint32_t ledgerSequence,
+    boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectNFTokenPage_};
     statement.bindNextInt(ledgerSequence);
     statement.bindNextBytes(ledgerKeyMin);
     statement.bindNextBytes(ledgerKeyMax);
-    CassandraResult response = executeSyncRead(statement);
+    CassandraResult response = executeAsyncRead(statement, yield);
     if (!response)
     {
         return {};
@@ -640,7 +637,7 @@ CassandraBackend::fetchNFTokenPage(
             object = objectCandidate;
         }
     } while (response.nextRow());
-    
+
     return LedgerObject{key, object};
 }
 
@@ -1356,6 +1353,26 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "SELECT * FROM " << tablePrefix << "issuer_nf_tokens"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix
+              << "owner_nf_tokens"
+              << "  ("
+              << "    owner blob,"
+              << "    sequence bigint,"
+              << "    token_id blob,"
+              << "    PRIMARY KEY (owner, sequence)"
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "    AND default_time_to_live = " << std::to_string(ttl);
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "owner_nf_tokens"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;

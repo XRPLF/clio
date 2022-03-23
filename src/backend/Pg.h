@@ -205,21 +205,15 @@ public:
     asBool(int ntuple = 0, int nfield = 0) const
     {
         std::string val = c_str(ntuple, nfield);
-        if (val == "true" ||
-            val == "t" ||
-            val == "yes" ||
-            val == "y" ||
+        if (val == "true" || val == "t" || val == "yes" || val == "y" ||
             val == "1")
         {
-          return true;
+            return true;
         }
-        if (val == "false" ||
-            val == "f" ||
-            val == "no" ||
-            val == "n" ||
+        if (val == "false" || val == "f" || val == "no" || val == "n" ||
             val == "0")
         {
-          return false;
+            return false;
         }
         throw std::runtime_error("Pg - invalid boolean value " + val);
     }

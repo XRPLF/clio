@@ -81,6 +81,24 @@ PostgresBackend::writeAccountTransactions(
 }
 
 void
+PostgresBackend::writeNFTokenTransactions(
+    std::vector<NFTokenTransactionsData>&& data)
+{
+    if (abortWrite_)
+    {
+        return;
+    }
+    PgQuery pg(pgPool_);
+    for (NFTokenTransactionsData const& record : data)
+    {
+        nfTokenTxBuffer_ << "\\\\x" << record.tokenID << '\t'
+                         << std::to_string(record.ledgerSequence) << '\t'
+                         << std::to_string(record.transactionIndex) << '\t'
+                         << "\\\\x" << ripple::strHex(record.txHash) << '\n';
+    }
+}
+
+void
 PostgresBackend::doWriteLedgerObject(
     std::string&& key,
     std::uint32_t const seq,
@@ -156,8 +174,7 @@ PostgresBackend::writeTransaction(
 }
 
 void
-PostgresBackend::writeNFTokens(
-    std::vector<NFTokensData> && data)
+PostgresBackend::writeNFTokens(std::vector<NFTokensData>&& data)
 {
     if (abortWrite_)
     {
@@ -168,8 +185,8 @@ PostgresBackend::writeNFTokens(
     {
         nfTokensBuffer_ << "\\\\x" << record.tokenID << '\t'
                         << std::to_string(record.ledgerSequence) << '\t'
-                        << "\\\\x" << record.issuer << '\t'
-                        << "\\\\x" << record.owner << '\t'
+                        << "\\\\x" << record.issuer << '\t' << "\\\\x"
+                        << record.owner << '\t'
                         << (record.isBurned ? "true" : "false") << '\n';
     }
 }
@@ -444,17 +461,18 @@ PostgresBackend::fetchAllTransactionHashesInLedger(
 std::optional<NFToken>
 PostgresBackend::fetchNFToken(
     ripple::uint256 tokenID,
-    uint32_t ledgerSequence) const
+    std::uint32_t ledgerSequence,
+    boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery("SET statement_timeout TO 10000");
+    pgQuery(set_timeout, yield);
     std::stringstream sql;
     sql << "SELECT ledger_seq,owner,is_burned"
         << " FROM nf_tokens WHERE"
         << " token_id = \'\\x" << ripple::strHex(tokenID) << "\' AND"
         << " ledger_seq <= " << std::to_string(ledgerSequence)
         << " ORDER BY ledger_seq DESC LIMIT 1";
-    auto response = pgQuery(sql.str().data());
+    auto response = pgQuery(sql.str().data(), yield);
     size_t numRows = checkResult(response, 3);
     if (!numRows)
     {
@@ -473,10 +491,11 @@ std::optional<LedgerObject>
 PostgresBackend::fetchNFTokenPage(
     ripple::uint256 ledgerKeyMin,
     ripple::uint256 ledgerKeyMax,
-    uint32_t ledgerSequence) const
+    std::uint32_t ledgerSequence,
+    boost::asio::yield_context& yield) const
 {
     PgQuery pgQuery(pgPool_);
-    pgQuery("SET statement_timeout TO 10000");
+    pgQuery(set_timeout, yield);
     std::stringstream sql;
     sql << "SELECT key,object"
         << " FROM objects WHERE"
@@ -484,16 +503,14 @@ PostgresBackend::fetchNFTokenPage(
         << " key >= \'\\x" << ripple::strHex(ledgerKeyMin) << "\' AND"
         << " key <= \'\\x" << ripple::strHex(ledgerKeyMax) << "\'"
         << " ORDER BY key ASC LIMIT 1";
-    auto response = pgQuery(sql.str().data());
+    auto response = pgQuery(sql.str().data(), yield);
     size_t numRows = checkResult(response, 2);
     if (!numRows)
     {
         return {};
     }
 
-    return LedgerObject{
-        response.asUInt256(0, 0),
-        response.asUnHexedBlob(0, 1)};
+    return LedgerObject{response.asUInt256(0, 0), response.asUnHexedBlob(0, 1)};
 }
 
 std::optional<ripple::uint256>
@@ -843,11 +860,11 @@ PostgresBackend::doFinishWrites()
             std::string txStr = transactionsBuffer_.str();
             writeConnection_.bulkInsert("transactions", txStr, yield);
             writeConnection_.bulkInsert(
-                "nf_tokens", nfTokensBuffer_.str());
+                "nf_tokens", nfTokensBuffer_.str(), yield);
             writeConnection_.bulkInsert(
                 "account_transactions", accountTxBuffer_.str(), yield);
             writeConnection_.bulkInsert(
-                "nf_token_transactions", nfTokenTxBuffer_.str());
+                "nf_token_transactions", nfTokenTxBuffer_.str(), yield);
             std::string objectsStr = objectsBuffer_.str();
             if (objectsStr.size())
                 writeConnection_.bulkInsert("objects", objectsStr, yield);

@@ -22,7 +22,8 @@
 struct AccountTransactionsData;
 struct NFTokenTransactionsData;
 struct NFTokensData;
-struct InsertTransactionsResult {
+struct InsertTransactionsResult
+{
     std::vector<AccountTransactionsData> accountTxData;
     std::vector<NFTokenTransactionsData> nfTokenTxData;
     std::vector<NFTokensData> nfTokensData;
@@ -220,8 +221,8 @@ private:
     /// @param ledger ledger to insert transactions into
     /// @param data data extracted from an ETL source
     /// @return struct that contains the neccessary info to write to the
-    /// account_transactions and nft_token_transactions tables in Postgres (mostly
-    /// transaction hashes, corresponding nodestore hashes and affected
+    /// account_transactions and nft_token_transactions tables in Postgres
+    /// (mostly transaction hashes, corresponding nodestore hashes and affected
     /// accounts)
     InsertTransactionsResult
     insertTransactions(
