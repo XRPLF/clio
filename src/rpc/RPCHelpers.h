@@ -20,6 +20,20 @@ accountFromStringStrict(std::string const& account);
 std::optional<ripple::AccountID>
 accountFromSeed(std::string const& account);
 
+bool
+isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID);
+
+std::uint64_t
+getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID);
+
+std::optional<AccountCursor>
+parseAccountCursor(
+    BackendInterface const& backend,
+    std::uint32_t seq,
+    std::optional<std::string> jsonCursor,
+    ripple::AccountID const& accountID,
+    boost::asio::yield_context& yield);
+
 // TODO this function should probably be in a different file and namespace
 std::pair<
     std::shared_ptr<ripple::STTx const>,
@@ -64,18 +78,20 @@ generatePubLedgerMessage(
     ripple::LedgerInfo const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    uint32_t txnCount);
+    std::uint32_t txnCount);
 
 std::variant<Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(Context const& ctx);
 
-std::optional<ripple::uint256>
+std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::AccountID const& accountID,
     std::uint32_t sequence,
-    ripple::uint256 const& cursor,
-    std::function<bool(ripple::SLE)> atOwnedNode);
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE)> atOwnedNode);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -90,7 +106,8 @@ bool
 isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t seq,
-    ripple::AccountID const& issuer);
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context& yield);
 
 bool
 isFrozen(
@@ -98,14 +115,16 @@ isFrozen(
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
-    ripple::AccountID const& issuer);
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context& yield);
 
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
-    uint32_t sequence,
+    std::uint32_t sequence,
     ripple::STAmount const& amount,
-    ripple::AccountID const& id);
+    ripple::AccountID const& id,
+    boost::asio::yield_context& yield);
 
 ripple::STAmount
 accountHolds(
@@ -114,26 +133,31 @@ accountHolds(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    bool zeroIfFrozen = false);
+    bool zeroIfFrozen,
+    boost::asio::yield_context& yield);
 
 ripple::Rate
 transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& issuer);
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context& yield);
 
 ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& id);
+    ripple::AccountID const& id,
+    boost::asio::yield_context& yield);
+
 boost::json::array
 postProcessOrderBook(
     std::vector<Backend::LedgerObject> const& offers,
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     Backend::BackendInterface const& backend,
-    uint32_t ledgerSequence);
+    std::uint32_t ledgerSequence,
+    boost::asio::yield_context& yield);
 
 std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request);
@@ -141,16 +165,16 @@ parseBook(boost::json::object const& request);
 std::variant<Status, ripple::AccountID>
 parseTaker(boost::json::value const& request);
 
-std::optional<uint32_t>
+std::optional<std::uint32_t>
 getUInt(boost::json::object const& request, std::string const& field);
 
-uint32_t
+std::uint32_t
 getUInt(
     boost::json::object const& request,
     std::string const& field,
-    uint32_t dfault);
+    std::uint32_t dfault);
 
-uint32_t
+std::uint32_t
 getRequiredUInt(boost::json::object const& request, std::string const& field);
 
 std::optional<bool>

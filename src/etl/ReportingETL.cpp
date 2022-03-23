@@ -10,8 +10,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <subscriptions/SubscriptionManager.h>
+#include <thread>
 #include <variant>
-#include <webserver/SubscriptionManager.h>
 
 namespace detail {
 /// Convenience function for printing out basic ledger info
@@ -95,29 +96,33 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
+    auto start = std::chrono::system_clock::now();
+
     backend_->startWrites();
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " started writes";
+
     backend_->writeLedger(
-        lgrInfo, std::move(*ledgerData->mutable_ledger_header()), true);
+        lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " wrote ledger";
     std::vector<AccountTransactionsData> accountTxData =
         insertTransactions(lgrInfo, *ledgerData);
     BOOST_LOG_TRIVIAL(debug) << __func__ << " inserted txns";
-
-    auto start = std::chrono::system_clock::now();
 
     // download the full account state map. This function downloads full ledger
     // data and pushes the downloaded data into the writeQueue. asyncWriter
     // consumes from the queue and inserts the data into the Ledger object.
     // Once the below call returns, all data has been pushed into the queue
     loadBalancer_->loadInitialLedger(startingSequence);
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " loaded initial ledger";
 
     if (!stopping_)
-    {
         backend_->writeAccountTransactions(std::move(accountTxData));
-    }
+
     backend_->finishWrites(startingSequence);
+
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(debug) << "Time to download and store ledger = "
                              << ((end - start).count()) / 1000000000.0;
@@ -129,43 +134,57 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 {
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " - Publishing ledger " << std::to_string(lgrInfo.seq);
-    backend_->updateRange(lgrInfo.seq);
-    auto ledgerRange = backend_->fetchLedgerRange();
 
-    std::optional<ripple::Fees> fees;
-    std::vector<Backend::TransactionAndMetadata> transactions;
-    while (true)
+    if (!writing_)
     {
-        try
-        {
-            fees = backend_->fetchFees(lgrInfo.seq);
-            transactions = backend_->fetchAllTransactionsInLedger(lgrInfo.seq);
-            break;
-        }
-        catch (Backend::DatabaseTimeout const&)
-        {
-            BOOST_LOG_TRIVIAL(warning) << "Read timeout fetching transactions";
-        }
-    }
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " - Updating cache";
 
-    if (!fees || !ledgerRange)
+        std::vector<Backend::LedgerObject> diff =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+            });
+
+        backend_->cache().update(diff, lgrInfo.seq);
+        backend_->updateRange(lgrInfo.seq);
+    }
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::system_clock::now().time_since_epoch())
+                   .count();
+    auto closeTime = lgrInfo.closeTime.time_since_epoch().count();
+    auto age = now - (rippleEpochStart + closeTime);
+    // if the ledger closed over 10 minutes ago, assume we are still
+    // catching up and don't publish
+    if (age < 600)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " - could not fetch from database";
-        return;
+        std::optional<ripple::Fees> fees =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchFees(lgrInfo.seq, yield);
+            });
+
+        std::vector<Backend::TransactionAndMetadata> transactions =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchAllTransactionsInLedger(
+                    lgrInfo.seq, yield);
+            });
+
+        auto ledgerRange = backend_->fetchLedgerRange();
+        assert(ledgerRange);
+        assert(fees);
+
+        std::string range = std::to_string(ledgerRange->minSequence) + "-" +
+            std::to_string(ledgerRange->maxSequence);
+
+        subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
+
+        for (auto& txAndMeta : transactions)
+            subscriptions_->pubTransaction(txAndMeta, lgrInfo);
+        BOOST_LOG_TRIVIAL(info) << __func__ << " - Published ledger "
+                                << std::to_string(lgrInfo.seq);
     }
-
-    std::string range = std::to_string(ledgerRange->minSequence) + "-" +
-        std::to_string(ledgerRange->maxSequence);
-
-    subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
-
-    for (auto& txAndMeta : transactions)
-        subscriptions_->pubTransaction(txAndMeta, lgrInfo);
-
+    else
+        BOOST_LOG_TRIVIAL(info) << __func__ << " - Skipping publishing ledger "
+                                << std::to_string(lgrInfo.seq);
     setLastPublish();
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " - Published ledger " << std::to_string(lgrInfo.seq);
 }
 
 bool
@@ -179,72 +198,75 @@ ReportingETL::publishLedger(
     size_t numAttempts = 0;
     while (!stopping_)
     {
-        try
-        {
-            auto range = backend_->hardFetchLedgerRangeNoThrow();
+        auto range = backend_->hardFetchLedgerRangeNoThrow();
 
-            if (!range || range->maxSequence < ledgerSequence)
+        if (!range || range->maxSequence < ledgerSequence)
+        {
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
+                                     << "Trying to publish. Could not find "
+                                        "ledger with sequence = "
+                                     << ledgerSequence;
+            // We try maxAttempts times to publish the ledger, waiting one
+            // second in between each attempt.
+            if (maxAttempts && numAttempts >= maxAttempts)
             {
                 BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
-                                         << "Trying to publish. Could not find "
-                                            "ledger with sequence = "
-                                         << ledgerSequence;
-                // We try maxAttempts times to publish the ledger, waiting one
-                // second in between each attempt.
-                if (maxAttempts && numAttempts >= maxAttempts)
-                {
-                    BOOST_LOG_TRIVIAL(debug)
-                        << __func__ << " : "
-                        << "Failed to publish ledger after " << numAttempts
-                        << " attempts.";
-                    return false;
-                }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                ++numAttempts;
-                continue;
+                                         << "Failed to publish ledger after "
+                                         << numAttempts << " attempts.";
+                return false;
             }
-            else
-            {
-                auto lgr = backend_->fetchLedgerBySequence(ledgerSequence);
-                assert(lgr);
-                publishLedger(*lgr);
-
-                return true;
-            }
-        }
-        catch (Backend::DatabaseTimeout const& e)
-        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ++numAttempts;
             continue;
+        }
+        else
+        {
+            auto lgr = Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerBySequence(ledgerSequence, yield);
+            });
+
+            assert(lgr);
+            publishLedger(*lgr);
+
+            return true;
         }
     }
     return false;
 }
 
 std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-ReportingETL::fetchLedgerData(uint32_t idx)
+ReportingETL::fetchLedgerData(uint32_t seq)
 {
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
-        << "Attempting to fetch ledger with sequence = " << idx;
+        << "Attempting to fetch ledger with sequence = " << seq;
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_->fetchLedger(idx, false);
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
-                             << "GetLedger reply = " << response->DebugString();
+        loadBalancer_->fetchLedger(seq, false, false);
+    if (response)
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " : "
+            << "GetLedger reply = " << response->DebugString();
     return response;
 }
 
 std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-ReportingETL::fetchLedgerDataAndDiff(uint32_t idx)
+ReportingETL::fetchLedgerDataAndDiff(uint32_t seq)
 {
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
-        << "Attempting to fetch ledger with sequence = " << idx;
+        << "Attempting to fetch ledger with sequence = " << seq;
 
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_->fetchLedger(idx, true);
-    BOOST_LOG_TRIVIAL(trace) << __func__ << " : "
-                             << "GetLedger reply = " << response->DebugString();
+        loadBalancer_->fetchLedger(
+            seq,
+            true,
+            !backend_->cache().isFull() ||
+                backend_->cache().latestLedgerSequence() >= seq);
+    if (response)
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " : "
+            << "GetLedger reply = " << response->DebugString();
     return response;
 }
 
@@ -260,21 +282,233 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Deserialized ledger header. " << detail::toString(lgrInfo);
+
     backend_->startWrites();
 
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "started writes";
+
     backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote ledger header";
 
+    // Write successor info, if included from rippled
+    if (rawData.object_neighbors_included())
+    {
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " object neighbors included";
+        for (auto& obj : *(rawData.mutable_book_successors()))
+        {
+            auto firstBook = std::move(*obj.mutable_first_book());
+            if (!firstBook.size())
+                firstBook = uint256ToString(Backend::lastKey);
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " writing book successor "
+                                     << ripple::strHex(obj.book_base()) << " - "
+                                     << ripple::strHex(firstBook);
+
+            backend_->writeSuccessor(
+                std::move(*obj.mutable_book_base()),
+                lgrInfo.seq,
+                std::move(firstBook));
+        }
+        for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
+        {
+            if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
+            {
+                std::string* predPtr = obj.mutable_predecessor();
+                if (!predPtr->size())
+                    *predPtr = uint256ToString(Backend::firstKey);
+                std::string* succPtr = obj.mutable_successor();
+                if (!succPtr->size())
+                    *succPtr = uint256ToString(Backend::lastKey);
+
+                if (obj.mod_type() ==
+                    org::xrpl::rpc::v1::RawLedgerObject::DELETED)
+                {
+                    BOOST_LOG_TRIVIAL(debug)
+                        << __func__
+                        << " modifying successors for deleted object "
+                        << ripple::strHex(obj.key()) << " - "
+                        << ripple::strHex(*predPtr) << " - "
+                        << ripple::strHex(*succPtr);
+
+                    backend_->writeSuccessor(
+                        std::move(*predPtr), lgrInfo.seq, std::move(*succPtr));
+                }
+                else
+                {
+                    BOOST_LOG_TRIVIAL(debug)
+                        << __func__ << " adding successor for new object "
+                        << ripple::strHex(obj.key()) << " - "
+                        << ripple::strHex(*predPtr) << " - "
+                        << ripple::strHex(*succPtr);
+
+                    backend_->writeSuccessor(
+                        std::move(*predPtr),
+                        lgrInfo.seq,
+                        std::string{obj.key()});
+                    backend_->writeSuccessor(
+                        std::string{obj.key()},
+                        lgrInfo.seq,
+                        std::move(*succPtr));
+                }
+            }
+            else
+                BOOST_LOG_TRIVIAL(debug) << __func__ << " object modified "
+                                         << ripple::strHex(obj.key());
+        }
+    }
+    std::vector<Backend::LedgerObject> cacheUpdates;
+    cacheUpdates.reserve(rawData.ledger_objects().objects_size());
+    // TODO change these to unordered_set
+    std::set<ripple::uint256> bookSuccessorsToCalculate;
+    std::set<ripple::uint256> modified;
     for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
     {
+        auto key = ripple::uint256::fromVoidChecked(obj.key());
+        assert(key);
+        cacheUpdates.push_back(
+            {*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " key = " << ripple::strHex(*key)
+            << " - mod type = " << obj.mod_type();
+
+        if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED &&
+            !rawData.object_neighbors_included())
+        {
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__ << " object neighbors not included. using cache";
+            if (!backend_->cache().isFull() ||
+                backend_->cache().latestLedgerSequence() != lgrInfo.seq - 1)
+                throw std::runtime_error(
+                    "Cache is not full, but object neighbors were not "
+                    "included");
+            auto blob = obj.mutable_data();
+            bool checkBookBase = false;
+            bool isDeleted = (blob->size() == 0);
+            if (isDeleted)
+            {
+                auto old = backend_->cache().get(*key, lgrInfo.seq - 1);
+                assert(old);
+                checkBookBase = isBookDir(*key, *old);
+            }
+            else
+                checkBookBase = isBookDir(*key, *blob);
+            if (checkBookBase)
+            {
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__
+                    << " is book dir. key = " << ripple::strHex(*key);
+                auto bookBase = getBookBase(*key);
+                auto oldFirstDir =
+                    backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
+                assert(oldFirstDir);
+                // We deleted the first directory, or we added a directory prior
+                // to the old first directory
+                if ((isDeleted && key == oldFirstDir->key) ||
+                    (!isDeleted && key < oldFirstDir->key))
+                {
+                    BOOST_LOG_TRIVIAL(debug)
+                        << __func__
+                        << " Need to recalculate book base successor. base = "
+                        << ripple::strHex(bookBase)
+                        << " - key = " << ripple::strHex(*key)
+                        << " - isDeleted = " << isDeleted
+                        << " - seq = " << lgrInfo.seq;
+                    bookSuccessorsToCalculate.insert(bookBase);
+                }
+            }
+        }
+        if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
+            modified.insert(*key);
+
         backend_->writeLedgerObject(
             std::move(*obj.mutable_key()),
             lgrInfo.seq,
             std::move(*obj.mutable_data()));
     }
+    backend_->cache().update(cacheUpdates, lgrInfo.seq);
+    // rippled didn't send successor information, so use our cache
+    if (!rawData.object_neighbors_included())
+    {
+        BOOST_LOG_TRIVIAL(debug)
+            << __func__ << " object neighbors not included. using cache";
+        if (!backend_->cache().isFull() ||
+            backend_->cache().latestLedgerSequence() != lgrInfo.seq)
+            throw std::runtime_error(
+                "Cache is not full, but object neighbors were not "
+                "included");
+        for (auto const& obj : cacheUpdates)
+        {
+            if (modified.count(obj.key))
+                continue;
+            auto lb = backend_->cache().getPredecessor(obj.key, lgrInfo.seq);
+            if (!lb)
+                lb = {Backend::firstKey, {}};
+            auto ub = backend_->cache().getSuccessor(obj.key, lgrInfo.seq);
+            if (!ub)
+                ub = {Backend::lastKey, {}};
+            if (obj.blob.size() == 0)
+            {
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__ << " writing successor for deleted object "
+                    << ripple::strHex(obj.key) << " - "
+                    << ripple::strHex(lb->key) << " - "
+                    << ripple::strHex(ub->key);
+
+                backend_->writeSuccessor(
+                    uint256ToString(lb->key),
+                    lgrInfo.seq,
+                    uint256ToString(ub->key));
+            }
+            else
+            {
+                backend_->writeSuccessor(
+                    uint256ToString(lb->key),
+                    lgrInfo.seq,
+                    uint256ToString(obj.key));
+                backend_->writeSuccessor(
+                    uint256ToString(obj.key),
+                    lgrInfo.seq,
+                    uint256ToString(ub->key));
+
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__ << " writing successor for new object "
+                    << ripple::strHex(lb->key) << " - "
+                    << ripple::strHex(obj.key) << " - "
+                    << ripple::strHex(ub->key);
+            }
+        }
+        for (auto const& base : bookSuccessorsToCalculate)
+        {
+            auto succ = backend_->cache().getSuccessor(base, lgrInfo.seq);
+            if (succ)
+            {
+                backend_->writeSuccessor(
+                    uint256ToString(base),
+                    lgrInfo.seq,
+                    uint256ToString(succ->key));
+
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__ << " Updating book successor "
+                    << ripple::strHex(base) << " - "
+                    << ripple::strHex(succ->key);
+            }
+            else
+            {
+                backend_->writeSuccessor(
+                    uint256ToString(base),
+                    lgrInfo.seq,
+                    uint256ToString(Backend::lastKey));
+
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__ << " Updating book successor "
+                    << ripple::strHex(base) << " - "
+                    << ripple::strHex(Backend::lastKey);
+            }
+        }
+    }
+
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Inserted/modified/deleted all objects. Number of objects = "
@@ -285,11 +519,15 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         << __func__ << " : "
         << "Inserted all transactions. Number of transactions  = "
         << rawData.transactions_list().transactions_size();
+
     backend_->writeAccountTransactions(std::move(accountTxData));
+
     BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
                              << "wrote account_tx";
     auto start = std::chrono::system_clock::now();
+
     bool success = backend_->finishWrites(lgrInfo.seq);
+
     auto end = std::chrono::system_clock::now();
 
     auto duration = ((end - start).count()) / 1000000000.0;
@@ -336,17 +574,12 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     writing_ = true;
 
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    if (!rng || rng->maxSequence != startSequence - 1)
+    if (!rng || rng->maxSequence < startSequence - 1)
     {
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
     }
     std::atomic<uint32_t> minSequence = rng->minSequence;
-    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
-                            << "Populating caches";
-
-    BOOST_LOG_TRIVIAL(info) << __func__ << " : "
-                            << "Populated caches";
 
     std::atomic_bool writeConflict = false;
     std::optional<uint32_t> lastPublishedSequence;
@@ -395,17 +628,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 auto time = ((end - start).count()) / 1000000000.0;
                 totalTime += time;
 
-                auto tps =
-                    fetchResponse->transactions_list().transactions_size() /
-                    time;
-
-                BOOST_LOG_TRIVIAL(info)
-                    << "Extract phase time = " << time
-                    << " . Extract phase tps = " << tps
-                    << " . Avg extract time = "
-                    << totalTime / (currentSequence - startSequence + 1)
-                    << " . thread num = " << i
-                    << " . seq = " << currentSequence;
                 // if the fetch is unsuccessful, stop. fetchLedger only
                 // returns false if the server is shutting down, or if the
                 // ledger was found in the database (which means another
@@ -417,6 +639,17 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 {
                     break;
                 }
+                auto tps =
+                    fetchResponse->transactions_list().transactions_size() /
+                    time;
+
+                BOOST_LOG_TRIVIAL(info)
+                    << "Extract phase time = " << time
+                    << " . Extract phase tps = " << tps
+                    << " . Avg extract time = "
+                    << totalTime / (currentSequence - startSequence + 1)
+                    << " . thread num = " << i
+                    << " . seq = " << currentSequence;
 
                 transformQueue->push(std::move(fetchResponse));
                 currentSequence += numExtractors;
@@ -479,16 +712,24 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
                     publishLedger(lgrInfo);
                 });
+
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
+            // TODO move online delete logic to an admin RPC call
             if (onlineDeleteInterval_ && !deleting_ &&
                 lgrInfo.seq - minSequence > *onlineDeleteInterval_)
             {
                 deleting_ = true;
                 ioContext_.post([this, &minSequence]() {
                     BOOST_LOG_TRIVIAL(info) << "Running online delete";
-                    backend_->doOnlineDelete(*onlineDeleteInterval_);
+
+                    Backend::synchronous(
+                        [&](boost::asio::yield_context& yield) {
+                            backend_->doOnlineDelete(
+                                *onlineDeleteInterval_, yield);
+                        });
+
                     BOOST_LOG_TRIVIAL(info) << "Finished online delete";
                     auto rng = backend_->fetchLedgerRange();
                     minSequence = rng->minSequence;
@@ -532,9 +773,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 void
 ReportingETL::monitor()
 {
-    std::optional<uint32_t> latestSequence =
-        backend_->fetchLatestLedgerSequence();
-    if (!latestSequence)
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+    if (!rng)
     {
         BOOST_LOG_TRIVIAL(info) << __func__ << " : "
                                 << "Database is empty. Will download a ledger "
@@ -574,7 +814,14 @@ ReportingETL::monitor()
             }
         }
         if (ledger)
-            latestSequence = ledger->seq;
+            rng = backend_->hardFetchLedgerRangeNoThrow();
+        else
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " : "
+                << "Failed to load initial ledger. Exiting monitor loop";
+            return;
+        }
     }
     else
     {
@@ -586,69 +833,182 @@ ReportingETL::monitor()
         BOOST_LOG_TRIVIAL(info)
             << __func__ << " : "
             << "Database already populated. Picking up from the tip of history";
+        loadCache(rng->maxSequence);
     }
-    if (!latestSequence)
-    {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " : "
-            << "Failed to load initial ledger. Exiting monitor loop";
-        return;
-    }
-    else
-    {
-    }
-    uint32_t nextSequence = latestSequence.value() + 1;
+    assert(rng);
+    uint32_t nextSequence = rng->maxSequence + 1;
 
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " : "
         << "Database is populated. "
         << "Starting monitor loop. sequence = " << nextSequence;
-    while (!stopping_ &&
-           networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence))
+    while (true)
     {
-        BOOST_LOG_TRIVIAL(info) << __func__ << " : "
-                                << "Ledger with sequence = " << nextSequence
-                                << " has been validated by the network. "
-                                << "Attempting to find in database and publish";
-        // Attempt to take over responsibility of ETL writer after 2 failed
-        // attempts to publish the ledger. publishLedger() fails if the
-        // ledger that has been validated by the network is not found in the
-        // database after the specified number of attempts. publishLedger()
-        // waits one second between each attempt to read the ledger from the
-        // database
-        //
-        // In strict read-only mode, when the software fails to find a
-        // ledger in the database that has been validated by the network,
-        // the software will only try to publish subsequent ledgers once,
-        // until one of those ledgers is found in the database. Once the
-        // software successfully publishes a ledger, the software will fall
-        // back to the normal behavior of trying several times to publish
-        // the ledger that has been validated by the network. In this
-        // manner, a reporting processing running in read-only mode does not
-        // need to restart if the database is wiped.
-        constexpr size_t timeoutSeconds = 2;
-        bool success = publishLedger(nextSequence, timeoutSeconds);
-        if (!success)
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
+            rng && rng->maxSequence >= nextSequence)
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " : "
-                << "Failed to publish ledger with sequence = " << nextSequence
-                << " . Beginning ETL";
-            // doContinousETLPipelined returns the most recent sequence
-            // published empty optional if no sequence was published
-            std::optional<uint32_t> lastPublished =
-                runETLPipeline(nextSequence, extractorThreads_);
-            BOOST_LOG_TRIVIAL(info)
-                << __func__ << " : "
-                << "Aborting ETL. Falling back to publishing";
-            // if no ledger was published, don't increment nextSequence
-            if (lastPublished)
-                nextSequence = *lastPublished + 1;
-        }
-        else
-        {
+            publishLedger(nextSequence, {});
             ++nextSequence;
         }
+        else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(
+                     nextSequence, 1000))
+        {
+            BOOST_LOG_TRIVIAL(info)
+                << __func__ << " : "
+                << "Ledger with sequence = " << nextSequence
+                << " has been validated by the network. "
+                << "Attempting to find in database and publish";
+            // Attempt to take over responsibility of ETL writer after 10 failed
+            // attempts to publish the ledger. publishLedger() fails if the
+            // ledger that has been validated by the network is not found in the
+            // database after the specified number of attempts. publishLedger()
+            // waits one second between each attempt to read the ledger from the
+            // database
+            constexpr size_t timeoutSeconds = 10;
+            bool success = publishLedger(nextSequence, timeoutSeconds);
+            if (!success)
+            {
+                BOOST_LOG_TRIVIAL(warning)
+                    << __func__ << " : "
+                    << "Failed to publish ledger with sequence = "
+                    << nextSequence << " . Beginning ETL";
+                // doContinousETLPipelined returns the most recent sequence
+                // published empty optional if no sequence was published
+                std::optional<uint32_t> lastPublished =
+                    runETLPipeline(nextSequence, extractorThreads_);
+                BOOST_LOG_TRIVIAL(info)
+                    << __func__ << " : "
+                    << "Aborting ETL. Falling back to publishing";
+                // if no ledger was published, don't increment nextSequence
+                if (lastPublished)
+                    nextSequence = *lastPublished + 1;
+            }
+            else
+                ++nextSequence;
+        }
+    }
+}
+
+void
+ReportingETL::loadCache(uint32_t seq)
+{
+    if (cacheLoadStyle_ == CacheLoadStyle::NOT_AT_ALL)
+    {
+        BOOST_LOG_TRIVIAL(warning) << "Cache is disabled. Not loading";
+        return;
+    }
+    // sanity check to make sure we are not calling this multiple times
+    static std::atomic_bool loading = false;
+    if (loading)
+    {
+        assert(false);
+        return;
+    }
+    loading = true;
+    if (backend_->cache().isFull())
+    {
+        assert(false);
+        return;
+    }
+    std::vector<Backend::LedgerObject> diff;
+    auto append = [](auto&& a, auto&& b) {
+        a.insert(std::end(a), std::begin(b), std::end(b));
+    };
+
+    for (size_t i = 0; i < numDiffs_; ++i)
+    {
+        append(diff, Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                   return backend_->fetchLedgerDiff(seq - i, yield);
+               }));
+    }
+
+    std::sort(diff.begin(), diff.end(), [](auto a, auto b) {
+        return a.key < b.key ||
+            (a.key == b.key && a.blob.size() < b.blob.size());
+    });
+    diff.erase(
+        std::unique(
+            diff.begin(),
+            diff.end(),
+            [](auto a, auto b) { return a.key == b.key; }),
+        diff.end());
+    std::vector<std::optional<ripple::uint256>> cursors;
+    cursors.push_back({});
+    for (auto& obj : diff)
+    {
+        if (obj.blob.size())
+            cursors.push_back({obj.key});
+    }
+    cursors.push_back({});
+    std::stringstream cursorStr;
+    for (auto& c : cursors)
+    {
+        if (c)
+            cursorStr << ripple::strHex(*c) << ", ";
+    }
+    BOOST_LOG_TRIVIAL(info)
+        << "Loading cache. num cursors = " << cursors.size() - 1;
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " cursors = " << cursorStr.str();
+
+    std::atomic_uint* numRemaining = new std::atomic_uint{cursors.size() - 1};
+
+    auto startTime = std::chrono::system_clock::now();
+    for (size_t i = 0; i < cursors.size() - 1; ++i)
+    {
+        std::optional<ripple::uint256> start = cursors[i];
+        std::optional<ripple::uint256> end = cursors[i + 1];
+        boost::asio::spawn(
+            ioContext_,
+            [this, seq, start, end, numRemaining, startTime](
+                boost::asio::yield_context yield) {
+                std::optional<ripple::uint256> cursor = start;
+                while (true)
+                {
+                    auto res =
+                        Backend::retryOnTimeout([this, seq, &cursor, &yield]() {
+                            return backend_->fetchLedgerPage(
+                                cursor, seq, 256, false, yield);
+                        });
+                    backend_->cache().update(res.objects, seq, true);
+                    if (!res.cursor || (end && *(res.cursor) > *end))
+                        break;
+                    BOOST_LOG_TRIVIAL(debug)
+                        << "Loading cache. cache size = "
+                        << backend_->cache().size()
+                        << " - cursor = " << ripple::strHex(res.cursor.value());
+                    cursor = std::move(res.cursor);
+                }
+                if (--(*numRemaining) == 0)
+                {
+                    auto endTime = std::chrono::system_clock::now();
+                    auto duration =
+                        std::chrono::duration_cast<std::chrono::seconds>(
+                            endTime - startTime);
+                    BOOST_LOG_TRIVIAL(info)
+                        << "Finished loading cache. cache size = "
+                        << backend_->cache().size() << ". Took "
+                        << duration.count() << " seconds";
+                    backend_->cache().setFull();
+                    delete numRemaining;
+                }
+                else
+                {
+                    BOOST_LOG_TRIVIAL(info)
+                        << "Finished a cursor. num remaining = "
+                        << *numRemaining;
+                }
+            });
+    }
+    // If loading synchronously, poll cache until full
+    while (cacheLoadStyle_ == CacheLoadStyle::SYNC &&
+           !backend_->cache().isFull())
+    {
+        BOOST_LOG_TRIVIAL(debug)
+            << "Cache not full. Cache size = " << backend_->cache().size()
+            << ". Sleeping ...";
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        BOOST_LOG_TRIVIAL(info)
+            << "Cache is full. Cache size = " << backend_->cache().size();
     }
 }
 
@@ -656,16 +1016,31 @@ void
 ReportingETL::monitorReadOnly()
 {
     BOOST_LOG_TRIVIAL(debug) << "Starting reporting in strict read only mode";
-    std::optional<uint32_t> mostRecent =
-        networkValidatedLedgers_->getMostRecent();
-    if (!mostRecent)
-        return;
-    uint32_t sequence = *mostRecent;
-    while (!stopping_ &&
-           networkValidatedLedgers_->waitUntilValidatedByNetwork(sequence))
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+    uint32_t latestSequence;
+    if (!rng)
+        if (auto net = networkValidatedLedgers_->getMostRecent())
+            latestSequence = *net;
+        else
+            return;
+    else
+        latestSequence = rng->maxSequence;
+    loadCache(latestSequence);
+    latestSequence++;
+    while (true)
     {
-        publishLedger(sequence, {});
-        ++sequence;
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
+            rng && rng->maxSequence >= latestSequence)
+        {
+            publishLedger(latestSequence, {});
+            latestSequence = latestSequence + 1;
+        }
+        else  // if we can't, wait until it's validated by the network, or 1
+              // second passes, whichever occurs first. Even if we don't hear
+              // from rippled, if ledgers are being written to the db, we
+              // publish them
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(
+                latestSequence, 1000);
     }
 }
 
@@ -688,11 +1063,11 @@ ReportingETL::ReportingETL(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<NetworkValidatedLedgers> ledgers)
-    : publishStrand_(ioc)
-    , ioContext_(ioc)
-    , backend_(backend)
+    : backend_(backend)
     , subscriptions_(subscriptions)
     , loadBalancer_(balancer)
+    , ioContext_(ioc)
+    , publishStrand_(ioc)
     , networkValidatedLedgers_(ledgers)
 {
     if (config.contains("start_sequence"))
@@ -719,5 +1094,23 @@ ReportingETL::ReportingETL(
         extractorThreads_ = config.at("extractor_threads").as_int64();
     if (config.contains("txn_threshold"))
         txnThreshold_ = config.at("txn_threshold").as_int64();
+    if (config.contains("cache"))
+    {
+        auto cache = config.at("cache").as_object();
+        if (cache.contains("load") && cache.at("load").is_string())
+        {
+            auto entry = config.at("cache").as_object().at("load").as_string();
+            boost::algorithm::to_lower(entry);
+            if (entry == "sync")
+                cacheLoadStyle_ = CacheLoadStyle::SYNC;
+            if (entry == "async")
+                cacheLoadStyle_ = CacheLoadStyle::ASYNC;
+            if (entry == "none" || entry == "no")
+                cacheLoadStyle_ = CacheLoadStyle::NOT_AT_ALL;
+        }
+        if (cache.contains("num_diffs") && cache.at("num_diffs").as_int64())
+        {
+            numDiffs_ = cache.at("num_diffs").as_int64();
+        }
+    }
 }
-

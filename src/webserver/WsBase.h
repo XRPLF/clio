@@ -9,9 +9,10 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
+#include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <subscriptions/SubscriptionManager.h>
 #include <webserver/DOSGuard.h>
-#include <webserver/SubscriptionManager.h>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -79,28 +80,37 @@ class WsSession : public WsBase,
 
     boost::beast::flat_buffer buffer_;
 
-    std::shared_ptr<BackendInterface> backend_;
+    boost::asio::io_context& ioc_;
+    std::shared_ptr<BackendInterface const> backend_;
     // has to be a weak ptr because SubscriptionManager maintains collections
     // of std::shared_ptr<WsBase> objects. If this were shared, there would be
     // a cyclical dependency that would block destruction
     std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
+    RPC::Counters& counters_;
     std::mutex mtx_;
     std::queue<std::string> messages_;
 
 public:
     explicit WsSession(
-        std::shared_ptr<BackendInterface> backend,
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
+        std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
+        RPC::Counters& counters,
         boost::beast::flat_buffer&& buffer)
-        : backend_(backend)
+        : buffer_(std::move(buffer))
+        , ioc_(ioc)
+        , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
+        , etl_(etl)
         , dosGuard_(dosGuard)
-        , buffer_(std::move(buffer))
+        , counters_(counters)
     {
     }
     virtual ~WsSession()
@@ -136,7 +146,7 @@ public:
     }
 
     void
-    send(std::string&& msg)
+    enqueueMessage(std::string&& msg)
     {
         size_t left = 0;
         {
@@ -148,10 +158,11 @@ public:
         if (left == 1)
             sendNext();
     }
+
     void
     send(std::string const& msg) override
     {
-        send({msg});
+        enqueueMessage(std::string(msg));
     }
 
     void
@@ -200,6 +211,87 @@ public:
     }
 
     void
+    handle_request(std::string const&& msg, boost::asio::yield_context& yc)
+    {
+        boost::json::object response = {};
+        auto sendError = [this](auto error) {
+            send(boost::json::serialize(RPC::make_error(error)));
+        };
+        try
+        {
+            boost::json::value raw = boost::json::parse(msg);
+            boost::json::object request = raw.as_object();
+            BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
+            try
+            {
+                auto range = backend_->fetchLedgerRange();
+                if (!range)
+                    return sendError(RPC::Error::rpcNOT_READY);
+
+                std::optional<RPC::Context> context = RPC::make_WsContext(
+                    yc,
+                    request,
+                    backend_,
+                    subscriptions_.lock(),
+                    balancer_,
+                    etl_,
+                    shared_from_this(),
+                    *range,
+                    counters_,
+                    derived().ip());
+
+                if (!context)
+                    return sendError(RPC::Error::rpcBAD_SYNTAX);
+
+                auto id = request.contains("id") ? request.at("id") : nullptr;
+
+                response = getDefaultWsResponse(id);
+
+                auto start = std::chrono::system_clock::now();
+                auto v = RPC::buildResponse(*context);
+                auto end = std::chrono::system_clock::now();
+                auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+                    end - start);
+
+                if (auto status = std::get_if<RPC::Status>(&v))
+                {
+                    counters_.rpcErrored(context->method);
+
+                    auto error = RPC::make_error(*status);
+
+                    if (!id.is_null())
+                        error["id"] = id;
+
+                    error["request"] = request;
+                    response = error;
+                }
+                else
+                {
+                    counters_.rpcComplete(context->method, us);
+
+                    response["result"] = std::get<boost::json::object>(v);
+                }
+            }
+            catch (Backend::DatabaseTimeout const& t)
+            {
+                BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+                return sendError(RPC::Error::rpcNOT_READY);
+            }
+        }
+        catch (std::exception const& e)
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " caught exception : " << e.what();
+
+            return sendError(RPC::Error::rpcINTERNAL);
+        }
+
+        std::string responseStr = boost::json::serialize(response);
+        dosGuard_.add(derived().ip(), responseStr.size());
+        send(std::move(responseStr));
+    }
+
+    void
     on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
@@ -209,82 +301,30 @@ public:
 
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
-        boost::json::object response;
         auto ip = derived().ip();
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " received request from ip = " << ip;
         if (!dosGuard_.isOk(ip))
+        {
+            boost::json::object response;
             response["error"] = "Too many requests. Slow down";
+            std::string responseStr = boost::json::serialize(response);
+
+            BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
+
+            dosGuard_.add(ip, responseStr.size());
+            send(std::move(responseStr));
+        }
         else
         {
-            auto sendError = [this](auto error) {
-                send(boost::json::serialize(RPC::make_error(error)));
-            };
-            try
-            {
-                boost::json::value raw = boost::json::parse(msg);
-                boost::json::object request = raw.as_object();
-                BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
-                try
-                {
-                    auto range = backend_->fetchLedgerRange();
-                    if (!range)
-                        return sendError(RPC::Error::rpcNOT_READY);
-
-                    std::optional<RPC::Context> context = RPC::make_WsContext(
-                        request,
-                        backend_,
-                        subscriptions_.lock(),
-                        balancer_,
-                        shared_from_this(),
-                        *range);
-
-                    if (!context)
-                        return sendError(RPC::Error::rpcBAD_SYNTAX);
-
-                    auto id =
-                        request.contains("id") ? request.at("id") : nullptr;
-
-                    response = getDefaultWsResponse(id);
-                    boost::json::object& result =
-                        response["result"].as_object();
-
-                    auto v = RPC::buildResponse(*context);
-
-                    if (auto status = std::get_if<RPC::Status>(&v))
-                    {
-                        auto error = RPC::make_error(*status);
-
-                        if (!id.is_null())
-                            error["id"] = id;
-                        error["request"] = request;
-                        response = error;
-                    }
-                    else
-                    {
-                        result = std::get<boost::json::object>(v);
-                    }
-                }
-                catch (Backend::DatabaseTimeout const& t)
-                {
-                    BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                    return sendError(RPC::Error::rpcNOT_READY);
-                }
-            }
-            catch (std::exception const& e)
-            {
-                BOOST_LOG_TRIVIAL(error)
-                    << __func__ << " caught exception : " << e.what();
-
-                return sendError(RPC::Error::rpcINTERNAL);
-            }
+            boost::asio::spawn(
+                ioc_,
+                [m = std::move(msg), shared_this = shared_from_this()](
+                    boost::asio::yield_context yield) {
+                    shared_this->handle_request(std::move(m), yield);
+                });
         }
-        BOOST_LOG_TRIVIAL(trace)
-            << __func__ << " : " << boost::json::serialize(response);
 
-        std::string responseStr = boost::json::serialize(response);
-        dosGuard_.add(ip, responseStr.size());
-        send(std::move(responseStr));
         do_read();
     }
 };

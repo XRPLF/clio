@@ -1,5 +1,5 @@
-#include <ripple/app/paths/RippleState.h>
 #include <ripple/app/ledger/Ledger.h>
+#include <ripple/app/paths/RippleState.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -8,13 +8,11 @@
 #include <boost/json.hpp>
 
 #include <algorithm>
-#include <rpc/RPCHelpers.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
+#include <rpc/RPCHelpers.h>
 
-
-namespace RPC
-{
+namespace RPC {
 
 void
 addLine(
@@ -47,13 +45,19 @@ addLine(
     if (!viewLowest)
         balance.negate();
 
-    bool lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineAuthPeer = flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineAuth =
+        flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineAuthPeer =
+        flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineNoRipple =
+        flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
     bool lineDefaultRipple = flags & ripple::lsfDefaultRipple;
-    bool lineNoRipplePeer = flags & (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool lineFreezePeer = flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineNoRipplePeer = flags &
+        (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineFreeze =
+        flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineFreezePeer =
+        flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
 
     ripple::STAmount const& saBalance(balance);
     ripple::STAmount const& saLimit(lineLimit);
@@ -83,7 +87,7 @@ addLine(
     jsonLines.push_back(jPeer);
 }
 
-Result 
+Result
 doAccountLines(Context const& context)
 {
     auto request = context.params;
@@ -95,13 +99,13 @@ doAccountLines(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    if(!request.contains("account"))
+    if (!request.contains("account"))
         return Status{Error::rpcINVALID_PARAMS, "missingAccount"};
 
-    if(!request.at("account").is_string())
+    if (!request.at("account").is_string())
         return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
-    
-    auto accountID = 
+
+    auto accountID =
         accountFromStringStrict(request.at("account").as_string().c_str());
 
     if (!accountID)
@@ -113,8 +117,8 @@ doAccountLines(Context const& context)
         if (!request.at("peer").is_string())
             return Status{Error::rpcINVALID_PARAMS, "peerNotString"};
 
-        peerAccount = accountFromStringStrict(
-            request.at("peer").as_string().c_str());
+        peerAccount =
+            accountFromStringStrict(request.at("peer").as_string().c_str());
 
         if (!peerAccount)
             return Status{Error::rpcINVALID_PARAMS, "peerMalformed"};
@@ -123,7 +127,7 @@ doAccountLines(Context const& context)
     std::uint32_t limit = 200;
     if (request.contains("limit"))
     {
-        if(!request.at("limit").is_int64())
+        if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
 
         limit = request.at("limit").as_int64();
@@ -131,14 +135,13 @@ doAccountLines(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
     }
 
-    ripple::uint256 cursor;
-    if (request.contains("cursor"))
+    std::optional<std::string> cursor = {};
+    if (request.contains("marker"))
     {
-        if(!request.at("cursor").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
+        if (!request.at("marker").is_string())
+            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
+        cursor = request.at("marker").as_string().c_str();
     }
 
     response["account"] = ripple::to_string(*accountID);
@@ -147,32 +150,31 @@ doAccountLines(Context const& context)
     response["lines"] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at("lines").as_array();
 
-    auto const addToResponse = [&](ripple::SLE const& sle) {
+    auto const addToResponse = [&](ripple::SLE const& sle) -> void {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            if (limit-- == 0)
-            {
-                return false;
-            }
-            
             addLine(jsonLines, sle, *accountID, peerAccount);
         }
-
-        return true;
     };
 
-    auto nextCursor = 
-        traverseOwnedNodes(
-            *context.backend,
-            *accountID,
-            lgrInfo.seq,
-            cursor,
-            addToResponse);
+    auto next = traverseOwnedNodes(
+        *context.backend,
+        *accountID,
+        lgrInfo.seq,
+        limit,
+        cursor,
+        context.yield,
+        addToResponse);
 
-    if (nextCursor)
-        response["marker"] = ripple::strHex(*nextCursor);
+    if (auto status = std::get_if<RPC::Status>(&next))
+        return *status;
+
+    auto nextCursor = std::get<RPC::AccountCursor>(next);
+
+    if (nextCursor.isNonZero())
+        response["marker"] = nextCursor.toString();
 
     return response;
 }
 
-} // namespace RPC
+}  // namespace RPC

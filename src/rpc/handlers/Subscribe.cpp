@@ -1,5 +1,5 @@
 #include <boost/json.hpp>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
 #include <rpc/RPCHelpers.h>
@@ -10,7 +10,9 @@ namespace RPC {
 static std::unordered_set<std::string> validCommonStreams{
     "ledger",
     "transactions",
-    "transactions_proposed"};
+    "transactions_proposed",
+    "validations",
+    "manifests"};
 
 Status
 validateStreams(boost::json::object const& request)
@@ -33,6 +35,7 @@ validateStreams(boost::json::object const& request)
 
 boost::json::object
 subscribeToStreams(
+    boost::asio::yield_context& yield,
     boost::json::object const& request,
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
@@ -45,11 +48,15 @@ subscribeToStreams(
         std::string s = stream.as_string().c_str();
 
         if (s == "ledger")
-            response = manager.subLedger(session);
+            response = manager.subLedger(yield, session);
         else if (s == "transactions")
             manager.subTransactions(session);
         else if (s == "transactions_proposed")
             manager.subProposedTransactions(session);
+        else if (s == "validations")
+            manager.subValidation(session);
+        else if (s == "manifests")
+            manager.subManifest(session);
         else
             assert(false);
     }
@@ -74,6 +81,10 @@ unsubscribeToStreams(
             manager.unsubTransactions(session);
         else if (s == "transactions_proposed")
             manager.unsubProposedTransactions(session);
+        else if (s == "validations")
+            manager.unsubValidation(session);
+        else if (s == "manifests")
+            manager.unsubManifest(session);
         else
             assert(false);
     }
@@ -197,8 +208,9 @@ unsubscribeToAccountsProposed(
 
 std::variant<Status, std::pair<std::vector<ripple::Book>, boost::json::array>>
 validateAndGetBooks(
+    boost::asio::yield_context& yield,
     boost::json::object const& request,
-    std::shared_ptr<Backend::BackendInterface> const& backend)
+    std::shared_ptr<Backend::BackendInterface const> const& backend)
 {
     if (!request.at("books").is_array())
         return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
@@ -235,23 +247,28 @@ validateAndGetBooks(
                         takerID = std::get<ripple::AccountID>(parsed);
                     }
                 }
-                auto getOrderBook =
-                    [&snapshot, &backend, &rng, &takerID](auto book) {
-                        auto bookBase = getBookBase(book);
-                        auto [offers, retCursor, warning] =
-                            backend->fetchBookOffers(
-                                bookBase, rng->maxSequence, 200, {});
+                auto getOrderBook = [&snapshot, &backend, &rng, &takerID](
+                                        auto book,
+                                        boost::asio::yield_context& yield) {
+                    auto bookBase = getBookBase(book);
+                    auto [offers, retCursor] = backend->fetchBookOffers(
+                        bookBase, rng->maxSequence, 200, {}, yield);
 
-                        auto orderBook = postProcessOrderBook(
-                            offers, book, takerID, *backend, rng->maxSequence);
-                        std::copy(
-                            orderBook.begin(),
-                            orderBook.end(),
-                            std::back_inserter(snapshot));
-                    };
-                getOrderBook(b);
+                    auto orderBook = postProcessOrderBook(
+                        offers,
+                        book,
+                        takerID,
+                        *backend,
+                        rng->maxSequence,
+                        yield);
+                    std::copy(
+                        orderBook.begin(),
+                        orderBook.end(),
+                        std::back_inserter(snapshot));
+                };
+                getOrderBook(b, yield);
                 if (both)
-                    getOrderBook(ripple::reversed(b));
+                    getOrderBook(ripple::reversed(b), yield);
             }
         }
     }
@@ -263,7 +280,7 @@ subscribeToBooks(
     std::shared_ptr<WsBase> session,
     SubscriptionManager& manager)
 {
-    for (auto const book : books)
+    for (auto const& book : books)
     {
         manager.subBook(book, session);
     }
@@ -312,7 +329,8 @@ doSubscribe(Context const& context)
     boost::json::array snapshot;
     if (request.contains("books"))
     {
-        auto parsed = validateAndGetBooks(request, context.backend);
+        auto parsed =
+            validateAndGetBooks(context.yield, request, context.backend);
         if (auto status = std::get_if<Status>(&parsed))
             return *status;
         auto [bks, snap] =
@@ -325,7 +343,7 @@ doSubscribe(Context const& context)
     boost::json::object response;
     if (request.contains("streams"))
         response = subscribeToStreams(
-            request, context.session, *context.subscriptions);
+            context.yield, request, context.session, *context.subscriptions);
 
     if (request.contains("accounts"))
         subscribeToAccounts(request, context.session, *context.subscriptions);

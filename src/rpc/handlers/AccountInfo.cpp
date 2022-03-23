@@ -64,12 +64,8 @@ doAccountInfo(Context const& context)
 
     auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
-        context.backend->fetchLedgerObject(key.key, lgrInfo.seq);
+        context.backend->fetchLedgerObject(key.key, lgrInfo.seq, context.yield);
     auto end = std::chrono::system_clock::now();
-
-    auto time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
 
     if (!dbResponse)
     {
@@ -103,8 +99,8 @@ doAccountInfo(Context const& context)
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const signers =
-            context.backend->fetchLedgerObject(signersKey.key, lgrInfo.seq);
+        auto const signers = context.backend->fetchLedgerObject(
+            signersKey.key, lgrInfo.seq, context.yield);
         if (signers)
         {
             ripple::STLedgerEntry sleSigners{

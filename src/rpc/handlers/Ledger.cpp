@@ -1,7 +1,6 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
-
 namespace RPC {
 
 Result
@@ -35,6 +34,15 @@ doLedger(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "expandFlagNotBool"};
 
         expand = params.at("expand").as_bool();
+    }
+
+    bool diff = false;
+    if (params.contains("diff"))
+    {
+        if (!params.at("diff").is_bool())
+            return Status{Error::rpcINVALID_PARAMS, "diffFlagNotBool"};
+
+        diff = params.at("diff").as_bool();
     }
 
     auto v = ledgerInfoFromRequest(context);
@@ -77,8 +85,8 @@ doLedger(Context const& context)
         boost::json::array& jsonTxs = header.at("transactions").as_array();
         if (expand)
         {
-            auto txns =
-                context.backend->fetchAllTransactionsInLedger(lgrInfo.seq);
+            auto txns = context.backend->fetchAllTransactionsInLedger(
+                lgrInfo.seq, context.yield);
 
             std::transform(
                 std::move_iterator(txns.begin()),
@@ -97,14 +105,14 @@ doLedger(Context const& context)
                         entry["tx_blob"] = ripple::strHex(obj.transaction);
                         entry["meta"] = ripple::strHex(obj.metadata);
                     }
-                    //entry["ledger_index"] = obj.ledgerSequence;
+                    // entry["ledger_index"] = obj.ledgerSequence;
                     return entry;
                 });
         }
         else
         {
-            auto hashes =
-                context.backend->fetchAllTransactionHashesInLedger(lgrInfo.seq);
+            auto hashes = context.backend->fetchAllTransactionHashesInLedger(
+                lgrInfo.seq, context.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
@@ -113,6 +121,31 @@ doLedger(Context const& context)
                     boost::json::object entry;
                     return boost::json::string(ripple::strHex(hash));
                 });
+        }
+    }
+
+    if (diff)
+    {
+        header["diff"] = boost::json::value(boost::json::array_kind);
+        boost::json::array& jsonDiff = header.at("diff").as_array();
+        auto diff =
+            context.backend->fetchLedgerDiff(lgrInfo.seq, context.yield);
+        for (auto const& obj : diff)
+        {
+            boost::json::object entry;
+            entry["id"] = ripple::strHex(obj.key);
+            if (binary)
+                entry["object"] = ripple::strHex(obj.blob);
+            else if (obj.blob.size())
+            {
+                ripple::STLedgerEntry sle{
+                    ripple::SerialIter{obj.blob.data(), obj.blob.size()},
+                    obj.key};
+                entry["object"] = toJson(sle);
+            }
+            else
+                entry["object"] = "";
+            jsonDiff.push_back(std::move(entry));
         }
     }
 

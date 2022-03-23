@@ -8,7 +8,7 @@
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <webserver/SubscriptionManager.h>
+#include <subscriptions/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -43,8 +43,16 @@ private:
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> loadBalancer_;
-    std::optional<uint32_t> onlineDeleteInterval_;
-    uint32_t extractorThreads_ = 1;
+    std::optional<std::uint32_t> onlineDeleteInterval_;
+    std::uint32_t extractorThreads_ = 1;
+
+    enum class CacheLoadStyle { ASYNC, SYNC, NOT_AT_ALL };
+
+    CacheLoadStyle cacheLoadStyle_ = CacheLoadStyle::ASYNC;
+
+    // number of diffs to use to generate cursors to traverse the ledger in
+    // parallel during initial cache download
+    size_t numDiffs_ = 1;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -122,10 +130,10 @@ private:
     /// server_info
     std::chrono::time_point<std::chrono::system_clock> lastPublish_;
 
-    std::mutex publishTimeMtx_;
+    mutable std::mutex publishTimeMtx_;
 
     std::chrono::time_point<std::chrono::system_clock>
-    getLastPublish()
+    getLastPublish() const
     {
         std::unique_lock<std::mutex> lck(publishTimeMtx_);
         return lastPublish_;
@@ -147,9 +155,17 @@ private:
     std::optional<ripple::LedgerInfo>
     loadInitialLedger(uint32_t sequence);
 
-    /// Run ETL. Extracts ledgers and writes them to the database, until a write
-    /// conflict occurs (or the server shuts down).
-    /// @note database must already be populated when this function is called
+    /// Populates the cache by walking through the given ledger. Should only be
+    /// called once. The default behavior is to return immediately and populate
+    /// the cache in the background. This can be overridden via config
+    /// parameter, to populate synchronously, or not at all
+    void
+    loadCache(uint32_t seq);
+
+    /// Run ETL. Extracts ledgers and writes them to the database, until a
+    /// write conflict occurs (or the server shuts down).
+    /// @note database must already be populated when this function is
+    /// called
     /// @param startSequence the first ledger to extract
     /// @return the last ledger written to the database, if any
     std::optional<uint32_t>
@@ -239,28 +255,10 @@ private:
     /// This is equivelent to the degree of parallelism during the initial
     /// ledger download
     /// @return the number of markers
-    uint32_t
+    std::uint32_t
     getNumMarkers()
     {
         return numMarkers_;
-    }
-
-    boost::json::object
-    getInfo()
-    {
-        boost::json::object result;
-
-        result["etl_sources"] = loadBalancer_->toJson();
-        result["is_writer"] = writing_.load();
-        result["read_only"] = readOnly_;
-        auto last = getLastPublish();
-        if (last.time_since_epoch().count() != 0)
-            result["last_publish_time"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now() - getLastPublish())
-                    .count());
-
-        return result;
     }
 
     /// start all of the necessary components and begin ETL
@@ -312,6 +310,24 @@ public:
             worker_.join();
 
         BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
+    }
+
+    boost::json::object
+    getInfo() const
+    {
+        boost::json::object result;
+
+        result["etl_sources"] = loadBalancer_->toJson();
+        result["is_writer"] = writing_.load();
+        result["read_only"] = readOnly_;
+        auto last = getLastPublish();
+        if (last.time_since_epoch().count() != 0)
+            result["last_publish_age_seconds"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::system_clock::now() - getLastPublish())
+                    .count());
+
+        return result;
     }
 };
 

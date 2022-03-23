@@ -1,18 +1,21 @@
-#ifndef RIPPLE_APP_REPORTING_DBHELPERS_H_INCLUDED
-#define RIPPLE_APP_REPORTING_DBHELPERS_H_INCLUDED
+#ifndef CLIO_BACKEND_DBHELPERS_H_INCLUDED
+#define CLIO_BACKEND_DBHELPERS_H_INCLUDED
 
 #include <ripple/basics/Log.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAccount.h>
 #include <ripple/protocol/TxMeta.h>
 #include <boost/container/flat_set.hpp>
 #include <backend/Pg.h>
+#include <backend/Types.h>
 
 /// Struct used to keep track of what to write to transactions and
 /// account_transactions tables in Postgres
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
-    uint32_t ledgerSequence;
-    uint32_t transactionIndex;
+    std::uint32_t ledgerSequence;
+    std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
     AccountTransactionsData(
@@ -36,6 +39,7 @@ isOffer(T const& object)
     short offer_bytes = (object[1] << 8) | object[2];
     return offer_bytes == 0x006f;
 }
+
 template <class T>
 inline bool
 isOfferHex(T const& object)
@@ -50,6 +54,26 @@ isOfferHex(T const& object)
 }
 
 template <class T>
+inline bool
+isDirNode(T const& object)
+{
+    short spaceKey = (object.data()[1] << 8) | object.data()[2];
+    return spaceKey == 0x0064;
+}
+
+template <class T, class R>
+inline bool
+isBookDir(T const& key, R const& object)
+{
+    if (!isDirNode(object))
+        return false;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{object.data(), object.size()}, key};
+    return !sle[~ripple::sfOwner].has_value();
+}
+
+template <class T>
 inline ripple::uint256
 getBook(T const& offer)
 {
@@ -57,6 +81,19 @@ getBook(T const& offer)
     ripple::SLE sle{it, {}};
     ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
     return book;
+}
+
+template <class T>
+inline ripple::uint256
+getBookBase(T const& key)
+{
+    assert(key.size() == ripple::uint256::size());
+    ripple::uint256 ret;
+    for (size_t i = 0; i < 24; ++i)
+    {
+        ret.data()[i] = key.data()[i];
+    }
+    return ret;
 }
 
 inline ripple::LedgerInfo
@@ -82,4 +119,12 @@ deserializeHeader(ripple::Slice data)
 
     return info;
 }
+
+inline std::string
+uint256ToString(ripple::uint256 const& uint)
+{
+    return {reinterpret_cast<const char*>(uint.data()), uint.size()};
+}
+
+static constexpr std::uint32_t rippleEpochStart = 946684800;
 #endif

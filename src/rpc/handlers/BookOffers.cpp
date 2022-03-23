@@ -18,8 +18,8 @@ Result
 doBookOffers(Context const& context)
 {
     auto request = context.params;
-    boost::json::object response = {};
 
+    boost::json::object response = {};
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
@@ -82,8 +82,8 @@ doBookOffers(Context const& context)
     }
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, retCursor, warning] =
-        context.backend->fetchBookOffers(bookBase, lgrInfo.seq, limit, cursor);
+    auto [offers, retCursor] = context.backend->fetchBookOffers(
+        bookBase, lgrInfo.seq, limit, cursor, context.yield);
     auto end = std::chrono::system_clock::now();
 
     BOOST_LOG_TRIVIAL(warning)
@@ -93,7 +93,7 @@ doBookOffers(Context const& context)
     response["ledger_index"] = lgrInfo.seq;
 
     response["offers"] = postProcessOrderBook(
-        offers, book, takerID, *context.backend, lgrInfo.seq);
+        offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
 
     end = std::chrono::system_clock::now();
 
@@ -102,11 +102,6 @@ doBookOffers(Context const& context)
 
     if (retCursor)
         response["marker"] = ripple::strHex(*retCursor);
-    if (warning)
-        response["warning"] =
-            "Periodic database update in progress. Data for this book as of "
-            "this ledger "
-            "may be incomplete. Data should be complete within one minute";
 
     return response;
 }

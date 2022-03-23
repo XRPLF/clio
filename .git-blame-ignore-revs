@@ -1,0 +1,8 @@
+# These might help too
+# Mark any lines that have had a commit skipped using --ignore-rev with a `?`
+#git config --global blame.markIgnoredLines true
+# Mark any lines that were added in a skipped commit and can not be attributed with a `*`
+#git config --global blame.markUnblamableLines true
+
+# clang-format
+e41150248a97e4bdc1cf21b54650c4bb7c63928e

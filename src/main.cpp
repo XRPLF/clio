@@ -1,3 +1,11 @@
+#include <grpc/impl/codegen/port_platform.h>
+#ifdef GRPC_TSAN_ENABLED
+#undef GRPC_TSAN_ENABLED
+#endif
+#ifdef GRPC_ASAN_ENABLED
+#undef GRPC_ASAN_ENABLED
+#endif
+
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/websocket.hpp>
@@ -53,13 +61,12 @@ parse_config(const char* filename)
 std::optional<ssl::context>
 parse_certs(boost::json::object const& config)
 {
-
     if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
         return {};
 
     auto certFilename = config.at("ssl_cert_file").as_string().c_str();
     auto keyFilename = config.at("ssl_key_file").as_string().c_str();
-    
+
     std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
     if (!readCert)
         return {};
@@ -104,7 +111,8 @@ initLogging(boost::json::object const& config)
     {
         boost::log::add_file_log(
             config.at("log_file").as_string().c_str(),
-            boost::log::keywords::format = format);
+            boost::log::keywords::format = format,
+            boost::log::keywords::open_mode = std::ios_base::app);
     }
     auto const logLevel = config.contains("log_level")
         ? config.at("log_level").as_string()
@@ -168,7 +176,7 @@ main(int argc, char* argv[])
         std::cerr << "Couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
-    
+
     initLogging(*config);
 
     auto ctx = parse_certs(*config);
@@ -195,11 +203,12 @@ main(int argc, char* argv[])
     DOSGuard dosGuard{config.value(), ioc};
 
     // Interface to the database
-    std::shared_ptr<BackendInterface> backend{Backend::make_Backend(*config)};
+    std::shared_ptr<BackendInterface> backend{
+        Backend::make_Backend(ioc, *config)};
 
     // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager(backend)};
+        SubscriptionManager::make_SubscriptionManager(*config, backend)};
 
     // Tracks which ledgers have been validated by the
     // network
@@ -221,7 +230,7 @@ main(int argc, char* argv[])
 
     // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(
-        *config, ioc, ctxRef, backend, subscriptions, balancer, dosGuard);
+        *config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

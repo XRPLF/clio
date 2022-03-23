@@ -4,6 +4,8 @@
 
 namespace RPC {
 
+using boost::json::value_to;
+
 Result
 doAccountTx(Context const& context)
 {
@@ -52,7 +54,8 @@ doAccountTx(Context const& context)
                 return Status{
                     Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
 
-            transactionIndex = value_to<std::uint32_t>(obj.at("seq"));
+            transactionIndex =
+                boost::json::value_to<std::uint32_t>(obj.at("seq"));
         }
 
         std::optional<std::uint32_t> ledgerIndex = {};
@@ -61,7 +64,8 @@ doAccountTx(Context const& context)
             if (!obj.at("ledger").is_int64())
                 return Status{Error::rpcINVALID_PARAMS, "ledgerIndexNotInt"};
 
-            ledgerIndex = value_to<std::uint32_t>(obj.at("ledger"));
+            ledgerIndex =
+                boost::json::value_to<std::uint32_t>(obj.at("ledger"));
         }
 
         if (!transactionIndex || !ledgerIndex)
@@ -73,10 +77,21 @@ doAccountTx(Context const& context)
     auto minIndex = context.range.minSequence;
     if (request.contains("ledger_index_min"))
     {
-        if (!request.at("ledger_index_min").is_int64())
+        auto& min = request.at("ledger_index_min");
+
+        if (!min.is_int64())
             return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
 
-        minIndex = value_to<std::uint32_t>(request.at("ledger_index_min"));
+        if (min.as_int64() != -1)
+        {
+            if (context.range.maxSequence < min.as_int64() ||
+                context.range.minSequence > min.as_int64())
+                return Status{
+                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+            else
+                minIndex = value_to<std::uint32_t>(min);
+        }
+
         if (forward && !cursor)
             cursor = {minIndex, 0};
     }
@@ -84,24 +99,38 @@ doAccountTx(Context const& context)
     auto maxIndex = context.range.maxSequence;
     if (request.contains("ledger_index_max"))
     {
-        if (!request.at("ledger_index_max").is_int64())
+        auto& max = request.at("ledger_index_max");
+
+        if (!max.is_int64())
             return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
 
-        maxIndex = value_to<std::uint32_t>(request.at("ledger_index_max"));
+        if (max.as_int64() != -1)
+        {
+            if (context.range.maxSequence < max.as_int64() ||
+                context.range.minSequence > max.as_int64())
+                return Status{
+                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+            else
+                maxIndex = value_to<std::uint32_t>(max);
+        }
 
         if (minIndex > maxIndex)
             return Status{Error::rpcINVALID_PARAMS, "invalidIndex"};
+
         if (!forward && !cursor)
             cursor = {maxIndex, INT32_MAX};
     }
+
     if (request.contains("ledger_index"))
     {
         if (!request.at("ledger_index").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "ledgerIndexNotNumber"};
 
-        auto ledgerIndex = value_to<uint32_t>(request.at("ledger_index"));
+        auto ledgerIndex =
+            boost::json::value_to<std::uint32_t>(request.at("ledger_index"));
         maxIndex = minIndex = ledgerIndex;
     }
+
     if (request.contains("ledger_hash"))
     {
         if (!request.at("ledger_hash").is_string())
@@ -113,9 +142,11 @@ doAccountTx(Context const& context)
             return RPC::Status{
                 RPC::Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-        auto lgrInfo = context.backend->fetchLedgerByHash(ledgerHash);
+        auto lgrInfo =
+            context.backend->fetchLedgerByHash(ledgerHash, context.yield);
         maxIndex = minIndex = lgrInfo->seq;
     }
+
     if (!cursor)
     {
         if (forward)
@@ -140,7 +171,7 @@ doAccountTx(Context const& context)
     boost::json::array txns;
     auto start = std::chrono::system_clock::now();
     auto [blobs, retCursor] = context.backend->fetchAccountTransactions(
-        *accountID, limit, forward, cursor);
+        *accountID, limit, forward, cursor, context.yield);
 
     auto end = std::chrono::system_clock::now();
     BOOST_LOG_TRIVIAL(info) << __func__ << " db fetch took "
@@ -187,8 +218,6 @@ doAccountTx(Context const& context)
             obj["ledger_index"] = txnPlusMeta.ledgerSequence;
             obj["date"] = txnPlusMeta.date;
         }
-
-        obj["validated"] = true;
 
         txns.push_back(obj);
         if (!minReturnedIndex || txnPlusMeta.ledgerSequence < *minReturnedIndex)

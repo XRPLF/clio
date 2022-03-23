@@ -51,7 +51,7 @@ public:
     getMostRecent()
     {
         std::unique_lock lck(m_);
-        cv_.wait(lck, [this]() { return max_ || stopping_; });
+        cv_.wait(lck, [this]() { return max_; });
         return max_;
     }
 
@@ -60,24 +60,19 @@ public:
     /// @return true if sequence was validated, false otherwise
     /// a return value of false means the datastructure has been stopped
     bool
-    waitUntilValidatedByNetwork(uint32_t sequence)
+    waitUntilValidatedByNetwork(
+        uint32_t sequence,
+        std::optional<uint32_t> maxWaitMs = {})
     {
         std::unique_lock lck(m_);
-        cv_.wait(lck, [sequence, this]() {
-            return (max_ && sequence <= *max_) || stopping_;
-        });
-        return !stopping_;
-    }
-
-    /// Puts the datastructure in the stopped state
-    /// Future calls to this datastructure will not block
-    /// This operation cannot be reversed
-    void
-    stop()
-    {
-        std::lock_guard lck(m_);
-        stopping_ = true;
-        cv_.notify_all();
+        auto pred = [sequence, this]() -> bool {
+            return (max_ && sequence <= *max_);
+        };
+        if (maxWaitMs)
+            cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
+        else
+            cv_.wait(lck, pred);
+        return pred();
     }
 };
 
@@ -179,4 +174,4 @@ getMarkers(size_t numMarkers)
     return markers;
 }
 
-#endif
+#endif  // RIPPLE_APP_REPORTING_ETLHELPERS_H_INCLUDED

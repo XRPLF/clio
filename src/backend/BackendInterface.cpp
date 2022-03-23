@@ -3,59 +3,36 @@
 #include <backend/BackendInterface.h>
 namespace Backend {
 bool
-BackendInterface::finishWrites(uint32_t ledgerSequence)
+BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
-    indexer_.finish(ledgerSequence, *this);
     auto commitRes = doFinishWrites();
     if (commitRes)
     {
-        if (isFirst_)
-            indexer_.doKeysRepairAsync(*this, ledgerSequence);
-        if (indexer_.isKeyFlagLedger(ledgerSequence))
-            indexer_.writeKeyFlagLedgerAsync(ledgerSequence, *this);
-        isFirst_ = false;
         updateRange(ledgerSequence);
     }
-    else
-    {
-        // if commitRes is false, we are relinquishing control of ETL. We
-        // reset isFirst_ to true so that way if we later regain control of
-        // ETL, we trigger the index repair
-        isFirst_ = true;
-    }
     return commitRes;
-}
-bool
-BackendInterface::isLedgerIndexed(std::uint32_t ledgerSequence) const
-{
-    auto keyIndex = getKeyIndexOfSeq(ledgerSequence);
-    if (keyIndex)
-    {
-        auto page = doFetchLedgerPage({}, ledgerSequence, 1);
-        return !page.warning.has_value();
-    }
-    return false;
 }
 void
 BackendInterface::writeLedgerObject(
     std::string&& key,
-    uint32_t seq,
-    std::string&& blob) const
+    std::uint32_t const seq,
+    std::string&& blob)
 {
     assert(key.size() == sizeof(ripple::uint256));
     ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
-    indexer_.addKey(std::move(key256));
     doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
+
 std::optional<LedgerRange>
-BackendInterface::hardFetchLedgerRangeNoThrow() const
+BackendInterface::hardFetchLedgerRangeNoThrow(
+    boost::asio::yield_context& yield) const
 {
     BOOST_LOG_TRIVIAL(debug) << __func__;
     while (true)
     {
         try
         {
-            return hardFetchLedgerRange();
+            return hardFetchLedgerRange(yield);
         }
         catch (DatabaseTimeout& t)
         {
@@ -63,45 +40,139 @@ BackendInterface::hardFetchLedgerRangeNoThrow() const
         }
     }
 }
-std::optional<KeyIndex>
-BackendInterface::getKeyIndexOfSeq(uint32_t seq) const
+
+std::optional<LedgerRange>
+BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    if (indexer_.isKeyFlagLedger(seq))
-        return KeyIndex{seq};
-    auto rng = fetchLedgerRange();
-    if (!rng)
-        return {};
-    if (rng->minSequence == seq)
-        return KeyIndex{seq};
-    return indexer_.getKeyIndexOfSeq(seq);
+    BOOST_LOG_TRIVIAL(debug) << __func__;
+    return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
 }
+
+// *** state data methods
+std::optional<Blob>
+BackendInterface::fetchLedgerObject(
+    ripple::uint256 const& key,
+    std::uint32_t const sequence,
+    boost::asio::yield_context& yield) const
+{
+    auto obj = cache_.get(key, sequence);
+    if (obj)
+    {
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " - cache hit - " << ripple::strHex(key);
+        return *obj;
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " - cache miss - " << ripple::strHex(key);
+        auto dbObj = doFetchLedgerObject(key, sequence, yield);
+        if (!dbObj)
+            BOOST_LOG_TRIVIAL(trace)
+                << __func__ << " - missed cache and missed in db";
+        else
+            BOOST_LOG_TRIVIAL(trace)
+                << __func__ << " - missed cache but found in db";
+        return dbObj;
+    }
+}
+
+std::vector<Blob>
+BackendInterface::fetchLedgerObjects(
+    std::vector<ripple::uint256> const& keys,
+    std::uint32_t const sequence,
+    boost::asio::yield_context& yield) const
+{
+    std::vector<Blob> results;
+    results.resize(keys.size());
+    std::vector<ripple::uint256> misses;
+    for (size_t i = 0; i < keys.size(); ++i)
+    {
+        auto obj = cache_.get(keys[i], sequence);
+        if (obj)
+            results[i] = *obj;
+        else
+            misses.push_back(keys[i]);
+    }
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " - cache hits = " << keys.size() - misses.size()
+        << " - cache misses = " << misses.size();
+
+    if (misses.size())
+    {
+        auto objs = doFetchLedgerObjects(misses, sequence, yield);
+        for (size_t i = 0, j = 0; i < results.size(); ++i)
+        {
+            if (results[i].size() == 0)
+            {
+                results[i] = objs[j];
+                ++j;
+            }
+        }
+    }
+
+    return results;
+}
+// Fetches the successor to key/index
+std::optional<ripple::uint256>
+BackendInterface::fetchSuccessorKey(
+    ripple::uint256 key,
+    std::uint32_t const ledgerSequence,
+    boost::asio::yield_context& yield) const
+{
+    auto succ = cache_.getSuccessor(key, ledgerSequence);
+    if (succ)
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " - cache hit - " << ripple::strHex(key);
+    else
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " - cache miss - " << ripple::strHex(key);
+    return succ ? succ->key : doFetchSuccessorKey(key, ledgerSequence, yield);
+}
+
+std::optional<LedgerObject>
+BackendInterface::fetchSuccessorObject(
+    ripple::uint256 key,
+    std::uint32_t const ledgerSequence,
+    boost::asio::yield_context& yield) const
+{
+    auto succ = fetchSuccessorKey(key, ledgerSequence, yield);
+    if (succ)
+    {
+        auto obj = fetchLedgerObject(*succ, ledgerSequence, yield);
+        assert(obj);
+        return {{*succ, *obj}};
+    }
+    return {};
+}
+
 BookOffersPage
 BackendInterface::fetchBookOffers(
     ripple::uint256 const& book,
-    uint32_t ledgerSequence,
-    std::uint32_t limit,
-    std::optional<ripple::uint256> const& cursor) const
+    std::uint32_t const ledgerSequence,
+    std::uint32_t const limit,
+    std::optional<ripple::uint256> const& cursor,
+    boost::asio::yield_context& yield) const
 {
-    // TODO try to speed this up. This can take a few seconds. The goal is to
-    // get it down to a few hundred milliseconds.
+    // TODO try to speed this up. This can take a few seconds. The goal is
+    // to get it down to a few hundred milliseconds.
     BookOffersPage page;
     const ripple::uint256 bookEnd = ripple::getQualityNext(book);
     ripple::uint256 uTipIndex = book;
-    bool done = false;
     std::vector<ripple::uint256> keys;
     auto getMillis = [](auto diff) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(diff)
             .count();
     };
     auto begin = std::chrono::system_clock::now();
-    uint32_t numSucc = 0;
-    uint32_t numPages = 0;
+    std::uint32_t numSucc = 0;
+    std::uint32_t numPages = 0;
     long succMillis = 0;
     long pageMillis = 0;
     while (keys.size() < limit)
     {
         auto mid1 = std::chrono::system_clock::now();
-        auto offerDir = fetchSuccessor(uTipIndex, ledgerSequence);
+        auto offerDir = fetchSuccessorObject(uTipIndex, ledgerSequence, yield);
         auto mid2 = std::chrono::system_clock::now();
         numSucc++;
         succMillis += getMillis(mid2 - mid1);
@@ -129,7 +200,8 @@ BackendInterface::fetchBookOffers(
                 break;
             }
             auto nextKey = ripple::keylet::page(uTipIndex, next);
-            auto nextDir = fetchLedgerObject(nextKey.key, ledgerSequence);
+            auto nextDir =
+                fetchLedgerObject(nextKey.key, ledgerSequence, yield);
             assert(nextDir);
             offerDir->blob = *nextDir;
             offerDir->key = nextKey.key;
@@ -138,12 +210,13 @@ BackendInterface::fetchBookOffers(
         pageMillis += getMillis(mid3 - mid2);
     }
     auto mid = std::chrono::system_clock::now();
-    auto objs = fetchLedgerObjects(keys, ledgerSequence);
+    auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i)
     {
-        BOOST_LOG_TRIVIAL(trace)
+        BOOST_LOG_TRIVIAL(debug)
             << __func__ << " key = " << ripple::strHex(keys[i])
-            << " blob = " << ripple::strHex(objs[i]);
+            << " blob = " << ripple::strHex(objs[i])
+            << " ledgerSequence = " << ledgerSequence;
         assert(objs[i].size());
         page.offers.push_back({keys[i], objs[i]});
     }
@@ -166,190 +239,65 @@ BackendInterface::fetchBookOffers(
     return page;
 }
 
-std::optional<LedgerObject>
-BackendInterface::fetchSuccessor(ripple::uint256 key, uint32_t ledgerSequence)
-    const
-{
-    auto start = std::chrono::system_clock::now();
-    auto page = fetchLedgerPage({++key}, ledgerSequence, 1, 512);
-    auto end = std::chrono::system_clock::now();
-
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-                  .count();
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " took " << std::to_string(ms) << " milliseconds";
-    if (page.objects.size())
-        return page.objects[0];
-    return {};
-}
 LedgerPage
 BackendInterface::fetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,
-    std::uint32_t ledgerSequence,
-    std::uint32_t limit,
-    std::uint32_t limitHint) const
+    std::uint32_t const ledgerSequence,
+    std::uint32_t const limit,
+    bool outOfOrder,
+    boost::asio::yield_context& yield) const
 {
-    assert(limit != 0);
-    bool incomplete = !isLedgerIndexed(ledgerSequence);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " incomplete = " << incomplete;
-    // really low limits almost always miss
-    uint32_t adjustedLimit = std::max(limitHint, std::max(limit, (uint32_t)4));
     LedgerPage page;
-    page.cursor = cursor;
-    long totalTime = 0;
-    long maxTime = 5000;
-    bool timedOut = false;
-    do
+
+    std::vector<ripple::uint256> keys;
+    bool reachedEnd = false;
+    while (keys.size() < limit && !reachedEnd)
     {
-        if (totalTime >= maxTime)
-        {
-            timedOut = true;
-            break;
-        }
-        adjustedLimit = adjustedLimit >= 8192 ? 8192 : adjustedLimit * 2;
-        auto start = std::chrono::system_clock::now();
-        auto partial =
-            doFetchLedgerPage(page.cursor, ledgerSequence, adjustedLimit);
-        auto end = std::chrono::system_clock::now();
-        std::string pageCursorStr =
-            page.cursor ? ripple::strHex(*page.cursor) : "";
-        std::string partialCursorStr =
-            partial.cursor ? ripple::strHex(*partial.cursor) : "";
-        auto thisTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-                .count();
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " " << std::to_string(ledgerSequence) << " "
-            << std::to_string(adjustedLimit) << " " << pageCursorStr << " - "
-            << partialCursorStr << " - time = " << std::to_string(thisTime);
-        totalTime += thisTime;
-        page.objects.insert(
-            page.objects.end(), partial.objects.begin(), partial.objects.end());
-        page.cursor = partial.cursor;
-    } while (page.objects.size() < limit && page.cursor);
-    if (incomplete)
-    {
-        auto rng = fetchLedgerRange();
-        if (!rng)
-            return page;
-        if (rng->minSequence == ledgerSequence)
-        {
-            BOOST_LOG_TRIVIAL(fatal)
-                << __func__
-                << " Database is populated but first flag ledger is "
-                   "incomplete. This should never happen";
-            assert(false);
-            throw std::runtime_error("Missing base flag ledger");
-        }
-        uint32_t lowerSequence = (ledgerSequence - 1) >> indexer_.getKeyShift()
-                << indexer_.getKeyShift();
-        if (lowerSequence < rng->minSequence)
-            lowerSequence = rng->minSequence;
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__
-            << " recursing. ledgerSequence = " << std::to_string(ledgerSequence)
-            << " , lowerSequence = " << std::to_string(lowerSequence);
-        auto lowerPage = fetchLedgerPage(cursor, lowerSequence, limit);
-        std::vector<ripple::uint256> keys;
-        std::transform(
-            std::move_iterator(lowerPage.objects.begin()),
-            std::move_iterator(lowerPage.objects.end()),
-            std::back_inserter(keys),
-            [](auto&& elt) { return std::move(elt.key); });
-        size_t upperPageSize = page.objects.size();
-        auto objs = fetchLedgerObjects(keys, ledgerSequence);
-        for (size_t i = 0; i < keys.size(); ++i)
-        {
-            auto& obj = objs[i];
-            auto& key = keys[i];
-            if (obj.size())
-                page.objects.push_back({std::move(key), std::move(obj)});
-        }
-        std::sort(page.objects.begin(), page.objects.end(), [](auto a, auto b) {
-            return a.key < b.key;
-        });
-        if (page.objects.size() > limit)
-            page.objects.resize(limit);
-        if (timedOut)
-        {
-            if (page.cursor && lowerPage.cursor)
-                page.cursor =
-                    std::min(page.cursor.value(), lowerPage.cursor.value());
-            else if (lowerPage.cursor)
-                page.cursor = lowerPage.cursor;
-        }
-        else if (page.objects.size() && page.objects.size() >= limit)
-            page.cursor = page.objects.back().key;
+        ripple::uint256 const& curCursor = keys.size() ? keys.back()
+            : cursor                                   ? *cursor
+                                                       : firstKey;
+        uint32_t seq = outOfOrder ? range->maxSequence : ledgerSequence;
+        auto succ = fetchSuccessorKey(curCursor, seq, yield);
+        if (!succ)
+            reachedEnd = true;
+        else
+            keys.push_back(std::move(*succ));
     }
+
+    auto objects = fetchLedgerObjects(keys, ledgerSequence, yield);
+    for (size_t i = 0; i < objects.size(); ++i)
+    {
+        if (objects[i].size())
+            page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
+        else if (!outOfOrder)
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " incorrect successor table. key = "
+                << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
+            std::stringstream msg;
+            for (size_t j = 0; j < objects.size(); ++j)
+            {
+                msg << " - " << ripple::strHex(keys[j]);
+            }
+            BOOST_LOG_TRIVIAL(error) << __func__ << msg.str();
+            assert(false);
+        }
+    }
+    if (!reachedEnd)
+        page.cursor = keys.back();
+
     return page;
 }
 
-void
-BackendInterface::checkFlagLedgers() const
-{
-    auto rng = hardFetchLedgerRangeNoThrow();
-    if (rng)
-    {
-        bool prevComplete = true;
-        uint32_t cur = rng->minSequence;
-        size_t numIncomplete = 0;
-        while (cur <= rng->maxSequence + 1)
-        {
-            auto keyIndex = getKeyIndexOfSeq(cur);
-            assert(keyIndex.has_value());
-            cur = keyIndex->keyIndex;
-
-            if (!isLedgerIndexed(cur))
-            {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__ << " - flag ledger "
-                    << std::to_string(keyIndex->keyIndex) << " is incomplete";
-                ++numIncomplete;
-                prevComplete = false;
-            }
-            else
-            {
-                if (!prevComplete)
-                {
-                    BOOST_LOG_TRIVIAL(fatal)
-                        << __func__ << " - flag ledger "
-                        << std::to_string(keyIndex->keyIndex)
-                        << " is incomplete but the next is complete. This "
-                           "should never happen";
-                    assert(false);
-                    throw std::runtime_error("missing prev flag ledger");
-                }
-                prevComplete = true;
-                BOOST_LOG_TRIVIAL(info)
-                    << __func__ << " - flag ledger "
-                    << std::to_string(keyIndex->keyIndex) << " is complete";
-            }
-            cur = cur + 1;
-        }
-        if (numIncomplete > 1)
-        {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " " << std::to_string(numIncomplete)
-                << " incomplete flag ledgers. "
-                   "This can happen, but is unlikely. Check indexer_key_shift "
-                   "in config";
-        }
-        else
-        {
-            BOOST_LOG_TRIVIAL(info)
-                << __func__ << " number of incomplete flag ledgers = "
-                << std::to_string(numIncomplete);
-        }
-    }
-}
-
 std::optional<ripple::Fees>
-BackendInterface::fetchFees(std::uint32_t seq) const
+BackendInterface::fetchFees(
+    std::uint32_t const seq,
+    boost::asio::yield_context& yield) const
 {
     ripple::Fees fees;
 
     auto key = ripple::keylet::fees().key;
-    auto bytes = fetchLedgerObject(key, seq);
+    auto bytes = fetchLedgerObject(key, seq, yield);
 
     if (!bytes)
     {

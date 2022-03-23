@@ -145,8 +145,15 @@ doGatewayBalances(Context const& context)
         }
         return true;
     };
+
     traverseOwnedNodes(
-        *context.backend, *accountID, lgrInfo.seq, beast::zero, addToResponse);
+        *context.backend,
+        *accountID,
+        lgrInfo.seq,
+        std::numeric_limits<std::uint32_t>::max(),
+        {},
+        context.yield,
+        addToResponse);
 
     if (!sums.empty())
     {

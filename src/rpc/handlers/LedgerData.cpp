@@ -20,6 +20,8 @@
 
 namespace RPC {
 
+using boost::json::value_to;
+
 Result
 doLedgerData(Context const& context)
 {
@@ -41,20 +43,40 @@ doLedgerData(Context const& context)
         if (!request.at("limit").is_int64())
             return Status{Error::rpcINVALID_PARAMS, "limitNotInteger"};
 
-        limit = value_to<int>(request.at("limit"));
+        limit = boost::json::value_to<int>(request.at("limit"));
+    }
+    bool outOfOrder = false;
+    if (request.contains("out_of_order"))
+    {
+        if (!request.at("out_of_order").is_bool())
+            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+        outOfOrder = request.at("out_of_order").as_bool();
     }
 
     std::optional<ripple::uint256> cursor;
+    std::optional<uint32_t> diffCursor;
     if (request.contains("marker"))
     {
         if (!request.at("marker").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+        {
+            if (outOfOrder)
+            {
+                if (!request.at("marker").is_int64())
+                    return Status{
+                        Error::rpcINVALID_PARAMS, "markerNotStringOrInt"};
+                diffCursor = value_to<uint32_t>(request.at("marker"));
+            }
+            else
+                return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+        }
+        else
+        {
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
 
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
-
-        cursor = ripple::uint256{};
-        if (!cursor->parseHex(request.at("marker").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
+            cursor = ripple::uint256{};
+            if (!cursor->parseHex(request.at("marker").as_string().c_str()))
+                return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
+        }
     }
 
     auto v = ledgerInfoFromRequest(context);
@@ -62,18 +84,8 @@ doLedgerData(Context const& context)
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-
-    Backend::LedgerPage page;
-    auto start = std::chrono::system_clock::now();
-    page = context.backend->fetchLedgerPage(cursor, lgrInfo.seq, limit);
-
-    auto end = std::chrono::system_clock::now();
-
-    auto time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-
     boost::json::object header;
+    // no cursor means this is the first call, so we return header info
     if (!cursor)
     {
         if (binary)
@@ -105,23 +117,57 @@ doLedgerData(Context const& context)
             response["ledger"] = header;
         }
     }
-
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
 
-    boost::json::array objects;
-    std::vector<Backend::LedgerObject>& results = page.objects;
-    std::optional<ripple::uint256> const& returnedCursor = page.cursor;
-
-    if (returnedCursor)
+    auto start = std::chrono::system_clock::now();
+    std::vector<Backend::LedgerObject> results;
+    if (diffCursor)
     {
-        response["marker"] = ripple::strHex(*returnedCursor);
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " cursor = " << ripple::strHex(*returnedCursor);
+        assert(outOfOrder);
+        auto diff =
+            context.backend->fetchLedgerDiff(*diffCursor, context.yield);
+        std::vector<ripple::uint256> keys;
+        for (auto&& [key, object] : diff)
+        {
+            if (!object.size())
+            {
+                keys.push_back(std::move(key));
+            }
+        }
+        auto objs = context.backend->fetchLedgerObjects(
+            keys, lgrInfo.seq, context.yield);
+        for (size_t i = 0; i < objs.size(); ++i)
+        {
+            auto&& obj = objs[i];
+            if (obj.size())
+                results.push_back({std::move(keys[i]), std::move(obj)});
+        }
+        if (*diffCursor > lgrInfo.seq)
+            response["marker"] = *diffCursor - 1;
     }
+    else
+    {
+        auto page = context.backend->fetchLedgerPage(
+            cursor, lgrInfo.seq, limit, outOfOrder, context.yield);
+        results = std::move(page.objects);
+        if (page.cursor)
+            response["marker"] = ripple::strHex(*(page.cursor));
+        else if (outOfOrder)
+            response["marker"] =
+                context.backend->fetchLedgerRange()->maxSequence;
+    }
+    auto end = std::chrono::system_clock::now();
+
+    auto time =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
 
     BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " number of results = " << results.size();
+        << __func__ << " number of results = " << results.size()
+        << " fetched in " << time << " microseconds";
+    boost::json::array objects;
+    objects.reserve(results.size());
     for (auto const& [key, object] : results)
     {
         ripple::STLedgerEntry sle{
@@ -131,23 +177,19 @@ doLedgerData(Context const& context)
             boost::json::object entry;
             entry["data"] = ripple::serializeHex(sle);
             entry["index"] = ripple::to_string(sle.key());
-            objects.push_back(entry);
+            objects.push_back(std::move(entry));
         }
         else
             objects.push_back(toJson(sle));
     }
-    response["state"] = objects;
+    response["state"] = std::move(objects);
+    auto end2 = std::chrono::system_clock::now();
 
-    if (cursor && page.warning)
-    {
-        response["warning"] =
-            "Periodic database update in progress. Data for this ledger may be "
-            "incomplete. Data should be complete "
-            "within a few minutes. Other RPC calls are not affected, "
-            "regardless of ledger. This "
-            "warning is only present on the first "
-            "page of the ledger";
-    }
+    time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)
+               .count();
+    BOOST_LOG_TRIVIAL(debug)
+        << __func__ << " number of results = " << results.size()
+        << " serialized in " << time << " microseconds";
 
     return response;
 }

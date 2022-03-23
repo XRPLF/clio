@@ -60,14 +60,13 @@ doAccountObjects(Context const& context)
             return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
     }
 
-    ripple::uint256 cursor;
-    if (request.contains("cursor"))
+    std::optional<std::string> cursor = {};
+    if (request.contains("marker"))
     {
-        if (!request.at("cursor").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "cursorNotString"};
+        if (!request.at("marker").is_string())
+            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
-        if (!cursor.parseHex(request.at("cursor").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
+        cursor = request.at("marker").as_string().c_str();
     }
 
     std::optional<ripple::LedgerEntryType> objectType = {};
@@ -90,25 +89,29 @@ doAccountObjects(Context const& context)
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (!objectType || objectType == sle.getType())
         {
-            if (limit-- == 0)
-            {
-                return false;
-            }
-
             jsonObjects.push_back(toJson(sle));
         }
-
-        return true;
     };
 
-    auto nextCursor = traverseOwnedNodes(
-        *context.backend, *accountID, lgrInfo.seq, cursor, addToResponse);
+    auto next = traverseOwnedNodes(
+        *context.backend,
+        *accountID,
+        lgrInfo.seq,
+        limit,
+        cursor,
+        context.yield,
+        addToResponse);
 
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
 
-    if (nextCursor)
-        response["marker"] = ripple::strHex(*nextCursor);
+    if (auto status = std::get_if<RPC::Status>(&next))
+        return *status;
+
+    auto nextCursor = std::get<RPC::AccountCursor>(next);
+
+    if (nextCursor.isNonZero())
+        response["marker"] = nextCursor.toString();
 
     return response;
 }

@@ -1,33 +1,60 @@
+#include <boost/asio/spawn.hpp>
 #include <etl/ETLSource.h>
 #include <rpc/Handlers.h>
 #include <unordered_map>
+
 namespace RPC {
 
 std::optional<Context>
 make_WsContext(
+    boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL const> const& etl,
     std::shared_ptr<WsBase> const& session,
-    Backend::LedgerRange const& range)
+    Backend::LedgerRange const& range,
+    Counters& counters,
+    std::string const& clientIp)
 {
-    if (!request.contains("command"))
+    boost::json::value commandValue = nullptr;
+    if (!request.contains("command") && request.contains("method"))
+        commandValue = request.at("method");
+    else if (request.contains("command") && !request.contains("method"))
+        commandValue = request.at("command");
+
+    if (!commandValue.is_string())
         return {};
 
-    std::string command = request.at("command").as_string().c_str();
+    std::string command = commandValue.as_string().c_str();
 
     return Context{
-        command, 1, request, backend, subscriptions, balancer, session, range};
+        yc,
+        command,
+        1,
+        request,
+        backend,
+        subscriptions,
+        balancer,
+        etl,
+        session,
+        range,
+        counters,
+        clientIp};
 }
 
 std::optional<Context>
 make_HttpContext(
+    boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<BackendInterface const> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
-    Backend::LedgerRange const& range)
+    std::shared_ptr<ReportingETL const> const& etl,
+    Backend::LedgerRange const& range,
+    RPC::Counters& counters,
+    std::string const& clientIp)
 {
     if (!request.contains("method") || !request.at("method").is_string())
         return {};
@@ -37,7 +64,7 @@ make_HttpContext(
     if (command == "subscribe" || command == "unsubscribe")
         return {};
 
-    if (!request.contains("params") || !request.at("params").is_array())
+    if (!request.at("params").is_array())
         return {};
 
     boost::json::array const& array = request.at("params").as_array();
@@ -49,14 +76,18 @@ make_HttpContext(
         return {};
 
     return Context{
+        yc,
         command,
         1,
         array.at(0).as_object(),
         backend,
         subscriptions,
         balancer,
+        etl,
         nullptr,
-        range};
+        range,
+        counters,
+        clientIp};
 }
 
 boost::json::object
@@ -117,9 +148,16 @@ static std::unordered_set<std::string> forwardCommands{
     "submit",
     "submit_multisigned",
     "fee",
-    "path_find",
+    "ledger_closed",
+    "ledger_current",
     "ripple_path_find",
     "manifest"};
+
+bool
+validHandler(std::string const& method)
+{
+    return handlerTable.contains(method) || forwardCommands.contains(method);
+}
 
 bool
 shouldForwardToRippled(Context const& ctx)
@@ -151,11 +189,23 @@ buildResponse(Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
     {
-        auto res = ctx.balancer->forwardToRippled(ctx.params);
+        boost::json::object toForward = ctx.params;
+        toForward["command"] = ctx.method;
+
+        auto res =
+            ctx.balancer->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+
+        ctx.counters.rpcForwarded(ctx.method);
+
         if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
+
+        if (res->contains("result") && res->at("result").is_object())
+            return res->at("result").as_object();
+
         return *res;
     }
+
     if (ctx.method == "ping")
         return boost::json::object{};
 
@@ -166,7 +216,12 @@ buildResponse(Context const& ctx)
 
     try
     {
-        return method(ctx);
+        auto v = method(ctx);
+
+        if (auto object = std::get_if<boost::json::object>(&v))
+            (*object)["validated"] = true;
+
+        return v;
     }
     catch (InvalidParamsError const& err)
     {

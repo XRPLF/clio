@@ -7,7 +7,7 @@ where nodes can prove that a piece of data is present in a ledger by sending
 the path from root to leaf. Other nodes can verify this path and be certain
 that the data does actually exist in the ledger in question.
 
-clio instead flattens the data model, so lookups are 0(1). This results in time
+clio instead flattens the data model, so lookups are O(1). This results in time
 and space savings. This is possible because clio does not participate in the peer
 to peer protocol, and thus does not need to verify any data. clio fully trusts the
 rippled nodes that are being used as a data source.

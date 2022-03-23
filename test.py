@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from ast import parse
 import websockets
 import asyncio
 import json
@@ -451,9 +452,9 @@ async def ledger_data(ip, port, ledger, limit, binary, cursor):
     try:
         async with websockets.connect(address) as ws:
             if limit is not None:
-                await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit),"cursor":cursor}))
+                await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"limit":int(limit),"cursor":cursor,"marker":cursor}))
             else:
-                await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"cursor":cursor}))
+                await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":bool(binary),"cursor":cursor,"marker":cursor}))
             res = json.loads(await ws.recv())
             print(res)
             objects = []
@@ -486,7 +487,7 @@ def writeLedgerData(data,filename):
             f.write('\n')
 
 
-async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
+async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1, marker = None):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         blobs = []
@@ -494,7 +495,6 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
         async with websockets.connect(address,max_size=1000000000) as ws:
             if int(limit) < 2048:
                 limit = 2048
-            marker = None
             while True:
                 res = {}
                 if marker is None:
@@ -503,7 +503,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1):
                     
                 else:
 
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "marker":marker,"binary":bool(binary), "limit":int(limit)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"cursor":marker, "marker":marker,"binary":bool(binary), "limit":int(limit),"out_of_order":True}))
                     res = json.loads(await ws.recv())
                 
                     
@@ -777,7 +777,7 @@ async def ledger_range(ip, port):
                 if rng == "empty":
                     return (0,0)
                 idx = rng.find("-")
-                return (int(rng[0:idx]),int(rng[idx+1:-1]))
+                return (int(rng[0:idx]),int(rng[idx+1:]))
                 
             res = res["result"]
             return (res["ledger_index_min"],res["ledger_index_max"])
@@ -825,17 +825,7 @@ async def subscribe(ip, port):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
         async with websockets.connect(address) as ws:
-            await ws.send(json.dumps({"command":"server_info"}));
-            print(json.loads(await ws.recv()))
-            await ws.send(json.dumps({"command":"server_info"}));
-            print(json.loads(await ws.recv()))
-            await ws.send(json.dumps({"command":"server_info"}));
-            await ws.send(json.dumps({"command":"server_info"}));
-            await ws.send(json.dumps({"command":"server_info"}));
-            print(json.loads(await ws.recv()))
-            print(json.loads(await ws.recv()))
-            print(json.loads(await ws.recv()))
-            await ws.send(json.dumps({"command":"subscribe","streams":["ledger"],"books":[{"snapshot":True,"taker_pays":{"currency":"XRP"},"taker_gets":{"currency":"USD","issuer":"rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"}}]}))
+            await ws.send(json.dumps({"command":"subscribe","streams":["ledger"]}))
             #await ws.send(json.dumps({"command":"subscribe","streams":["manifests"]}))
             while True:
                 res = json.loads(await ws.recv())
@@ -985,6 +975,7 @@ parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx",
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
+parser.add_argument('--marker')
 parser.add_argument('--hash')
 parser.add_argument('--account')
 parser.add_argument('--ledger')
@@ -1003,6 +994,7 @@ parser.add_argument('--transactions',default=False)
 parser.add_argument('--minLedger',default=-1)
 parser.add_argument('--maxLedger',default=-1)
 parser.add_argument('--filename',default=None)
+parser.add_argument('--ledgerIndex', default=-1)
 parser.add_argument('--index')
 parser.add_argument('--numPages',default=3)
 parser.add_argument('--base')
@@ -1024,6 +1016,14 @@ args = parser.parse_args()
 
 def run(args):
     asyncio.set_event_loop(asyncio.new_event_loop())
+    if args.action == "call":
+        asyncio.get_event_loop().run_until_complete(
+                call(args.ip,args.port,args.request))
+        return
+    elif args.action == "server_info":
+        asyncio.get_event_loop().run_until_complete(server_info(args.ip, args.port))
+        return
+
     rng =asyncio.get_event_loop().run_until_complete(ledger_range(args.ip, args.port))
     if args.ledger is None:
         args.ledger = rng[1]
@@ -1033,14 +1033,9 @@ def run(args):
         args.minLedger = rng[0]
     if args.action == "fee":
         asyncio.get_event_loop().run_until_complete(fee(args.ip, args.port))
-    elif args.action == "server_info":
-        asyncio.get_event_loop().run_until_complete(server_info(args.ip, args.port))
     elif args.action == "perf":
         asyncio.get_event_loop().run_until_complete(
                 perf(args.ip,args.port))
-    elif args.action == "call":
-        asyncio.get_event_loop().run_until_complete(
-                call(args.ip,args.port,args.request))
     elif args.action == "gaps":
         missing = []
         for x in range(rng[0],rng[1]):
@@ -1267,7 +1262,7 @@ def run(args):
                 args.filename = str(args.port) + "." + str(args.ledger)
 
         res = asyncio.get_event_loop().run_until_complete(
-                ledger_data_full(args.ip, args.port, args.ledger, bool(args.binary), args.limit,args.type, int(args.count)))
+                ledger_data_full(args.ip, args.port, args.ledger, bool(args.binary), args.limit,args.type, int(args.count), args.marker))
         print(len(res[0]))
         if args.verify:
             writeLedgerData(res,args.filename)
