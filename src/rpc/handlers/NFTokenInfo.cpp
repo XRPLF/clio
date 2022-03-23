@@ -1,4 +1,6 @@
 #include <boost/json.hpp>
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
+#include <ripple/protocol/Indexes.h>
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
@@ -11,24 +13,27 @@
 
 namespace RPC {
 
-static std::optional<std::string>
-getNFTokenURI(Backend::NFToken const& dbResponse)
+static std::string
+getNFTokenURI(
+    Backend::LedgerObject const& dbResponse,
+    ripple::uint256 const& tokenID)
 {
-    if (!dbResponse.page.has_value())
-    {
-        return {};
-    }
-
     ripple::SLE sle{
-        ripple::SerialIter{dbResponse.page.value().blob.data(), dbResponse.page.value().blob.size()},
-        dbResponse.page.value().key};
+        ripple::SerialIter{dbResponse.blob.data(), dbResponse.blob.size()},
+        dbResponse.key};
+    if (sle.getType() != ripple::ltNFTOKEN_PAGE)
+    {
+        std::stringstream msg;
+        msg << __func__ << " - received unexpected object type " << sle.getType();
+        throw std::runtime_error(msg.str());
+    }
 
     ripple::STArray nfts = sle.getFieldArray(ripple::sfNonFungibleTokens);
     auto nft = std::find_if(
         nfts.begin(),
         nfts.end(),
-        [dbResponse](ripple::STObject const& candidate) {
-            return candidate.getFieldH256(ripple::sfTokenID) == dbResponse.tokenID;
+        [tokenID](ripple::STObject const& candidate) {
+            return candidate.getFieldH256(ripple::sfTokenID) == tokenID;
         });
     if (nft == nfts.end())
     {
@@ -73,29 +78,41 @@ doNFTokenInfo(Context const& context)
 
     response["tokenid"] = ripple::strHex(dbResponse->tokenID);
     response["ledger_index"] = dbResponse->ledgerSequence;
-    response["owner"] = ripple::strHex(dbResponse->owner);
+    response["owner"] = ripple::toBase58(dbResponse->owner);
     response["is_burned"] = dbResponse->isBurned;
-    response["uri"] = getNFTokenURI(dbResponse.value()).value_or(nullptr);
 
-    std::uint32_t tokenSeq;
-    memcpy(&tokenSeq, dbResponse->tokenID.begin() + 56, 4);
-    response["token_sequence"] = boost::endian::big_to_native(tokenSeq);
+    response["flags"] = ripple::nft::getFlags(tokenID);
+    response["transfer_fee"] = ripple::nft::getTransferFee(tokenID);
+    response["issuer"] = ripple::toBase58(ripple::nft::getIssuer(tokenID));
+    response["token_taxon"] = ripple::nft::getTaxon(tokenID);
+    response["token_sequence"] = ripple::nft::getSerial(tokenID);
 
-    std::uint32_t tokenTaxon;
-    memcpy(&tokenTaxon, dbResponse->tokenID.begin() + 48, 4);
-    response["token_taxon"] = boost::endian::big_to_native(tokenTaxon);
+    // If the token is burned we will not find it at this ledger sequence (of
+    // course) so just stop.
+    if (dbResponse->isBurned)
+    {
+        return response;
+    }
 
-    ripple::AccountID issuer = ripple::AccountID::fromVoid(dbResponse->tokenID.data() + 4);
-    response["issuer"] = ripple::strHex(issuer);
+    // Now determine the ledger index of the NFTokenPage.
+    ripple::Keylet const base = ripple::keylet::nftpage_min(dbResponse->owner);
+    ripple::Keylet const min = ripple::keylet::nftpage(base, tokenID);
+    ripple::Keylet const max = ripple::keylet::nftpage_max(dbResponse->owner);
 
-    std::uint16_t transferFee;
-    memcpy(&transferFee, dbResponse->tokenID.begin() + 2, 2);
-    response["transfer_fee"] = boost::endian::big_to_native(transferFee);
+    std::optional<Backend::LedgerObject> dbPageResponse = context.backend->fetchNFTokenPage(
+        min.key,
+        max.key,
+        dbResponse->ledgerSequence);
 
-    std::uint16_t flags;
-    memcpy(&flags, dbResponse->tokenID.begin(), 2);
-    response["flags"] = boost::endian::big_to_native(flags);
-
+    if (!dbPageResponse.has_value())
+    {
+        std::stringstream msg;
+        msg << __func__ << " - NFTokenPage object not found for token "
+            << ripple::strHex(tokenID);
+        throw std::runtime_error(msg.str());
+    }
+    
+    response["uri"] = getNFTokenURI(*dbPageResponse, dbResponse->tokenID);
     return response;
 }
 

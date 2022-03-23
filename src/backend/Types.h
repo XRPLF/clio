@@ -59,7 +59,7 @@ struct TransactionsAndCursor
     std::optional<TransactionsCursor> cursor;
 };
 
-struct NFTokenTransactionsCursor
+struct NFTokenTransactions
 {
     std::vector<TransactionAndMetadata> txns;
     std::optional<TransactionsCursor> cursor;
@@ -69,9 +69,8 @@ struct NFToken
 {
     ripple::uint256 tokenID;
     uint32_t ledgerSequence;
-    ripple::uint160 owner;
+    ripple::AccountID owner;
     bool isBurned;
-    std::optional<LedgerObject> page;
 
     bool
     operator==(NFToken const& other) const

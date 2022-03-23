@@ -1,6 +1,7 @@
 #ifndef CLIO_BACKEND_DBHELPERS_H_INCLUDED
 #define CLIO_BACKEND_DBHELPERS_H_INCLUDED
 
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/basics/Log.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAccount.h>
@@ -33,13 +34,13 @@ struct AccountTransactionsData
 /// nf_token_transactions table in Postgres
 struct NFTokenTransactionsData
 {
-    std::string tokenID;
+    ripple::uint256 tokenID;
     uint32_t ledgerSequence;
     uint32_t transactionIndex;
     ripple::uint256 txHash;
 
     NFTokenTransactionsData(
-        std::string const& tokenID,
+        ripple::uint256 const& tokenID,
         ripple::TxMeta& meta,
         ripple::uint256 const& txHash)
         : tokenID(tokenID)
@@ -56,21 +57,21 @@ struct NFTokenTransactionsData
 /// nf_tokens table
 struct NFTokensData
 {
-    std::string tokenID;
+    ripple::uint256 tokenID;
     uint32_t ledgerSequence;
-    std::string issuer;
-    std::string owner;
+    ripple::AccountID issuer;
+    ripple::AccountID owner;
     bool isBurned;
 
     NFTokensData(
-        std::string const& tokenID,
-        std::optional<std::string> const& newOwner,
+        ripple::uint256 const& tokenID,
+        std::optional<ripple::AccountID> const& newOwner,
         ripple::TxMeta& meta,
         bool isBurnedArg)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
-        , issuer(tokenID.substr(8, 40))
-        , owner(newOwner.value_or(tokenID.substr(8, 40)))
+        , issuer(ripple::nft::getIssuer(tokenID))
+        , owner(newOwner.value_or(ripple::nft::getIssuer(tokenID)))
         , isBurned(isBurnedArg)
     {
     }

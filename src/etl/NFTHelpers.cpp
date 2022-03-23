@@ -20,27 +20,26 @@ getAffectedPages(ripple::TxMeta const& txMeta, ripple::LedgerEntryType pageType)
     return ret;
 }
 
-static std::set<std::string>
+static std::set<ripple::uint256>
 getTokenIDsFromField(ripple::STObject const& fields)
 {
-    std::set<std::string> tokenIDs;
+    std::set<ripple::uint256> tokenIDs;
     for (ripple::STObject const& nft : fields.getFieldArray(ripple::sfNonFungibleTokens))
     {
-        ripple::uint256 tokenID = nft.getFieldH256(ripple::sfTokenID);
-        tokenIDs.insert(ripple::strHex(tokenID.begin(), tokenID.end()));
+        tokenIDs.insert(nft.getFieldH256(ripple::sfTokenID));
     }
     return tokenIDs;
 }
 
-static std::string
+static ripple::uint256
 getTokenIDNFTokenMint(ripple::TxMeta const& txMeta)
 {
     ripple::STObject const& affectedPage = getAffectedPages(
         txMeta,
         ripple::ltNFTOKEN_PAGE).front().get();
 
-    std::set<std::string> previousIds;
-    std::set<std::string> finalIds;
+    std::set<ripple::uint256> previousIds;
+    std::set<ripple::uint256> finalIds;
 
     if (affectedPage.getFName() == ripple::sfCreatedNode)
     {
@@ -58,7 +57,7 @@ getTokenIDNFTokenMint(ripple::TxMeta const& txMeta)
               ripple::sfFinalFields).downcast<ripple::STObject>());
     }
 
-    std::set<std::string> result;
+    std::set<ripple::uint256> result;
     std::set_difference(
         finalIds.begin(),
         finalIds.end(),
@@ -68,24 +67,7 @@ getTokenIDNFTokenMint(ripple::TxMeta const& txMeta)
     return *(result.begin());
 }
 
-static std::string
-getTokenIDNFTokenBurn(ripple::STTx const& sttx)
-{
-    ripple::uint256 tokenID = sttx.getFieldH256(ripple::sfTokenID);
-    return ripple::strHex(tokenID.begin(), tokenID.end());
-}
-
-static std::string
-getTokenIDNFTokenAcceptOffer(ripple::TxMeta const& txMeta)
-{
-    ripple::uint256 tokenID = getAffectedPages(
-        txMeta,
-        ripple::ltNFTOKEN_OFFER).front().get().peekAtField(
-          ripple::sfFinalFields).downcast<ripple::STObject>().getFieldH256(ripple::sfTokenID);
-    return ripple::strHex(tokenID.begin(), tokenID.end());
-}
-
-std::string
+ripple::uint256
 getNFTokenID(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     switch (sttx.getTxnType())
@@ -94,26 +76,30 @@ getNFTokenID(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             return getTokenIDNFTokenMint(txMeta);
 
         case ripple::TxType::ttNFTOKEN_BURN:
-            return getTokenIDNFTokenBurn(sttx);
+            return sttx.getFieldH256(ripple::sfTokenID);
 
         case ripple::TxType::ttNFTOKEN_ACCEPT_OFFER:
-            return getTokenIDNFTokenAcceptOffer(txMeta);
+            return getAffectedPages(
+                txMeta,
+                ripple::ltNFTOKEN_OFFER).front().get().peekAtField(
+                    ripple::sfFinalFields).downcast<ripple::STObject>().getFieldH256(
+                        ripple::sfTokenID);
 
         default:
             throw std::runtime_error("Invalid transaction type for NFToken");
    }
 }
 
-static std::string
+static ripple::AccountID
 getNewOwnerNFTokenBurn(ripple::TxMeta const& txMeta)
 {
     ripple::uint256 ledgerIndex = getAffectedPages(
         txMeta,
         ripple::ltNFTOKEN_PAGE).front().get().getFieldH256(ripple::sfLedgerIndex);
-    return ripple::strHex(ledgerIndex.begin(), ledgerIndex.end()).substr(0, 40);
+    return ripple::AccountID::fromVoid(ledgerIndex.data());
 }
 
-static std::string
+static ripple::AccountID
 getNewOwnerNFTokenAcceptOffer(ripple::TxMeta const& txMeta)
 {
     std::vector<std::reference_wrapper<const ripple::STObject>> modifiedNodes;
@@ -128,7 +114,7 @@ getNewOwnerNFTokenAcceptOffer(ripple::TxMeta const& txMeta)
             // single created NFTokenPage, belonging to the new owner (the old owner's
             // NFTokenPage was either modified or deleted).
             ripple::uint256 ledgerIndex = page.get().getFieldH256(ripple::sfLedgerIndex);
-            return ripple::strHex(ledgerIndex.begin(), ledgerIndex.end()).substr(0, 40);
+            return ripple::AccountID::fromVoid(ledgerIndex.data());
         }
         if (page.get().getFName() == ripple::sfModifiedNode)
         {
@@ -158,13 +144,13 @@ getNewOwnerNFTokenAcceptOffer(ripple::TxMeta const& txMeta)
     if (ownerNode != std::end(modifiedNodes))
     {
         ripple::uint256 ledgerIndex = (*ownerNode).get().getFieldH256(ripple::sfLedgerIndex);
-        return ripple::strHex(ledgerIndex.begin(), ledgerIndex.end()).substr(0, 40);
+        return ripple::AccountID::fromVoid(ledgerIndex.data());
     }
 
     throw std::runtime_error("New owner not found for NFTokenAcceptOffer transaction");
 }
 
-std::optional<std::string>
+std::optional<ripple::AccountID>
 getNFTokenNewOwner(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     switch (sttx.getTxnType())

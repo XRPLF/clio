@@ -8,10 +8,10 @@
 #include <sstream>
 
 namespace etl {
-std::string
+ripple::uint256
 getNFTokenID(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
-std::optional<std::string>
+std::optional<ripple::AccountID>
 getNFTokenNewOwner(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 } // namespace etl
 

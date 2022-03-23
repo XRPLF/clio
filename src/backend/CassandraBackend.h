@@ -115,7 +115,9 @@ public:
             throw std::runtime_error(
                 "CassandraStatement::bindNextBoolean - statement_ is null");
         CassError rc = cass_statement_bind_bool(
-            statement_, curBindingIndex_, static_cast<cass_bool_t>(val));
+            statement_,
+            curBindingIndex_,
+            static_cast<cass_bool_t>(val));
         if (rc != CASS_OK)
         {
             std::stringstream ss;
@@ -481,8 +483,6 @@ public:
         return {first, second};
     }
 
-    // TODO: should be replaced with a templated implementation as is very
-    // similar to other getters
     bool
     getBool()
     {
@@ -499,8 +499,8 @@ public:
         if (rc != CASS_OK)
         {
             std::stringstream msg;
-            msg << __func__ << " - error getting value: " << rc << ", "
-                << cass_error_desc(rc);
+            msg << __func__ << " - error getting value: " << rc
+                << ", " << cass_error_desc(rc);
             BOOST_LOG_TRIVIAL(error) << msg.str();
             throw std::runtime_error(msg.str());
         }
@@ -617,6 +617,7 @@ private:
     CassandraPreparedStatement selectObject_;
     CassandraPreparedStatement selectLedgerPageKeys_;
     CassandraPreparedStatement selectLedgerPage_;
+    CassandraPreparedStatement selectNFTokenPage_;
     CassandraPreparedStatement upperBound2_;
     CassandraPreparedStatement getToken_;
     CassandraPreparedStatement insertSuccessor_;
@@ -626,12 +627,11 @@ private:
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement selectAccountTxForward_;
-    CassandraPreparedStatement insertNFT_;
-    CassandraPreparedStatement selectNFT_;
-    CassandraPreparedStatement insertIssuerNFT_;
-    CassandraPreparedStatement insertNFTTx_;
-    CassandraPreparedStatement selectNFTTx_;
-    CassandraPreparedStatement selectNFTTxForward_;
+    CassandraPreparedStatement insertNFToken_;
+    CassandraPreparedStatement selectNFToken_;
+    CassandraPreparedStatement insertIssuerNFToken_;
+    CassandraPreparedStatement insertOwnerNFToken_;
+    CassandraPreparedStatement insertNFTokenTx_;
     CassandraPreparedStatement insertLedgerHeader_;
     CassandraPreparedStatement insertLedgerHash_;
     CassandraPreparedStatement updateLedgerRange_;
@@ -887,6 +887,12 @@ public:
 
     std::optional<NFToken>
     fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
+
+    std::optional<LedgerObject>
+    fetchNFTokenPage(
+        ripple::uint256 ledgerKeyMin,
+        ripple::uint256 ledgerKeyMax,
+        uint32_t ledgerSequence) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence

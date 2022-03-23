@@ -39,7 +39,7 @@ ReportingETL::insertTransactions(
     FormattedTransactionsData result;
 
     // Token ID -> <transaction index, NFTokensData>
-    std::map<std::string, std::tuple<uint32_t, NFTokensData>> nfTokensCache;
+    std::map<ripple::uint256, std::pair<uint32_t, NFTokensData>> nfTokensCache;
 
     for (auto& txn :
          *(data.mutable_transactions_list()->mutable_transactions()))
@@ -48,10 +48,6 @@ ReportingETL::insertTransactions(
 
         ripple::SerialIter it{raw->data(), raw->size()};
         ripple::STTx sttx{it};
-
-        // TODO what is this for
-        auto txSerializer =
-            std::make_shared<ripple::Serializer>(sttx.getSerializer());
 
         ripple::TxMeta txMeta{
             sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
@@ -64,7 +60,7 @@ ReportingETL::insertTransactions(
               txType == ripple::TxType::ttNFTOKEN_BURN ||
               txType == ripple::TxType::ttNFTOKEN_ACCEPT_OFFER))
         {
-            std::string tokenID = etl::getNFTokenID(txMeta, sttx);
+            ripple::uint256 tokenID = etl::getNFTokenID(txMeta, sttx);
 
             result.nfTokenTxData.emplace_back(tokenID, txMeta, sttx.getTransactionID());
 
@@ -81,7 +77,7 @@ ReportingETL::insertTransactions(
                 // yet this ledger, so add it
                 nfTokensCache.insert({
                     tokenID,
-                    std::make_tuple(txMeta.getIndex(), toInsert)});
+                    std::make_pair(txMeta.getIndex(), toInsert)});
             }
             else if (txMeta.getIndex() > std::get<0>(search->second))
             {
@@ -89,7 +85,7 @@ ReportingETL::insertTransactions(
                 // the existing one for this token ID
                 nfTokensCache.insert_or_assign(
                     tokenID,
-                    std::make_tuple(txMeta.getIndex(), toInsert));
+                    std::make_pair(txMeta.getIndex(), toInsert));
             }
         }
 

@@ -184,6 +184,12 @@ public:
     virtual std::optional<NFToken>
     fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const = 0;
 
+    virtual std::optional<LedgerObject>
+    fetchNFTokenPage(
+        ripple::uint256 ledgerKeyMin,
+        ripple::uint256 ledgerKeyMax,
+        uint32_t ledgerSequence) const = 0;
+
     // *** state data methods
     std::optional<Blob>
     fetchLedgerObject(
