@@ -65,13 +65,17 @@ public:
         boost::asio::yield_context& yield) const override;
 
     std::optional<NFToken>
-    fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
+    fetchNFToken(
+        ripple::uint256 tokenID,
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::optional<LedgerObject>
     fetchNFTokenPage(
         ripple::uint256 ledgerKeyMin,
         ripple::uint256 ledgerKeyMax,
-        uint32_t ledgerSequence) const override;
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
     fetchLedgerDiff(
@@ -139,7 +143,8 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     virtual void
-    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) override;
+    writeNFTokenTransactions(
+        std::vector<NFTokenTransactionsData>&& data) override;
 
     void
     open(bool readOnly) override;

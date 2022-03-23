@@ -13,7 +13,7 @@ getNFTokenID(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
 std::optional<ripple::AccountID>
 getNFTokenNewOwner(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
-} // namespace etl
+}  // namespace etl
 
 /// This datastructure is used to keep track of the sequence of the most recent
 /// ledger validated by the network. There are two methods that will wait until

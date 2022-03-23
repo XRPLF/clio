@@ -1,6 +1,6 @@
-#include <boost/json.hpp>
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
+#include <boost/json.hpp>
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
@@ -24,15 +24,14 @@ getNFTokenURI(
     if (sle.getType() != ripple::ltNFTOKEN_PAGE)
     {
         std::stringstream msg;
-        msg << __func__ << " - received unexpected object type " << sle.getType();
+        msg << __func__ << " - received unexpected object type "
+            << sle.getType();
         throw std::runtime_error(msg.str());
     }
 
     ripple::STArray nfts = sle.getFieldArray(ripple::sfNonFungibleTokens);
     auto nft = std::find_if(
-        nfts.begin(),
-        nfts.end(),
-        [tokenID](ripple::STObject const& candidate) {
+        nfts.begin(), nfts.end(), [tokenID](ripple::STObject const& candidate) {
             return candidate.getFieldH256(ripple::sfTokenID) == tokenID;
         });
     if (nft == nfts.end())
@@ -70,7 +69,8 @@ doNFTokenInfo(Context const& context)
     }
     ripple::LedgerInfo lgrInfo = std::get<ripple::LedgerInfo>(v);
 
-    std::optional<Backend::NFToken> dbResponse = context.backend->fetchNFToken(tokenID, lgrInfo.seq);
+    std::optional<Backend::NFToken> dbResponse =
+        context.backend->fetchNFToken(tokenID, lgrInfo.seq, context.yield);
     if (!dbResponse)
     {
         return Status{Error::rpcOBJECT_NOT_FOUND};
@@ -99,10 +99,9 @@ doNFTokenInfo(Context const& context)
     ripple::Keylet const min = ripple::keylet::nftpage(base, tokenID);
     ripple::Keylet const max = ripple::keylet::nftpage_max(dbResponse->owner);
 
-    std::optional<Backend::LedgerObject> dbPageResponse = context.backend->fetchNFTokenPage(
-        min.key,
-        max.key,
-        dbResponse->ledgerSequence);
+    std::optional<Backend::LedgerObject> dbPageResponse =
+        context.backend->fetchNFTokenPage(
+            min.key, max.key, dbResponse->ledgerSequence, context.yield);
 
     if (!dbPageResponse.has_value())
     {
@@ -111,7 +110,7 @@ doNFTokenInfo(Context const& context)
             << ripple::strHex(tokenID);
         throw std::runtime_error(msg.str());
     }
-    
+
     response["uri"] = getNFTokenURI(*dbPageResponse, dbResponse->tokenID);
     return response;
 }
