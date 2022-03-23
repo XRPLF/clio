@@ -32,7 +32,7 @@ Use these instructions to build a clio executable from source. These instruction
 2. sudo apt-get -y upgrade
 3. sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake
 4. Boost:
-  wget https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
+  wget -O ~/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
   tar xvzf boost_1_75_0.tar.gz
   cd boost_1_75_0
   ./bootstrap.sh
@@ -42,12 +42,13 @@ Use these instructions to build a clio executable from source. These instruction
   # -------------------------------
   export BOOST_ROOT=/home/my_user/boost_1_75_0
   source ~/.profile
-5. git clone https://github.com/XRPLF/clio.git
-6. cd clio
-7. mkdir build
-8. cd build
-9. cmake ..
-10. cmake --build . -- -j$((`nproc`+1))
+5. cd ~
+6. git clone https://github.com/XRPLF/clio.git
+7. cd clio
+8. mkdir build
+9. cd build
+10. cmake ..
+11. cmake --build . -- -j$((`nproc`+1))
 ```
 
 ## Running
