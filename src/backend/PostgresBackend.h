@@ -67,6 +67,12 @@ public:
     std::optional<NFToken>
     fetchNFToken(ripple::uint256 tokenID, uint32_t ledgerSequence) const override;
 
+    std::optional<LedgerObject>
+    fetchNFTokenPage(
+        ripple::uint256 ledgerKeyMin,
+        ripple::uint256 ledgerKeyMax,
+        uint32_t ledgerSequence) const override;
+
     std::vector<LedgerObject>
     fetchLedgerDiff(
         std::uint32_t const ledgerSequence,

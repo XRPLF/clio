@@ -1,6 +1,7 @@
 #ifndef CLIO_TYPES_H_INCLUDED
 #define CLIO_TYPES_H_INCLUDED
 #include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
 #include <optional>
 #include <string>
 #include <vector>
@@ -58,7 +59,7 @@ struct AccountTransactions
     std::optional<TransactionsCursor> cursor;
 };
 
-struct NFTokenTransactionsCursor
+struct NFTokenTransactions
 {
     std::vector<TransactionAndMetadata> txns;
     std::optional<TransactionsCursor> cursor;
@@ -68,9 +69,8 @@ struct NFToken
 {
     ripple::uint256 tokenID;
     uint32_t ledgerSequence;
-    ripple::uint160 owner;
+    ripple::AccountID owner;
     bool isBurned;
-    std::optional<LedgerObject> page;
 
     bool
     operator==(NFToken const& other) const

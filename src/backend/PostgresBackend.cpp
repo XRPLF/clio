@@ -465,77 +465,52 @@ PostgresBackend::fetchNFToken(
 {
     PgQuery pgQuery(pgPool_);
     pgQuery("SET statement_timeout TO 10000");
-
-    // Find nf_token data
-    std::stringstream nfTokenSql;
-    nfTokenSql << "SELECT ledger_seq,owner,is_burned"
+    std::stringstream sql;
+    sql << "SELECT ledger_seq,owner,is_burned"
         << " FROM nf_tokens WHERE"
         << " token_id = \'\\x" << ripple::strHex(tokenID) << "\' AND"
         << " ledger_seq <= " << std::to_string(ledgerSequence)
         << " ORDER BY ledger_seq DESC LIMIT 1";
-    auto nfTokenRes = pgQuery(nfTokenSql.str().data());
-    size_t nfTokenNumRows = checkResult(nfTokenRes, 3);
-
-    // This token does not exist at or before this sequence.
-    if (!nfTokenNumRows)
+    auto response = pgQuery(sql.str().data());
+    size_t numRows = checkResult(response, 3);
+    if (!numRows)
     {
         return {};
     }
 
     NFToken result;
     result.tokenID = tokenID;
-    result.ledgerSequence = nfTokenRes.asBigInt(0, 0);
-    result.owner = nfTokenRes.asAccountID(0, 1);
-    result.isBurned = nfTokenRes.asBool(0, 2);
-
-    // If the token is burned we will not find it at this ledger sequence (of
-    // course) so just stop.
-    if (result.isBurned)
-    {
-        return result;
-    }
-
-    // Now determine the ledger index of the NFTokenPage.
-    // The ledger index is >= the ledgerObjID, which is computed by shifting
-    // the 160-bit owner id left by 96 and inserting as the low 96 bits the
-    // low 96 bits of the token id, yielding a 256-bit ID.
-    std::uint32_t mask = 0xFFFFFFFF;
-
-    std::array<std::uint32_t, ripple::uint256::bytes> minData;
-    memcpy(&minData, tokenID.begin(), 12);
-    memcpy(&minData + 12, result.owner.begin(), 20);
-    ripple::uint256 ledgerObjIDMin = ripple::uint256::fromVoid(&minData);
-
-    std::array<std::uint32_t, ripple::uint256::bytes> maxData;
-    memcpy(&maxData, &mask, 4);
-    memcpy(&maxData + 4, &mask, 4);
-    memcpy(&maxData + 8, &mask, 4);
-    memcpy(&maxData + 12, result.owner.begin(), 20);
-    ripple::uint256 ledgerObjIDMax = ripple::uint256::fromVoid(&maxData);
-
-    // Find the expected page of this NFToken
-    std::stringstream objSql;
-    objSql << "SELECT key,object"
-        << " FROM objects WHERE"
-        << " ledger_seq = " << std::to_string(result.ledgerSequence) << " AND"
-        << " key >= \'\\x" << ripple::strHex(ledgerObjIDMin) << "\' AND"
-        << " key <= \'\\x" << ripple::strHex(ledgerObjIDMax) << "\'"
-        << " ORDER BY key ASC LIMIT 1";
-    auto objRes = pgQuery(objSql.str().data());
-    size_t objNumRows = checkResult(objRes, 2);
-    if (!objNumRows)
-    {
-        std::stringstream msg;
-        msg << "NFTokenPage object not found for token "
-            << ripple::strHex(tokenID)
-            << "; this is likely due to corrupted data on clio.";
-        throw std::runtime_error(msg.str());
-    }
-
-    result.page = {
-        objRes.asUInt256(0, 0),
-        objRes.asUnHexedBlob(0, 1)};
+    result.ledgerSequence = response.asBigInt(0, 0);
+    result.owner = response.asAccountID(0, 1);
+    result.isBurned = response.asBool(0, 2);
     return result;
+}
+
+std::optional<LedgerObject>
+PostgresBackend::fetchNFTokenPage(
+    ripple::uint256 ledgerKeyMin,
+    ripple::uint256 ledgerKeyMax,
+    uint32_t ledgerSequence) const
+{
+    PgQuery pgQuery(pgPool_);
+    pgQuery("SET statement_timeout TO 10000");
+    std::stringstream sql;
+    sql << "SELECT key,object"
+        << " FROM objects WHERE"
+        << " ledger_seq = " << std::to_string(ledgerSequence) << " AND"
+        << " key >= \'\\x" << ripple::strHex(ledgerKeyMin) << "\' AND"
+        << " key <= \'\\x" << ripple::strHex(ledgerKeyMax) << "\'"
+        << " ORDER BY key ASC LIMIT 1";
+    auto response = pgQuery(sql.str().data());
+    size_t numRows = checkResult(response, 2);
+    if (!numRows)
+    {
+        return {};
+    }
+
+    return LedgerObject{
+        response.asUInt256(0, 0),
+        response.asUnHexedBlob(0, 1)};
 }
 
 std::optional<ripple::uint256>
