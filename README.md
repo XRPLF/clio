@@ -24,7 +24,7 @@ from which data can be extracted. The rippled node does not need to be running o
 2. Access to one or more rippled nodes. Can be local or remote.
 
 ## Building
-clio is built with cmake. clio requires c++20, and boost 1.75.0 or later. protobuf v2 is required and must be manually built on systems that ship with v3, including Debian 11 and Ubuntu 21.10.
+clio is built with cmake. clio requires c++20, and boost 1.75.0 or later. protobuf v2 or v3 can both be used, however, users with older systems will need to update to GCC 8 or later and cmake 3.16.3 or later.
 Use these instructions to build a clio executable from source. These instructions were tested on Ubuntu 20.04 LTS.
 
 ```
