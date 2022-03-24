@@ -25,27 +25,26 @@ from which data can be extracted. The rippled node does not need to be running o
 
 ## Building
 
-Clio is built with cmake. Clio requires c++20, and boost 1.75.0 or later. protobuf v2 or v3 can both be used, however, users with older systems will need to update to GCC 8 or later and cmake 3.16.3 or later.
+Clio is built with cmake. Clio requires c++20, and boost 1.75.0 or later.
 
 Use these instructions to build a Clio executable from source. These instructions were tested on Ubuntu 20.04 LTS.
 
 ```
-# Update software & install dependencies
-  sudo apt-get update && sudo apt-get -y upgrade
+# Install dependencies
   sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake
 
 # Compile Boost
-  wget -O ~/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
-  tar xvzf ~/boost_1_75_0.tar.gz
-  cd ~/boost_1_75_0
+  wget -O $HOME/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
+  tar xvzf $HOME/boost_1_75_0.tar.gz
+  cd $HOME/boost_1_75_0
   ./bootstrap.sh
-  ./b2 -j$((`nproc`+1))
-  echo "export BOOST_ROOT=/home/$USER/boost_1_75_0" >> ~/.profile && source ~/.profile
+  ./b2 -j$(nproc)
+  echo "export BOOST_ROOT=$HOME/boost_1_75_0" >> $HOME/.profile && source $HOME/.profile
 
 # Clone the Clio Git repository & build Clio
-  cd ~
+  cd $HOME
   git clone https://github.com/XRPLF/clio.git
-  cd clio
+  cd $HOME/clio
   cmake -B build && cmake --build build --parallel $(nproc)
 ```
 
