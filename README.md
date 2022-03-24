@@ -28,27 +28,23 @@ clio is built with cmake. clio requires c++20, and boost 1.75.0 or later. protob
 Use these instructions to build a clio executable from source. These instructions were tested on Ubuntu 20.04 LTS.
 
 ```
-1. sudo apt-get update
-2. sudo apt-get -y upgrade
-3. sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake
-4. Boost:
+# Update software & install dependencies
+  sudo apt-get update && sudo apt-get -y upgrade
+  sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake
+
+# Compile Boost
   wget -O ~/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
-  tar xvzf boost_1_75_0.tar.gz
-  cd boost_1_75_0
+  tar xvzf ~/boost_1_75_0.tar.gz
+  cd ~/boost_1_75_0
   ./bootstrap.sh
   ./b2 -j$((`nproc`+1))
-  # Add the following 'export' command
-  # to your profile file (~/.profile):
-  # -------------------------------
-  export BOOST_ROOT=/home/my_user/boost_1_75_0
-  source ~/.profile
-5. cd ~
-6. git clone https://github.com/XRPLF/clio.git
-7. cd clio
-8. mkdir build
-9. cd build
-10. cmake ..
-11. cmake --build . -- -j$((`nproc`+1))
+  echo "export BOOST_ROOT=/home/$USER/boost_1_75_0" >> ~/.profile && source ~/.profile
+
+# Clone the Clio Git repository & build Clio
+  cd ~
+  git clone https://github.com/XRPLF/clio.git
+  cd clio
+  cmake -B build && cmake --build build --parallel $(nproc)
 ```
 
 ## Running
