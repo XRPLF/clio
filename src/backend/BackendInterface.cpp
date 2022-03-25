@@ -253,9 +253,8 @@ BackendInterface::fetchLedgerPage(
     bool reachedEnd = false;
     while (keys.size() < limit && !reachedEnd)
     {
-        ripple::uint256 const& curCursor = keys.size() ? keys.back()
-            : cursor                                   ? *cursor
-                                                       : firstKey;
+        ripple::uint256 const& curCursor =
+            keys.size() ? keys.back() : cursor ? *cursor : firstKey;
         uint32_t seq = outOfOrder ? range->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
         if (!succ)
@@ -283,7 +282,7 @@ BackendInterface::fetchLedgerPage(
             assert(false);
         }
     }
-    if (!reachedEnd)
+    if (keys.size() && !reachedEnd)
         page.cursor = keys.back();
 
     return page;

@@ -50,10 +50,17 @@ public:
         return std::move(stream_);
     }
 
-    std::string
+    std::optional<std::string>
     ip()
     {
-        return stream_.socket().remote_endpoint().address().to_string();
+        try
+        {
+            return stream_.socket().remote_endpoint().address().to_string();
+        }
+        catch (std::exception const&)
+        {
+            return {};
+        }
     }
 
     // Start the asynchronous operation

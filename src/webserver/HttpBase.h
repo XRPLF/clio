@@ -192,6 +192,10 @@ public:
         }
 
         auto ip = derived().ip();
+
+        if (!ip)
+            return;
+
         auto session = derived().shared_from_this();
 
         // Requests are handed using coroutines. Here we spawn a coroutine
@@ -208,7 +212,7 @@ public:
                     etl_,
                     dosGuard_,
                     counters_,
-                    ip,
+                    *ip,
                     session);
             });
     }

@@ -213,6 +213,10 @@ public:
     void
     handle_request(std::string const&& msg, boost::asio::yield_context& yc)
     {
+        auto ip = derived().ip();
+        if (!ip)
+            return;
+
         boost::json::object response = {};
         auto sendError = [this](auto error) {
             send(boost::json::serialize(RPC::make_error(error)));
@@ -221,6 +225,7 @@ public:
         {
             boost::json::value raw = boost::json::parse(msg);
             boost::json::object request = raw.as_object();
+
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
@@ -238,7 +243,7 @@ public:
                     shared_from_this(),
                     *range,
                     counters_,
-                    derived().ip());
+                    *ip);
 
                 if (!context)
                     return sendError(RPC::Error::rpcBAD_SYNTAX);
@@ -287,7 +292,7 @@ public:
         }
 
         std::string responseStr = boost::json::serialize(response);
-        dosGuard_.add(derived().ip(), responseStr.size());
+        dosGuard_.add(*ip, responseStr.size());
         send(std::move(responseStr));
     }
 
@@ -302,9 +307,13 @@ public:
         std::string msg{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         auto ip = derived().ip();
+
+        if (!ip)
+            return;
+
         BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " received request from ip = " << ip;
-        if (!dosGuard_.isOk(ip))
+            << __func__ << " received request from ip = " << *ip;
+        if (!dosGuard_.isOk(*ip))
         {
             boost::json::object response;
             response["error"] = "Too many requests. Slow down";
@@ -312,7 +321,7 @@ public:
 
             BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
 
-            dosGuard_.add(ip, responseStr.size());
+            dosGuard_.add(*ip, responseStr.size());
             send(std::move(responseStr));
         }
         else
