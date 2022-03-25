@@ -48,16 +48,8 @@ doAccountInfo(Context const& context)
     // Get info on account.
     auto accountID = accountFromStringStrict(strIdent);
     if (!accountID)
-    {
-        if (!request.contains("strict") || !request.at("strict").as_bool())
-        {
-            accountID = accountFromSeed(strIdent);
-            if (!accountID)
-                return Status{Error::rpcBAD_SEED};
-        }
-        else
-            return Status{Error::rpcACT_MALFORMED};
-    }
+        return Status{Error::rpcACT_MALFORMED};
+
     assert(accountID.has_value());
 
     auto key = ripple::keylet::account(accountID.value());
