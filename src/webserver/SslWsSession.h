@@ -55,7 +55,7 @@ public:
     {
         return ws_;
     }
-    
+
     std::optional<std::string>
     ip()
     {

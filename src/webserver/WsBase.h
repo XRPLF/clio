@@ -226,8 +226,6 @@ public:
             boost::json::value raw = boost::json::parse(msg);
             boost::json::object request = raw.as_object();
 
-
-
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {

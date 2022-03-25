@@ -59,7 +59,7 @@ public:
         }
         catch (std::exception const&)
         {
-          return {};
+            return {};
         }
     }
 
