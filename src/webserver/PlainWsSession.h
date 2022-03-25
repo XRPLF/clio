@@ -58,15 +58,22 @@ public:
         return ws_;
     }
 
-    std::string
+    std::optional<std::string>
     ip()
     {
-        return ws()
-            .next_layer()
-            .socket()
-            .remote_endpoint()
-            .address()
-            .to_string();
+        try
+        {
+            return ws()
+                .next_layer()
+                .socket()
+                .remote_endpoint()
+                .address()
+                .to_string();
+        }
+        catch (std::exception const&)
+        {
+            return {};
+        }
     }
 
     ~PlainWsSession() = default;
