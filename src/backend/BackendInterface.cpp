@@ -282,7 +282,7 @@ BackendInterface::fetchLedgerPage(
             assert(false);
         }
     }
-    if (!reachedEnd)
+    if (keys.size() && !reachedEnd)
         page.cursor = keys.back();
 
     return page;
