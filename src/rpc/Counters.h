@@ -16,11 +16,11 @@ private:
     {
         MethodInfo() = default;
 
-        std::atomic_uint started{0};
-        std::atomic_uint finished{0};
-        std::atomic_uint errored{0};
-        std::atomic_uint forwarded{0};
-        std::atomic_uint duration{0};
+        std::atomic_uint64_t started{0};
+        std::atomic_uint64_t finished{0};
+        std::atomic_uint64_t errored{0};
+        std::atomic_uint64_t forwarded{0};
+        std::atomic_uint64_t duration{0};
     };
 
     void
