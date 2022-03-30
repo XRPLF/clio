@@ -46,7 +46,8 @@ Result
 doBookOffers(Context const& context);
 
 // NFT methods
-doNFTokenInfo(Context const& context);
+Result
+doNFTInfo(Context const& context);
 
 // ledger methods
 Result

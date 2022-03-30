@@ -1,7 +1,6 @@
 #ifndef CLIO_BACKEND_DBHELPERS_H_INCLUDED
 #define CLIO_BACKEND_DBHELPERS_H_INCLUDED
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/basics/Log.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAccount.h>
@@ -11,7 +10,7 @@
 #include <backend/Types.h>
 
 /// Struct used to keep track of what to write to
-/// account_transactions table in Postgres
+/// account_transactions/account_tx tables
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
@@ -30,18 +29,18 @@ struct AccountTransactionsData
     AccountTransactionsData() = default;
 };
 
-/// Struct used to keep track of what to write to
-/// nf_token_transactions table in Postgres
-struct NFTokenTransactionsData
+/// Represents a link from a tx to an NFT that was targeted/modified/created
+/// by it. Gets written to nf_token_transactions table and the like.
+struct NFTTransactionsData
 {
     ripple::uint256 tokenID;
-    uint32_t ledgerSequence;
-    uint32_t transactionIndex;
+    std::uint32_t ledgerSequence;
+    std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
-    NFTokenTransactionsData(
+    NFTTransactionsData(
         ripple::uint256 const& tokenID,
-        ripple::TxMeta& meta,
+        ripple::TxMeta const& meta,
         ripple::uint256 const& txHash)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
@@ -49,34 +48,36 @@ struct NFTokenTransactionsData
         , txHash(txHash)
     {
     }
-
-    NFTokenTransactionsData() = default;
 };
 
-/// Struct used to keep track of what to write to
-/// nf_tokens table
-struct NFTokensData
+/// Represents an NFT state at a particular ledger. Gets written to nf_tokens
+/// table and the like.
+struct NFTsData
 {
     ripple::uint256 tokenID;
-    uint32_t ledgerSequence;
-    ripple::AccountID issuer;
+    std::uint32_t ledgerSequence;
+
+    // The transaction index is only stored because we want to store only the
+    // final state of an NFT per ledger. Since we pull this from transactions
+    // we keep track of which tx index created this so we can de-duplicate, as
+    // it is possible for one ledger to have multiple txs that change the
+    // state of the same NFT.
+    std::uint32_t transactionIndex;
     ripple::AccountID owner;
     bool isBurned;
 
-    NFTokensData(
+    NFTsData(
         ripple::uint256 const& tokenID,
-        std::optional<ripple::AccountID> const& newOwner,
-        ripple::TxMeta& meta,
-        bool isBurnedArg)
+        ripple::AccountID const& owner,
+        ripple::TxMeta const& meta,
+        bool isBurned)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
-        , issuer(ripple::nft::getIssuer(tokenID))
-        , owner(newOwner.value_or(ripple::nft::getIssuer(tokenID)))
-        , isBurned(isBurnedArg)
+        , transactionIndex(meta.getIndex())
+        , owner(owner)
+        , isBurned(isBurned)
     {
     }
-
-    NFTokensData() = default;
 };
 
 template <class T>

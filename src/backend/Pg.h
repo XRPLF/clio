@@ -595,6 +595,8 @@ void
 initSchema(std::shared_ptr<PgPool> const& pool);
 void
 initAccountTx(std::shared_ptr<PgPool> const& pool);
+void
+initNFTTx(std::shared_ptr<PgPool> const& pool);
 
 // Load the ledger info for the specified ledger/s from the database
 // @param whichLedger specifies the ledger to load via ledger sequence, ledger

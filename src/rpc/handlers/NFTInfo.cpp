@@ -13,7 +13,7 @@
 
 namespace RPC {
 
-std::optional<std::string>
+static std::optional<std::string>
 getNFTokenURI(ripple::TxMeta const& txMeta, ripple::uint256 const& tokenID)
 {
     for (ripple::STObject const& node : txMeta.getNodes())
@@ -23,21 +23,21 @@ getNFTokenURI(ripple::TxMeta const& txMeta, ripple::uint256 const& tokenID)
             node.getFName() == ripple::sfDeletedNode)
             continue;
 
-        ripple::STArray const& nfts = [&node] {
+        ripple::STArray const& nfts = [node] {
             if (node.getFName() == ripple::sfCreatedNode)
                 return node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNFTokens);
+                    .getFieldArray(ripple::sfNonFungibleTokens);
             return node.peekAtField(ripple::sfFinalFields)
                 .downcast<ripple::STObject>()
-                .getFieldArray(ripple::sfNFTokens);
+                .getFieldArray(ripple::sfNonFungibleTokens);
         }();
 
         auto nft = std::find_if(
             nfts.begin(),
             nfts.end(),
             [&tokenID](ripple::STObject const& candidate) {
-                return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
+                return candidate.getFieldH256(ripple::sfTokenID) == tokenID;
             });
         if (nft != nfts.end())
         {
@@ -92,8 +92,7 @@ doNFTInfo(Context const& context)
     response["transfer_fee"] = ripple::nft::getTransferFee(dbResponse->tokenID);
     response["issuer"] =
         ripple::toBase58(ripple::nft::getIssuer(dbResponse->tokenID));
-    response["nft_taxon"] =
-        ripple::nft::toUInt32(ripple::nft::getTaxon(dbResponse->tokenID));
+    response["nft_taxon"] = ripple::nft::getTaxon(dbResponse->tokenID);
     response["nft_sequence"] = ripple::nft::getSerial(dbResponse->tokenID);
 
     // Fetch URI from first transaction
@@ -106,7 +105,7 @@ doNFTInfo(Context const& context)
             Error::rpcINTERNAL,
             "Could not find first transaction for this NFT"};
 
-    auto [_, txMeta] = deserializeTxPlusMeta(
+    auto [_tx, txMeta] = deserializeTxPlusMeta(
         dbTxResponse.txns.front(), dbTxResponse.txns.front().ledgerSequence);
     std::optional<std::string> uri =
         getNFTokenURI(*txMeta, dbResponse->tokenID);

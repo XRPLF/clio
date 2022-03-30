@@ -181,17 +181,18 @@ public:
         boost::asio::yield_context& yield) const = 0;
 
     // *** NFT methods
-    virtual std::optional<NFToken>
-    fetchNFToken(
-        ripple::uint256 tokenID,
-        std::uint32_t ledgerSequence,
+    virtual std::optional<NFT>
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
-    virtual std::optional<LedgerObject>
-    fetchNFTokenPage(
-        ripple::uint256 ledgerKeyMin,
-        ripple::uint256 ledgerKeyMax,
-        std::uint32_t ledgerSequence,
+    virtual TransactionsAndCursor
+    fetchNFTTransactions(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context& yield) const = 0;
 
     // *** state data methods
@@ -300,13 +301,13 @@ public:
         std::string&& metadata) = 0;
 
     virtual void
-    writeNFTokens(std::vector<NFTokensData>&& data) = 0;
+    writeNFTs(std::vector<NFTsData>&& data) = 0;
 
     virtual void
     writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
 
     virtual void
-    writeNFTokenTransactions(std::vector<NFTokenTransactionsData>&& data) = 0;
+    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) = 0;
 
     virtual void
     writeSuccessor(
