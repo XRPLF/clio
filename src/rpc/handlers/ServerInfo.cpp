@@ -54,6 +54,10 @@ doServerInfo(Context const& context)
         lgrInfo->closeTime.time_since_epoch().count() - 946684800;
     auto& validatedLgr =
         (response["validated_ledger"] = boost::json::object{}).as_object();
+
+    if (age < 0)
+        age = 0;
+
     validatedLgr["age"] = age;
     validatedLgr["hash"] = ripple::strHex(lgrInfo->hash);
     validatedLgr["seq"] = lgrInfo->seq;
