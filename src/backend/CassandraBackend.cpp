@@ -1,7 +1,8 @@
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
 #include <functional>
-#include <unordered_map>
+
 namespace Backend {
 
 // Type alias for async completion handlers
@@ -267,11 +268,11 @@ CassandraBackend::writeAccountTransactions(
         {
             makeAndExecuteAsyncWrite(
                 this,
-                std::move(std::make_tuple(
+                std::make_tuple(
                     std::move(account),
                     record.ledgerSequence,
                     record.transactionIndex,
-                    record.txHash)),
+                    record.txHash),
                 [this](auto& params) {
                     CassandraStatement statement(insertAccountTx_);
                     auto& [account, lgrSeq, txnIdx, hash] = params.data;
@@ -286,24 +287,22 @@ CassandraBackend::writeAccountTransactions(
 }
 
 void
-CassandraBackend::writeNFTokenTransactions(
-    std::vector<NFTokenTransactionsData>&& data)
+CassandraBackend::writeNFTTransactions(std::vector<NFTTransactionsData>&& data)
 {
-    for (NFTokenTransactionsData& record : data)
+    for (NFTTransactionsData const& record : data)
     {
         makeAndExecuteAsyncWrite(
             this,
-            std::move(std::make_tuple(
+            std::make_tuple(
                 record.tokenID,
                 record.ledgerSequence,
                 record.transactionIndex,
-                record.txHash)),
-            [this](auto& params) {
-                CassandraStatement statement(insertNFTokenTx_);
-                auto& [tokenID, lgrSeq, txnIdx, txHash] = params.data;
+                record.txHash),
+            [this](auto const& params) {
+                CassandraStatement statement(insertNFTTx_);
+                auto const& [tokenID, lgrSeq, txnIdx, txHash] = params.data;
                 statement.bindNextBytes(tokenID);
-                statement.bindNextInt(lgrSeq);
-                statement.bindNextInt(txnIdx);
+                statement.bindNextIntTuple(lgrSeq, txnIdx);
                 statement.bindNextBytes(txHash);
                 return statement;
             },
@@ -354,24 +353,22 @@ CassandraBackend::writeTransaction(
 }
 
 void
-CassandraBackend::writeNFTokens(std::vector<NFTokensData>&& data)
+CassandraBackend::writeNFTs(std::vector<NFTsData>&& data)
 {
-    for (NFTokensData& record : data)
+    for (NFTsData const& record : data)
     {
         makeAndExecuteAsyncWrite(
             this,
-            std::move(std::make_tuple(
+            std::make_tuple(
                 record.tokenID,
                 record.ledgerSequence,
-                record.issuer,
                 record.owner,
-                record.isBurned)),
-            [this](auto& params) {
-                CassandraStatement statement{insertNFToken_};
-                auto& [tokenID, lgrSeq, issuer, owner, isBurned] = params.data;
+                record.isBurned),
+            [this](auto const& params) {
+                CassandraStatement statement{insertNFT_};
+                auto const& [tokenID, lgrSeq, owner, isBurned] = params.data;
                 statement.bindNextBytes(tokenID);
                 statement.bindNextInt(lgrSeq);
-                statement.bindNextBytes(issuer);
                 statement.bindNextBytes(owner);
                 statement.bindNextBoolean(isBurned);
                 return statement;
@@ -379,30 +376,15 @@ CassandraBackend::writeNFTokens(std::vector<NFTokensData>&& data)
             "nf_tokens");
         makeAndExecuteAsyncWrite(
             this,
-            std::move(std::make_tuple(
-                record.issuer, record.ledgerSequence, record.tokenID)),
-            [this](auto& params) {
-                CassandraStatement statement{insertIssuerNFToken_};
-                auto& [issuer, lgrSeq, tokenID] = params.data;
-                statement.bindNextBytes(issuer);
-                statement.bindNextInt(lgrSeq);
+            std::make_tuple(record.tokenID),
+            [this](auto const& params) {
+                CassandraStatement statement{insertIssuerNFT_};
+                auto const& [tokenID] = params.data;
+                statement.bindNextBytes(ripple::nft::getIssuer(tokenID));
                 statement.bindNextBytes(tokenID);
                 return statement;
             },
             "issuer_nf_tokens");
-        makeAndExecuteAsyncWrite(
-            this,
-            std::move(std::make_tuple(
-                record.owner, record.ledgerSequence, record.tokenID)),
-            [this](auto& params) {
-                CassandraStatement statement{insertOwnerNFToken_};
-                auto& [owner, lgrSeq, tokenID] = params.data;
-                statement.bindNextBytes(owner);
-                statement.bindNextInt(lgrSeq);
-                statement.bindNextBytes(tokenID);
-                return statement;
-            },
-            "owner_nf_tokens");
     }
 }
 
@@ -583,22 +565,20 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     return hashes;
 }
 
-std::optional<NFToken>
-CassandraBackend::fetchNFToken(
-    ripple::uint256 tokenID,
-    std::uint32_t ledgerSequence,
+std::optional<NFT>
+CassandraBackend::fetchNFT(
+    ripple::uint256 const& tokenID,
+    std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
-    CassandraStatement statement{selectNFToken_};
+    CassandraStatement statement{selectNFT_};
     statement.bindNextBytes(tokenID);
     statement.bindNextInt(ledgerSequence);
     CassandraResult response = executeAsyncRead(statement, yield);
     if (!response)
-    {
         return {};
-    }
 
-    NFToken result;
+    NFT result;
     result.tokenID = tokenID;
     result.ledgerSequence = response.getUInt32();
     result.owner = response.getBytes();
@@ -606,41 +586,87 @@ CassandraBackend::fetchNFToken(
     return result;
 }
 
-std::optional<LedgerObject>
-CassandraBackend::fetchNFTokenPage(
-    ripple::uint256 ledgerKeyMin,
-    ripple::uint256 ledgerKeyMax,
-    std::uint32_t ledgerSequence,
+TransactionsAndCursor
+CassandraBackend::fetchNFTTransactions(
+    ripple::uint256 const& tokenID,
+    std::uint32_t const limit,
+    bool const forward,
+    std::optional<TransactionsCursor> const& cursorIn,
     boost::asio::yield_context& yield) const
 {
-    CassandraStatement statement{selectNFTokenPage_};
-    statement.bindNextInt(ledgerSequence);
-    statement.bindNextBytes(ledgerKeyMin);
-    statement.bindNextBytes(ledgerKeyMax);
-    CassandraResult response = executeAsyncRead(statement, yield);
-    if (!response)
+    auto cursor = cursorIn;
+    auto rng = fetchLedgerRange();
+    if (!rng)
+        return {{}, {}};
+
+    CassandraStatement statement = forward
+        ? CassandraStatement(selectNFTTxForward_)
+        : CassandraStatement(selectNFTTx_);
+
+    statement.bindNextBytes(tokenID);
+
+    if (cursor)
     {
+        statement.bindNextIntTuple(
+            cursor->ledgerSequence, cursor->transactionIndex);
+        BOOST_LOG_TRIVIAL(debug) << " token_id = " << ripple::strHex(tokenID)
+                                 << " tuple = " << cursor->ledgerSequence
+                                 << " : " << cursor->transactionIndex;
+    }
+    else
+    {
+        int const seq = forward ? rng->minSequence : rng->maxSequence;
+        int const placeHolder =
+            forward ? 0 : std::numeric_limits<std::uint32_t>::max();
+
+        statement.bindNextIntTuple(placeHolder, placeHolder);
+        BOOST_LOG_TRIVIAL(debug)
+            << " token_id = " << ripple::strHex(tokenID) << " idx = " << seq
+            << " tuple = " << placeHolder;
+    }
+
+    statement.bindNextUInt(limit);
+
+    CassandraResult result = executeAsyncRead(statement, yield);
+
+    if (!result.hasResult())
+    {
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
         return {};
     }
 
-    ripple::uint256 key;
-    Blob object;
+    std::vector<ripple::uint256> hashes = {};
+    auto numRows = result.numRows();
+    BOOST_LOG_TRIVIAL(info) << "num_rows = " << std::to_string(numRows);
     do
     {
-        ripple::uint256 keyCandidate = response.getUInt256();
-        Blob objectCandidate = response.getBytes();
-
-        if (key == 0 || keyCandidate < key)
+        hashes.push_back(result.getUInt256());
+        if (--numRows == 0)
         {
-            key = keyCandidate;
-            object = objectCandidate;
-        }
-    } while (response.nextRow());
+            BOOST_LOG_TRIVIAL(debug) << __func__ << " setting cursor";
+            auto const [lgrSeq, txnIdx] = result.getInt64Tuple();
+            cursor = {
+                static_cast<std::uint32_t>(lgrSeq),
+                static_cast<std::uint32_t>(txnIdx)};
 
-    return LedgerObject{key, object};
+            if (forward)
+                ++cursor->transactionIndex;
+        }
+    } while (result.nextRow());
+
+    auto txns = fetchTransactions(hashes, yield);
+    BOOST_LOG_TRIVIAL(debug) << __func__ << " txns = " << txns.size();
+
+    if (txns.size() == limit)
+    {
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " returning cursor";
+        return {txns, cursor};
+    }
+
+    return {txns, {}};
 }
 
-AccountTransactions
+TransactionsAndCursor
 CassandraBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
     std::uint32_t const limit,
@@ -673,8 +699,8 @@ CassandraBackend::fetchAccountTransactions(
     }
     else
     {
-        int seq = forward ? rng->minSequence : rng->maxSequence;
-        int placeHolder =
+        int const seq = forward ? rng->minSequence : rng->maxSequence;
+        int const placeHolder =
             forward ? 0 : std::numeric_limits<std::uint32_t>::max();
 
         statement.bindNextIntTuple(placeHolder, placeHolder);
@@ -722,6 +748,7 @@ CassandraBackend::fetchAccountTransactions(
 
     return {txns, {}};
 }
+
 std::optional<ripple::uint256>
 CassandraBackend::doFetchSuccessorKey(
     ripple::uint256 key,
@@ -1323,12 +1350,11 @@ CassandraBackend::open(bool readOnly)
               << "  ("
               << "    token_id blob,"
               << "    sequence bigint,"
-              << "    issuer blob,"
               << "    owner blob,"
               << "    is_burned boolean,"
               << "    PRIMARY KEY (token_id, sequence)"
               << "  )"
-              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "  WITH CLUSTERING ORDER BY (sequence DESC)"
               << "    AND default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -1344,12 +1370,9 @@ CassandraBackend::open(bool readOnly)
               << "issuer_nf_tokens"
               << "  ("
               << "    issuer blob,"
-              << "    sequence bigint,"
               << "    token_id blob,"
-              << "    PRIMARY KEY (issuer, sequence)"
-              << "  )"
-              << "  WITH CLUSTERING ORDER BY (sequence desc)"
-              << "    AND default_time_to_live = " << std::to_string(ttl);
+              << "    PRIMARY KEY (issuer, token_id)"
+              << "  )";
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1361,35 +1384,14 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix
-              << "owner_nf_tokens"
-              << "  ("
-              << "    owner blob,"
-              << "    sequence bigint,"
-              << "    token_id blob,"
-              << "    PRIMARY KEY (owner, sequence)"
-              << "  )"
-              << "  WITH CLUSTERING ORDER BY (sequence desc)"
-              << "    AND default_time_to_live = " << std::to_string(ttl);
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query.str("");
-        query << "SELECT * FROM " << tablePrefix << "owner_nf_tokens"
-              << " LIMIT 1";
-        if (!executeSimpleStatement(query.str()))
-            continue;
-
-        query.str("");
-        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix
               << "nf_token_transactions"
               << "  ("
               << "    token_id blob,"
-              << "    sequence bigint,"
-              << "    transaction_index bigint,"
+              << "    seq_idx tuple<bigint, bigint>,"
               << "    hash blob,"
-              << "    PRIMARY KEY (token_id, sequence, transaction_index, hash)"
+              << "    PRIMARY KEY (token_id, seq_idx)"
               << "  )"
-              << "  WITH CLUSTERING ORDER BY (sequence desc)"
+              << "  WITH CLUSTERING ORDER BY (seq_idx DESC)"
               << "    AND default_time_to_live = " << std::to_string(ttl);
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -1491,18 +1493,6 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "SELECT key,object"
-              << " FROM " << tablePrefix << "objects WHERE"
-              << " sequence = ? AND"
-              << " key >= ? AND"
-              << " key <= ?"
-              << " ALLOW FILTERING";
-        if (!selectNFTokenPage_.prepareStatement(query, session_.get()))
-        {
-            continue;
-        }
-
-        query.str("");
         query << "SELECT TOKEN(key) FROM " << tablePrefix << "objects "
               << " WHERE key = ? LIMIT 1";
 
@@ -1531,9 +1521,9 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "nf_tokens"
-              << " (token_id,sequence,issuer,owner,is_burned)"
-              << " VALUES (?,?,?,?,?)";
-        if (!insertNFToken_.prepareStatement(query, session_.get()))
+              << " (token_id,sequence,owner,is_burned)"
+              << " VALUES (?,?,?,?)";
+        if (!insertNFT_.prepareStatement(query, session_.get()))
         {
             continue;
         }
@@ -1543,35 +1533,49 @@ CassandraBackend::open(bool readOnly)
               << " FROM " << tablePrefix << "nf_tokens WHERE"
               << " token_id = ? AND"
               << " sequence <= ?"
-              << " ORDER BY sequence DESC LIMIT 1";
-        if (!selectNFToken_.prepareStatement(query, session_.get()))
+              << " LIMIT 1";
+        if (!selectNFT_.prepareStatement(query, session_.get()))
         {
             continue;
         }
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "issuer_nf_tokens"
-              << " (issuer,sequence,token_id)"
-              << " VALUES (?,?,?)";
-        if (!insertIssuerNFToken_.prepareStatement(query, session_.get()))
-        {
-            continue;
-        }
-
-        query.str("");
-        query << "INSERT INTO " << tablePrefix << "owner_nf_tokens"
-              << " (owner,sequence,token_id)"
-              << " VALUES (?,?,?)";
-        if (!insertOwnerNFToken_.prepareStatement(query, session_.get()))
+              << " (issuer,token_id)"
+              << " VALUES (?,?)";
+        if (!insertIssuerNFT_.prepareStatement(query, session_.get()))
         {
             continue;
         }
 
         query.str("");
         query << "INSERT INTO " << tablePrefix << "nf_token_transactions"
-              << " (token_id,sequence,transaction_index,hash)"
-              << " VALUES (?,?,?,?)";
-        if (!insertNFTokenTx_.prepareStatement(query, session_.get()))
+              << " (token_id,seq_idx,hash)"
+              << " VALUES (?,?,?)";
+        if (!insertNFTTx_.prepareStatement(query, session_.get()))
+        {
+            continue;
+        }
+
+        query.str("");
+        query << "SELECT hash,seq_idx"
+              << " FROM " << tablePrefix << "nf_token_transactions WHERE"
+              << " token_id = ? AND"
+              << " seq_idx < ?"
+              << " LIMIT ?";
+        if (!selectNFTTx_.prepareStatement(query, session_.get()))
+        {
+            continue;
+        }
+
+        query.str("");
+        query << "SELECT hash,seq_idx"
+              << " FROM " << tablePrefix << "nf_token_transactions WHERE"
+              << " token_id = ? AND"
+              << " seq_idx >= ?"
+              << " ORDER BY seq_idx ASC"
+              << " LIMIT ?";
+        if (!selectNFTTxForward_.prepareStatement(query, session_.get()))
         {
             continue;
         }

@@ -481,6 +481,8 @@ public:
         return {first, second};
     }
 
+    // TODO: should be replaced with a templated implementation as is very
+    // similar to other getters
     bool
     getBool()
     {
@@ -615,7 +617,6 @@ private:
     CassandraPreparedStatement selectObject_;
     CassandraPreparedStatement selectLedgerPageKeys_;
     CassandraPreparedStatement selectLedgerPage_;
-    CassandraPreparedStatement selectNFTokenPage_;
     CassandraPreparedStatement upperBound2_;
     CassandraPreparedStatement getToken_;
     CassandraPreparedStatement insertSuccessor_;
@@ -625,11 +626,12 @@ private:
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement selectAccountTxForward_;
-    CassandraPreparedStatement insertNFToken_;
-    CassandraPreparedStatement selectNFToken_;
-    CassandraPreparedStatement insertIssuerNFToken_;
-    CassandraPreparedStatement insertOwnerNFToken_;
-    CassandraPreparedStatement insertNFTokenTx_;
+    CassandraPreparedStatement insertNFT_;
+    CassandraPreparedStatement selectNFT_;
+    CassandraPreparedStatement insertIssuerNFT_;
+    CassandraPreparedStatement insertNFTTx_;
+    CassandraPreparedStatement selectNFTTx_;
+    CassandraPreparedStatement selectNFTTxForward_;
     CassandraPreparedStatement insertLedgerHeader_;
     CassandraPreparedStatement insertLedgerHash_;
     CassandraPreparedStatement updateLedgerRange_;
@@ -714,7 +716,7 @@ public:
         open_ = false;
     }
 
-    AccountTransactions
+    TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t const limit,
@@ -883,17 +885,18 @@ public:
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
-    std::optional<NFToken>
-    fetchNFToken(
-        ripple::uint256 tokenID,
-        std::uint32_t ledgerSequence,
+    std::optional<NFT>
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
-    std::optional<LedgerObject>
-    fetchNFTokenPage(
-        ripple::uint256 ledgerKeyMin,
-        ripple::uint256 ledgerKeyMax,
-        std::uint32_t ledgerSequence,
+    TransactionsAndCursor
+    fetchNFTTransactions(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context& yield) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence
@@ -986,8 +989,7 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     void
-    writeNFTokenTransactions(
-        std::vector<NFTokenTransactionsData>&& data) override;
+    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;
 
     void
     writeTransaction(
@@ -997,8 +999,8 @@ public:
         std::string&& transaction,
         std::string&& metadata) override;
 
-    virtual void
-    writeNFTokens(std::vector<NFTokensData>&& data) override;
+    void
+    writeNFTs(std::vector<NFTsData>&& data) override;
 
     void
     startWrites() const override

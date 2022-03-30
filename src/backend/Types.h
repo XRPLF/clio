@@ -53,27 +53,24 @@ struct TransactionsCursor
     std::uint32_t transactionIndex;
 };
 
-struct AccountTransactions
+struct TransactionsAndCursor
 {
     std::vector<TransactionAndMetadata> txns;
     std::optional<TransactionsCursor> cursor;
 };
 
-struct NFTokenTransactions
-{
-    std::vector<TransactionAndMetadata> txns;
-    std::optional<TransactionsCursor> cursor;
-};
-
-struct NFToken
+struct NFT
 {
     ripple::uint256 tokenID;
-    uint32_t ledgerSequence;
+    std::uint32_t ledgerSequence;
     ripple::AccountID owner;
     bool isBurned;
 
+    // clearly two tokens are the same if they have the same ID, but this
+    // struct stores the state of a given token at a given ledger sequence, so
+    // we also need to compare with ledgerSequence
     bool
-    operator==(NFToken const& other) const
+    operator==(NFT const& other) const
     {
         return tokenID == other.tokenID &&
             ledgerSequence == other.ledgerSequence;

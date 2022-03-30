@@ -64,17 +64,18 @@ public:
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
-    std::optional<NFToken>
-    fetchNFToken(
-        ripple::uint256 tokenID,
-        std::uint32_t ledgerSequence,
+    std::optional<NFT>
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
-    std::optional<LedgerObject>
-    fetchNFTokenPage(
-        ripple::uint256 ledgerKeyMin,
-        ripple::uint256 ledgerKeyMax,
-        std::uint32_t ledgerSequence,
+    TransactionsAndCursor
+    fetchNFTTransactions(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context& yield) const override;
 
     std::vector<LedgerObject>
@@ -102,7 +103,7 @@ public:
         std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
-    AccountTransactions
+    TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t const limit,
@@ -136,15 +137,14 @@ public:
         std::string&& metadata) override;
 
     virtual void
-    writeNFTokens(std::vector<NFTokensData>&& data) override;
+    writeNFTs(std::vector<NFTsData>&& data) override;
 
     void
     writeAccountTransactions(
         std::vector<AccountTransactionsData>&& data) override;
 
     virtual void
-    writeNFTokenTransactions(
-        std::vector<NFTokenTransactionsData>&& data) override;
+    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;
 
     void
     open(bool readOnly) override;
