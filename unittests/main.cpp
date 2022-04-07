@@ -317,7 +317,7 @@ TEST(BackendTest, Basic)
                     EXPECT_TRUE(hash256.parseHex(hashHex));
                     ripple::TxMeta txMeta{hash256, lgrInfoNext.seq, metaBlob};
                     auto journal = ripple::debugLog();
-                    auto accountsSet = txMeta.getAffectedAccounts(journal);
+                    auto accountsSet = txMeta.getAffectedAccounts();
                     for (auto& a : accountsSet)
                     {
                         affectedAccounts.push_back(a);
