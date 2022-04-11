@@ -22,7 +22,7 @@ struct AccountTransactionsData
         ripple::TxMeta& meta,
         ripple::uint256 const& txHash,
         beast::Journal& j)
-        : accounts(meta.getAffectedAccounts(j))
+        : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
         , txHash(txHash)

@@ -254,7 +254,7 @@ SubscriptionManager::pubTransaction(
     txSubscribers_.publish(pubMsg);
 
     auto journal = ripple::debugLog();
-    auto accounts = meta->getAffectedAccounts(journal);
+    auto accounts = meta->getAffectedAccounts();
 
     for (auto const& account : accounts)
         accountSubscribers_.publish(pubMsg, account);
