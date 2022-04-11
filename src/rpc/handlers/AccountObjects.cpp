@@ -1,4 +1,5 @@
 #include <ripple/app/ledger/Ledger.h>
+#include <ripple/app/paths/TrustLine.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
