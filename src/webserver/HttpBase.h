@@ -34,31 +34,6 @@ static std::string defaultResponse =
     " Test</h1><p>This page shows xrpl reporting http(s) "
     "connectivity is working.</p></body></html>";
 
-inline void
-httpFail(boost::beast::error_code ec, char const* what)
-{
-    // ssl::error::stream_truncated, also known as an SSL "short read",
-    // indicates the peer closed the connection without performing the
-    // required closing handshake (for example, Google does this to
-    // improve performance). Generally this can be a security issue,
-    // but if your communication protocol is self-terminated (as
-    // it is with both HTTP and WebSocket) then you may simply
-    // ignore the lack of close_notify.
-    //
-    // https://github.com/boostorg/beast/issues/38
-    //
-    // https://security.stackexchange.com/questions/91435/how-to-handle-a-malicious-ssl-tls-shutdown
-    //
-    // When a short read would cut off the end of an HTTP message,
-    // Beast returns the error boost::beast::http::error::partial_message.
-    // Therefore, if we see a short read here, it has occurred
-    // after the message has been completed, so it is safe to ignore it.
-
-    if (ec == net::ssl::error::stream_truncated)
-        return;
-
-    std::cerr << what << ": " << ec.message() << "\n";
-}
 
 // From Boost Beast examples http_server_flex.cpp
 template <class Derived>
@@ -84,6 +59,9 @@ class HttpBase
         void
         operator()(http::message<isRequest, Body, Fields>&& msg) const
         {
+            if (self_.dead())
+                return;
+
             // The lifetime of the message has to extend
             // for the duration of the async operation so
             // we use a shared_ptr to manage it.
@@ -105,6 +83,7 @@ class HttpBase
         }
     };
 
+    boost::system::error_code ec_;
     boost::asio::io_context& ioc_;
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
@@ -118,6 +97,43 @@ class HttpBase
 
 protected:
     boost::beast::flat_buffer buffer_;
+
+    bool
+    dead()
+    {
+        return ec_ != boost::system::error_code{};
+    }
+
+    inline void
+    httpFail(boost::beast::error_code ec, char const* what)
+    {
+        // ssl::error::stream_truncated, also known as an SSL "short read",
+        // indicates the peer closed the connection without performing the
+        // required closing handshake (for example, Google does this to
+        // improve performance). Generally this can be a security issue,
+        // but if your communication protocol is self-terminated (as
+        // it is with both HTTP and WebSocket) then you may simply
+        // ignore the lack of close_notify.
+        //
+        // https://github.com/boostorg/beast/issues/38
+        //
+        // https://security.stackexchange.com/questions/91435/how-to-handle-a-malicious-ssl-tls-shutdown
+        //
+        // When a short read would cut off the end of an HTTP message,
+        // Beast returns the error boost::beast::http::error::partial_message.
+        // Therefore, if we see a short read here, it has occurred
+        // after the message has been completed, so it is safe to ignore it.
+
+        if (ec == net::ssl::error::stream_truncated)
+            return;
+
+        if (!ec_ && ec != boost::asio::error::operation_aborted)
+        {
+            ec_ = ec;
+            std::cerr << "httpFail: " << what << ": " << ec.message();
+            boost::beast::get_lowest_layer(derived().stream()).socket().close(ec);
+        }
+    }
 
 public:
     HttpBase(
@@ -141,9 +157,12 @@ public:
     {
     }
 
+
     void
     do_read()
     {
+        if (dead())
+            return;
         // Make the request empty before reading,
         // otherwise the operation behavior is undefined.
         req_ = {};

@@ -43,7 +43,9 @@ getDefaultWsResponse(boost::json::value const& id)
 
 class WsBase
 {
-    std::atomic_bool dead_ = false;
+
+protected:
+    boost::system::error_code ec_;
 
 public:
     // Send, that enables SubscriptionManager to publish to clients
@@ -54,17 +56,10 @@ public:
     {
     }
 
-    void
-    wsFail(boost::beast::error_code ec, char const* what)
-    {
-        logError(ec, what);
-        dead_ = true;
-    }
-
     bool
     dead()
     {
-        return dead_;
+        return ec_ != boost::system::error_code{};
     }
 };
 
@@ -91,7 +86,20 @@ class WsSession : public WsBase,
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     std::mutex mtx_;
+
+    bool sending_ = false;
     std::queue<std::string> messages_;
+
+    void
+    wsFail(boost::beast::error_code ec, char const* what)
+    {
+        if (!ec_ && ec != boost::asio::error::operation_aborted)
+        {
+            ec_ = ec;
+            std::cerr << "wsFail: " << what << ": " << ec.message();
+            boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
+        }
+    }
 
 public:
     explicit WsSession(
@@ -125,44 +133,51 @@ public:
         return static_cast<Derived&>(*this);
     }
 
-    void
-    sendNext()
+    void 
+    do_write()
     {
-        std::lock_guard<std::mutex> lck(mtx_);
+        sending_ = true;
         derived().ws().async_write(
-            boost::asio::buffer(messages_.front()),
-            [shared = shared_from_this()](auto ec, size_t size) {
-                if (ec)
-                    return shared->wsFail(ec, "publishToStream");
-                size_t left = 0;
-                {
-                    std::lock_guard<std::mutex> lck(shared->mtx_);
-                    shared->messages_.pop();
-                    left = shared->messages_.size();
-                }
-                if (left > 0)
-                    shared->sendNext();
-            });
+            net::buffer(messages_.front()), 
+            boost::beast::bind_front_handler(
+                &WsSession::on_write, derived().shared_from_this()));
     }
 
     void
-    enqueueMessage(std::string&& msg)
+    on_write(boost::system::error_code ec, std::size_t)
     {
-        size_t left = 0;
+        if (ec)
         {
-            std::lock_guard<std::mutex> lck(mtx_);
-            messages_.push(std::move(msg));
-            left = messages_.size();
+            wsFail(ec, "Failed to write");
         }
-        // if the queue was previously empty, start the send chain
-        if (left == 1)
-            sendNext();
+        else
+        {
+            messages_.pop();
+            sending_ = false;
+            maybe_send_next();
+        }
+    }
+
+
+    void
+    maybe_send_next()
+    {
+        if (ec_ || sending_ || messages_.empty())
+            return;
+
+        do_write();
     }
 
     void
     send(std::string const& msg) override
     {
-        enqueueMessage(std::string(msg));
+        net::dispatch(
+            derived().ws().get_executor(),
+            [this, self = derived().shared_from_this(), msg = std::string(msg)]()
+            {
+                messages_.push(std::move(msg));
+                maybe_send_next();
+            });
     }
 
     void
@@ -200,6 +215,9 @@ public:
     void
     do_read()
     {
+        if (dead())
+            return;
+
         std::lock_guard<std::mutex> lck{mtx_};
         // Clear the buffer
         buffer_.consume(buffer_.size());
@@ -327,7 +345,7 @@ public:
         else
         {
             boost::asio::spawn(
-                ioc_,
+                derived().ws().get_executor(),
                 [m = std::move(msg), shared_this = shared_from_this()](
                     boost::asio::yield_context yield) {
                     shared_this->handle_request(std::move(m), yield);

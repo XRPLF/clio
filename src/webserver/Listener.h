@@ -55,6 +55,15 @@ public:
     {
     }
 
+    inline void
+    fail(boost::system::error_code ec, char const* message)
+    {
+        if (ec == net::ssl::error::stream_truncated)
+            return;
+
+        std::cerr << "Detector failed: " << message << ec.message() << std::endl;
+    }
+
     // Launch the detector
     void
     run()
@@ -74,12 +83,12 @@ public:
     on_detect(boost::beast::error_code ec, bool result)
     {
         if (ec)
-            return httpFail(ec, "detect");
+            return fail(ec, "detect");
 
         if (result)
         {
             if (!ctx_)
-                return httpFail(ec, "ssl not supported by this server");
+                return fail(ec, "ssl not supported by this server");
             // Launch SSL session
             std::make_shared<SslSession>(
                 ioc_,
@@ -206,34 +215,22 @@ public:
         // Open the acceptor
         acceptor_.open(endpoint.protocol(), ec);
         if (ec)
-        {
-            httpFail(ec, "open");
             return;
-        }
 
         // Allow address reuse
         acceptor_.set_option(net::socket_base::reuse_address(true), ec);
         if (ec)
-        {
-            httpFail(ec, "set_option");
             return;
-        }
 
         // Bind to the server address
         acceptor_.bind(endpoint, ec);
         if (ec)
-        {
-            httpFail(ec, "bind");
             return;
-        }
 
         // Start listening for connections
         acceptor_.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
-        {
-            httpFail(ec, "listen");
             return;
-        }
     }
 
     // Start accepting incoming connections
@@ -257,11 +254,7 @@ private:
     void
     on_accept(boost::beast::error_code ec, tcp::socket socket)
     {
-        if (ec)
-        {
-            httpFail(ec, "listener_accept");
-        }
-        else
+        if (!ec)
         {
             auto ctxRef = ctx_
                 ? std::optional<
