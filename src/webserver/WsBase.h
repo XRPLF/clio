@@ -43,7 +43,6 @@ getDefaultWsResponse(boost::json::value const& id)
 
 class WsBase
 {
-
 protected:
     boost::system::error_code ec_;
 
@@ -133,12 +132,12 @@ public:
         return static_cast<Derived&>(*this);
     }
 
-    void 
+    void
     do_write()
     {
         sending_ = true;
         derived().ws().async_write(
-            net::buffer(messages_.front()), 
+            net::buffer(messages_.front()),
             boost::beast::bind_front_handler(
                 &WsSession::on_write, derived().shared_from_this()));
     }
@@ -158,7 +157,6 @@ public:
         }
     }
 
-
     void
     maybe_send_next()
     {
@@ -173,8 +171,9 @@ public:
     {
         net::dispatch(
             derived().ws().get_executor(),
-            [this, self = derived().shared_from_this(), msg = std::string(msg)]()
-            {
+            [this,
+             self = derived().shared_from_this(),
+             msg = std::string(msg)]() {
                 messages_.push(std::move(msg));
                 maybe_send_next();
             });

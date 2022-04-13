@@ -34,7 +34,6 @@ static std::string defaultResponse =
     " Test</h1><p>This page shows xrpl reporting http(s) "
     "connectivity is working.</p></body></html>";
 
-
 // From Boost Beast examples http_server_flex.cpp
 template <class Derived>
 class HttpBase
@@ -131,7 +130,9 @@ protected:
         {
             ec_ = ec;
             std::cerr << "httpFail: " << what << ": " << ec.message();
-            boost::beast::get_lowest_layer(derived().stream()).socket().close(ec);
+            boost::beast::get_lowest_layer(derived().stream())
+                .socket()
+                .close(ec);
         }
     }
 
@@ -156,7 +157,6 @@ public:
         , buffer_(std::move(buffer))
     {
     }
-
 
     void
     do_read()
