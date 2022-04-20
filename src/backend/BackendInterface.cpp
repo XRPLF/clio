@@ -182,10 +182,10 @@ BackendInterface::fetchBookOffers(
                                      << offerDir.has_value() << " breaking";
             break;
         }
+        uTipIndex = offerDir->key;
         while (keys.size() < limit)
         {
             ++numPages;
-            uTipIndex = offerDir->key;
             ripple::STLedgerEntry sle{
                 ripple::SerialIter{
                     offerDir->blob.data(), offerDir->blob.size()},
