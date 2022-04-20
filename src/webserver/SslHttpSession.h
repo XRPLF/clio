@@ -76,9 +76,6 @@ public:
         // We need to be executing within a strand to perform async operations
         // on the I/O objects in this session.
         net::dispatch(stream_.get_executor(), [self]() {
-            if (self->dead())
-                return;
-
             // Set the timeout.
             boost::beast::get_lowest_layer(self->stream())
                 .expires_after(std::chrono::seconds(30));

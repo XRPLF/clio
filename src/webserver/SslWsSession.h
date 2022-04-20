@@ -146,8 +146,6 @@ public:
         boost::beast::get_lowest_layer(https_).expires_after(
             std::chrono::seconds(30));
 
-        auto self = shared_from_this();
-
         net::dispatch(
             https_.get_executor(),
             boost::beast::bind_front_handler(

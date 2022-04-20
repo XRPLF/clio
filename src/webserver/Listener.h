@@ -61,8 +61,8 @@ public:
         if (ec == net::ssl::error::stream_truncated)
             return;
 
-        std::cerr << "Detector failed: " << message << ec.message()
-                  << std::endl;
+        BOOST_LOG_TRIVIAL(info)
+            << "Detector failed: " << message << ec.message() << std::endl;
     }
 
     // Launch the detector

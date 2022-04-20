@@ -129,7 +129,8 @@ protected:
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            std::cerr << "httpFail: " << what << ": " << ec.message();
+            BOOST_LOG_TRIVIAL(info)
+                << "httpFail: " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().stream())
                 .socket()
                 .close(ec);

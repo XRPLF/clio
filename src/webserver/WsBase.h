@@ -95,7 +95,8 @@ class WsSession : public WsBase,
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            std::cerr << "wsFail: " << what << ": " << ec.message();
+            BOOST_LOG_TRIVIAL(info)
+                << "wsFail: " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
         }
     }
