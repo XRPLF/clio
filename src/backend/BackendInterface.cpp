@@ -178,7 +178,7 @@ BackendInterface::fetchBookOffers(
         auto mid2 = std::chrono::system_clock::now();
         numSucc++;
         succMillis += getMillis(mid2 - mid1);
-        if (!offerDir || offerDir->key > bookEnd)
+        if (!offerDir || offerDir->key >= bookEnd)
         {
             BOOST_LOG_TRIVIAL(debug) << __func__ << " - offerDir.has_value() "
                                      << offerDir.has_value() << " breaking";
