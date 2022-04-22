@@ -30,13 +30,13 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             ripple::STArray const& toAddNFTs =
                 node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             std::transform(
                 toAddNFTs.begin(),
                 toAddNFTs.end(),
                 std::back_inserter(finalIDs),
                 [](ripple::STObject const& nft) {
-                    return nft.getFieldH256(ripple::sfTokenID);
+                    return nft.getFieldH256(ripple::sfNFTokenID);
                 });
         }
         else if (node.getFName() == ripple::sfModifiedNode)
@@ -44,25 +44,25 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             ripple::STArray const& toAddNFTs =
                 node.peekAtField(ripple::sfPreviousFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             std::transform(
                 toAddNFTs.begin(),
                 toAddNFTs.end(),
                 std::back_inserter(prevIDs),
                 [](ripple::STObject const& nft) {
-                    return nft.getFieldH256(ripple::sfTokenID);
+                    return nft.getFieldH256(ripple::sfNFTokenID);
                 });
 
             ripple::STArray const& toAddFinalNFTs =
                 node.peekAtField(ripple::sfFinalFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             std::transform(
                 toAddFinalNFTs.begin(),
                 toAddFinalNFTs.end(),
                 std::back_inserter(finalIDs),
                 [](ripple::STObject const& nft) {
-                    return nft.getFieldH256(ripple::sfTokenID);
+                    return nft.getFieldH256(ripple::sfNFTokenID);
                 });
         }
         else
@@ -70,13 +70,13 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             ripple::STArray const& toAddNFTs =
                 node.peekAtField(ripple::sfFinalFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             std::transform(
                 toAddNFTs.begin(),
                 toAddNFTs.end(),
                 std::back_inserter(prevIDs),
                 [](ripple::STObject const& nft) {
-                    return nft.getFieldH256(ripple::sfTokenID);
+                    return nft.getFieldH256(ripple::sfNFTokenID);
                 });
         }
     }
@@ -108,7 +108,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
-    ripple::uint256 tokenID = sttx.getFieldH256(ripple::sfTokenID);
+    ripple::uint256 tokenID = sttx.getFieldH256(ripple::sfNFTokenID);
     std::vector<NFTTransactionsData> txs = {
         NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())};
 
@@ -131,17 +131,17 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             if (node.getFName() == ripple::sfModifiedNode)
                 return node.peekAtField(ripple::sfPreviousFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             return node.peekAtField(ripple::sfFinalFields)
                 .downcast<ripple::STObject>()
-                .getFieldArray(ripple::sfNonFungibleTokens);
+                .getFieldArray(ripple::sfNFTokens);
         }();
 
         auto nft = std::find_if(
             prevNFTs.begin(),
             prevNFTs.end(),
             [tokenID](ripple::STObject const& candidate) {
-                return candidate.getFieldH256(ripple::sfTokenID) == tokenID;
+                return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
             });
         if (nft != prevNFTs.end())
             return std::make_pair(
@@ -162,13 +162,12 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenAcceptOfferData(
     ripple::TxMeta const& txMeta,
-    ripple::STTx const& sttx,
-    ripple::LedgerIndex seq)
+    ripple::STTx const& sttx)
 {
     // If we have the buy offer from this tx, we can determine the owner
     // more easily by just looking at the owner of the accepted NFTokenOffer
     // object.
-    if (sttx.isFieldPresent(ripple::sfBuyOffer))
+    if (sttx.isFieldPresent(ripple::sfNFTokenBuyOffer))
     {
         auto affectedBuyOffer = std::find_if(
             txMeta.getNodes().begin(),
@@ -176,7 +175,7 @@ getNFTokenAcceptOfferData(
             [](ripple::STObject const& node) {
                 return node.getFieldU16(ripple::sfLedgerEntryType) ==
                     ripple::ltNFTOKEN_OFFER &&
-                    !node.isFlag(ripple::lsfSellToken);
+                    !node.isFlag(ripple::lsfSellNFToken);
             });
         if (affectedBuyOffer == txMeta.getNodes().end())
             throw std::runtime_error("Unexpected NFTokenAcceptOffer data");
@@ -184,7 +183,7 @@ getNFTokenAcceptOfferData(
         ripple::uint256 tokenID = (*affectedBuyOffer)
                                       .peekAtField(ripple::sfFinalFields)
                                       .downcast<ripple::STObject>()
-                                      .getFieldH256(ripple::sfTokenID);
+                                      .getFieldH256(ripple::sfNFTokenID);
 
         ripple::AccountID owner = (*affectedBuyOffer)
                                       .peekAtField(ripple::sfFinalFields)
@@ -202,7 +201,7 @@ getNFTokenAcceptOfferData(
         [](ripple::STObject const& node) {
             return node.getFieldU16(ripple::sfLedgerEntryType) ==
                 ripple::ltNFTOKEN_OFFER &&
-                node.isFlag(ripple::lsfSellToken);
+                node.isFlag(ripple::lsfSellNFToken);
         });
     if (affectedSellOffer == txMeta.getNodes().end())
         throw std::runtime_error("Unexpected NFTokenAcceptOffer data");
@@ -210,7 +209,7 @@ getNFTokenAcceptOfferData(
     ripple::uint256 tokenID = (*affectedSellOffer)
                                   .peekAtField(ripple::sfFinalFields)
                                   .downcast<ripple::STObject>()
-                                  .getFieldH256(ripple::sfTokenID);
+                                  .getFieldH256(ripple::sfNFTokenID);
 
     ripple::AccountID seller = (*affectedSellOffer)
                                    .peekAtField(ripple::sfFinalFields)
@@ -233,17 +232,17 @@ getNFTokenAcceptOfferData(
             if (node.getFName() == ripple::sfCreatedNode)
                 return node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             return node.peekAtField(ripple::sfFinalFields)
                 .downcast<ripple::STObject>()
-                .getFieldArray(ripple::sfNonFungibleTokens);
+                .getFieldArray(ripple::sfNFTokens);
         }();
 
         auto nft = std::find_if(
             nfts.begin(),
             nfts.end(),
             [&tokenID](ripple::STObject const& candidate) {
-                return candidate.getFieldH256(ripple::sfTokenID) == tokenID;
+                return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
             });
         if (nft != nfts.end())
             return {
@@ -263,8 +262,7 @@ getNFTokenAcceptOfferData(
 static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenCancelOfferData(
     ripple::TxMeta const& txMeta,
-    ripple::STTx const& sttx,
-    ripple::LedgerIndex seq)
+    ripple::STTx const& sttx)
 {
     std::vector<NFTTransactionsData> txs;
     for (ripple::STObject const& node : txMeta.getNodes())
@@ -275,7 +273,7 @@ getNFTokenCancelOfferData(
 
         ripple::uint256 tokenID = node.peekAtField(ripple::sfFinalFields)
                                       .downcast<ripple::STObject>()
-                                      .getFieldH256(ripple::sfTokenID);
+                                      .getFieldH256(ripple::sfNFTokenID);
         txs.emplace_back(tokenID, txMeta, sttx.getTransactionID());
     }
 
@@ -309,17 +307,14 @@ getNFTokenCreateOfferData(
 {
     return {
         {NFTTransactionsData(
-            sttx.getFieldH256(ripple::sfTokenID),
+            sttx.getFieldH256(ripple::sfNFTokenID),
             txMeta,
             sttx.getTransactionID())},
         {}};
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTData(
-    ripple::TxMeta const& txMeta,
-    ripple::STTx const& sttx,
-    ripple::LedgerIndex seq)
+getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     if (txMeta.getResultTER() != ripple::tesSUCCESS)
         return {{}, {}};
@@ -333,10 +328,10 @@ getNFTData(
             return getNFTokenBurnData(txMeta, sttx);
 
         case ripple::TxType::ttNFTOKEN_ACCEPT_OFFER:
-            return getNFTokenAcceptOfferData(txMeta, sttx, seq);
+            return getNFTokenAcceptOfferData(txMeta, sttx);
 
         case ripple::TxType::ttNFTOKEN_CANCEL_OFFER:
-            return getNFTokenCancelOfferData(txMeta, sttx, seq);
+            return getNFTokenCancelOfferData(txMeta, sttx);
 
         case ripple::TxType::ttNFTOKEN_CREATE_OFFER:
             return getNFTokenCreateOfferData(txMeta, sttx);

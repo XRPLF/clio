@@ -24,10 +24,7 @@
  * pull to-write data out of a transaction that relates to NFTs.
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTData(
-    ripple::TxMeta const& txMeta,
-    ripple::STTx const& sttx,
-    ripple::LedgerIndex seq);
+getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
 struct AccountTransactionsData;
 struct NFTTransactionsData;

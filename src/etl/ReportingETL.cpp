@@ -52,15 +52,14 @@ ReportingETL::insertTransactions(
         ripple::TxMeta txMeta{
             sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
 
-        auto const [nftTxs, maybeNFT] = getNFTData(txMeta, sttx, ledger.seq);
+        auto const [nftTxs, maybeNFT] = getNFTData(txMeta, sttx);
         result.nfTokenTxData.insert(
             result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
         if (maybeNFT)
             result.nfTokensData.push_back(*maybeNFT);
 
         auto journal = ripple::debugLog();
-        result.accountTxData.emplace_back(
-            txMeta, sttx.getTransactionID(), journal);
+        result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
         backend_->writeTransaction(
             std::move(keyStr),
