@@ -11,6 +11,8 @@ doServerInfo(Context const& context)
 {
     boost::json::object response = {};
 
+
+
     auto range = context.backend->fetchLedgerRange();
     if (!range)
     {
@@ -19,18 +21,45 @@ doServerInfo(Context const& context)
             "emptyDatabase",
             "The server has no data in the database"};
     }
-    else
-    {
-        response["info"] = boost::json::object{};
-        boost::json::object& info = response["info"].as_object();
 
-        info["complete_ledgers"] = std::to_string(range->minSequence) + "-" +
-            std::to_string(range->maxSequence);
+    auto lgrInfo = context.backend->fetchLedgerBySequence(
+        range->maxSequence, context.yield);
 
-        info["counters"] = boost::json::object{};
-        info["counters"].as_object()["rpc"] = context.counters.report();
-    }
-    auto& cache = (response["cache"] = boost::json::object{}).as_object();
+    auto fees = context.backend->fetchFees(lgrInfo->seq, context.yield);
+
+    if (!lgrInfo || !fees)
+        return Status {Error::rpcINTERNAL};
+
+    auto age = std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::system_clock::now().time_since_epoch())
+                   .count() -
+        lgrInfo->closeTime.time_since_epoch().count() - 946684800;
+
+    if (age < 0)
+        age = 0;
+
+    response["info"] = boost::json::object{};
+    boost::json::object& info = response["info"].as_object();
+
+    info["complete_ledgers"] = std::to_string(range->minSequence) + "-" +
+        std::to_string(range->maxSequence);
+
+    info["counters"] = boost::json::object{};
+    info["counters"].as_object()["rpc"] = context.counters.report();
+
+    info["validated_ledger"] = boost::json::object{};
+    boost::json::object& validated = info["validated_ledger"].as_object();
+
+    validated["age"] = age;
+    validated["hash"] = ripple::strHex(lgrInfo->hash);
+    validated["seq"] = lgrInfo->seq;
+    validated["base_fee_xrp"] = fees->base.decimalXRP();
+    validated["reserve_base_xrp"] = fees->reserve.decimalXRP();
+    validated["reserve_inc_xrp"] = fees->increment.decimalXRP();
+
+    response["cache"] = boost::json::object{};
+    auto& cache = response["cache"].as_object();
+    
     cache["size"] = context.backend->cache().size();
     cache["is_full"] = context.backend->cache().isFull();
     cache["latest_ledger_seq"] =
@@ -42,30 +71,7 @@ doServerInfo(Context const& context)
         context.params, context.clientIp, context.yield);
 
     if (serverInfoRippled && !serverInfoRippled->contains("error"))
-        response["info"].as_object()["load_factor"] = 1;
-
-    auto lgrInfo = context.backend->fetchLedgerBySequence(
-        range->maxSequence, context.yield);
-
-    assert(lgrInfo.has_value());
-    auto age = std::chrono::duration_cast<std::chrono::seconds>(
-                   std::chrono::system_clock::now().time_since_epoch())
-                   .count() -
-        lgrInfo->closeTime.time_since_epoch().count() - 946684800;
-    auto& validatedLgr =
-        (response["validated_ledger"] = boost::json::object{}).as_object();
-
-    if (age < 0)
-        age = 0;
-
-    validatedLgr["age"] = age;
-    validatedLgr["hash"] = ripple::strHex(lgrInfo->hash);
-    validatedLgr["seq"] = lgrInfo->seq;
-    auto fees = context.backend->fetchFees(lgrInfo->seq, context.yield);
-    assert(fees.has_value());
-    validatedLgr["base_fee_xrp"] = fees->base.decimalXRP();
-    validatedLgr["reserve_base_xrp"] = fees->reserve.decimalXRP();
-    validatedLgr["reserve_inc_xrp"] = fees->increment.decimalXRP();
+        info["load_factor"] = 1;
 
     response["note"] =
         "This is a clio server. If you want to talk to rippled, include "
