@@ -27,17 +27,17 @@ getNFTokenURI(ripple::TxMeta const& txMeta, ripple::uint256 const& tokenID)
             if (node.getFName() == ripple::sfCreatedNode)
                 return node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
-                    .getFieldArray(ripple::sfNonFungibleTokens);
+                    .getFieldArray(ripple::sfNFTokens);
             return node.peekAtField(ripple::sfFinalFields)
                 .downcast<ripple::STObject>()
-                .getFieldArray(ripple::sfNonFungibleTokens);
+                .getFieldArray(ripple::sfNFTokens);
         }();
 
         auto nft = std::find_if(
             nfts.begin(),
             nfts.end(),
             [&tokenID](ripple::STObject const& candidate) {
-                return candidate.getFieldH256(ripple::sfTokenID) == tokenID;
+                return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
             });
         if (nft != nfts.end())
         {
@@ -92,7 +92,8 @@ doNFTInfo(Context const& context)
     response["transfer_fee"] = ripple::nft::getTransferFee(dbResponse->tokenID);
     response["issuer"] =
         ripple::toBase58(ripple::nft::getIssuer(dbResponse->tokenID));
-    response["nft_taxon"] = ripple::nft::getTaxon(dbResponse->tokenID);
+    response["nft_taxon"] =
+        ripple::nft::toUInt32(ripple::nft::getTaxon(dbResponse->tokenID));
     response["nft_sequence"] = ripple::nft::getSerial(dbResponse->tokenID);
 
     // Fetch URI from first transaction

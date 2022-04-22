@@ -18,10 +18,7 @@ struct AccountTransactionsData
     std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
-    AccountTransactionsData(
-        ripple::TxMeta& meta,
-        ripple::uint256 const& txHash,
-        beast::Journal& j)
+    AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash)
         : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())

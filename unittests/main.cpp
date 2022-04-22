@@ -324,7 +324,7 @@ TEST(BackendTest, Basic)
                     }
 
                     std::vector<AccountTransactionsData> accountTxData;
-                    accountTxData.emplace_back(txMeta, hash256, journal);
+                    accountTxData.emplace_back(txMeta, hash256);
                     backend->writeLedger(
                         lgrInfoNext,
                         std::move(ledgerInfoToBinaryString(lgrInfoNext)));
