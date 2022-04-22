@@ -140,7 +140,10 @@ BackendInterface::fetchSuccessorObject(
     if (succ)
     {
         auto obj = fetchLedgerObject(*succ, ledgerSequence, yield);
-        assert(obj);
+        if (!obj)
+            return {{*succ, {}}};
+
+
         return {{*succ, *obj}};
     }
     return {};
