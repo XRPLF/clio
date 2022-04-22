@@ -143,7 +143,6 @@ BackendInterface::fetchSuccessorObject(
         if (!obj)
             return {{*succ, {}}};
 
-
         return {{*succ, *obj}};
     }
     return {};
