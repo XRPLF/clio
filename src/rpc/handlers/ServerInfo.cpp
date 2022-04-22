@@ -11,8 +11,6 @@ doServerInfo(Context const& context)
 {
     boost::json::object response = {};
 
-
-
     auto range = context.backend->fetchLedgerRange();
     if (!range)
     {
@@ -28,7 +26,7 @@ doServerInfo(Context const& context)
     auto fees = context.backend->fetchFees(lgrInfo->seq, context.yield);
 
     if (!lgrInfo || !fees)
-        return Status {Error::rpcINTERNAL};
+        return Status{Error::rpcINTERNAL};
 
     auto age = std::chrono::duration_cast<std::chrono::seconds>(
                    std::chrono::system_clock::now().time_since_epoch())
@@ -59,7 +57,7 @@ doServerInfo(Context const& context)
 
     response["cache"] = boost::json::object{};
     auto& cache = response["cache"].as_object();
-    
+
     cache["size"] = context.backend->cache().size();
     cache["is_full"] = context.backend->cache().isFull();
     cache["latest_ledger_seq"] =
