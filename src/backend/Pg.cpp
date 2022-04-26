@@ -1767,11 +1767,7 @@ initNFTTx(std::shared_ptr<PgPool> const& pool)
     });
 
     if (!res)
-    {
-        std::stringstream ss;
-        ss << "Error initializing nft_tx stored procedure";
-        throw std::runtime_error(ss.str());
-    }
+        throw std::runtime_error("Error initializing nft_tx stored procedure");
 }
 
 void

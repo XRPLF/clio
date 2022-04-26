@@ -469,7 +469,7 @@ PostgresBackend::fetchNFT(
     sql << "SELECT ledger_seq,owner,is_burned"
         << " FROM nf_tokens WHERE"
         << " token_id = \'\\x" << ripple::strHex(tokenID) << "\' AND"
-        << " ledger_seq <= " << std::to_string(ledgerSequence)
+        << " ledger_seq <= " << ledgerSequence
         << " ORDER BY ledger_seq DESC LIMIT 1";
     auto response = pgQuery(sql.str().data(), yield);
     if (!checkResult(response, 3))
@@ -734,7 +734,7 @@ PostgresBackend::fetchNFTTransactions(
     }
     for (size_t i = 0; i < values.size(); ++i)
     {
-        BOOST_LOG_TRIVIAL(debug) << "value " << std::to_string(i) << " = "
+        BOOST_LOG_TRIVIAL(debug) << "value " << i << " = "
                                  << (values[i] ? values[i].value() : "null");
     }
 
@@ -744,9 +744,8 @@ PostgresBackend::fetchNFTTransactions(
 
     auto duration = ((end - start).count()) / 1000000000.0;
     BOOST_LOG_TRIVIAL(info)
-        << __func__ << " : executed stored_procedure in "
-        << std::to_string(duration)
-        << " num records = " << std::to_string(checkResult(res, 1));
+        << __func__ << " : executed stored_procedure in " << duration
+        << "s num records = " << checkResult(res, 1);
 
     checkResult(res, 1);
 
@@ -757,12 +756,13 @@ PostgresBackend::fetchNFTTransactions(
 
     boost::json::value raw = boost::json::parse(resultStr);
     boost::json::object responseObj = raw.as_object();
-    BOOST_LOG_TRIVIAL(debug) << " parsed = " << responseObj;
+    BOOST_LOG_TRIVIAL(debug) << "parsed = " << responseObj;
     if (responseObj.contains("transactions"))
     {
-        auto txns = responseObj.at("transactions").as_array();
+        auto const& txns = responseObj.at("transactions").as_array();
         std::vector<ripple::uint256> hashes;
-        for (auto& hashHex : txns)
+        hashes.reserve(txns.size());
+        for (auto const& hashHex : txns)
         {
             ripple::uint256 hash;
             if (hash.parseHex(hashHex.at("hash").as_string().c_str() + 2))

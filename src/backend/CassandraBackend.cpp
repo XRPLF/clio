@@ -637,7 +637,7 @@ CassandraBackend::fetchNFTTransactions(
 
     std::vector<ripple::uint256> hashes = {};
     auto numRows = result.numRows();
-    BOOST_LOG_TRIVIAL(info) << "num_rows = " << std::to_string(numRows);
+    BOOST_LOG_TRIVIAL(info) << "num_rows = " << numRows;
     do
     {
         hashes.push_back(result.getUInt256());
@@ -1355,7 +1355,7 @@ CassandraBackend::open(bool readOnly)
               << "    PRIMARY KEY (token_id, sequence)"
               << "  )"
               << "  WITH CLUSTERING ORDER BY (sequence DESC)"
-              << "    AND default_time_to_live = " << std::to_string(ttl);
+              << "    AND default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 
@@ -1392,7 +1392,7 @@ CassandraBackend::open(bool readOnly)
               << "    PRIMARY KEY (token_id, seq_idx)"
               << "  )"
               << "  WITH CLUSTERING ORDER BY (seq_idx DESC)"
-              << "    AND default_time_to_live = " << std::to_string(ttl);
+              << "    AND default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 
