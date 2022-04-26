@@ -47,7 +47,7 @@ doServerInfo(Context const& context)
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
         {{"command", "server_info"}}, context.clientIp, context.yield);
-    
+
     info["load_factor"] = 1;
     if (serverInfoRippled && !serverInfoRippled->contains("error"))
     {
@@ -58,7 +58,9 @@ doServerInfo(Context const& context)
             info["load_factor"] = rippledInfo["load_factor"];
             info["validation_quorum"] = rippledInfo["validation_quorum"];
         }
-        catch (std::exception const&) {}
+        catch (std::exception const&)
+        {
+        }
     }
 
     info["validated_ledger"] = boost::json::object{};
