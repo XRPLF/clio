@@ -45,6 +45,22 @@ doServerInfo(Context const& context)
     info["counters"] = boost::json::object{};
     info["counters"].as_object()["rpc"] = context.counters.report();
 
+    auto serverInfoRippled = context.balancer->forwardToRippled(
+        {{"command", "server_info"}}, context.clientIp, context.yield);
+    
+    info["load_factor"] = 1;
+    if (serverInfoRippled && !serverInfoRippled->contains("error"))
+    {
+        try
+        {
+            auto& rippledResult = serverInfoRippled->at("result").as_object();
+            auto& rippledInfo = rippledResult.at("info").as_object();
+            info["load_factor"] = rippledInfo["load_factor"];
+            info["validation_quorum"] = rippledInfo["validation_quorum"];
+        }
+        catch (std::exception const&) {}
+    }
+
     info["validated_ledger"] = boost::json::object{};
     boost::json::object& validated = info["validated_ledger"].as_object();
 
@@ -64,12 +80,6 @@ doServerInfo(Context const& context)
         context.backend->cache().latestLedgerSequence();
 
     response["etl"] = context.etl->getInfo();
-
-    auto serverInfoRippled = context.balancer->forwardToRippled(
-        context.params, context.clientIp, context.yield);
-
-    if (serverInfoRippled && !serverInfoRippled->contains("error"))
-        info["load_factor"] = 1;
 
     response["note"] =
         "This is a clio server. If you want to talk to rippled, include "
