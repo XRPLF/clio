@@ -13,7 +13,7 @@
 
 namespace RPC {
 
-static std::optional<std::string>
+std::optional<std::string>
 getNFTokenURI(ripple::TxMeta const& txMeta, ripple::uint256 const& tokenID)
 {
     for (ripple::STObject const& node : txMeta.getNodes())
@@ -23,7 +23,7 @@ getNFTokenURI(ripple::TxMeta const& txMeta, ripple::uint256 const& tokenID)
             node.getFName() == ripple::sfDeletedNode)
             continue;
 
-        ripple::STArray const& nfts = [node] {
+        ripple::STArray const& nfts = [&node] {
             if (node.getFName() == ripple::sfCreatedNode)
                 return node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
@@ -106,7 +106,7 @@ doNFTInfo(Context const& context)
             Error::rpcINTERNAL,
             "Could not find first transaction for this NFT"};
 
-    auto [_tx, txMeta] = deserializeTxPlusMeta(
+    auto [_, txMeta] = deserializeTxPlusMeta(
         dbTxResponse.txns.front(), dbTxResponse.txns.front().ledgerSequence);
     std::optional<std::string> uri =
         getNFTokenURI(*txMeta, dbResponse->tokenID);

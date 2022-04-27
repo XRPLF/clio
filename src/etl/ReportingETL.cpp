@@ -30,6 +30,13 @@ toString(ripple::LedgerInfo const& info)
 }
 }  // namespace detail
 
+/**
+ * Helper function for the ReportingETL, implemented in NFTHelpers.cpp, to
+ * pull to-write data out of a transaction that relates to NFTs.
+ */
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+
 FormattedTransactionsData
 ReportingETL::insertTransactions(
     ripple::LedgerInfo const& ledger,
@@ -79,6 +86,23 @@ ReportingETL::insertTransactions(
             return a.tokenID > b.tokenID &&
                 a.transactionIndex > b.transactionIndex;
         });
+    // Now we need to ensure that if any member of a group by tokenID that was
+    // the first appearance of this tokenID that the `isFirstSeq` field is set.
+    // This is unlikely, but covers the case where a token is minted and
+    // burned within one sequence, for example. In that case, we need to mark
+    // the new token as burned, but still have to insert it into the
+    // `issuer_nf_tokens` table for the first time.
+    int i = 0;
+    for (int j = 1; j < result.nfTokensData.size(); j++)
+    {
+        NFTsData& reference = result.nfTokensData.at(i);
+        NFTsData const& comparator = result.nfTokensData.at(j);
+        if (reference.tokenID != comparator.tokenID)
+            i = j;
+        else if (!reference.isFirstSeq && comparator.isFirstSeq)
+            reference.isFirstSeq = true;
+    }
+    // Now we can unique the NFTs by tokenID.
     auto last = std::unique(
         result.nfTokensData.begin(),
         result.nfTokensData.end(),

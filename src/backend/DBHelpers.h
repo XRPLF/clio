@@ -65,17 +65,24 @@ struct NFTsData
     std::uint32_t transactionIndex;
     ripple::AccountID owner;
     bool isBurned;
+    // Similar to transactionIndex, this is only used to prevent needing to
+    // continually re-write to `issuer_nf_tokens` table in cassandra. We only
+    // need to write to that table for the first sequence in which a token
+    // appears.
+    bool isFirstSeq;
 
     NFTsData(
         ripple::uint256 const& tokenID,
         ripple::AccountID const& owner,
         ripple::TxMeta const& meta,
-        bool isBurned)
+        bool isBurned,
+        bool isFirstSeq)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
         , owner(owner)
         , isBurned(isBurned)
+        , isFirstSeq(isFirstSeq)
     {
     }
 };
