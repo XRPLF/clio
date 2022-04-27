@@ -1078,35 +1078,6 @@ CREATE TABLE IF NOT EXISTS account_transactions (
     PRIMARY KEY (account, ledger_seq, transaction_index, hash)
 ) PARTITION BY RANGE (ledger_seq);
 
--- Table that stores NFTs, since they are found in pages and we need O(1) access to arbitrary ones.
--- Deletes from the ledger table cascade here based on ledger_seq.
-CREATE TABLE IF NOT EXISTS nf_tokens (
-    token_id      bytea     NOT NULL,
-    ledger_seq    bigint    NOT NULL REFERENCES ledgers ON DELETE CASCADE,
-    issuer        bytea     NOT NULL,
-    owner         bytea     NOT NULL,
-    is_burned     boolean   NOT NULL,
-    PRIMARY KEY (token_id, ledger_seq)
-) PARTITION BY RANGE (ledger_seq);
-
-CREATE INDEX IF NOT EXISTS nf_tokens_issuer_ledger_seq_idx ON nf_tokens
-    USING btree(issuer, ledger_seq);
-
--- Table that maps NFTs to transactions affecting them. Deletes from the
--- ledger table cascade here based on ledger seq. Deletes from the
--- nf_tokens table also cascade here.
-CREATE TABLE IF NOT EXISTS nf_token_transactions (
-    token_id              bytea     NOT NULL,
-    ledger_seq            bigint    NOT NULL REFERENCES ledgers ON DELETE CASCADE,
-    transaction_index     bigint    NOT NULL,
-    hash                  bytea     NOT NULL,
-    PRIMARY KEY (token_id, ledger_seq, transaction_index, hash),
-    CONSTRAINT nf_token_transactions_token_id_ledger_seq_fkey
-      FOREIGN KEY (token_id, ledger_seq)
-      REFERENCES nf_tokens (token_id, ledger_seq) ON DELETE CASCADE
-) PARTITION BY RANGE (ledger_seq);
-
-
 CREATE TABLE IF NOT EXISTS successor (
     key bytea NOT NULL,
     ledger_seq bigint NOT NULL,
@@ -1181,8 +1152,6 @@ BEGIN
     EXECUTE format('create table if not exists public.successor_part_%s partition of public.successor for values from (%s) to (%s)',_partition,_lowerBound,_upperBound);
     EXECUTE format('create table if not exists public.transactions_part_%s partition of public.transactions for values from (%s) to (%s)',_partition,_lowerBound,_upperBound);
     EXECUTE format('create table if not exists public.account_transactions_part_%s partition of public.account_transactions for values from (%s) to (%s)',_partition,_lowerBound,_upperBound);
-    EXECUTE format('create table if not exists public.nf_tokens_part_%s partition of public.nf_tokens for values from (%s) to (%s)',_partition,_lowerBound,_upperBound);
-    EXECUTE format('create table if not exists public.nf_token_transactions_part_%s partition of public.nf_token_transactions for values from (%s) to (%s)',_partition,_lowerBound,_upperBound);
 
     IF (SELECT ledger_hash
           FROM public.ledgers
@@ -1549,127 +1518,6 @@ $$ LANGUAGE plpgsql;
 
 )";
 
-// TODO - this should be generalized for nft_tx and account_tx
-static constexpr char const* nftTxSchema = R"(
-
--- nft_tx() RPC helper. From the rippled reporting process, only the
--- parameters without defaults are required. For the parameters with
--- defaults, validation should be done by rippled, such as:
--- _in_account_id should be a valid xrp base58 address.
--- _in_forward either true or false according to the published api
--- _in_limit should be validated and not simply passed through from
--- client.
---
--- For _in_ledger_index_min and _in_ledger_index_max, if passed in the
--- request, verify that their type is int and pass through as is.
--- For _ledger_hash, verify and convert from hex length 32 bytes and
--- prepend with \x (\\x C++).
---
--- For _in_ledger_index, if the input type is integer, then pass through
--- as is. If the type is string and contents = validated, then do not
--- set _in_ledger_index. Instead set _in_invalidated to TRUE.
---
--- There is no need for rippled to do any type of lookup on max/min
--- ledger range, lookup of hash, or the like. This functions does those
--- things, including error responses if bad input. Only the above must
--- be done to set the correct search range.
---
--- If a marker is present in the request, verify the members 'ledger'
--- and 'seq' are integers and they correspond to _in_marker_seq
--- _in_marker_index.
--- To reiterate:
--- JSON input field 'ledger' corresponds to _in_marker_seq
--- JSON input field 'seq' corresponds to _in_marker_index
-CREATE OR REPLACE FUNCTION nft_tx(
-        _in_token_id bytea,
-        _in_limit bigint,
-        _in_forward bool,
-        _in_marker_seq bigint DEFAULT NULL::bigint,
-        _in_marker_index bigint DEFAULT NULL::bigint)
-RETURNS jsonb
-AS $$
-DECLARE
-    _min          bigint;
-    _max          bigint;
-    _marker       bool;
-    _between_min  bigint;
-    _between_max  bigint;
-    _sql          text;
-    _cursor       refcursor;
-    _result       jsonb;
-    _record       record;
-    _tally        bigint     := 0;
-    _ret_marker   jsonb;
-    _transactions jsonb[]    := '{}';
-    _sort_order   text       := (SELECT CASE WHEN _in_forward IS TRUE THEN
-                                 'ASC' ELSE 'DESC' END);
-BEGIN
-    _min := min_ledger();
-    _max := max_ledger();
-    IF _in_marker_seq IS NOT NULL OR _in_marker_index IS NOT NULL THEN
-        _marker := TRUE;
-        IF _in_marker_seq IS NULL OR _in_marker_index IS NULL THEN
-            -- The rippled implementation returns no transaction results
-            -- if either of these values are missing.
-            _between_min := 0;
-            _between_max := 0;
-        ELSE
-            _between_min := _min;
-            _between_max := _in_marker_seq;
-        END IF;
-    ELSE
-        _marker := FALSE;
-        _between_min := _min;
-        _between_max := _max;
-    END IF;
-
-
-    _sql := format('SELECT hash, ledger_seq, transaction_index FROM nf_token_transactions WHERE token_id = $1
-        AND ledger_seq BETWEEN $2 AND $3 ORDER BY ledger_seq %s, transaction_index %s',_sort_order,_sort_order);
-
-    OPEN _cursor FOR EXECUTE _sql USING _in_token_id, _between_min, _between_max;
-    LOOP
-        FETCH _cursor INTO _record;
-        IF _record IS NULL THEN EXIT; END IF;
-        IF _marker IS TRUE THEN
-            IF _in_marker_seq = _record.ledger_seq THEN
-                IF _in_forward IS TRUE THEN
-                    IF _in_marker_index > _record.transaction_index THEN
-                        CONTINUE;
-                    END IF;
-                ELSE
-                    IF _in_marker_index < _record.transaction_index THEN
-                        CONTINUE;
-                    END IF;
-                END IF;
-            END IF;
-            _marker := FALSE;
-        END IF;
-        _tally := _tally + 1;
-        IF _tally > _in_limit THEN
-            _ret_marker := jsonb_build_object(
-                'ledger_sequence', _record.ledger_seq,
-                'transaction_index', _record.transaction_index);
-            EXIT;
-        END IF;
-
-        -- Is the transaction index in the tx object?
-        _transactions := _transactions || jsonb_build_object('hash',_record.hash);
-    END LOOP;
-    CLOSE _cursor;
-
-    _result := jsonb_build_object('ledger_index_min', _min,
-        'ledger_index_max', _max,
-        'transactions', _transactions);
-    IF _ret_marker IS NOT NULL THEN
-        _result := _result || jsonb_build_object('cursor', _ret_marker);
-    END IF;
-    RETURN _result;
-END;
-$$ LANGUAGE plpgsql;
-
-)";
-
 std::array<char const*, LATEST_SCHEMA_VERSION> upgrade_schemata = {
     // upgrade from version 0:
     "There is no upgrade path from version 0. Instead, install "
@@ -1756,18 +1604,6 @@ initAccountTx(std::shared_ptr<PgPool> const& pool)
         ss << "Error initializing account_tx stored procedure";
         throw std::runtime_error(ss.str());
     }
-}
-
-void
-initNFTTx(std::shared_ptr<PgPool> const& pool)
-{
-    PgResult res;
-    Backend::synchronous([&](boost::asio::yield_context yield) {
-        res = PgQuery(pool)(nftTxSchema, yield);
-    });
-
-    if (!res)
-        throw std::runtime_error("Error initializing nft_tx stored procedure");
 }
 
 void

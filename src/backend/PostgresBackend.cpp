@@ -83,18 +83,7 @@ PostgresBackend::writeAccountTransactions(
 void
 PostgresBackend::writeNFTTransactions(std::vector<NFTTransactionsData>&& data)
 {
-    if (abortWrite_)
-    {
-        return;
-    }
-    PgQuery pg(pgPool_);
-    for (NFTTransactionsData const& record : data)
-    {
-        nfTokenTxBuffer_ << "\\\\x" << record.tokenID << '\t'
-                         << std::to_string(record.ledgerSequence) << '\t'
-                         << std::to_string(record.transactionIndex) << '\t'
-                         << "\\\\x" << ripple::strHex(record.txHash) << '\n';
-    }
+    throw std::runtime_error("Not implemented");
 }
 
 void
@@ -175,19 +164,7 @@ PostgresBackend::writeTransaction(
 void
 PostgresBackend::writeNFTs(std::vector<NFTsData>&& data)
 {
-    if (abortWrite_)
-    {
-        return;
-    }
-    PgQuery pg(pgPool_);
-    for (NFTsData const& record : data)
-    {
-        nfTokensBuffer_ << "\\\\x" << record.tokenID << '\t'
-                        << std::to_string(record.ledgerSequence) << '\t'
-                        << "\\\\x" << ripple::nft::getIssuer(record.tokenID)
-                        << '\t' << "\\\\x" << record.owner << '\t'
-                        << (record.isBurned ? "true" : "false") << '\n';
-    }
+    throw std::runtime_error("Not implemented");
 }
 
 std::uint32_t
@@ -463,24 +440,7 @@ PostgresBackend::fetchNFT(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
-    PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout, yield);
-    std::stringstream sql;
-    sql << "SELECT ledger_seq,owner,is_burned"
-        << " FROM nf_tokens WHERE"
-        << " token_id = \'\\x" << ripple::strHex(tokenID) << "\' AND"
-        << " ledger_seq <= " << ledgerSequence
-        << " ORDER BY ledger_seq DESC LIMIT 1";
-    auto response = pgQuery(sql.str().data(), yield);
-    if (!checkResult(response, 3))
-        return {};
-
-    NFT result;
-    result.tokenID = tokenID;
-    result.ledgerSequence = response.asBigInt(0, 0);
-    result.owner = response.asAccountID(0, 1);
-    result.isBurned = response.asBool(0, 2);
-    return result;
+    throw std::runtime_error("Not implemented");
 }
 
 std::optional<ripple::uint256>
@@ -711,75 +671,7 @@ PostgresBackend::fetchNFTTransactions(
     std::optional<TransactionsCursor> const& cursor,
     boost::asio::yield_context& yield) const
 {
-    PgQuery pgQuery(pgPool_);
-    pgQuery(set_timeout, yield);
-    pg_params dbParams;
-
-    char const*& command = dbParams.first;
-    std::vector<std::optional<std::string>>& values = dbParams.second;
-    command =
-        "SELECT nft_tx($1::bytea, $2::bigint, $3::bool, "
-        "$4::bigint, $5::bigint)";
-    values.resize(5);
-    values[0] = "\\x" + ripple::strHex(tokenID);
-
-    values[1] = std::to_string(limit);
-
-    values[2] = std::to_string(forward);
-
-    if (cursor)
-    {
-        values[3] = std::to_string(cursor->ledgerSequence);
-        values[4] = std::to_string(cursor->transactionIndex);
-    }
-    for (size_t i = 0; i < values.size(); ++i)
-    {
-        BOOST_LOG_TRIVIAL(debug) << "value " << i << " = "
-                                 << (values[i] ? values[i].value() : "null");
-    }
-
-    auto start = std::chrono::system_clock::now();
-    auto res = pgQuery(dbParams, yield);
-    auto end = std::chrono::system_clock::now();
-
-    auto duration = ((end - start).count()) / 1000000000.0;
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " : executed stored_procedure in " << duration
-        << "s num records = " << checkResult(res, 1);
-
-    checkResult(res, 1);
-
-    char const* resultStr = res.c_str();
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " : "
-                             << "postgres result = " << resultStr
-                             << " : token_id = " << ripple::strHex(tokenID);
-
-    boost::json::value raw = boost::json::parse(resultStr);
-    boost::json::object responseObj = raw.as_object();
-    BOOST_LOG_TRIVIAL(debug) << "parsed = " << responseObj;
-    if (responseObj.contains("transactions"))
-    {
-        auto const& txns = responseObj.at("transactions").as_array();
-        std::vector<ripple::uint256> hashes;
-        hashes.reserve(txns.size());
-        for (auto const& hashHex : txns)
-        {
-            ripple::uint256 hash;
-            if (hash.parseHex(hashHex.at("hash").as_string().c_str() + 2))
-                hashes.push_back(hash);
-        }
-        if (responseObj.contains("cursor"))
-        {
-            return {
-                fetchTransactions(hashes, yield),
-                {{responseObj.at("cursor").at("ledger_sequence").as_int64(),
-                  responseObj.at("cursor")
-                      .at("transaction_index")
-                      .as_int64()}}};
-        }
-        return {fetchTransactions(hashes, yield), {}};
-    }
-    return {{}, {}};
+    throw std::runtime_error("Not implemented");
 }
 
 TransactionsAndCursor
@@ -866,7 +758,6 @@ PostgresBackend::open(bool readOnly)
 {
     initSchema(pgPool_);
     initAccountTx(pgPool_);
-    initNFTTx(pgPool_);
 }
 
 void
@@ -899,11 +790,7 @@ PostgresBackend::doFinishWrites()
             std::string txStr = transactionsBuffer_.str();
             writeConnection_.bulkInsert("transactions", txStr, yield);
             writeConnection_.bulkInsert(
-                "nf_tokens", nfTokensBuffer_.str(), yield);
-            writeConnection_.bulkInsert(
                 "account_transactions", accountTxBuffer_.str(), yield);
-            writeConnection_.bulkInsert(
-                "nf_token_transactions", nfTokenTxBuffer_.str(), yield);
             std::string objectsStr = objectsBuffer_.str();
             if (objectsStr.size())
                 writeConnection_.bulkInsert("objects", objectsStr, yield);
@@ -933,8 +820,6 @@ PostgresBackend::doFinishWrites()
         }
         transactionsBuffer_.str("");
         transactionsBuffer_.clear();
-        nfTokensBuffer_.str("");
-        nfTokensBuffer_.clear();
         objectsBuffer_.str("");
         objectsBuffer_.clear();
         successorBuffer_.str("");
@@ -942,8 +827,6 @@ PostgresBackend::doFinishWrites()
         successors_.clear();
         accountTxBuffer_.str("");
         accountTxBuffer_.clear();
-        nfTokenTxBuffer_.str("");
-        nfTokenTxBuffer_.clear();
         numRowsInObjectsBuffer_ = 0;
     });
 
