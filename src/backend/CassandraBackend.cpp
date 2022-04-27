@@ -374,17 +374,19 @@ CassandraBackend::writeNFTs(std::vector<NFTsData>&& data)
                 return statement;
             },
             "nf_tokens");
-        makeAndExecuteAsyncWrite(
-            this,
-            std::make_tuple(record.tokenID),
-            [this](auto const& params) {
-                CassandraStatement statement{insertIssuerNFT_};
-                auto const& [tokenID] = params.data;
-                statement.bindNextBytes(ripple::nft::getIssuer(tokenID));
-                statement.bindNextBytes(tokenID);
-                return statement;
-            },
-            "issuer_nf_tokens");
+
+        if (record.isFirstSeq)
+            makeAndExecuteAsyncWrite(
+                this,
+                std::make_tuple(record.tokenID),
+                [this](auto const& params) {
+                    CassandraStatement statement{insertIssuerNFT_};
+                    auto const& [tokenID] = params.data;
+                    statement.bindNextBytes(ripple::nft::getIssuer(tokenID));
+                    statement.bindNextBytes(tokenID);
+                    return statement;
+                },
+                "issuer_nf_tokens");
     }
 }
 
@@ -1533,6 +1535,7 @@ CassandraBackend::open(bool readOnly)
               << " FROM " << tablePrefix << "nf_tokens WHERE"
               << " token_id = ? AND"
               << " sequence <= ?"
+              << " ORDER BY sequence DESC"
               << " LIMIT 1";
         if (!selectNFT_.prepareStatement(query, session_.get()))
         {
@@ -1562,6 +1565,7 @@ CassandraBackend::open(bool readOnly)
               << " FROM " << tablePrefix << "nf_token_transactions WHERE"
               << " token_id = ? AND"
               << " seq_idx < ?"
+              << " ORDER BY seq_idx DESC"
               << " LIMIT ?";
         if (!selectNFTTx_.prepareStatement(query, session_.get()))
         {

@@ -146,17 +146,6 @@ public:
         return val;
     }
 
-    ripple::AccountID
-    asAccountID(int ntuple = 0, int nfield = 0) const
-    {
-        ripple::AccountID val;
-        if (!val.parseHex(c_str(ntuple, nfield) + 2))
-        {
-            throw std::runtime_error("Pg - failed to parse hex into uint160");
-        }
-        return val;
-    }
-
     /** Return field as equivalent to Postgres' INT type (32 bit signed).
      *
      * Note that this function does not guarantee that the result struct
@@ -189,33 +178,6 @@ public:
     {
         return boost::lexical_cast<std::int64_t>(
             PQgetvalue(result_.get(), ntuple, nfield));
-    }
-
-    /** Return field as equivalent to Postgres' BOOL type (8 bits).
-     *
-     * Note that this function does not guarantee that the result struct
-     * exists, or that the row and fields exist, or that the field is
-     * not null, or that the type is that requested.
-
-     * @param ntuple Row number.
-     * @param nfield Field number.
-     * @return Field contents.
-     */
-    bool
-    asBool(int ntuple = 0, int nfield = 0) const
-    {
-        std::string val = c_str(ntuple, nfield);
-        if (val == "true" || val == "t" || val == "yes" || val == "y" ||
-            val == "1")
-        {
-            return true;
-        }
-        if (val == "false" || val == "f" || val == "no" || val == "n" ||
-            val == "0")
-        {
-            return false;
-        }
-        throw std::runtime_error("Pg - invalid boolean value " + val);
     }
 
     /** Returns whether the field is NULL or not.
@@ -595,8 +557,6 @@ void
 initSchema(std::shared_ptr<PgPool> const& pool);
 void
 initAccountTx(std::shared_ptr<PgPool> const& pool);
-void
-initNFTTx(std::shared_ptr<PgPool> const& pool);
 
 // Load the ledger info for the specified ledger/s from the database
 // @param whichLedger specifies the ledger to load via ledger sequence, ledger

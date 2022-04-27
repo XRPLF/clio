@@ -8,7 +8,7 @@
 #include <backend/DBHelpers.h>
 #include <backend/Types.h>
 
-static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     // To find the minted token ID, we put all tokenIDs referenced in the
@@ -81,6 +81,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         }
     }
 
+    std::sort(finalIDs.begin(), finalIDs.end());
+    std::sort(prevIDs.begin(), prevIDs.end());
     std::vector<ripple::uint256> tokenIDResult;
     std::set_difference(
         finalIDs.begin(),
@@ -97,7 +99,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
                 tokenIDResult.front(),
                 ripple::nft::getIssuer(tokenIDResult.front()),
                 txMeta,
-                false)};
+                false,
+                true)};
     }
 
     std::stringstream msg;
@@ -105,7 +108,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     throw std::runtime_error(msg.str());
 }
 
-static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     ripple::uint256 tokenID = sttx.getFieldH256(ripple::sfNFTokenID);
@@ -127,7 +130,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         // modified, we want to look for the target in the fields prior to
         // modification. If deleted, "FinalFields" is overloaded to mean the
         // state prior to deletion.
-        ripple::STArray const& prevNFTs = [node]() {
+        ripple::STArray const& prevNFTs = [&node] {
             if (node.getFName() == ripple::sfModifiedNode)
                 return node.peekAtField(ripple::sfPreviousFields)
                     .downcast<ripple::STObject>()
@@ -140,7 +143,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         auto nft = std::find_if(
             prevNFTs.begin(),
             prevNFTs.end(),
-            [tokenID](ripple::STObject const& candidate) {
+            [&tokenID](ripple::STObject const& candidate) {
                 return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
             });
         if (nft != prevNFTs.end())
@@ -151,7 +154,8 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
                     ripple::AccountID::fromVoid(
                         node.getFieldH256(ripple::sfLedgerIndex).data()),
                     txMeta,
-                    true));
+                    true,
+                    false));
     }
 
     std::stringstream msg;
@@ -159,7 +163,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     throw std::runtime_error(msg.str());
 }
 
-static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenAcceptOfferData(
     ripple::TxMeta const& txMeta,
     ripple::STTx const& sttx)
@@ -191,7 +195,7 @@ getNFTokenAcceptOfferData(
                                       .getAccountID(ripple::sfOwner);
         return {
             {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())},
-            NFTsData(tokenID, owner, txMeta, false)};
+            NFTsData(tokenID, owner, txMeta, false, false)};
     }
 
     // Otherwise we have to infer the new owner from the affected nodes.
@@ -228,7 +232,7 @@ getNFTokenAcceptOfferData(
         if (nodeOwner == seller)
             continue;
 
-        ripple::STArray const& nfts = [node] {
+        ripple::STArray const& nfts = [&node] {
             if (node.getFName() == ripple::sfCreatedNode)
                 return node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
@@ -247,7 +251,7 @@ getNFTokenAcceptOfferData(
         if (nft != nfts.end())
             return {
                 {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())},
-                NFTsData(tokenID, nodeOwner, txMeta, false)};
+                NFTsData(tokenID, nodeOwner, txMeta, false, false)};
     }
 
     std::stringstream msg;
@@ -259,7 +263,7 @@ getNFTokenAcceptOfferData(
 // the returned vector, because you can cancel multiple offers in one
 // transaction using this feature. This transaction also never returns an
 // NFTsData because it does not change the state of an NFT itself.
-static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenCancelOfferData(
     ripple::TxMeta const& txMeta,
     ripple::STTx const& sttx)
@@ -300,7 +304,7 @@ getNFTokenCancelOfferData(
 
 // This transaction never returns an NFTokensData because it does not
 // change the state of an NFT itself.
-static std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenCreateOfferData(
     ripple::TxMeta const& txMeta,
     ripple::STTx const& sttx)
