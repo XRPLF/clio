@@ -5,7 +5,7 @@
 template <class T>
 inline void
 sendToSubscribers(
-    std::string const& message,
+    std::shared_ptr<Message>& message,
     T& subscribers,
     boost::asio::io_context::strand& strand)
 {
@@ -63,7 +63,7 @@ Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
 }
 
 void
-Subscription::publish(std::string const& message)
+Subscription::publish(std::shared_ptr<Message>& message)
 {
     sendToSubscribers(message, subscribers_, strand_);
 }
@@ -88,7 +88,9 @@ SubscriptionMap<Key>::unsubscribe(
 
 template <class Key>
 void
-SubscriptionMap<Key>::publish(std::string const& message, Key const& account)
+SubscriptionMap<Key>::publish(
+    std::shared_ptr<Message>& message,
+    Key const& account)
 {
     sendToSubscribers(message, subscribers_[account], strand_);
 }
@@ -200,8 +202,10 @@ SubscriptionManager::pubLedger(
     std::string const& ledgerRange,
     std::uint32_t txnCount)
 {
-    ledgerSubscribers_.publish(boost::json::serialize(
+    auto message = std::make_shared<Message>(boost::json::serialize(
         getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
+
+    ledgerSubscribers_.publish(message);
 }
 
 void
@@ -250,7 +254,7 @@ SubscriptionManager::pubTransaction(
         }
     }
 
-    std::string pubMsg{boost::json::serialize(pubObj)};
+    auto pubMsg = std::make_shared<Message>(boost::json::serialize(pubObj));
     txSubscribers_.publish(pubMsg);
 
     auto journal = ripple::debugLog();
@@ -305,7 +309,7 @@ void
 SubscriptionManager::forwardProposedTransaction(
     boost::json::object const& response)
 {
-    std::string pubMsg{boost::json::serialize(response)};
+    auto pubMsg = std::make_shared<Message>(boost::json::serialize(response));
     txProposedSubscribers_.publish(pubMsg);
 
     auto transaction = response.at("transaction").as_object();
@@ -318,15 +322,15 @@ SubscriptionManager::forwardProposedTransaction(
 void
 SubscriptionManager::forwardManifest(boost::json::object const& response)
 {
-    std::string pubMsg{boost::json::serialize(response)};
+    auto pubMsg = std::make_shared<Message>(boost::json::serialize(response));
     manifestSubscribers_.publish(pubMsg);
 }
 
 void
 SubscriptionManager::forwardValidation(boost::json::object const& response)
 {
-    std::string pubMsg{boost::json::serialize(response)};
-    validationsSubscribers_.publish(std::move(pubMsg));
+    auto pubMsg = std::make_shared<Message>(boost::json::serialize(response));
+    validationsSubscribers_.publish(pubMsg);
 }
 
 void

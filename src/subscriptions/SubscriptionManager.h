@@ -3,6 +3,7 @@
 
 #include <backend/BackendInterface.h>
 #include <memory>
+#include <subscriptions/Message.h>
 
 class WsBase;
 
@@ -29,7 +30,7 @@ public:
     unsubscribe(std::shared_ptr<WsBase> const& session);
 
     void
-    publish(std::string const& message);
+    publish(std::shared_ptr<Message>& message);
 };
 
 template <class Key>
@@ -58,7 +59,7 @@ public:
     unsubscribe(std::shared_ptr<WsBase> const& session, Key const& key);
 
     void
-    publish(std::string const& message, Key const& key);
+    publish(std::shared_ptr<Message>& message, Key const& key);
 };
 
 class SubscriptionManager
