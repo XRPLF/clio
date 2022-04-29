@@ -81,3 +81,6 @@ if(BUILD_TESTS)
 endif()
 
 include(CMake/install/install.cmake)
+if(PACKAGING)
+    include(CMake/packaging.cmake)
+endif()

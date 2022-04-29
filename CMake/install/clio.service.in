@@ -1,0 +1,16 @@
+[Unit]
+Description=Clio XRPL API server
+Documentation=https://github.com/XRPLF/clio.git
+
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=@CLIO_INSTALL_DIR@/bin/clio_server @CLIO_INSTALL_DIR@/etc/config.json
+Restart=on-failure
+User=clio
+Group=clio
+
+[Install]
+WantedBy=multi-user.target

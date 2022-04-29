@@ -1,10 +1,10 @@
 name: Build Clio
 on:
   push:
-    branches:  [master, develop]
+    branches:  [master, develop, develop-next]
   pull_request:
-    branches:  [master, develop]
-  
+    branches:  [master, develop, develop-next]
+
 jobs:
   lint:
     name: Lint
@@ -12,30 +12,36 @@ jobs:
     steps:
       - name: Get source
         uses: actions/checkout@v3
-      
+
       - name: Run clang-format
-        uses: XRPLF/clio-build/lint@main
-  
-  build_clio: 
+        uses: XRPLF/clio-gha/lint@main
+
+  build_clio:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, Linux]
     needs: lint
     steps:
-      - name: Get clio repo
+      - name: Get Clio repo
         uses: actions/checkout@v3
         with:
           path: clio_src
-      
-      - name: Get gha repo
+          ref: 'develop-next'
+
+      - name: Get Clio CI repo
         uses: actions/checkout@v3
         with:
-          repository: XRPLF/clio-build
-          ref: main
-          path: gha # must be the same as defined in XRPLF/clio-build
-      
+          path: clio_ci
+          repository: 'XRPLF/clio-ci'
+
+      - name: Get GitHub actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: XRPLF/clio-gha
+          path: gha # must be the same as defined in XRPLF/clio-gha
+
       - name: Build
-        uses: XRPLF/clio-build/build@main
-      
+        uses: XRPLF/clio-gha/build@main
+
       # - name: Artifact clio_tests
       #   uses: actions/upload-artifact@v2
       #   with:

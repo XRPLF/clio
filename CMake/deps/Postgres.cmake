@@ -16,6 +16,7 @@ ExternalProject_Add(postgres
         ${POSTGRES_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}pgcommon${CMAKE_STATIC_LIBRARY_SUFFIX}}
         ${POSTGRES_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}pgport${CMAKE_STATIC_LIBRARY_SUFFIX}}
         )
+ExternalProject_Get_Property (postgres BINARY_DIR)
 
 foreach(_lib ${POSTGRES_LIBS})
     add_library(${_lib} STATIC IMPORTED GLOBAL)
@@ -26,5 +27,5 @@ foreach(_lib ${POSTGRES_LIBS})
         INTERFACE_INCLUDE_DIRECTORIES ${POSTGRES_INSTALL_DIR}/include)
     target_link_libraries(clio PUBLIC ${POSTGRES_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}${_lib}${CMAKE_STATIC_LIBRARY_SUFFIX})
 endforeach()
-
+add_dependencies(clio postgres)
 target_include_directories(clio PUBLIC ${POSTGRES_INSTALL_DIR}/include)
