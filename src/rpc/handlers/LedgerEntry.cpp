@@ -349,7 +349,7 @@ doLedgerEntry(Context const& context)
     auto end = std::chrono::system_clock::now();
 
     if (!dbResponse or dbResponse->size() == 0)
-        return Status{Error::rpcLGR_NOT_FOUND};
+        return Status{Error::rpcOBJECT_NOT_FOUND, "entryNotFound"};
 
     response["index"] = ripple::strHex(key);
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
