@@ -180,7 +180,7 @@ BackendInterface::fetchBookOffers(
         succMillis += getMillis(mid2 - mid1);
         if (!offerDir || offerDir->key >= bookEnd)
         {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " - offerDir.has_value() "
+            BOOST_LOG_TRIVIAL(trace) << __func__ << " - offerDir.has_value() "
                                      << offerDir.has_value() << " breaking";
             break;
         }
@@ -197,7 +197,7 @@ BackendInterface::fetchBookOffers(
             auto next = sle.getFieldU64(ripple::sfIndexNext);
             if (!next)
             {
-                BOOST_LOG_TRIVIAL(debug)
+                BOOST_LOG_TRIVIAL(trace)
                     << __func__ << " next is empty. breaking";
                 break;
             }
@@ -215,7 +215,7 @@ BackendInterface::fetchBookOffers(
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i)
     {
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << __func__ << " key = " << ripple::strHex(keys[i])
             << " blob = " << ripple::strHex(objs[i])
             << " ledgerSequence = " << ledgerSequence;
@@ -236,7 +236,8 @@ BackendInterface::fetchBookOffers(
         << ". Fetching all objects took "
         << std::to_string(getMillis(end - mid))
         << " milliseconds. total time = "
-        << std::to_string(getMillis(end - begin)) << " milliseconds";
+        << std::to_string(getMillis(end - begin)) << " milliseconds"
+        << " book = " << ripple::strHex(book);
 
     return page;
 }

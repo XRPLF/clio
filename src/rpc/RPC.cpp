@@ -238,4 +238,5 @@ buildResponse(Context const& ctx)
         return Status{Error::rpcINTERNAL, err.what()};
     }
 }
+
 }  // namespace RPC
