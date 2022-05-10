@@ -49,7 +49,7 @@ doServerInfo(Context const& context)
         context.subscriptions->report();
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
-        {{"counters", "server_info"}}, context.clientIp, context.yield);
+        {{"command", "server_info"}}, context.clientIp, context.yield);
 
     info[JS(load_factor)] = 1;
     info["clio_version"] = Build::getClioVersionString();

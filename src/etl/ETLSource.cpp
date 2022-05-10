@@ -11,6 +11,64 @@
 #include <etl/ReportingETL.h>
 #include <thread>
 
+void
+ForwardCache::freshen()
+{
+    BOOST_LOG_TRIVIAL(trace) << "Freshening ForwardCache";
+
+    auto numOutstanding =
+        std::make_shared<std::atomic_uint>(latestForwarded_.size());
+
+    for (auto const& cacheEntry : latestForwarded_)
+    {
+        boost::asio::spawn(
+            strand_,
+            [this, numOutstanding, command = cacheEntry.first](
+                boost::asio::yield_context yield) {
+                boost::json::object request = {{"command", command}};
+                auto resp = source_.requestFromRippled(request, {}, yield);
+
+                if (!resp || resp->contains("error"))
+                    resp = {};
+
+                {
+                    std::unique_lock lk(mtx_);
+                    latestForwarded_[command] = resp;
+                }
+            });
+    }
+}
+
+void
+ForwardCache::clear()
+{
+    std::unique_lock lk(mtx_);
+    for (auto& cacheEntry : latestForwarded_)
+        latestForwarded_[cacheEntry.first] = {};
+}
+
+std::optional<boost::json::object>
+ForwardCache::get(boost::json::object const& request) const
+{
+    std::optional<std::string> command = {};
+    if (request.contains("command") && !request.contains("method") &&
+        request.at("command").is_string())
+        command = request.at("command").as_string().c_str();
+    else if (
+        request.contains("method") && !request.contains("command") &&
+        request.at("method").is_string())
+        command = request.at("method").as_string().c_str();
+
+    if (!command)
+        return {};
+
+    std::shared_lock lk(mtx_);
+    if (!latestForwarded_.contains(*command))
+        return {};
+
+    return {latestForwarded_.at(*command)};
+}
+
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
 // Primarly used in read-only mode, to monitor when ledgers are validated
@@ -27,6 +85,7 @@ ETLSourceImpl<Derived>::ETLSourceImpl(
     , backend_(backend)
     , subscriptions_(subscriptions)
     , balancer_(balancer)
+    , forwardCache_(config, ioContext, *this)
     , ioc_(ioContext)
     , timer_(ioContext)
 {
@@ -245,11 +304,9 @@ PlainETLSource::onConnect(
             boost::beast::websocket::stream_base::decorator(
                 [](boost::beast::websocket::request_type& req) {
                     req.set(
-                        boost::beast::http::field::user_agent,
-                        std::string(BOOST_BEAST_VERSION_STRING) +
-                            " clio-client");
+                        boost::beast::http::field::user_agent, "clio-client");
 
-                    req.set("X-User", "coro-client");
+                    req.set("X-User", "clio-client");
                 }));
 
         // Update the host_ string. This will provide the value of the
@@ -291,11 +348,9 @@ SslETLSource::onConnect(
             boost::beast::websocket::stream_base::decorator(
                 [](boost::beast::websocket::request_type& req) {
                     req.set(
-                        boost::beast::http::field::user_agent,
-                        std::string(BOOST_BEAST_VERSION_STRING) +
-                            " clio-client");
+                        boost::beast::http::field::user_agent, "clio-client");
 
-                    req.set("X-User", "coro-client");
+                    req.set("X-User", "clio-client");
                 }));
 
         // Update the host_ string. This will provide the value of the
@@ -475,6 +530,7 @@ ETLSourceImpl<Derived>::handleMessage()
             {
                 if (response.contains("transaction"))
                 {
+                    forwardCache_.freshen();
                     subscriptions_->forwardProposedTransaction(response);
                 }
                 else if (
@@ -1026,7 +1082,23 @@ ETLSourceImpl<Derived>::forwardToRippled(
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
 {
-    BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
+    if (auto resp = forwardCache_.get(request); resp)
+    {
+        BOOST_LOG_TRIVIAL(debug) << "request hit forwardCache";
+        return resp;
+    }
+
+    return requestFromRippled(request, clientIp, yield);
+}
+
+template <class Derived>
+std::optional<boost::json::object>
+ETLSourceImpl<Derived>::requestFromRippled(
+    boost::json::object const& request,
+    std::string const& clientIp,
+    boost::asio::yield_context& yield) const
+{
+    BOOST_LOG_TRIVIAL(trace) << "Attempting to forward request to tx. "
                              << "request = " << boost::json::serialize(request);
 
     boost::json::object response;
@@ -1047,7 +1119,7 @@ ETLSourceImpl<Derived>::forwardToRippled(
         // These objects perform our I/O
         tcp::resolver resolver{ioc_};
 
-        BOOST_LOG_TRIVIAL(debug) << "Creating websocket";
+        BOOST_LOG_TRIVIAL(trace) << "Creating websocket";
         auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioc_);
 
         // Look up the domain name
@@ -1057,7 +1129,7 @@ ETLSourceImpl<Derived>::forwardToRippled(
 
         ws->next_layer().expires_after(std::chrono::seconds(3));
 
-        BOOST_LOG_TRIVIAL(debug) << "Connecting websocket";
+        BOOST_LOG_TRIVIAL(trace) << "Connecting websocket";
         // Make the connection on the IP address we get from a lookup
         ws->next_layer().async_connect(results, yield[ec]);
         if (ec)
@@ -1076,15 +1148,15 @@ ETLSourceImpl<Derived>::forwardToRippled(
                         " websocket-client-coro");
                 req.set(http::field::forwarded, "for=" + clientIp);
             }));
-        BOOST_LOG_TRIVIAL(debug) << "client ip: " << clientIp;
+        BOOST_LOG_TRIVIAL(trace) << "client ip: " << clientIp;
 
-        BOOST_LOG_TRIVIAL(debug) << "Performing websocket handshake";
+        BOOST_LOG_TRIVIAL(trace) << "Performing websocket handshake";
         // Perform the websocket handshake
         ws->async_handshake(ip_, "/", yield[ec]);
         if (ec)
             return {};
 
-        BOOST_LOG_TRIVIAL(debug) << "Sending request";
+        BOOST_LOG_TRIVIAL(trace) << "Sending request";
         // Send the message
         ws->async_write(
             net::buffer(boost::json::serialize(request)), yield[ec]);
@@ -1106,7 +1178,7 @@ ETLSourceImpl<Derived>::forwardToRippled(
                 << "Error parsing response: " << std::string{begin, end};
             return {};
         }
-        BOOST_LOG_TRIVIAL(debug) << "Successfully forward request";
+        BOOST_LOG_TRIVIAL(trace) << "Successfully forward request";
 
         response = parsed.as_object();
 
