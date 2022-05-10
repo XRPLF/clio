@@ -1,5 +1,6 @@
 #include <backend/SimpleCache.h>
 namespace Backend {
+
 uint32_t
 SimpleCache::latestLedgerSequence() const
 {
@@ -13,6 +14,9 @@ SimpleCache::update(
     uint32_t seq,
     bool isBackground)
 {
+    if (disabled_)
+        return;
+
     {
         std::unique_lock lck{mtx_};
         if (seq > latestSeq_)
@@ -83,8 +87,17 @@ SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 }
 
 void
+SimpleCache::setDisabled()
+{
+    disabled_ = true;
+}
+
+void
 SimpleCache::setFull()
 {
+    if (disabled_)
+        return;
+
     full_ = true;
     std::unique_lock lck{mtx_};
     deletes_.clear();
