@@ -498,7 +498,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1, 
             while True:
                 res = {}
                 if marker is None:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":binary, "limit":int(limit)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":binary, "limit":int(limit),"out_of_order":True}))
                     res = json.loads(await ws.recv())
                     
                 else:

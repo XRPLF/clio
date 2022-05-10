@@ -76,7 +76,7 @@ doAccountInfo(Context const& context)
     //     response["account_data"] = ripple::strHex(*dbResponse);
     // response["db_time"] = time;
 
-    response["account_data"] = toJson(sle);
+    response["account_data"] = toJson(sle, *context.backend, lgrInfo.seq);
     response["ledger_hash"] = ripple::strHex(lgrInfo.hash);
     response["ledger_index"] = lgrInfo.seq;
 
@@ -101,7 +101,8 @@ doAccountInfo(Context const& context)
             if (!signersKey.check(sleSigners))
                 return Status{Error::rpcDB_DESERIALIZATION};
 
-            signerList.push_back(toJson(sleSigners));
+            signerList.push_back(
+                toJson(sleSigners, *context.backend, lgrInfo.seq));
         }
 
         response["account_data"].as_object()["signer_lists"] =

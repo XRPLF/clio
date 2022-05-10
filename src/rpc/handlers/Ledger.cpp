@@ -92,11 +92,12 @@ doLedger(Context const& context)
                 std::move_iterator(txns.begin()),
                 std::move_iterator(txns.end()),
                 std::back_inserter(jsonTxs),
-                [binary](auto obj) {
+                [binary, &context](auto obj) {
                     boost::json::object entry;
                     if (!binary)
                     {
-                        auto [txn, meta] = toExpandedJson(obj);
+                        auto [txn, meta] =
+                            toExpandedJson(obj, *context.backend);
                         entry = txn;
                         entry["metaData"] = meta;
                     }
@@ -141,7 +142,7 @@ doLedger(Context const& context)
                 ripple::STLedgerEntry sle{
                     ripple::SerialIter{obj.blob.data(), obj.blob.size()},
                     obj.key};
-                entry["object"] = toJson(sle);
+                entry["object"] = toJson(sle, *context.backend, lgrInfo.seq);
             }
             else
                 entry["object"] = "";

@@ -3,6 +3,7 @@
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/hardened_hash.h>
+#include <boost/json.hpp>
 #include <backend/Types.h>
 #include <map>
 #include <mutex>
@@ -16,11 +17,26 @@ class SimpleCache
     {
         uint32_t seq = 0;
         Blob blob;
+        std::atomic_bool hasJson = false;
+        std::atomic_bool updatingJson = false;
+        std::optional<boost::json::object> json;
+
+        CacheEntry&
+        operator=(CacheEntry&& other)
+        {
+            seq = other.seq;
+            blob = std::move(other.blob);
+            updatingJson = other.updatingJson.load();
+            json = std::move(other.json);
+            return *this;
+        }
     };
+    using CacheIter = std::map<ripple::uint256, CacheEntry>::iterator;
     std::map<ripple::uint256, CacheEntry> map_;
     mutable std::shared_mutex mtx_;
     uint32_t latestSeq_ = 0;
     std::atomic_bool full_ = false;
+    std::atomic_bool cacheJson_ = false;
     // temporary set to prevent background thread from writing already deleted
     // data. not used when cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
@@ -34,8 +50,17 @@ public:
         uint32_t seq,
         bool isBackground = false);
 
+    void
+    updateJson(
+        ripple::uint256 const& key,
+        uint32_t seq,
+        boost::json::object&& json) const;
+
     std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const;
+
+    std::optional<boost::json::object>
+    getJson(ripple::uint256 const& key, uint32_t seq) const;
 
     // always returns empty optional if isFull() is false
     std::optional<LedgerObject>
@@ -47,6 +72,9 @@ public:
 
     void
     setFull();
+
+    void
+    enableJsonCaching();
 
     uint32_t
     latestLedgerSequence() const;

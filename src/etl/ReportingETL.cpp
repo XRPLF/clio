@@ -1108,9 +1108,12 @@ ReportingETL::ReportingETL(
             if (entry == "none" || entry == "no")
                 cacheLoadStyle_ = CacheLoadStyle::NOT_AT_ALL;
         }
-        if (cache.contains("num_diffs") && cache.at("num_diffs").as_int64())
+        if (cache.contains("num_diffs") && cache.at("num_diffs").is_int64())
         {
             numDiffs_ = cache.at("num_diffs").as_int64();
         }
+        if (cache.contains("json") && cache.at("json").is_bool() &&
+            cache.at("json").as_bool())
+            backend_->cache().enableJsonCaching();
     }
 }

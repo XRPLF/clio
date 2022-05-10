@@ -211,7 +211,7 @@ SubscriptionManager::pubTransaction(
 {
     auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
-    pubObj["transaction"] = RPC::toJson(*tx);
+    pubObj["transaction"] = RPC::toJson(*tx, *backend_, lgrInfo.seq);
     pubObj["meta"] = RPC::toJson(*meta);
     RPC::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta);
     pubObj["type"] = "transaction";

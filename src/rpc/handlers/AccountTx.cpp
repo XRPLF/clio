@@ -205,7 +205,7 @@ doAccountTx(Context const& context)
 
         if (!binary)
         {
-            auto [txn, meta] = toExpandedJson(txnPlusMeta);
+            auto [txn, meta] = toExpandedJson(txnPlusMeta, *context.backend);
             obj["meta"] = meta;
             obj["tx"] = txn;
             obj["tx"].as_object()["ledger_index"] = txnPlusMeta.ledgerSequence;

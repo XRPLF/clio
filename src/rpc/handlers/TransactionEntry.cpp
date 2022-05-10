@@ -32,7 +32,7 @@ doTransactionEntry(Context const& context)
             "transactionNotFound",
             "Transaction not found."};
 
-    auto [txn, meta] = toExpandedJson(*dbResponse);
+    auto [txn, meta] = toExpandedJson(*dbResponse, *context.backend);
     response["tx_json"] = std::move(txn);
     response["metadata"] = std::move(meta);
     response["ledger_index"] = lgrInfo.seq;

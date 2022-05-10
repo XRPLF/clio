@@ -29,7 +29,10 @@ SimpleCache::update(
                 auto& e = map_[obj.key];
                 if (seq > e.seq)
                 {
-                    e = {seq, obj.blob};
+                    // we don't need to worry about hasJson and updatingJson
+                    // here, because we have a unique_lock, so no other threads
+                    // can be touching the cache
+                    e = {seq, obj.blob, false, false, {}};
                 }
             }
             else
@@ -71,15 +74,63 @@ SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<Blob>
 SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
+    std::shared_lock lck{mtx_};
     if (seq > latestSeq_)
         return {};
-    std::shared_lock lck{mtx_};
     auto e = map_.find(key);
     if (e == map_.end())
         return {};
     if (seq < e->second.seq)
         return {};
     return {e->second.blob};
+}
+std::optional<boost::json::object>
+SimpleCache::getJson(ripple::uint256 const& key, uint32_t seq) const
+{
+    if (!cacheJson_)
+        return {};
+    std::shared_lock lck{mtx_};
+    if (seq > latestSeq_)
+        return {};
+    auto e = map_.find(key);
+    if (e == map_.end())
+        return {};
+    if (seq < e->second.seq)
+        return {};
+    if (!e->second.hasJson)
+        return {};
+    return {e->second.json};
+}
+void
+SimpleCache::updateJson(
+    ripple::uint256 const& key,
+    uint32_t seq,
+    boost::json::object&& json) const
+{
+    if (!cacheJson_)
+        return;
+    std::shared_lock lck{mtx_};
+    if (seq > latestSeq_)
+        return;
+    if (!map_.count(key))
+        return;
+    auto& e = const_cast<SimpleCache::CacheEntry&>(map_.at(key));
+    if (seq < e.seq)
+        return;
+    if (e.hasJson)
+        return;
+    if (!e.updatingJson.exchange(true))
+    {
+        e.json = std::move(json);
+        e.hasJson = true;
+    }
+    e.updatingJson = false;
+}
+
+void
+SimpleCache::enableJsonCaching()
+{
+    cacheJson_ = true;
 }
 
 void

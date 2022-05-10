@@ -43,7 +43,7 @@ doTx(Context const& context)
 
     if (!binary)
     {
-        auto [txn, meta] = toExpandedJson(*dbResponse);
+        auto [txn, meta] = toExpandedJson(*dbResponse, *context.backend);
         response = txn;
         response["meta"] = meta;
     }

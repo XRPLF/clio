@@ -89,7 +89,7 @@ doAccountObjects(Context const& context)
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (!objectType || objectType == sle.getType())
         {
-            jsonObjects.push_back(toJson(sle));
+            jsonObjects.push_back(toJson(sle, *context.backend, lgrInfo.seq));
         }
     };
 

@@ -49,7 +49,9 @@ deserializeTxPlusMeta(
     std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs);
+toExpandedJson(
+    Backend::TransactionAndMetadata const& blobs,
+    BackendInterface const& backend);
 
 bool
 insertDeliveredAmount(
@@ -58,11 +60,13 @@ insertDeliveredAmount(
     std::shared_ptr<ripple::TxMeta const> const& meta);
 
 boost::json::object
-toJson(ripple::STBase const& obj);
+toJson(
+    ripple::STBase const& obj,
+    BackendInterface const& backend,
+    uint32_t seq);
 
 boost::json::object
-toJson(ripple::SLE const& sle);
-
+toJson(ripple::SLE const& sle, BackendInterface const& backend, uint32_t seq);
 boost::json::object
 toJson(ripple::LedgerInfo const& info);
 

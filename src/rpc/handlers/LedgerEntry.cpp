@@ -363,7 +363,7 @@ doLedgerEntry(Context const& context)
     {
         ripple::STLedgerEntry sle{
             ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
-        response["node"] = toJson(sle);
+        response["node"] = toJson(sle, *context.backend, lgrInfo.seq);
     }
 
     return response;
