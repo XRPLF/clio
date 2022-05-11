@@ -275,6 +275,7 @@ public:
                 auto end = std::chrono::system_clock::now();
                 auto us = std::chrono::duration_cast<std::chrono::microseconds>(
                     end - start);
+                logDuration(*context, us);
 
                 if (auto status = std::get_if<RPC::Status>(&v))
                 {
