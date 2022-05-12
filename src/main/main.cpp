@@ -227,16 +227,16 @@ main(int argc, char* argv[])
         ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
         : std::nullopt;
 
-    auto const threads = config->contains("workers")
-        ? config->at("workers").as_int64()
-        : std::thread::hardware_concurrency();
+    auto const threads = config->contains("io_threads")
+        ? config->at("io_threads").as_int64()
+        : 2;
 
     if (threads <= 0)
     {
-        BOOST_LOG_TRIVIAL(fatal) << "Workers is less than 0";
+        BOOST_LOG_TRIVIAL(fatal) << "io_threads is less than 0";
         return EXIT_FAILURE;
     }
-    BOOST_LOG_TRIVIAL(info) << "Number of workers = " << threads;
+    BOOST_LOG_TRIVIAL(info) << "Number of io threads = " << threads;
 
     // io context to handle all incoming requests, as well as other things
     // This is not the only io context in the application

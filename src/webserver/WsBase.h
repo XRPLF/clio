@@ -12,6 +12,7 @@
 #include <etl/ReportingETL.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <rpc/WorkQueue.h>
 #include <subscriptions/Message.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/DOSGuard.h>
@@ -86,6 +87,7 @@ class WsSession : public WsBase,
     std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
+    WorkQueue& queue_;
     std::mutex mtx_;
 
     bool sending_ = false;
@@ -115,6 +117,7 @@ public:
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
+        WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
         : buffer_(std::move(buffer))
         , ioc_(ioc)
@@ -124,6 +127,7 @@ public:
         , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
+        , queue_(queue)
     {
     }
     virtual ~WsSession()
@@ -364,25 +368,29 @@ public:
 
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " received request from ip = " << *ip;
-        if (!dosGuard_.isOk(*ip))
-        {
+        auto sendError = [&](auto&& msg) {
             boost::json::object response;
-            response["error"] = "Too many requests. Slow down";
+            response["error"] = std::move(msg);
             std::string responseStr = boost::json::serialize(response);
 
             BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
 
             dosGuard_.add(*ip, responseStr.size());
             send(std::move(responseStr));
+        };
+        if (!dosGuard_.isOk(*ip))
+        {
+            sendError("Too many requests. Slow down");
         }
         else
         {
-            boost::asio::spawn(
-                derived().ws().get_executor(),
-                [m = std::move(msg), shared_this = shared_from_this()](
-                    boost::asio::yield_context yield) {
-                    shared_this->handle_request(std::move(m), yield);
-                });
+            if (!queue_.postCoro(
+                    [m = std::move(msg), shared_this = shared_from_this()](
+                        boost::asio::yield_context yield) {
+                        shared_this->handle_request(std::move(m), yield);
+                    },
+                    dosGuard_.isWhiteListed(*ip)))
+                sendError("Server overloaded");
         }
 
         do_read();

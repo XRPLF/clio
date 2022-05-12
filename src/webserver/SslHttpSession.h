@@ -26,6 +26,7 @@ public:
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
+        WorkQueue& queue,
         boost::beast::flat_buffer buffer)
         : HttpBase<SslHttpSession>(
               ioc,
@@ -35,6 +36,7 @@ public:
               etl,
               dosGuard,
               counters,
+              queue,
               std::move(buffer))
         , stream_(std::move(socket), ctx)
     {
