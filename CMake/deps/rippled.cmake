@@ -1,5 +1,5 @@
 set(RIPPLED_REPO "https://github.com/ripple/rippled.git")
-set(RIPPLED_BRANCH "develop")
+set(RIPPLED_BRANCH "1.9.0")
 set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
 message(STATUS "Cloning ${RIPPLED_REPO} branch ${RIPPLED_BRANCH}")
 FetchContent_Declare(rippled
