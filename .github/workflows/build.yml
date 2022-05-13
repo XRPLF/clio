@@ -43,8 +43,8 @@ jobs:
       - name: Build
         uses: XRPLF/clio-gha/build@main
 
-      # - name: Artifact clio_tests
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: clio_output
-      #     path: clio_src/build/clio_tests
+      - name: Artifact .deb
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: clio_ci/build/*.deb
