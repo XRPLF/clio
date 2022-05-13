@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 
-project(clio VERSION 0.1.1)
+project(clio VERSION 0.2.0)
 
 option(BUILD_TESTS "Build tests" TRUE)
 
