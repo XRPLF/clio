@@ -4,6 +4,7 @@ on:
     branches:  [master, develop, develop-next]
   pull_request:
     branches:  [master, develop, develop-next]
+  workflow_dispatch:
 
 jobs:
   lint:
