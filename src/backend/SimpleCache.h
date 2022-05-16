@@ -21,6 +21,7 @@ class SimpleCache
     mutable std::shared_mutex mtx_;
     uint32_t latestSeq_ = 0;
     std::atomic_bool full_ = false;
+    std::atomic_bool disabled_ = false;
     // temporary set to prevent background thread from writing already deleted
     // data. not used when cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
@@ -44,6 +45,9 @@ public:
     // always returns empty optional if isFull() is false
     std::optional<LedgerObject>
     getPredecessor(ripple::uint256 const& key, uint32_t seq) const;
+
+    void
+    setDisabled();
 
     void
     setFull();

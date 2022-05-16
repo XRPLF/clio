@@ -894,6 +894,7 @@ ReportingETL::loadCache(uint32_t seq)
 {
     if (cacheLoadStyle_ == CacheLoadStyle::NOT_AT_ALL)
     {
+        backend_->cache().setDisabled();
         BOOST_LOG_TRIVIAL(warning) << "Cache is disabled. Not loading";
         return;
     }
