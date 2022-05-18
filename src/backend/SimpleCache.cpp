@@ -43,6 +43,17 @@ SimpleCache::update(
             }
         }
     }
+    for(auto const& obj : objs)
+    {
+        if(obj.blob.size())
+        {
+            ripple::STLedgerEntry sle{
+                ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
+            boost::json::value json = boost::json::parse(
+                    sle.getJson(ripple::JsonOptions::none).toStyledString());
+            updateJson(obj.key,seq,std::move(json.as_object()));
+        }
+    }
 }
 std::optional<LedgerObject>
 SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const

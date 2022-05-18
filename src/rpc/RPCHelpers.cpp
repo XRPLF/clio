@@ -420,14 +420,6 @@ toJson(ripple::SLE const& sle, BackendInterface const& backend, uint32_t seq)
         << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)
                .count()
         << " microseconds";
-    backend.cache().updateJson(
-        sle.key(), seq, boost::json::object{value.as_object()});
-    auto end3 = std::chrono::system_clock::now();
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " json cache insert took "
-        << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2)
-               .count()
-        << " microseconds";
     return value.as_object();
 }
 
