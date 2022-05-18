@@ -22,19 +22,19 @@ jobs:
     runs-on: [self-hosted, Linux]
     needs: lint
     steps:
-      - name: Get Clio repo
+
+      - name: Clone Clio repo
         uses: actions/checkout@v3
         with:
           path: clio_src
-          ref: 'develop-next'
 
-      - name: Get Clio CI repo
+      - name: Clone Clio CI repo
         uses: actions/checkout@v3
         with:
           path: clio_ci
           repository: 'XRPLF/clio-ci'
 
-      - name: Get GitHub actions repo
+      - name: Clone GitHub actions repo
         uses: actions/checkout@v3
         with:
           repository: XRPLF/clio-gha
@@ -43,8 +43,27 @@ jobs:
       - name: Build
         uses: XRPLF/clio-gha/build@main
 
-      - name: Artifact .deb
+      - name: Artifact clio_tests
         uses: actions/upload-artifact@v2
         with:
-          name: package
+          name: clio_tests
+          path: clio_tests
+
+      - name: Artifact Debian package
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb_package-${{ github.sha }}
           path: clio_ci/build/*.deb
+
+  test_clio:
+    name: Test Clio
+    runs-on: [self-hosted, Linux]
+    needs: build_clio
+    steps:
+      - name: Get clio_tests artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: clio_tests
+
+      - name: Run tests
+        uses: XRPLF/clio-gha/test@main

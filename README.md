@@ -1,3 +1,6 @@
+[![Build Clio](https://github.com/legleux/clio/actions/workflows/build.yml/badge.svg?branch=run-tests)](https://github.com/legleux/clio/actions/workflows/build.yml)
+
+
 **Status:** This software is in beta mode. We encourage anyone to try it out and
 report any issues they discover. Version 1.0 coming soon.
 
