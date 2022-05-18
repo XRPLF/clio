@@ -11,6 +11,7 @@
 #include <etl/ETLSource.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <subscriptions/Message.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/DOSGuard.h>
 
@@ -49,7 +50,7 @@ protected:
 public:
     // Send, that enables SubscriptionManager to publish to clients
     virtual void
-    send(std::string const& msg) = 0;
+    send(std::shared_ptr<Message> msg) = 0;
 
     virtual ~WsBase()
     {
@@ -87,7 +88,7 @@ class WsSession : public WsBase,
     std::mutex mtx_;
 
     bool sending_ = false;
-    std::queue<std::string> messages_;
+    std::queue<std::shared_ptr<Message>> messages_;
 
     void
     wsFail(boost::beast::error_code ec, char const* what)
@@ -138,7 +139,7 @@ public:
     {
         sending_ = true;
         derived().ws().async_write(
-            net::buffer(messages_.front()),
+            net::buffer(messages_.front()->data(), messages_.front()->size()),
             boost::beast::bind_front_handler(
                 &WsSession::on_write, derived().shared_from_this()));
     }
@@ -168,16 +169,23 @@ public:
     }
 
     void
-    send(std::string const& msg) override
+    send(std::shared_ptr<Message> msg) override
     {
         net::dispatch(
             derived().ws().get_executor(),
             [this,
              self = derived().shared_from_this(),
-             msg = std::string(msg)]() {
+             msg = std::move(msg)]() {
                 messages_.push(std::move(msg));
                 maybe_send_next();
             });
+    }
+
+    void
+    send(std::string&& msg)
+    {
+        auto sharedMsg = std::make_shared<Message>(std::move(msg));
+        send(sharedMsg);
     }
 
     void
