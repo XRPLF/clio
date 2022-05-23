@@ -1,3 +1,4 @@
+#include <ripple/protocol/STLedgerEntry.h>
 #include <backend/SimpleCache.h>
 namespace Backend {
 uint32_t
@@ -43,15 +44,21 @@ SimpleCache::update(
             }
         }
     }
-    for(auto const& obj : objs)
+    bool updateJsonCache =
+        isBackground ? jsonCaching_ == FULL : jsonCaching_ == DIFFS;
+    if (updateJsonCache)
     {
-        if(obj.blob.size())
+        for (auto const& obj : objs)
         {
-            ripple::STLedgerEntry sle{
-                ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
-            boost::json::value json = boost::json::parse(
+            if (obj.blob.size())
+            {
+                ripple::STLedgerEntry sle{
+                    ripple::SerialIter{obj.blob.data(), obj.blob.size()},
+                    obj.key};
+                boost::json::value json = boost::json::parse(
                     sle.getJson(ripple::JsonOptions::none).toStyledString());
-            updateJson(obj.key,seq,std::move(json.as_object()));
+                updateJson(obj.key, seq, std::move(json.as_object()));
+            }
         }
     }
 }
@@ -98,9 +105,9 @@ SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 std::optional<boost::json::object>
 SimpleCache::getJson(ripple::uint256 const& key, uint32_t seq) const
 {
-    if (!cacheJson_)
-        return {};
     std::shared_lock lck{mtx_};
+    if (jsonCaching_ == NONE)
+        return {};
     if (seq > latestSeq_)
         return {};
     auto e = map_.find(key);
@@ -118,9 +125,9 @@ SimpleCache::updateJson(
     uint32_t seq,
     boost::json::object&& json) const
 {
-    if (!cacheJson_)
-        return;
     std::shared_lock lck{mtx_};
+    if (jsonCaching_ == NONE)
+        return;
     if (seq > latestSeq_)
         return;
     if (!map_.count(key))
@@ -139,9 +146,10 @@ SimpleCache::updateJson(
 }
 
 void
-SimpleCache::enableJsonCaching()
+SimpleCache::enableJsonCaching(bool full)
 {
-    cacheJson_ = true;
+    std::unique_lock lck{mtx_};
+    jsonCaching_ = full ? FULL : DIFFS;
 }
 
 void

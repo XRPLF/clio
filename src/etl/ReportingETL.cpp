@@ -1099,7 +1099,7 @@ ReportingETL::ReportingETL(
         auto cache = config.at("cache").as_object();
         if (cache.contains("load") && cache.at("load").is_string())
         {
-            auto entry = config.at("cache").as_object().at("load").as_string();
+            auto entry = cache.at("load").as_string();
             boost::algorithm::to_lower(entry);
             if (entry == "sync")
                 cacheLoadStyle_ = CacheLoadStyle::SYNC;
@@ -1112,8 +1112,20 @@ ReportingETL::ReportingETL(
         {
             numDiffs_ = cache.at("num_diffs").as_int64();
         }
-        if (cache.contains("json") && cache.at("json").is_bool() &&
-            cache.at("json").as_bool())
-            backend_->cache().enableJsonCaching();
+        if (cache.contains("json") && cache.at("json").is_string())
+        {
+            auto entry = cache.at("json").as_string();
+            boost::algorithm::to_lower(entry);
+            bool full = false;
+            bool cacheJson = true;
+            if (entry == "full" || entry == "all")
+                full = true;
+            if (entry == "diff" || entry == "diffs")
+                full = false;
+            if (entry == "none" || entry == "no")
+                cacheJson = false;
+            if (cacheJson)
+                backend_->cache().enableJsonCaching(full);
+        }
     }
 }

@@ -36,7 +36,8 @@ class SimpleCache
     mutable std::shared_mutex mtx_;
     uint32_t latestSeq_ = 0;
     std::atomic_bool full_ = false;
-    std::atomic_bool cacheJson_ = false;
+    enum JsonCaching { NONE, DIFFS, FULL };
+    JsonCaching jsonCaching_ = NONE;
     // temporary set to prevent background thread from writing already deleted
     // data. not used when cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
@@ -74,7 +75,7 @@ public:
     setFull();
 
     void
-    enableJsonCaching();
+    enableJsonCaching(bool full);
 
     uint32_t
     latestLedgerSequence() const;
