@@ -45,7 +45,7 @@ SimpleCache::update(
         }
     }
     bool updateJsonCache =
-        isBackground ? jsonCaching_ == FULL : jsonCaching_ == DIFFS;
+        isBackground ? jsonCaching_ == FULL : jsonCaching_ != NONE;
     if (updateJsonCache)
     {
         for (auto const& obj : objs)
