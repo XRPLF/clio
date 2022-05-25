@@ -10,7 +10,7 @@ if(NOT cassandra)
         ExternalProject_Add(zlib_src
             PREFIX ${nih_cache_path}
             GIT_REPOSITORY https://github.com/madler/zlib.git
-            GIT_TAG master
+            GIT_TAG v1.2.12
             INSTALL_COMMAND ""
             BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}z.a
             )
@@ -33,7 +33,7 @@ if(NOT cassandra)
         ExternalProject_Add(krb5_src
             PREFIX ${nih_cache_path}
             GIT_REPOSITORY https://github.com/krb5/krb5.git
-            GIT_TAG master
+            GIT_TAG krb5-1.20
             UPDATE_COMMAND ""
             CONFIGURE_COMMAND autoreconf src && CFLAGS=-fcommon ./src/configure --enable-static --disable-shared
             BUILD_IN_SOURCE 1
@@ -66,7 +66,7 @@ if(NOT cassandra)
         ExternalProject_Add(libuv_src
             PREFIX ${nih_cache_path}
             GIT_REPOSITORY https://github.com/libuv/libuv.git
-            GIT_TAG v1.x
+            GIT_TAG v1.44.1
             INSTALL_COMMAND ""
             BUILD_BYPRODUCTS <BINARY_DIR>/${CMAKE_STATIC_LIBRARY_PREFIX}uv_a.a
             )
@@ -89,7 +89,7 @@ if(NOT cassandra)
     ExternalProject_Add(cassandra_src
         PREFIX ${nih_cache_path}
         GIT_REPOSITORY https://github.com/datastax/cpp-driver.git
-        GIT_TAG master
+        GIT_TAG 2.16.2
         CMAKE_ARGS
         -DLIBUV_ROOT_DIR=${BINARY_DIR}
         -DLIBUV_INCLUDE_DIR=${SOURCE_DIR}/include
