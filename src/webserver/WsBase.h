@@ -99,6 +99,9 @@ class WsSession : public WsBase,
             BOOST_LOG_TRIVIAL(info)
                 << "wsFail: " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
+
+            if (auto manager = subscriptions_.lock(); manager)
+                manager->cleanup(derived().shared_from_this());
         }
     }
 

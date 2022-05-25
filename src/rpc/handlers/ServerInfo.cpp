@@ -44,6 +44,8 @@ doServerInfo(Context const& context)
 
     info[JS(counters)] = boost::json::object{};
     info[JS(counters)].as_object()[JS(rpc)] = context.counters.report();
+    info[JS(counters)].as_object()["subscriptions"] =
+        context.subscriptions->report();
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
         {{"counters", "server_info"}}, context.clientIp, context.yield);
