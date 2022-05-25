@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 
-project(clio VERSION 0.2.0)
+project(clio)
 
 option(BUILD_TESTS "Build tests" TRUE)
 
@@ -10,6 +10,22 @@ if(VERBOSE)
   set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
 endif()
 
+if(NOT GIT_COMMIT_HASH)
+  if(VERBOSE)
+    message(WARNING "GIT_COMMIT_HASH not provided...looking for git")
+  endif()
+  find_package(Git)
+  if(Git_FOUND)
+      execute_process(COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=8
+          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE gch)
+      if(gch)
+          set(GIT_COMMIT_HASH "${gch}")
+          message(STATUS "Git commit: ${GIT_COMMIT_HASH}")
+          add_definitions(-DCLIO_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+      endif()
+  endif()
+endif() #git
+
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
@@ -17,14 +33,15 @@ target_include_directories(clio PUBLIC src)
 include(FetchContent)
 include(ExternalProject)
 include(CMake/settings.cmake)
+include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
 include(CMake/deps/Postgres.cmake)
 
-# configure_file(CMake/version-config.h include/version.h) # NOTE: Not used, but an idea how to handle versioning.
-
 target_sources(clio PRIVATE
+  ## Main
+  src/main/impl/Build.cpp
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
@@ -74,7 +91,7 @@ target_sources(clio PRIVATE
   # Utility
   src/rpc/handlers/Random.cpp)
 
-add_executable(clio_server src/main.cpp)
+add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)

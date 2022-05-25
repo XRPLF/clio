@@ -28,6 +28,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <main/Build.h>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -170,6 +171,12 @@ main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    if (std::string{argv[1]} == "-v" || std::string{argv[1]} == "--version")
+    {
+        std::cout << Build::getClioFullVersionString() << std::endl;
+        return EXIT_SUCCESS;
+    }
+
     auto const config = parse_config(argv[1]);
     if (!config)
     {
@@ -178,6 +185,10 @@ main(int argc, char* argv[])
     }
 
     initLogging(*config);
+
+    // Announce Clio version
+    BOOST_LOG_TRIVIAL(info)
+        << "Clio version: " << Build::getClioFullVersionString();
 
     auto ctx = parse_certs(*config);
     auto ctxRef = ctx

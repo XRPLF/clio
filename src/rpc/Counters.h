@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <shared_mutex>
 #include <string>
+#include <unordered_map>
 
 namespace RPC {
 
