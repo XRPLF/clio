@@ -106,6 +106,14 @@ make_error(Error err)
 boost::json::object
 make_error(Status const& status)
 {
+    if (status.error == ripple::rpcUNKNOWN)
+    {
+        return {
+            {"error", status.message},
+            {"type", "response"},
+            {"status", "error"}};
+    }
+
     boost::json::object json;
     ripple::RPC::ErrorInfo const& info(
         ripple::RPC::get_error_info(status.error));

@@ -103,6 +103,14 @@ struct Status
 
     Status(Error error_) : error(error_){};
 
+    // HACK. Some rippled handlers explicitly specify errors.
+    // This means that we have to be able to duplicate this
+    // functionality.
+    Status(std::string const& message_)
+        : error(ripple::rpcUNKNOWN), message(message_)
+    {
+    }
+
     Status(Error error_, std::string message_)
         : error(error_), message(message_)
     {

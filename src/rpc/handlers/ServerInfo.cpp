@@ -2,6 +2,7 @@
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <main/Build.h>
 #include <rpc/RPCHelpers.h>
 
 namespace RPC {
@@ -49,6 +50,7 @@ doServerInfo(Context const& context)
         {{"counters", "server_info"}}, context.clientIp, context.yield);
 
     info[JS(load_factor)] = 1;
+    info["clio_version"] = Build::getClioVersionString();
     if (serverInfoRippled && !serverInfoRippled->contains(JS(error)))
     {
         try
@@ -57,6 +59,7 @@ doServerInfo(Context const& context)
             auto& rippledInfo = rippledResult.at(JS(info)).as_object();
             info[JS(load_factor)] = rippledInfo[JS(load_factor)];
             info[JS(validation_quorum)] = rippledInfo[JS(validation_quorum)];
+            info["rippled_version"] = rippledInfo[JS(build_version)];
         }
         catch (std::exception const&)
         {
