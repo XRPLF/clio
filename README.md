@@ -5,8 +5,8 @@
 report any issues they discover. Version 1.0 coming soon.
 
 # Clio
-Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over websocket or JSON-RPC. Validated
-historical ledger and transaction data is stored in a more space efficient format,
+Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
+historical ledger and transaction data are stored in a more space-efficient format,
 using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
 allowing for scalable read throughput. Multiple Clio nodes can share
 access to the same dataset, allowing for a highly available cluster of Clio nodes,
@@ -15,9 +15,9 @@ without the need for redundant data storage or computation.
 Clio offers the full rippled API, with the caveat that Clio by default only returns validated data.
 This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
 Other non-validated data is also not returned, such as information about queued transactions.
-For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node, and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
+For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
 
-Clio does not connect to the peer to peer network. Instead, Clio extracts data from a specified rippled node. Running Clio requires access to a rippled node
+Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
 from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
 
 
@@ -28,11 +28,11 @@ from which data can be extracted. The rippled node does not need to be running o
 
 ## Building
 
-Clio is built with cmake. Clio requires c++20, and boost 1.75.0 or later.
+Clio is built with CMake. Clio requires c++20, and boost 1.75.0 or later.
 
-Use these instructions to build a Clio executable from source. These instructions were tested on Ubuntu 20.04 LTS.
+Use these instructions to build a Clio executable from the source. These instructions were tested on Ubuntu 20.04 LTS.
 
-```
+```sh
 # Install dependencies
   sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake
 
@@ -52,28 +52,30 @@ Use these instructions to build a Clio executable from source. These instruction
 ```
 
 ## Running
-`./clio_server config.json`
+```sh
+./clio_server config.json
+```
 
 Clio needs access to a rippled server. The config files of rippled and Clio need
 to match in a certain sense.
 Clio needs to know:
-- the ip of rippled
-- the port on which rippled is accepting unencrypted websocket connections
+- the IP of rippled
+- the port on which rippled is accepting unencrypted WebSocket connections
 - the port on which rippled is handling gRPC requests
 
 rippled needs to open:
 - a port to accept unencrypted websocket connections
-- a port to handle gRPC requests, with the ip(s) of Clio specified in the `secure_gateway` entry
+- a port to handle gRPC requests, with the IP(s) of Clio specified in the `secure_gateway` entry
 
-The example configs of rippled and Clio are setup such that minimal changes are
+The example configs of rippled and Clio are setups such that minimal changes are
 required. When running locally, the only change needed is to uncomment the `port_grpc`
 section of the rippled config. When running Clio and rippled on separate machines,
 in addition to uncommenting the `port_grpc` section, a few other steps must be taken:
-1. change the `ip` of the first entry of `etl_sources` to the ip where your rippled
+1. change the `ip` of the first entry of `etl_sources` to the IP where your rippled
 server is running
-2. open a public, unencrypted websocket port on your rippled server
-3. change the ip specified in `secure_gateway` of `port_grpc` section of the rippled config
-to the ip of your Clio server. This entry can take the form of a comma separated list if
+2. open a public, unencrypted WebSocket port on your rippled server
+3. change the IP specified in `secure_gateway` of `port_grpc` section of the rippled config
+to the IP of your Clio server. This entry can take the form of a comma-separated list if
 you are running multiple Clio nodes.
 
 Once your config files are ready, start rippled and Clio. It doesn't matter which you
@@ -87,7 +89,7 @@ the most recent ledger on the network, and then backfill. If Clio is extracting 
 from rippled, and then rippled is stopped for a significant amount of time and then restarted, rippled
 will take time to backfill to the next ledger that Clio wants. The time it takes is proportional
 to the amount of time rippled was offline for. Also be aware that the amount rippled backfills
-is dependent on the online_delete and ledger_history config values; if these values
+are dependent on the online_delete and ledger_history config values; if these values
 are small, and rippled is stopped for a significant amount of time, rippled may never backfill
 to the ledger that Clio wants. To avoid this situation, it is advised to keep history
 proportional to the amount of time that you expect rippled to be offline. For example, if you
@@ -109,7 +111,7 @@ This can take some time, and depends on database throughput. With a moderately f
 database, this should take less than 10 minutes. If you did not properly set `secure_gateway`
 in the `port_grpc` section of rippled, this step will fail. Once the first ledger
 is fully downloaded, Clio only needs to extract the changed data for each ledger,
-so extraction is much faster and Clio can keep up with rippled in real time. Even under
+so extraction is much faster and Clio can keep up with rippled in real-time. Even under
 intense load, Clio should not lag behind the network, as Clio is not processing the data,
 and is simply writing to a database. The throughput of Clio is dependent on the throughput
 of your database, but a standard Cassandra or Scylla deployment can handle
@@ -143,3 +145,26 @@ are doing this, be aware that database traffic will be flowing across regions,
 which can cause high latencies. A possible alternative to this is to just deploy
 a database in each region, and the Clio nodes in each region use their region's database.
 This is effectively two systems.
+
+## Logging
+Clio provides several logging options, all are configurable via the config file and are detailed below.
+
+`log_level`: The minimum level of severity at which the log message will be outputted. 
+Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. 
+
+`log_to_console`: Enable/disable log output to console. Options are `true`/`false`.
+
+`log_to_file`: Enable/disable log saving to files in persistent local storage.  Options are `true`/`false`.
+
+`log_directory`: Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it.
+
+`log_rotation_size`: The max size of the log file in **megabytes** before it will rotate into a smaller file.
+
+`log_directory_max_size`: The max size of the log directory in **megabytes** before old log files will be 
+deleted to free up space.
+
+`log_rotation_hour_interval`: The time interval in **hours** after the last log rotation to automatically
+rotate the current log file.
+
+Note, time-based log rotation occurs dependently on size-based log rotation, where if a
+size-based log rotation occurs, the timer for the time-based rotation will reset.
