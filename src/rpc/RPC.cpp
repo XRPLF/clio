@@ -238,7 +238,7 @@ buildResponse(Context const& ctx)
     {
         BOOST_LOG_TRIVIAL(error)
             << __func__ << " caught exception : " << err.what();
-        return Status{Error::rpcINTERNAL, err.what()};
+        return Status{Error::rpcINTERNAL};
     }
 }
 
