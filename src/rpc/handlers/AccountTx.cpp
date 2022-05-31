@@ -192,6 +192,7 @@ doAccountTx(Context const& context)
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(date)] = txnPlusMeta.date;
         }
+        obj[JS(validated)] = true;
 
         txns.push_back(obj);
         if (!minReturnedIndex || txnPlusMeta.ledgerSequence < *minReturnedIndex)
