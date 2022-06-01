@@ -73,6 +73,7 @@ doLedgerData(Context const& context)
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+
     boost::json::object header;
     // no marker means this is the first call, so we return header info
     if (!marker)
@@ -105,6 +106,13 @@ doLedgerData(Context const& context)
 
             response[JS(ledger)] = header;
         }
+    }
+    else
+    {
+        if (!outOfOrder &&
+            !context.backend->fetchLedgerObject(
+                *marker, lgrInfo.seq, context.yield))
+            return Status{Error::rpcINVALID_PARAMS, "markerDoesNotExist"};
     }
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
