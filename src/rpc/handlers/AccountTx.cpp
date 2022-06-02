@@ -99,31 +99,18 @@ doAccountTx(Context const& context)
             cursor = {maxIndex, INT32_MAX};
     }
 
-    if (request.contains(JS(ledger_index)))
+    if (request.contains(JS(ledger_index)) || request.contains(JS(ledger_hash)))
     {
-        if (!request.at(JS(ledger_index)).is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "ledgerIndexNotNumber"};
+        if (request.contains(JS(ledger_index_max)) ||
+            request.contains(JS(ledger_index_min)))
+            return Status{
+                Error::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"};
 
-        auto ledgerIndex =
-            boost::json::value_to<std::uint32_t>(request.at(JS(ledger_index)));
-        maxIndex = minIndex = ledgerIndex;
-    }
+        auto v = ledgerInfoFromRequest(context);
+        if (auto status = std::get_if<Status>(&v))
+            return *status;
 
-    if (request.contains(JS(ledger_hash)))
-    {
-        if (!request.at(JS(ledger_hash)).is_string())
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
-
-        ripple::uint256 ledgerHash;
-        if (!ledgerHash.parseHex(
-                request.at(JS(ledger_hash)).as_string().c_str()))
-            return RPC::Status{
-                RPC::Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
-
-        auto lgrInfo =
-            context.backend->fetchLedgerByHash(ledgerHash, context.yield);
-        maxIndex = minIndex = lgrInfo->seq;
+        maxIndex = minIndex = std::get<ripple::LedgerInfo>(v).seq;
     }
 
     if (!cursor)
