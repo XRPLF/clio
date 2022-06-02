@@ -1,6 +1,6 @@
 #include <boost/algorithm/string.hpp>
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
+#include <clio/backend/BackendInterface.h>
+#include <clio/rpc/RPCHelpers.h>
 namespace RPC {
 
 std::optional<bool>
@@ -557,12 +557,7 @@ ledgerInfoFromRequest(Context const& ctx)
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-        auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
-
-        if (!lgrInfo)
-            return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
-
-        return *lgrInfo;
+        return ctx.app.backend().fetchLedgerByHash(ledgerHash, ctx.yield);
     }
 
     auto indexValue = ctx.params.contains("ledger_index")
@@ -592,7 +587,7 @@ ledgerInfoFromRequest(Context const& ctx)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerIndexMalformed"};
 
     auto lgrInfo =
-        ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
+        ctx.app.backend().fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -823,7 +818,7 @@ read(
     ripple::LedgerInfo const& lgrInfo,
     Context const& context)
 {
-    if (auto const blob = context.backend->fetchLedgerObject(
+    if (auto const blob = context.app.backend().fetchLedgerObject(
             keylet.key, lgrInfo.seq, context.yield);
         blob)
     {
