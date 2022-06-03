@@ -11,6 +11,7 @@ class Subscription
 {
     boost::asio::io_context::strand strand_;
     std::unordered_set<std::shared_ptr<WsBase>> subscribers_ = {};
+    std::atomic_uint64_t subCount_ = 0;
 
 public:
     Subscription() = delete;
@@ -31,15 +32,23 @@ public:
 
     void
     publish(std::shared_ptr<Message>& message);
+
+    std::uint64_t
+    count()
+    {
+        return subCount_.load();
+    }
 };
 
 template <class Key>
 class SubscriptionMap
 {
-    using subscribers = std::unordered_set<std::shared_ptr<WsBase>>;
+    using ptr = std::shared_ptr<WsBase>;
+    using subscribers = std::set<ptr>;
 
     boost::asio::io_context::strand strand_;
     std::unordered_map<Key, subscribers> subscribers_ = {};
+    std::atomic_uint64_t subCount_ = 0;
 
 public:
     SubscriptionMap() = delete;
@@ -60,10 +69,18 @@ public:
 
     void
     publish(std::shared_ptr<Message>& message, Key const& key);
+
+    std::uint64_t
+    count()
+    {
+        return subCount_.load();
+    }
 };
 
 class SubscriptionManager
 {
+    using session_ptr = std::shared_ptr<WsBase>;
+
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
     std::optional<boost::asio::io_context::work> work_;
@@ -133,9 +150,7 @@ public:
     }
 
     boost::json::object
-    subLedger(
-        boost::asio::yield_context& yield,
-        std::shared_ptr<WsBase>& session);
+    subLedger(boost::asio::yield_context& yield, session_ptr session);
 
     void
     pubLedger(
@@ -145,13 +160,13 @@ public:
         std::uint32_t txnCount);
 
     void
-    unsubLedger(std::shared_ptr<WsBase>& session);
+    unsubLedger(session_ptr session);
 
     void
-    subTransactions(std::shared_ptr<WsBase>& session);
+    subTransactions(session_ptr session);
 
     void
-    unsubTransactions(std::shared_ptr<WsBase>& session);
+    unsubTransactions(session_ptr session);
 
     void
     pubTransaction(
@@ -159,32 +174,28 @@ public:
         ripple::LedgerInfo const& lgrInfo);
 
     void
-    subAccount(
-        ripple::AccountID const& account,
-        std::shared_ptr<WsBase>& session);
+    subAccount(ripple::AccountID const& account, session_ptr& session);
 
     void
-    unsubAccount(
-        ripple::AccountID const& account,
-        std::shared_ptr<WsBase>& session);
+    unsubAccount(ripple::AccountID const& account, session_ptr& session);
 
     void
-    subBook(ripple::Book const& book, std::shared_ptr<WsBase>& session);
+    subBook(ripple::Book const& book, session_ptr session);
 
     void
-    unsubBook(ripple::Book const& book, std::shared_ptr<WsBase>& session);
+    unsubBook(ripple::Book const& book, session_ptr session);
 
     void
-    subManifest(std::shared_ptr<WsBase>& session);
+    subManifest(session_ptr session);
 
     void
-    unsubManifest(std::shared_ptr<WsBase>& session);
+    unsubManifest(session_ptr session);
 
     void
-    subValidation(std::shared_ptr<WsBase>& session);
+    subValidation(session_ptr session);
 
     void
-    unsubValidation(std::shared_ptr<WsBase>& session);
+    unsubValidation(session_ptr session);
 
     void
     forwardProposedTransaction(boost::json::object const& response);
@@ -196,26 +207,51 @@ public:
     forwardValidation(boost::json::object const& response);
 
     void
-    subProposedAccount(
-        ripple::AccountID const& account,
-        std::shared_ptr<WsBase>& session);
+    subProposedAccount(ripple::AccountID const& account, session_ptr session);
 
     void
-    unsubProposedAccount(
-        ripple::AccountID const& account,
-        std::shared_ptr<WsBase>& session);
+    unsubProposedAccount(ripple::AccountID const& account, session_ptr session);
 
     void
-    subProposedTransactions(std::shared_ptr<WsBase>& session);
+    subProposedTransactions(session_ptr session);
 
     void
-    unsubProposedTransactions(std::shared_ptr<WsBase>& session);
+    unsubProposedTransactions(session_ptr session);
+
+    void
+    cleanup(session_ptr session);
+
+    boost::json::object
+    report()
+    {
+        boost::json::object counts = {};
+
+        counts["ledger"] = ledgerSubscribers_.count();
+        counts["transactions"] = txSubscribers_.count();
+        counts["transactions_proposed"] = txProposedSubscribers_.count();
+        counts["manifests"] = manifestSubscribers_.count();
+        counts["validations"] = validationsSubscribers_.count();
+        counts["account"] = accountSubscribers_.count();
+        counts["accounts_proposed"] = accountProposedSubscribers_.count();
+        counts["books"] = bookSubscribers_.count();
+
+        return counts;
+    }
 
 private:
     void
-    sendAll(
-        std::string const& pubMsg,
-        std::unordered_set<std::shared_ptr<WsBase>>& subs);
+    sendAll(std::string const& pubMsg, std::unordered_set<session_ptr>& subs);
+
+    /**
+     * This is how we chose to cleanup subscriptions that have been closed.
+     * Each time we add a subscriber, we add the opposite lambda that
+     * unsubscribes that subscriber when cleanup is called with the session that
+     * closed.
+     */
+    using CleanupFunction = std::function<void(session_ptr)>;
+    std::mutex cleanupMtx_;
+    std::unordered_map<session_ptr, std::vector<CleanupFunction>>
+        cleanupFuncs_ = {};
 };
 
 #endif  // SUBSCRIPTION_MANAGER_H

@@ -275,10 +275,28 @@ subscribeToBooks(
     }
 }
 
+void
+unsubscribeToBooks(
+    std::vector<ripple::Book> const& books,
+    std::shared_ptr<WsBase> session,
+    SubscriptionManager& manager)
+{
+    for (auto const& book : books)
+    {
+        manager.unsubBook(book, session);
+    }
+}
+
 Result
 doSubscribe(Context const& context)
 {
     auto request = context.params;
+
+    if (!request.contains(JS(streams)) && !request.contains(JS(accounts)) &&
+        !request.contains(JS(accounts_proposed)) &&
+        !request.contains(JS(books)))
+        return Status{
+            Error::rpcINVALID_PARAMS, "does not contain valid subscription"};
 
     if (request.contains(JS(streams)))
     {
@@ -315,6 +333,7 @@ doSubscribe(Context const& context)
         if (status)
             return status;
     }
+
     std::vector<ripple::Book> books;
     boost::json::array snapshot;
     if (request.contains(JS(books)))
@@ -355,6 +374,12 @@ doUnsubscribe(Context const& context)
 {
     auto request = context.params;
 
+    if (!request.contains(JS(streams)) && !request.contains(JS(accounts)) &&
+        !request.contains(JS(accounts_proposed)) &&
+        !request.contains(JS(books)))
+        return Status{
+            Error::rpcINVALID_PARAMS, "does not contain valid subscription"};
+
     if (request.contains(JS(streams)))
     {
         if (!request.at(JS(streams)).is_array())
@@ -391,6 +416,22 @@ doUnsubscribe(Context const& context)
             return status;
     }
 
+    std::vector<ripple::Book> books;
+    if (request.contains(JS(books)))
+    {
+        auto parsed =
+            validateAndGetBooks(context.yield, request, context.backend);
+
+        if (auto status = std::get_if<Status>(&parsed))
+            return *status;
+
+        auto [bks, snap] =
+            std::get<std::pair<std::vector<ripple::Book>, boost::json::array>>(
+                parsed);
+
+        books = std::move(bks);
+    }
+
     if (request.contains(JS(streams)))
         unsubscribeToStreams(request, context.session, *context.subscriptions);
 
@@ -400,6 +441,9 @@ doUnsubscribe(Context const& context)
     if (request.contains(JS(accounts_proposed)))
         unsubscribeToAccountsProposed(
             request, context.session, *context.subscriptions);
+
+    if (request.contains("books"))
+        unsubscribeToBooks(books, context.session, *context.subscriptions);
 
     boost::json::object response = {{"status", "success"}};
     return response;

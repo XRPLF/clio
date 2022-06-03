@@ -30,6 +30,7 @@ SimpleCache::update(
             {
                 if (isBackground && deletes_.count(obj.key))
                     continue;
+
                 auto& e = map_[obj.key];
                 if (seq > e.seq)
                 {
@@ -45,6 +46,7 @@ SimpleCache::update(
         }
     }
 }
+
 std::optional<LedgerObject>
 SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
@@ -58,6 +60,7 @@ SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
         return {};
     return {{e->first, e->second.blob}};
 }
+
 std::optional<LedgerObject>
 SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 {

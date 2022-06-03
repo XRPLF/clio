@@ -228,6 +228,7 @@ public:
                     std::move(req_),
                     lambda_,
                     backend_,
+                    subscriptions_,
                     balancer_,
                     etl_,
                     dosGuard_,
@@ -275,6 +276,7 @@ handle_request(
         request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
     std::shared_ptr<BackendInterface const> backend,
+    std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard,
@@ -349,7 +351,15 @@ handle_request(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
 
         std::optional<RPC::Context> context = RPC::make_HttpContext(
-            yc, request, backend, nullptr, balancer, etl, *range, counters, ip);
+            yc,
+            request,
+            backend,
+            subscriptions,
+            balancer,
+            etl,
+            *range,
+            counters,
+            ip);
 
         if (!context)
             return send(httpResponse(

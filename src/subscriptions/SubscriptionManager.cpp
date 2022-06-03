@@ -5,25 +5,24 @@
 template <class T>
 inline void
 sendToSubscribers(
-    std::shared_ptr<Message>& message,
+    std::shared_ptr<Message> const& message,
     T& subscribers,
-    boost::asio::io_context::strand& strand)
+    std::atomic_uint64_t& counter)
 {
-    boost::asio::post(strand, [&subscribers, message]() {
-        for (auto it = subscribers.begin(); it != subscribers.end();)
+    for (auto it = subscribers.begin(); it != subscribers.end();)
+    {
+        auto& session = *it;
+        if (session->dead())
         {
-            auto& session = *it;
-            if (session->dead())
-            {
-                it = subscribers.erase(it);
-            }
-            else
-            {
-                session->send(message);
-                ++it;
-            }
+            it = subscribers.erase(it);
+            --counter;
         }
-    });
+        else
+        {
+            session->send(message);
+            ++it;
+        }
+    }
 }
 
 template <class T>
@@ -31,11 +30,13 @@ inline void
 addSession(
     std::shared_ptr<WsBase> session,
     T& subscribers,
-    boost::asio::io_context::strand& strand)
+    std::atomic_uint64_t& counter)
 {
-    boost::asio::post(strand, [&subscribers, s = std::move(session)]() {
-        subscribers.emplace(s);
-    });
+    if (!subscribers.contains(session))
+    {
+        subscribers.insert(session);
+        ++counter;
+    }
 }
 
 template <class T>
@@ -43,29 +44,37 @@ inline void
 removeSession(
     std::shared_ptr<WsBase> session,
     T& subscribers,
-    boost::asio::io_context::strand& strand)
+    std::atomic_uint64_t& counter)
 {
-    boost::asio::post(strand, [&subscribers, s = std::move(session)]() {
-        subscribers.erase(s);
-    });
+    if (subscribers.contains(session))
+    {
+        subscribers.erase(session);
+        --counter;
+    }
 }
 
 void
 Subscription::subscribe(std::shared_ptr<WsBase> const& session)
 {
-    addSession(session, subscribers_, strand_);
+    boost::asio::post(strand_, [this, session]() {
+        addSession(session, subscribers_, subCount_);
+    });
 }
 
 void
 Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
 {
-    removeSession(session, subscribers_, strand_);
+    boost::asio::post(strand_, [this, session]() {
+        removeSession(session, subscribers_, subCount_);
+    });
 }
 
 void
 Subscription::publish(std::shared_ptr<Message>& message)
 {
-    sendToSubscribers(message, subscribers_, strand_);
+    boost::asio::post(strand_, [this, message]() {
+        sendToSubscribers(message, subscribers_, subCount_);
+    });
 }
 
 template <class Key>
@@ -74,7 +83,9 @@ SubscriptionMap<Key>::subscribe(
     std::shared_ptr<WsBase> const& session,
     Key const& account)
 {
-    addSession(session, subscribers_[account], strand_);
+    boost::asio::post(strand_, [this, session, account]() {
+        addSession(session, subscribers_[account], subCount_);
+    });
 }
 
 template <class Key>
@@ -83,7 +94,22 @@ SubscriptionMap<Key>::unsubscribe(
     std::shared_ptr<WsBase> const& session,
     Key const& account)
 {
-    removeSession(session, subscribers_[account], strand_);
+    boost::asio::post(strand_, [this, account, session]() {
+        if (!subscribers_.contains(account))
+            return;
+
+        if (!subscribers_[account].contains(session))
+            return;
+
+        --subCount_;
+
+        subscribers_[account].erase(session);
+
+        if (subscribers_[account].size() == 0)
+        {
+            subscribers_.erase(account);
+        }
+    });
 }
 
 template <class Key>
@@ -92,7 +118,12 @@ SubscriptionMap<Key>::publish(
     std::shared_ptr<Message>& message,
     Key const& account)
 {
-    sendToSubscribers(message, subscribers_[account], strand_);
+    boost::asio::post(strand_, [this, account, message]() {
+        if (!subscribers_.contains(account))
+            return;
+
+        sendToSubscribers(message, subscribers_[account], subCount_);
+    });
 }
 
 boost::json::object
@@ -122,7 +153,7 @@ getLedgerPubMessage(
 boost::json::object
 SubscriptionManager::subLedger(
     boost::asio::yield_context& yield,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<WsBase> session)
 {
     ledgerSubscribers_.subscribe(session);
 
@@ -146,19 +177,19 @@ SubscriptionManager::subLedger(
 }
 
 void
-SubscriptionManager::unsubLedger(std::shared_ptr<WsBase>& session)
+SubscriptionManager::unsubLedger(std::shared_ptr<WsBase> session)
 {
     ledgerSubscribers_.unsubscribe(session);
 }
 
 void
-SubscriptionManager::subTransactions(std::shared_ptr<WsBase>& session)
+SubscriptionManager::subTransactions(std::shared_ptr<WsBase> session)
 {
     txSubscribers_.subscribe(session);
 }
 
 void
-SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase>& session)
+SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase> session)
 {
     txSubscribers_.unsubscribe(session);
 }
@@ -169,6 +200,11 @@ SubscriptionManager::subAccount(
     std::shared_ptr<WsBase>& session)
 {
     accountSubscribers_.subscribe(session, account);
+
+    std::unique_lock lk(cleanupMtx_);
+    cleanupFuncs_[session].emplace_back([this, account](session_ptr session) {
+        unsubAccount(account, session);
+    });
 }
 
 void
@@ -182,15 +218,19 @@ SubscriptionManager::unsubAccount(
 void
 SubscriptionManager::subBook(
     ripple::Book const& book,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<WsBase> session)
 {
     bookSubscribers_.subscribe(session, book);
+
+    std::unique_lock lk(cleanupMtx_);
+    cleanupFuncs_[session].emplace_back(
+        [this, book](session_ptr session) { unsubBook(book, session); });
 }
 
 void
 SubscriptionManager::unsubBook(
     ripple::Book const& book,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<WsBase> session)
 {
     bookSubscribers_.unsubscribe(session, book);
 }
@@ -335,31 +375,31 @@ SubscriptionManager::forwardValidation(boost::json::object const& response)
 void
 SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<WsBase> session)
 {
     accountProposedSubscribers_.subscribe(session, account);
 }
 
 void
-SubscriptionManager::subManifest(std::shared_ptr<WsBase>& session)
+SubscriptionManager::subManifest(std::shared_ptr<WsBase> session)
 {
     manifestSubscribers_.subscribe(session);
 }
 
 void
-SubscriptionManager::unsubManifest(std::shared_ptr<WsBase>& session)
+SubscriptionManager::unsubManifest(std::shared_ptr<WsBase> session)
 {
     manifestSubscribers_.unsubscribe(session);
 }
 
 void
-SubscriptionManager::subValidation(std::shared_ptr<WsBase>& session)
+SubscriptionManager::subValidation(std::shared_ptr<WsBase> session)
 {
     validationsSubscribers_.subscribe(session);
 }
 
 void
-SubscriptionManager::unsubValidation(std::shared_ptr<WsBase>& session)
+SubscriptionManager::unsubValidation(std::shared_ptr<WsBase> session)
 {
     validationsSubscribers_.unsubscribe(session);
 }
@@ -367,19 +407,34 @@ SubscriptionManager::unsubValidation(std::shared_ptr<WsBase>& session)
 void
 SubscriptionManager::unsubProposedAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<WsBase> session)
 {
     accountProposedSubscribers_.unsubscribe(session, account);
 }
 
 void
-SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase>& session)
+SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase> session)
 {
     txProposedSubscribers_.subscribe(session);
 }
 
 void
-SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase>& session)
+SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase> session)
 {
     txProposedSubscribers_.unsubscribe(session);
+}
+
+void
+SubscriptionManager::cleanup(std::shared_ptr<WsBase> session)
+{
+    std::unique_lock lk(cleanupMtx_);
+    if (!cleanupFuncs_.contains(session))
+        return;
+
+    for (auto f : cleanupFuncs_[session])
+    {
+        f(session);
+    }
+
+    cleanupFuncs_.erase(session);
 }

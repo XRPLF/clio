@@ -17,6 +17,7 @@ class SimpleCache
         uint32_t seq = 0;
         Blob blob;
     };
+
     std::map<ripple::uint256, CacheEntry> map_;
     mutable std::shared_mutex mtx_;
     uint32_t latestSeq_ = 0;
