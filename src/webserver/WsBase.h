@@ -9,6 +9,7 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
+#include <etl/ReportingETL.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <subscriptions/Message.h>
@@ -322,7 +323,27 @@ public:
         }
 
         std::string responseStr = boost::json::serialize(response);
-        dosGuard_.add(*ip, responseStr.size());
+        boost::json::array warnings;
+        auto warningFlag = false;
+
+        if (!dosGuard_.add(*ip, responseStr.size()))
+        {
+            warnings.emplace_back("Too many requests");
+            warningFlag = true;
+        }
+        auto lastPublishAge = etl_->lastPublishAgeSeconds();
+        if (lastPublishAge >= 60)
+        {
+            warnings.emplace_back("This server may be out of date");
+            warningFlag = true;
+        }
+        // reserialize if a warning was appended
+        if (warningFlag)
+        {
+            auto& result = response["result"].as_object();
+            result["warning"] = warnings;
+            responseStr = boost::json::serialize(response);
+        }
         send(std::move(responseStr));
     }
 
