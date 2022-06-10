@@ -764,7 +764,7 @@ traverseOwnedNodes(
                 backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
             if (!ownerDir)
-                return Status(ripple::rpcACT_NOT_FOUND);
+                break;
 
             ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
             ripple::SLE sle{it, currentIndex.key};

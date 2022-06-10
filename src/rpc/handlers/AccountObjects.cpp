@@ -47,9 +47,10 @@ doAccountNFTs(Context const& context)
     if (!accountID)
         return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
 
-    // TODO: just check for existence without pulling
-    if (!context.backend->fetchLedgerObject(
-            ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield))
+    auto rawAcct = context.backend->fetchLedgerObject(
+        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+
+    if (!rawAcct)
         return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::uint32_t limit = 200;

@@ -58,6 +58,12 @@ doAccountChannels(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
+    auto rawAcct = context.backend->fetchLedgerObject(
+        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+
+    if (!rawAcct)
+        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+
     ripple::AccountID destAccount;
     if (auto const status =
             getAccount(request, destAccount, JS(destination_account));
