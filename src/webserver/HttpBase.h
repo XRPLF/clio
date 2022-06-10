@@ -318,11 +318,18 @@ handle_request(
         return res;
     };
 
+    // The DOS guard allocates tickets to concurrent requests.
+    // The resource is automatically checked in when ticket goes out of scope.
+    auto ticket = dosGuard.checkout(ip);
+    if (!ticket.isValid())
+        return send(httpResponse(
+            http::status::ok,
+            "application/json",
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
+
     if (req.method() == http::verb::get && req.body() == "")
-    {
-        send(httpResponse(http::status::ok, "text/html", defaultResponse));
-        return;
-    }
+        return send(
+            httpResponse(http::status::ok, "text/html", defaultResponse));
 
     if (req.method() != http::verb::post)
         return send(httpResponse(
