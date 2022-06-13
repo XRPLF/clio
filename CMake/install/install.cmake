@@ -6,7 +6,7 @@ install(TARGETS clio_server DESTINATION bin)
 
 #install(FILES example-config.json DESTINATION etc RENAME config.json)
 file(READ example-config.json config)
-string(REGEX REPLACE "./clio.log" "/var/log/clio/clio.log" config "${config}")
+string(REGEX REPLACE "./clio_log" "/var/log/clio/" config "${config}")
 file(WRITE ${CMAKE_BINARY_DIR}/install-config.json "${config}")
 install(FILES ${CMAKE_BINARY_DIR}/install-config.json DESTINATION etc RENAME config.json)
 

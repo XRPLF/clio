@@ -30,7 +30,12 @@
         "port":51233
     },
     "log_level":"debug",
-    "log_file":"./clio.log",
+    "log_to_console": true,
+    "log_to_file": true,
+    "log_directory":"./clio_log",
+    "log_rotation_size": 2048,
+    "log_directory_max_size": 51200,
+    "log_rotation_hour_interval": 12,
     "online_delete":0,
     "extractor_threads":8,
     "read_only":false

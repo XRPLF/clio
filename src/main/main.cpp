@@ -104,45 +104,77 @@ parse_certs(boost::json::object const& config)
 void
 initLogging(boost::json::object const& config)
 {
+    namespace src = boost::log::sources;
+    namespace keywords = boost::log::keywords;
+    namespace sinks = boost::log::sinks;
+    namespace trivial = boost::log::trivial;
     boost::log::add_common_attributes();
     std::string format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%";
-    boost::log::add_console_log(
-        std::cout, boost::log::keywords::format = format);
-    if (config.contains("log_file"))
+    if (config.contains("log_to_console") &&
+        config.at("log_to_console").as_bool())
     {
-        boost::log::add_file_log(
-            config.at("log_file").as_string().c_str(),
-            boost::log::keywords::format = format,
-            boost::log::keywords::open_mode = std::ios_base::app);
+        boost::log::add_console_log(std::cout, keywords::format = format);
+    }
+    if (config.contains("log_to_file") && config.at("log_to_file").as_bool() &&
+        config.contains("log_directory"))
+    {
+        if (!config.at("log_directory").is_string())
+            throw std::runtime_error("log directory must be a string");
+        boost::filesystem::path dirPath{
+            config.at("log_directory").as_string().c_str()};
+        if (!boost::filesystem::exists(dirPath))
+            boost::filesystem::create_directories(dirPath);
+        const uint64_t rotationSize = config.contains("log_rotation_size")
+            ? config.at("log_rotation_size").as_uint64() * 1024 * 1024
+            : 2 * 1024 * 1024 * 1024u;
+        const uint64_t rotationPeriod =
+            config.contains("log_rotation_hour_interval")
+            ? config.at("log_rotation_hour_interval").as_uint64()
+            : 12u;
+        const uint64_t dirSize = config.contains("log_directory_max_size")
+            ? config.at("log_directory_max_size").as_uint64() * 1024 * 1024
+            : 50 * 1024 * 1024 * 1024u;
+        auto fileSink = boost::log::add_file_log(
+            keywords::file_name = dirPath / "clio.log",
+            keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
+            keywords::auto_flush = true,
+            keywords::format = format,
+            keywords::open_mode = std::ios_base::app,
+            keywords::rotation_size = rotationSize,
+            keywords::time_based_rotation =
+                sinks::file::rotation_at_time_interval(
+                    boost::posix_time::hours(rotationPeriod)));
+        fileSink->locked_backend()->set_file_collector(
+            sinks::file::make_collector(
+                keywords::target = dirPath, keywords::max_size = dirSize));
+        fileSink->locked_backend()->scan_for_files();
     }
     auto const logLevel = config.contains("log_level")
         ? config.at("log_level").as_string()
         : "info";
     if (boost::iequals(logLevel, "trace"))
         boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::trace);
+            trivial::severity >= trivial::trace);
     else if (boost::iequals(logLevel, "debug"))
         boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::debug);
+            trivial::severity >= trivial::debug);
     else if (boost::iequals(logLevel, "info"))
-        boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::info);
+        boost::log::core::get()->set_filter(trivial::severity >= trivial::info);
     else if (
         boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
         boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::warning);
+            trivial::severity >= trivial::warning);
     else if (boost::iequals(logLevel, "error"))
         boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::error);
+            trivial::severity >= trivial::error);
     else if (boost::iequals(logLevel, "fatal"))
         boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::fatal);
+            trivial::severity >= trivial::fatal);
     else
     {
         BOOST_LOG_TRIVIAL(warning) << "Unrecognized log level: " << logLevel
                                    << ". Setting log level to info";
-        boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::info);
+        boost::log::core::get()->set_filter(trivial::severity >= trivial::info);
     }
     BOOST_LOG_TRIVIAL(info) << "Log level = " << logLevel;
 }
