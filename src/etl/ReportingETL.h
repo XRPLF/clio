@@ -130,19 +130,12 @@ private:
     /// server_info
     std::chrono::time_point<std::chrono::system_clock> lastPublish_;
 
-    mutable std::mutex publishTimeMtx_;
-
-    std::chrono::time_point<std::chrono::system_clock>
-    getLastPublish() const
-    {
-        std::unique_lock<std::mutex> lck(publishTimeMtx_);
-        return lastPublish_;
-    }
+    mutable std::shared_mutex publishTimeMtx_;
 
     void
     setLastPublish()
     {
-        std::unique_lock<std::mutex> lck(publishTimeMtx_);
+        std::unique_lock lck(publishTimeMtx_);
         lastPublish_ = std::chrono::system_clock::now();
     }
 
@@ -322,12 +315,24 @@ public:
         result["read_only"] = readOnly_;
         auto last = getLastPublish();
         if (last.time_since_epoch().count() != 0)
-            result["last_publish_age_seconds"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::seconds>(
-                    std::chrono::system_clock::now() - getLastPublish())
-                    .count());
-
+            result["last_publish_age_seconds"] =
+                std::to_string(lastPublishAgeSeconds());
         return result;
+    }
+
+    std::chrono::time_point<std::chrono::system_clock>
+    getLastPublish() const
+    {
+        std::shared_lock lck(publishTimeMtx_);
+        return lastPublish_;
+    }
+
+    std::uint32_t
+    lastPublishAgeSeconds() const
+    {
+        return std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::system_clock::now() - getLastPublish())
+            .count();
     }
 };
 

@@ -405,9 +405,25 @@ handle_request(
             responseStr = boost::json::serialize(response);
         }
 
+        auto warningFlag = false;
+        boost::json::array warnings;
         if (!dosGuard.add(ip, responseStr.size()))
-            result["warning"] = "Too many requests";
-
+        {
+            warnings.emplace_back("Too many requests");
+            warningFlag = true;
+        }
+        auto lastPublishAge = context->etl->lastPublishAgeSeconds();
+        if (lastPublishAge >= 60)
+        {
+            warnings.emplace_back("This server may be out of date");
+            warningFlag = true;
+        }
+        // reserialize only if a warning was appended.
+        if (warningFlag)
+        {
+            result["warning"] = warnings;
+            responseStr = boost::json::serialize(response);
+        }
         return send(
             httpResponse(http::status::ok, "application/json", responseStr));
     }
