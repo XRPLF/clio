@@ -80,6 +80,12 @@ doAccountOffers(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
+    auto rawAcct = context.backend->fetchLedgerObject(
+        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+
+    if (!rawAcct)
+        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+
     std::uint32_t limit = 200;
     if (auto const status = getLimit(request, limit); status)
         return status;
