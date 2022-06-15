@@ -30,9 +30,12 @@ doLedgerData(Context const& context)
 
     bool const binary = getBool(request, "binary", false);
 
-    std::uint32_t limit = binary ? 2048 : 256;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
+
+    if (!binary)
+        limit = std::clamp(limit, {1}, {256});
 
     bool outOfOrder = false;
     if (request.contains("out_of_order"))

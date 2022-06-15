@@ -48,8 +48,8 @@ doBookOffers(Context const& context)
         }
     }
 
-    std::uint32_t limit = 200;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     ripple::AccountID takerID = beast::zero;

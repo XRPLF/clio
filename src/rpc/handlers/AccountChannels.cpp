@@ -70,8 +70,8 @@ doAccountChannels(Context const& context)
         status)
         return status;
 
-    std::uint32_t limit = 200;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     std::optional<std::string> marker = {};
@@ -93,11 +93,6 @@ doAccountChannels(Context const& context)
             (!destAccount ||
              destAccount == sle.getAccountID(ripple::sfDestination)))
         {
-            if (limit-- == 0)
-            {
-                return false;
-            }
-
             addChannel(jsonChannels, sle);
         }
 

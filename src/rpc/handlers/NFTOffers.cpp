@@ -50,8 +50,8 @@ enumerateNFTOffers(
             directory.key, lgrInfo.seq, context.yield))
         return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
 
-    std::uint32_t limit = 200;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     boost::json::object response = {};

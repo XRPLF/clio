@@ -53,10 +53,8 @@ doAccountNFTs(Context const& context)
     if (!rawAcct)
         return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
 
-    // limit controls the number of pages being returned. each page could have
-    // 32 nfts
-    std::uint32_t limit = 10;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     ripple::uint256 marker;
@@ -150,8 +148,8 @@ doAccountObjects(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    std::uint32_t limit = 200;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     std::optional<std::string> marker = {};

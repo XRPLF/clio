@@ -230,9 +230,6 @@ Status
 getHexMarker(boost::json::object const& request, ripple::uint256& marker);
 
 Status
-getLimit(boost::json::object const& request, std::uint32_t& limit);
-
-Status
 getAccount(boost::json::object const& request, ripple::AccountID& accountId);
 
 Status
