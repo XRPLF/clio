@@ -20,6 +20,7 @@
 
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <rpc/WorkQueue.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
 
@@ -92,6 +93,7 @@ class HttpBase
     std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
+    WorkQueue& workQueue_;
     send_lambda lambda_;
 
 protected:
@@ -146,6 +148,7 @@ public:
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
+        WorkQueue& queue,
         boost::beast::flat_buffer buffer)
         : ioc_(ioc)
         , backend_(backend)
@@ -154,6 +157,7 @@ public:
         , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
+        , workQueue_(queue)
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {
@@ -208,7 +212,8 @@ public:
                 balancer_,
                 etl_,
                 dosGuard_,
-                counters_);
+                counters_,
+                workQueue_);
         }
 
         auto ip = derived().ip();
@@ -220,22 +225,32 @@ public:
 
         // Requests are handed using coroutines. Here we spawn a coroutine
         // which will asynchronously handle a request.
-        boost::asio::spawn(
-            derived().stream().get_executor(),
-            [this, ip, session](boost::asio::yield_context yield) {
-                handle_request(
-                    yield,
-                    std::move(req_),
-                    lambda_,
-                    backend_,
-                    subscriptions_,
-                    balancer_,
-                    etl_,
-                    dosGuard_,
-                    counters_,
-                    *ip,
-                    session);
-            });
+        if (!workQueue_.postCoro(
+                [this, ip, session](boost::asio::yield_context yield) {
+                    handle_request(
+                        yield,
+                        std::move(req_),
+                        lambda_,
+                        backend_,
+                        subscriptions_,
+                        balancer_,
+                        etl_,
+                        dosGuard_,
+                        counters_,
+                        *ip,
+                        session);
+                },
+                dosGuard_.isWhiteListed(*ip)))
+        {
+            http::response<http::string_body> res{
+                http::status::ok, req_.version()};
+            res.set(http::field::server, "clio-server-v0.0.0");
+            res.set(http::field::content_type, "application/json");
+            res.keep_alive(req_.keep_alive());
+            res.body() = "Server overloaded";
+            res.prepare_payload();
+            lambda_(std::move(res));
+        }
     }
 
     void

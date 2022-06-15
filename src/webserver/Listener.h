@@ -30,6 +30,7 @@ class Detector
     std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
+    WorkQueue& queue_;
     boost::beast::flat_buffer buffer_;
 
 public:
@@ -42,7 +43,8 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
-        RPC::Counters& counters)
+        RPC::Counters& counters,
+        WorkQueue& queue)
         : ioc_(ioc)
         , stream_(std::move(socket))
         , ctx_(ctx)
@@ -52,6 +54,7 @@ public:
         , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
+        , queue_(queue)
     {
     }
 
@@ -101,6 +104,7 @@ public:
                 etl_,
                 dosGuard_,
                 counters_,
+                queue_,
                 std::move(buffer_))
                 ->run();
             return;
@@ -116,6 +120,7 @@ public:
             etl_,
             dosGuard_,
             counters_,
+            queue_,
             std::move(buffer_))
             ->run();
     }
@@ -132,7 +137,8 @@ make_websocket_session(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard,
-    RPC::Counters& counters)
+    RPC::Counters& counters,
+    WorkQueue& queue)
 {
     std::make_shared<WsUpgrader>(
         ioc,
@@ -143,6 +149,7 @@ make_websocket_session(
         etl,
         dosGuard,
         counters,
+        queue,
         std::move(buffer),
         std::move(req))
         ->run();
@@ -159,7 +166,8 @@ make_websocket_session(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard,
-    RPC::Counters& counters)
+    RPC::Counters& counters,
+    WorkQueue& queue)
 {
     std::make_shared<SslWsUpgrader>(
         ioc,
@@ -170,6 +178,7 @@ make_websocket_session(
         etl,
         dosGuard,
         counters,
+        queue,
         std::move(buffer),
         std::move(req))
         ->run();
@@ -190,11 +199,14 @@ class Listener
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
+    WorkQueue queue_;
     RPC::Counters counters_;
 
 public:
     Listener(
         boost::asio::io_context& ioc,
+        uint32_t numWorkerThreads,
+        uint32_t maxQueueSize,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface const> backend,
@@ -210,6 +222,7 @@ public:
         , balancer_(balancer)
         , etl_(etl)
         , dosGuard_(dosGuard)
+        , queue_(numWorkerThreads, maxQueueSize)
     {
         boost::beast::error_code ec;
 
@@ -271,7 +284,8 @@ private:
                 balancer_,
                 etl_,
                 dosGuard_,
-                counters_)
+                counters_,
+                queue_)
                 ->run();
         }
 
@@ -306,8 +320,19 @@ make_HttpServer(
     auto const port =
         static_cast<unsigned short>(serverConfig.at("port").as_int64());
 
+    uint32_t numThreads = std::thread::hardware_concurrency();
+    if (serverConfig.contains("workers"))
+        numThreads = serverConfig.at("workers").as_int64();
+    uint32_t maxQueueSize = 0;  // no max
+    if (serverConfig.contains("max_queue_size"))
+        maxQueueSize = serverConfig.at("max_queue_size").as_int64();
+    BOOST_LOG_TRIVIAL(info) << __func__ << " Number of workers = " << numThreads
+                            << ". Max queue size = " << maxQueueSize;
+
     auto server = std::make_shared<HttpServer>(
         ioc,
+        numThreads,
+        maxQueueSize,
         sslCtx,
         boost::asio::ip::tcp::endpoint{address, port},
         backend,

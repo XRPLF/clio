@@ -38,6 +38,7 @@ public:
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
+        WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
         : WsSession(
               ioc,
@@ -47,6 +48,7 @@ public:
               etl,
               dosGuard,
               counters,
+              queue,
               std::move(buffer))
         , ws_(std::move(socket))
     {
@@ -91,6 +93,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     std::shared_ptr<ReportingETL const> etl_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
+    WorkQueue& queue_;
     http::request<http::string_body> req_;
 
 public:
@@ -103,6 +106,7 @@ public:
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
+        WorkQueue& queue,
         boost::beast::flat_buffer&& b)
         : ioc_(ioc)
         , http_(std::move(socket))
@@ -113,6 +117,7 @@ public:
         , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
+        , queue_(queue)
     {
     }
     WsUpgrader(
@@ -124,6 +129,7 @@ public:
         std::shared_ptr<ReportingETL const> etl,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
+        WorkQueue& queue,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
         : ioc_(ioc)
@@ -135,6 +141,7 @@ public:
         , etl_(etl)
         , dosGuard_(dosGuard)
         , counters_(counters)
+        , queue_(queue)
         , req_(std::move(req))
     {
     }
@@ -190,6 +197,7 @@ private:
             etl_,
             dosGuard_,
             counters_,
+            queue_,
             std::move(buffer_))
             ->run(std::move(req_));
     }

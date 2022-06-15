@@ -93,6 +93,12 @@ public:
     }
 
     bool
+    isWhiteListed(std::string const& ip)
+    {
+        return whitelist_.contains(ip);
+    }
+
+    bool
     isOk(std::string const& ip)
     {
         if (whitelist_.contains(ip))
