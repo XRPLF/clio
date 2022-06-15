@@ -65,7 +65,7 @@ doAccountTx(Context const& context)
             if (context.range.maxSequence < min.as_int64() ||
                 context.range.minSequence > min.as_int64())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+                    Error::rpcINVALID_PARAMS, "ledgerSeqMinOutOfRange"};
             else
                 minIndex = value_to<std::uint32_t>(min);
         }
@@ -189,21 +189,15 @@ doAccountTx(Context const& context)
     }
 
     assert(cursor);
-    if (forward)
+    if (!forward)
     {
         response[JS(ledger_index_min)] = cursor->ledgerSequence;
-        if (blobs.size() >= limit)
-            response[JS(ledger_index_max)] = *maxReturnedIndex;
-        else
-            response[JS(ledger_index_max)] = maxIndex;
+        response[JS(ledger_index_max)] = maxIndex;
     }
     else
     {
         response[JS(ledger_index_max)] = cursor->ledgerSequence;
-        if (blobs.size() >= limit)
-            response[JS(ledger_index_min)] = *minReturnedIndex;
-        else
-            response[JS(ledger_index_min)] = minIndex;
+        response[JS(ledger_index_min)] = minIndex;
     }
 
     response[JS(transactions)] = txns;
