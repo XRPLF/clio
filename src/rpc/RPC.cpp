@@ -145,7 +145,6 @@ static std::unordered_map<std::string, std::function<Result(Context const&)>>
         {"ledger_data", &doLedgerData},
         {"ledger_entry", &doLedgerEntry},
         {"ledger_range", &doLedgerRange},
-        {"ledger_data", &doLedgerData},
         {"nft_buy_offers", &doNFTBuyOffers},
         {"nft_sell_offers", &doNFTSellOffers},
         {"subscribe", &doSubscribe},
