@@ -35,7 +35,7 @@ doNoRippleCheck(Context const& context)
     }
 
     std::uint32_t limit = 300;
-    if (auto const status = getLimit(request, limit); status)
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     bool includeTxs = getBool(request, "transactions", false);

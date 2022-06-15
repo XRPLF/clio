@@ -1,6 +1,7 @@
 #include <boost/asio/spawn.hpp>
 #include <etl/ETLSource.h>
 #include <rpc/Handlers.h>
+#include <rpc/RPCHelpers.h>
 #include <unordered_map>
 
 namespace RPC {
@@ -126,33 +127,81 @@ make_error(Status const& status)
     json["type"] = "response";
     return json;
 }
-static std::unordered_map<std::string, std::function<Result(Context const&)>>
-    handlerTable{
-        {"account_channels", &doAccountChannels},
-        {"account_currencies", &doAccountCurrencies},
-        {"account_info", &doAccountInfo},
-        {"account_lines", &doAccountLines},
-        {"account_nfts", &doAccountNFTs},
-        {"account_objects", &doAccountObjects},
-        {"account_offers", &doAccountOffers},
-        {"account_tx", &doAccountTx},
-        {"gateway_balances", &doGatewayBalances},
-        {"noripple_check", &doNoRippleCheck},
-        {"book_offers", &doBookOffers},
-        {"channel_authorize", &doChannelAuthorize},
-        {"channel_verify", &doChannelVerify},
-        {"ledger", &doLedger},
-        {"ledger_data", &doLedgerData},
-        {"ledger_entry", &doLedgerEntry},
-        {"ledger_range", &doLedgerRange},
-        {"nft_buy_offers", &doNFTBuyOffers},
-        {"nft_sell_offers", &doNFTSellOffers},
-        {"subscribe", &doSubscribe},
-        {"server_info", &doServerInfo},
-        {"unsubscribe", &doUnsubscribe},
-        {"tx", &doTx},
-        {"transaction_entry", &doTransactionEntry},
-        {"random", &doRandom}};
+
+using LimitRange = std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>;
+using HandlerFunction = std::function<Result(Context const&)>;
+
+struct Handler
+{
+    std::string method;
+    std::function<Result(Context const&)> handler;
+    std::optional<LimitRange> limit;
+};
+
+class HandlerTable
+{
+    std::unordered_map<std::string, Handler> handlerMap_;
+
+public:
+    HandlerTable(std::initializer_list<Handler> handlers)
+    {
+        for (auto const& handler : handlers)
+        {
+            handlerMap_[handler.method] = std::move(handler);
+        }
+    }
+
+    bool
+    contains(std::string const& method)
+    {
+        return handlerMap_.contains(method);
+    }
+
+    std::optional<LimitRange>
+    getLimitRange(std::string const& command)
+    {
+        if (!handlerMap_.contains(command))
+            return {};
+
+        return handlerMap_[command].limit;
+    }
+
+    std::optional<HandlerFunction>
+    getHandler(std::string const& command)
+    {
+        if (!handlerMap_.contains(command))
+            return {};
+
+        return handlerMap_[command].handler;
+    }
+};
+
+static HandlerTable handlerTable{
+    {"account_channels", &doAccountChannels, LimitRange{10, 50, 256}},
+    {"account_currencies", &doAccountCurrencies, {}},
+    {"account_info", &doAccountInfo, {}},
+    {"account_lines", &doAccountLines, LimitRange{10, 50, 256}},
+    {"account_nfts", &doAccountNFTs, LimitRange{1, 5, 10}},
+    {"account_objects", &doAccountObjects, LimitRange{10, 50, 256}},
+    {"account_offers", &doAccountOffers, LimitRange{10, 50, 256}},
+    {"account_tx", &doAccountTx, LimitRange{1, 50, 100}},
+    {"gateway_balances", &doGatewayBalances, {}},
+    {"noripple_check", &doNoRippleCheck, {}},
+    {"book_offers", &doBookOffers, LimitRange{1, 50, 100}},
+    {"channel_authorize", &doChannelAuthorize, {}},
+    {"channel_verify", &doChannelVerify, {}},
+    {"ledger", &doLedger, {}},
+    {"ledger_data", &doLedgerData, LimitRange{1, 100, 2048}},
+    {"nft_buy_offers", &doNFTBuyOffers, LimitRange{1, 50, 100}},
+    {"nft_sell_offers", &doNFTSellOffers, LimitRange{1, 50, 100}},
+    {"ledger_entry", &doLedgerEntry, {}},
+    {"ledger_range", &doLedgerRange, {}},
+    {"subscribe", &doSubscribe, {}},
+    {"server_info", &doServerInfo, {}},
+    {"unsubscribe", &doUnsubscribe, {}},
+    {"tx", &doTx, {}},
+    {"transaction_entry", &doTransactionEntry, {}},
+    {"random", &doRandom, {}}};
 
 static std::unordered_set<std::string> forwardCommands{
     "submit",
@@ -167,6 +216,36 @@ bool
 validHandler(std::string const& method)
 {
     return handlerTable.contains(method) || forwardCommands.contains(method);
+}
+
+Status
+getLimit(RPC::Context const& context, std::uint32_t& limit)
+{
+    if (!handlerTable.getHandler(context.method))
+        return Status{Error::rpcUNKNOWN_COMMAND};
+
+    if (!handlerTable.getLimitRange(context.method))
+        return Status{Error::rpcINVALID_PARAMS, "rpcDoesNotRequireLimit"};
+
+    auto [lo, def, hi] = *handlerTable.getLimitRange(context.method);
+
+    if (context.params.contains(JS(limit)))
+    {
+        if (!context.params.at(JS(limit)).is_int64())
+            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
+
+        limit = context.params.at(JS(limit)).as_int64();
+        if (limit <= 0)
+            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
+
+        limit = std::clamp(limit, lo, hi);
+    }
+    else
+    {
+        limit = def;
+    }
+
+    return {};
 }
 
 bool
@@ -219,14 +298,14 @@ buildResponse(Context const& ctx)
     if (ctx.method == "ping")
         return boost::json::object{};
 
-    if (handlerTable.find(ctx.method) == handlerTable.end())
-        return Status{Error::rpcUNKNOWN_COMMAND};
+    auto method = handlerTable.getHandler(ctx.method);
 
-    auto method = handlerTable[ctx.method];
+    if (!method)
+        return Status{Error::rpcUNKNOWN_COMMAND};
 
     try
     {
-        auto v = method(ctx);
+        auto v = (*method)(ctx);
 
         if (auto object = std::get_if<boost::json::object>(&v))
             (*object)["validated"] = true;

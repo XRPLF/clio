@@ -86,8 +86,8 @@ doAccountOffers(Context const& context)
     if (!rawAcct)
         return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
 
-    std::uint32_t limit = 200;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     std::optional<std::string> marker = {};
@@ -108,11 +108,6 @@ doAccountOffers(Context const& context)
     auto const addToResponse = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltOFFER)
         {
-            if (limit-- == 0)
-            {
-                return false;
-            }
-
             addOffer(jsonLines, sle);
         }
 

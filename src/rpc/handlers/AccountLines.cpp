@@ -113,8 +113,8 @@ doAccountLines(Context const& context)
     if (auto const status = getAccount(request, peerAccount, JS(peer)); status)
         return status;
 
-    std::uint32_t limit = 200;
-    if (auto const status = getLimit(request, limit); status)
+    std::uint32_t limit;
+    if (auto const status = getLimit(context, limit); status)
         return status;
 
     std::optional<std::string> marker = {};

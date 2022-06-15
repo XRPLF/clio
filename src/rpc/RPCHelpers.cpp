@@ -192,22 +192,6 @@ getHexMarker(boost::json::object const& request, ripple::uint256& marker)
 }
 
 Status
-getLimit(boost::json::object const& request, std::uint32_t& limit)
-{
-    if (request.contains(JS(limit)))
-    {
-        if (!request.at(JS(limit)).is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
-
-        limit = request.at(JS(limit)).as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
-    }
-
-    return {};
-}
-
-Status
 getAccount(
     boost::json::object const& request,
     ripple::AccountID& account,
