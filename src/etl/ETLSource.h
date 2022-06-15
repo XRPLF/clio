@@ -15,6 +15,7 @@
 #include <grpcpp/grpcpp.h>
 
 class ETLLoadBalancer;
+class ETLSource;
 class SubscriptionManager;
 
 /// This class manages a connection to a single ETL source. This is almost
@@ -24,6 +25,64 @@ class SubscriptionManager;
 /// has. This class also has methods for extracting said ledgers. Lastly this
 /// class forwards transactions received on the transactions_proposed streams to
 /// any subscribers.
+class ForwardCache
+{
+    using response_type = std::optional<boost::json::object>;
+
+    mutable std::atomic_bool stopping_ = false;
+    mutable std::shared_mutex mtx_;
+    std::unordered_map<std::string, response_type> latestForwarded_;
+
+    boost::asio::io_context::strand strand_;
+    boost::asio::steady_timer timer_;
+    ETLSource const& source_;
+    std::uint32_t duration_ = 10;
+
+    void
+    clear();
+
+public:
+    ForwardCache(
+        boost::json::object const& config,
+        boost::asio::io_context& ioc,
+        ETLSource const& source)
+        : strand_(ioc), timer_(strand_), source_(source)
+    {
+        if (config.contains("cache") && !config.at("cache").is_array())
+            throw std::runtime_error("ETLSource cache must be array");
+
+        if (config.contains("cache_duration") &&
+            !config.at("cache_duration").is_int64())
+            throw std::runtime_error(
+                "ETLSource cache_duration must be a number");
+
+        duration_ = config.contains("cache_duration")
+            ? config.at("cache_duration").as_int64()
+            : 10;
+
+        auto commands = config.contains("cache") ? config.at("cache").as_array()
+                                                 : boost::json::array{};
+
+        for (auto const& command : commands)
+        {
+            if (!command.is_string())
+                throw std::runtime_error(
+                    "ETLSource forward command must be array of strings");
+
+            latestForwarded_[command.as_string().c_str()] = {};
+        }
+    }
+
+    // This is to be called every freshenDuration_ seconds.
+    // It will request information from this etlSource, and
+    // will populate the cache with the latest value. If the
+    // request fails, it will evict that value from the cache.
+    void
+    freshen();
+
+    std::optional<boost::json::object>
+    get(boost::json::object const& command) const;
+};
 
 class ETLSource
 {
@@ -64,6 +123,15 @@ public:
     virtual ~ETLSource()
     {
     }
+
+private:
+    friend ForwardCache;
+
+    virtual std::optional<boost::json::object>
+    requestFromRippled(
+        boost::json::object const& request,
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const = 0;
 };
 
 template <class Derived>
@@ -104,6 +172,14 @@ class ETLSourceImpl : public ETLSource
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     ETLLoadBalancer& balancer_;
+
+    ForwardCache forwardCache_;
+
+    std::optional<boost::json::object>
+    requestFromRippled(
+        boost::json::object const& request,
+        std::string const& clientIp,
+        boost::asio::yield_context& yield) const override;
 
 protected:
     Derived&
