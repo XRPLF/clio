@@ -52,7 +52,9 @@ doAccountNFTs(Context const& context)
             ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield))
         return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
 
-    std::uint32_t limit = 200;
+    // limit controls the number of pages being returned. each page could have
+    // 32 nfts
+    std::uint32_t limit = 10;
     if (auto const status = getLimit(request, limit); status)
         return status;
 
@@ -60,46 +62,33 @@ doAccountNFTs(Context const& context)
     if (auto const status = getHexMarker(request, marker); status)
         return status;
 
-    auto const first =
-        ripple::keylet::nftpage(ripple::keylet::nftpage_min(accountID), marker);
-    auto const last = ripple::keylet::nftpage_max(accountID);
+    response[JS(account)] = ripple::toBase58(accountID);
+    response[JS(validated)] = true;
 
-    auto const key =
-        context.backend
-            ->fetchSuccessorKey(first.key, lgrInfo.seq, context.yield)
-            .value_or(last.key);
-    auto const blob = context.backend->fetchLedgerObject(
-        ripple::Keylet(ripple::ltNFTOKEN_PAGE, key).key,
-        lgrInfo.seq,
-        context.yield);
-
-    std::optional<ripple::SLE const> cp{
-        ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, key}};
-
-    std::uint32_t cnt = 0;
+    std::uint32_t numPages = 0;
     response[JS(account_nfts)] = boost::json::value(boost::json::array_kind);
     auto& nfts = response.at(JS(account_nfts)).as_array();
 
-    bool pastMarker = marker.isZero();
-    ripple::uint256 const maskedMarker = marker & ripple::nft::pageMask;
+    // if a marker was passed, start at the page specified in marker. Else,
+    // start at the max page
+    auto const pageKey =
+        marker.isZero() ? ripple::keylet::nftpage_max(accountID).key : marker;
 
-    // Continue iteration from the current page:
-    while (true)
+    auto const blob =
+        context.backend->fetchLedgerObject(pageKey, lgrInfo.seq, context.yield);
+    if (!blob)
+        return response;
+    std::optional<ripple::SLE const> page{
+        ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
+
+    // Continue iteration from the current page
+    while (page)
     {
-        auto arr = cp->getFieldArray(ripple::sfNFTokens);
+        auto arr = page->getFieldArray(ripple::sfNFTokens);
 
         for (auto const& o : arr)
         {
             ripple::uint256 const nftokenID = o[ripple::sfNFTokenID];
-            ripple::uint256 const maskedNftokenID =
-                nftokenID & ripple::nft::pageMask;
-
-            if (!pastMarker && maskedNftokenID < maskedMarker)
-                continue;
-
-            if (!pastMarker && maskedNftokenID == maskedMarker &&
-                nftokenID <= marker)
-                continue;
 
             {
                 nfts.push_back(
@@ -118,31 +107,29 @@ doAccountNFTs(Context const& context)
                         ripple::nft::getTransferFee(nftokenID)})
                     obj[SFS(sfTransferFee)] = xferFee;
             }
-
-            if (++cnt == limit)
-            {
-                response[JS(limit)] = limit;
-                response[JS(marker)] =
-                    to_string(o.getFieldH256(ripple::sfNFTokenID));
-                return response;
-            }
         }
 
-        if (auto npm = (*cp)[~ripple::sfNextPageMin])
+        ++numPages;
+        if (auto npm = (*page)[~ripple::sfPreviousPageMin])
         {
             auto const nextKey = ripple::Keylet(ripple::ltNFTOKEN_PAGE, *npm);
+            if (numPages == limit)
+            {
+                response[JS(marker)] = to_string(nextKey.key);
+                response[JS(limit)] = numPages;
+                return response;
+            }
             auto const nextBlob = context.backend->fetchLedgerObject(
                 nextKey.key, lgrInfo.seq, context.yield);
 
-            cp.emplace(ripple::SLE{
+            page.emplace(ripple::SLE{
                 ripple::SerialIter{nextBlob->data(), nextBlob->size()},
                 nextKey.key});
         }
         else
-            break;
+            page.reset();
     }
 
-    response[JS(account)] = ripple::toBase58(accountID);
     return response;
 }
 
