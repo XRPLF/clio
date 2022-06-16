@@ -125,14 +125,14 @@ initLogging(boost::json::object const& config)
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
         const uint64_t rotationSize = config.contains("log_rotation_size")
-            ? config.at("log_rotation_size").as_uint64() * 1024 * 1024
+            ? config.at("log_rotation_size").as_int64() * 1024 * 1024
             : 2 * 1024 * 1024 * 1024u;
         const uint64_t rotationPeriod =
             config.contains("log_rotation_hour_interval")
-            ? config.at("log_rotation_hour_interval").as_uint64()
+            ? config.at("log_rotation_hour_interval").as_int64()
             : 12u;
         const uint64_t dirSize = config.contains("log_directory_max_size")
-            ? config.at("log_directory_max_size").as_uint64() * 1024 * 1024
+            ? config.at("log_directory_max_size").as_int64() * 1024 * 1024
             : 50 * 1024 * 1024 * 1024u;
         auto fileSink = boost::log::add_file_log(
             keywords::file_name = dirPath / "clio.log",
