@@ -436,7 +436,7 @@ handle_request(
         // reserialize only if a warning was appended.
         if (warningFlag)
         {
-            result["warning"] = warnings;
+            response["warning"] = warnings;
             responseStr = boost::json::serialize(response);
         }
         return send(
