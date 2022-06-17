@@ -344,8 +344,7 @@ public:
         // reserialize if a warning was appended
         if (warningFlag)
         {
-            auto& result = response["result"].as_object();
-            result["warning"] = warnings;
+            response["warning"] = warnings;
             responseStr = boost::json::serialize(response);
         }
         send(std::move(responseStr));
