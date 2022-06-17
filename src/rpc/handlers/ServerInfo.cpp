@@ -88,9 +88,6 @@ doServerInfo(Context const& context)
 
     response["etl"] = context.etl->getInfo();
 
-    response["note"] =
-        "This is a clio server. If you want to talk to rippled, include "
-        "\"ledger_index\":\"current\" in your request";
     return response;
 }
 }  // namespace RPC
