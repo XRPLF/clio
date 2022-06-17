@@ -9,6 +9,7 @@
 #include <backend/DBHelpers.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <rpc/RPCHelpers.h>
 #include <thread>
 
 void
@@ -60,6 +61,8 @@ ForwardCache::get(boost::json::object const& request) const
         command = request.at("method").as_string().c_str();
 
     if (!command)
+        return {};
+    if (RPC::specifiesCurrentOrClosedLedger(request))
         return {};
 
     std::shared_lock lk(mtx_);

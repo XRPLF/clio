@@ -7,6 +7,7 @@
 #include <boost/log/trivial.hpp>
 
 #include <memory>
+#include <optional>
 #include <queue>
 #include <shared_mutex>
 #include <thread>
