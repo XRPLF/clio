@@ -315,7 +315,7 @@ handle_request(
 
     try
     {
-        BOOST_LOG_TRIVIAL(info) << "Received request: " << req.body();
+        BOOST_LOG_TRIVIAL(debug) << "Received request: " << req.body();
 
         boost::json::object request;
         std::string responseStr = "";

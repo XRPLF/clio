@@ -214,7 +214,7 @@ logDuration(Context const& ctx, T const& dur)
     else if (seconds > 1)
         BOOST_LOG_TRIVIAL(warning) << ss.str();
     else
-        BOOST_LOG_TRIVIAL(debug) << ss.str();
+        BOOST_LOG_TRIVIAL(info) << ss.str();
 }
 
 }  // namespace RPC
