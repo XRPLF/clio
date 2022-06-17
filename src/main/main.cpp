@@ -110,7 +110,7 @@ initLogging(boost::json::object const& config)
     namespace trivial = boost::log::trivial;
     boost::log::add_common_attributes();
     std::string format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%";
-    if (config.contains("log_to_console") &&
+    if (!config.contains("log_to_console") ||
         config.at("log_to_console").as_bool())
     {
         boost::log::add_console_log(std::cout, keywords::format = format);
@@ -124,16 +124,25 @@ initLogging(boost::json::object const& config)
             config.at("log_directory").as_string().c_str()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
-        const uint64_t rotationSize = config.contains("log_rotation_size")
-            ? config.at("log_rotation_size").as_uint64() * 1024 * 1024
+        const int64_t rotationSize = config.contains("log_rotation_size")
+            ? config.at("log_rotation_size").as_int64() * 1024 * 1024u
             : 2 * 1024 * 1024 * 1024u;
-        const uint64_t rotationPeriod =
+        if (rotationSize <= 0)
+            throw std::runtime_error(
+                "log rotation size must be greater than 0");
+        const int64_t rotationPeriod =
             config.contains("log_rotation_hour_interval")
-            ? config.at("log_rotation_hour_interval").as_uint64()
+            ? config.at("log_rotation_hour_interval").as_int64()
             : 12u;
-        const uint64_t dirSize = config.contains("log_directory_max_size")
-            ? config.at("log_directory_max_size").as_uint64() * 1024 * 1024
+        if (rotationPeriod <= 0)
+            throw std::runtime_error(
+                "log rotation time interval must be greater than 0");
+        const int64_t dirSize = config.contains("log_directory_max_size")
+            ? config.at("log_directory_max_size").as_int64() * 1024 * 1024u
             : 50 * 1024 * 1024 * 1024u;
+        if (dirSize <= 0)
+            throw std::runtime_error(
+                "log rotation directory max size must be greater than 0");
         auto fileSink = boost::log::add_file_log(
             keywords::file_name = dirPath / "clio.log",
             keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
