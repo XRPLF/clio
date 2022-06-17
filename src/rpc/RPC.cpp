@@ -256,15 +256,8 @@ shouldForwardToRippled(Context const& ctx)
     if (forwardCommands.find(ctx.method) != forwardCommands.end())
         return true;
 
-    if (request.contains("ledger_index"))
-    {
-        auto indexValue = request.at("ledger_index");
-        if (indexValue.is_string())
-        {
-            std::string index = indexValue.as_string().c_str();
-            return index == "current" || index == "closed";
-        }
-    }
+    if (specifiesCurrentOrClosedLedger(request))
+        return true;
 
     if (ctx.method == "account_info" && request.contains("queue") &&
         request.at("queue").as_bool())

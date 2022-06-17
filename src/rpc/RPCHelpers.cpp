@@ -1434,5 +1434,19 @@ parseTaker(boost::json::value const& taker)
         return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
     return *takerID;
 }
+bool
+specifiesCurrentOrClosedLedger(boost::json::object const& request)
+{
+    if (request.contains("ledger_index"))
+    {
+        auto indexValue = request.at("ledger_index");
+        if (indexValue.is_string())
+        {
+            std::string index = indexValue.as_string().c_str();
+            return index == "current" || index == "closed";
+        }
+    }
+    return false;
+}
 
 }  // namespace RPC

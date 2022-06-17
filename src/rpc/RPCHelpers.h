@@ -244,5 +244,8 @@ getTaker(boost::json::object const& request, ripple::AccountID& takerID);
 Status
 getChannelId(boost::json::object const& request, ripple::uint256& channelId);
 
+bool
+specifiesCurrentOrClosedLedger(boost::json::object const& request);
+
 }  // namespace RPC
 #endif
