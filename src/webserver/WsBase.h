@@ -326,25 +326,24 @@ public:
             return sendError(RPC::Error::rpcINTERNAL);
         }
 
-        std::string responseStr = boost::json::serialize(response);
         boost::json::array warnings;
-        auto warningFlag = false;
+        warnings.emplace_back(
+            "This is a clio server. clio only serves validated data. If you "
+            "want to talk to rippled, include 'ledger_index':'current' in your "
+            "request");
 
+        auto lastPublishAge = etl_->lastPublishAgeSeconds();
+        if (lastPublishAge >= 60)
+            warnings.emplace_back("This server may be out of date");
+
+        auto& result = response["result"].as_object();
+        result["warnings"] = warnings;
+        std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
         {
             warnings.emplace_back("Too many requests");
-            warningFlag = true;
-        }
-        auto lastPublishAge = etl_->lastPublishAgeSeconds();
-        if (lastPublishAge >= 60)
-        {
-            warnings.emplace_back("This server may be out of date");
-            warningFlag = true;
-        }
-        // reserialize if a warning was appended
-        if (warningFlag)
-        {
-            response["warning"] = warnings;
+            response["warnings"] = warnings;
+            // reserialize if we need to include this warning
             responseStr = boost::json::serialize(response);
         }
         send(std::move(responseStr));

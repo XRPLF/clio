@@ -402,7 +402,6 @@ handle_request(
 
             result = error;
 
-            responseStr = boost::json::serialize(response);
             BOOST_LOG_TRIVIAL(debug)
                 << __func__ << " Encountered error: " << responseStr;
         }
@@ -416,27 +415,23 @@ handle_request(
 
             if (!result.contains("error"))
                 result["status"] = "success";
-
-            responseStr = boost::json::serialize(response);
         }
 
-        auto warningFlag = false;
         boost::json::array warnings;
+        warnings.emplace_back(
+            "This is a clio server. clio only serves validated data. If you "
+            "want to talk to rippled, include 'ledger_index':'current' in your "
+            "request");
+        auto lastPublishAge = context->etl->lastPublishAgeSeconds();
+        if (lastPublishAge >= 60)
+            warnings.emplace_back("This server may be out of date");
+        result["warnings"] = warnings;
+        responseStr = boost::json::serialize(response);
         if (!dosGuard.add(ip, responseStr.size()))
         {
             warnings.emplace_back("Too many requests");
-            warningFlag = true;
-        }
-        auto lastPublishAge = context->etl->lastPublishAgeSeconds();
-        if (lastPublishAge >= 60)
-        {
-            warnings.emplace_back("This server may be out of date");
-            warningFlag = true;
-        }
-        // reserialize only if a warning was appended.
-        if (warningFlag)
-        {
-            response["warning"] = warnings;
+            response["warnings"] = warnings;
+            // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
         }
         return send(
