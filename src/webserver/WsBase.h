@@ -252,20 +252,41 @@ public:
             return;
 
         boost::json::object response = {};
-        auto sendError = [this](auto error) {
-            send(boost::json::serialize(RPC::make_error(error)));
+        auto sendError = [this](auto error, boost::json::value id) {
+            auto e = RPC::make_error(error);
+
+            if (!id.is_null())
+                e["id"] = id;
+
+            send(boost::json::serialize(e));
         };
+
+        boost::json::value raw = [](std::string const&& msg) {
+            try
+            {
+                return boost::json::parse(msg);
+            }
+            catch (std::exception&)
+            {
+                return boost::json::value{nullptr};
+            }
+        }(std::move(msg));
+
+        if (!raw.is_object())
+            return sendError(RPC::Error::rpcINVALID_PARAMS, nullptr);
+
+        boost::json::object request = raw.as_object();
+
+        auto id = request.contains("id") ? request.at("id") : nullptr;
+
         try
         {
-            boost::json::value raw = boost::json::parse(msg);
-            boost::json::object request = raw.as_object();
-
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
                 auto range = backend_->fetchLedgerRange();
                 if (!range)
-                    return sendError(RPC::Error::rpcNOT_READY);
+                    return sendError(RPC::Error::rpcNOT_READY, id);
 
                 std::optional<RPC::Context> context = RPC::make_WsContext(
                     yc,
@@ -280,9 +301,7 @@ public:
                     *ip);
 
                 if (!context)
-                    return sendError(RPC::Error::rpcBAD_SYNTAX);
-
-                auto id = request.contains("id") ? request.at("id") : nullptr;
+                    return sendError(RPC::Error::rpcBAD_SYNTAX, id);
 
                 response = getDefaultWsResponse(id);
 
@@ -315,7 +334,7 @@ public:
             catch (Backend::DatabaseTimeout const& t)
             {
                 BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                return sendError(RPC::Error::rpcNOT_READY);
+                return sendError(RPC::Error::rpcNOT_READY, id);
             }
         }
         catch (std::exception const& e)
@@ -323,7 +342,7 @@ public:
             BOOST_LOG_TRIVIAL(error)
                 << __func__ << " caught exception : " << e.what();
 
-            return sendError(RPC::Error::rpcINTERNAL);
+            return sendError(RPC::Error::rpcINTERNAL, id);
         }
 
         boost::json::array warnings;
