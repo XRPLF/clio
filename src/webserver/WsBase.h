@@ -355,8 +355,7 @@ public:
         if (lastPublishAge >= 60)
             warnings.emplace_back("This server may be out of date");
 
-        auto& result = response["result"].as_object();
-        result["warnings"] = warnings;
+        response["warnings"] = warnings;
         std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
         {
