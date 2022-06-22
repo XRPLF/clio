@@ -39,7 +39,7 @@ addLine(
     auto lineQualityIn = viewLowest ? lowQualityIn : highQualityIn;
     auto lineQualityOut = viewLowest ? lowQualityOut : highQualityOut;
 
-    if (peerAccount and peerAccount != lineAccountIDPeer)
+    if (peerAccount && peerAccount != lineAccountIDPeer)
         return;
 
     if (!viewLowest)
@@ -109,8 +109,9 @@ doAccountLines(Context const& context)
     if (!rawAcct)
         return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
 
-    ripple::AccountID peerAccount;
-    if (auto const status = getAccount(request, peerAccount, JS(peer)); status)
+    std::optional<ripple::AccountID> peerAccount;
+    if (auto const status = getOptionalAccount(request, peerAccount, JS(peer));
+        status)
         return status;
 
     std::uint32_t limit;

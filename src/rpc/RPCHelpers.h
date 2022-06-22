@@ -239,6 +239,12 @@ getAccount(
     boost::string_view const& field);
 
 Status
+getOptionalAccount(
+    boost::json::object const& request,
+    std::optional<ripple::AccountID>& account,
+    boost::string_view const& field);
+
+Status
 getTaker(boost::json::object const& request, ripple::AccountID& takerID);
 
 Status
