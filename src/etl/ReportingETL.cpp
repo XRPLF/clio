@@ -147,11 +147,9 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
         backend_->cache().update(diff, lgrInfo.seq);
         backend_->updateRange(lgrInfo.seq);
     }
-    auto now = std::chrono::duration_cast<std::chrono::seconds>(
-                   std::chrono::system_clock::now().time_since_epoch())
-                   .count();
-    auto closeTime = lgrInfo.closeTime.time_since_epoch().count();
-    auto age = now - (rippleEpochStart + closeTime);
+
+    setLastClose(lgrInfo.closeTime);
+    auto age = lastCloseAgeSeconds();
     // if the ledger closed over 10 minutes ago, assume we are still
     // catching up and don't publish
     if (age < 600)

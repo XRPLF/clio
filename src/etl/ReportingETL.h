@@ -139,6 +139,18 @@ private:
         lastPublish_ = std::chrono::system_clock::now();
     }
 
+    /// The time that the most recently published ledger was closed.
+    std::chrono::time_point<ripple::NetClock> lastCloseTime_;
+
+    mutable std::shared_mutex closeTimeMtx_;
+
+    void
+    setLastClose(std::chrono::time_point<ripple::NetClock> lastCloseTime)
+    {
+        std::unique_lock lck(closeTimeMtx_);
+        lastCloseTime_ = lastCloseTime;
+    }
+
     /// Download a ledger with specified sequence in full, via GetLedgerData,
     /// and write the data to the databases. This takes several minutes or
     /// longer.
@@ -333,6 +345,17 @@ public:
         return std::chrono::duration_cast<std::chrono::seconds>(
                    std::chrono::system_clock::now() - getLastPublish())
             .count();
+    }
+
+    std::uint32_t
+    lastCloseAgeSeconds() const
+    {
+        std::shared_lock lck(closeTimeMtx_);
+        auto now = std::chrono::duration_cast<std::chrono::seconds>(
+                       std::chrono::system_clock::now().time_since_epoch())
+                       .count();
+        auto closeTime = lastCloseTime_.time_since_epoch().count();
+        return now - (rippleEpochStart + closeTime);
     }
 };
 
