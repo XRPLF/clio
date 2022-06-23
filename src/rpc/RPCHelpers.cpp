@@ -222,6 +222,32 @@ getAccount(
 }
 
 Status
+getOptionalAccount(
+    boost::json::object const& request,
+    std::optional<ripple::AccountID>& account,
+    boost::string_view const& field)
+{
+    if (!request.contains(field))
+    {
+        account = {};
+        return {};
+    }
+
+    if (!request.at(field).is_string())
+        return Status{
+            Error::rpcINVALID_PARAMS, field.to_string() + "NotString"};
+
+    if (auto a = accountFromStringStrict(request.at(field).as_string().c_str());
+        a)
+    {
+        account = a.value();
+        return {};
+    }
+
+    return Status{Error::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
+}
+
+Status
 getAccount(boost::json::object const& request, ripple::AccountID& accountId)
 {
     return getAccount(request, accountId, JS(account), true);
