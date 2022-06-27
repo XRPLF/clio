@@ -188,8 +188,6 @@ static HandlerTable handlerTable{
     {"gateway_balances", &doGatewayBalances, {}},
     {"noripple_check", &doNoRippleCheck, {}},
     {"book_offers", &doBookOffers, LimitRange{1, 50, 100}},
-    {"channel_authorize", &doChannelAuthorize, {}},
-    {"channel_verify", &doChannelVerify, {}},
     {"ledger", &doLedger, {}},
     {"ledger_data", &doLedgerData, LimitRange{1, 100, 2048}},
     {"nft_buy_offers", &doNFTBuyOffers, LimitRange{1, 50, 100}},
@@ -210,7 +208,9 @@ static std::unordered_set<std::string> forwardCommands{
     "ledger_closed",
     "ledger_current",
     "ripple_path_find",
-    "manifest"};
+    "manifest",
+    "channel_authorize",
+    "channel_verify"};
 
 bool
 validHandler(std::string const& method)
