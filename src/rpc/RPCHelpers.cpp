@@ -694,7 +694,10 @@ traverseOwnedNodes(
     auto currentIndex = rootIndex;
 
     std::vector<ripple::uint256> keys;
-    keys.reserve(limit);
+    // Only reserve 2048 nodes when fetching all owned ledger objects. If there
+    // are more, then keys will allocate more memory, which is suboptimal, but
+    // should only occur occasionally.
+    keys.reserve(std::min(std::uint32_t{2048}, limit));
 
     auto start = std::chrono::system_clock::now();
 
