@@ -45,7 +45,6 @@ target_sources(clio PRIVATE
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
-  src/backend/LayeredCache.cpp
   src/backend/Pg.cpp
   src/backend/PostgresBackend.cpp
   src/backend/SimpleCache.cpp
