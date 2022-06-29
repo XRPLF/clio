@@ -2,6 +2,8 @@
 #include <boost/preprocessor/stringize.hpp>
 #include <algorithm>
 #include <main/Build.h>
+#include <optional>
+#include <stdexcept>
 
 namespace Build {
 
