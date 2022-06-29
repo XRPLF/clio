@@ -1,9 +1,5 @@
 [![Build Clio](https://github.com/legleux/clio/actions/workflows/build.yml/badge.svg?branch=run-tests)](https://github.com/legleux/clio/actions/workflows/build.yml)
 
-
-**Status:** This software is in beta mode. We encourage anyone to try it out and
-report any issues they discover. Version 1.0 coming soon.
-
 # Clio
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
 historical ledger and transaction data are stored in a more space-efficient format,
