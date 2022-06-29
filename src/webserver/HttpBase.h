@@ -422,8 +422,8 @@ handle_request(
             "This is a clio server. clio only serves validated data. If you "
             "want to talk to rippled, include 'ledger_index':'current' in your "
             "request");
-        auto lastPublishAge = context->etl->lastPublishAgeSeconds();
-        if (lastPublishAge >= 60)
+        auto lastCloseAge = context->etl->lastCloseAgeSeconds();
+        if (lastCloseAge >= 60)
             warnings.emplace_back("This server may be out of date");
         result["warnings"] = warnings;
         responseStr = boost::json::serialize(response);

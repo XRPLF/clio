@@ -351,10 +351,9 @@ public:
             "want to talk to rippled, include 'ledger_index':'current' in your "
             "request");
 
-        auto lastPublishAge = etl_->lastPublishAgeSeconds();
-        if (lastPublishAge >= 60)
+        auto lastCloseAge = etl_->lastCloseAgeSeconds();
+        if (lastCloseAge >= 60)
             warnings.emplace_back("This server may be out of date");
-
         response["warnings"] = warnings;
         std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
