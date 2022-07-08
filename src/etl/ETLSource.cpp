@@ -1032,7 +1032,7 @@ ETLLoadBalancer::fetchLedger(
             auto [status, data] = source->fetchLedger(
                 ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
-            if (status.ok() && (response.validated() || true))
+            if (status.ok() && response.validated())
             {
                 BOOST_LOG_TRIVIAL(info)
                     << "Successfully fetched ledger = " << ledgerSequence
