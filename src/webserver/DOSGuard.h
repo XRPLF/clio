@@ -15,6 +15,7 @@ class DOSGuard
     std::uint32_t const maxFetches_;
     std::uint32_t const sweepInterval_;
 
+    // Load config setting for DOSGuard
     std::optional<boost::json::object>
     getConfig(boost::json::object const& config) const
     {
