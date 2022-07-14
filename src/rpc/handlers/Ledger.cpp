@@ -132,7 +132,7 @@ doLedger(Context const& context)
         for (auto const& obj : diff)
         {
             boost::json::object entry;
-            entry[JS(id)] = ripple::strHex(obj.key);
+            entry["object_id"] = ripple::strHex(obj.key);
             if (binary)
                 entry["object"] = ripple::strHex(obj.blob);
             else if (obj.blob.size())
