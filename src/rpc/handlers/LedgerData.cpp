@@ -79,7 +79,7 @@ doLedgerData(Context const& context)
 
     boost::json::object header;
     // no marker means this is the first call, so we return header info
-    if (!marker)
+    if (!request.contains(JS(marker)))
     {
         if (binary)
         {
@@ -106,9 +106,9 @@ doLedgerData(Context const& context)
             header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
             header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
             header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
-
-            response[JS(ledger)] = header;
         }
+
+        response[JS(ledger)] = header;
     }
     else
     {
