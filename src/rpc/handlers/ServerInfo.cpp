@@ -85,6 +85,9 @@ doServerInfo(Context const& context)
     cache["is_full"] = context.backend->cache().isFull();
     cache["latest_ledger_seq"] =
         context.backend->cache().latestLedgerSequence();
+    cache["object_hit_rate"] = context.backend->cache().getObjectHitRate();
+    cache["successor_hit_rate"] =
+        context.backend->cache().getSuccessorHitRate();
 
     response["etl"] = context.etl->getInfo();
 
