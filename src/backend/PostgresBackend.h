@@ -62,6 +62,20 @@ public:
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
+    std::optional<NFT>
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
+
+    TransactionsAndCursor
+    fetchNFTTransactions(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context& yield) const override;
+
     std::vector<LedgerObject>
     fetchLedgerDiff(
         std::uint32_t const ledgerSequence,
@@ -87,12 +101,12 @@ public:
         std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
 
-    AccountTransactions
+    TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t const limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor,
+        std::optional<TransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const override;
 
     void
@@ -121,8 +135,14 @@ public:
         std::string&& metadata) override;
 
     void
+    writeNFTs(std::vector<NFTsData>&& data) override;
+
+    void
     writeAccountTransactions(
         std::vector<AccountTransactionsData>&& data) override;
+
+    void
+    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;
 
     void
     open(bool readOnly) override;

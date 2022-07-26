@@ -115,7 +115,7 @@ public:
             throw std::runtime_error(
                 "CassandraStatement::bindNextBoolean - statement_ is null");
         CassError rc = cass_statement_bind_bool(
-            statement_, 1, static_cast<cass_bool_t>(val));
+            statement_, curBindingIndex_, static_cast<cass_bool_t>(val));
         if (rc != CASS_OK)
         {
             std::stringstream ss;
@@ -481,6 +481,33 @@ public:
         return {first, second};
     }
 
+    // TODO: should be replaced with a templated implementation as is very
+    // similar to other getters
+    bool
+    getBool()
+    {
+        if (!row_)
+        {
+            std::stringstream msg;
+            msg << __func__ << " - no result";
+            BOOST_LOG_TRIVIAL(error) << msg.str();
+            throw std::runtime_error(msg.str());
+        }
+        cass_bool_t val;
+        CassError rc =
+            cass_value_get_bool(cass_row_get_column(row_, curGetIndex_), &val);
+        if (rc != CASS_OK)
+        {
+            std::stringstream msg;
+            msg << __func__ << " - error getting value: " << rc << ", "
+                << cass_error_desc(rc);
+            BOOST_LOG_TRIVIAL(error) << msg.str();
+            throw std::runtime_error(msg.str());
+        }
+        ++curGetIndex_;
+        return val;
+    }
+
     ~CassandraResult()
     {
         if (result_ != nullptr)
@@ -599,6 +626,12 @@ private:
     CassandraPreparedStatement insertAccountTx_;
     CassandraPreparedStatement selectAccountTx_;
     CassandraPreparedStatement selectAccountTxForward_;
+    CassandraPreparedStatement insertNFT_;
+    CassandraPreparedStatement selectNFT_;
+    CassandraPreparedStatement insertIssuerNFT_;
+    CassandraPreparedStatement insertNFTTx_;
+    CassandraPreparedStatement selectNFTTx_;
+    CassandraPreparedStatement selectNFTTxForward_;
     CassandraPreparedStatement insertLedgerHeader_;
     CassandraPreparedStatement insertLedgerHash_;
     CassandraPreparedStatement updateLedgerRange_;
@@ -683,12 +716,12 @@ public:
         open_ = false;
     }
 
-    AccountTransactions
+    TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t const limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor,
+        std::optional<TransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const override;
 
     bool
@@ -852,6 +885,20 @@ public:
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
+    std::optional<NFT>
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const override;
+
+    TransactionsAndCursor
+    fetchNFTTransactions(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context& yield) const override;
+
     // Synchronously fetch the object with key key, as of ledger with sequence
     // sequence
     std::optional<Blob>
@@ -942,12 +989,18 @@ public:
         std::vector<AccountTransactionsData>&& data) override;
 
     void
+    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override;
+
+    void
     writeTransaction(
         std::string&& hash,
         std::uint32_t const seq,
         std::uint32_t const date,
         std::string&& transaction,
         std::string&& metadata) override;
+
+    void
+    writeNFTs(std::vector<NFTsData>&& data) override;
 
     void
     startWrites() const override

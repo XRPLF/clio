@@ -50,6 +50,7 @@ target_sources(clio PRIVATE
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
+  src/etl/NFTHelpers.cpp
   src/etl/ReportingETL.cpp
   ## Subscriptions
   src/subscriptions/SubscriptionManager.cpp
@@ -68,6 +69,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountObjects.cpp
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/NoRippleCheck.cpp
+  # NFT
+  src/rpc/handlers/NFTInfo.cpp
   # Ledger
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp

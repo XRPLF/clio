@@ -140,6 +140,15 @@ which can cause high latencies. A possible alternative to this is to just deploy
 a database in each region, and the Clio nodes in each region use their region's database.
 This is effectively two systems.
 
+## Developing against `rippled` in standalone mode
+
+If you wish you develop against a `rippled` instance running in standalone
+mode there are a few quirks of both clio and rippled you need to keep in mind.
+You must:
+
+1. Advance the `rippled` ledger to at least ledger 256
+2. Wait 10 minutes before first starting clio against this standalone node.
+
 ## Logging
 Clio provides several logging options, all are configurable via the config file and are detailed below.
 

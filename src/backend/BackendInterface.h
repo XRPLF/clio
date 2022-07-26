@@ -162,12 +162,12 @@ public:
         std::vector<ripple::uint256> const& hashes,
         boost::asio::yield_context& yield) const = 0;
 
-    virtual AccountTransactions
+    virtual TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
         std::uint32_t const limit,
         bool forward,
-        std::optional<AccountTransactionsCursor> const& cursor,
+        std::optional<TransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
@@ -178,6 +178,21 @@ public:
     virtual std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
+
+    // *** NFT methods
+    virtual std::optional<NFT>
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const = 0;
+
+    virtual TransactionsAndCursor
+    fetchNFTTransactions(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context& yield) const = 0;
 
     // *** state data methods
@@ -286,7 +301,13 @@ public:
         std::string&& metadata) = 0;
 
     virtual void
+    writeNFTs(std::vector<NFTsData>&& data) = 0;
+
+    virtual void
     writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
+
+    virtual void
+    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) = 0;
 
     virtual void
     writeSuccessor(

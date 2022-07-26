@@ -19,7 +19,7 @@ doAccountTx(Context const& context)
     bool const binary = getBool(request, JS(binary), false);
     bool const forward = getBool(request, JS(forward), false);
 
-    std::optional<Backend::AccountTransactionsCursor> cursor;
+    std::optional<Backend::TransactionsCursor> cursor;
 
     if (request.contains(JS(marker)))
     {
