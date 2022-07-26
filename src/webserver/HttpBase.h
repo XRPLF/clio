@@ -424,7 +424,7 @@ handle_request(
         auto lastCloseAge = context->etl->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
             warnings.emplace_back("This server may be out of date");
-        result["warnings"] = warnings;
+        response["warnings"] = warnings;
         responseStr = boost::json::serialize(response);
         if (!dosGuard.add(ip, responseStr.size()))
         {
