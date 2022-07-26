@@ -569,7 +569,7 @@ ledgerInfoFromRequest(Context const& ctx)
 
         auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
 
-        if (!lgrInfo)
+        if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
             return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
 
         return *lgrInfo;
@@ -604,7 +604,7 @@ ledgerInfoFromRequest(Context const& ctx)
     auto lgrInfo =
         ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
-    if (!lgrInfo)
+    if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
 
     return *lgrInfo;
