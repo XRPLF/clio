@@ -52,7 +52,15 @@ private:
 
     // number of diffs to use to generate cursors to traverse the ledger in
     // parallel during initial cache download
-    size_t numDiffs_ = 1;
+    size_t numCacheDiffs_ = 32;
+    // number of markers to use at one time to traverse the ledger in parallel
+    // during initial cache download
+    size_t numCacheMarkers_ = 48;
+    // number of ledger objects to fetch concurrently per marker during cache
+    // download
+    size_t cachePageFetchSize_ = 512;
+    // thread responsible for syncing the cache on startup
+    std::thread cacheDownloader_;
 
     std::thread worker_;
     boost::asio::io_context& ioContext_;
@@ -313,6 +321,8 @@ public:
 
         if (worker_.joinable())
             worker_.join();
+        if (cacheDownloader_.joinable())
+            cacheDownloader_.join();
 
         BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
     }

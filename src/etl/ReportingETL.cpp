@@ -914,7 +914,7 @@ ReportingETL::loadCache(uint32_t seq)
         a.insert(std::end(a), std::begin(b), std::end(b));
     };
 
-    for (size_t i = 0; i < numDiffs_; ++i)
+    for (size_t i = 0; i < numCacheDiffs_; ++i)
     {
         append(diff, Backend::synchronousAndRetryOnTimeout([&](auto yield) {
                    return backend_->fetchLedgerDiff(seq - i, yield);
@@ -949,55 +949,73 @@ ReportingETL::loadCache(uint32_t seq)
         << "Loading cache. num cursors = " << cursors.size() - 1;
     BOOST_LOG_TRIVIAL(debug) << __func__ << " cursors = " << cursorStr.str();
 
-    std::atomic_uint* numRemaining = new std::atomic_uint{cursors.size() - 1};
-
-    auto startTime = std::chrono::system_clock::now();
-    for (size_t i = 0; i < cursors.size() - 1; ++i)
-    {
-        std::optional<ripple::uint256> start = cursors[i];
-        std::optional<ripple::uint256> end = cursors[i + 1];
-        boost::asio::spawn(
-            ioContext_,
-            [this, seq, start, end, numRemaining, startTime](
-                boost::asio::yield_context yield) {
-                std::optional<ripple::uint256> cursor = start;
-                while (true)
-                {
-                    auto res =
-                        Backend::retryOnTimeout([this, seq, &cursor, &yield]() {
-                            return backend_->fetchLedgerPage(
-                                cursor, seq, 256, false, yield);
-                        });
-                    backend_->cache().update(res.objects, seq, true);
-                    if (!res.cursor || (end && *(res.cursor) > *end))
-                        break;
+    cacheDownloader_ = std::thread{[this, seq, cursors]() {
+        auto startTime = std::chrono::system_clock::now();
+        std::atomic_int markers = 0;
+        std::atomic_int numRemaining = cursors.size() - 1;
+        for (size_t i = 0; i < cursors.size() - 1; ++i)
+        {
+            std::optional<ripple::uint256> start = cursors[i];
+            std::optional<ripple::uint256> end = cursors[i + 1];
+            markers.wait(numCacheMarkers_);
+            ++markers;
+            boost::asio::spawn(
+                ioContext_,
+                [this, seq, start, end, &numRemaining, startTime, &markers](
+                    boost::asio::yield_context yield) {
+                    std::optional<ripple::uint256> cursor = start;
+                    std::string cursorStr = cursor.has_value()
+                        ? ripple::strHex(cursor.value())
+                        : ripple::strHex(Backend::firstKey);
                     BOOST_LOG_TRIVIAL(debug)
-                        << "Loading cache. cache size = "
-                        << backend_->cache().size()
-                        << " - cursor = " << ripple::strHex(res.cursor.value());
-                    cursor = std::move(res.cursor);
-                }
-                if (--(*numRemaining) == 0)
-                {
-                    auto endTime = std::chrono::system_clock::now();
-                    auto duration =
-                        std::chrono::duration_cast<std::chrono::seconds>(
-                            endTime - startTime);
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Finished loading cache. cache size = "
-                        << backend_->cache().size() << ". Took "
-                        << duration.count() << " seconds";
-                    backend_->cache().setFull();
-                    delete numRemaining;
-                }
-                else
-                {
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Finished a cursor. num remaining = "
-                        << *numRemaining;
-                }
-            });
-    }
+                        << "Starting a cursor: " << cursorStr
+                        << " markers = " << markers;
+
+                    while (!stopping_)
+                    {
+                        auto res = Backend::retryOnTimeout([this,
+                                                            seq,
+                                                            &cursor,
+                                                            &yield]() {
+                            return backend_->fetchLedgerPage(
+                                cursor, seq, cachePageFetchSize_, false, yield);
+                        });
+                        backend_->cache().update(res.objects, seq, true);
+                        if (!res.cursor || (end && *(res.cursor) > *end))
+                            break;
+                        BOOST_LOG_TRIVIAL(debug)
+                            << "Loading cache. cache size = "
+                            << backend_->cache().size() << " - cursor = "
+                            << ripple::strHex(res.cursor.value())
+                            << " start = " << cursorStr
+                            << " markers = " << markers;
+
+                        cursor = std::move(res.cursor);
+                    }
+                    --markers;
+                    markers.notify_one();
+                    if (--numRemaining == 0)
+                    {
+                        auto endTime = std::chrono::system_clock::now();
+                        auto duration =
+                            std::chrono::duration_cast<std::chrono::seconds>(
+                                endTime - startTime);
+                        BOOST_LOG_TRIVIAL(info)
+                            << "Finished loading cache. cache size = "
+                            << backend_->cache().size() << ". Took "
+                            << duration.count() << " seconds";
+                        backend_->cache().setFull();
+                    }
+                    else
+                    {
+                        BOOST_LOG_TRIVIAL(info)
+                            << "Finished a cursor. num remaining = "
+                            << numRemaining << " start = " << cursorStr
+                            << " markers = " << markers;
+                    }
+                });
+        }
+    }};
     // If loading synchronously, poll cache until full
     while (cacheLoadStyle_ == CacheLoadStyle::SYNC &&
            !backend_->cache().isFull())
@@ -1107,9 +1125,12 @@ ReportingETL::ReportingETL(
             if (entry == "none" || entry == "no")
                 cacheLoadStyle_ = CacheLoadStyle::NOT_AT_ALL;
         }
-        if (cache.contains("num_diffs") && cache.at("num_diffs").as_int64())
-        {
-            numDiffs_ = cache.at("num_diffs").as_int64();
-        }
+        if (cache.contains("num_diffs") && cache.at("num_diffs").is_int64())
+            numCacheDiffs_ = cache.at("num_diffs").as_int64();
+        if (cache.contains("num_markers") && cache.at("num_markers").is_int64())
+            numCacheMarkers_ = cache.at("num_markers").as_int64();
+        if (cache.contains("page_fetch_size") &&
+            cache.at("page_fetch_size").is_int64())
+            cachePageFetchSize_ = cache.at("page_fetch_size").as_int64();
     }
 }

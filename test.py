@@ -475,14 +475,13 @@ async def ledger_data(ip, port, ledger, limit, binary, cursor):
     except websockets.exceptions.connectionclosederror as e:
         print(e)
 
-def writeLedgerData(data,filename):
-    print(len(data[0]))
+def writeLedgerData(state,filename):
+    print(len(state))
+
     with open(filename,'w') as f:
-        data[0].sort()
-        data[1].sort()
-        for k,v in zip(data[0],data[1]):
+        for k,v in state.items():
             f.write(k)
-            f.write('\n')
+            f.write(':')
             f.write(v)
             f.write('\n')
 
@@ -490,15 +489,14 @@ def writeLedgerData(data,filename):
 async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1, marker = None):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
-        blobs = []
-        keys = []
+        state = {}
         async with websockets.connect(address,max_size=1000000000) as ws:
             if int(limit) < 2048:
                 limit = 2048
             while True:
                 res = {}
                 if marker is None:
-                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":binary, "limit":int(limit)}))
+                    await ws.send(json.dumps({"command":"ledger_data","ledger_index":int(ledger),"binary":binary, "limit":int(limit),"out_of_order":True}))
                     res = json.loads(await ws.recv())
                     
                 else:
@@ -520,16 +518,15 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1, 
                     if binary:
                         if typ is None or x["data"][2:6] == typ:
                             #print(json.dumps(x))
-                            keys.append(x["index"])
+                            state[x["index"]] = x["data"]
                     else:
                         if typ is None or x["LedgerEntryType"] == typ:
-                            blobs.append(x)
-                            keys.append(x["index"])
-                if count != -1 and len(keys) > count:
+                            state[x["index"]] = x
+                if count != -1 and len(state) > count:
                     print("stopping early")
-                    print(len(keys))
+                    print(len(state))
                     print("done")
-                    return (keys,blobs)
+                    return state
                 if "cursor" in res:
                     marker = res["cursor"]
                     print(marker)
@@ -538,7 +535,7 @@ async def ledger_data_full(ip, port, ledger, binary, limit, typ=None, count=-1, 
                     print(marker)
                 else:
                     print("done")
-                    return (keys, blobs)
+                    return state
 
 
     except websockets.exceptions.connectionclosederror as e:
@@ -1263,7 +1260,7 @@ def run(args):
 
         res = asyncio.get_event_loop().run_until_complete(
                 ledger_data_full(args.ip, args.port, args.ledger, bool(args.binary), args.limit,args.type, int(args.count), args.marker))
-        print(len(res[0]))
+        print(len(res))
         if args.verify:
             writeLedgerData(res,args.filename)
 
