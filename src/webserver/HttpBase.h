@@ -242,12 +242,16 @@ public:
                 },
                 dosGuard_.isWhiteListed(*ip)))
         {
+            // Non-whitelist connection rejected due to full connection queue
             http::response<http::string_body> res{
                 http::status::ok, req_.version()};
-            res.set(http::field::server, "clio-server-v0.0.0");
+            res.set(
+                http::field::server,
+                "clio-server-" + Build::getClioVersionString());
             res.set(http::field::content_type, "application/json");
             res.keep_alive(req_.keep_alive());
-            res.body() = "Server overloaded";
+            res.body() = boost::json::serialize(
+                RPC::make_error(RPC::Error::rpcTOO_BUSY));
             res.prepare_payload();
             lambda_(std::move(res));
         }
@@ -304,7 +308,9 @@ handle_request(
                                   std::string content_type,
                                   std::string message) {
         http::response<http::string_body> res{status, req.version()};
-        res.set(http::field::server, "xrpl-reporting-server-v0.0.0");
+        res.set(
+            http::field::server,
+            "clio-server-" + Build::getClioVersionString());
         res.set(http::field::content_type, content_type);
         res.keep_alive(req.keep_alive());
         res.body() = std::string(message);
@@ -324,9 +330,9 @@ handle_request(
 
     if (!dosGuard.isOk(ip))
         return send(httpResponse(
-            http::status::ok,
-            "application/json",
-            boost::json::serialize(RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
+            http::status::service_unavailable,
+            "text/plain",
+            "Server is overloaded"));
 
     try
     {
@@ -349,13 +355,6 @@ handle_request(
                 boost::json::serialize(
                     RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
         }
-
-        if (!dosGuard.isOk(ip))
-            return send(httpResponse(
-                http::status::ok,
-                "application/json",
-                boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
 
         auto range = backend->fetchLedgerRange();
         if (!range)
@@ -429,8 +428,7 @@ handle_request(
         responseStr = boost::json::serialize(response);
         if (!dosGuard.add(ip, responseStr.size()))
         {
-            warnings.emplace_back("Too many requests");
-            response["warnings"] = warnings;
+            response["warning"] = "load";
             // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
         }

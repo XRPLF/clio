@@ -245,39 +245,23 @@ public:
     }
 
     void
-    handle_request(std::string const&& msg, boost::asio::yield_context& yc)
+    handle_request(
+        boost::json::object const&& request,
+        boost::json::value const& id,
+        boost::asio::yield_context& yield)
     {
         auto ip = derived().ip();
         if (!ip)
             return;
 
         boost::json::object response = {};
-        auto sendError = [this](auto error, boost::json::value id) {
+        auto sendError = [this, &request, id](auto error) {
             auto e = RPC::make_error(error);
-
             if (!id.is_null())
                 e["id"] = id;
-
+            e["request"] = request;
             send(boost::json::serialize(e));
         };
-
-        boost::json::value raw = [](std::string const&& msg) {
-            try
-            {
-                return boost::json::parse(msg);
-            }
-            catch (std::exception&)
-            {
-                return boost::json::value{nullptr};
-            }
-        }(std::move(msg));
-
-        if (!raw.is_object())
-            return sendError(RPC::Error::rpcINVALID_PARAMS, nullptr);
-
-        boost::json::object request = raw.as_object();
-
-        auto id = request.contains("id") ? request.at("id") : nullptr;
 
         try
         {
@@ -286,10 +270,10 @@ public:
             {
                 auto range = backend_->fetchLedgerRange();
                 if (!range)
-                    return sendError(RPC::Error::rpcNOT_READY, id);
+                    return sendError(RPC::Error::rpcNOT_READY);
 
                 std::optional<RPC::Context> context = RPC::make_WsContext(
-                    yc,
+                    yield,
                     request,
                     backend_,
                     subscriptions_.lock(),
@@ -301,7 +285,7 @@ public:
                     *ip);
 
                 if (!context)
-                    return sendError(RPC::Error::rpcBAD_SYNTAX, id);
+                    return sendError(RPC::Error::rpcBAD_SYNTAX);
 
                 response = getDefaultWsResponse(id);
 
@@ -334,7 +318,7 @@ public:
             catch (Backend::DatabaseTimeout const& t)
             {
                 BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                return sendError(RPC::Error::rpcNOT_READY, id);
+                return sendError(RPC::Error::rpcNOT_READY);
             }
         }
         catch (std::exception const& e)
@@ -342,7 +326,7 @@ public:
             BOOST_LOG_TRIVIAL(error)
                 << __func__ << " caught exception : " << e.what();
 
-            return sendError(RPC::Error::rpcINTERNAL, id);
+            return sendError(RPC::Error::rpcINTERNAL);
         }
 
         boost::json::array warnings;
@@ -358,8 +342,7 @@ public:
         std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
         {
-            warnings.emplace_back("Too many requests");
-            response["warnings"] = warnings;
+            response["warning"] = "load";
             // reserialize if we need to include this warning
             responseStr = boost::json::serialize(response);
         }
@@ -383,29 +366,55 @@ public:
 
         BOOST_LOG_TRIVIAL(debug)
             << __func__ << " received request from ip = " << *ip;
-        auto sendError = [&](auto&& msg) {
-            boost::json::object response;
-            response["error"] = std::move(msg);
-            std::string responseStr = boost::json::serialize(response);
 
+        auto sendError = [this, ip](
+                             auto error,
+                             boost::json::value const& id,
+                             boost::json::object const& request) {
+            auto e = RPC::make_error(error);
+
+            if (!id.is_null())
+                e["id"] = id;
+            e["request"] = request;
+
+            auto responseStr = boost::json::serialize(e);
             BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
-
             dosGuard_.add(*ip, responseStr.size());
             send(std::move(responseStr));
         };
+
+        boost::json::value raw = [](std::string const&& msg) {
+            try
+            {
+                return boost::json::parse(msg);
+            }
+            catch (std::exception&)
+            {
+                return boost::json::value{nullptr};
+            }
+        }(std::move(msg));
+
+        boost::json::object request;
+        if (!raw.is_object())
+            return sendError(RPC::Error::rpcINVALID_PARAMS, nullptr, request);
+        request = raw.as_object();
+
+        auto id = request.contains("id") ? request.at("id") : nullptr;
+
         if (!dosGuard_.isOk(*ip))
         {
-            sendError("Too many requests. Slow down");
+            sendError(RPC::Error::rpcSLOW_DOWN, id, request);
         }
         else
         {
             if (!queue_.postCoro(
-                    [m = std::move(msg), shared_this = shared_from_this()](
-                        boost::asio::yield_context yield) {
-                        shared_this->handle_request(std::move(m), yield);
+                    [shared_this = shared_from_this(),
+                     r = std::move(request),
+                     id](boost::asio::yield_context yield) {
+                        shared_this->handle_request(std::move(r), id, yield);
                     },
                     dosGuard_.isWhiteListed(*ip)))
-                sendError("Server overloaded");
+                sendError(RPC::Error::rpcTOO_BUSY, id, request);
         }
 
         do_read();
