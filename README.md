@@ -168,3 +168,9 @@ rotate the current log file.
 
 Note, time-based log rotation occurs dependently on size-based log rotation, where if a
 size-based log rotation occurs, the timer for the time-based rotation will reset.
+
+## Cassandra / Scylla Administration
+
+Since Clio relies on either Cassandra or Scylla for its database backend, here are some important considerations:
+
+- Scylla, by default, will reserve all free RAM on a machine for itself. If you are running `rippled` or other services on the same machine, restrict its memory usage using the `--memory` argument: https://docs.scylladb.com/getting-started/scylla-in-a-shared-environment/
