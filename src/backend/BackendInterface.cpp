@@ -276,7 +276,8 @@ BackendInterface::fetchLedgerPage(
         else if (!outOfOrder)
         {
             BOOST_LOG_TRIVIAL(error)
-                << __func__ << " incorrect successor table. key = "
+                << __func__
+                << " deleted or non-existent object in successor table. key = "
                 << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j)
@@ -284,7 +285,6 @@ BackendInterface::fetchLedgerPage(
                 msg << " - " << ripple::strHex(keys[j]);
             }
             BOOST_LOG_TRIVIAL(error) << __func__ << msg.str();
-            assert(false);
         }
     }
     if (keys.size() && !reachedEnd)
