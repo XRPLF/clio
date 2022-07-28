@@ -7,15 +7,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Get source
-        uses: actions/checkout@v3
+  # lint:
+  #   name: Lint
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Get source
+  #       uses: actions/checkout@v3
 
-      - name: Run clang-format
-        uses: XRPLF/clio-gha/lint@main
+  #     - name: Run clang-format
+  #       uses: XRPLF/clio-gha/lint@main
 
   build_clio:
     name: Build
@@ -32,13 +32,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: clio_ci
-          repository: 'XRPLF/clio-ci'
-
-      - name: Clone GitHub actions repo
-        uses: actions/checkout@v3
-        with:
-          repository: XRPLF/clio-gha
-          path: gha # must be the same as defined in XRPLF/clio-gha
+          repository: 'legleux/clio-ci'
 
       - name: Build
         uses: legleux/clio-gha/build@main
@@ -48,9 +42,16 @@ jobs:
         with:
           name: clio_tests
           path: clio_tests
+      - name: Install siging stuff
+        run: |
+          sudo apt-get update && apt-get install -y dpkg-sig equivs
 
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
+
+      - name: VERIFY the signature
+        run: |
+          gpg --verify *.deb
 
       - name: Artifact Debian package
         uses: actions/upload-artifact@v2
@@ -58,15 +59,15 @@ jobs:
           name: deb_package-${{ github.sha }}
           path: clio_ci/build/*.deb
 
-  test_clio:
-    name: Test Clio
-    runs-on: [self-hosted, Linux]
-    needs: build_clio
-    steps:
-      - name: Get clio_tests artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: clio_tests
+  # test_clio:
+  #   name: Test Clio
+  #   runs-on: [self-hosted, Linux]
+  #   needs: build_clio
+  #   steps:
+  #     - name: Get clio_tests artifact
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: clio_tests
 
-      - name: Run tests
-        uses: XRPLF/clio-gha/test@main
+  #     - name: Run tests
+  #       uses: XRPLF/clio-gha/test@main
