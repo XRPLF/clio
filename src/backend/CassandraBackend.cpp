@@ -486,6 +486,10 @@ CassandraBackend::fetchTransactions(
 {
     if (hashes.size() == 0)
         return {};
+    if (numReadRequestsOutstanding_ + hashes.size() >=
+        maxReadRequestsOutstanding)
+        throw DatabaseRequestThrottled();
+    numReadRequestsOutstanding_ += hashes.size();
 
     handler_type handler(std::forward<decltype(yield)>(yield));
     result_type result(handler);
@@ -518,6 +522,7 @@ CassandraBackend::fetchTransactions(
 
     // suspend the coroutine until completion handler is called.
     result.get();
+    numReadRequestsOutstanding_ -= hashes.size();
 
     auto end = std::chrono::system_clock::now();
     for (auto const& cb : cbs)
@@ -811,6 +816,10 @@ CassandraBackend::doFetchLedgerObjects(
 {
     if (keys.size() == 0)
         return {};
+    if (numReadRequestsOutstanding_ + keys.size() >= maxReadRequestsOutstanding)
+        throw DatabaseRequestThrottled();
+
+    numReadRequestsOutstanding_ += keys.size();
 
     handler_type handler(std::forward<decltype(yield)>(yield));
     result_type result(handler);
@@ -838,6 +847,7 @@ CassandraBackend::doFetchLedgerObjects(
 
     // suspend the coroutine until completion handler is called.
     result.get();
+    numReadRequestsOutstanding_ -= keys.size();
 
     for (auto const& cb : cbs)
     {
@@ -1077,21 +1087,26 @@ CassandraBackend::open(bool readOnly)
            << ", result: " << rc << ", " << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
-    if (getInt("max_requests_outstanding"))
-        maxRequestsOutstanding = *getInt("max_requests_outstanding");
+    if (getInt("max_write_requests_outstanding"))
+        maxWriteRequestsOutstanding = *getInt("max_write_requests_outstanding");
+
+    if (getInt("max_read_requests_outstanding"))
+        maxReadRequestsOutstanding = *getInt("max_read_requests_outstanding");
 
     if (getInt("sync_interval"))
         syncInterval_ = *getInt("sync_interval");
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " sync interval is " << syncInterval_
-        << ". max requests outstanding is " << maxRequestsOutstanding;
+        << ". max write requests outstanding is " << maxWriteRequestsOutstanding
+        << ". max read requests outstanding is " << maxReadRequestsOutstanding;
 
     cass_cluster_set_request_timeout(cluster, 10000);
 
     rc = cass_cluster_set_queue_size_io(
         cluster,
-        maxRequestsOutstanding);  // This number needs to scale w/ the
-                                  // number of request per sec
+        maxWriteRequestsOutstanding +
+            maxReadRequestsOutstanding);  // This number needs to scale w/ the
+                                          // number of request per sec
     if (rc != CASS_OK)
     {
         std::stringstream ss;

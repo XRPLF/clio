@@ -11,10 +11,35 @@ namespace Backend {
 
 class DatabaseTimeout : public std::exception
 {
+    std::string msg;
+
+public:
+    DatabaseTimeout(std::string const& msg) : msg(msg)
+    {
+    }
+    DatabaseTimeout() : msg("Database read timed out. Please retry the request")
+    {
+    }
     const char*
     what() const throw() override
     {
-        return "Database read timed out. Please retry the request";
+        return msg.c_str();
+    }
+};
+
+class DatabaseRequestThrottled : public std::exception
+{
+    std::string msg;
+
+public:
+    DatabaseRequestThrottled()
+    {
+    }
+
+    const char*
+    what() const throw() override
+    {
+        return "Max outstanding database requests exceeded";
     }
 };
 
@@ -30,9 +55,15 @@ retryOnTimeout(F func, size_t waitMs = 500)
         }
         catch (DatabaseTimeout& t)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
             BOOST_LOG_TRIVIAL(error)
-                << __func__ << " function timed out. Retrying ... ";
+                << __func__
+                << " function timed out. Sleeping and retrying ... ";
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
+        }
+        catch (DatabaseRequestThrottled& t)
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << __func__ << " Request throttled. Retrying";
         }
     }
 }

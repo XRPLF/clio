@@ -9,7 +9,8 @@
             "keyspace":"clio",
             "replication_factor":1,
             "table_prefix":"",
-            "max_requests_outstanding":25000,
+            "max_write_requests_outstanding":25000,
+            "max_read_requests_outstanding":1000,
             "threads":8
         }
     },

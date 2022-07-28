@@ -645,13 +645,19 @@ private:
     uint32_t syncInterval_ = 1;
     uint32_t lastSync_ = 0;
 
-    // maximum number of concurrent in flight requests. New requests will wait
-    // for earlier requests to finish if this limit is exceeded
-    std::uint32_t maxRequestsOutstanding = 10000;
-    mutable std::atomic_uint32_t numRequestsOutstanding_ = 0;
+    // maximum number of concurrent in flight write requests. New requests will
+    // wait for earlier requests to finish if this limit is exceeded
+    std::uint32_t maxWriteRequestsOutstanding = 10000;
+    mutable std::atomic_uint32_t numWriteRequestsOutstanding_ = 0;
+
+    // maximum number of concurrent in flight read requests. New requests will
+    // throw if this limit is exceeded. Note, this is a rough max, and may be
+    // slightly exceeded at times
+    std::uint32_t maxReadRequestsOutstanding = 10000;
+    mutable std::atomic_uint32_t numReadRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
-    // requests
+    // write requests
     mutable std::mutex throttleMutex_;
     mutable std::condition_variable throttleCv_;
 
@@ -1031,19 +1037,19 @@ public:
                 throttleCv_.wait(lck, [this]() { return canAddRequest(); });
             }
         }
-        ++numRequestsOutstanding_;
+        ++numWriteRequestsOutstanding_;
     }
 
     inline void
     decrementOutstandingRequestCount() const
     {
         // sanity check
-        if (numRequestsOutstanding_ == 0)
+        if (numWriteRequestsOutstanding_ == 0)
         {
             assert(false);
             throw std::runtime_error("decrementing num outstanding below 0");
         }
-        size_t cur = (--numRequestsOutstanding_);
+        size_t cur = (--numWriteRequestsOutstanding_);
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
@@ -1062,13 +1068,13 @@ public:
     inline bool
     canAddRequest() const
     {
-        return numRequestsOutstanding_ < maxRequestsOutstanding;
+        return numWriteRequestsOutstanding_ < maxWriteRequestsOutstanding;
     }
 
     inline bool
     finishedAllRequests() const
     {
-        return numRequestsOutstanding_ == 0;
+        return numWriteRequestsOutstanding_ == 0;
     }
 
     void
@@ -1201,6 +1207,8 @@ public:
         CassandraStatement const& statement,
         boost::asio::yield_context& yield) const
     {
+        if (numReadRequestsOutstanding_ >= maxReadRequestsOutstanding)
+            throw DatabaseRequestThrottled();
         using result = boost::asio::async_result<
             boost::asio::yield_context,
             void(boost::system::error_code, CassError)>;
@@ -1209,10 +1217,18 @@ public:
         CassError rc;
         do
         {
+            // Since the check and the increment are not atomic, we can actually
+            // end up with slightly more requests than the max. This is ok,
+            // since the max is meant to be on the order of thousands, and we
+            // can only surpass the max by the number of threads submitting
+            // requests. The max should then be interpreted as a rough max,
+            // rather than a hard number
+            ++numReadRequestsOutstanding_;
             fut = cass_session_execute(session_.get(), statement.get());
 
             boost::system::error_code ec;
             rc = cass_future_error_code(fut, yield[ec]);
+            --numReadRequestsOutstanding_;
 
             if (ec)
             {
