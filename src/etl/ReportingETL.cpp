@@ -977,17 +977,18 @@ ReportingETL::loadCache(uint32_t seq)
 
     cacheDownloader_ = std::thread{[this, seq, cursors]() {
         auto startTime = std::chrono::system_clock::now();
-        std::atomic_int markers = 0;
-        std::atomic_int numRemaining = cursors.size() - 1;
+        auto markers = std::make_shared<std::atomic_int>(0);
+        auto numRemaining =
+            std::make_shared<std::atomic_int>(cursors.size() - 1);
         for (size_t i = 0; i < cursors.size() - 1; ++i)
         {
             std::optional<ripple::uint256> start = cursors[i];
             std::optional<ripple::uint256> end = cursors[i + 1];
-            markers.wait(numCacheMarkers_);
-            ++markers;
+            markers->wait(numCacheMarkers_);
+            ++(*markers);
             boost::asio::spawn(
                 ioContext_,
-                [this, seq, start, end, &numRemaining, startTime, &markers](
+                [this, seq, start, end, numRemaining, startTime, markers](
                     boost::asio::yield_context yield) {
                     std::optional<ripple::uint256> cursor = start;
                     std::string cursorStr = cursor.has_value()
@@ -995,7 +996,7 @@ ReportingETL::loadCache(uint32_t seq)
                         : ripple::strHex(Backend::firstKey);
                     BOOST_LOG_TRIVIAL(debug)
                         << "Starting a cursor: " << cursorStr
-                        << " markers = " << markers;
+                        << " markers = " << *markers;
 
                     while (!stopping_)
                     {
@@ -1014,13 +1015,13 @@ ReportingETL::loadCache(uint32_t seq)
                             << backend_->cache().size() << " - cursor = "
                             << ripple::strHex(res.cursor.value())
                             << " start = " << cursorStr
-                            << " markers = " << markers;
+                            << " markers = " << *markers;
 
                         cursor = std::move(res.cursor);
                     }
-                    --markers;
-                    markers.notify_one();
-                    if (--numRemaining == 0)
+                    --(*markers);
+                    markers->notify_one();
+                    if (--(*numRemaining) == 0)
                     {
                         auto endTime = std::chrono::system_clock::now();
                         auto duration =
@@ -1036,8 +1037,8 @@ ReportingETL::loadCache(uint32_t seq)
                     {
                         BOOST_LOG_TRIVIAL(info)
                             << "Finished a cursor. num remaining = "
-                            << numRemaining << " start = " << cursorStr
-                            << " markers = " << markers;
+                            << *numRemaining << " start = " << cursorStr
+                            << " markers = " << *markers;
                     }
                 });
         }
