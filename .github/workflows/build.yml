@@ -18,9 +18,8 @@ jobs:
         uses: XRPLF/clio-gha/lint@main
 
   build_clio:
-    name: Build
+    name: Build Clio
     runs-on: [self-hosted, Linux]
-    needs: lint
     steps:
 
       - name: Clone Clio repo
@@ -34,26 +33,61 @@ jobs:
           path: clio_ci
           repository: 'XRPLF/clio-ci'
 
-      - name: Clone GitHub actions repo
-        uses: actions/checkout@v3
-        with:
-          repository: XRPLF/clio-gha
-          path: gha # must be the same as defined in XRPLF/clio-gha
-
       - name: Build
         uses: XRPLF/clio-gha/build@main
 
+      - name: Artifact packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_packages
+          path: ${{ github.workspace }}/*.deb
+
       - name: Artifact clio_tests
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: clio_tests
           path: clio_tests
 
+  sign:
+    name: Sign packages
+    needs: build_clio
+    runs-on: ubuntu-20.04
+    env:
+      GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
+      GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
+
+    steps:
+      - name: Get package artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: clio_packages
+
+      - name: find packages
+        run: find . -name "*.deb"
+
+      - name: Install dpkg-sig
+        run: |
+          sudo apt-get update && sudo apt-get install -y dpkg-sig
+
+      - name: Sign Debian packages
+        uses: XRPLF/clio-gha/sign@main
+
+      - name: Verify the signature
+        run: |
+          set -e
+          for PKG in $(ls *.deb); do
+            gpg --verify "${PKG}"
+          done
+
+      - name: Get short SHA
+        id: shortsha
+        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+
       - name: Artifact Debian package
         uses: actions/upload-artifact@v2
         with:
-          name: deb_package-${{ github.sha }}
-          path: clio_ci/build/*.deb
+          name: clio-deb-packages-${{ steps.shortsha.outputs.sha8 }}
+          path: ${{ github.workspace }}/*.deb
 
   test_clio:
     name: Test Clio
