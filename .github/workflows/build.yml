@@ -44,7 +44,7 @@ jobs:
 
       - name: Install signing stuff
         run: |
-          sudo apt-get update && apt-get install -y dpkg-sig equivs
+          sudo apt-get update && apt-get sudo install -y dpkg-sig equivs
 
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
