@@ -41,13 +41,16 @@ jobs:
           path: gha # must be the same as defined in XRPLF/clio-gha
 
       - name: Build
-        uses: XRPLF/clio-gha/build@main
+        uses: legleux/clio-gha/build@main
 
       - name: Artifact clio_tests
         uses: actions/upload-artifact@v2
         with:
           name: clio_tests
           path: clio_tests
+
+      - name: Sign Debian packages
+        uses: legleux/clio-gha/sign@main
 
       - name: Artifact Debian package
         uses: actions/upload-artifact@v2
