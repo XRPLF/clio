@@ -72,6 +72,11 @@ jobs:
         with:
           repository: 'legleux/clio-gha'
 
+      - name: Get package artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: clio_package
+
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
 
