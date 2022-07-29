@@ -47,11 +47,29 @@ jobs:
           ls -lh
           touch clio_tests
 
+
+      - name: Artifact package
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_package
+          path: ${{ github.workspace }}/*.deb
+
       - name: Artifact clio_tests
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: clio_tests
           path: clio_tests
+  sign:
+    name: Sign packages
+    runs-on: [self-hosted, Linux]
+    env:
+      GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
+      GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
+    steps:
+      - name: Clone clio-gha repo
+        uses: actions/checkout@v3
+        with:
+          repository: 'legleux/clio-gha'
 
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
