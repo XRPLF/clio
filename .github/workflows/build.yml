@@ -63,10 +63,11 @@ jobs:
   sign:
     name: Sign packages
     needs: build_clio
-    runs-on: [self-hosted, Linux]
+    runs-on: ubuntu-20.04
     env:
       GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
       GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
+
     steps:
       - name: Clone clio-gha repo
         uses: actions/checkout@v3
@@ -77,9 +78,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: clio_package
+
       - name: check
         run: |
-          ls -l
+          sudo apt-get update && sudo apt-get install -y dpkg-sig
 
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
