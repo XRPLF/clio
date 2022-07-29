@@ -42,14 +42,10 @@ jobs:
           name: clio_tests
           path: clio_tests
 
-      - name: Install signing stuff
-        run: |
-          sudo apt-get update && apt-get sudo install -y dpkg-sig equivs
-
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
 
-      - name: VERIFY the signature
+      - name: Verify the signature
         run: |
           gpg --verify *.deb
 
