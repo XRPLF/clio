@@ -61,6 +61,7 @@ jobs:
           path: clio_tests
   sign:
     name: Sign packages
+    needs: build_clio
     runs-on: [self-hosted, Linux]
     env:
       GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
