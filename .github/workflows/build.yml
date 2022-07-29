@@ -59,6 +59,7 @@ jobs:
         with:
           name: clio_tests
           path: clio_tests
+
   sign:
     name: Sign packages
     needs: build_clio
@@ -76,6 +77,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: clio_package
+      - name: check
+        run: |
+          ls -l
 
       - name: Sign Debian packages
         uses: legleux/clio-gha/sign@main
