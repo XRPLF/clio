@@ -20,6 +20,9 @@ jobs:
   build_clio:
     name: Build
     runs-on: [self-hosted, Linux]
+    env:
+      GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
+      GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
     steps:
 
       - name: Clone Clio repo
@@ -33,8 +36,15 @@ jobs:
           path: clio_ci
           repository: 'legleux/clio-ci'
 
-      - name: Build
-        uses: legleux/clio-gha/build@main
+      # - name: Build
+      #   uses: legleux/clio-gha/build@main
+
+      - name: fake build
+        run: |
+          echo -en 'Package: fake\nVersion: 1.2.3\nMaintainer: Mee <support@me.com>\nArchitecture: all\nDepends: butts' > a.equivs
+          equivs-build a.equivs
+          ls -lh
+          touch clio_tests
 
       - name: Artifact clio_tests
         uses: actions/upload-artifact@v2
