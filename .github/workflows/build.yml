@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: deb_package-${{ github.sha }}
-          path: clio_ci/build/*.deb
+          path: ${{ github.workspace }}/*.deb
 
   # test_clio:
   #   name: Test Clio
