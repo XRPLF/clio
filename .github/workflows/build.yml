@@ -7,22 +7,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  # lint:
-  #   name: Lint
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Get source
-  #       uses: actions/checkout@v3
+  lint:
+    name: Lint
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Get source
+        uses: actions/checkout@v3
 
-  #     - name: Run clang-format
-  #       uses: XRPLF/clio-gha/lint@main
+      - name: Run clang-format
+        uses: XRPLF/clio-gha/lint@main
 
   build_clio:
     name: Build
     runs-on: [self-hosted, Linux]
-    env:
-      GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
-      GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
     steps:
 
       - name: Clone Clio repo
@@ -69,17 +66,17 @@ jobs:
       GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
 
     steps:
-      - name: Clone clio-gha repo
-        uses: actions/checkout@v3
-        with:
-          repository: 'legleux/clio-gha'
+      # - name: Clone clio-gha repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: 'legleux/clio-gha'
 
       - name: Get package artifact
         uses: actions/download-artifact@v3
         with:
           name: clio_package
 
-      - name: check
+      - name: Install dpkg-sig
         run: |
           sudo apt-get update && sudo apt-get install -y dpkg-sig
 
