@@ -41,6 +41,7 @@ jobs:
 
       - name: fake build
         run: |
+          sudo apt-get install equivs
           echo -en 'Package: fake\nVersion: 1.2.3\nMaintainer: Mee <support@me.com>\nArchitecture: all\nDepends: butts' > a.equivs
           equivs-build a.equivs
           ls -lh
