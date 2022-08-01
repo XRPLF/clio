@@ -327,4 +327,90 @@ BackendInterface::fetchFees(
     return fees;
 }
 
+std::optional<TransactionAndMetadata>
+BackendInterface::fetchTransaction(
+    ripple::uint256 const& hash,
+    boost::asio::yield_context& yield) const
+{
+    auto obj = txCache_.get(hash);
+    if (obj)
+    {
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " - tx_cache hit - " << ripple::strHex(hash);
+        return *obj;
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << " - tx_cache miss - " << ripple::strHex(hash);
+        auto dbObj = doFetchTransaction(hash, yield);
+        if (!dbObj)
+            BOOST_LOG_TRIVIAL(trace)
+                << __func__ << " - missed tx_cache and missed in db";
+        else
+            BOOST_LOG_TRIVIAL(trace)
+                << __func__ << " - missed tx_cache but found in db";
+        return dbObj;
+    }
+}
+
+std::vector<TransactionAndMetadata>
+BackendInterface::fetchTransactions(
+    std::vector<ripple::uint256> const& hashes,
+    boost::asio::yield_context& yield) const
+{
+    std::vector<TransactionAndMetadata> results;
+    results.resize(hashes.size());
+    std::vector<ripple::uint256> misses;
+    for (size_t i = 0; i < hashes.size(); ++i)
+    {
+        auto obj = txCache_.get(hashes[i]);
+        if (obj)
+            results[i] = *obj;
+        else
+            misses.push_back(hashes[i]);
+    }
+    BOOST_LOG_TRIVIAL(trace)
+        << __func__ << " - tx_cache hits = " << hashes.size() - misses.size()
+        << " - tx_cache misses = " << misses.size();
+
+    if (misses.size())
+    {
+        auto objs = doFetchTransactions(misses, yield);
+        for (size_t i = 0, j = 0; i < results.size(); ++i)
+        {
+            if (results[i].transaction.size() == 0)
+            {
+                results[i] = objs[j];
+                ++j;
+            }
+        }
+    }
+
+    return results;
+}
+
+std::vector<TransactionAndMetadata>
+BackendInterface::fetchAllTransactionsInLedger(
+    std::uint32_t const ledgerSequence,
+    boost::asio::yield_context& yield) const
+{
+    auto obj = txCache_.getLedgerTransactions(ledgerSequence);
+    if (obj)
+        return *obj;
+    else
+        return doFetchAllTransactionsInLedger(ledgerSequence, yield);
+}
+
+std::vector<ripple::uint256>
+BackendInterface::fetchAllTransactionHashesInLedger(
+    std::uint32_t const ledgerSequence,
+    boost::asio::yield_context& yield) const
+{
+    auto obj = txCache_.getLedgerTransactionHashes(ledgerSequence);
+    if (obj)
+        return *obj;
+    else
+        return doFetchAllTransactionHashesInLedger(ledgerSequence, yield);
+}
 }  // namespace Backend

@@ -416,12 +416,12 @@ CassandraBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 }
 
 std::vector<TransactionAndMetadata>
-CassandraBackend::fetchAllTransactionsInLedger(
+CassandraBackend::doFetchAllTransactionsInLedger(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
-    auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
-    return fetchTransactions(hashes, yield);
+    auto hashes = doFetchAllTransactionHashesInLedger(ledgerSequence, yield);
+    return doFetchTransactions(hashes, yield);
 }
 
 template <class Result>
@@ -480,7 +480,7 @@ processAsyncRead(CassFuture* fut, void* cbData)
 }
 
 std::vector<TransactionAndMetadata>
-CassandraBackend::fetchTransactions(
+CassandraBackend::doFetchTransactions(
     std::vector<ripple::uint256> const& hashes,
     boost::asio::yield_context& yield) const
 {
@@ -535,7 +535,7 @@ CassandraBackend::fetchTransactions(
 }
 
 std::vector<ripple::uint256>
-CassandraBackend::fetchAllTransactionHashesInLedger(
+CassandraBackend::doFetchAllTransactionHashesInLedger(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {

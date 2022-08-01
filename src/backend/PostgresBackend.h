@@ -48,17 +48,17 @@ public:
 
     // returns a transaction, metadata pair
     std::optional<TransactionAndMetadata>
-    fetchTransaction(
+    doFetchTransaction(
         ripple::uint256 const& hash,
         boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(
+    doFetchAllTransactionsInLedger(
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
     std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(
+    doFetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const override;
 
@@ -91,7 +91,7 @@ public:
         boost::asio::yield_context& yield) const override;
 
     std::vector<TransactionAndMetadata>
-    fetchTransactions(
+    doFetchTransactions(
         std::vector<ripple::uint256> const& hashes,
         boost::asio::yield_context& yield) const override;
 

@@ -185,12 +185,19 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
                 return backend_->fetchFees(lgrInfo.seq, yield);
             });
 
-        std::vector<Backend::TransactionAndMetadata> transactions =
+        std::vector<ripple::uint256> hashes =
             Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchAllTransactionsInLedger(
+                return backend_->fetchAllTransactionHashesInLedger(
                     lgrInfo.seq, yield);
             });
 
+        std::vector<Backend::TransactionAndMetadata> transactions =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchTransactions(hashes, yield);
+            });
+
+        // hashes map to transactions
+        backend_->txCache().update(hashes, transactions, lgrInfo.seq);
         auto ledgerRange = backend_->fetchLedgerRange();
         assert(ledgerRange);
         assert(fees);

@@ -354,7 +354,7 @@ PostgresBackend::doFetchLedgerObject(
 
 // returns a transaction, metadata pair
 std::optional<TransactionAndMetadata>
-PostgresBackend::fetchTransaction(
+PostgresBackend::doFetchTransaction(
     ripple::uint256 const& hash,
     boost::asio::yield_context& yield) const
 {
@@ -378,7 +378,7 @@ PostgresBackend::fetchTransaction(
     return {};
 }
 std::vector<TransactionAndMetadata>
-PostgresBackend::fetchAllTransactionsInLedger(
+PostgresBackend::doFetchAllTransactionsInLedger(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
@@ -407,7 +407,7 @@ PostgresBackend::fetchAllTransactionsInLedger(
     return {};
 }
 std::vector<ripple::uint256>
-PostgresBackend::fetchAllTransactionHashesInLedger(
+PostgresBackend::doFetchAllTransactionHashesInLedger(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
@@ -468,7 +468,7 @@ PostgresBackend::doFetchSuccessorKey(
 }
 
 std::vector<TransactionAndMetadata>
-PostgresBackend::fetchTransactions(
+PostgresBackend::doFetchTransactions(
     std::vector<ripple::uint256> const& hashes,
     boost::asio::yield_context& yield) const
 {

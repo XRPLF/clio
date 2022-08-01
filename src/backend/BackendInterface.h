@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <backend/DBHelpers.h>
 #include <backend/SimpleCache.h>
+#include <backend/TxCache.h>
 #include <backend/Types.h>
 #include <thread>
 #include <type_traits>
@@ -85,6 +86,7 @@ protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
     SimpleCache cache_;
+    TxCache txCache_;
 
     // mutex used for open() and close()
     mutable std::mutex mutex_;
@@ -115,6 +117,18 @@ public:
     cache()
     {
         return cache_;
+    }
+
+    TxCache&
+    txCache()
+    {
+        return txCache_;
+    }
+
+    TxCache const&
+    txCache() const
+    {
+        return txCache_;
     }
 
     virtual std::optional<ripple::LedgerInfo>
@@ -152,14 +166,24 @@ public:
     fetchFees(std::uint32_t const seq, boost::asio::yield_context& yield) const;
 
     // *** transaction methods
-    virtual std::optional<TransactionAndMetadata>
+    std::optional<TransactionAndMetadata>
     fetchTransaction(
         ripple::uint256 const& hash,
+        boost::asio::yield_context& yield) const;
+
+    std::vector<TransactionAndMetadata>
+    fetchTransactions(
+        std::vector<ripple::uint256> const& hashes,
+        boost::asio::yield_context& yield) const;
+
+    virtual std::optional<TransactionAndMetadata>
+    doFetchTransaction(
+        ripple::uint256 const& key,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<TransactionAndMetadata>
-    fetchTransactions(
-        std::vector<ripple::uint256> const& hashes,
+    doFetchTransactions(
+        std::vector<ripple::uint256> const& keys,
         boost::asio::yield_context& yield) const = 0;
 
     virtual TransactionsAndCursor
@@ -170,13 +194,23 @@ public:
         std::optional<TransactionsCursor> const& cursor,
         boost::asio::yield_context& yield) const = 0;
 
-    virtual std::vector<TransactionAndMetadata>
+    std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const;
+
+    std::vector<ripple::uint256>
+    fetchAllTransactionHashesInLedger(
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context& yield) const;
+
+    virtual std::vector<TransactionAndMetadata>
+    doFetchAllTransactionsInLedger(
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
     virtual std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(
+    doFetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context& yield) const = 0;
 
