@@ -40,66 +40,101 @@ include(CMake/deps/cassandra.cmake)
 include(CMake/deps/Postgres.cmake)
 
 target_sources(clio PRIVATE
-  ## Main
-  src/main/impl/Build.cpp
+  ## Application
+  src/clio/main/impl/Application.cpp
+  src/clio/main/impl/Build.cpp
+  src/clio/main/impl/Config.cpp
   ## Backend
-  src/backend/BackendInterface.cpp
-  src/backend/CassandraBackend.cpp
-  src/backend/Pg.cpp
-  src/backend/PostgresBackend.cpp
-  src/backend/SimpleCache.cpp
+  src/clio/backend/BackendInterface.cpp
+  src/clio/backend/CassandraBackend.cpp
+  src/clio/backend/Pg.cpp
+  src/clio/backend/PostgresBackend.cpp
+  src/clio/backend/SimpleCache.cpp
   ## ETL
-  src/etl/ETLSource.cpp
-  src/etl/NFTHelpers.cpp
-  src/etl/ReportingETL.cpp
+  src/clio/etl/ETLSource.cpp
+  src/clio/etl/NFTHelpers.cpp
+  src/clio/etl/ReportingETL.cpp
   ## Subscriptions
-  src/subscriptions/SubscriptionManager.cpp
+  src/clio/subscriptions/SubscriptionManager.cpp
   ## RPC
-  src/rpc/RPC.cpp
-  src/rpc/RPCHelpers.cpp
-  src/rpc/Counters.cpp
-  src/rpc/WorkQueue.cpp
+  src/clio/rpc/RPC.cpp
+  src/clio/rpc/RPCHelpers.cpp
+  src/clio/rpc/Counters.cpp
+  src/clio/rpc/WorkQueue.cpp
+  ## Webserver
+  src/clio/webserver/impl/DOSGuard.cpp
+  src/clio/webserver/impl/Listener.cpp
   ## RPC Methods
   # Account
-  src/rpc/handlers/AccountChannels.cpp
-  src/rpc/handlers/AccountCurrencies.cpp
-  src/rpc/handlers/AccountInfo.cpp
-  src/rpc/handlers/AccountLines.cpp
-  src/rpc/handlers/AccountOffers.cpp
-  src/rpc/handlers/AccountObjects.cpp
-  src/rpc/handlers/GatewayBalances.cpp
-  src/rpc/handlers/NoRippleCheck.cpp
+  src/clio/rpc/handlers/AccountChannels.cpp
+  src/clio/rpc/handlers/AccountCurrencies.cpp
+  src/clio/rpc/handlers/AccountInfo.cpp
+  src/clio/rpc/handlers/AccountLines.cpp
+  src/clio/rpc/handlers/AccountOffers.cpp
+  src/clio/rpc/handlers/AccountObjects.cpp
+  src/clio/rpc/handlers/GatewayBalances.cpp
+  src/clio/rpc/handlers/NoRippleCheck.cpp
   # NFT
-  src/rpc/handlers/NFTInfo.cpp
+  src/clio/rpc/handlers/NFTInfo.cpp
   # Ledger
-  src/rpc/handlers/Ledger.cpp
-  src/rpc/handlers/LedgerData.cpp
-  src/rpc/handlers/LedgerEntry.cpp
-  src/rpc/handlers/LedgerRange.cpp
+  src/clio/rpc/handlers/Ledger.cpp
+  src/clio/rpc/handlers/LedgerData.cpp
+  src/clio/rpc/handlers/LedgerEntry.cpp
+  src/clio/rpc/handlers/LedgerRange.cpp
   # Transaction
-  src/rpc/handlers/Tx.cpp
-  src/rpc/handlers/TransactionEntry.cpp
-  src/rpc/handlers/AccountTx.cpp
+  src/clio/rpc/handlers/Tx.cpp
+  src/clio/rpc/handlers/TransactionEntry.cpp
+  src/clio/rpc/handlers/AccountTx.cpp
   # Dex
-  src/rpc/handlers/BookOffers.cpp
+  src/clio/rpc/handlers/BookOffers.cpp
   # NFT
-  src/rpc/handlers/NFTOffers.cpp
+  src/clio/rpc/handlers/NFTOffers.cpp
   # Payment Channel
-  src/rpc/handlers/ChannelAuthorize.cpp
-  src/rpc/handlers/ChannelVerify.cpp
+  src/clio/rpc/handlers/ChannelAuthorize.cpp
+  src/clio/rpc/handlers/ChannelVerify.cpp
   # Subscribe
-  src/rpc/handlers/Subscribe.cpp
+  src/clio/rpc/handlers/Subscribe.cpp
   # Server
-  src/rpc/handlers/ServerInfo.cpp
+  src/clio/rpc/handlers/ServerInfo.cpp
   # Utility
-  src/rpc/handlers/Random.cpp)
+  src/clio/rpc/handlers/Random.cpp)
 
-add_executable(clio_server src/main/main.cpp)
+add_executable(clio_server src/clio/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests unittests/main.cpp)
   include(CMake/deps/gtest.cmake)
+
+  add_library(test_lib)
+
+  target_compile_features(test_lib PUBLIC cxx_std_20)
+
+  target_sources(test_lib PUBLIC 
+    src/test/backend/backend.Integration.cpp
+    src/test/cache/Cache.backgroundLoad.cpp
+    src/test/cache/Cache.basicCache.cpp
+    src/test/etl/etl.networkValidatedLedgers.cpp
+    src/test/etl/etl.threadSafeQueue.cpp
+    src/test/etl/etl.getMarkers.cpp
+    src/test/rpc/rpc.ledger.cpp
+    src/test/rpc/rpc.accountInfo.cpp
+    src/test/rpc/rpc.channelAuthorize.cpp
+    src/test/rpc/rpc.channelVerify.cpp
+    src/test/rpc/rpc.accountObjects.cpp
+    src/test/rpc/rpc.accountLines.cpp
+    src/test/rpc/rpc.accountChannels.cpp
+    src/test/rpc/rpc.accountCurrencies.cpp
+    src/test/rpc/rpc.accountOffers.cpp
+    src/test/rpc/rpc.accountTx.cpp
+    src/test/rpc/rpc.bookOffers.cpp
+    src/test/rpc/rpc.ledgerData.cpp)
+
+  target_link_libraries(test_lib PUBLIC clio gtest_main gmock_main)
+
+  add_executable(clio_tests)
+  target_link_libraries(clio_tests PUBLIC test_lib)
+  gtest_discover_tests(clio_tests)
+
 endif()
 
 include(CMake/install/install.cmake)

@@ -10,10 +10,6 @@ if(NOT googletest_POPULATED)
   add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-target_link_libraries(clio_tests PUBLIC clio gtest_main)
-
 enable_testing()
 
 include(GoogleTest)
-
-gtest_discover_tests(clio_tests)
