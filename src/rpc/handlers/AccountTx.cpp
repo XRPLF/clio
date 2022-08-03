@@ -140,7 +140,8 @@ doAccountTx(Context const& context)
 
     response[JS(account)] = ripple::to_string(accountID);
 
-    if (retCursor)
+    //@fmendoz7, 08/08 1152 PST | Cancels extraneous cursor on last page
+    if (retCursor && txs.size() > limit)
     {
         boost::json::object cursorJson;
         cursorJson[JS(ledger)] = retCursor->ledgerSequence;
