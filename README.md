@@ -22,7 +22,7 @@ from which data can be extracted. The rippled node does not need to be running o
 
 ## Building
 
-Clio is built with CMake. Clio requires c++20, and boost 1.75.0 or later.
+Clio is built with CMake. Clio requires at least GCC-11 (C++20), and Boost 1.75.0 or later.
 
 Use these instructions to build a Clio executable from the source. These instructions were tested on Ubuntu 20.04 LTS.
 
@@ -152,18 +152,16 @@ You must:
 ## Logging
 Clio provides several logging options, all are configurable via the config file and are detailed below.
 
-`log_level`: The minimum level of severity at which the log message will be outputted. 
-Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. 
+`log_level`: The minimum level of severity at which the log message will be outputted.
+Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 
-`log_to_console`: Enable/disable log output to console. Options are `true`/`false`.
+`log_to_console`: Enable/disable log output to console. Options are `true`/`false`. Defaults to true.
 
-`log_to_file`: Enable/disable log saving to files in persistent local storage.  Options are `true`/`false`.
-
-`log_directory`: Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it.
+`log_directory`: Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it. If not specified, logs are not written to a file.
 
 `log_rotation_size`: The max size of the log file in **megabytes** before it will rotate into a smaller file.
 
-`log_directory_max_size`: The max size of the log directory in **megabytes** before old log files will be 
+`log_directory_max_size`: The max size of the log directory in **megabytes** before old log files will be
 deleted to free up space.
 
 `log_rotation_hour_interval`: The time interval in **hours** after the last log rotation to automatically
@@ -171,3 +169,9 @@ rotate the current log file.
 
 Note, time-based log rotation occurs dependently on size-based log rotation, where if a
 size-based log rotation occurs, the timer for the time-based rotation will reset.
+
+## Cassandra / Scylla Administration
+
+Since Clio relies on either Cassandra or Scylla for its database backend, here are some important considerations:
+
+- Scylla, by default, will reserve all free RAM on a machine for itself. If you are running `rippled` or other services on the same machine, restrict its memory usage using the `--memory` argument: https://docs.scylladb.com/getting-started/scylla-in-a-shared-environment/

@@ -321,8 +321,8 @@ make_HttpServer(
         static_cast<unsigned short>(serverConfig.at("port").as_int64());
 
     uint32_t numThreads = std::thread::hardware_concurrency();
-    if (serverConfig.contains("workers"))
-        numThreads = serverConfig.at("workers").as_int64();
+    if (config.contains("workers"))
+        numThreads = config.at("workers").as_int64();
     uint32_t maxQueueSize = 0;  // no max
     if (serverConfig.contains("max_queue_size"))
         maxQueueSize = serverConfig.at("max_queue_size").as_int64();
