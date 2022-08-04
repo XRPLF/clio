@@ -268,8 +268,8 @@ public:
         // scope.
         auto ticket = dosGuard_.checkout(*ip);
         if (!ticket.isValid())
-            return sendError(RPC::Error::rpcSLOW_DOWN, id);
-            
+            return sendError(RPC::Error::rpcSLOW_DOWN);
+
         try
         {
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;

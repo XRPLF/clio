@@ -218,8 +218,8 @@ public:
     {
         if (whitelist_.contains(ip))
             return true;
-        std::shared_lock lk(ftMtx_);
-        std::shared_lock lk(reqMtx_);
+        std::shared_lock flk(ftMtx_);
+        std::shared_lock rlk(reqMtx_);
         bool fetchesOk = maxFetches_ == -1 || getFetches(ip) < maxFetches_;
         bool requestsOk = maxConcurrentRequests_ == -1 ||
             getRequests(ip) < maxConcurrentRequests_;
