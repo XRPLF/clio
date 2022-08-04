@@ -191,11 +191,10 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
                 return backend_->fetchFees(lgrInfo.seq, yield);
             });
 
-        hashes =
-            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->doFetchAllTransactionHashesInLedger(
-                    lgrInfo.seq, yield);
-            });
+        hashes = Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+            return backend_->doFetchAllTransactionHashesInLedger(
+                lgrInfo.seq, yield);
+        });
 
         transactions = Backend::synchronousAndRetryOnTimeout([&](auto yield) {
             return backend_->doFetchTransactions(hashes, yield);
