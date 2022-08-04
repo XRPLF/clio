@@ -187,13 +187,13 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 
         std::vector<ripple::uint256> hashes =
             Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchAllTransactionHashesInLedger(
+                return backend_->doFetchAllTransactionHashesInLedger(
                     lgrInfo.seq, yield);
             });
 
         std::vector<Backend::TransactionAndMetadata> transactions =
             Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchTransactions(hashes, yield);
+                return backend_->doFetchTransactions(hashes, yield);
             });
 
         // hashes map to transactions
