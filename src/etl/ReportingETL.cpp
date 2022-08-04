@@ -34,7 +34,8 @@ ReportingETL::insertTransactions(
     org::xrpl::rpc::v1::GetLedgerResponse& data)
 {
     FormattedTransactionsData result;
-
+    std::vector<Backend::TransactionAndMetadata> transactions;
+    std::vector<ripple::uint256> hashes;
     for (auto& txn :
          *(data.mutable_transactions_list()->mutable_transactions()))
     {
@@ -60,13 +61,25 @@ ReportingETL::insertTransactions(
         result.accountTxData.emplace_back(
             txMeta, sttx.getTransactionID(), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
+
+        ripple::uint256 hash{keyStr};
+        hashes.push_back(hash);
+
         backend_->writeTransaction(
             std::move(keyStr),
             ledger.seq,
             ledger.closeTime.time_since_epoch().count(),
             std::move(*raw),
             std::move(*txn.mutable_metadata_blob()));
+        
+        Backend::Blob txBlob;
+        std::copy(raw->begin(), raw->end(), std::back_inserter(txBlob));
+        Backend::Blob mdBlob;
+        auto mdStr = txn.mutable_metadata_blob();
+        std::copy(mdStr->begin(), mdStr->end(), std::back_inserter(mdBlob));
+        transactions.push_back({txBlob, mdBlob, ledger.seq, ledger.closeTime.time_since_epoch().count()});
     }
+    backend_->txCache().update(hashes, transactions, ledger.seq);
 
     // Remove all but the last NFTsData for each id. unique removes all
     // but the first of a group, so we want to reverse sort by transaction
@@ -161,19 +174,8 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     BOOST_LOG_TRIVIAL(debug)
         << __func__ << " - Publishing ledger " << std::to_string(lgrInfo.seq);
 
-    if (!writing_)
-    {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - Updating cache";
-
-        std::vector<Backend::LedgerObject> diff =
-            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
-            });
-
-        backend_->cache().update(diff, lgrInfo.seq);
-        backend_->updateRange(lgrInfo.seq);
-    }
-
+    std::vector<ripple::uint256> hashes;
+    std::vector<Backend::TransactionAndMetadata> transactions;
     setLastClose(lgrInfo.closeTime);
     auto age = lastCloseAgeSeconds();
     // if the ledger closed over 10 minutes ago, assume we are still
@@ -185,19 +187,17 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
                 return backend_->fetchFees(lgrInfo.seq, yield);
             });
 
-        std::vector<ripple::uint256> hashes =
+        hashes =
             Backend::synchronousAndRetryOnTimeout([&](auto yield) {
                 return backend_->doFetchAllTransactionHashesInLedger(
                     lgrInfo.seq, yield);
             });
 
-        std::vector<Backend::TransactionAndMetadata> transactions =
+        transactions =
             Backend::synchronousAndRetryOnTimeout([&](auto yield) {
                 return backend_->doFetchTransactions(hashes, yield);
             });
 
-        // hashes map to transactions
-        backend_->txCache().update(hashes, transactions, lgrInfo.seq);
         auto ledgerRange = backend_->fetchLedgerRange();
         assert(ledgerRange);
         assert(fees);
@@ -215,6 +215,20 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     else
         BOOST_LOG_TRIVIAL(info) << __func__ << " - Skipping publishing ledger "
                                 << std::to_string(lgrInfo.seq);
+    if (!writing_)
+    {
+        BOOST_LOG_TRIVIAL(debug) << __func__ << " - Updating cache";
+
+        std::vector<Backend::LedgerObject> diff =
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+            });
+
+        backend_->cache().update(diff, lgrInfo.seq);
+        backend_->txCache().update(hashes, transactions, lgrInfo.seq);
+        backend_->updateRange(lgrInfo.seq);
+    }
+
     setLastPublish();
 }
 
