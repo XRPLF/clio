@@ -71,13 +71,17 @@ ReportingETL::insertTransactions(
             ledger.closeTime.time_since_epoch().count(),
             std::move(*raw),
             std::move(*txn.mutable_metadata_blob()));
-        
+
         Backend::Blob txBlob;
         std::copy(raw->begin(), raw->end(), std::back_inserter(txBlob));
         Backend::Blob mdBlob;
         auto mdStr = txn.mutable_metadata_blob();
         std::copy(mdStr->begin(), mdStr->end(), std::back_inserter(mdBlob));
-        transactions.push_back({txBlob, mdBlob, ledger.seq, ledger.closeTime.time_since_epoch().count()});
+        transactions.push_back(
+            {txBlob,
+             mdBlob,
+             ledger.seq,
+             ledger.closeTime.time_since_epoch().count()});
     }
     backend_->txCache().update(hashes, transactions, ledger.seq);
 
@@ -193,10 +197,9 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
                     lgrInfo.seq, yield);
             });
 
-        transactions =
-            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->doFetchTransactions(hashes, yield);
-            });
+        transactions = Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+            return backend_->doFetchTransactions(hashes, yield);
+        });
 
         auto ledgerRange = backend_->fetchLedgerRange();
         assert(ledgerRange);
