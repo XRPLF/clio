@@ -115,8 +115,7 @@ initLogging(boost::json::object const& config)
     {
         boost::log::add_console_log(std::cout, keywords::format = format);
     }
-    if (config.contains("log_to_file") && config.at("log_to_file").as_bool() &&
-        config.contains("log_directory"))
+    if (config.contains("log_directory"))
     {
         if (!config.at("log_directory").is_string())
             throw std::runtime_error("log directory must be a string");
