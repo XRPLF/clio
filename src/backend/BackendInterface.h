@@ -11,26 +11,20 @@ namespace Backend {
 
 class DatabaseTimeout : public std::exception
 {
-    std::string msg;
-
 public:
-    DatabaseTimeout(std::string const& msg) : msg(msg)
+    DatabaseTimeout()
     {
     }
-    DatabaseTimeout() : msg("Database read timed out. Please retry the request")
-    {
-    }
+
     const char*
     what() const throw() override
     {
-        return msg.c_str();
+        return "Database read timed out. Please retry the request";
     }
 };
 
 class DatabaseRequestThrottled : public std::exception
 {
-    std::string msg;
-
 public:
     DatabaseRequestThrottled()
     {
