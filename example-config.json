@@ -10,7 +10,7 @@
             "replication_factor":1,
             "table_prefix":"",
             "max_write_requests_outstanding":25000,
-            "max_read_requests_outstanding":1000,
+            "max_read_requests_outstanding":30000,
             "threads":8
         }
     },

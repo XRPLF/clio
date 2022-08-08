@@ -364,6 +364,16 @@ buildResponse(Context const& ctx)
     {
         return Status{Error::rpcACT_NOT_FOUND, err.what()};
     }
+    catch (Backend::DatabaseTimeout const& t)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+        return Status{Error::rpcTOO_BUSY};
+    }
+    catch (Backend::DatabaseRequestThrottled const& t)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database request throttled";
+        return Status{Error::rpcTOO_BUSY};
+    }
     catch (std::exception const& err)
     {
         BOOST_LOG_TRIVIAL(error)
