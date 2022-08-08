@@ -57,13 +57,13 @@ retryOnTimeout(F func, size_t waitMs = 500)
         {
             BOOST_LOG_TRIVIAL(error)
                 << __func__
-                << " function timed out. Sleeping and retrying ... ";
+                << " Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
         }
         catch (DatabaseRequestThrottled& t)
         {
             BOOST_LOG_TRIVIAL(error)
-                << __func__ << " Request throttled. Retrying";
+                << __func__ << " Database request throttled. Retrying";
         }
     }
 }

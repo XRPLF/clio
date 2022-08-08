@@ -318,7 +318,13 @@ public:
             catch (Backend::DatabaseTimeout const& t)
             {
                 BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                return sendError(RPC::Error::rpcNOT_READY);
+                return sendError(RPC::Error::rpcTOO_BUSY);
+            }
+            catch (Backend::DatabaseRequestThrottled const& t)
+            {
+                BOOST_LOG_TRIVIAL(error)
+                    << __func__ << " Database request throttled";
+                return sendError(RPC::Error::rpcTOO_BUSY);
             }
         }
         catch (std::exception const& e)

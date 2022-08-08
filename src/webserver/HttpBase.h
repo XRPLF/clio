@@ -434,6 +434,22 @@ handle_request(
         return send(
             httpResponse(http::status::ok, "application/json", responseStr));
     }
+    catch (Backend::DatabaseTimeout const& t)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+        return send(httpResponse(
+            http::status::ok,
+            "application/json",
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcTOO_BUSY))));
+    }
+    catch (Backend::DatabaseRequestThrottled const& t)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database request throttled";
+        return send(httpResponse(
+            http::status::ok,
+            "application/json",
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcTOO_BUSY))));
+    }
     catch (std::exception const& e)
     {
         BOOST_LOG_TRIVIAL(error)
