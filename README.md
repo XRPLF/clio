@@ -155,11 +155,9 @@ Clio provides several logging options, all are configurable via the config file 
 `log_level`: The minimum level of severity at which the log message will be outputted. 
 Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. 
 
-`log_to_console`: Enable/disable log output to console. Options are `true`/`false`.
+`log_to_console`: Enable/disable log output to console. Options are `true`/`false`. Defaults to true.
 
-`log_to_file`: Enable/disable log saving to files in persistent local storage.  Options are `true`/`false`.
-
-`log_directory`: Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it.
+`log_directory`: Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it. If not specified, logs are not written to a file.
 
 `log_rotation_size`: The max size of the log file in **megabytes** before it will rotate into a smaller file.
 
