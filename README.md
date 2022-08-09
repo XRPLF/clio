@@ -22,7 +22,7 @@ from which data can be extracted. The rippled node does not need to be running o
 
 ## Building
 
-Clio is built with CMake. Clio requires c++20, and boost 1.75.0 or later.
+Clio is built with CMake. Clio requires at least GCC-11 (C++20), and Boost 1.75.0 or later.
 
 Use these instructions to build a Clio executable from the source. These instructions were tested on Ubuntu 20.04 LTS.
 
@@ -152,8 +152,8 @@ You must:
 ## Logging
 Clio provides several logging options, all are configurable via the config file and are detailed below.
 
-`log_level`: The minimum level of severity at which the log message will be outputted. 
-Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. 
+`log_level`: The minimum level of severity at which the log message will be outputted.
+Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 
 `log_to_console`: Enable/disable log output to console. Options are `true`/`false`.
 
@@ -163,7 +163,7 @@ Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 
 `log_rotation_size`: The max size of the log file in **megabytes** before it will rotate into a smaller file.
 
-`log_directory_max_size`: The max size of the log directory in **megabytes** before old log files will be 
+`log_directory_max_size`: The max size of the log directory in **megabytes** before old log files will be
 deleted to free up space.
 
 `log_rotation_hour_interval`: The time interval in **hours** after the last log rotation to automatically
