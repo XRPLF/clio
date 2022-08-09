@@ -486,9 +486,6 @@ CassandraBackend::fetchTransactions(
 {
     if (hashes.size() == 0)
         return {};
-    if (numReadRequestsOutstanding_ + hashes.size() >=
-        maxReadRequestsOutstanding)
-        throw DatabaseRequestThrottled();
     numReadRequestsOutstanding_ += hashes.size();
 
     handler_type handler(std::forward<decltype(yield)>(yield));
@@ -816,8 +813,6 @@ CassandraBackend::doFetchLedgerObjects(
 {
     if (keys.size() == 0)
         return {};
-    if (numReadRequestsOutstanding_ + keys.size() >= maxReadRequestsOutstanding)
-        throw DatabaseRequestThrottled();
 
     numReadRequestsOutstanding_ += keys.size();
 
@@ -973,6 +968,12 @@ CassandraBackend::doOnlineDelete(
     executeSyncWrite(statement);
     // update ledger_range
     return true;
+}
+
+bool
+CassandraBackend::isTooBusy() const
+{
+    return numReadRequestsOutstanding_ >= maxReadRequestsOutstanding;
 }
 
 void

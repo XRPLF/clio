@@ -7,6 +7,7 @@
 #include <backend/Types.h>
 #include <thread>
 #include <type_traits>
+
 namespace Backend {
 
 class DatabaseTimeout : public std::exception
@@ -20,20 +21,6 @@ public:
     what() const throw() override
     {
         return "Database read timed out. Please retry the request";
-    }
-};
-
-class DatabaseRequestThrottled : public std::exception
-{
-public:
-    DatabaseRequestThrottled()
-    {
-    }
-
-    const char*
-    what() const throw() override
-    {
-        return "Max outstanding database requests exceeded";
     }
 };
 
@@ -53,11 +40,6 @@ retryOnTimeout(F func, size_t waitMs = 500)
                 << __func__
                 << " Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
-        }
-        catch (DatabaseRequestThrottled& t)
-        {
-            BOOST_LOG_TRIVIAL(error)
-                << __func__ << " Database request throttled. Retrying";
         }
     }
 }
@@ -366,6 +348,9 @@ public:
     // Close the database, releasing any resources
     virtual void
     close(){};
+
+    virtual bool
+    isTooBusy() const = 0;
 
     // *** private helper methods
 private:

@@ -650,9 +650,8 @@ private:
     std::uint32_t maxWriteRequestsOutstanding = 10000;
     mutable std::atomic_uint32_t numWriteRequestsOutstanding_ = 0;
 
-    // maximum number of concurrent in flight read requests. New requests will
-    // throw if this limit is exceeded. Note, this is a rough max, and may be
-    // slightly exceeded at times
+    // maximum number of concurrent in flight read requests. isTooBusy() will
+    // return true if the number of in flight read requests exceeds this limit
     std::uint32_t maxReadRequestsOutstanding = 10000;
     mutable std::atomic_uint32_t numReadRequestsOutstanding_ = 0;
 
@@ -1023,6 +1022,9 @@ public:
         std::uint32_t const numLedgersToKeep,
         boost::asio::yield_context& yield) const override;
 
+    bool
+    isTooBusy() const override;
+
     inline void
     incremementOutstandingRequestCount() const
     {
@@ -1207,8 +1209,6 @@ public:
         CassandraStatement const& statement,
         boost::asio::yield_context& yield) const
     {
-        if (numReadRequestsOutstanding_ >= maxReadRequestsOutstanding)
-            throw DatabaseRequestThrottled();
         using result = boost::asio::async_result<
             boost::asio::yield_context,
             void(boost::system::error_code, CassError)>;
@@ -1217,12 +1217,6 @@ public:
         CassError rc;
         do
         {
-            // Since the check and the increment are not atomic, we can actually
-            // end up with slightly more requests than the max. This is ok,
-            // since the max is meant to be on the order of thousands, and we
-            // can only surpass the max by the number of threads submitting
-            // requests. The max should then be interpreted as a rough max,
-            // rather than a hard number
             ++numReadRequestsOutstanding_;
             fut = cass_session_execute(session_.get(), statement.get());
 

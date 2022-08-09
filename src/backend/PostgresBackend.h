@@ -157,6 +157,12 @@ public:
     doFinishWrites() override;
 
     bool
+    isTooBusy() const override
+    {
+        return false;
+    }
+
+    bool
     doOnlineDelete(
         std::uint32_t const numLedgersToKeep,
         boost::asio::yield_context& yield) const override;
