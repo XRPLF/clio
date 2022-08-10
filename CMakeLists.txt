@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.16.3)
 
 project(clio)
 
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
+  message(FATAL_ERROR "GCC 11+ required for building clio")
+endif()
+
 option(BUILD_TESTS "Build tests" TRUE)
 
 option(VERBOSE "Verbose build" TRUE)
@@ -12,7 +16,7 @@ endif()
 
 if(NOT GIT_COMMIT_HASH)
   if(VERBOSE)
-    message(WARNING "GIT_COMMIT_HASH not provided...looking for git")
+    message("GIT_COMMIT_HASH not provided...looking for git")
   endif()
   find_package(Git)
   if(Git_FOUND)
