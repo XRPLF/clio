@@ -912,6 +912,156 @@ ReportingETL::monitor()
         }
     }
 }
+bool
+ReportingETL::loadCacheFromClioPeer(
+    uint32_t ledgerIndex,
+    std::string const& ip,
+    std::string const& port,
+    boost::asio::yield_context& yield)
+{
+    namespace beast = boost::beast;          // from <boost/beast.hpp>
+    namespace http = beast::http;            // from <boost/beast/http.hpp>
+    namespace websocket = beast::websocket;  // from
+    namespace net = boost::asio;             // from
+    using tcp = boost::asio::ip::tcp;        // from
+    try
+    {
+        boost::beast::error_code ec;
+        // These objects perform our I/O
+        tcp::resolver resolver{ioContext_};
+
+        BOOST_LOG_TRIVIAL(trace) << "Creating websocket";
+        auto ws =
+            std::make_unique<websocket::stream<beast::tcp_stream>>(ioContext_);
+
+        // Look up the domain name
+        auto const results = resolver.async_resolve(ip, port, yield[ec]);
+        if (ec)
+            return {};
+
+        BOOST_LOG_TRIVIAL(trace) << "Connecting websocket";
+        // Make the connection on the IP address we get from a lookup
+        ws->next_layer().async_connect(results, yield[ec]);
+        if (ec)
+            return {};
+
+        BOOST_LOG_TRIVIAL(trace) << "Performing websocket handshake";
+        // Perform the websocket handshake
+        ws->async_handshake(ip, "/", yield[ec]);
+        if (ec)
+            return {};
+
+        std::optional<boost::json::value> marker;
+
+        BOOST_LOG_TRIVIAL(trace) << "Sending request";
+        auto getRequest = [&](auto marker) {
+            boost::json::object request = {
+                {"command", "ledger_data"},
+                {"ledger_index", ledgerIndex},
+                {"binary", true},
+                {"out_of_order", true},
+                {"limit", 2048}};
+
+            if (marker)
+                request["marker"] = *marker;
+            return request;
+        };
+
+        do
+        {
+            // Send the message
+            ws->async_write(
+                net::buffer(boost::json::serialize(getRequest(marker))),
+                yield[ec]);
+            if (ec)
+            {
+                BOOST_LOG_TRIVIAL(error) << "error writing = " << ec.message();
+                return {};
+            }
+
+            beast::flat_buffer buffer;
+            ws->async_read(buffer, yield[ec]);
+            if (ec)
+            {
+                BOOST_LOG_TRIVIAL(error) << "error reading = " << ec.message();
+                return {};
+            }
+
+            auto begin = static_cast<char const*>(buffer.data().data());
+            auto end = begin + buffer.data().size();
+            auto parsed = boost::json::parse(std::string(begin, end));
+
+            if (!parsed.is_object())
+            {
+                BOOST_LOG_TRIVIAL(error)
+                    << "Error parsing response: " << std::string{begin, end};
+                return false;
+            }
+            BOOST_LOG_TRIVIAL(trace)
+                << "Successfully parsed response " << parsed;
+
+            auto response = parsed.as_object();
+            if (response.contains("error"))
+            {
+                BOOST_LOG_TRIVIAL(error)
+                    << "Response contains error: " << response;
+                return false;
+            }
+            response = response["result"].as_object();
+            if (!response.contains("cache_full") ||
+                !response.at("cache_full").as_bool())
+            {
+                BOOST_LOG_TRIVIAL(error)
+                    << __func__ << " cache not full for clio node. ip = " << ip;
+                return false;
+            }
+            if (response.contains("marker"))
+                marker = response.at("marker");
+            else
+                marker = {};
+
+            boost::json::array& state = response["state"].as_array();
+
+            std::vector<Backend::LedgerObject> objects;
+            objects.reserve(state.size());
+            for (auto const& ledgerObject : state)
+            {
+                boost::json::object const& obj = ledgerObject.as_object();
+
+                Backend::LedgerObject stateObject = {};
+
+                if (!stateObject.key.parseHex(
+                        obj.at("index").as_string().c_str()))
+                {
+                    BOOST_LOG_TRIVIAL(error) << "failed to parse object id";
+                    return false;
+                }
+                boost::algorithm::unhex(
+                    obj.at("data").as_string().c_str(),
+                    std::back_inserter(stateObject.blob));
+                objects.push_back(std::move(stateObject));
+            }
+            backend_->cache().update(objects, ledgerIndex, true);
+
+            if (marker)
+                BOOST_LOG_TRIVIAL(debug)
+                    << __func__ << " - At marker " << *marker;
+
+        } while (marker);
+        BOOST_LOG_TRIVIAL(info)
+            << __func__
+            << " Finished downloading ledger from clio node. ip = " << ip;
+        backend_->cache().setFull();
+
+        return true;
+    }
+    catch (std::exception const& e)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "Encountered exception : " << e.what() << " - ip = " << ip;
+        return false;
+    }
+}
 
 void
 ReportingETL::loadCache(uint32_t seq)
@@ -935,6 +1085,51 @@ ReportingETL::loadCache(uint32_t seq)
         assert(false);
         return;
     }
+
+    if (clioPeers.size() > 0)
+    {
+        boost::asio::spawn(
+            ioContext_, [this, seq](boost::asio::yield_context yield) {
+                for (auto& peer : clioPeers)
+                {
+                    // returns true on success
+                    if (loadCacheFromClioPeer(
+                            seq, peer.ip, std::to_string(peer.port), yield))
+                        return;
+                }
+                // if we couldn't successfully load from any peers, load from db
+                loadCacheFromDb(seq);
+            });
+        return;
+    }
+    else
+    {
+        loadCacheFromDb(seq);
+    }
+    // If loading synchronously, poll cache until full
+    while (cacheLoadStyle_ == CacheLoadStyle::SYNC &&
+           !backend_->cache().isFull())
+    {
+        BOOST_LOG_TRIVIAL(debug)
+            << "Cache not full. Cache size = " << backend_->cache().size()
+            << ". Sleeping ...";
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        BOOST_LOG_TRIVIAL(info)
+            << "Cache is full. Cache size = " << backend_->cache().size();
+    }
+}
+
+void
+ReportingETL::loadCacheFromDb(uint32_t seq)
+{
+    // sanity check to make sure we are not calling this multiple times
+    static std::atomic_bool loading = false;
+    if (loading)
+    {
+        assert(false);
+        return;
+    }
+    loading = true;
     std::vector<Backend::LedgerObject> diff;
     auto append = [](auto&& a, auto&& b) {
         a.insert(std::end(a), std::begin(b), std::end(b));
@@ -1043,17 +1238,6 @@ ReportingETL::loadCache(uint32_t seq)
                 });
         }
     }};
-    // If loading synchronously, poll cache until full
-    while (cacheLoadStyle_ == CacheLoadStyle::SYNC &&
-           !backend_->cache().isFull())
-    {
-        BOOST_LOG_TRIVIAL(debug)
-            << "Cache not full. Cache size = " << backend_->cache().size()
-            << ". Sleeping ...";
-        std::this_thread::sleep_for(std::chrono::seconds(10));
-        BOOST_LOG_TRIVIAL(info)
-            << "Cache is full. Cache size = " << backend_->cache().size();
-    }
 }
 
 void
@@ -1159,5 +1343,23 @@ ReportingETL::ReportingETL(
         if (cache.contains("page_fetch_size") &&
             cache.at("page_fetch_size").is_int64())
             cachePageFetchSize_ = cache.at("page_fetch_size").as_int64();
+        if (cache.contains("clio_peers") && cache.at("clio_peers").is_array())
+        {
+            boost::json::array peers = cache.at("clio_peers").as_array();
+            for (auto& peer : peers)
+            {
+                auto& clio = peer.as_object();
+                auto ip = clio.at("ip").as_string().c_str();
+                auto port = clio.at("port").as_int64();
+                clioPeers.emplace_back(ip, port);
+            }
+            unsigned seed =
+                std::chrono::system_clock::now().time_since_epoch().count();
+
+            std::shuffle(
+                clioPeers.begin(),
+                clioPeers.end(),
+                std::default_random_engine(seed));
+        }
     }
 }
