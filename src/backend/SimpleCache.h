@@ -18,6 +18,13 @@ class SimpleCache
         Blob blob;
     };
 
+    // counters for fetchLedgerObject(s) hit rate
+    mutable std::atomic_uint32_t objectReqCounter_;
+    mutable std::atomic_uint32_t objectHitCounter_;
+    // counters for fetchSuccessorKey hit rate
+    mutable std::atomic_uint32_t successorReqCounter_;
+    mutable std::atomic_uint32_t successorHitCounter_;
+
     std::map<ripple::uint256, CacheEntry> map_;
     mutable std::shared_mutex mtx_;
     uint32_t latestSeq_ = 0;
@@ -62,6 +69,12 @@ public:
 
     size_t
     size() const;
+
+    float
+    getObjectHitRate() const;
+
+    float
+    getSuccessorHitRate() const;
 };
 
 }  // namespace Backend
