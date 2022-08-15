@@ -53,11 +53,13 @@ SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
     if (!full_)
         return {};
     std::shared_lock{mtx_};
+    successorReqCounter_++;
     if (seq != latestSeq_)
         return {};
     auto e = map_.upper_bound(key);
     if (e == map_.end())
         return {};
+    successorHitCounter_++;
     return {{e->first, e->second.blob}};
 }
 
@@ -81,11 +83,13 @@ SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
     if (seq > latestSeq_)
         return {};
     std::shared_lock lck{mtx_};
+    objectReqCounter_++;
     auto e = map_.find(key);
     if (e == map_.end())
         return {};
     if (seq < e->second.seq)
         return {};
+    objectHitCounter_++;
     return {e->second.blob};
 }
 
@@ -116,5 +120,19 @@ SimpleCache::size() const
 {
     std::shared_lock lck{mtx_};
     return map_.size();
+}
+float
+SimpleCache::getObjectHitRate() const
+{
+    if (!objectReqCounter_)
+        return 1;
+    return ((float)objectHitCounter_) / objectReqCounter_;
+}
+float
+SimpleCache::getSuccessorHitRate() const
+{
+    if (!successorReqCounter_)
+        return 1;
+    return ((float)successorHitCounter_) / successorReqCounter_;
 }
 }  // namespace Backend
