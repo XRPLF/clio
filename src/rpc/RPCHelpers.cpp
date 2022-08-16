@@ -296,7 +296,8 @@ std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
-    std::uint32_t const ledgerSequence)
+    std::uint32_t const ledgerSequence,
+    uint32_t date)
 {
     if (meta->hasDeliveredAmount())
         return meta->getDeliveredAmount();
@@ -312,7 +313,7 @@ getDeliveredAmount(
         // then its absence indicates that the amount delivered is listed in the
         // Amount field. DeliveredAmount went live January 24, 2014.
         // 446000000 is in Feb 2014, well after DeliveredAmount went live
-        if (ledgerSequence >= 4594095)
+        if (ledgerSequence >= 4594095 || date > 446000000)
         {
             return txn->getFieldAmount(ripple::sfAmount);
         }
@@ -458,7 +459,7 @@ toExpandedJson(Backend::TransactionAndMetadata const& blobs)
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
     auto metaJson = toJson(*meta);
-    insertDeliveredAmount(metaJson, txn, meta);
+    insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     return {txnJson, metaJson};
 }
 
@@ -466,11 +467,12 @@ bool
 insertDeliveredAmount(
     boost::json::object& metaJson,
     std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta)
+    std::shared_ptr<ripple::TxMeta const> const& meta,
+    uint32_t date)
 {
     if (canHaveDeliveredAmount(txn, meta))
     {
-        if (auto amt = getDeliveredAmount(txn, meta, meta->getLgrSeq()))
+        if (auto amt = getDeliveredAmount(txn, meta, meta->getLgrSeq(), date))
             metaJson["delivered_amount"] =
                 toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
         else
