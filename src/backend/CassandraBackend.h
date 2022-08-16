@@ -668,15 +668,10 @@ private:
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
-    boost::json::object config_;
-
     mutable std::uint32_t ledgerSequence_ = 0;
 
 public:
-    CassandraBackend(
-        boost::asio::io_context& ioc,
-        boost::json::object const& config)
-        : BackendInterface(config), config_(config)
+    CassandraBackend(Application const& app) : BackendInterface(app)
     {
         work_.emplace(ioContext_);
         ioThread_ = std::thread([this]() { ioContext_.run(); });

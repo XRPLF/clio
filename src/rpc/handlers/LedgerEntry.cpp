@@ -352,8 +352,8 @@ doLedgerEntry(Context const& context)
     }
 
     auto start = std::chrono::system_clock::now();
-    auto dbResponse =
-        context.backend->fetchLedgerObject(key, lgrInfo.seq, context.yield);
+    auto dbResponse = context.app.backend().fetchLedgerObject(
+        key, lgrInfo.seq, context.yield);
     auto end = std::chrono::system_clock::now();
 
     if (!dbResponse or dbResponse->size() == 0)

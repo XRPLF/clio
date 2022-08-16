@@ -9,6 +9,8 @@
 #include <backend/DBHelpers.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <main/Application.h>
+#include <main/Config.h>
 #include <rpc/RPCHelpers.h>
 #include <thread>
 
@@ -77,52 +79,32 @@ ForwardCache::get(boost::json::object const& request) const
 // Primarly used in read-only mode, to monitor when ledgers are validated
 template <class Derived>
 ETLSourceImpl<Derived>::ETLSourceImpl(
-    boost::json::object const& config,
-    boost::asio::io_context& ioContext,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-    ETLLoadBalancer& balancer)
-    : resolver_(boost::asio::make_strand(ioContext))
-    , networkValidatedLedgers_(networkValidatedLedgers)
-    , backend_(backend)
-    , subscriptions_(subscriptions)
-    , balancer_(balancer)
-    , forwardCache_(config, ioContext, *this)
-    , ioc_(ioContext)
-    , timer_(ioContext)
+    Application const& app,
+    ETLSourceConfig const& config)
+    : resolver_(boost::asio::make_strand(app.etlIoc()))
+    , forwardCache_(app, config, *this)
+    , app_(app)
+    , timer_(app.etlIoc())
 {
-    if (config.contains("ip"))
+    ip_ = config.ip;
+    wsPort_ = config.wsPort;
+    grpcPort_ = config.grpcPort;
+
+    try
     {
-        auto ipJs = config.at("ip").as_string();
-        ip_ = {ipJs.c_str(), ipJs.size()};
+        boost::asio::ip::tcp::endpoint endpoint{
+            boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
+        std::stringstream ss;
+        ss << endpoint;
+        stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
+            grpc::CreateChannel(ss.str(), grpc::InsecureChannelCredentials()));
+        BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
     }
-    if (config.contains("ws_port"))
+    catch (std::exception const& e)
     {
-        auto portjs = config.at("ws_port").as_string();
-        wsPort_ = {portjs.c_str(), portjs.size()};
-    }
-    if (config.contains("grpc_port"))
-    {
-        auto portjs = config.at("grpc_port").as_string();
-        grpcPort_ = {portjs.c_str(), portjs.size()};
-        try
-        {
-            boost::asio::ip::tcp::endpoint endpoint{
-                boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
-            std::stringstream ss;
-            ss << endpoint;
-            stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                grpc::CreateChannel(
-                    ss.str(), grpc::InsecureChannelCredentials()));
-            BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
-        }
-        catch (std::exception const& e)
-        {
-            BOOST_LOG_TRIVIAL(debug)
-                << "Exception while creating stub = " << e.what()
-                << " . Remote = " << toString();
-        }
+        BOOST_LOG_TRIVIAL(debug)
+            << "Exception while creating stub = " << e.what()
+            << " . Remote = " << toString();
     }
 }
 
@@ -173,11 +155,21 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     });
 }
 
+PlainETLSource::PlainETLSource(
+    Application const& app,
+    ETLSourceConfig const& config)
+    : ETLSourceImpl(app, config)
+    , ws_(std::make_unique<
+          boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+          boost::asio::make_strand(app.etlIoc())))
+{
+}
+
 void
 PlainETLSource::close(bool startAgain)
 {
     timer_.cancel();
-    ioc_.post([this, startAgain]() {
+    app_.etlIoc().post([this, startAgain]() {
         if (closing_)
             return;
 
@@ -212,7 +204,7 @@ void
 SslETLSource::close(bool startAgain)
 {
     timer_.cancel();
-    ioc_.post([this, startAgain]() {
+    app_.etlIoc().post([this, startAgain]() {
         if (closing_)
             return;
 
@@ -237,7 +229,7 @@ SslETLSource::close(bool startAgain)
                         ws_ = std::make_unique<boost::beast::websocket::stream<
                             boost::beast::ssl_stream<
                                 boost::beast::tcp_stream>>>(
-                            boost::asio::make_strand(ioc_), *sslCtx_);
+                            boost::asio::make_strand(app_.etlIoc()), *sslCtx_);
 
                         run();
                     }
@@ -247,7 +239,7 @@ SslETLSource::close(bool startAgain)
         {
             ws_ = std::make_unique<boost::beast::websocket::stream<
                 boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
-                boost::asio::make_strand(ioc_), *sslCtx_);
+                boost::asio::make_strand(app_.etlIoc()), *sslCtx_);
 
             run();
         }
@@ -365,6 +357,18 @@ SslETLSource::onConnect(
             boost::asio::ssl::stream_base::client,
             [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
     }
+}
+
+SslETLSource::SslETLSource(
+    Application const& app,
+    ETLSourceConfig const& config)
+    : ETLSourceImpl(app, config)
+    , sslCtx_(*app.sslContext())
+    , ws_(std::make_unique<boost::beast::websocket::stream<
+              boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
+          boost::asio::make_strand(app.etlIoc()),
+          *app.sslContext()))
+{
 }
 
 void
@@ -529,24 +533,24 @@ ETLSourceImpl<Derived>::handleMessage()
         }
         else
         {
-            if (balancer_.shouldPropagateTxnStream(this))
+            if (app_.balancer().shouldPropagateTxnStream(this))
             {
                 if (response.contains("transaction"))
                 {
                     forwardCache_.freshen();
-                    subscriptions_->forwardProposedTransaction(response);
+                    app_.subscriptions().forwardProposedTransaction(response);
                 }
                 else if (
                     response.contains("type") &&
                     response["type"] == "validationReceived")
                 {
-                    subscriptions_->forwardValidation(response);
+                    app_.subscriptions().forwardValidation(response);
                 }
                 else if (
                     response.contains("type") &&
                     response["type"] == "manifestReceived")
                 {
-                    subscriptions_->forwardManifest(response);
+                    app_.subscriptions().forwardManifest(response);
                 }
             }
         }
@@ -557,7 +561,7 @@ ETLSourceImpl<Derived>::handleMessage()
                 << __func__ << " : "
                 << "Pushing ledger sequence = " << ledgerIndex << " - "
                 << toString();
-            networkValidatedLedgers_->push(ledgerIndex);
+            app_.networkValidatedLedgers().push(ledgerIndex);
         }
         return true;
     }
@@ -786,7 +790,8 @@ ETLSourceImpl<Derived>::loadInitialLedger(
         {
             BOOST_LOG_TRIVIAL(trace)
                 << "Marker prefix = " << ptr->getMarkerPrefix();
-            auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
+            auto result =
+                ptr->process(stub_, cq, app_.backend(), abort, cacheOnly);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
@@ -801,10 +806,10 @@ ETLSourceImpl<Derived>::loadInitialLedger(
             {
                 abort = true;
             }
-            if (backend_->cache().size() > progress)
+            if (app_.backend().cache().size() > progress)
             {
                 BOOST_LOG_TRIVIAL(info)
-                    << "Downloaded " << backend_->cache().size()
+                    << "Downloaded " << app_.backend().cache().size()
                     << " records from rippled";
                 progress += incr;
             }
@@ -812,11 +817,12 @@ ETLSourceImpl<Derived>::loadInitialLedger(
     }
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " - finished loadInitialLedger. cache size = "
-        << backend_->cache().size();
+        << app_.backend().cache().size();
+
     size_t numWrites = 0;
     if (!abort)
     {
-        backend_->cache().setFull();
+        app_.backend().cache().setFull();
         if (!cacheOnly)
         {
             auto start = std::chrono::system_clock::now();
@@ -825,19 +831,20 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__
                     << " writing edge key = " << ripple::strHex(key);
-                auto succ = backend_->cache().getSuccessor(
+                auto succ = app_.backend().cache().getSuccessor(
                     *ripple::uint256::fromVoidChecked(key), sequence);
                 if (succ)
-                    backend_->writeSuccessor(
+                    app_.backend().writeSuccessor(
                         std::move(key), sequence, uint256ToString(succ->key));
             }
             ripple::uint256 prev = Backend::firstKey;
-            while (auto cur = backend_->cache().getSuccessor(prev, sequence))
+            while (auto cur =
+                       app_.backend().cache().getSuccessor(prev, sequence))
             {
                 assert(cur);
                 if (prev == Backend::firstKey)
                 {
-                    backend_->writeSuccessor(
+                    app_.backend().writeSuccessor(
                         uint256ToString(prev),
                         sequence,
                         uint256ToString(cur->key));
@@ -847,10 +854,10 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 {
                     auto base = getBookBase(cur->key);
                     // make sure the base is not an actual object
-                    if (!backend_->cache().get(cur->key, sequence))
+                    if (!app_.backend().cache().get(cur->key, sequence))
                     {
                         auto succ =
-                            backend_->cache().getSuccessor(base, sequence);
+                            app_.backend().cache().getSuccessor(base, sequence);
                         assert(succ);
                         if (succ->key == cur->key)
                         {
@@ -859,7 +866,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                                 << ripple::strHex(base) << " - "
                                 << ripple::strHex(cur->key);
 
-                            backend_->writeSuccessor(
+                            app_.backend().writeSuccessor(
                                 uint256ToString(base),
                                 sequence,
                                 uint256ToString(cur->key));
@@ -873,7 +880,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                                             << numWrites << " book successors";
             }
 
-            backend_->writeSuccessor(
+            app_.backend().writeSuccessor(
                 uint256ToString(prev),
                 sequence,
                 uint256ToString(Backend::lastKey));
@@ -928,36 +935,17 @@ ETLSourceImpl<Derived>::fetchLedger(
 }
 
 static std::unique_ptr<ETLSource>
-make_ETLSource(
-    boost::json::object const& config,
-    boost::asio::io_context& ioContext,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-    ETLLoadBalancer& balancer)
+make_ETLSource(Application const& app, ETLSourceConfig const& config)
 {
     std::unique_ptr<ETLSource> src = nullptr;
-    if (sslCtx)
+
+    if (app.sslContext())
     {
-        src = std::make_unique<SslETLSource>(
-            config,
-            ioContext,
-            sslCtx,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
+        src = std::make_unique<SslETLSource>(app, config);
     }
     else
     {
-        src = std::make_unique<PlainETLSource>(
-            config,
-            ioContext,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
+        src = std::make_unique<PlainETLSource>(app, config);
     }
 
     src->run();
@@ -965,37 +953,16 @@ make_ETLSource(
     return src;
 }
 
-ETLLoadBalancer::ETLLoadBalancer(
-    boost::json::object const& config,
-    boost::asio::io_context& ioContext,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> nwvl)
+ETLLoadBalancer::ETLLoadBalancer(Application const& app)
 {
-    if (config.contains("num_markers") && config.at("num_markers").is_int64())
-    {
-        downloadRanges_ = config.at("num_markers").as_int64();
+    // The algorithm we use for downloading the inital ledger only works
+    // with up to 256 ranges. Defaults to 16.
+    downloadRanges_ = std::clamp(app.config().numMarkers, {1}, {256});
 
-        downloadRanges_ = std::clamp(downloadRanges_, {1}, {256});
-    }
-    else if (backend->fetchLedgerRange())
+    for (auto& entry : app.config().etlSources)
     {
-        downloadRanges_ = 4;
-    }
+        sources_.push_back(make_ETLSource(app, entry));
 
-    for (auto& entry : config.at("etl_sources").as_array())
-    {
-        std::unique_ptr<ETLSource> source = make_ETLSource(
-            entry.as_object(),
-            ioContext,
-            sslCtx,
-            backend,
-            subscriptions,
-            nwvl,
-            *this);
-
-        sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
                                 << sources_.back()->toString();
     }
@@ -1120,10 +1087,11 @@ ETLSourceImpl<Derived>::requestFromRippled(
     {
         boost::beast::error_code ec;
         // These objects perform our I/O
-        tcp::resolver resolver{ioc_};
+        tcp::resolver resolver{app_.rpcIoc()};
 
         BOOST_LOG_TRIVIAL(trace) << "Creating websocket";
-        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioc_);
+        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(
+            app_.rpcIoc());
 
         // Look up the domain name
         auto const results = resolver.async_resolve(ip_, wsPort_, yield[ec]);

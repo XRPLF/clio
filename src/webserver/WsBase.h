@@ -6,10 +6,12 @@
 
 #include <iostream>
 #include <memory>
+#include <queue>
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <main/Application.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
@@ -75,19 +77,9 @@ class WsSession : public WsBase,
 {
     using std::enable_shared_from_this<WsSession<Derived>>::shared_from_this;
 
+    Application const& app_;
     boost::beast::flat_buffer buffer_;
 
-    boost::asio::io_context& ioc_;
-    std::shared_ptr<BackendInterface const> backend_;
-    // has to be a weak ptr because SubscriptionManager maintains collections
-    // of std::shared_ptr<WsBase> objects. If this were shared, there would be
-    // a cyclical dependency that would block destruction
-    std::weak_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
     std::mutex mtx_;
 
     bool sending_ = false;
@@ -103,31 +95,15 @@ class WsSession : public WsBase,
                 << "wsFail: " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
 
-            if (auto manager = subscriptions_.lock(); manager)
-                manager->cleanup(derived().shared_from_this());
+            app_.subscriptions().cleanup(derived().shared_from_this());
         }
     }
 
 public:
     explicit WsSession(
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        Application const& app,
         boost::beast::flat_buffer&& buffer)
-        : buffer_(std::move(buffer))
-        , ioc_(ioc)
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
+        : app_(app), buffer_(std::move(buffer))
     {
     }
     virtual ~WsSession()
@@ -268,21 +244,12 @@ public:
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
             try
             {
-                auto range = backend_->fetchLedgerRange();
+                auto range = app_.backend().fetchLedgerRange();
                 if (!range)
                     return sendError(RPC::Error::rpcNOT_READY);
 
                 std::optional<RPC::Context> context = RPC::make_WsContext(
-                    yield,
-                    request,
-                    backend_,
-                    subscriptions_.lock(),
-                    balancer_,
-                    etl_,
-                    shared_from_this(),
-                    *range,
-                    counters_,
-                    *ip);
+                    request, app_, shared_from_this(), *range, *ip, yield);
 
                 if (!context)
                     return sendError(RPC::Error::rpcBAD_SYNTAX);
@@ -298,7 +265,7 @@ public:
 
                 if (auto status = std::get_if<RPC::Status>(&v))
                 {
-                    counters_.rpcErrored(context->method);
+                    app_.counters().rpcErrored(context->method);
 
                     auto error = RPC::make_error(*status);
 
@@ -310,7 +277,7 @@ public:
                 }
                 else
                 {
-                    counters_.rpcComplete(context->method, us);
+                    app_.counters().rpcComplete(context->method, us);
 
                     response["result"] = std::get<boost::json::object>(v);
                 }
@@ -333,12 +300,12 @@ public:
 
         warnings.emplace_back(RPC::make_warning(RPC::warnRPC_CLIO));
 
-        auto lastCloseAge = etl_->lastCloseAgeSeconds();
+        auto lastCloseAge = app_.reportingETL().lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
             warnings.emplace_back(RPC::make_warning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         std::string responseStr = boost::json::serialize(response);
-        if (!dosGuard_.add(*ip, responseStr.size()))
+        if (!app_.dosGuard().add(*ip, responseStr.size()))
         {
             response["warning"] = "load";
             warnings.emplace_back(RPC::make_warning(RPC::warnRPC_RATE_LIMIT));
@@ -379,7 +346,7 @@ public:
 
             auto responseStr = boost::json::serialize(e);
             BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
-            dosGuard_.add(*ip, responseStr.size());
+            app_.dosGuard().add(*ip, responseStr.size());
             send(std::move(responseStr));
         };
 
@@ -401,19 +368,19 @@ public:
 
         auto id = request.contains("id") ? request.at("id") : nullptr;
 
-        if (!dosGuard_.isOk(*ip))
+        if (!app_.dosGuard().isOk(*ip))
         {
             sendError(RPC::Error::rpcSLOW_DOWN, id, request);
         }
         else
         {
-            if (!queue_.postCoro(
+            if (!app_.workQueue().postCoro(
                     [shared_this = shared_from_this(),
                      r = std::move(request),
                      id](boost::asio::yield_context yield) {
                         shared_this->handle_request(std::move(r), id, yield);
                     },
-                    dosGuard_.isWhiteListed(*ip)))
+                    app_.dosGuard().isWhiteListed(*ip)))
                 sendError(RPC::Error::rpcTOO_BUSY, id, request);
         }
 

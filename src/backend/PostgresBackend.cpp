@@ -1,6 +1,8 @@
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
 #include <backend/PostgresBackend.h>
+#include <main/Application.h>
+#include <main/Config.h>
 #include <thread>
 
 namespace Backend {
@@ -20,18 +22,26 @@ struct HandlerWrapper
     }
 };
 
-PostgresBackend::PostgresBackend(
-    boost::asio::io_context& ioc,
-    boost::json::object const& config)
-    : BackendInterface(config)
-    , pgPool_(make_PgPool(ioc, config))
+PostgresBackend::PostgresBackend(Application const& app)
+    : BackendInterface(app)
+    , pgPool_(make_PgPool(app_))
     , writeConnection_(pgPool_)
+
 {
-    if (config.contains("write_interval"))
+    auto const& dbConfig = app.config().postgres().postgres;
+
+    if (!dbConfig.experimental)
+        BOOST_LOG_TRIVIAL(fatal)
+            << "Postgres support is experimental at this time. "
+            << "If you would really like to use Postgres, add "
+               "\"experimental\":true to your database config";
+
+    if (dbConfig.writeInterval)
     {
-        writeInterval_ = config.at("write_interval").as_int64();
+        writeInterval_ = dbConfig.writeInterval;
     }
 }
+
 void
 PostgresBackend::writeLedger(
     ripple::LedgerInfo const& ledgerInfo,

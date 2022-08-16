@@ -210,7 +210,7 @@ std::variant<Status, std::pair<std::vector<ripple::Book>, boost::json::array>>
 validateAndGetBooks(
     boost::asio::yield_context& yield,
     boost::json::object const& request,
-    std::shared_ptr<Backend::BackendInterface const> const& backend)
+    Backend::BackendInterface const& backend)
 {
     if (!request.at(JS(books)).is_array())
         return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
@@ -234,7 +234,7 @@ validateAndGetBooks(
         if (book.as_object().contains(JS(snapshot)))
         {
             if (!rng)
-                rng = backend->fetchLedgerRange();
+                rng = backend.fetchLedgerRange();
             ripple::AccountID takerID = beast::zero;
             if (book.as_object().contains(JS(taker)))
                 if (auto const status = getTaker(book.as_object(), takerID);
@@ -245,11 +245,11 @@ validateAndGetBooks(
                                     auto book,
                                     boost::asio::yield_context& yield) {
                 auto bookBase = getBookBase(book);
-                auto [offers, retMarker] = backend->fetchBookOffers(
+                auto [offers, retMarker] = backend.fetchBookOffers(
                     bookBase, rng->maxSequence, 200, {}, yield);
 
                 auto orderBook = postProcessOrderBook(
-                    offers, book, takerID, *backend, rng->maxSequence, yield);
+                    offers, book, takerID, backend, rng->maxSequence, yield);
                 std::copy(
                     orderBook.begin(),
                     orderBook.end(),
@@ -339,7 +339,7 @@ doSubscribe(Context const& context)
     if (request.contains(JS(books)))
     {
         auto parsed =
-            validateAndGetBooks(context.yield, request, context.backend);
+            validateAndGetBooks(context.yield, request, context.app.backend());
         if (auto status = std::get_if<Status>(&parsed))
             return *status;
         auto [bks, snap] =
@@ -352,17 +352,21 @@ doSubscribe(Context const& context)
     boost::json::object response;
     if (request.contains(JS(streams)))
         response = subscribeToStreams(
-            context.yield, request, context.session, *context.subscriptions);
+            context.yield,
+            request,
+            context.session,
+            context.app.subscriptions());
 
     if (request.contains(JS(accounts)))
-        subscribeToAccounts(request, context.session, *context.subscriptions);
+        subscribeToAccounts(
+            request, context.session, context.app.subscriptions());
 
     if (request.contains(JS(accounts_proposed)))
         subscribeToAccountsProposed(
-            request, context.session, *context.subscriptions);
+            request, context.session, context.app.subscriptions());
 
     if (request.contains(JS(books)))
-        subscribeToBooks(books, context.session, *context.subscriptions);
+        subscribeToBooks(books, context.session, context.app.subscriptions());
 
     if (snapshot.size())
         response[JS(offers)] = snapshot;
@@ -420,7 +424,7 @@ doUnsubscribe(Context const& context)
     if (request.contains(JS(books)))
     {
         auto parsed =
-            validateAndGetBooks(context.yield, request, context.backend);
+            validateAndGetBooks(context.yield, request, context.app.backend());
 
         if (auto status = std::get_if<Status>(&parsed))
             return *status;
@@ -433,17 +437,19 @@ doUnsubscribe(Context const& context)
     }
 
     if (request.contains(JS(streams)))
-        unsubscribeToStreams(request, context.session, *context.subscriptions);
+        unsubscribeToStreams(
+            request, context.session, context.app.subscriptions());
 
     if (request.contains(JS(accounts)))
-        unsubscribeToAccounts(request, context.session, *context.subscriptions);
+        unsubscribeToAccounts(
+            request, context.session, context.app.subscriptions());
 
     if (request.contains(JS(accounts_proposed)))
         unsubscribeToAccountsProposed(
-            request, context.session, *context.subscriptions);
+            request, context.session, context.app.subscriptions());
 
     if (request.contains("books"))
-        unsubscribeToBooks(books, context.session, *context.subscriptions);
+        unsubscribeToBooks(books, context.session, context.app.subscriptions());
 
     boost::json::object response = {{"status", "success"}};
     return response;

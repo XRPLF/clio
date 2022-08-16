@@ -46,7 +46,7 @@ enumerateNFTOffers(
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     // TODO: just check for existence without pulling
-    if (!context.backend->fetchLedgerObject(
+    if (!context.app.backend().fetchLedgerObject(
             directory.key, lgrInfo.seq, context.yield))
         return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
 
@@ -95,7 +95,7 @@ enumerateNFTOffers(
     }
 
     auto result = traverseOwnedNodes(
-        *context.backend,
+        context.app.backend(),
         directory,
         cursor,
         0,

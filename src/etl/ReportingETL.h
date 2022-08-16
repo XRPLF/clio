@@ -55,13 +55,9 @@ class SubscriptionManager;
 class ReportingETL
 {
 private:
-    std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> loadBalancer_;
+    Application const& app_;
     std::optional<std::uint32_t> onlineDeleteInterval_;
     std::uint32_t extractorThreads_ = 1;
-
-    enum class CacheLoadStyle { ASYNC, SYNC, NOT_AT_ALL };
 
     CacheLoadStyle cacheLoadStyle_ = CacheLoadStyle::ASYNC;
 
@@ -78,7 +74,6 @@ private:
     std::thread cacheDownloader_;
 
     std::thread worker_;
-    boost::asio::io_context& ioContext_;
 
     /// Strand to ensure that ledgers are published in order.
     /// If ETL is started far behind the network, ledgers will be written and
@@ -97,10 +92,6 @@ private:
     /// Mechanism for communicating with ETL sources. ETLLoadBalancer wraps an
     /// arbitrary number of ETL sources and load balances ETL requests across
     /// those sources.
-
-    /// Mechanism for detecting when the network has validated a new ledger.
-    /// This class provides a way to wait for a specific ledger to be validated
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
 
     /// Whether the software is stopping
     std::atomic_bool stopping_ = false;
@@ -305,25 +296,12 @@ private:
     doWork();
 
 public:
-    ReportingETL(
-        boost::json::object const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<NetworkValidatedLedgers> ledgers);
+    ReportingETL(Application const& app);
 
-    static std::shared_ptr<ReportingETL>
-    make_ReportingETL(
-        boost::json::object const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<NetworkValidatedLedgers> ledgers)
+    static std::unique_ptr<ReportingETL>
+    make_ReportingETL(Application const& app)
     {
-        auto etl = std::make_shared<ReportingETL>(
-            config, ioc, backend, subscriptions, balancer, ledgers);
+        auto etl = std::make_unique<ReportingETL>(app);
 
         etl->run();
 
@@ -349,7 +327,7 @@ public:
     {
         boost::json::object result;
 
-        result["etl_sources"] = loadBalancer_->toJson();
+        result["etl_sources"] = app_.balancer().toJson();
         result["is_writer"] = writing_.load();
         result["read_only"] = readOnly_;
         auto last = getLastPublish();

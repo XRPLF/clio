@@ -1,6 +1,32 @@
+#include <main/Application.h>
 #include <rpc/RPCHelpers.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
+
+SubscriptionManager::SubscriptionManager(Application const& app)
+    : app_(app)
+    , ledgerSubscribers_(ioc_)
+    , txSubscribers_(ioc_)
+    , txProposedSubscribers_(ioc_)
+    , manifestSubscribers_(ioc_)
+    , validationsSubscribers_(ioc_)
+    , accountSubscribers_(ioc_)
+    , accountProposedSubscribers_(ioc_)
+    , bookSubscribers_(ioc_)
+{
+    work_.emplace(ioc_);
+
+    auto numThreads = app_.config().subscriptionWorkers;
+    // We will eventually want to clamp this to be the number of strands,
+    // since adding more threads than we have strands won't see any
+    // performance benefits
+    BOOST_LOG_TRIVIAL(info)
+        << "Starting subscription manager with " << numThreads << " workers";
+
+    workers_.reserve(numThreads);
+    for (auto i = numThreads; i > 0; --i)
+        workers_.emplace_back([this] { ioc_.run(); });
+}
 
 template <class T>
 inline void
@@ -157,14 +183,14 @@ SubscriptionManager::subLedger(
 {
     ledgerSubscribers_.subscribe(session);
 
-    auto ledgerRange = backend_->fetchLedgerRange();
+    auto ledgerRange = app_.backend().fetchLedgerRange();
     assert(ledgerRange);
     auto lgrInfo =
-        backend_->fetchLedgerBySequence(ledgerRange->maxSequence, yield);
+        app_.backend().fetchLedgerBySequence(ledgerRange->maxSequence, yield);
     assert(lgrInfo);
 
     std::optional<ripple::Fees> fees;
-    fees = backend_->fetchFees(lgrInfo->seq, yield);
+    fees = app_.backend().fetchFees(lgrInfo->seq, yield);
     assert(fees);
 
     std::string range = std::to_string(ledgerRange->minSequence) + "-" +
@@ -283,7 +309,7 @@ SubscriptionManager::pubTransaction(
             auto fetchFundsSynchronous = [&]() {
                 Backend::synchronous([&](boost::asio::yield_context& yield) {
                     ownerFunds = RPC::accountFunds(
-                        *backend_, lgrInfo.seq, amount, account, yield);
+                        app_.backend(), lgrInfo.seq, amount, account, yield);
                 });
             };
 

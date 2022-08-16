@@ -113,7 +113,7 @@ doLedgerData(Context const& context)
     else
     {
         if (!outOfOrder &&
-            !context.backend->fetchLedgerObject(
+            !context.app.backend().fetchLedgerObject(
                 *marker, lgrInfo.seq, context.yield))
             return Status{Error::rpcINVALID_PARAMS, "markerDoesNotExist"};
     }
@@ -127,7 +127,7 @@ doLedgerData(Context const& context)
     {
         assert(outOfOrder);
         auto diff =
-            context.backend->fetchLedgerDiff(*diffMarker, context.yield);
+            context.app.backend().fetchLedgerDiff(*diffMarker, context.yield);
         std::vector<ripple::uint256> keys;
         for (auto&& [key, object] : diff)
         {
@@ -136,7 +136,7 @@ doLedgerData(Context const& context)
                 keys.push_back(std::move(key));
             }
         }
-        auto objs = context.backend->fetchLedgerObjects(
+        auto objs = context.app.backend().fetchLedgerObjects(
             keys, lgrInfo.seq, context.yield);
         for (size_t i = 0; i < objs.size(); ++i)
         {
@@ -149,14 +149,14 @@ doLedgerData(Context const& context)
     }
     else
     {
-        auto page = context.backend->fetchLedgerPage(
+        auto page = context.app.backend().fetchLedgerPage(
             marker, lgrInfo.seq, limit, outOfOrder, context.yield);
         results = std::move(page.objects);
         if (page.cursor)
             response["marker"] = ripple::strHex(*(page.cursor));
         else if (outOfOrder)
             response["marker"] =
-                context.backend->fetchLedgerRange()->maxSequence;
+                context.app.backend().fetchLedgerRange()->maxSequence;
     }
     auto end = std::chrono::system_clock::now();
 

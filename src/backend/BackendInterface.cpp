@@ -1,7 +1,14 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <backend/BackendInterface.h>
+#include <main/Application.h>
+
 namespace Backend {
+
+BackendInterface::BackendInterface(Application const& app) : app_(app)
+{
+}
+
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
@@ -12,6 +19,7 @@ BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
     }
     return commitRes;
 }
+
 void
 BackendInterface::writeLedgerObject(
     std::string&& key,
@@ -108,6 +116,9 @@ BackendInterface::fetchLedgerObjects(
                 results[i] = objs[j];
                 ++j;
             }
+
+            if (j >= objs.size())
+                break;
         }
     }
 

@@ -38,7 +38,7 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
     // terminate and use the `sle` from this iteration.
     do
     {
-        auto const blob = context.backend->fetchLedgerObject(
+        auto const blob = context.app.backend().fetchLedgerObject(
             ripple::Keylet(ripple::ltNFTOKEN_PAGE, nextKey).key,
             dbResponse.ledgerSequence,
             context.yield);
@@ -109,7 +109,7 @@ doNFTInfo(Context const& context)
     ripple::LedgerInfo lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     std::optional<Backend::NFT> dbResponse =
-        context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
+        context.app.backend().fetchNFT(tokenID, lgrInfo.seq, context.yield);
     if (!dbResponse)
         return Status{Error::rpcOBJECT_NOT_FOUND, "NFT not found"};
 

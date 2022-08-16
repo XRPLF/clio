@@ -33,11 +33,12 @@ doTx(Context const& context)
         binary = request.at(JS(binary)).as_bool();
     }
 
-    auto range = context.backend->fetchLedgerRange();
+    auto range = context.app.backend().fetchLedgerRange();
     if (!range)
         return Status{Error::rpcNOT_READY};
 
-    auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
+    auto dbResponse =
+        context.app.backend().fetchTransaction(hash, context.yield);
     if (!dbResponse)
         return Status{Error::rpcTXN_NOT_FOUND};
 

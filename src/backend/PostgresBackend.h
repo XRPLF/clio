@@ -16,16 +16,14 @@ private:
     std::shared_ptr<PgPool> pgPool_;
     mutable PgQuery writeConnection_;
     mutable bool abortWrite_ = false;
-    std::uint32_t writeInterval_ = 1000000;
+    std::uint32_t writeInterval_;
     std::uint32_t inProcessLedger = 0;
     mutable std::unordered_set<std::string> successors_;
 
     const char* const set_timeout = "SET statement_timeout TO 10000";
 
 public:
-    PostgresBackend(
-        boost::asio::io_context& ioc,
-        boost::json::object const& config);
+    PostgresBackend(Application const& app);
 
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override;

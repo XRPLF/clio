@@ -7,6 +7,9 @@
 #include <backend/Types.h>
 #include <thread>
 #include <type_traits>
+
+class Application;
+
 namespace Backend {
 
 class DatabaseTimeout : public std::exception
@@ -86,13 +89,13 @@ protected:
     std::optional<LedgerRange> range;
     SimpleCache cache_;
 
+    Application const& app_;
     // mutex used for open() and close()
     mutable std::mutex mutex_;
 
 public:
-    BackendInterface(boost::json::object const& config)
-    {
-    }
+    BackendInterface(Application const& app);
+
     virtual ~BackendInterface()
     {
     }

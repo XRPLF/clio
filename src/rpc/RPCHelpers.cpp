@@ -567,7 +567,8 @@ ledgerInfoFromRequest(Context const& ctx)
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
             return Status{Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-        auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
+        auto lgrInfo =
+            ctx.app.backend().fetchLedgerByHash(ledgerHash, ctx.yield);
 
         if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
             return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -602,7 +603,7 @@ ledgerInfoFromRequest(Context const& ctx)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerIndexMalformed"};
 
     auto lgrInfo =
-        ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
+        ctx.app.backend().fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
         return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -700,6 +701,7 @@ traverseOwnedNodes(
     keys.reserve(std::min(std::uint32_t{2048}, limit));
 
     auto start = std::chrono::system_clock::now();
+    // std::cout << "{" << std::endl;
 
     // If startAfter is not zero try jumping to that page using the hint
     if (hexMarker.isNonZero())
@@ -733,6 +735,9 @@ traverseOwnedNodes(
             if (!ownerDir)
                 return Status(
                     ripple::rpcINVALID_PARAMS, "Owner directory not found");
+
+            // std::cout << "{\"" << ripple::strHex(currentIndex.key) << "\",
+            // \"" << ripple::strHex(*ownerDir) << "\"}," << std::endl;
 
             ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
             ripple::SLE sle{it, currentIndex.key};
@@ -779,6 +784,9 @@ traverseOwnedNodes(
             if (!ownerDir)
                 break;
 
+            // std::cout << "{\"" << ripple::strHex(currentIndex.key) << "\",
+            // \"" << ripple::strHex(*ownerDir) << "\"}," << std::endl;
+
             ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
             ripple::SLE sle{it, currentIndex.key};
 
@@ -818,11 +826,14 @@ traverseOwnedNodes(
 
     for (auto i = 0; i < objects.size(); ++i)
     {
+        // std::cout << "{\"" << ripple::strHex(keys[i]) << "\", \"" <<
+        // ripple::strHex(objects[i]) << "\"}," << std::endl;
         ripple::SerialIter it{objects[i].data(), objects[i].size()};
         ripple::SLE sle(it, keys[i]);
 
         atOwnedNode(sle);
     }
+    // std::cout << "}" << std::endl;
 
     if (limit == 0)
         return cursor;
@@ -836,7 +847,7 @@ read(
     ripple::LedgerInfo const& lgrInfo,
     Context const& context)
 {
-    if (auto const blob = context.backend->fetchLedgerObject(
+    if (auto const blob = context.app.backend().fetchLedgerObject(
             keylet.key, lgrInfo.seq, context.yield);
         blob)
     {

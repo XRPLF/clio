@@ -44,8 +44,10 @@ include(CMake/deps/cassandra.cmake)
 include(CMake/deps/Postgres.cmake)
 
 target_sources(clio PRIVATE
-  ## Main
-  src/main/impl/Build.cpp
+  ## Application
+  src/main/Application.cpp
+  src/main/Build.cpp
+  src/main/Config.cpp
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
@@ -63,6 +65,9 @@ target_sources(clio PRIVATE
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
+  ## Webserver
+  src/webserver/impl/DOSGuard.cpp
+  src/webserver/impl/Listener.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -101,8 +106,11 @@ target_sources(clio PRIVATE
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
+
 if(BUILD_TESTS)
   add_executable(clio_tests unittests/main.cpp)
+
+  target_link_libraries(clio_server PUBLIC clio)
   include(CMake/deps/gtest.cmake)
 endif()
 

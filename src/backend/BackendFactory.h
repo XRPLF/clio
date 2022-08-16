@@ -5,43 +5,28 @@
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
 #include <backend/PostgresBackend.h>
+#include <main/Application.h>
+#include <main/Config.h>
 
 namespace Backend {
-std::shared_ptr<BackendInterface>
-make_Backend(boost::asio::io_context& ioc, boost::json::object const& config)
+static std::unique_ptr<BackendInterface>
+make_Backend(Application const& app)
 {
     BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
 
-    boost::json::object dbConfig = config.at("database").as_object();
+    DatabaseConfig const& dbConfig = app.config().database;
 
-    bool readOnly = false;
-    if (config.contains("read_only"))
-        readOnly = config.at("read_only").as_bool();
+    bool readOnly = app.config().readOnly;
 
-    auto type = dbConfig.at("type").as_string();
+    std::unique_ptr<BackendInterface> backend = nullptr;
 
-    std::shared_ptr<BackendInterface> backend = nullptr;
-
-    if (boost::iequals(type, "cassandra"))
+    if (dbConfig.type == "cassandra")
     {
-        if (config.contains("online_delete"))
-            dbConfig.at(type).as_object()["ttl"] =
-                config.at("online_delete").as_int64() * 4;
-        backend = std::make_shared<CassandraBackend>(
-            ioc, dbConfig.at(type).as_object());
+        backend = std::make_unique<CassandraBackend>(app);
     }
-    else if (boost::iequals(type, "postgres"))
+    else if (dbConfig.type == "postgres")
     {
-        if (dbConfig.contains("experimental") &&
-            dbConfig.at("experimental").is_bool() &&
-            dbConfig.at("experimental").as_bool())
-            backend = std::make_shared<PostgresBackend>(
-                ioc, dbConfig.at(type).as_object());
-        else
-            BOOST_LOG_TRIVIAL(fatal)
-                << "Postgres support is experimental at this time. "
-                << "If you would really like to use Postgres, add "
-                   "\"experimental\":true to your database config";
+        backend = std::make_unique<PostgresBackend>(app);
     }
 
     if (!backend)

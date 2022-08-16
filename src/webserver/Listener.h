@@ -21,40 +21,13 @@ class Detector
     using std::enable_shared_from_this<
         Detector<PlainSession, SslSession>>::shared_from_this;
 
-    boost::asio::io_context& ioc_;
+    Application const& app_;
     boost::beast::tcp_stream stream_;
-    std::optional<std::reference_wrapper<ssl::context>> ctx_;
-    std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
     boost::beast::flat_buffer buffer_;
 
 public:
-    Detector(
-        boost::asio::io_context& ioc,
-        tcp::socket&& socket,
-        std::optional<std::reference_wrapper<ssl::context>> ctx,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue)
-        : ioc_(ioc)
-        , stream_(std::move(socket))
-        , ctx_(ctx)
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
+    Detector(Application const& app, boost::asio::ip::tcp::socket&& socket)
+        : app_(app), stream_(std::move(socket))
     {
     }
 
@@ -91,96 +64,43 @@ public:
 
         if (result)
         {
-            if (!ctx_)
+            if (!app_.sslContext())
                 return fail(ec, "ssl not supported by this server");
             // Launch SSL session
             std::make_shared<SslSession>(
-                ioc_,
-                stream_.release_socket(),
-                *ctx_,
-                backend_,
-                subscriptions_,
-                balancer_,
-                etl_,
-                dosGuard_,
-                counters_,
-                queue_,
-                std::move(buffer_))
+                app_, stream_.release_socket(), std::move(buffer_))
                 ->run();
             return;
         }
 
         // Launch plain session
         std::make_shared<PlainSession>(
-            ioc_,
-            stream_.release_socket(),
-            backend_,
-            subscriptions_,
-            balancer_,
-            etl_,
-            dosGuard_,
-            counters_,
-            queue_,
-            std::move(buffer_))
+            app_, stream_.release_socket(), std::move(buffer_))
             ->run();
     }
 };
 
-void
+static void
 make_websocket_session(
-    boost::asio::io_context& ioc,
+    Application const& app,
     boost::beast::tcp_stream stream,
     http::request<http::string_body> req,
-    boost::beast::flat_buffer buffer,
-    std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
-    DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    WorkQueue& queue)
+    boost::beast::flat_buffer buffer)
 {
     std::make_shared<WsUpgrader>(
-        ioc,
-        std::move(stream),
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        dosGuard,
-        counters,
-        queue,
-        std::move(buffer),
-        std::move(req))
+        app, std::move(stream), std::move(buffer), std::move(req))
         ->run();
 }
 
-void
+static void
 make_websocket_session(
-    boost::asio::io_context& ioc,
+    Application const& app,
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
     http::request<http::string_body> req,
-    boost::beast::flat_buffer buffer,
-    std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
-    DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    WorkQueue& queue)
+    boost::beast::flat_buffer buffer)
 {
     std::make_shared<SslWsUpgrader>(
-        ioc,
-        std::move(stream),
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        dosGuard,
-        counters,
-        queue,
-        std::move(buffer),
-        std::move(req))
+        app, std::move(stream), std::move(buffer), std::move(req))
         ->run();
 }
 
@@ -191,40 +111,20 @@ class Listener
     using std::enable_shared_from_this<
         Listener<PlainSession, SslSession>>::shared_from_this;
 
-    boost::asio::io_context& ioc_;
-    std::optional<std::reference_wrapper<ssl::context>> ctx_;
+    Application const& app_;
     tcp::acceptor acceptor_;
-    std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
-    WorkQueue queue_;
-    RPC::Counters counters_;
 
 public:
-    Listener(
-        boost::asio::io_context& ioc,
-        uint32_t numWorkerThreads,
-        uint32_t maxQueueSize,
-        std::optional<std::reference_wrapper<ssl::context>> ctx,
-        tcp::endpoint endpoint,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard)
-        : ioc_(ioc)
-        , ctx_(ctx)
-        , acceptor_(net::make_strand(ioc))
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , dosGuard_(dosGuard)
-        , queue_(numWorkerThreads, maxQueueSize)
+    Listener(Application const& app)
+        : app_(app), acceptor_(net::make_strand(app.socketIoc()))
     {
         boost::beast::error_code ec;
+
+        ServerConfig const& config = *app.config().server;
+        auto const address = boost::asio::ip::make_address(config.ip);
+        auto const port = static_cast<unsigned short>(config.port);
+
+        auto endpoint = boost::asio::ip::tcp::endpoint{address, port};
 
         // Open the acceptor
         acceptor_.open(endpoint.protocol(), ec);
@@ -260,7 +160,7 @@ private:
     {
         // The new connection gets its own strand
         acceptor_.async_accept(
-            net::make_strand(ioc_),
+            net::make_strand(app_.socketIoc()),
             boost::beast::bind_front_handler(
                 &Listener::on_accept, shared_from_this()));
     }
@@ -270,22 +170,8 @@ private:
     {
         if (!ec)
         {
-            auto ctxRef = ctx_
-                ? std::optional<
-                      std::reference_wrapper<ssl::context>>{ctx_.value()}
-                : std::nullopt;
-            // Create the detector session and run it
             std::make_shared<Detector<PlainSession, SslSession>>(
-                ioc_,
-                std::move(socket),
-                ctxRef,
-                backend_,
-                subscriptions_,
-                balancer_,
-                etl_,
-                dosGuard_,
-                counters_,
-                queue_)
+                app_, std::move(socket))
                 ->run();
         }
 
@@ -296,54 +182,9 @@ private:
 
 namespace Server {
 
-using WebsocketServer = Listener<WsUpgrader, SslWsUpgrader>;
-using HttpServer = Listener<HttpSession, SslHttpSession>;
+std::shared_ptr<HttpServer>
+make_HttpServer(Application const& app);
 
-static std::shared_ptr<HttpServer>
-make_HttpServer(
-    boost::json::object const& config,
-    boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<ssl::context>> sslCtx,
-    std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
-    DOSGuard& dosGuard)
-{
-    if (!config.contains("server"))
-        return nullptr;
-
-    auto const& serverConfig = config.at("server").as_object();
-
-    auto const address = boost::asio::ip::make_address(
-        serverConfig.at("ip").as_string().c_str());
-    auto const port =
-        static_cast<unsigned short>(serverConfig.at("port").as_int64());
-
-    uint32_t numThreads = std::thread::hardware_concurrency();
-    if (config.contains("workers"))
-        numThreads = config.at("workers").as_int64();
-    uint32_t maxQueueSize = 0;  // no max
-    if (serverConfig.contains("max_queue_size"))
-        maxQueueSize = serverConfig.at("max_queue_size").as_int64();
-    BOOST_LOG_TRIVIAL(info) << __func__ << " Number of workers = " << numThreads
-                            << ". Max queue size = " << maxQueueSize;
-
-    auto server = std::make_shared<HttpServer>(
-        ioc,
-        numThreads,
-        maxQueueSize,
-        sslCtx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        dosGuard);
-
-    server->run();
-    return server;
-}
 }  // namespace Server
 
 #endif  // LISTENER_H

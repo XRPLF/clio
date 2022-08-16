@@ -48,6 +48,8 @@ using pg_params =
 /** Parameter values for pg API. */
 using pg_formatted_params = std::vector<char const*>;
 
+class Application;
+
 /** Parameters for managing postgres connections. */
 struct PgConfig
 {
@@ -436,7 +438,7 @@ public:
      * @param j Logger object.
      * @param parent Stoppable parent.
      */
-    PgPool(boost::asio::io_context& ioc, boost::json::object const& config);
+    PgPool(Application const& app, std::optional<std::string> database = {});
 
     ~PgPool()
     {
@@ -544,7 +546,7 @@ public:
  * @return Postgres connection pool manager
  */
 std::shared_ptr<PgPool>
-make_PgPool(boost::asio::io_context& ioc, boost::json::object const& pgConfig);
+make_PgPool(Application const& app);
 
 /** Initialize the Postgres schema.
  *

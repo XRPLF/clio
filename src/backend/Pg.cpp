@@ -22,6 +22,7 @@
 #include <exception>
 #include <functional>
 #include <iterator>
+#include <main/Application.h>
 #include <signal.h>
 #include <sstream>
 #include <stdexcept>
@@ -607,8 +608,8 @@ Pg::clear()
 
 //-----------------------------------------------------------------------------
 
-PgPool::PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
-    : ioc_(ioc)
+PgPool::PgPool(Application const& app, std::optional<std::string> database)
+    : ioc_(app.rpcIoc())
 {
     // Make sure that boost::asio initializes the SSL library.
     {
@@ -616,6 +617,8 @@ PgPool::PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
     }
     // Don't have postgres client initialize SSL.
     PQinitOpenSSL(0, 0);
+
+    auto const& dbConfig = app.config().postgres().postgres;
 
     /*
     Connect to postgres to create low level connection parameters
@@ -628,23 +631,15 @@ PgPool::PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
     */
     constexpr std::size_t maxFieldSize = 1024;
     constexpr std::size_t maxFields = 1000;
+
     std::string conninfo = "postgres://";
-    auto getFieldAsString = [&config](auto field) {
-        if (!config.contains(field))
-            throw std::runtime_error(
-                field + std::string{" missing from postgres config"});
-        if (!config.at(field).is_string())
-            throw std::runtime_error(
-                field + std::string{" in postgres config is not a string"});
-        return std::string{config.at(field).as_string().c_str()};
-    };
-    conninfo += getFieldAsString("username");
+    conninfo += dbConfig.username;
     conninfo += ":";
-    conninfo += getFieldAsString("password");
+    conninfo += dbConfig.password;
     conninfo += "@";
-    conninfo += getFieldAsString("contact_point");
+    conninfo += dbConfig.contactPoint;
     conninfo += "/";
-    conninfo += getFieldAsString("database");
+    conninfo += database ? *database : dbConfig.database;
 
     // The connection object must be freed using the libpq API PQfinish() call.
     pg_connection_type conn(
@@ -671,9 +666,7 @@ PgPool::PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
     }
 
     // Set "port" and "hostaddr" if we're caching it.
-    bool const remember_ip = config.contains("remember_ip")
-        ? config.at("remember_ip").as_bool()
-        : true;
+    bool const remember_ip = dbConfig.rememberIp;
 
     if (remember_ip)
     {
@@ -773,11 +766,8 @@ PgPool::PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
     config_.keywordsIdx.push_back(nullptr);
     config_.valuesIdx.push_back(nullptr);
 
-    if (config.contains("max_connections"))
-        config_.max_connections = config.at("max_connections").as_int64();
-    if (config.contains("timeout"))
-        config_.timeout =
-            std::chrono::seconds(config.at("timeout").as_uint64());
+    config_.max_connections = dbConfig.maxConnections;
+    config_.timeout = std::chrono::seconds(dbConfig.timeout);
 }
 
 void
@@ -871,29 +861,32 @@ PgPool::checkin(std::unique_ptr<Pg>& pg)
 //-----------------------------------------------------------------------------
 
 std::shared_ptr<PgPool>
-make_PgPool(boost::asio::io_context& ioc, boost::json::object const& config)
+make_PgPool(Application const& app)
 {
     try
     {
-        auto ret = std::make_shared<PgPool>(ioc, config);
+        auto ret = std::make_shared<PgPool>(app);
         ret->setup();
         return ret;
     }
     catch (std::runtime_error& e)
     {
-        boost::json::object configCopy = config;
-        configCopy["database"] = "postgres";
-        auto ret = std::make_shared<PgPool>(ioc, configCopy);
+        // If we cannot connect to a database, then we'll connect to
+        // the "postgres" database to create the configuration database.
+        auto ret = std::make_shared<PgPool>(app, "postgres");
         ret->setup();
 
         Backend::synchronous([&](boost::asio::yield_context& yield) {
             PgQuery pgQuery(ret);
-            std::string query = "CREATE DATABASE " +
-                std::string{config.at("database").as_string().c_str()};
+
+            std::string database = app.config().postgres().postgres.database;
+
+            std::string query = "CREATE DATABASE " + database;
+
             pgQuery(query.c_str(), yield);
         });
 
-        ret = std::make_shared<PgPool>(ioc, config);
+        ret = std::make_shared<PgPool>(app);
 
         ret->setup();
         return ret;

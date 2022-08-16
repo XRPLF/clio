@@ -12,7 +12,7 @@ doServerInfo(Context const& context)
 {
     boost::json::object response = {};
 
-    auto range = context.backend->fetchLedgerRange();
+    auto range = context.app.backend().fetchLedgerRange();
     if (!range)
     {
         return Status{
@@ -21,10 +21,10 @@ doServerInfo(Context const& context)
             "The server has no data in the database"};
     }
 
-    auto lgrInfo = context.backend->fetchLedgerBySequence(
+    auto lgrInfo = context.app.backend().fetchLedgerBySequence(
         range->maxSequence, context.yield);
 
-    auto fees = context.backend->fetchFees(lgrInfo->seq, context.yield);
+    auto fees = context.app.backend().fetchFees(lgrInfo->seq, context.yield);
 
     if (!lgrInfo || !fees)
         return Status{Error::rpcINTERNAL};
@@ -48,12 +48,13 @@ doServerInfo(Context const& context)
     if (admin)
     {
         info[JS(counters)] = boost::json::object{};
-        info[JS(counters)].as_object()[JS(rpc)] = context.counters.report();
+        info[JS(counters)].as_object()[JS(rpc)] =
+            context.app.counters().report();
         info[JS(counters)].as_object()["subscriptions"] =
-            context.subscriptions->report();
+            context.app.subscriptions().report();
     }
 
-    auto serverInfoRippled = context.balancer->forwardToRippled(
+    auto serverInfoRippled = context.app.balancer().forwardToRippled(
         {{"command", "server_info"}}, context.clientIp, context.yield);
 
     info[JS(load_factor)] = 1;
@@ -86,17 +87,17 @@ doServerInfo(Context const& context)
     info["cache"] = boost::json::object{};
     auto& cache = info["cache"].as_object();
 
-    cache["size"] = context.backend->cache().size();
-    cache["is_full"] = context.backend->cache().isFull();
+    cache["size"] = context.app.backend().cache().size();
+    cache["is_full"] = context.app.backend().cache().isFull();
     cache["latest_ledger_seq"] =
-        context.backend->cache().latestLedgerSequence();
-    cache["object_hit_rate"] = context.backend->cache().getObjectHitRate();
+        context.app.backend().cache().latestLedgerSequence();
+    cache["object_hit_rate"] = context.app.backend().cache().getObjectHitRate();
     cache["successor_hit_rate"] =
-        context.backend->cache().getSuccessorHitRate();
+        context.app.backend().cache().getSuccessorHitRate();
 
     if (admin)
     {
-        info["etl"] = context.etl->getInfo();
+        info["etl"] = context.app.reportingETL().getInfo();
     }
 
     return response;

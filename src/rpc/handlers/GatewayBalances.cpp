@@ -139,7 +139,7 @@ doGatewayBalances(Context const& context)
     };
 
     traverseOwnedNodes(
-        *context.backend,
+        context.app.backend(),
         accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),

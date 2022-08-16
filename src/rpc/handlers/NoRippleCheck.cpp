@@ -46,16 +46,16 @@ doNoRippleCheck(Context const& context)
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
     std::optional<ripple::Fees> fees = includeTxs
-        ? context.backend->fetchFees(lgrInfo.seq, context.yield)
+        ? context.app.backend().fetchFees(lgrInfo.seq, context.yield)
         : std::nullopt;
 
     boost::json::array transactions;
 
     auto keylet = ripple::keylet::account(accountID);
-    auto accountObj = context.backend->fetchLedgerObject(
+    auto accountObj = context.app.backend().fetchLedgerObject(
         keylet.key, lgrInfo.seq, context.yield);
     if (!accountObj)
-        throw AccountNotFoundError(ripple::toBase58(accountID));
+        return Status{ripple::rpcACT_NOT_FOUND};
 
     ripple::SerialIter it{accountObj->data(), accountObj->size()};
     ripple::SLE sle{it, keylet.key};
@@ -87,7 +87,7 @@ doNoRippleCheck(Context const& context)
     }
 
     traverseOwnedNodes(
-        *context.backend,
+        context.app.backend(),
         accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),

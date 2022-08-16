@@ -61,7 +61,7 @@ doBookOffers(Context const& context)
         return status;
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, retMarker] = context.backend->fetchBookOffers(
+    auto [offers, retMarker] = context.app.backend().fetchBookOffers(
         bookBase, lgrInfo.seq, limit, marker, context.yield);
     auto end = std::chrono::system_clock::now();
 
@@ -75,7 +75,12 @@ doBookOffers(Context const& context)
     response[JS(ledger_index)] = lgrInfo.seq;
 
     response[JS(offers)] = postProcessOrderBook(
-        offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
+        offers,
+        book,
+        takerID,
+        context.app.backend(),
+        lgrInfo.seq,
+        context.yield);
 
     auto end2 = std::chrono::system_clock::now();
 

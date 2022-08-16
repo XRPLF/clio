@@ -17,28 +17,11 @@ class SslHttpSession : public HttpBase<SslHttpSession>,
 public:
     // Take ownership of the socket
     explicit SslHttpSession(
-        boost::asio::io_context& ioc,
+        Application const& app,
         tcp::socket&& socket,
-        ssl::context& ctx,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer buffer)
-        : HttpBase<SslHttpSession>(
-              ioc,
-              backend,
-              subscriptions,
-              balancer,
-              etl,
-              dosGuard,
-              counters,
-              queue,
-              std::move(buffer))
-        , stream_(std::move(socket), ctx)
+        : HttpBase<SslHttpSession>(app, std::move(buffer))
+        , stream_(std::move(socket), *app.sslContext())
     {
     }
 

@@ -5,6 +5,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 #include <backend/BackendInterface.h>
+#include <main/Application.h>
 #include <optional>
 #include <rpc/Counters.h>
 #include <string>
@@ -29,47 +30,32 @@ namespace RPC {
 
 struct Context
 {
-    boost::asio::yield_context& yield;
     std::string method;
     std::uint32_t version;
     boost::json::object const& params;
-    std::shared_ptr<BackendInterface const> const& backend;
-    // this needs to be an actual shared_ptr, not a reference. The above
-    // references refer to shared_ptr members of WsBase, but WsBase contains
-    // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
-    std::shared_ptr<SubscriptionManager> subscriptions;
-    std::shared_ptr<ETLLoadBalancer> const& balancer;
-    std::shared_ptr<ReportingETL const> const& etl;
+    Application const& app;
     std::shared_ptr<WsBase> session;
     Backend::LedgerRange const& range;
-    Counters& counters;
     std::string clientIp;
+    boost::asio::yield_context& yield;
 
     Context(
-        boost::asio::yield_context& yield_,
         std::string const& command_,
         std::uint32_t version_,
         boost::json::object const& params_,
-        std::shared_ptr<BackendInterface const> const& backend_,
-        std::shared_ptr<SubscriptionManager> const& subscriptions_,
-        std::shared_ptr<ETLLoadBalancer> const& balancer_,
-        std::shared_ptr<ReportingETL const> const& etl_,
+        Application const& app_,
         std::shared_ptr<WsBase> const& session_,
         Backend::LedgerRange const& range_,
-        Counters& counters_,
-        std::string const& clientIp_)
-        : yield(yield_)
-        , method(command_)
+        std::string const& clientIp_,
+        boost::asio::yield_context& yield_)
+        : method(command_)
         , version(version_)
         , params(params_)
-        , backend(backend_)
-        , subscriptions(subscriptions_)
-        , balancer(balancer_)
-        , etl(etl_)
+        , app(app_)
         , session(session_)
         , range(range_)
-        , counters(counters_)
         , clientIp(clientIp_)
+        , yield(yield_)
     {
     }
 };
@@ -147,20 +133,9 @@ public:
         return msg.c_str();
     }
 };
-class AccountNotFoundError : public std::exception
-{
-    std::string account;
 
-public:
-    AccountNotFoundError(std::string const& acct) : account(acct)
-    {
-    }
-    const char*
-    what() const throw() override
-    {
-        return account.c_str();
-    }
-};
+bool
+shouldForwardToRippled(Context const& ctx);
 
 enum warning_code {
     warnUNKNOWN = -1,
@@ -197,28 +172,20 @@ make_error(Error err);
 
 std::optional<Context>
 make_WsContext(
-    boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    Application const& app,
     std::shared_ptr<WsBase> const& session,
     Backend::LedgerRange const& range,
-    Counters& counters,
-    std::string const& clientIp);
+    std::string const& clientIp,
+    boost::asio::yield_context& yield);
 
 std::optional<Context>
 make_HttpContext(
-    boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    Application const& app,
     Backend::LedgerRange const& range,
-    Counters& counters,
-    std::string const& clientIp);
+    std::string const& clientIp,
+    boost::asio::yield_context& yield);
 
 Result
 buildResponse(Context const& ctx);

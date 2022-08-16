@@ -6,12 +6,15 @@
 #include <boost/json.hpp>
 #include <boost/log/trivial.hpp>
 
+#include <main/Application.h>
+
 #include <memory>
 #include <optional>
 #include <queue>
 #include <shared_mutex>
 #include <thread>
 
+namespace RPC {
 class WorkQueue
 {
     // these are cumulative for the lifetime of the process
@@ -22,7 +25,7 @@ class WorkQueue
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
 public:
-    WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
+    WorkQueue(Application const& app);
 
     template <typename F>
     bool
@@ -42,7 +45,8 @@ public:
         // will dequeue and run the job at the front of the job queue.
         boost::asio::spawn(
             ioc_,
-            [this, f = std::move(f), start](boost::asio::yield_context yield) {
+            [this, f = std::forward<F>(f), start](
+                boost::asio::yield_context yield) {
                 auto run = std::chrono::system_clock::now();
                 auto wait =
                     std::chrono::duration_cast<std::chrono::microseconds>(
@@ -78,5 +82,7 @@ private:
     boost::asio::io_context ioc_ = {};
     std::optional<boost::asio::io_context::work> work_{ioc_};
 };
+
+}  // namespace RPC
 
 #endif  // CLIO_WORK_QUEUE_H

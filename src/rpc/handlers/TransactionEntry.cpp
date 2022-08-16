@@ -16,7 +16,8 @@ doTransactionEntry(Context const& context)
     if (!hash.parseHex(getRequiredString(context.params, JS(tx_hash))))
         return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
 
-    auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
+    auto dbResponse =
+        context.app.backend().fetchTransaction(hash, context.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite

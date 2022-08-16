@@ -2,6 +2,8 @@
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
 #include <functional>
+#include <main/Application.h>
+#include <main/Config.h>
 #include <unordered_map>
 
 namespace Backend {
@@ -180,7 +182,7 @@ CassandraBackend::doWriteLedgerObject(
     if (range)
         makeAndExecuteAsyncWrite(
             this,
-            std::move(std::make_tuple(seq, key)),
+            std::make_tuple(seq, key),
             [this](auto& params) {
                 auto& [sequence, key] = params.data;
 
@@ -192,7 +194,7 @@ CassandraBackend::doWriteLedgerObject(
             "ledger_diff");
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(std::move(key), seq, std::move(blob))),
+        std::make_tuple(std::move(key), seq, std::move(blob)),
         [this](auto& params) {
             auto& [key, sequence, blob] = params.data;
 
@@ -217,7 +219,7 @@ CassandraBackend::writeSuccessor(
     assert(successor.size() != 0);
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(std::move(key), seq, std::move(successor))),
+        std::make_tuple(std::move(key), seq, std::move(successor)),
         [this](auto& params) {
             auto& [key, sequence, successor] = params.data;
 
@@ -236,7 +238,7 @@ CassandraBackend::writeLedger(
 {
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(ledgerInfo.seq, std::move(header))),
+        std::make_tuple(ledgerInfo.seq, std::move(header)),
         [this](auto& params) {
             auto& [sequence, header] = params.data;
             CassandraStatement statement{insertLedgerHeader_};
@@ -247,7 +249,7 @@ CassandraBackend::writeLedger(
         "ledger");
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(ledgerInfo.hash, ledgerInfo.seq)),
+        std::make_tuple(ledgerInfo.hash, ledgerInfo.seq),
         [this](auto& params) {
             auto& [hash, sequence] = params.data;
             CassandraStatement statement{insertLedgerHash_};
@@ -324,7 +326,7 @@ CassandraBackend::writeTransaction(
 
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_pair(seq, hash)),
+        std::make_pair(seq, hash),
         [this](auto& params) {
             CassandraStatement statement{insertLedgerTransaction_};
             statement.bindNextInt(params.data.first);
@@ -334,12 +336,12 @@ CassandraBackend::writeTransaction(
         "ledger_transaction");
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(
+        std::make_tuple(
             std::move(hash),
             seq,
             date,
             std::move(transaction),
-            std::move(metadata))),
+            std::move(metadata)),
         [this](auto& params) {
             CassandraStatement statement{insertTransaction_};
             auto& [hash, sequence, date, transaction, metadata] = params.data;
@@ -680,7 +682,6 @@ CassandraBackend::fetchAccountTransactions(
     if (!rng)
         return {{}, {}};
 
-    auto keylet = ripple::keylet::account(account);
     auto cursor = cursorIn;
 
     CassandraStatement statement = [this, forward]() {
@@ -964,19 +965,8 @@ CassandraBackend::doOnlineDelete(
 void
 CassandraBackend::open(bool readOnly)
 {
-    auto getString = [this](std::string const& field) -> std::string {
-        if (config_.contains(field))
-        {
-            auto jsonStr = config_[field].as_string();
-            return {jsonStr.c_str(), jsonStr.size()};
-        }
-        return {""};
-    };
-    auto getInt = [this](std::string const& field) -> std::optional<int> {
-        if (config_.contains(field) && config_.at(field).is_int64())
-            return config_[field].as_int64();
-        return {};
-    };
+    auto const& dbConfig = app_.config().cassandra().cassandra;
+
     if (open_)
     {
         assert(false);
@@ -991,18 +981,16 @@ CassandraBackend::open(bool readOnly)
     if (!cluster)
         throw std::runtime_error("nodestore:: Failed to create CassCluster");
 
-    std::string secureConnectBundle = getString("secure_connect_bundle");
-
-    if (!secureConnectBundle.empty())
+    if (dbConfig.secureConnectBundle)
     {
         /* Setup driver to connect to the cloud using the secure connection
          * bundle */
         if (cass_cluster_set_cloud_secure_connection_bundle(
-                cluster, secureConnectBundle.c_str()) != CASS_OK)
+                cluster, dbConfig.secureConnectBundle->c_str()) != CASS_OK)
         {
             BOOST_LOG_TRIVIAL(error) << "Unable to configure cloud using the "
                                         "secure connection bundle: "
-                                     << secureConnectBundle;
+                                     << *dbConfig.secureConnectBundle;
             throw std::runtime_error(
                 "nodestore: Failed to connect using secure connection "
                 "bundle");
@@ -1011,33 +999,32 @@ CassandraBackend::open(bool readOnly)
     }
     else
     {
-        std::string contact_points = getString("contact_points");
-        if (contact_points.empty())
+        if (!dbConfig.contactPoints)
         {
             throw std::runtime_error(
                 "nodestore: Missing contact_points in Cassandra config");
         }
-        CassError rc =
-            cass_cluster_set_contact_points(cluster, contact_points.c_str());
+        CassError rc = cass_cluster_set_contact_points(
+            cluster, dbConfig.contactPoints->c_str());
         if (rc != CASS_OK)
         {
             std::stringstream ss;
             ss << "nodestore: Error setting Cassandra contact_points: "
-               << contact_points << ", result: " << rc << ", "
+               << *dbConfig.contactPoints << ", result: " << rc << ", "
                << cass_error_desc(rc);
 
             throw std::runtime_error(ss.str());
         }
 
-        auto port = getInt("port");
-        if (port)
+        if (dbConfig.port)
         {
-            rc = cass_cluster_set_port(cluster, *port);
+            rc = cass_cluster_set_port(cluster, *dbConfig.port);
             if (rc != CASS_OK)
             {
                 std::stringstream ss;
-                ss << "nodestore: Error setting Cassandra port: " << *port
-                   << ", result: " << rc << ", " << cass_error_desc(rc);
+                ss << "nodestore: Error setting Cassandra port: "
+                   << *dbConfig.port << ", result: " << rc << ", "
+                   << cass_error_desc(rc);
 
                 throw std::runtime_error(ss.str());
             }
@@ -1055,29 +1042,26 @@ CassandraBackend::open(bool readOnly)
         throw std::runtime_error(ss.str());
     }
 
-    std::string username = getString("username");
-    if (username.size())
+    if (dbConfig.username && dbConfig.password)
     {
-        BOOST_LOG_TRIVIAL(debug) << "user = " << username.c_str();
+        BOOST_LOG_TRIVIAL(debug) << "user = " << dbConfig.username->c_str();
         cass_cluster_set_credentials(
-            cluster, username.c_str(), getString("password").c_str());
+            cluster, dbConfig.username->c_str(), dbConfig.password->c_str());
     }
-    int threads = getInt("threads") ? *getInt("threads")
-                                    : std::thread::hardware_concurrency();
 
-    rc = cass_cluster_set_num_threads_io(cluster, threads);
+    rc = cass_cluster_set_num_threads_io(cluster, dbConfig.threads);
     if (rc != CASS_OK)
     {
         std::stringstream ss;
-        ss << "nodestore: Error setting Cassandra io threads to " << threads
-           << ", result: " << rc << ", " << cass_error_desc(rc);
+        ss << "nodestore: Error setting Cassandra io threads to "
+           << dbConfig.threads << ", result: " << rc << ", "
+           << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
-    if (getInt("max_requests_outstanding"))
-        maxRequestsOutstanding = *getInt("max_requests_outstanding");
 
-    if (getInt("sync_interval"))
-        syncInterval_ = *getInt("sync_interval");
+    maxRequestsOutstanding = dbConfig.maxRequestsOutstanding;
+
+    syncInterval_ = dbConfig.syncInterval;
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " sync interval is " << syncInterval_
         << ". max requests outstanding is " << maxRequestsOutstanding;
@@ -1098,15 +1082,14 @@ CassandraBackend::open(bool readOnly)
         throw std::runtime_error(ss.str());
     }
 
-    std::string certfile = getString("certfile");
-    if (certfile.size())
+    if (dbConfig.certfile)
     {
         std::ifstream fileStream(
-            boost::filesystem::path(certfile).string(), std::ios::in);
+            boost::filesystem::path(*dbConfig.certfile).string(), std::ios::in);
         if (!fileStream)
         {
             std::stringstream ss;
-            ss << "opening config file " << certfile;
+            ss << "opening config file " << *dbConfig.certfile;
             throw std::system_error(errno, std::generic_category(), ss.str());
         }
         std::string cert(
@@ -1115,7 +1098,7 @@ CassandraBackend::open(bool readOnly)
         if (fileStream.bad())
         {
             std::stringstream ss;
-            ss << "reading config file " << certfile;
+            ss << "reading config file " << *dbConfig.certfile;
             throw std::system_error(errno, std::generic_category(), ss.str());
         }
 
@@ -1134,17 +1117,17 @@ CassandraBackend::open(bool readOnly)
         cass_ssl_free(context);
     }
 
-    std::string keyspace = getString("keyspace");
-    if (keyspace.empty())
+    std::string keyspace = "clio";
+    if (dbConfig.keyspace)
     {
         BOOST_LOG_TRIVIAL(warning)
             << "No keyspace specified. Using keyspace clio";
-        keyspace = "clio";
+        keyspace = *dbConfig.keyspace;
     }
 
-    int rf = getInt("replication_factor") ? *getInt("replication_factor") : 3;
+    int rf = dbConfig.replicationFactor;
 
-    std::string tablePrefix = getString("table_prefix");
+    std::string tablePrefix = dbConfig.tablePrefix;
     if (tablePrefix.empty())
     {
         BOOST_LOG_TRIVIAL(warning) << "Table prefix is empty";
@@ -1152,7 +1135,7 @@ CassandraBackend::open(bool readOnly)
 
     cass_cluster_set_connect_timeout(cluster, 10000);
 
-    int ttl = getInt("ttl") ? *getInt("ttl") * 2 : 0;
+    int ttl = dbConfig.ttl ? *dbConfig.ttl * 2 : 0;
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " setting ttl to " << std::to_string(ttl);
 

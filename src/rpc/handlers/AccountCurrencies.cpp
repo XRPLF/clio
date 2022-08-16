@@ -28,7 +28,7 @@ doAccountCurrencies(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto rawAcct = context.backend->fetchLedgerObject(
+    auto rawAcct = context.app.backend().fetchLedgerObject(
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
@@ -58,7 +58,7 @@ doAccountCurrencies(Context const& context)
     };
 
     traverseOwnedNodes(
-        *context.backend,
+        context.app.backend(),
         accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),

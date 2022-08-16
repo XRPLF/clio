@@ -8,16 +8,12 @@ namespace RPC {
 
 std::optional<Context>
 make_WsContext(
-    boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    Application const& app,
     std::shared_ptr<WsBase> const& session,
     Backend::LedgerRange const& range,
-    Counters& counters,
-    std::string const& clientIp)
+    std::string const& clientIp,
+    boost::asio::yield_context& yield)
 {
     boost::json::value commandValue = nullptr;
     if (!request.contains("command") && request.contains("method"))
@@ -30,32 +26,16 @@ make_WsContext(
 
     std::string command = commandValue.as_string().c_str();
 
-    return Context{
-        yc,
-        command,
-        1,
-        request,
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        session,
-        range,
-        counters,
-        clientIp};
+    return Context{command, 1, request, app, session, range, clientIp, yield};
 }
 
 std::optional<Context>
 make_HttpContext(
-    boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    Application const& app,
     Backend::LedgerRange const& range,
-    RPC::Counters& counters,
-    std::string const& clientIp)
+    std::string const& clientIp,
+    boost::asio::yield_context& yield)
 {
     if (!request.contains("method") || !request.at("method").is_string())
         return {};
@@ -77,18 +57,14 @@ make_HttpContext(
         return {};
 
     return Context{
-        yc,
         command,
         1,
         array.at(0).as_object(),
-        backend,
-        subscriptions,
-        balancer,
-        etl,
+        app,
         nullptr,
         range,
-        counters,
-        clientIp};
+        clientIp,
+        yield};
 }
 
 constexpr static WarningInfo warningInfos[]{
@@ -240,6 +216,8 @@ static std::unordered_set<std::string> forwardCommands{
     "fee",
     "ledger_closed",
     "ledger_current",
+    "channel_verify",
+    "channel_authorize",
     "ripple_path_find",
     "manifest",
     "channel_authorize",
@@ -307,10 +285,10 @@ buildResponse(Context const& ctx)
         boost::json::object toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res =
-            ctx.balancer->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        auto res = ctx.app.balancer().forwardToRippled(
+            toForward, ctx.clientIp, ctx.yield);
 
-        ctx.counters.rpcForwarded(ctx.method);
+        ctx.app.counters().rpcForwarded(ctx.method);
 
         if (!res)
             return Status{Error::rpcFAILED_TO_FORWARD};
@@ -341,10 +319,6 @@ buildResponse(Context const& ctx)
     catch (InvalidParamsError const& err)
     {
         return Status{Error::rpcINVALID_PARAMS, err.what()};
-    }
-    catch (AccountNotFoundError const& err)
-    {
-        return Status{Error::rpcACT_NOT_FOUND, err.what()};
     }
     catch (std::exception const& err)
     {

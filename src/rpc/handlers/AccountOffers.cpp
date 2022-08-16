@@ -80,7 +80,7 @@ doAccountOffers(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto rawAcct = context.backend->fetchLedgerObject(
+    auto rawAcct = context.app.backend().fetchLedgerObject(
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
@@ -115,7 +115,7 @@ doAccountOffers(Context const& context)
     };
 
     auto next = traverseOwnedNodes(
-        *context.backend,
+        context.app.backend(),
         accountID,
         lgrInfo.seq,
         limit,

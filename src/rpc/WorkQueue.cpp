@@ -1,11 +1,19 @@
 #include <rpc/WorkQueue.h>
 
-WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
+namespace RPC {
+
+WorkQueue::WorkQueue(Application const& app)
 {
-    if (maxSize != 0)
-        maxSize_ = maxSize;
-    while (--numWorkers)
+    auto const& config = app.config();
+
+    if (config.maxQueueSize != 0)
+        maxSize_ = config.maxQueueSize;
+
+    auto threads = config.socketWorkers;
+    while (threads--)
     {
         threads_.emplace_back([this] { ioc_.run(); });
     }
 }
+
+}  // namespace RPC

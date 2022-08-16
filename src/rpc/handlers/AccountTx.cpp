@@ -130,7 +130,7 @@ doAccountTx(Context const& context)
 
     boost::json::array txns;
     auto start = std::chrono::system_clock::now();
-    auto [blobs, retCursor] = context.backend->fetchAccountTransactions(
+    auto [blobs, retCursor] = context.app.backend().fetchAccountTransactions(
         accountID, limit, forward, cursor, context.yield);
 
     auto end = std::chrono::system_clock::now();

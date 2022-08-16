@@ -30,27 +30,10 @@ class PlainWsSession : public WsSession<PlainWsSession>
 public:
     // Take ownership of the socket
     explicit PlainWsSession(
-        boost::asio::io_context& ioc,
+        Application const& app,
         boost::asio::ip::tcp::socket&& socket,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
-        : WsSession(
-              ioc,
-              backend,
-              subscriptions,
-              balancer,
-              etl,
-              dosGuard,
-              counters,
-              queue,
-              std::move(buffer))
-        , ws_(std::move(socket))
+        : WsSession(app, std::move(buffer)), ws_(std::move(socket))
     {
     }
 
@@ -83,65 +66,29 @@ public:
 
 class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
 {
-    boost::asio::io_context& ioc_;
+    Application const& app_;
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
     http::request<http::string_body> req_;
 
 public:
     WsUpgrader(
-        boost::asio::io_context& ioc,
+        Application const& app,
         boost::asio::ip::tcp::socket&& socket,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& b)
-        : ioc_(ioc)
-        , http_(std::move(socket))
-        , buffer_(std::move(b))
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
+        : app_(app), http_(std::move(socket)), buffer_(std::move(b))
     {
     }
+
     WsUpgrader(
-        boost::asio::io_context& ioc,
+        Application const& app,
         boost::beast::tcp_stream&& stream,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
-        : ioc_(ioc)
+        : app_(app)
         , http_(std::move(stream))
         , buffer_(std::move(b))
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
         , req_(std::move(req))
     {
     }
@@ -189,16 +136,7 @@ private:
         boost::beast::get_lowest_layer(http_).expires_never();
 
         std::make_shared<PlainWsSession>(
-            ioc_,
-            http_.release_socket(),
-            backend_,
-            subscriptions_,
-            balancer_,
-            etl_,
-            dosGuard_,
-            counters_,
-            queue_,
-            std::move(buffer_))
+            app_, http_.release_socket(), std::move(buffer_))
             ->run(std::move(req_));
     }
 };

@@ -8,6 +8,7 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/version.hpp>
+#include <boost/beast/websocket.hpp>
 #include <boost/config.hpp>
 #include <boost/json.hpp>
 #include <algorithm>
@@ -17,11 +18,14 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
+#include <etl/ReportingETL.h>
+#include <main/Application.h>
+#include <main/Build.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
-#include <vector>
 #include <webserver/DOSGuard.h>
 
 namespace http = boost::beast::http;
@@ -83,17 +87,10 @@ class HttpBase
         }
     };
 
+    Application const& app_;
     boost::system::error_code ec_;
-    boost::asio::io_context& ioc_;
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
-    std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& workQueue_;
     send_lambda lambda_;
 
 protected:
@@ -140,26 +137,8 @@ protected:
     }
 
 public:
-    HttpBase(
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
-        boost::beast::flat_buffer buffer)
-        : ioc_(ioc)
-        , backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , dosGuard_(dosGuard)
-        , counters_(counters)
-        , workQueue_(queue)
-        , lambda_(*this)
-        , buffer_(std::move(buffer))
+    HttpBase(Application const& app, boost::beast::flat_buffer buffer)
+        : app_(app), lambda_(*this), buffer_(std::move(buffer))
     {
     }
 
@@ -203,17 +182,10 @@ public:
             // The websocket::stream uses its own timeout settings.
             boost::beast::get_lowest_layer(derived().stream()).expires_never();
             return make_websocket_session(
-                ioc_,
+                app_,
                 derived().release_stream(),
                 std::move(req_),
-                std::move(buffer_),
-                backend_,
-                subscriptions_,
-                balancer_,
-                etl_,
-                dosGuard_,
-                counters_,
-                workQueue_);
+                std::move(buffer_));
         }
 
         auto ip = derived().ip();
@@ -225,22 +197,12 @@ public:
 
         // Requests are handed using coroutines. Here we spawn a coroutine
         // which will asynchronously handle a request.
-        if (!workQueue_.postCoro(
+        if (!app_.workQueue().postCoro(
                 [this, ip, session](boost::asio::yield_context yield) {
                     handle_request(
-                        yield,
-                        std::move(req_),
-                        lambda_,
-                        backend_,
-                        subscriptions_,
-                        balancer_,
-                        etl_,
-                        dosGuard_,
-                        counters_,
-                        *ip,
-                        session);
+                        app_, std::move(req_), lambda_, *ip, session, yield);
                 },
-                dosGuard_.isWhiteListed(*ip)))
+                app_.dosGuard().isWhiteListed(*ip)))
         {
             // Non-whitelist connection rejected due to full connection queue
             http::response<http::string_body> res{
@@ -290,18 +252,13 @@ public:
 template <class Body, class Allocator, class Send, class Session>
 void
 handle_request(
-    boost::asio::yield_context& yc,
+    Application const& app,
     boost::beast::http::
         request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
-    std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
-    DOSGuard& dosGuard,
-    RPC::Counters& counters,
     std::string const& ip,
-    std::shared_ptr<Session> http)
+    std::shared_ptr<Session> http,
+    boost::asio::yield_context& yield)
 {
     auto const httpResponse = [&req](
                                   http::status status,
@@ -328,7 +285,7 @@ handle_request(
         return send(httpResponse(
             http::status::bad_request, "text/html", "Expected a POST request"));
 
-    if (!dosGuard.isOk(ip))
+    if (!app.dosGuard().isOk(ip))
         return send(httpResponse(
             http::status::service_unavailable,
             "text/plain",
@@ -356,7 +313,7 @@ handle_request(
                     RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
         }
 
-        auto range = backend->fetchLedgerRange();
+        auto range = app.backend().fetchLedgerRange();
         if (!range)
             return send(httpResponse(
                 http::status::ok,
@@ -364,16 +321,8 @@ handle_request(
                 boost::json::serialize(
                     RPC::make_error(RPC::Error::rpcNOT_READY))));
 
-        std::optional<RPC::Context> context = RPC::make_HttpContext(
-            yc,
-            request,
-            backend,
-            subscriptions,
-            balancer,
-            etl,
-            *range,
-            counters,
-            ip);
+        std::optional<RPC::Context> context =
+            RPC::make_HttpContext(request, app, *range, ip, yield);
 
         if (!context)
             return send(httpResponse(
@@ -394,7 +343,7 @@ handle_request(
 
         if (auto status = std::get_if<RPC::Status>(&v))
         {
-            counters.rpcErrored(context->method);
+            app.counters().rpcErrored(context->method);
             auto error = RPC::make_error(*status);
 
             error["request"] = request;
@@ -409,7 +358,7 @@ handle_request(
             // This can still technically be an error. Clio counts forwarded
             // requests as successful.
 
-            counters.rpcComplete(context->method, us);
+            app.counters().rpcComplete(context->method, us);
             result = std::get<boost::json::object>(v);
 
             if (!result.contains("error"))
@@ -418,12 +367,12 @@ handle_request(
 
         boost::json::array warnings;
         warnings.emplace_back(RPC::make_warning(RPC::warnRPC_CLIO));
-        auto lastCloseAge = context->etl->lastCloseAgeSeconds();
+        auto lastCloseAge = context->app.reportingETL().lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
             warnings.emplace_back(RPC::make_warning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         responseStr = boost::json::serialize(response);
-        if (!dosGuard.add(ip, responseStr.size()))
+        if (!app.dosGuard().add(ip, responseStr.size()))
         {
             response["warning"] = "load";
             warnings.emplace_back(RPC::make_warning(RPC::warnRPC_RATE_LIMIT));

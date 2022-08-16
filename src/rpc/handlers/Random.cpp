@@ -4,7 +4,6 @@
 #include <ripple/beast/utility/rngfill.h>
 #include <ripple/crypto/csprng.h>
 #include <rpc/RPCHelpers.h>
-
 namespace RPC {
 
 Result

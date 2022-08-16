@@ -26,10 +26,10 @@ class NetworkValidatedLedgers
     bool stopping_ = false;
 
 public:
-    static std::shared_ptr<NetworkValidatedLedgers>
+    static std::unique_ptr<NetworkValidatedLedgers>
     make_ValidatedLedgers()
     {
-        return std::make_shared<NetworkValidatedLedgers>();
+        return std::make_unique<NetworkValidatedLedgers>();
     }
 
     /// Notify the datastructure that idx has been validated by the network
@@ -107,7 +107,7 @@ public:
         std::unique_lock lck(m_);
         // if queue has a max size, wait until not full
         if (maxSize_)
-            cv_.wait(lck, [this]() { return queue_.size() <= *maxSize_; });
+            cv_.wait(lck, [this]() { return queue_.size() < *maxSize_; });
         queue_.push(elt);
         cv_.notify_all();
     }
@@ -120,7 +120,7 @@ public:
         std::unique_lock lck(m_);
         // if queue has a max size, wait until not full
         if (maxSize_)
-            cv_.wait(lck, [this]() { return queue_.size() <= *maxSize_; });
+            cv_.wait(lck, [this]() { return queue_.size() < *maxSize_; });
         queue_.push(std::move(elt));
         cv_.notify_all();
     }

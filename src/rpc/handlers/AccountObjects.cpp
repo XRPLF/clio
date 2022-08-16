@@ -47,7 +47,7 @@ doAccountNFTs(Context const& context)
     if (!accountID)
         return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
 
-    auto rawAcct = context.backend->fetchLedgerObject(
+    auto rawAcct = context.app.backend().fetchLedgerObject(
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
@@ -73,8 +73,8 @@ doAccountNFTs(Context const& context)
     auto const pageKey =
         marker.isZero() ? ripple::keylet::nftpage_max(accountID).key : marker;
 
-    auto const blob =
-        context.backend->fetchLedgerObject(pageKey, lgrInfo.seq, context.yield);
+    auto const blob = context.app.backend().fetchLedgerObject(
+        pageKey, lgrInfo.seq, context.yield);
     if (!blob)
         return response;
     std::optional<ripple::SLE const> page{
@@ -118,7 +118,7 @@ doAccountNFTs(Context const& context)
                 response[JS(limit)] = numPages;
                 return response;
             }
-            auto const nextBlob = context.backend->fetchLedgerObject(
+            auto const nextBlob = context.app.backend().fetchLedgerObject(
                 nextKey.key, lgrInfo.seq, context.yield);
 
             page.emplace(ripple::SLE{
@@ -187,7 +187,7 @@ doAccountObjects(Context const& context)
     };
 
     auto next = traverseOwnedNodes(
-        *context.backend,
+        context.app.backend(),
         accountID,
         lgrInfo.seq,
         limit,

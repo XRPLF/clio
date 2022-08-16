@@ -17,26 +17,10 @@ class HttpSession : public HttpBase<HttpSession>,
 public:
     // Take ownership of the socket
     explicit HttpSession(
-        boost::asio::io_context& ioc,
+        Application const& app,
         tcp::socket&& socket,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer buffer)
-        : HttpBase<HttpSession>(
-              ioc,
-              backend,
-              subscriptions,
-              balancer,
-              etl,
-              dosGuard,
-              counters,
-              queue,
-              std::move(buffer))
+        : HttpBase<HttpSession>(app, std::move(buffer))
         , stream_(std::move(socket))
     {
     }
