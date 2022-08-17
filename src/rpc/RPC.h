@@ -226,6 +226,9 @@ buildResponse(Context const& ctx);
 bool
 validHandler(std::string const& method);
 
+bool
+isClioOnly(std::string const& method);
+
 Status
 getLimit(RPC::Context const& context, std::uint32_t& limit);
 
