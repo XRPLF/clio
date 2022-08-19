@@ -91,6 +91,38 @@ make_HttpContext(
         clientIp};
 }
 
+constexpr static WarningInfo warningInfos[]{
+    {warnUNKNOWN, "Unknown warning"},
+    {warnRPC_CLIO,
+     "This is a clio server. clio only serves validated data. If you "
+     "want to talk to rippled, include 'ledger_index':'current' in your "
+     "request"},
+    {warnRPC_OUTDATED, "This server may be out of date"},
+    {warnRPC_RATE_LIMIT, "You are about to be rate limited"}};
+
+WarningInfo const&
+get_warning_info(warning_code code)
+{
+    for (WarningInfo const& info : warningInfos)
+    {
+        if (info.code == code)
+        {
+            return info;
+        }
+    }
+    throw(std::out_of_range("Invalid warning_code"));
+}
+
+boost::json::object
+make_warning(warning_code code)
+{
+    boost::json::object json;
+    WarningInfo const& info(get_warning_info(code));
+    json["id"] = code;
+    json["message"] = static_cast<std::string>(info.message);
+    return json;
+}
+
 boost::json::object
 make_error(Error err)
 {

@@ -417,18 +417,17 @@ handle_request(
         }
 
         boost::json::array warnings;
-        warnings.emplace_back(
-            "This is a clio server. clio only serves validated data. If you "
-            "want to talk to rippled, include 'ledger_index':'current' in your "
-            "request");
+        warnings.emplace_back(RPC::make_warning(RPC::warnRPC_CLIO));
         auto lastCloseAge = context->etl->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
-            warnings.emplace_back("This server may be out of date");
+            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         responseStr = boost::json::serialize(response);
         if (!dosGuard.add(ip, responseStr.size()))
         {
             response["warning"] = "load";
+            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_RATE_LIMIT));
+            response["warnings"] = warnings;
             // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
         }

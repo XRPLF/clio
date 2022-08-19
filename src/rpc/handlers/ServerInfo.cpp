@@ -43,10 +43,15 @@ doServerInfo(Context const& context)
     info[JS(complete_ledgers)] = std::to_string(range->minSequence) + "-" +
         std::to_string(range->maxSequence);
 
-    info[JS(counters)] = boost::json::object{};
-    info[JS(counters)].as_object()[JS(rpc)] = context.counters.report();
-    info[JS(counters)].as_object()["subscriptions"] =
-        context.subscriptions->report();
+    bool admin = context.clientIp == "127.0.0.1";
+
+    if (admin)
+    {
+        info[JS(counters)] = boost::json::object{};
+        info[JS(counters)].as_object()[JS(rpc)] = context.counters.report();
+        info[JS(counters)].as_object()["subscriptions"] =
+            context.subscriptions->report();
+    }
 
     auto serverInfoRippled = context.balancer->forwardToRippled(
         {{"command", "server_info"}}, context.clientIp, context.yield);
@@ -78,15 +83,21 @@ doServerInfo(Context const& context)
     validated[JS(reserve_base_xrp)] = fees->reserve.decimalXRP();
     validated[JS(reserve_inc_xrp)] = fees->increment.decimalXRP();
 
-    response["cache"] = boost::json::object{};
-    auto& cache = response["cache"].as_object();
+    info["cache"] = boost::json::object{};
+    auto& cache = info["cache"].as_object();
 
     cache["size"] = context.backend->cache().size();
     cache["is_full"] = context.backend->cache().isFull();
     cache["latest_ledger_seq"] =
         context.backend->cache().latestLedgerSequence();
+    cache["object_hit_rate"] = context.backend->cache().getObjectHitRate();
+    cache["successor_hit_rate"] =
+        context.backend->cache().getSuccessorHitRate();
 
-    response["etl"] = context.etl->getInfo();
+    if (admin)
+    {
+        info["etl"] = context.etl->getInfo();
+    }
 
     return response;
 }

@@ -162,6 +162,33 @@ public:
     }
 };
 
+enum warning_code {
+    warnUNKNOWN = -1,
+    warnRPC_CLIO = 2001,
+    warnRPC_OUTDATED = 2002,
+    warnRPC_RATE_LIMIT = 2003
+};
+
+struct WarningInfo
+{
+    constexpr WarningInfo() : code(warnUNKNOWN), message("unknown warning")
+    {
+    }
+
+    constexpr WarningInfo(warning_code code_, char const* message_)
+        : code(code_), message(message_)
+    {
+    }
+    warning_code code;
+    std::string_view const message;
+};
+
+WarningInfo const&
+get_warning_info(warning_code code);
+
+boost::json::object
+make_warning(warning_code code);
+
 boost::json::object
 make_error(Status const& status);
 
