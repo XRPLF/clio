@@ -1,0 +1,21 @@
+name: 'Sign packages'
+runs:
+  using: "composite"
+
+  steps:
+    - name: Sign
+      shell: bash
+      run: |
+        set -ex -o pipefail
+        echo "$GPG_KEY_B64"| base64 -d | gpg --batch --no-tty --allow-secret-key-import --import -
+        unset GPG_KEY_B64
+        export GPG_PASSPHRASE=$(echo $GPG_KEY_PASS_B64 | base64 -di)
+        unset GPG_KEY_PASS_B64
+        export GPG_KEYID=$(gpg --with-colon --list-secret-keys | head -n1 | cut -d : -f 5)
+        for PKG in $(ls *.deb); do
+          dpkg-sig \
+            -g "--no-tty --digest-algo 'sha512' --passphrase '${GPG_PASSPHRASE}' --pinentry-mode=loopback" \
+                  -k "${GPG_KEYID}" \
+                  --sign builder \
+                  $PKG
+        done
