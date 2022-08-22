@@ -188,16 +188,43 @@ doAccountTx(Context const& context)
             maxReturnedIndex = txnPlusMeta.ledgerSequence;
     }
 
-    assert(cursor);
+    // The below logic is a bit nuanced. The API requires the server to return
+    // the range of ledgers actually searched for transactions. There are a
+    // number of things that control the range searched.
+    // 1. The range of ledgers in the db
+    // 2. The ledger_index_min and ledger_index_max (optionally) specified in
+    // the request
+    // 3. The cursor/marker (optionally) specified in the request
+    //
+    // Earlier in the function minIndex and maxIndex are set to the indexes
+    // specified in the request, or the min and max ledger in the db if the
+    // request doesn't not specify a range of ledgers to search.
+    //
+    // The database returns a cursor indicating where iteration should continue
+    // with the next API call.
+    //
+    // The range searched is then defined by the input and output cursor, as
+    // well as the input min and max. The tighest bound that can be formed is
+    // the range searched
     if (!forward)
     {
-        response[JS(ledger_index_min)] = cursor->ledgerSequence;
-        response[JS(ledger_index_max)] = maxIndex;
+        // min of input cursor and max index
+        response[JS(ledger_index_max)] =
+            cursor ? std::min(cursor->ledgerSequence, maxIndex) : maxIndex;
+        // max of returned cursor and minIndex
+        response[JS(ledger_index_min)] = retCursor
+            ? std::max(retCursor->ledgerSequence, minIndex)
+            : minIndex;
     }
     else
     {
-        response[JS(ledger_index_max)] = cursor->ledgerSequence;
-        response[JS(ledger_index_min)] = minIndex;
+        // min of returned cursor and max index
+        response[JS(ledger_index_max)] = retCursor
+            ? std::min(retCursor->ledgerSequence, maxIndex)
+            : maxIndex;
+        // max of input cursor and min index
+        response[JS(ledger_index_min)] =
+            cursor ? std::max(cursor->ledgerSequence, minIndex) : minIndex;
     }
 
     response[JS(transactions)] = txns;
