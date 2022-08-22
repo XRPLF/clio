@@ -140,8 +140,8 @@ doAccountTx(Context const& context)
 
     response[JS(account)] = ripple::to_string(accountID);
 
-    //@fmendoz7, 08/08 1152 PST | Cancels extraneous cursor on last page
-    if (retCursor && txs.size() > limit)
+    //@fmendoz7, 08/08 1152 PST | Cancels extraneous cursor on last page (deleted in light of new changes)
+    if (retCursor)
     {
         boost::json::object cursorJson;
         cursorJson[JS(ledger)] = retCursor->ledgerSequence;
@@ -153,14 +153,29 @@ doAccountTx(Context const& context)
     std::optional<size_t> minReturnedIndex;
     for (auto const& txnPlusMeta : blobs)
     {
-        if (txnPlusMeta.ledgerSequence < minIndex ||
-            txnPlusMeta.ledgerSequence > maxIndex)
-        {
+        /* 
+            TODO: Split into TWO, append additional logic. We should make changes here
+                > No cursor for case1 & case2
+                > [!!!] Take into account WHICH DIRECTION you're going so you don't erroneously flag no return, using forward bool
+        */
+        //CASE #1: [ABNORMAL] Moving to the LHS, less than minIndex
+        if (txnPlusMeta.ledgerSequence < minIndex && !forward) {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
                 << " skipping over transactions from incomplete ledger";
             continue;
         }
+
+        //CASE #2: [ABNORMAL] Moving to RHS, greater than maxIndex
+        if(txnPlusMeta.ledgerSequence > maxIndex && forward) {
+            BOOST_LOG_TRIVIAL(debug)
+                << __func__
+                << " skipping over transactions from incomplete ledger";
+            continue;
+        }
+
+        //CASE #3: [NORMAL] Moving to LHS (BACKWARD), greater than minIndex
+        //CASE #4: [NORMAL] Moving to RHS (FORWARD), less than maxIndex
 
         boost::json::object obj;
 
@@ -182,11 +197,24 @@ doAccountTx(Context const& context)
         }
         obj[JS(validated)] = true;
 
+        /*
+            Just because we skip txns doesn't mean we're finished iterating
+                >> ARCHETYPE: if txns.size() <= limit && {case1 || case2}, don't return cursor
+                > CASE #1: If going BACKWARD and < minIndex, DON'T RETURN CURSOR
+                > CASE #2: If going FORWARD and > maxIndex, DON'T RETURN CURSOR
+                > CASE #3 + #4: Case 1 + Case 2, but take into account which direction you're going w. forward bool. RETURN CURSOR if not done 
+        */
         txns.push_back(obj);
-        if (!minReturnedIndex || txnPlusMeta.ledgerSequence < *minReturnedIndex)
+
+        //CASE #3: Before LHS limit of window, but iterating FORWARD
+        if (!minReturnedIndex || (txnPlusMeta.ledgerSequence < *minReturnedIndex && forward)) {
             minReturnedIndex = txnPlusMeta.ledgerSequence;
-        if (!maxReturnedIndex || txnPlusMeta.ledgerSequence > *maxReturnedIndex)
+        }
+        //CASE #4: After RHS limit of window, but iterating BACKWARD
+        if (!maxReturnedIndex || (txnPlusMeta.ledgerSequence > *maxReturnedIndex && !forward)) {
             maxReturnedIndex = txnPlusMeta.ledgerSequence;
+        }
+        //CASE #1 + #2: TODO
     }
 
     assert(cursor);
