@@ -152,7 +152,7 @@ doAccountTx(Context const& context)
     std::optional<size_t> minReturnedIndex;
     for (auto const& txnPlusMeta : blobs)
     {
-        if (txnPlusMeta.ledgerSequence < minIndex && !forward) 
+        if (txnPlusMeta.ledgerSequence < minIndex && !forward)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
@@ -160,7 +160,7 @@ doAccountTx(Context const& context)
             continue;
         }
 
-        if(txnPlusMeta.ledgerSequence > maxIndex && forward) 
+        if (txnPlusMeta.ledgerSequence > maxIndex && forward)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
@@ -189,11 +189,13 @@ doAccountTx(Context const& context)
         obj[JS(validated)] = true;
         txns.push_back(obj);
 
-        if (!minReturnedIndex || (txnPlusMeta.ledgerSequence < *minReturnedIndex && forward)) 
+        if (!minReturnedIndex ||
+            (txnPlusMeta.ledgerSequence < *minReturnedIndex && forward))
         {
             minReturnedIndex = txnPlusMeta.ledgerSequence;
         }
-        if (!maxReturnedIndex || (txnPlusMeta.ledgerSequence > *maxReturnedIndex && !forward)) 
+        if (!maxReturnedIndex ||
+            (txnPlusMeta.ledgerSequence > *maxReturnedIndex && !forward))
         {
             maxReturnedIndex = txnPlusMeta.ledgerSequence;
         }
