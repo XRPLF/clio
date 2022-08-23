@@ -652,7 +652,7 @@ private:
 
     // maximum number of concurrent in flight read requests. isTooBusy() will
     // return true if the number of in flight read requests exceeds this limit
-    std::uint32_t maxReadRequestsOutstanding = 10000;
+    std::uint32_t maxReadRequestsOutstanding = 100000;
     mutable std::atomic_uint32_t numReadRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight

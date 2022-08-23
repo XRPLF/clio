@@ -344,6 +344,8 @@ buildResponse(Context const& ctx)
 
     if (ctx.backend->isTooBusy())
     {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " Database is too busy. Rejecting request";
         return Status{Error::rpcTOO_BUSY};
     }
 

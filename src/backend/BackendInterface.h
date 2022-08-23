@@ -13,10 +13,6 @@ namespace Backend {
 class DatabaseTimeout : public std::exception
 {
 public:
-    DatabaseTimeout()
-    {
-    }
-
     const char*
     what() const throw() override
     {
