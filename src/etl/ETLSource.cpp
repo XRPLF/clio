@@ -112,9 +112,11 @@ ETLSourceImpl<Derived>::ETLSourceImpl(
                 boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
             std::stringstream ss;
             ss << endpoint;
+            grpc::ChannelArguments chArgs;
+            chArgs.SetMaxReceiveMessageSize(-1);
             stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                grpc::CreateChannel(
-                    ss.str(), grpc::InsecureChannelCredentials()));
+                grpc::CreateCustomChannel(
+                    ss.str(), grpc::InsecureChannelCredentials(), chArgs));
             BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
         }
         catch (std::exception const& e)
