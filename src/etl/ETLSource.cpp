@@ -8,6 +8,7 @@
 #include <boost/log/trivial.hpp>
 #include <backend/DBHelpers.h>
 #include <etl/ETLSource.h>
+#include <etl/ProbingETLSource.h>
 #include <etl/ReportingETL.h>
 #include <rpc/RPCHelpers.h>
 #include <thread>
@@ -72,64 +73,16 @@ ForwardCache::get(boost::json::object const& request) const
     return {latestForwarded_.at(*command)};
 }
 
-// Create ETL source without grpc endpoint
-// Fetch ledger and load initial ledger will fail for this source
-// Primarly used in read-only mode, to monitor when ledgers are validated
-template <class Derived>
-ETLSourceImpl<Derived>::ETLSourceImpl(
-    boost::json::object const& config,
-    boost::asio::io_context& ioContext,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-    ETLLoadBalancer& balancer)
-    : resolver_(boost::asio::make_strand(ioContext))
-    , networkValidatedLedgers_(networkValidatedLedgers)
-    , backend_(backend)
-    , subscriptions_(subscriptions)
-    , balancer_(balancer)
-    , forwardCache_(config, ioContext, *this)
-    , ioc_(ioContext)
-    , timer_(ioContext)
-{
-    if (config.contains("ip"))
-    {
-        auto ipJs = config.at("ip").as_string();
-        ip_ = {ipJs.c_str(), ipJs.size()};
-    }
-    if (config.contains("ws_port"))
-    {
-        auto portjs = config.at("ws_port").as_string();
-        wsPort_ = {portjs.c_str(), portjs.size()};
-    }
-    if (config.contains("grpc_port"))
-    {
-        auto portjs = config.at("grpc_port").as_string();
-        grpcPort_ = {portjs.c_str(), portjs.size()};
-        try
-        {
-            boost::asio::ip::tcp::endpoint endpoint{
-                boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
-            std::stringstream ss;
-            ss << endpoint;
-            stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                grpc::CreateChannel(
-                    ss.str(), grpc::InsecureChannelCredentials()));
-            BOOST_LOG_TRIVIAL(debug) << "Made stub for remote = " << toString();
-        }
-        catch (std::exception const& e)
-        {
-            BOOST_LOG_TRIVIAL(debug)
-                << "Exception while creating stub = " << e.what()
-                << " . Remote = " << toString();
-        }
-    }
-}
-
 template <class Derived>
 void
 ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
 {
+    if (paused_)
+        return;
+
+    if (connected_)
+        hooks_.onDisconnected(ec);
+
     connected_ = false;
     // These are somewhat normal errors. operation_aborted occurs on shutdown,
     // when the timer is cancelled. connection_refused will occur repeatedly
@@ -198,11 +151,21 @@ PlainETLSource::close(bool startAgain)
                     }
                     closing_ = false;
                     if (startAgain)
+                    {
+                        ws_ = std::make_unique<boost::beast::websocket::stream<
+                            boost::beast::tcp_stream>>(
+                            boost::asio::make_strand(ioc_));
+
                         run();
+                    }
                 });
         }
         else if (startAgain)
         {
+            ws_ = std::make_unique<
+                boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+                boost::asio::make_strand(ioc_));
+
             run();
         }
     });
@@ -391,6 +354,10 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
 {
     BOOST_LOG_TRIVIAL(trace)
         << __func__ << " : ec = " << ec << " - " << toString();
+    if (auto action = hooks_.onConnected(ec);
+        action == ETLSourceHooks::Action::stop)
+        return;
+
     if (ec)
     {
         // start over
@@ -922,8 +889,6 @@ ETLSourceImpl<Derived>::fetchLedger(
                "correctly on the ETL source. source = "
             << toString() << " status = " << status.error_message();
     }
-    // BOOST_LOG_TRIVIAL(debug)
-    //    << __func__ << " Message size = " << response.ByteSizeLong();
     return {status, std::move(response)};
 }
 
@@ -931,34 +896,18 @@ static std::unique_ptr<ETLSource>
 make_ETLSource(
     boost::json::object const& config,
     boost::asio::io_context& ioContext,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
     ETLLoadBalancer& balancer)
 {
-    std::unique_ptr<ETLSource> src = nullptr;
-    if (sslCtx)
-    {
-        src = std::make_unique<SslETLSource>(
-            config,
-            ioContext,
-            sslCtx,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
-    }
-    else
-    {
-        src = std::make_unique<PlainETLSource>(
-            config,
-            ioContext,
-            backend,
-            subscriptions,
-            networkValidatedLedgers,
-            balancer);
-    }
+    auto src = std::make_unique<ProbingETLSource>(
+        config,
+        ioContext,
+        backend,
+        subscriptions,
+        networkValidatedLedgers,
+        balancer);
 
     src->run();
 
@@ -968,7 +917,6 @@ make_ETLSource(
 ETLLoadBalancer::ETLLoadBalancer(
     boost::json::object const& config,
     boost::asio::io_context& ioContext,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl)
@@ -987,13 +935,7 @@ ETLLoadBalancer::ETLLoadBalancer(
     for (auto& entry : config.at("etl_sources").as_array())
     {
         std::unique_ptr<ETLSource> source = make_ETLSource(
-            entry.as_object(),
-            ioContext,
-            sslCtx,
-            backend,
-            subscriptions,
-            nwvl,
-            *this);
+            entry.as_object(), ioContext, backend, subscriptions, nwvl, *this);
 
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "
