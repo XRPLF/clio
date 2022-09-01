@@ -82,10 +82,10 @@ private:
         boost::asio::yield_context& yield) const override;
 
     ETLSourceHooks
-    make_SSLHooks(std::mutex& mtx) noexcept;
+    make_SSLHooks() noexcept;
 
     ETLSourceHooks
-    make_PlainHooks(std::mutex& mtx) noexcept;
+    make_PlainHooks() noexcept;
 };
 
 #endif

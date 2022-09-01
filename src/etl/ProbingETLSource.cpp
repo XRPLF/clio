@@ -18,7 +18,7 @@ ProbingETLSource::ProbingETLSource(
           subscriptions,
           nwvl,
           balancer,
-          make_SSLHooks(mtx_))}
+          make_SSLHooks())}
     , plainSrc_{make_shared<PlainETLSource>(
           config,
           ioc,
@@ -26,7 +26,7 @@ ProbingETLSource::ProbingETLSource(
           subscriptions,
           nwvl,
           balancer,
-          make_PlainHooks(mtx_))}
+          make_PlainHooks())}
 {
 }
 
@@ -126,10 +126,10 @@ ProbingETLSource::requestFromRippled(
 }
 
 ETLSourceHooks
-ProbingETLSource::make_SSLHooks(std::mutex& mtx) noexcept
+ProbingETLSource::make_SSLHooks() noexcept
 {
     return {
-        std::ref(mtx),
+        std::ref(mtx_),
         // onConnected
         [this](auto ec) {
             if (currentSrc_)
@@ -156,10 +156,10 @@ ProbingETLSource::make_SSLHooks(std::mutex& mtx) noexcept
 }
 
 ETLSourceHooks
-ProbingETLSource::make_PlainHooks(std::mutex& mtx) noexcept
+ProbingETLSource::make_PlainHooks() noexcept
 {
     return {
-        std::ref(mtx),
+        std::ref(mtx_),
         // onConnected
         [this](auto ec) {
             if (currentSrc_)
