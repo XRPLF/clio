@@ -85,7 +85,7 @@ ApplicationImp::initLogging(Config const& config)
     boost::log::add_common_attributes();
     std::string format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%";
 
-    if (!config.logToConsole)
+    if (config.logToConsole)
     {
         boost::log::add_console_log(std::cout, keywords::format = format);
     }

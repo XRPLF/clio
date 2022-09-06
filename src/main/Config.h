@@ -4,6 +4,7 @@
 #include <boost/json.hpp>
 #include <iostream>
 #include <optional>
+#include <variant>
 #include <string>
 #include <unordered_set>
 
@@ -11,7 +12,7 @@ struct ETLSourceConfig
 {
     std::string ip;
     std::string wsPort;
-    std::string grpcPort;
+    std::optional<std::string> grpcPort;
     std::vector<std::string> cacheCommands;
 };
 
@@ -40,25 +41,12 @@ private:
     parseDOSGuardConfig(boost::json::value& config);
 };
 
-struct DatabaseConfig
+struct MockDatabaseConfig
 {
-    std::string type;
-
-    virtual ~DatabaseConfig(){};
-
-    static DatabaseConfig
-    parseDatabaseConfig(boost::json::value& cofig);
+    std::string type = "mock";
 };
 
-struct MockDatabaseConfig : public DatabaseConfig
-{
-    MockDatabaseConfig()
-    {
-        type = "mock";
-    }
-};
-
-struct CassandraConfig : public DatabaseConfig
+struct CassandraConfig
 {
     struct CassandraOptions
     {
@@ -79,10 +67,12 @@ struct CassandraConfig : public DatabaseConfig
 
     CassandraOptions cassandra;
 
-    CassandraConfig(boost::json::value& config);
+    std::string type = "cassandra";
+
+    CassandraConfig(boost::json::value& options);
 };
 
-struct PostgresConfig : public DatabaseConfig
+struct PostgresConfig
 {
     struct PostgresOptions
     {
@@ -99,8 +89,12 @@ struct PostgresConfig : public DatabaseConfig
 
     PostgresOptions postgres;
 
-    PostgresConfig(boost::json::value& config);
+    std::string type = "postgres";
+
+    PostgresConfig(boost::json::value& options);
 };
+
+using DatabaseConfig = std::variant<CassandraConfig, PostgresConfig, MockDatabaseConfig>;
 
 boost::json::object
 parseConfig(std::string const& filename);
@@ -108,10 +102,9 @@ parseConfig(std::string const& filename);
 class Config
 {
     boost::json::object json_;
-    std::shared_ptr<DatabaseConfig> dbConfigStore;
 
 public:
-    DatabaseConfig& database;
+    DatabaseConfig database;
     DOSGuardConfig dosGuard;
     std::vector<ETLSourceConfig> etlSources;
     std::optional<CacheConfig> cache;
@@ -122,7 +115,6 @@ public:
     std::optional<std::string> sslCertFile;
     std::optional<std::string> sslKeyFile;
 
-    std::optional<std::string> logFile;
     std::string logLevel;
     bool logToConsole;
     std::optional<std::string> logDirectory;
@@ -149,13 +141,17 @@ public:
     PostgresConfig const&
     postgres() const
     {
-        return dynamic_cast<PostgresConfig const&>(database);
+        assert(std::holds_alternative<PostgresConfig>(database));
+
+        return std::get<PostgresConfig>(database);
     }
 
     CassandraConfig const&
     cassandra() const
     {
-        return dynamic_cast<CassandraConfig const&>(database);
+        assert(std::holds_alternative<CassandraConfig>(database));
+
+        return std::get<CassandraConfig>(database);
     }
 
     Config(boost::json::object const& json);

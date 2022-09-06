@@ -92,7 +92,8 @@ checkRequired(std::optional<T>& potentiallyRequired)
     }
 }
 
-std::optional<std::string>
+template <typename Required = cfgOPTIONAL>
+auto
 parseString(boost::json::value& value)
 {
     std::optional<std::string> parsed = {};
@@ -100,10 +101,10 @@ parseString(boost::json::value& value)
     if (value.is_string())
         parsed = value.as_string().c_str();
 
-    return parsed;
+    return checkRequired<Required>(parsed);
 }
 
-std::optional<std::string>
+std::string
 parseString(boost::json::value& value, std::string dfault)
 {
     auto possibleValue = parseString(value);
@@ -114,7 +115,8 @@ parseString(boost::json::value& value, std::string dfault)
     return *possibleValue;
 }
 
-std::optional<std::uint32_t>
+template<typename Required = cfgOPTIONAL>
+auto
 parseUInt32(boost::json::value& value)
 {
     std::optional<std::uint32_t> parsed = {};
@@ -122,13 +124,13 @@ parseUInt32(boost::json::value& value)
     if (value.is_int64())
         parsed = value.as_int64();
 
-    return parsed;
+    return checkRequired<Required>(parsed);
 }
 
 std::uint32_t
 parseUInt32(boost::json::value& value, std::uint32_t dfault)
 {
-    auto possibleValue = parseUInt32(value);
+    auto possibleValue = parseUInt32<cfgOPTIONAL>(value);
 
     if (!possibleValue)
         return dfault;
@@ -136,7 +138,8 @@ parseUInt32(boost::json::value& value, std::uint32_t dfault)
     return *possibleValue;
 }
 
-std::optional<bool>
+template<typename Required = cfgOPTIONAL>
+auto
 parseBool(boost::json::value& value)
 {
     std::optional<bool> parsed = {};
@@ -144,7 +147,18 @@ parseBool(boost::json::value& value)
     if (value.is_bool())
         parsed = value.as_bool();
 
-    return parsed;
+    return checkRequired<Required>(parsed);
+}
+
+bool
+parseBool(boost::json::value& value, bool dfault)
+{
+    auto optBool = parseBool<cfgOPTIONAL>(value);
+
+    if (!optBool)
+        return dfault;
+
+    return *optBool;
 }
 
 template <typename T>
@@ -166,7 +180,7 @@ parseSet(boost::json::value& value)
     return result;
 }
 
-static DOSGuardConfig
+DOSGuardConfig
 parseDosGuardConfig(boost::json::value& value)
 {
     if (value.is_null())
@@ -178,20 +192,15 @@ parseDosGuardConfig(boost::json::value& value)
     boost::json::object& config = value.as_object();
 
     DOSGuardConfig dosGuard;
-    // add(dosGuard.maxFetches,
-    //     config["max_fetches"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     100);
-    // add(dosGuard.sweepInterval,
-    //     config["sweep_interval"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     1);
-    // add(dosGuard.whitelist, config["whitelist"], &parseSet<std::string>);
+
+    dosGuard.maxFetches = parseUInt32(config["max_fetches"], 100);
+    dosGuard.sweepInterval = parseUInt32(config["sweep_interval"], 1);
+    dosGuard.whitelist = parseSet<std::string>(config["whitelist"]);
 
     return dosGuard;
 }
 
-static std::unique_ptr<DatabaseConfig>
+DatabaseConfig
 parseDatabaseConfig(boost::json::value& config)
 {
     if (!config.is_object())
@@ -202,11 +211,11 @@ parseDatabaseConfig(boost::json::value& config)
     auto& type = config.at("type").as_string();
 
     if (type == "cassandra")
-        return std::make_unique<CassandraConfig>(dbConfig[type]);
+        return CassandraConfig(dbConfig[type]);
     else if (type == "postgres")
-        return std::make_unique<PostgresConfig>(dbConfig[type]);
+        return PostgresConfig(dbConfig[type]);
     else if (type == "mock")
-        return std::make_unique<MockDatabaseConfig>();
+        return MockDatabaseConfig();
 
     throw std::runtime_error("Unknown database type");
 }
@@ -232,31 +241,33 @@ parseETLSources(boost::json::value& config)
             auto& object = json.as_object();
 
             ETLSourceConfig etl;
-            // add(etl.ip, object["ip"], &parseString<cfgREQUIRED>);
-            // add(etl.wsPort, object["ws_port"], &parseString<cfgREQUIRED>);
-            // add(etl.grpcPort, object["grpc_port"], &parseString<cfgREQUIRED>);
-            // add(
-            //     etl.cacheCommands,
-            //     object["cache"],
-            //     [](boost::json::value& json) -> std::vector<std::string> {
-            //         if (!json.is_array())
-            //             throw std::runtime_error(
-            //                 "ETLSource `cache` is not an array");
+            etl.ip = parseString<cfgREQUIRED>(object["ip"]);
+            etl.wsPort = parseString<cfgREQUIRED>(object["ws_port"]);
+            etl.grpcPort = parseString(object["grpc_port"]);
 
-            //         std::vector<std::string> result = {};
-            //         for (auto const& cmd : json.as_array())
-            //         {
-            //             if (!cmd.is_string())
-            //                 throw std::runtime_error(
-            //                     "Cache command " + boost::json::serialize(cmd) +
-            //                     " is not string");
+            etl.cacheCommands = 
+                [](boost::json::value& json) -> std::vector<std::string> {
+                    if (json.is_null())
+                        return {};
 
-            //             result.push_back(cmd.as_string().c_str());
-            //         }
+                    if (!json.is_array())
+                        throw std::runtime_error(
+                            "ETLSource `cache` is not an array");
 
-            //         return result;
-            //     },
-            //     std::vector<std::string>{});
+                    std::vector<std::string> result = {};
+                    for (auto const& cmd : json.as_array())
+                    {
+                        if (!cmd.is_string())
+                            throw std::runtime_error(
+                                "Cache command " + boost::json::serialize(cmd) +
+                                " is not string");
+
+                        result.push_back(cmd.as_string().c_str());
+                    }
+
+                    return result;
+                }(object["cache"]);
+
             return etl;
         });
 
@@ -291,7 +302,7 @@ parseCache(boost::json::value& value)
                 "Invalid cache load option: specify sync, async, or none");
     }
 
-    // add(config.numDiffs, cache["num_diffs"], &parseUInt32<cfgREQUIRED>, 1);
+    config.numDiffs = parseUInt32(cache["num_diffs"], 1);
 
     return config;
 }
@@ -300,7 +311,7 @@ ServerConfig
 parseServerConfig(boost::json::value& value)
 {
     if (value.is_null())
-        return {};
+        return {"127.0.0.1", 51233};
 
     if (!value.is_object())
         throw std::runtime_error("Server config must be a json object");
@@ -308,8 +319,8 @@ parseServerConfig(boost::json::value& value)
     auto& object = value.as_object();
 
     ServerConfig config;
-    // add(config.ip, object["ip"], &parseString<cfgREQUIRED>);
-    // add(config.port, object["port"], &parseUInt32<cfgREQUIRED>);
+    config.ip = parseString(object["ip"], "127.0.0.1");
+    config.port = parseUInt32(object["port"], 51233);
 
     return config;
 }
@@ -322,37 +333,22 @@ CassandraConfig::CassandraConfig(boost::json::value& options)
 
     auto& object = options.as_object();
 
-    type = "cassandra";
+    cassandra.secureConnectBundle = parseString(object["secure_connect_bundle"]);
+    cassandra.contactPoints = parseString(object["contact_points"]);
 
-    // add(cassandra.secureConnectBundle,
-    //     object["secure_connect_bundle"],
-    //     &parseString<cfgOPTIONAL>);
-    // add(cassandra.contactPoints,
-    //     object["contact_points"],
-    //     &parseString<cfgOPTIONAL>);
-    // add(cassandra.keyspace, object["keyspace"], &parseString<cfgREQUIRED>);
-    // add(cassandra.username, object["username"], &parseString<cfgOPTIONAL>);
-    // add(cassandra.password, object["password"], &parseString<cfgOPTIONAL>);
-    // add(cassandra.certfile, object["certfile"], &parseString<cfgOPTIONAL>);
-    // add(cassandra.maxRequestsOutstanding,
-    //     object["max_requests_outstanding"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     1000);
-    // add(cassandra.threads, object["threads"], &parseUInt32<cfgREQUIRED>, 2);
-    // add(cassandra.port, object["port"], &parseUInt32<cfgOPTIONAL>);
-    // add(cassandra.replicationFactor,
-    //     object["replication_factor"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     3);
-    // add(cassandra.syncInterval,
-    //     object["sync_interval"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     1);
-    // add(cassandra.tablePrefix,
-    //     object["table_prefix"],
-    //     &parseString<cfgREQUIRED>,
-    //     "");
-    // add(cassandra.ttl, object["ttl"], &parseUInt32<cfgOPTIONAL>);
+    cassandra.keyspace = parseString(object["keyspace"], "clio");
+    cassandra.username = parseString(object["username"]);
+    cassandra.password = parseString(object["password"]);
+    cassandra.certfile = parseString(object["certfile"]);
+
+    cassandra.maxRequestsOutstanding = parseUInt32(object["max_requests_outstanding"], 1000);
+    cassandra.threads = parseUInt32(object["threads"], 2);
+    cassandra.port = parseUInt32(object["port"]);
+
+    cassandra.replicationFactor = parseUInt32(object["replication_factor"], 3);
+    cassandra.syncInterval = parseUInt32(object["sync_interval"], 1);
+    cassandra.tablePrefix = parseString(object["table_prefix"], "");
+    cassandra.ttl = parseUInt32(object["ttl"]);
 }
 
 PostgresConfig::PostgresConfig(boost::json::value& options)
@@ -362,77 +358,48 @@ PostgresConfig::PostgresConfig(boost::json::value& options)
 
     auto& object = options.as_object();
 
-    type = "postgres";
+    postgres.writeInterval = parseUInt32(object["write_interval"], 1000000);
+    postgres.experimental = parseBool<cfgREQUIRED>(object["experimental"]);
+    postgres.rememberIp = parseBool(object["remember_ip"], true);
 
-    // add(postgres.writeInterval,
-    //     object["write_interval"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     1000000);
-    // add(postgres.experimental, object["experimental"], &parseBool<cfgREQUIRED>);
-    // add(postgres.rememberIp,
-    //     object["remember_ip"],
-    //     &parseBool<cfgREQUIRED>,
-    //     true);
-    // add(postgres.username, object["username"], &parseString<cfgREQUIRED>);
-    // add(postgres.password, object["password"], &parseString<cfgREQUIRED>);
-    // add(postgres.contactPoint,
-    //     object["contact_point"],
-    //     &parseString<cfgREQUIRED>);
-    // add(postgres.database, object["database"], &parseString<cfgREQUIRED>);
+    postgres.username = parseString<cfgREQUIRED>(object["username"]);
+    postgres.password = parseString<cfgREQUIRED>(object["password"]);
+    postgres.contactPoint = parseString<cfgREQUIRED>(object["contact_point"]);
+    postgres.database = parseString<cfgREQUIRED>(object["database"]);
 
-    // for (auto& c : postgres.database)
-    //     c = std::tolower(c);
+    for (auto& c : postgres.database)
+        c = std::tolower(c);
 
-    // add(postgres.timeout, object["timeout"], &parseUInt32<cfgREQUIRED>, 600);
-    // add(postgres.maxConnections,
-    //     object["max_connections"],
-    //     &parseUInt32<cfgREQUIRED>,
-    //     1000);
+    postgres.timeout = parseUInt32(object["timeout"], 600);
+    postgres.maxConnections = parseUInt32(object["max_connections"], 1000);
+
 }
 
 Config::Config(boost::json::object const& json)
     : json_(json)
-    , dbConfigStore(parseDatabaseConfig(json_["database"]))
-    , database(*dbConfigStore)
+    , database(parseDatabaseConfig(json_["database"]))
     , dosGuard(parseDosGuardConfig(json_["dos_guard"]))
     , etlSources(parseETLSources(json_["etl_sources"]))
     , cache(parseCache(json_["cache"]))
     , server(parseServerConfig(json_["server"]))
-    , readOnly(parseBool(json_["read_only"]))
+    , readOnly(parseBool<cfgREQUIRED>(json_["read_only"]))
     , sslCertFile(parseString(json_["ssl_cert_file"]))
     , sslKeyFile(parseString(json_["ssl_key_file"]))
+    , logLevel(parseString(json_["log_level"], "info"))
+    , logToConsole(parseBool(json_["log_to_console"], true))
+    , logDirectory(parseString(json_["log_directory"]))
+    , logRotationSize(parseUInt32(json_["log_rotation_size"], 2 * 1024 * 1024 * 1024u))
+    , logRotationHourInterval(parseUInt32(json_["log_rotation_hour_interval"], 12u))
+    , logDirectoryMaxSize(parseUInt32(json_["log_directory_max_size"], 50 * 1024 * 1024 * 1024u))
+    , numMarkers(parseUInt32(json_["num_markers"], 16))
     , subscriptionWorkers(parseUInt32(json_["subscription_workers"], 1))
+    , etlWorkers(parseUInt32(json_["etl_workers"], 1))
+    , rpcWorkers(parseUInt32(json_["rpc_workers"], 1))
+    , socketWorkers(parseUInt32(json_["socket_workers"], 1))
+    , maxQueueSize(parseUInt32(json_["max_queue_size"], std::numeric_limits<std::uint32_t>::max()))
+    , startSequence(parseUInt32(json_["start_sequence"]))
+    , finishSequence(parseUInt32(json_["finish_sequence"]))
+    , extractorThreads(parseUInt32(json_["extractor_threads"], 1))
+    , txnThreshold(parseUInt32(json_["txn_threshold"], 0))
 {
-//     add(etlWorkers, json_["etl_workers"], &parseUInt32<cfgREQUIRED>, 1);
-//     add(rpcWorkers, json_["rpc_workers"], &parseUInt32<cfgREQUIRED>, 1);
-//     add(socketWorkers, json_["socket_workers"], &parseUInt32<cfgREQUIRED>, 1);
-//     add(maxQueueSize,
-//         json_["max_queue_size"],
-//         &parseUInt32<cfgREQUIRED>,
-//         std::numeric_limits<std::uint32_t>::max());
-//     add(numMarkers, json_["num_ranges"], &parseUInt32<cfgREQUIRED>, 16);
-
-//     add(logFile, json_["log_file"], &parseString<cfgOPTIONAL>);
-//     add(logLevel, json_["log_level"], &parseString<cfgREQUIRED>, "info");
-//     add(logRotationSize,
-//         json_["log_rotation_size"],
-//         &parseUInt32<cfgREQUIRED>,
-//         2 * 1024 * 1024 * 1024u);
-//     add(logRotationHourInterval,
-//         json_["log_rotation_hour_interval"],
-//         &parseUInt32<cfgREQUIRED>,
-//         12u);
-//     add(logDirectoryMaxSize,
-//         json_["log_directory_max_size"],
-//         &parseUInt32<cfgREQUIRED>,
-//         50 * 1024 * 1024 * 1024u);
-
-//     add(startSequence, json_["start_sequence"], &parseUInt32<cfgOPTIONAL>);
-//     add(finishSequence, json_["finish_sequence"], &parseUInt32<cfgOPTIONAL>);
-//     add(onlineDelete, json_["online_delete"], &parseUInt32<cfgOPTIONAL>);
-//     add(extractorThreads,
-//         json_["extractor_threads"],
-//         &parseUInt32<cfgREQUIRED>,
-//         1);
-//     add(txnThreshold, json_["txn_threshold"], &parseUInt32<cfgREQUIRED>, 0);
 }

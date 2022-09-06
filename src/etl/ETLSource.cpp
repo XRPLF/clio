@@ -92,8 +92,11 @@ ETLSourceImpl<Derived>::ETLSourceImpl(
 
     try
     {
+        if (!grpcPort_)
+            return;
+
         boost::asio::ip::tcp::endpoint endpoint{
-            boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
+            boost::asio::ip::make_address(ip_), std::stoi(*grpcPort_)};
         std::stringstream ss;
         ss << endpoint;
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(

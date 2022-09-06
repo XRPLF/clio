@@ -20,11 +20,11 @@ make_Backend(Application const& app)
 
     std::unique_ptr<BackendInterface> backend = nullptr;
 
-    if (dbConfig.type == "cassandra")
+    if (std::holds_alternative<CassandraConfig>(dbConfig))
     {
         backend = std::make_unique<CassandraBackend>(app);
     }
-    else if (dbConfig.type == "postgres")
+    else if (std::holds_alternative<PostgresConfig>(dbConfig))
     {
         backend = std::make_unique<PostgresBackend>(app);
     }

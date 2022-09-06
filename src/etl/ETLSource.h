@@ -124,7 +124,7 @@ class ETLSourceImpl : public ETLSource
 {
     std::string wsPort_;
 
-    std::string grpcPort_;
+    std::optional<std::string> grpcPort_;
 
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
 
@@ -309,7 +309,7 @@ public:
     {
         return "{ validated_ledger : " + getValidatedRange() +
             " , ip : " + ip_ + " , web socket port : " + wsPort_ +
-            ", grpc port : " + grpcPort_ + " }";
+            ", grpc port : " + (grpcPort_ ? *grpcPort_ : "null") + " }";
     }
 
     boost::json::object
@@ -320,7 +320,7 @@ public:
         res["is_connected"] = std::to_string(isConnected());
         res["ip"] = ip_;
         res["ws_port"] = wsPort_;
-        res["grpc_port"] = grpcPort_;
+        res["grpc_port"] = (grpcPort_ ? *grpcPort_ : "null") ;
         auto last = getLastMsgTime();
         if (last.time_since_epoch().count() != 0)
             res["last_msg_age_seconds"] = std::to_string(
