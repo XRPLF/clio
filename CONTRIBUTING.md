@@ -31,10 +31,9 @@ git checkout <your feature branch>
 git rebase -i develop
 ```
 For each commit in the list other than the first one please select `s` to squash.
-After this is done you will have the opportunity to write a message for the squashed commit:
+After this is done you will have the opportunity to write a message for the squashed commit.
 
-> **Note:** See [issues](https://github.com/XRPLF/clio/issues) for the `ISSUE_ID`
-> **Important:** Please use **imperative mood** commit message in the following format: `"Your message (#ISSUE_ID)"` (capitalized, imperative mood, issue_id provided at the end).
+> **Hint:** Please use **imperative mood** commit message capitalizing the first word of the subject.
 
 ``` bash
 # You should now have a single commit on top of a commit in `develop`
@@ -44,7 +43,7 @@ git log
 
 ``` bash
 # Use the same commit message as you did above
-git commit -m 'Your message (#ISSUE_ID)'
+git commit -m 'Your message'
 git rebase --continue
 ```
 
@@ -71,11 +70,14 @@ git add <paths to add>
 git commit -S -m "[FOLD] Your commit message"
 
 # And finally push your changes
-git push --force
+git push
 ```
 ## After code review
 Last but not least, when your PR is approved you still have to `Squash and merge` your code. 
 Luckily there is a button for that towards the bottom of the PR's page on github.
+
+> **Important:** Please leave the automatically generated link to PR in the subject line **and** in the description field please add `"Fixes #ISSUE_ID"` (replacing `ISSUE_ID` with yours).
+> **Note:** See [issues](https://github.com/XRPLF/clio/issues) to find the `ISSUE_ID` for the feature/bug you were working on.
 
 # Style guide
 This is a non-exhaustive list of recommended style guidelines. These are not always strictly enforced and serve as a way to keep the codebase coherent rather than a set of _thou shalt not_ commandments.
