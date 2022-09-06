@@ -140,7 +140,7 @@ doAccountTx(Context const& context)
 
     response[JS(account)] = ripple::to_string(accountID);
 
-    if (retCursor && txs.size() > limit)
+    if (retCursor)
     {
         boost::json::object cursorJson;
         cursorJson[JS(ledger)] = retCursor->ledgerSequence;
