@@ -140,7 +140,7 @@ doAccountTx(Context const& context)
 
     response[JS(account)] = ripple::to_string(accountID);
 
-    if (retCursor)
+    if (retCursor && txs.size() > limit)
     {
         boost::json::object cursorJson;
         cursorJson[JS(ledger)] = retCursor->ledgerSequence;
@@ -154,13 +154,17 @@ doAccountTx(Context const& context)
     {
         if (txnPlusMeta.ledgerSequence < minIndex && !forward)
         {
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__
-                << " skipping over transactions from incomplete ledger";
-            continue;
+            response.erase(JS(marker));
+            break;
         }
 
         if (txnPlusMeta.ledgerSequence > maxIndex && forward)
+        {
+            response.erase(JS(marker));
+            break;
+        }
+
+        else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
@@ -189,13 +193,11 @@ doAccountTx(Context const& context)
         obj[JS(validated)] = true;
         txns.push_back(obj);
 
-        if (!minReturnedIndex ||
-            (txnPlusMeta.ledgerSequence < *minReturnedIndex && forward))
+        if (!minReturnedIndex)
         {
             minReturnedIndex = txnPlusMeta.ledgerSequence;
         }
-        if (!maxReturnedIndex ||
-            (txnPlusMeta.ledgerSequence > *maxReturnedIndex && !forward))
+        if (!maxReturnedIndex)
         {
             maxReturnedIndex = txnPlusMeta.ledgerSequence;
         }
