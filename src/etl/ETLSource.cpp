@@ -355,7 +355,7 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
     BOOST_LOG_TRIVIAL(trace)
         << __func__ << " : ec = " << ec << " - " << toString();
     if (auto action = hooks_.onConnected(ec);
-        action == ETLSourceHooks::Action::stop)
+        action == ETLSourceHooks::Action::STOP)
         return;
 
     if (ec)

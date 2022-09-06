@@ -145,14 +145,14 @@ private:
 /// Hooks are executed with respect to the mutex provided
 struct ETLSourceHooks
 {
-    enum class Action { stop, proceed };
+    enum class Action { STOP, PROCEED };
 
     std::reference_wrapper<std::mutex> mtx_;
     std::function<Action(boost::beast::error_code)> onConnected_ = [](auto) {
-        return Action::proceed;  // nop
+        return Action::PROCEED;  // nop
     };
     std::function<Action(boost::beast::error_code)> onDisconnected_ = [](auto) {
-        return Action::proceed;  // nop
+        return Action::STOP;  // nop
     };
 
     Action

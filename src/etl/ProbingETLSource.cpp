@@ -133,7 +133,7 @@ ProbingETLSource::make_SSLHooks() noexcept
         // onConnected
         [this](auto ec) {
             if (currentSrc_)
-                return ETLSourceHooks::Action::stop;
+                return ETLSourceHooks::Action::STOP;
 
             if (!ec)
             {
@@ -142,7 +142,7 @@ ProbingETLSource::make_SSLHooks() noexcept
                 BOOST_LOG_TRIVIAL(info) << "Selected WSS as the main source: "
                                         << currentSrc_->toString();
             }
-            return ETLSourceHooks::Action::proceed;
+            return ETLSourceHooks::Action::PROCEED;
         },
         // onDisconnected
         [this](auto ec) {
@@ -151,7 +151,7 @@ ProbingETLSource::make_SSLHooks() noexcept
                 currentSrc_ = nullptr;
                 plainSrc_->resume();
             }
-            return ETLSourceHooks::Action::stop;
+            return ETLSourceHooks::Action::STOP;
         }};
 }
 
@@ -163,7 +163,7 @@ ProbingETLSource::make_PlainHooks() noexcept
         // onConnected
         [this](auto ec) {
             if (currentSrc_)
-                return ETLSourceHooks::Action::stop;
+                return ETLSourceHooks::Action::STOP;
 
             if (!ec)
             {
@@ -173,7 +173,7 @@ ProbingETLSource::make_PlainHooks() noexcept
                     << "Selected Plain WS as the main source: "
                     << currentSrc_->toString();
             }
-            return ETLSourceHooks::Action::proceed;
+            return ETLSourceHooks::Action::PROCEED;
         },
         // onDisconnected
         [this](auto ec) {
@@ -182,6 +182,6 @@ ProbingETLSource::make_PlainHooks() noexcept
                 currentSrc_ = nullptr;
                 sslSrc_->resume();
             }
-            return ETLSourceHooks::Action::stop;
+            return ETLSourceHooks::Action::STOP;
         }};
 }
