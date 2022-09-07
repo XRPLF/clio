@@ -62,7 +62,8 @@ bool
 insertDeliveredAmount(
     boost::json::object& metaJson,
     std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta);
+    std::shared_ptr<ripple::TxMeta const> const& meta,
+    uint32_t date);
 
 boost::json::object
 toJson(ripple::STBase const& obj);
