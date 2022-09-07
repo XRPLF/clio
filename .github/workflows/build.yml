@@ -101,4 +101,5 @@ jobs:
           name: clio_tests
 
       - name: Run tests
+        timeout-minutes: 10
         uses: XRPLF/clio-gha/test@main
