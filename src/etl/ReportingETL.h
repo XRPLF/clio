@@ -382,6 +382,8 @@ public:
                        std::chrono::system_clock::now().time_since_epoch())
                        .count();
         auto closeTime = lastCloseTime_.time_since_epoch().count();
+        if (now < (rippleEpochStart + closeTime))
+            return 0;
         return now - (rippleEpochStart + closeTime);
     }
 };
