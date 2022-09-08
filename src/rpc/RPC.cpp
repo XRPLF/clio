@@ -19,6 +19,7 @@ make_WsContext(
     Counters& counters,
     std::string const& clientIp)
 {
+    BOOST_LOG_TRIVIAL(info) << "got request over ws: " << request;
     boost::json::value commandValue = nullptr;
     if (!request.contains("command") && request.contains("method"))
         commandValue = request.at("method");
@@ -219,6 +220,7 @@ static HandlerTable handlerTable{
     {"account_tx", &doAccountTx, LimitRange{1, 50, 100}},
     {"gateway_balances", &doGatewayBalances, {}},
     {"noripple_check", &doNoRippleCheck, {}},
+    {"book_changes", &doBookChanges, {}},
     {"book_offers", &doBookOffers, LimitRange{1, 50, 100}},
     {"ledger", &doLedger, {}},
     {"ledger_data", &doLedgerData, LimitRange{1, 100, 2048}},

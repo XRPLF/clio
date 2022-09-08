@@ -85,6 +85,7 @@ target_sources(clio PRIVATE
   src/rpc/handlers/TransactionEntry.cpp
   src/rpc/handlers/AccountTx.cpp
   # Dex
+  src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
   # NFT
   src/rpc/handlers/NFTOffers.cpp
