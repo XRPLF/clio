@@ -52,8 +52,9 @@ public:
     {
         reset();
 
-        auto transactions = context_.get().backend->fetchAllTransactionsInLedger(
-            ledger.seq, context_.get().yield);
+        auto transactions =
+            context_.get().backend->fetchAllTransactionsInLedger(
+                ledger.seq, context_.get().yield);
         for (auto const& tx : transactions)
             handleBookChange(tx);
 
