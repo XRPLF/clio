@@ -183,7 +183,7 @@ private:
     }
 
     std::optional<uint32_t>
-    shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx)
+    shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx) const
     {
         switch (tx->getFieldU16(sfTransactionType))
         {
