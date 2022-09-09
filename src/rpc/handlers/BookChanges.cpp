@@ -25,8 +25,8 @@ struct BookChange
 class BookChangesHandler
 {
     std::reference_wrapper<Context const> context_;
-    std::map<std::string, BookChange> tally_;
-    std::optional<uint32_t> offerCancel_;
+    std::map<std::string, BookChange> tally_ = {};
+    std::optional<uint32_t> offerCancel_ = {};
 
 public:
     ~BookChangesHandler() = default;
@@ -61,6 +61,7 @@ public:
             handleBookChange(tx);
         }
 
+        // TODO: rewrite this with std::ranges when compilers catch up
         std::vector<BookChange> changes;
         std::transform(
             std::make_move_iterator(std::begin(tally_)),
@@ -96,13 +97,10 @@ private:
             !node.isFieldPresent(sfPreviousFields))
             return;
 
-        auto& finalFields = (const_cast<STObject&>(node))
-                                .getField(sfFinalFields)
-                                .downcast<STObject>();
-
-        auto& previousFields = (const_cast<STObject&>(node))
-                                   .getField(sfPreviousFields)
-                                   .downcast<STObject>();
+        auto const& finalFields =
+            node.peekAtField(sfFinalFields).downcast<STObject>();
+        auto const& previousFields =
+            node.peekAtField(sfPreviousFields).downcast<STObject>();
 
         // defensive case that should never be hit
         if (!finalFields.isFieldPresent(sfTakerGets) ||
@@ -162,13 +160,15 @@ private:
         }
         else
         {
+            // TODO: use paranthesized initialization when clang catches up
             tally_[key] = {
-                .sideAVolume = first,
-                .sideBVolume = second,
-                .highRate = rate,
-                .lowRate = rate,
-                .openRate = rate,
-                .closeRate = rate};
+                first,   // sideAVolume
+                second,  // sideBVolume
+                rate,    // highRate
+                rate,    // lowRate
+                rate,    // openRate
+                rate,    // closeRate
+            };
         }
     }
 
