@@ -147,27 +147,8 @@ struct ETLSourceHooks
 {
     enum class Action { STOP, PROCEED };
 
-    std::reference_wrapper<std::mutex> mtx_;
-    std::function<Action(boost::beast::error_code)> onConnected_ = [](auto) {
-        return Action::PROCEED;  // nop
-    };
-    std::function<Action(boost::beast::error_code)> onDisconnected_ = [](auto) {
-        return Action::STOP;  // nop
-    };
-
-    Action
-    onConnected(boost::beast::error_code ec) const
-    {
-        std::lock_guard lck(mtx_.get());
-        return onConnected_(ec);
-    }
-
-    Action
-    onDisconnected(boost::beast::error_code ec) const
-    {
-        std::lock_guard lck(mtx_.get());
-        return onDisconnected_(ec);
-    }
+    std::function<Action(boost::beast::error_code)> onConnected;
+    std::function<Action(boost::beast::error_code)> onDisconnected;
 };
 
 template <class Derived>

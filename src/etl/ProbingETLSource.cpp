@@ -13,7 +13,7 @@ ProbingETLSource::ProbingETLSource(
     , sslSrc_{make_shared<SslETLSource>(
           config,
           ioc,
-          std::reference_wrapper{sslCtx_},
+          std::ref(sslCtx_),
           backend,
           subscriptions,
           nwvl,
@@ -111,7 +111,8 @@ ProbingETLSource::forwardToRippled(
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
 {
-    assert(currentSrc_);  // expected to be connected
+    if (!currentSrc_)
+        return {};
     return currentSrc_->forwardToRippled(request, clientIp, yield);
 }
 
@@ -121,67 +122,69 @@ ProbingETLSource::requestFromRippled(
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
 {
-    assert(currentSrc_);  // expected to be connected
+    if (!currentSrc_)
+        return {};
     return currentSrc_->requestFromRippled(request, clientIp, yield);
 }
 
 ETLSourceHooks
 ProbingETLSource::make_SSLHooks() noexcept
 {
-    return {
-        std::ref(mtx_),
-        // onConnected
-        [this](auto ec) {
-            if (currentSrc_)
-                return ETLSourceHooks::Action::STOP;
+    return {// onConnected
+            [this](auto ec) {
+                std::lock_guard lck(mtx_);
+                if (currentSrc_)
+                    return ETLSourceHooks::Action::STOP;
 
-            if (!ec)
-            {
-                plainSrc_->pause();
-                currentSrc_ = sslSrc_;
-                BOOST_LOG_TRIVIAL(info) << "Selected WSS as the main source: "
-                                        << currentSrc_->toString();
-            }
-            return ETLSourceHooks::Action::PROCEED;
-        },
-        // onDisconnected
-        [this](auto ec) {
-            if (currentSrc_)
-            {
-                currentSrc_ = nullptr;
-                plainSrc_->resume();
-            }
-            return ETLSourceHooks::Action::STOP;
-        }};
+                if (!ec)
+                {
+                    plainSrc_->pause();
+                    currentSrc_ = sslSrc_;
+                    BOOST_LOG_TRIVIAL(info)
+                        << "Selected WSS as the main source: "
+                        << currentSrc_->toString();
+                }
+                return ETLSourceHooks::Action::PROCEED;
+            },
+            // onDisconnected
+            [this](auto ec) {
+                std::lock_guard lck(mtx_);
+                if (currentSrc_)
+                {
+                    currentSrc_ = nullptr;
+                    plainSrc_->resume();
+                }
+                return ETLSourceHooks::Action::STOP;
+            }};
 }
 
 ETLSourceHooks
 ProbingETLSource::make_PlainHooks() noexcept
 {
-    return {
-        std::ref(mtx_),
-        // onConnected
-        [this](auto ec) {
-            if (currentSrc_)
-                return ETLSourceHooks::Action::STOP;
+    return {// onConnected
+            [this](auto ec) {
+                std::lock_guard lck(mtx_);
+                if (currentSrc_)
+                    return ETLSourceHooks::Action::STOP;
 
-            if (!ec)
-            {
-                sslSrc_->pause();
-                currentSrc_ = plainSrc_;
-                BOOST_LOG_TRIVIAL(info)
-                    << "Selected Plain WS as the main source: "
-                    << currentSrc_->toString();
-            }
-            return ETLSourceHooks::Action::PROCEED;
-        },
-        // onDisconnected
-        [this](auto ec) {
-            if (currentSrc_)
-            {
-                currentSrc_ = nullptr;
-                sslSrc_->resume();
-            }
-            return ETLSourceHooks::Action::STOP;
-        }};
+                if (!ec)
+                {
+                    sslSrc_->pause();
+                    currentSrc_ = plainSrc_;
+                    BOOST_LOG_TRIVIAL(info)
+                        << "Selected Plain WS as the main source: "
+                        << currentSrc_->toString();
+                }
+                return ETLSourceHooks::Action::PROCEED;
+            },
+            // onDisconnected
+            [this](auto ec) {
+                std::lock_guard lck(mtx_);
+                if (currentSrc_)
+                {
+                    currentSrc_ = nullptr;
+                    sslSrc_->resume();
+                }
+                return ETLSourceHooks::Action::STOP;
+            }};
 }
