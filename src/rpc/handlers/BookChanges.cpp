@@ -22,24 +22,24 @@ struct BookChange
     STAmount closeRate;
 };
 
-class BookChangeHandler
+class BookChangesHandler
 {
     std::reference_wrapper<Context const> context_;
     std::map<std::string, BookChange> tally_;
     std::optional<uint32_t> offerCancel_;
 
 public:
-    ~BookChangeHandler() = default;
-    BookChangeHandler(Context const& context) : context_{std::cref(context)}
+    ~BookChangesHandler() = default;
+    BookChangesHandler(Context const& context) : context_{std::cref(context)}
     {
     }
 
-    BookChangeHandler(BookChangeHandler const&) = delete;
-    BookChangeHandler(BookChangeHandler&&) = delete;
-    BookChangeHandler&
-    operator=(BookChangeHandler const&) = delete;
-    BookChangeHandler&
-    operator=(BookChangeHandler&&) = delete;
+    BookChangesHandler(BookChangesHandler const&) = delete;
+    BookChangesHandler(BookChangesHandler&&) = delete;
+    BookChangesHandler&
+    operator=(BookChangesHandler const&) = delete;
+    BookChangesHandler&
+    operator=(BookChangesHandler&&) = delete;
 
     /**
      * @brief Handles the `book_change` request for given transactions
@@ -48,10 +48,12 @@ public:
      * @return std::vector<BookChange> The changes
      */
     std::vector<BookChange>
-    handle(std::vector<Backend::TransactionAndMetadata>& transactions)
+    handle(LedgerInfo const& ledger)
     {
         reset();
 
+        auto transactions = context_.get().backend->fetchAllTransactionsInLedger(
+            ledger.seq, context_.get().yield);
         for (auto const& tx : transactions)
             handleBookChange(tx);
 
@@ -232,11 +234,8 @@ doBookChanges(Context const& context)
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto changes = BookChangesHandler{context}.handle(lgrInfo);
     auto response = json::object{};
-
-    auto txns = context.backend->fetchAllTransactionsInLedger(
-        lgrInfo.seq, context.yield);
-    auto changes = BookChangeHandler{context}.handle(txns);
 
     response[JS(type)] = "bookChanges";
     response[JS(ledger_index)] = lgrInfo.seq;
