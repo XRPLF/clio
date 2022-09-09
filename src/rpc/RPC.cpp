@@ -19,7 +19,6 @@ make_WsContext(
     Counters& counters,
     std::string const& clientIp)
 {
-    BOOST_LOG_TRIVIAL(info) << "got request over ws: " << request;
     boost::json::value commandValue = nullptr;
     if (!request.contains("command") && request.contains("method"))
         commandValue = request.at("method");

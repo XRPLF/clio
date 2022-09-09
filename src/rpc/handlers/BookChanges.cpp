@@ -52,7 +52,7 @@ public:
     {
         reset();
 
-        auto transactions =
+        auto const transactions =
             context_.get().backend->fetchAllTransactionsInLedger(
                 ledger.seq, context_.get().yield);
         for (auto const& tx : transactions)
@@ -79,7 +79,7 @@ private:
     handleAffectedNode(STObject const& node)
     {
         auto const& metaType = node.getFName();
-        auto nodeType = node.getFieldU16(sfLedgerEntryType);
+        auto const nodeType = node.getFieldU16(sfLedgerEntryType);
 
         // we only care about ltOFFER objects being modified or
         // deleted
@@ -115,13 +115,13 @@ private:
 
         // compute the difference in gets and pays actually
         // affected onto the offer
-        auto deltaGets = finalFields.getFieldAmount(sfTakerGets) -
+        auto const deltaGets = finalFields.getFieldAmount(sfTakerGets) -
             previousFields.getFieldAmount(sfTakerGets);
-        auto deltaPays = finalFields.getFieldAmount(sfTakerPays) -
+        auto const deltaPays = finalFields.getFieldAmount(sfTakerPays) -
             previousFields.getFieldAmount(sfTakerPays);
 
-        auto g = to_string(deltaGets.issue());
-        auto p = to_string(deltaPays.issue());
+        auto const g = to_string(deltaGets.issue());
+        auto const p = to_string(deltaPays.issue());
 
         auto const noswap =
             isXRP(deltaGets) ? true : (isXRP(deltaPays) ? false : (g < p));
@@ -133,7 +133,7 @@ private:
         if (second == beast::zero)
             return;
 
-        auto rate = divide(first, second, noIssue());
+        auto const rate = divide(first, second, noIssue());
 
         if (first < beast::zero)
             first = -first;
@@ -141,7 +141,7 @@ private:
         if (second < beast::zero)
             second = -second;
 
-        auto key = noswap ? (g + '|' + p) : (p + '|' + g);
+        auto const key = noswap ? (g + '|' + p) : (p + '|' + g);
         if (tally_.contains(key))
         {
             auto& entry = tally_.at(key);
@@ -229,13 +229,13 @@ tag_invoke(
 Result
 doBookChanges(Context const& context)
 {
-    auto request = context.params;
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
+    auto const request = context.params;
+    auto const v = ledgerInfoFromRequest(context);
+    if (auto const status = std::get_if<Status>(&v))
         return *status;
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-    auto changes = BookChangesHandler{context}.handle(lgrInfo);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const changes = BookChangesHandler{context}.handle(lgrInfo);
     auto response = json::object{};
 
     response[JS(type)] = "bookChanges";
