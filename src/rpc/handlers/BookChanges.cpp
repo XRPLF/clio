@@ -53,11 +53,13 @@ public:
     {
         reset();
 
-        auto const transactions =
-            context_.get().backend->fetchAllTransactionsInLedger(
-                ledger.seq, context_.get().yield);
-        for (auto const& tx : transactions)
+        for (auto const transactions =
+                 context_.get().backend->fetchAllTransactionsInLedger(
+                     ledger.seq, context_.get().yield);
+             auto const& tx : transactions)
+        {
             handleBookChange(tx);
+        }
 
         std::vector<BookChange> changes;
         std::transform(
@@ -70,7 +72,7 @@ public:
 
 private:
     inline void
-    reset()
+    reset() noexcept
     {
         tally_.clear();
         offerCancel_ = std::nullopt;
@@ -161,13 +163,12 @@ private:
         else
         {
             tally_[key] = {
-                first,   // side A vol
-                second,  // side B vol
-                rate,    // high
-                rate,    // low
-                rate,    // open
-                rate     // close
-            };
+                .sideAVolume = first,
+                .sideBVolume = second,
+                .highRate = rate,
+                .lowRate = rate,
+                .openRate = rate,
+                .closeRate = rate};
         }
     }
 
@@ -231,21 +232,19 @@ Result
 doBookChanges(Context const& context)
 {
     auto const request = context.params;
-    auto const v = ledgerInfoFromRequest(context);
-    if (auto const status = std::get_if<Status>(&v))
+    auto const info = ledgerInfoFromRequest(context);
+    if (auto const status = std::get_if<Status>(&info))
         return *status;
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(info);
     auto const changes = BookChangesHandler{context}.handle(lgrInfo);
-    auto response = json::object{};
-
-    response[JS(type)] = "bookChanges";
-    response[JS(ledger_index)] = lgrInfo.seq;
-    response[JS(ledger_hash)] = to_string(lgrInfo.hash);
-    response[JS(ledger_time)] = lgrInfo.closeTime.time_since_epoch().count();
-    response[JS(changes)] = json::value_from(changes);
-
-    return response;
+    return json::object{
+        {JS(type), "bookChanges"},
+        {JS(ledger_index), lgrInfo.seq},
+        {JS(ledger_hash), to_string(lgrInfo.hash)},
+        {JS(ledger_time), lgrInfo.closeTime.time_since_epoch().count()},
+        {JS(changes), json::value_from(changes)},
+    };
 }
 
 }  // namespace RPC
