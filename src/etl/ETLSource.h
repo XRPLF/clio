@@ -142,7 +142,6 @@ private:
         boost::asio::yield_context& yield) const = 0;
 };
 
-/// Hooks are executed with respect to the mutex provided
 struct ETLSourceHooks
 {
     enum class Action { STOP, PROCEED };
