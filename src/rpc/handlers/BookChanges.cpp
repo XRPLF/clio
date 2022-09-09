@@ -30,7 +30,8 @@ class BookChangesHandler
 
 public:
     ~BookChangesHandler() = default;
-    BookChangesHandler(Context const& context) : context_{std::cref(context)}
+    explicit BookChangesHandler(Context const& context)
+        : context_{std::cref(context)}
     {
     }
 
