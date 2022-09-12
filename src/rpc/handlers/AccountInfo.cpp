@@ -54,10 +54,8 @@ doAccountInfo(Context const& context)
 
     auto key = ripple::keylet::account(accountID.value());
 
-    auto start = std::chrono::system_clock::now();
     std::optional<std::vector<unsigned char>> dbResponse =
         context.backend->fetchLedgerObject(key.key, lgrInfo.seq, context.yield);
-    auto end = std::chrono::system_clock::now();
 
     if (!dbResponse)
     {
