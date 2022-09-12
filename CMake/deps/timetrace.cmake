@@ -1,0 +1,7 @@
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  message(STATUS "Enabling time-trace")
+  target_compile_options(clio PRIVATE "-ftime-trace")
+  target_compile_options(clio_server PRIVATE "-ftime-trace")
+else()
+  message(FATAL "BUILD_TIMETRACE requested but compiler is not Clang")
+endif()
