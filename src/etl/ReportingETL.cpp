@@ -694,8 +694,6 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         beast::setCurrentThreadName("rippled: ReportingETL transform");
         uint32_t currentSequence = startSequence;
 
-        auto begin = std::chrono::system_clock::now();
-
         while (!writeConflict)
         {
             std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{

@@ -260,7 +260,7 @@ public:
             if (!id.is_null())
                 e["id"] = id;
             e["request"] = request;
-            send(boost::json::serialize(e));
+            this->send(boost::json::serialize(e));
         };
 
         try
