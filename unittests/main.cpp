@@ -467,14 +467,13 @@ TEST(BackendTest, Basic)
                     nftData.push_back(*parsedNFT);
 
                     backend->writeLedger(
-                        lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
+                        lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
                     backend->writeTransaction(
-                        std::move(std::string{hashBlob}),
+                        std::string{hashBlob},
                         lgrInfoNext.seq,
                         lgrInfoNext.closeTime.time_since_epoch().count(),
-                        std::move(std::string{txnBlob}),
-                        std::move(std::string{metaBlob}));
+                        std::string{txnBlob},
+                        std::string{metaBlob});
                     backend->writeAccountTransactions(std::move(accountTxData));
 
                     // NFT writing not yet implemented for pg
@@ -497,9 +496,9 @@ TEST(BackendTest, Basic)
                     }
 
                     backend->writeLedgerObject(
-                        std::move(std::string{accountIndexBlob}),
+                        std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}));
+                        std::string{accountBlob});
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
@@ -606,16 +605,15 @@ TEST(BackendTest, Basic)
                         ~(lgrInfoNext.accountHash ^ lgrInfoNext.txHash);
 
                     backend->writeLedger(
-                        lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
+                        lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
                     std::shuffle(
                         accountBlob.begin(),
                         accountBlob.end(),
                         std::default_random_engine(seed));
                     backend->writeLedgerObject(
-                        std::move(std::string{accountIndexBlob}),
+                        std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}));
+                        std::string{accountBlob});
 
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
@@ -669,12 +667,11 @@ TEST(BackendTest, Basic)
                         ~(lgrInfoNext.accountHash ^ lgrInfoNext.txHash);
 
                     backend->writeLedger(
-                        lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
+                        lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
                     backend->writeLedgerObject(
-                        std::move(std::string{accountIndexBlob}),
+                        std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        std::move(std::string{}));
+                        std::string{});
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
@@ -716,9 +713,8 @@ TEST(BackendTest, Basic)
                     EXPECT_FALSE(obj);
                 }
 
-                auto generateObjects = [seed](
-                                           size_t numObjects,
-                                           uint32_t ledgerSequence) {
+                auto generateObjects = [](size_t numObjects,
+                                          uint32_t ledgerSequence) {
                     std::vector<std::pair<std::string, std::string>> res{
                         numObjects};
                     ripple::uint256 key;
@@ -740,26 +736,26 @@ TEST(BackendTest, Basic)
                     }
                     return objs;
                 };
-                auto generateTxns =
-                    [seed](size_t numTxns, uint32_t ledgerSequence) {
-                        std::vector<
-                            std::tuple<std::string, std::string, std::string>>
-                            res{numTxns};
-                        ripple::uint256 base;
-                        base = ledgerSequence * 100000;
-                        for (auto& blob : res)
-                        {
-                            ++base;
-                            std::string hashStr{
-                                (const char*)base.data(), base.size()};
-                            std::string txnStr =
-                                "tx" + std::to_string(ledgerSequence) + hashStr;
-                            std::string metaStr = "meta" +
-                                std::to_string(ledgerSequence) + hashStr;
-                            blob = std::make_tuple(hashStr, txnStr, metaStr);
-                        }
-                        return res;
-                    };
+                auto generateTxns = [](size_t numTxns,
+                                       uint32_t ledgerSequence) {
+                    std::vector<
+                        std::tuple<std::string, std::string, std::string>>
+                        res{numTxns};
+                    ripple::uint256 base;
+                    base = ledgerSequence * 100000;
+                    for (auto& blob : res)
+                    {
+                        ++base;
+                        std::string hashStr{
+                            (const char*)base.data(), base.size()};
+                        std::string txnStr =
+                            "tx" + std::to_string(ledgerSequence) + hashStr;
+                        std::string metaStr =
+                            "meta" + std::to_string(ledgerSequence) + hashStr;
+                        blob = std::make_tuple(hashStr, txnStr, metaStr);
+                    }
+                    return res;
+                };
                 auto generateAccounts = [](uint32_t ledgerSequence,
                                            uint32_t numAccounts) {
                     std::vector<ripple::AccountID> accounts;
@@ -824,7 +820,7 @@ TEST(BackendTest, Basic)
                     backend->startWrites();
 
                     backend->writeLedger(
-                        lgrInfo, std::move(ledgerInfoToBinaryString(lgrInfo)));
+                        lgrInfo, ledgerInfoToBinaryString(lgrInfo));
                     for (auto [hash, txn, meta] : txns)
                     {
                         backend->writeTransaction(
@@ -2042,12 +2038,11 @@ TEST(Backend, cacheIntegration)
                     lgrInfoNext.hash++;
 
                     backend->writeLedger(
-                        lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
+                        lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
                     backend->writeLedgerObject(
-                        std::move(std::string{accountIndexBlob}),
+                        std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}));
+                        std::string{accountBlob});
                     auto key =
                         ripple::uint256::fromVoidChecked(accountIndexBlob);
                     backend->cache().update(
@@ -2109,8 +2104,7 @@ TEST(Backend, cacheIntegration)
                         ~(lgrInfoNext.accountHash ^ lgrInfoNext.txHash);
 
                     backend->writeLedger(
-                        lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
+                        lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
                     std::shuffle(
                         accountBlob.begin(),
                         accountBlob.end(),
@@ -2121,9 +2115,9 @@ TEST(Backend, cacheIntegration)
                         {{*key, {accountBlob.begin(), accountBlob.end()}}},
                         lgrInfoNext.seq);
                     backend->writeLedgerObject(
-                        std::move(std::string{accountIndexBlob}),
+                        std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        std::move(std::string{accountBlob}));
+                        std::string{accountBlob});
 
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
@@ -2171,15 +2165,14 @@ TEST(Backend, cacheIntegration)
                         ~(lgrInfoNext.accountHash ^ lgrInfoNext.txHash);
 
                     backend->writeLedger(
-                        lgrInfoNext,
-                        std::move(ledgerInfoToBinaryString(lgrInfoNext)));
+                        lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
                     auto key =
                         ripple::uint256::fromVoidChecked(accountIndexBlob);
                     backend->cache().update({{*key, {}}}, lgrInfoNext.seq);
                     backend->writeLedgerObject(
-                        std::move(std::string{accountIndexBlob}),
+                        std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        std::move(std::string{}));
+                        std::string{});
                     backend->writeSuccessor(
                         uint256ToString(Backend::firstKey),
                         lgrInfoNext.seq,
@@ -2215,9 +2208,8 @@ TEST(Backend, cacheIntegration)
                     EXPECT_FALSE(obj);
                 }
 
-                auto generateObjects = [seed](
-                                           size_t numObjects,
-                                           uint32_t ledgerSequence) {
+                auto generateObjects = [](size_t numObjects,
+                                          uint32_t ledgerSequence) {
                     std::vector<std::pair<std::string, std::string>> res{
                         numObjects};
                     ripple::uint256 key;

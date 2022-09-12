@@ -833,7 +833,7 @@ PgPool::checkout()
         else if (connections_ < config_.max_connections)
         {
             ++connections_;
-            ret = std::make_unique<Pg>(config_, ioc_, stop_, mutex_);
+            ret = std::make_unique<Pg>(config_, ioc_);
         }
         // Otherwise, wait until a connection becomes available or we stop.
         else
@@ -1680,7 +1680,6 @@ getLedger(
         whichLedger,
     std::shared_ptr<PgPool>& pgPool)
 {
-    ripple::LedgerInfo lgrInfo;
     std::stringstream sql;
     sql << "SELECT ledger_hash, prev_hash, account_set_hash, trans_set_hash, "
            "total_coins, closing_time, prev_closing_time, close_time_res, "

@@ -571,7 +571,19 @@ def compare_book_offers(aldous, p2p):
     print("offers match!")
     return True
                     
-        
+async def book_changes(ip, port, ledger):
+    address = 'ws://' + str(ip) + ':' + str(port)
+    try:
+        async with websockets.connect(address) as ws:
+            await ws.send(json.dumps({
+                "command" : "book_changes",
+                "ledger_index" : ledger
+            }))
+            res = json.loads(await ws.recv())
+            print(json.dumps(res, indent=4, sort_keys=True))
+    except websockets.exceptions.connectionclosederror as e:
+        print(e)
+
 async def book_offerses(ip, port, ledger, books, numCalls):
     address = 'ws://' + str(ip) + ':' + str(port)
     random.seed()
@@ -789,6 +801,7 @@ async def fee(ip, port):
             print(json.dumps(res,indent=4,sort_keys=True))
     except websockets.exceptions.connectionclosederror as e:
         print(e)
+
 async def server_info(ip, port):
     address = 'ws://' + str(ip) + ':' + str(port)
     try:
@@ -968,7 +981,7 @@ async def verifySubscribe(ip,clioPort,ripdPort):
     
 
 parser = argparse.ArgumentParser(description='test script for xrpl-reporting')
-parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe","verify_subscribe","call"])
+parser.add_argument('action', choices=["account_info", "tx", "txs","account_tx", "account_tx_full","ledger_data", "ledger_data_full", "book_offers","ledger","ledger_range","ledger_entry", "ledgers", "ledger_entries","account_txs","account_infos","account_txs_full","book_changes","book_offerses","ledger_diff","perf","fee","server_info", "gaps","subscribe","verify_subscribe","call"])
 
 parser.add_argument('--ip', default='127.0.0.1')
 parser.add_argument('--port', default='8080')
@@ -1156,14 +1169,17 @@ def run(args):
         end = datetime.datetime.now().timestamp()
         num = int(args.numRunners) * int(args.numCalls)
         print("Completed " + str(num) + " in " + str(end - start) + " seconds. Throughput = " + str(num / (end - start)) + " calls per second")
-    
+   
+    elif args.action == "book_changes":
+        asyncio.get_event_loop().run_until_complete(book_changes(args.ip, args.port, int(args.ledger)))
+            
     elif args.action == "book_offerses":
         books = getBooks(args.filename)
         async def runner():
 
             tasks = []
-            for x in range(0,int(args.numRunners)):
-                tasks.append(asyncio.create_task(book_offerses(args.ip, args.port,int(args.ledger),books, int(args.numCalls))))
+            for x in range(0, int(args.numRunners)):
+                tasks.append(asyncio.create_task(book_offerses(args.ip, args.port, int(args.ledger), books, int(args.numCalls))))
             for t in tasks:
                 await t
 

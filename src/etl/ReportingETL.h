@@ -109,18 +109,6 @@ private:
     // deletion
     std::atomic_bool deleting_ = false;
 
-    /// Used to determine when to write to the database during the initial
-    /// ledger download. By default, the software downloads an entire ledger and
-    /// then writes to the database. If flushInterval_ is non-zero, the software
-    /// will write to the database as new ledger data (SHAMap leaf nodes)
-    /// arrives. It is not neccesarily more effient to write the data as it
-    /// arrives, as different SHAMap leaf nodes share the same SHAMap inner
-    /// nodes; flushing prematurely can result in the same SHAMap inner node
-    /// being written to the database more than once. It is recommended to use
-    /// the default value of 0 for this variable; however, different values can
-    /// be experimented with if better performance is desired.
-    size_t flushInterval_ = 0;
-
     /// This variable controls the number of GetLedgerData calls that will be
     /// executed in parallel during the initial ledger download. GetLedgerData
     /// allows clients to page through a ledger over many RPC calls.
@@ -146,7 +134,6 @@ private:
     std::optional<uint32_t> startSequence_;
     std::optional<uint32_t> finishSequence_;
 
-    size_t accumTxns_ = 0;
     size_t txnThreshold_ = 0;
 
     /// The time that the most recently published ledger was published. Used by
@@ -382,6 +369,8 @@ public:
                        std::chrono::system_clock::now().time_since_epoch())
                        .count();
         auto closeTime = lastCloseTime_.time_since_epoch().count();
+        if (now < (rippleEpochStart + closeTime))
+            return 0;
         return now - (rippleEpochStart + closeTime);
     }
 };
