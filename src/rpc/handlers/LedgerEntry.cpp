@@ -351,10 +351,8 @@ doLedgerEntry(Context const& context)
         return Status{Error::rpcINVALID_PARAMS, "unknownOption"};
     }
 
-    auto start = std::chrono::system_clock::now();
     auto dbResponse =
         context.backend->fetchLedgerObject(key, lgrInfo.seq, context.yield);
-    auto end = std::chrono::system_clock::now();
 
     if (!dbResponse or dbResponse->size() == 0)
         return Status{"entryNotFound"};

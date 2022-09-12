@@ -262,8 +262,6 @@ class Pg
 
     PgConfig const& config_;
     boost::asio::io_context::strand strand_;
-    bool& stop_;
-    std::mutex& mutex_;
 
     asio_socket_type socket_{nullptr, [](boost::asio::ip::tcp::socket*) {}};
 
@@ -364,14 +362,9 @@ public:
      *
      * @param config Config parameters.
      * @param j Logger object.
-     * @param stop Reference to connection pool's stop flag.
-     * @param mutex Reference to connection pool's mutex.
      */
-    Pg(PgConfig const& config,
-       boost::asio::io_context& ctx,
-       bool& stop,
-       std::mutex& mutex)
-        : config_(config), strand_(ctx), stop_(stop), mutex_(mutex)
+    Pg(PgConfig const& config, boost::asio::io_context& ctx)
+        : config_(config), strand_(ctx)
     {
     }
 };
