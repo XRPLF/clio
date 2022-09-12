@@ -16,6 +16,7 @@
 
 class ETLLoadBalancer;
 class ETLSource;
+class ProbingETLSource;
 class SubscriptionManager;
 
 /// This class manages a connection to a single ETL source. This is almost
@@ -96,6 +97,12 @@ public:
     virtual void
     run() = 0;
 
+    virtual void
+    pause() = 0;
+
+    virtual void
+    resume() = 0;
+
     virtual std::string
     toString() const = 0;
 
@@ -126,12 +133,21 @@ public:
 
 private:
     friend ForwardCache;
+    friend ProbingETLSource;
 
     virtual std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
         std::string const& clientIp,
         boost::asio::yield_context& yield) const = 0;
+};
+
+struct ETLSourceHooks
+{
+    enum class Action { STOP, PROCEED };
+
+    std::function<Action(boost::beast::error_code)> onConnected;
+    std::function<Action(boost::beast::error_code)> onDisconnected;
 };
 
 template <class Derived>
@@ -199,6 +215,10 @@ protected:
 
     std::atomic_bool closing_{false};
 
+    std::atomic_bool paused_{false};
+
+    ETLSourceHooks hooks_;
+
     void
     run() override
     {
@@ -215,7 +235,7 @@ protected:
 public:
     ~ETLSourceImpl()
     {
-        close(false);
+        derived().close(false);
     }
 
     bool
@@ -247,7 +267,54 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-        ETLLoadBalancer& balancer);
+        ETLLoadBalancer& balancer,
+        ETLSourceHooks hooks)
+        : resolver_(boost::asio::make_strand(ioContext))
+        , networkValidatedLedgers_(networkValidatedLedgers)
+        , backend_(backend)
+        , subscriptions_(subscriptions)
+        , balancer_(balancer)
+        , forwardCache_(config, ioContext, *this)
+        , ioc_(ioContext)
+        , timer_(ioContext)
+        , hooks_(hooks)
+    {
+        if (config.contains("ip"))
+        {
+            auto ipJs = config.at("ip").as_string();
+            ip_ = {ipJs.c_str(), ipJs.size()};
+        }
+        if (config.contains("ws_port"))
+        {
+            auto portjs = config.at("ws_port").as_string();
+            wsPort_ = {portjs.c_str(), portjs.size()};
+        }
+        if (config.contains("grpc_port"))
+        {
+            auto portjs = config.at("grpc_port").as_string();
+            grpcPort_ = {portjs.c_str(), portjs.size()};
+            try
+            {
+                boost::asio::ip::tcp::endpoint endpoint{
+                    boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
+                std::stringstream ss;
+                ss << endpoint;
+                grpc::ChannelArguments chArgs;
+                chArgs.SetMaxReceiveMessageSize(-1);
+                stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
+                    grpc::CreateCustomChannel(
+                        ss.str(), grpc::InsecureChannelCredentials(), chArgs));
+                BOOST_LOG_TRIVIAL(debug)
+                    << "Made stub for remote = " << toString();
+            }
+            catch (std::exception const& e)
+            {
+                BOOST_LOG_TRIVIAL(debug)
+                    << "Exception while creating stub = " << e.what()
+                    << " . Remote = " << toString();
+            }
+        }
+    }
 
     /// @param sequence ledger sequence to check for
     /// @return true if this source has the desired ledger
@@ -371,6 +438,22 @@ public:
     void
     reconnect(boost::beast::error_code ec);
 
+    /// Pause the source effectively stopping it from trying to reconnect
+    void
+    pause() override
+    {
+        paused_ = true;
+        derived().close(false);
+    }
+
+    /// Resume the source allowing it to reconnect again
+    void
+    resume() override
+    {
+        paused_ = false;
+        derived().close(true);
+    }
+
     /// Callback
     void
     onResolve(
@@ -420,8 +503,16 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
-        ETLLoadBalancer& balancer)
-        : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer)
+        ETLLoadBalancer& balancer,
+        ETLSourceHooks hooks)
+        : ETLSourceImpl(
+              config,
+              ioc,
+              backend,
+              subscriptions,
+              nwvl,
+              balancer,
+              std::move(hooks))
         , ws_(std::make_unique<
               boost::beast::websocket::stream<boost::beast::tcp_stream>>(
               boost::asio::make_strand(ioc)))
@@ -462,8 +553,16 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
-        ETLLoadBalancer& balancer)
-        : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer)
+        ETLLoadBalancer& balancer,
+        ETLSourceHooks hooks)
+        : ETLSourceImpl(
+              config,
+              ioc,
+              backend,
+              subscriptions,
+              nwvl,
+              balancer,
+              std::move(hooks))
         , sslCtx_(sslCtx)
         , ws_(std::make_unique<boost::beast::websocket::stream<
                   boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
@@ -513,7 +612,6 @@ public:
     ETLLoadBalancer(
         boost::json::object const& config,
         boost::asio::io_context& ioContext,
-        std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl);
@@ -522,13 +620,12 @@ public:
     make_ETLLoadBalancer(
         boost::json::object const& config,
         boost::asio::io_context& ioc,
-        std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
     {
         return std::make_shared<ETLLoadBalancer>(
-            config, ioc, sslCtx, backend, subscriptions, validatedLedgers);
+            config, ioc, backend, subscriptions, validatedLedgers);
     }
 
     ~ETLLoadBalancer()

@@ -54,6 +54,7 @@ target_sources(clio PRIVATE
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
+  src/etl/ProbingETLSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ReportingETL.cpp
   ## Subscriptions
