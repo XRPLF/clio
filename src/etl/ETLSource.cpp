@@ -72,6 +72,29 @@ ForwardCache::get(boost::json::object const& request) const
     return {latestForwarded_.at(*command)};
 }
 
+static boost::beast::websocket::stream_base::timeout
+make_TimeoutOption()
+{
+    // See #289 for details.
+    // TODO: investigate the issue and find if there is a solution other than
+    // introducing artificial timeouts.
+    if (true)
+    {
+        // The only difference between this and the suggested client role is
+        // that idle_timeout is set to 20 instead of none()
+        auto opt = boost::beast::websocket::stream_base::timeout{};
+        opt.handshake_timeout = std::chrono::seconds(30);
+        opt.idle_timeout = std::chrono::seconds(20);
+        opt.keep_alive_pings = false;
+        return opt;
+    }
+    else
+    {
+        return boost::beast::websocket::stream_base::timeout::suggested(
+            boost::beast::role_type::client);
+    }
+}
+
 // Create ETL source without grpc endpoint
 // Fetch ledger and load initial ledger will fail for this source
 // Primarly used in read-only mode, to monitor when ledgers are validated
@@ -200,11 +223,21 @@ PlainETLSource::close(bool startAgain)
                     }
                     closing_ = false;
                     if (startAgain)
+                    {
+                        ws_ = std::make_unique<boost::beast::websocket::stream<
+                            boost::beast::tcp_stream>>(
+                            boost::asio::make_strand(ioc_));
+
                         run();
+                    }
                 });
         }
         else if (startAgain)
         {
+            ws_ = std::make_unique<
+                boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+                boost::asio::make_strand(ioc_));
+
             run();
         }
     });
@@ -299,10 +332,8 @@ PlainETLSource::onConnect(
         // own timeout system
         boost::beast::get_lowest_layer(derived().ws()).expires_never();
 
-        // Set suggested timeout settings for the websocket
-        derived().ws().set_option(
-            boost::beast::websocket::stream_base::timeout::suggested(
-                boost::beast::role_type::client));
+        // Set a desired timeout for the websocket stream
+        derived().ws().set_option(make_TimeoutOption());
 
         // Set a decorator to change the User-Agent of the handshake
         derived().ws().set_option(
@@ -343,10 +374,8 @@ SslETLSource::onConnect(
         // own timeout system
         boost::beast::get_lowest_layer(derived().ws()).expires_never();
 
-        // Set suggested timeout settings for the websocket
-        derived().ws().set_option(
-            boost::beast::websocket::stream_base::timeout::suggested(
-                boost::beast::role_type::client));
+        // Set a desired timeout for the websocket stream
+        derived().ws().set_option(make_TimeoutOption());
 
         // Set a decorator to change the User-Agent of the handshake
         derived().ws().set_option(
@@ -924,8 +953,6 @@ ETLSourceImpl<Derived>::fetchLedger(
                "correctly on the ETL source. source = "
             << toString() << " status = " << status.error_message();
     }
-    // BOOST_LOG_TRIVIAL(debug)
-    //    << __func__ << " Message size = " << response.ByteSizeLong();
     return {status, std::move(response)};
 }
 
