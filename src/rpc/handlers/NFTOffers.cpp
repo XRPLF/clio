@@ -16,19 +16,19 @@ appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
     offers.push_back(boost::json::object_kind);
     boost::json::object& obj(offers.back().as_object());
 
-    obj.at(JS(index)) = ripple::to_string(offer.key());
-    obj.at(JS(flags)) = (offer)[ripple::sfFlags];
-    obj.at(JS(owner)) = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
+    obj[JS(index)] = ripple::to_string(offer.key());
+    obj[JS(flags)] = (offer)[ripple::sfFlags];
+    obj[JS(owner)] = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
 
     if (offer.isFieldPresent(ripple::sfDestination))
         obj[JS(destination)] =
             ripple::toBase58(offer.getAccountID(ripple::sfDestination));
 
     if (offer.isFieldPresent(ripple::sfExpiration))
-        obj.at(JS(expiration)) = offer.getFieldU32(ripple::sfExpiration);
+        obj[JS(expiration)] = offer.getFieldU32(ripple::sfExpiration);
 
-    obj.at(JS(amount)) = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
-                                         .getJson(ripple::JsonOptions::none));
+    obj[JS(amount)] = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
+                                      .getJson(ripple::JsonOptions::none));
 }
 
 static Result
@@ -118,8 +118,8 @@ enumerateNFTOffers(
 
     if (offers.size() == reserve)
     {
-        response.at(JS(limit)) = limit;
-        response.at(JS(marker)) = to_string(offers.back().key());
+        response[JS(limit)] = limit;
+        response[JS(marker)] = to_string(offers.back().key());
         offers.pop_back();
     }
 
