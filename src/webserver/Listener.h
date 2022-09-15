@@ -239,12 +239,20 @@ public:
         // Bind to the server address
         acceptor_.bind(endpoint, ec);
         if (ec)
-            return;
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << "Failed to bind to endpoint: " << endpoint;
+            throw std::runtime_error("Failed to bind to specified endpoint");
+        }
 
         // Start listening for connections
         acceptor_.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
-            return;
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << "Failed to listen at endpoint: " << endpoint;
+            throw std::runtime_error("Failed to listen at specified endpoint");
+        }
     }
 
     // Start accepting incoming connections
