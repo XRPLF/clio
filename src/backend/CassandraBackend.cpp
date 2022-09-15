@@ -588,6 +588,40 @@ CassandraBackend::fetchNFT(
     return result;
 }
 
+std::optional<IssuerNFTs>
+CassandraBackend::fetchIssuerNFT(
+    ripple::AccountID const& issuer,
+    ripple::uint256 const& cursor,
+    std::uint32_t const limit,
+    boost::asio::yield_context& yield) const
+{
+    CassandraStatement statement{selectIssuerNFT_};
+    statement.bindNextBytes(issuer);
+    statement.bindNextBytes(cursor);
+    statement.bindNextUInt(limit);
+    CassandraResult response = executeAsyncRead(statement, yield);
+    if (!response)
+        return {};
+
+    auto numRows = response.numRows();
+    auto hasCursor = (limit + 1 == static_cast<std::uint32_t>(numRows)) ? true : false;
+    std::vector<ripple::uint256> nf_tokens = {};
+    do
+    {
+        ripple::uint256 const nf_token = result.getUInt256();
+        nf_tokens.push_back(nf_token);
+        if (hasCursor && --numRows == 0)
+        {
+            cursor = nf_token;
+        }
+    } while (result.nextRow());
+
+    if(hasCursor)
+        return {issuer, nf_tokens, cursor};
+    return {issuer, nf_tokens, {}}
+}
+
+
 TransactionsAndCursor
 CassandraBackend::fetchNFTTransactions(
     ripple::uint256 const& tokenID,
@@ -1543,6 +1577,16 @@ CassandraBackend::open(bool readOnly)
               << " (issuer,token_id)"
               << " VALUES (?,?)";
         if (!insertIssuerNFT_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT token_id"
+              << " FROM " << tablePrefix << "issuer_nf_tokens WHERE"
+              << " issuer = ? AND"
+              << " token_id >= ?"
+              << " ORDER BY token_id ASC"
+              << " LIMIT ?";
+        if (!selectIssuerNFT_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

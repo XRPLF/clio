@@ -629,6 +629,7 @@ private:
     CassandraPreparedStatement insertNFT_;
     CassandraPreparedStatement selectNFT_;
     CassandraPreparedStatement insertIssuerNFT_;
+    CassandraPreparedStatement selectIssuerNFT_;
     CassandraPreparedStatement insertNFTTx_;
     CassandraPreparedStatement selectNFTTx_;
     CassandraPreparedStatement selectNFTTxForward_;
