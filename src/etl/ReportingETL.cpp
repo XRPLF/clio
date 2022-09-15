@@ -943,13 +943,13 @@ ReportingETL::loadCacheFromClioPeer(
         // Make the connection on the IP address we get from a lookup
         ws->next_layer().async_connect(results, yield[ec]);
         if (ec)
-            return {};
+            return false;
 
         BOOST_LOG_TRIVIAL(trace) << "Performing websocket handshake";
         // Perform the websocket handshake
         ws->async_handshake(ip, "/", yield[ec]);
         if (ec)
-            return {};
+            return false;
 
         std::optional<boost::json::value> marker;
 
@@ -976,7 +976,7 @@ ReportingETL::loadCacheFromClioPeer(
             if (ec)
             {
                 BOOST_LOG_TRIVIAL(error) << "error writing = " << ec.message();
-                return {};
+                return false;
             }
 
             beast::flat_buffer buffer;
@@ -984,7 +984,7 @@ ReportingETL::loadCacheFromClioPeer(
             if (ec)
             {
                 BOOST_LOG_TRIVIAL(error) << "error reading = " << ec.message();
-                return {};
+                return false;
             }
 
             auto begin = static_cast<char const*>(buffer.data().data());
