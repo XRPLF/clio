@@ -129,26 +129,10 @@ enumerateNFTOffers(
     return response;
 }
 
-std::variant<ripple::uint256, Status>
-getTokenid(boost::json::object const& request)
-{
-    if (!request.contains(JS(nft_id)))
-        return Status{Error::rpcINVALID_PARAMS, "missingTokenid"};
-
-    if (!request.at(JS(nft_id)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "tokenidNotString"};
-
-    ripple::uint256 tokenid;
-    if (!tokenid.parseHex(request.at(JS(nft_id)).as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
-
-    return tokenid;
-}
-
 Result
 doNFTOffers(Context const& context, bool sells)
 {
-    auto const v = getTokenid(context.params);
+    auto const v = getNFTID(context.params);
     if (auto const status = std::get_if<Status>(&v))
         return *status;
 
