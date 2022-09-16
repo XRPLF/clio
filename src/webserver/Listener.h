@@ -4,7 +4,9 @@
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+
 #include <subscriptions/SubscriptionManager.h>
+#include <util/Taggable.h>
 #include <webserver/HttpSession.h>
 #include <webserver/PlainWsSession.h>
 #include <webserver/SslHttpSession.h>
@@ -28,6 +30,7 @@ class Detector
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
+    util::TagDecoratorFactory const& tagFactory_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
@@ -42,6 +45,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
+        util::TagDecoratorFactory const& tagFactory,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue)
@@ -52,6 +56,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
@@ -102,6 +107,7 @@ public:
                 subscriptions_,
                 balancer_,
                 etl_,
+                tagFactory_,
                 dosGuard_,
                 counters_,
                 queue_,
@@ -118,6 +124,7 @@ public:
             subscriptions_,
             balancer_,
             etl_,
+            tagFactory_,
             dosGuard_,
             counters_,
             queue_,
@@ -136,6 +143,7 @@ make_websocket_session(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
+    util::TagDecoratorFactory const& tagFactory,
     DOSGuard& dosGuard,
     RPC::Counters& counters,
     WorkQueue& queue)
@@ -147,6 +155,7 @@ make_websocket_session(
         subscriptions,
         balancer,
         etl,
+        tagFactory,
         dosGuard,
         counters,
         queue,
@@ -165,6 +174,7 @@ make_websocket_session(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
+    util::TagDecoratorFactory const& tagFactory,
     DOSGuard& dosGuard,
     RPC::Counters& counters,
     WorkQueue& queue)
@@ -176,6 +186,7 @@ make_websocket_session(
         subscriptions,
         balancer,
         etl,
+        tagFactory,
         dosGuard,
         counters,
         queue,
@@ -198,6 +209,7 @@ class Listener
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
+    util::TagDecoratorFactory tagFactory_;
     DOSGuard& dosGuard_;
     WorkQueue queue_;
     RPC::Counters counters_;
@@ -213,6 +225,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
+        util::TagDecoratorFactory tagFactory,
         DOSGuard& dosGuard)
         : ioc_(ioc)
         , ctx_(ctx)
@@ -221,6 +234,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(std::move(tagFactory))
         , dosGuard_(dosGuard)
         , queue_(numWorkerThreads, maxQueueSize)
     {
@@ -283,6 +297,7 @@ private:
                 subscriptions_,
                 balancer_,
                 etl_,
+                tagFactory_,
                 dosGuard_,
                 counters_,
                 queue_)
@@ -339,6 +354,7 @@ make_HttpServer(
         subscriptions,
         balancer,
         etl,
+        util::TagDecoratorFactory(config),
         dosGuard);
 
     server->run();

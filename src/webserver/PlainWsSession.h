@@ -36,6 +36,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
+        util::TagDecoratorFactory const& tagFactory,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
@@ -46,6 +47,7 @@ public:
               subscriptions,
               balancer,
               etl,
+              tagFactory,
               dosGuard,
               counters,
               queue,
@@ -91,6 +93,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
+    util::TagDecoratorFactory const& tagFactory_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
@@ -104,6 +107,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
+        util::TagDecoratorFactory const& tagFactory,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
@@ -115,6 +119,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
@@ -127,6 +132,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
+        util::TagDecoratorFactory const& tagFactory,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
@@ -139,6 +145,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
@@ -195,6 +202,7 @@ private:
             subscriptions_,
             balancer_,
             etl_,
+            tagFactory_,
             dosGuard_,
             counters_,
             queue_,

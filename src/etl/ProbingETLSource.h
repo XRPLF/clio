@@ -16,7 +16,6 @@
 class ProbingETLSource : public ETLSource
 {
     std::mutex mtx_;
-    boost::asio::io_context& ioc_;
     boost::asio::ssl::context sslCtx_;
     std::shared_ptr<ETLSource> sslSrc_;
     std::shared_ptr<ETLSource> plainSrc_;

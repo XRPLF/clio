@@ -971,7 +971,7 @@ ReportingETL::loadCache(uint32_t seq)
     }
     BOOST_LOG_TRIVIAL(info)
         << "Loading cache. num cursors = " << cursors.size() - 1;
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " cursors = " << cursorStr.str();
+    BOOST_LOG_TRIVIAL(trace) << __func__ << " cursors = " << cursorStr.str();
 
     cacheDownloader_ = std::thread{[this, seq, cursors]() {
         auto startTime = std::chrono::system_clock::now();
@@ -1008,7 +1008,7 @@ ReportingETL::loadCache(uint32_t seq)
                         backend_->cache().update(res.objects, seq, true);
                         if (!res.cursor || (end && *(res.cursor) > *end))
                             break;
-                        BOOST_LOG_TRIVIAL(debug)
+                        BOOST_LOG_TRIVIAL(trace)
                             << "Loading cache. cache size = "
                             << backend_->cache().size() << " - cursor = "
                             << ripple::strHex(res.cursor.value())
