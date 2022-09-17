@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
@@ -123,7 +122,11 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         return {
             {NFTTransactionsData(
                 tokenIDResult.front(), txMeta, sttx.getTransactionID())},
-            NFTsData(tokenIDResult.front(), *owner, txMeta, false)};
+            NFTsData(
+                tokenIDResult.front(),
+                *owner,
+                sttx.getFieldVL(ripple::sfURI),
+                txMeta)};
 
     std::stringstream msg;
     msg << " - unexpected NFTokenMint data in tx " << sttx.getTransactionID();
@@ -150,11 +153,11 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         // NFT burn can result in an NFTokenPage being modified to no longer
         // include the target, or an NFTokenPage being deleted. If this is
         // modified, we want to look for the target in the fields prior to
-        // modification. If deleted, it's possible that the page was modified
-        // to remove the target NFT prior to the entire page being deleted. In
-        // this case, we need to look in the PreviousFields. Otherwise, the
-        // page was not modified prior to deleting and we need to look in the
-        // FinalFields.
+        // modification. If deleted, it's possible that the page was
+        // modified to remove the target NFT prior to the entire page being
+        // deleted. In this case, we need to look in the PreviousFields.
+        // Otherwise, the page was not modified prior to deleting and we
+        // need to look in the FinalFields.
         std::optional<ripple::STArray> prevNFTs;
 
         if (node.isFieldPresent(ripple::sfPreviousFields))
@@ -360,7 +363,7 @@ getNFTokenCreateOfferData(
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
+getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     if (txMeta.getResultTER() != ripple::tesSUCCESS)
         return {{}, {}};
@@ -385,4 +388,29 @@ getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         default:
             return {{}, {}};
     }
+}
+
+std::vector<NFTsData>
+getNFTDataFromObj(
+    std::uint32_t const seq,
+    std::string const& key,
+    std::string const& blob)
+{
+    std::vector<NFTsData> nfts;
+    ripple::STLedgerEntry const sle = ripple::STLedgerEntry(
+        ripple::SerialIter{blob.data(), blob.size()},
+        ripple::uint256::fromVoid(key.data()));
+
+    if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE)
+        return nfts;
+
+    auto const owner = ripple::AccountID::fromVoid(key.data());
+    for (ripple::STObject const& node : sle.getFieldArray(ripple::sfNFTokens))
+        nfts.emplace_back(
+            node.getFieldH256(ripple::sfNFTokenID),
+            seq,
+            owner,
+            node.getFieldVL(ripple::sfURI));
+
+    return nfts;
 }

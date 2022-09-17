@@ -85,11 +85,41 @@ struct NFTsData
     // final state of an NFT per ledger. Since we pull this from transactions
     // we keep track of which tx index created this so we can de-duplicate, as
     // it is possible for one ledger to have multiple txs that change the
-    // state of the same NFT.
-    std::uint32_t transactionIndex;
+    // state of the same NFT. This field is not applicable when we are loading
+    // initial NFT state via ledger objects, since we do not have to tiebreak
+    // NFT state for a given ledger in that case.
+    std::optional<std::uint32_t> transactionIndex;
     ripple::AccountID owner;
-    bool isBurned;
+    // We only set the uri if this is a mint tx, or if we are
+    // loading initial state from NFTokenPage objects. In other words,
+    // uri should only be set if the etl process believes this NFT hasn't
+    // been seen before in our local database. We do this so that we don't
+    // write to the the nf_token_uris table every
+    // time the same NFT changes hands. We also can infer if there is a URI
+    // that we need to write to the issuer_nf_tokens table.
+    std::optional<ripple::Blob> uri;
+    bool isBurned = false;
 
+    // This constructor is used when parsing an NFTokenMint tx.
+    // Unfortunately because of the extreme edge case of being able to
+    // re-mint an NFT with the same ID, we must explicitly record a null
+    // URI. For this reason, we _always_ write this field as a result of
+    // this tx.
+    NFTsData(
+        ripple::uint256 const& tokenID,
+        ripple::AccountID const& owner,
+        ripple::Blob const& uri,
+        ripple::TxMeta const& meta)
+        : tokenID(tokenID)
+        , ledgerSequence(meta.getLgrSeq())
+        , transactionIndex(meta.getIndex())
+        , owner(owner)
+        , uri(uri)
+    {
+    }
+
+    // This constructor is used when parsing an NFTokenBurn or
+    // NFTokenAcceptOffer tx
     NFTsData(
         ripple::uint256 const& tokenID,
         ripple::AccountID const& owner,
@@ -100,6 +130,24 @@ struct NFTsData
         , transactionIndex(meta.getIndex())
         , owner(owner)
         , isBurned(isBurned)
+    {
+    }
+
+    // This constructor is used when parsing an NFTokenPage directly from
+    // ledger state.
+    // Unfortunately because of the extreme edge case of being able to
+    // re-mint an NFT with the same ID, we must explicitly record a null
+    // URI. For this reason, we _always_ write this field as a result of
+    // this tx.
+    NFTsData(
+        ripple::uint256 const& tokenID,
+        std::uint32_t const ledgerSequence,
+        ripple::AccountID const& owner,
+        ripple::Blob const& uri)
+        : tokenID(tokenID)
+        , ledgerSequence(ledgerSequence)
+        , owner(owner)
+        , uri(uri)
     {
     }
 };

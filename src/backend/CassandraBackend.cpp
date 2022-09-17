@@ -17,11 +17,12 @@
 */
 //==============================================================================
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
 #include <log/Logger.h>
 #include <util/Profiler.h>
+
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 
 #include <functional>
 #include <unordered_map>
@@ -405,17 +406,41 @@ CassandraBackend::writeNFTs(std::vector<NFTsData>&& data)
             },
             "nf_tokens");
 
-        makeAndExecuteAsyncWrite(
-            this,
-            std::make_tuple(record.tokenID),
-            [this](auto const& params) {
-                CassandraStatement statement{insertIssuerNFT_};
-                auto const& [tokenID] = params.data;
-                statement.bindNextBytes(ripple::nft::getIssuer(tokenID));
-                statement.bindNextBytes(tokenID);
-                return statement;
-            },
-            "issuer_nf_tokens");
+        // If `uri` is set (and it can be set to an empty uri), we know this
+        // is a net-new NFT. That is, this NFT has not been seen before by us
+        // _OR_ it is in the extreme edge case of a re-minted NFT ID with the
+        // same NFT ID as an already-burned token. In this case, we need to
+        // record the URI and link to the issuer_nf_tokens table.
+        if (record.uri)
+        {
+            makeAndExecuteAsyncWrite(
+                this,
+                std::make_tuple(record.tokenID),
+                [this](auto const& params) {
+                    CassandraStatement statement{insertIssuerNFT_};
+                    auto const& [tokenID] = params.data;
+                    statement.bindNextBytes(ripple::nft::getIssuer(tokenID));
+                    statement.bindNextInt(
+                        ripple::nft::toUInt32(ripple::nft::getTaxon(tokenID)));
+                    statement.bindNextBytes(tokenID);
+                    return statement;
+                },
+                "issuer_nf_tokens");
+
+            makeAndExecuteAsyncWrite(
+                this,
+                std::make_tuple(
+                    record.tokenID, record.ledgerSequence, record.uri.value()),
+                [this](auto const& params) {
+                    CassandraStatement statement{insertNFTURI_};
+                    auto const& [tokenID, lgrSeq, uri] = params.data;
+                    statement.bindNextBytes(tokenID);
+                    statement.bindNextInt(lgrSeq);
+                    statement.bindNextBytes(uri);
+                    return statement;
+                },
+                "nf_token_uris");
+        }
     }
 }
 
@@ -598,18 +623,35 @@ CassandraBackend::fetchNFT(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
-    CassandraStatement statement{selectNFT_};
-    statement.bindNextBytes(tokenID);
-    statement.bindNextInt(ledgerSequence);
-    CassandraResult response = executeAsyncRead(statement, yield);
-    if (!response)
+    CassandraStatement nftStatement{selectNFT_};
+    nftStatement.bindNextBytes(tokenID);
+    nftStatement.bindNextInt(ledgerSequence);
+    CassandraResult nftResponse = executeAsyncRead(nftStatement, yield);
+    if (!nftResponse)
         return {};
 
     NFT result;
     result.tokenID = tokenID;
-    result.ledgerSequence = response.getUInt32();
-    result.owner = response.getBytes();
-    result.isBurned = response.getBool();
+    result.ledgerSequence = nftResponse.getUInt32();
+    result.owner = nftResponse.getBytes();
+    result.isBurned = nftResponse.getBool();
+
+    // now fetch URI. Usually we will have the URI even for burned NFTs, but
+    // if the first ledger on this clio included NFTokenBurn transactions
+    // we will not have the URIs for any of those tokens. In any other case
+    // not having the URI indicates something went wrong with our data.
+    //
+    // TODO - in the future would be great for any handlers that use this
+    // could inject a warning in this case (the case of not having a URI
+    // because it was burned in the first ledger) to indicate that even though
+    // we are returning a blank URI, the NFT might have had one.
+    CassandraStatement uriStatement{selectNFTURI_};
+    uriStatement.bindNextBytes(tokenID);
+    uriStatement.bindNextInt(ledgerSequence);
+    CassandraResult uriResponse = executeAsyncRead(uriStatement, yield);
+    if (uriResponse.hasResult())
+        result.uri = uriResponse.getBytes();
+
     return result;
 }
 
@@ -1388,17 +1430,37 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "CREATE TABLE IF NOT EXISTS " << tablePrefix
-              << "issuer_nf_tokens"
+              << "issuer_nf_tokens_v2"
               << "  ("
               << "    issuer blob,"
+              << "    taxon bigint,"
               << "    token_id blob,"
-              << "    PRIMARY KEY (issuer, token_id)"
+              << "    PRIMARY KEY (issuer, taxon, token_id)"
               << "  )";
         if (!executeSimpleStatement(query.str()))
             continue;
 
         query.str("");
-        query << "SELECT * FROM " << tablePrefix << "issuer_nf_tokens"
+        query << "SELECT * FROM " << tablePrefix << "issuer_nf_tokens_v2"
+              << " LIMIT 1";
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "CREATE TABLE IF NOT EXISTS " << tablePrefix << "nf_token_uris"
+              << "  ("
+              << "    token_id blob,"
+              << "    sequence bigint,"
+              << "    uri blob,"
+              << "    PRIMARY KEY (token_id, sequence)"
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (sequence DESC)"
+              << "    AND default_time_to_live = " << ttl;
+        if (!executeSimpleStatement(query.str()))
+            continue;
+
+        query.str("");
+        query << "SELECT * FROM " << tablePrefix << "nf_token_uris"
               << " LIMIT 1";
         if (!executeSimpleStatement(query.str()))
             continue;
@@ -1558,10 +1620,26 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
-        query << "INSERT INTO " << tablePrefix << "issuer_nf_tokens"
-              << " (issuer,token_id)"
-              << " VALUES (?,?)";
+        query << "INSERT INTO " << tablePrefix << "issuer_nf_tokens_v2"
+              << " (issuer,taxon,token_id)"
+              << " VALUES (?,?,?)";
         if (!insertIssuerNFT_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "INSERT INTO " << tablePrefix << "nf_token_uris"
+              << " (token_id,sequence,uri)"
+              << " VALUES (?,?,?)";
+        if (!insertNFTURI_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT uri FROM " << tablePrefix << "nf_token_uris"
+              << " WHERE token_id = ? AND"
+              << " sequence <= ?"
+              << " ORDER BY sequence DESC"
+              << " LIMIT 1";
+        if (!selectNFTURI_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

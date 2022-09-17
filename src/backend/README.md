@@ -130,3 +130,91 @@ In each new ledger version with sequence `n`, a ledger object `v` can either be 
 	 1. Being **created**, add two new records of `seq=n` with one being `e` pointing to `v`, and `v` pointing to `w` (Linked List insertion operation).
 	 2. Being **modified**, do nothing.
 	 3. Being **deleted**, add a record of `seq=n` with `e` pointing to `v`'s `next` value (Linked List deletion operation).
+
+### NFT data model
+In `rippled` NFTs are stored in NFTokenPage ledger objects. This object is
+implemented to save ledger space and has the property that it gives us O(1)
+lookup time for an NFT, assuming we know who owns the NFT at a particular
+ledger. However, if we do not know who owns the NFT at a specific ledger
+height we have no alternative in rippled other than scanning the entire
+ledger. Because of this tradeoff, clio implements a special NFT indexing data
+structure that allows clio users to query NFTs quickly, while keeping
+rippled's space-saving optimizations.
+
+#### `nf_tokens`
+```
+CREATE TABLE clio.nf_tokens (
+	token_id blob,         # The NFT's ID
+	sequence bigint,       # Sequence of ledger version
+	owner blob,            # The account ID of the owner of this NFT at this ledger
+	is_burned boolean,     # True if token was burned in this ledger
+	PRIMARY KEY (token_id, sequence)
+) WITH CLUSTERING ORDER BY (sequence DESC) ...
+```
+This table indexes NFT IDs with their owner at a given ledger. So
+```
+SELECT * FROM nf_tokens
+WHERE token_id = N AND seq <= Y
+ORDER BY seq DESC LIMIT 1;
+```
+will give you the owner of token N at ledger Y and whether it was burned. If
+the token is burned, the owner field indicates the account that owned the
+token at the time it was burned; it does not indicate the person who burned
+the token, necessarily. If you need to determine who burned the token you can
+use the `nft_history` API, which will give you the NFTokenBurn transaction
+that burned this token, along with the account that submitted that
+transaction.
+
+#### `issuer_nf_tokens_v2`
+```
+CREATE TABLE clio.issuer_nf_tokens_v2 (
+	issuer blob,       # The NFT issuer's account ID
+	taxon bigint,      # The NFT's token taxon
+	token_id blob,     # The NFT's ID
+	PRIMARY KEY (issuer, taxon, token_id)
+)
+```
+This table indexes token IDs against their issuer and issuer/taxon
+combination. This is useful for determining all the NFTs a specific account
+issued, or all the NFTs a specific account issued with a specific taxon. It is
+not useful to know all the NFTs with a given taxon while excluding issuer, since the
+meaning of a taxon is left to an issuer.
+
+#### `nf_token_uris`
+```
+CREATE TABLE clio.nf_token_uris (
+	token_id blob,    # The NFT's ID
+	sequence bigint,  # Sequence of ledger version
+	uri blob,         # The NFT's URI
+	PRIMARY KEY (token_id, sequence)
+) WITH CLUSTERING ORDER BY (sequence DESC) ...
+```
+This table is used to store an NFT's URI. Without storing this here, we would
+need to traverse the NFT owner's entire set of NFTs to find the URI, again due
+to the way that NFTs are stored in rippled. Furthermore, instead of storing
+this in the `nf_tokens` table, we store it here to save space. A given NFT
+will have only one entry in this table (see caveat below), written to this
+table as soon as clio sees the NFTokenMint transaction, or when clio loads an
+NFTokenPage from the initial ledger it downloaded. However, the `nf_tokens`
+table is written to every time an NFT changes ownership, or if it is burned.
+
+Given this, why do we have to store the sequence? Unfortunately there is an
+extreme edge case where a given NFT ID can be burned, and then re-minted with
+a different URI. This is extremely unlikely, and might be fixed in a future
+version to rippled, but just in case we can handle that edge case by allowing
+a given NFT ID to have a new URI assigned in this case, without removing the
+prior URI.
+
+#### `nf_token_transactions`
+```
+CREATE TABLE clio.nf_token_transactions (
+	token_id blob,                  # The NFT's ID
+	seq_idx tuple<bigint, bigint>,  # Tuple of (ledger_index, transaction_index)
+	hash blob,                      # Hash of the transaction
+	PRIMARY KEY (token_id, seq_idx)
+) WITH CLUSTERING ORDER BY (seq_idx DESC) ...
+```
+This table is the NFT equivalent of `account_tx`. It's motivated by the exact
+same reasons and serves the analogous purpose here. It drives the
+`nft_history` API.
+
