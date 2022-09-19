@@ -270,5 +270,10 @@ traverseTransactions(
         std::optional<Backend::TransactionsCursor> const&,
         boost::asio::yield_context& yield)> transactionFetcher);
 
+[[nodiscard]] boost::json::object const
+computeBookChanges(
+    ripple::LedgerInfo const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions);
+
 }  // namespace RPC
 #endif

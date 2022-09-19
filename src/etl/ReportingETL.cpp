@@ -202,6 +202,9 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
 
         for (auto& txAndMeta : transactions)
             subscriptions_->pubTransaction(txAndMeta, lgrInfo);
+
+        subscriptions_->pubBookChanges(lgrInfo, transactions);
+
         BOOST_LOG_TRIVIAL(info) << __func__ << " - Published ledger "
                                 << std::to_string(lgrInfo.seq);
     }

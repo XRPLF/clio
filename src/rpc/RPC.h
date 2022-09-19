@@ -9,6 +9,7 @@
 #include <rpc/Counters.h>
 #include <string>
 #include <variant>
+
 /*
  * This file contains various classes necessary for executing RPC handlers.
  * Context gives the handlers access to various other parts of the application

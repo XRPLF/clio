@@ -70,7 +70,7 @@ Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
 }
 
 void
-Subscription::publish(std::shared_ptr<Message>& message)
+Subscription::publish(std::shared_ptr<Message> const& message)
 {
     boost::asio::post(strand_, [this, message]() {
         sendToSubscribers(message, subscribers_, subCount_);
@@ -236,6 +236,22 @@ SubscriptionManager::unsubBook(
 }
 
 void
+SubscriptionManager::subBookChanges(std::shared_ptr<WsBase> session)
+{
+    bookChangesSubscribers_.subscribe(session);
+
+    std::unique_lock lk(cleanupMtx_);
+    cleanupFuncs_[session].emplace_back(
+        [this](session_ptr session) { unsubBookChanges(session); });
+}
+
+void
+SubscriptionManager::unsubBookChanges(std::shared_ptr<WsBase> session)
+{
+    bookChangesSubscribers_.unsubscribe(session);
+}
+
+void
 SubscriptionManager::pubLedger(
     ripple::LedgerInfo const& lgrInfo,
     ripple::Fees const& fees,
@@ -343,6 +359,20 @@ SubscriptionManager::pubTransaction(
             }
         }
     }
+}
+
+void
+SubscriptionManager::pubBookChanges(
+    ripple::LedgerInfo const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions)
+{
+    if (bookChangesSubscribers_.empty())
+        return;
+
+    auto const json = RPC::computeBookChanges(lgrInfo, transactions);
+    auto const bookChangesMsg =
+        std::make_shared<Message>(boost::json::serialize(json));
+    bookChangesSubscribers_.publish(bookChangesMsg);
 }
 
 void
