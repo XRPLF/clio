@@ -626,7 +626,6 @@ CassandraBackend::fetchIssuerNFTs(
     return result;
 }
 
-
 TransactionsAndCursor
 CassandraBackend::fetchNFTTransactions(
     ripple::uint256 const& tokenID,
