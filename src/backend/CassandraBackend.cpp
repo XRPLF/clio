@@ -589,7 +589,7 @@ CassandraBackend::fetchNFT(
 }
 
 std::optional<IssuerNFTs>
-CassandraBackend::fetchIssuerNFT(
+CassandraBackend::fetchIssuerNFTs(
     ripple::AccountID const& issuer,
     ripple::uint256 const& cursor,
     std::uint32_t const limit,
@@ -618,7 +618,7 @@ CassandraBackend::fetchIssuerNFT(
 
     if(hasCursor)
         return {issuer, nf_tokens, cursor};
-    return {issuer, nf_tokens, {}}
+    return {issuer, nf_tokens, {}};
 }
 
 

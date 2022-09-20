@@ -441,6 +441,16 @@ PostgresBackend::fetchNFT(
     throw std::runtime_error("Not implemented");
 }
 
+std::optional<IssuerNFTs>
+PostgresBackend::fetchIssuerNFTs(
+    ripple::AccountID const& issuer,
+    ripple::uint256 const& cursor,
+    std::uint32_t const limit,
+    boost::asio::yield_context& yield) const
+{
+    throw std::runtime_error("Not implemented");
+}
+
 std::optional<ripple::uint256>
 PostgresBackend::doFetchSuccessorKey(
     ripple::uint256 key,
