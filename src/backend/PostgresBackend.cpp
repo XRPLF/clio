@@ -444,7 +444,7 @@ PostgresBackend::fetchNFT(
 std::optional<IssuerNFTs>
 PostgresBackend::fetchIssuerNFTs(
     ripple::AccountID const& issuer,
-    ripple::uint256 const& cursor,
+    std::optional<ripple::uint256> const& cursor,
     std::uint32_t const limit,
     boost::asio::yield_context& yield) const
 {
