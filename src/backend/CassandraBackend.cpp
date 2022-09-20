@@ -598,7 +598,7 @@ CassandraBackend::fetchIssuerNFTs(
     CassandraStatement statement{selectIssuerNFT_};
     statement.bindNextBytes(issuer);
     if(cursorIn)
-        statement.bindNextBytes(cursorIn);
+        statement.bindNextBytes(cursorIn.value());
     else
         statement.bindNextBytes(0);
     statement.bindNextUInt(limit + 1);
