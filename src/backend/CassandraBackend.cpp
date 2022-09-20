@@ -591,34 +591,39 @@ CassandraBackend::fetchNFT(
 std::optional<IssuerNFTs>
 CassandraBackend::fetchIssuerNFTs(
     ripple::AccountID const& issuer,
-    ripple::uint256 const& cursor,
+    ripple::uint256 const& cursorIn,
     std::uint32_t const limit,
     boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectIssuerNFT_};
     statement.bindNextBytes(issuer);
-    statement.bindNextBytes(cursor);
+    statement.bindNextBytes(cursorIn);
     statement.bindNextUInt(limit + 1);
     CassandraResult response = executeAsyncRead(statement, yield);
     if (!response)
         return {};
 
+    auto cursor = cursorIn;
     auto numRows = response.numRows();
     auto hasCursor = (limit + 1 == static_cast<std::uint32_t>(numRows)) ? true : false;
     std::vector<ripple::uint256> nf_tokens = {};
     do
     {
-        ripple::uint256 const nf_token = result.getUInt256();
+        ripple::uint256 const nf_token = response.getUInt256();
         nf_tokens.push_back(nf_token);
         if (hasCursor && --numRows == 0)
         {
             cursor = nf_token;
         }
-    } while (result.nextRow());
+    } while (response.nextRow());
 
+    IssuerNFTs result;
     if(hasCursor)
-        return {issuer, nf_tokens, cursor};
-    return {issuer, nf_tokens, {}};
+        result.cursor = cursor;
+
+    result.issuer = issuer;
+    result.nf_tokens = nf_tokens;
+    return result;
 }
 
 
