@@ -591,13 +591,16 @@ CassandraBackend::fetchNFT(
 std::optional<IssuerNFTs>
 CassandraBackend::fetchIssuerNFTs(
     ripple::AccountID const& issuer,
-    ripple::uint256 const& cursorIn,
+    std::optional<ripple::uint256> const& cursorIn,
     std::uint32_t const limit,
     boost::asio::yield_context& yield) const
 {
     CassandraStatement statement{selectIssuerNFT_};
     statement.bindNextBytes(issuer);
-    statement.bindNextBytes(cursorIn);
+    if(cursorIn)
+        statement.bindNextBytes(cursorIn);
+    else
+        statement.bindNextBytes(0);
     statement.bindNextUInt(limit + 1);
     CassandraResult response = executeAsyncRead(statement, yield);
     if (!response)
