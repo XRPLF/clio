@@ -82,7 +82,7 @@ struct IssuerNFTs
     ripple::AccountID issuer;
     std::vector<ripple::uint256> nf_tokens;
     std::optional<ripple::uint256> cursor;
-}
+};
 
 struct LedgerRange
 {
