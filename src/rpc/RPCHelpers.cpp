@@ -218,7 +218,7 @@ getAccount(
         return {};
     }
 
-    return Status{Error::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
+    return Status{Error::rpcACT_MALFORMED, field.to_string() + "Malformed"};
 }
 
 Status
