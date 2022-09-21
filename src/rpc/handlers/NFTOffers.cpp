@@ -16,19 +16,19 @@ appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
     offers.push_back(boost::json::object_kind);
     boost::json::object& obj(offers.back().as_object());
 
-    obj.at(JS(index)) = ripple::to_string(offer.key());
-    obj.at(JS(flags)) = (offer)[ripple::sfFlags];
-    obj.at(JS(owner)) = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
+    obj[JS(index)] = ripple::to_string(offer.key());
+    obj[JS(flags)] = (offer)[ripple::sfFlags];
+    obj[JS(owner)] = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
 
     if (offer.isFieldPresent(ripple::sfDestination))
         obj[JS(destination)] =
             ripple::toBase58(offer.getAccountID(ripple::sfDestination));
 
     if (offer.isFieldPresent(ripple::sfExpiration))
-        obj.at(JS(expiration)) = offer.getFieldU32(ripple::sfExpiration);
+        obj[JS(expiration)] = offer.getFieldU32(ripple::sfExpiration);
 
-    obj.at(JS(amount)) = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
-                                         .getJson(ripple::JsonOptions::none));
+    obj[JS(amount)] = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
+                                      .getJson(ripple::JsonOptions::none));
 }
 
 static Result
@@ -118,8 +118,8 @@ enumerateNFTOffers(
 
     if (offers.size() == reserve)
     {
-        response.at(JS(limit)) = limit;
-        response.at(JS(marker)) = to_string(offers.back().key());
+        response[JS(limit)] = limit;
+        response[JS(marker)] = to_string(offers.back().key());
         offers.pop_back();
     }
 
@@ -129,26 +129,10 @@ enumerateNFTOffers(
     return response;
 }
 
-std::variant<ripple::uint256, Status>
-getTokenid(boost::json::object const& request)
-{
-    if (!request.contains(JS(nft_id)))
-        return Status{Error::rpcINVALID_PARAMS, "missingTokenid"};
-
-    if (!request.at(JS(nft_id)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "tokenidNotString"};
-
-    ripple::uint256 tokenid;
-    if (!tokenid.parseHex(request.at(JS(nft_id)).as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
-
-    return tokenid;
-}
-
 Result
 doNFTOffers(Context const& context, bool sells)
 {
-    auto const v = getTokenid(context.params);
+    auto const v = getNFTID(context.params);
     if (auto const status = std::get_if<Status>(&v))
         return *status;
 

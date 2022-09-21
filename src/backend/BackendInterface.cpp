@@ -19,7 +19,6 @@ BackendInterface::writeLedgerObject(
     std::string&& blob)
 {
     assert(key.size() == sizeof(ripple::uint256));
-    ripple::uint256 key256 = ripple::uint256::fromVoid(key.data());
     doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
 

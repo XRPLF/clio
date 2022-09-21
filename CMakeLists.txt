@@ -54,6 +54,7 @@ target_sources(clio PRIVATE
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
+  src/etl/ProbingETLSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ReportingETL.cpp
   ## Subscriptions
@@ -74,7 +75,9 @@ target_sources(clio PRIVATE
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/NoRippleCheck.cpp
   # NFT
+  src/rpc/handlers/NFTHistory.cpp
   src/rpc/handlers/NFTInfo.cpp
+  src/rpc/handlers/NFTOffers.cpp
   # Ledger
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp
@@ -85,9 +88,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/TransactionEntry.cpp
   src/rpc/handlers/AccountTx.cpp
   # Dex
+  src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
-  # NFT
-  src/rpc/handlers/NFTOffers.cpp
   # Payment Channel
   src/rpc/handlers/ChannelAuthorize.cpp
   src/rpc/handlers/ChannelVerify.cpp

@@ -649,9 +649,6 @@ private:
     // maximum number of concurrent in flight requests. New requests will wait
     // for earlier requests to finish if this limit is exceeded
     std::uint32_t maxRequestsOutstanding = 10000;
-    // we keep this small because the indexer runs in the background, and we
-    // don't want the database to be swamped when the indexer is running
-    std::uint32_t indexerMaxRequestsOutstanding = 10;
     mutable std::atomic_uint32_t numRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
@@ -1075,6 +1072,7 @@ public:
     {
         return numRequestsOutstanding_ < maxRequestsOutstanding;
     }
+
     inline bool
     finishedAllRequests() const
     {

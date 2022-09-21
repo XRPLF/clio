@@ -44,7 +44,10 @@ doChannelAuthorize(Context const& context);
 Result
 doChannelVerify(Context const& context);
 
-// offers methods
+// book methods
+Result
+doBookChanges(Context const& context);
+
 Result
 doBookOffers(Context const& context);
 
@@ -57,6 +60,9 @@ doNFTSellOffers(Context const& context);
 
 Result
 doNFTInfo(Context const& context);
+
+Result
+doNFTHistory(Context const& context);
 
 // ledger methods
 Result

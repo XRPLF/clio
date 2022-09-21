@@ -272,7 +272,7 @@ main(int argc, char* argv[])
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        *config, ioc, ctxRef, backend, subscriptions, ledgers);
+        *config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only
     // mode, ETL only publishes

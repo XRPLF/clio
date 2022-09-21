@@ -180,7 +180,7 @@ CassandraBackend::doWriteLedgerObject(
     if (range)
         makeAndExecuteAsyncWrite(
             this,
-            std::move(std::make_tuple(seq, key)),
+            std::make_tuple(seq, key),
             [this](auto& params) {
                 auto& [sequence, key] = params.data;
 
@@ -192,7 +192,7 @@ CassandraBackend::doWriteLedgerObject(
             "ledger_diff");
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(std::move(key), seq, std::move(blob))),
+        std::make_tuple(std::move(key), seq, std::move(blob)),
         [this](auto& params) {
             auto& [key, sequence, blob] = params.data;
 
@@ -217,7 +217,7 @@ CassandraBackend::writeSuccessor(
     assert(successor.size() != 0);
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(std::move(key), seq, std::move(successor))),
+        std::make_tuple(std::move(key), seq, std::move(successor)),
         [this](auto& params) {
             auto& [key, sequence, successor] = params.data;
 
@@ -236,7 +236,7 @@ CassandraBackend::writeLedger(
 {
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(ledgerInfo.seq, std::move(header))),
+        std::make_tuple(ledgerInfo.seq, std::move(header)),
         [this](auto& params) {
             auto& [sequence, header] = params.data;
             CassandraStatement statement{insertLedgerHeader_};
@@ -247,7 +247,7 @@ CassandraBackend::writeLedger(
         "ledger");
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(ledgerInfo.hash, ledgerInfo.seq)),
+        std::make_tuple(ledgerInfo.hash, ledgerInfo.seq),
         [this](auto& params) {
             auto& [hash, sequence] = params.data;
             CassandraStatement statement{insertLedgerHash_};
@@ -324,7 +324,7 @@ CassandraBackend::writeTransaction(
 
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_pair(seq, hash)),
+        std::make_pair(seq, hash),
         [this](auto& params) {
             CassandraStatement statement{insertLedgerTransaction_};
             statement.bindNextInt(params.data.first);
@@ -334,12 +334,12 @@ CassandraBackend::writeTransaction(
         "ledger_transaction");
     makeAndExecuteAsyncWrite(
         this,
-        std::move(std::make_tuple(
+        std::make_tuple(
             std::move(hash),
             seq,
             date,
             std::move(transaction),
-            std::move(metadata))),
+            std::move(metadata)),
         [this](auto& params) {
             CassandraStatement statement{insertTransaction_};
             auto& [hash, sequence, date, transaction, metadata] = params.data;
@@ -693,6 +693,9 @@ CassandraBackend::fetchNFTTransactions(
                 static_cast<std::uint32_t>(lgrSeq),
                 static_cast<std::uint32_t>(txnIdx)};
 
+            // Only modify if forward because forward query
+            // (selectNFTTxForward_) orders by ledger/tx sequence >= whereas
+            // reverse query (selectNFTTx_) orders by ledger/tx sequence <.
             if (forward)
                 ++cursor->transactionIndex;
         }
@@ -722,9 +725,6 @@ CassandraBackend::fetchAccountTransactions(
     if (!rng)
         return {{}, {}};
 
-    auto keylet = ripple::keylet::account(account);
-    auto cursor = cursorIn;
-
     CassandraStatement statement = [this, forward]() {
         if (forward)
             return CassandraStatement{selectAccountTxForward_};
@@ -732,6 +732,7 @@ CassandraBackend::fetchAccountTransactions(
             return CassandraStatement{selectAccountTx_};
     }();
 
+    auto cursor = cursorIn;
     statement.bindNextBytes(account);
     if (cursor)
     {
@@ -776,6 +777,9 @@ CassandraBackend::fetchAccountTransactions(
                 static_cast<std::uint32_t>(lgrSeq),
                 static_cast<std::uint32_t>(txnIdx)};
 
+            // Only modify if forward because forward query
+            // (selectAccountTxForward_) orders by ledger/tx sequence >= whereas
+            // reverse query (selectAccountTx_) orders by ledger/tx sequence <.
             if (forward)
                 ++cursor->transactionIndex;
         }
@@ -1104,8 +1108,8 @@ CassandraBackend::open(bool readOnly)
         cass_cluster_set_credentials(
             cluster, username.c_str(), getString("password").c_str());
     }
-    int threads = getInt("threads") ? *getInt("threads")
-                                    : std::thread::hardware_concurrency();
+    int threads =
+        getInt("threads").value_or(std::thread::hardware_concurrency());
 
     rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)

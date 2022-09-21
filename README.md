@@ -153,19 +153,19 @@ You must:
 Clio provides several logging options, all are configurable via the config file and are detailed below.
 
 `log_level`: The minimum level of severity at which the log message will be outputted.
-Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
+Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. Defaults to `info`.
 
 `log_to_console`: Enable/disable log output to console. Options are `true`/`false`. Defaults to true.
 
 `log_directory`: Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it. If not specified, logs are not written to a file.
 
-`log_rotation_size`: The max size of the log file in **megabytes** before it will rotate into a smaller file.
+`log_rotation_size`: The max size of the log file in **megabytes** before it will rotate into a smaller file. Defaults to 2GB.
 
 `log_directory_max_size`: The max size of the log directory in **megabytes** before old log files will be
-deleted to free up space.
+deleted to free up space. Defaults to 50GB.
 
 `log_rotation_hour_interval`: The time interval in **hours** after the last log rotation to automatically
-rotate the current log file.
+rotate the current log file. Defaults to 12 hours.
 
 Note, time-based log rotation occurs dependently on size-based log rotation, where if a
 size-based log rotation occurs, the timer for the time-based rotation will reset.

@@ -1,3 +1,5 @@
 *clio*.log
 build/
+.vscode
 .python-version
+config.json

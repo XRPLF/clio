@@ -257,7 +257,8 @@ SubscriptionManager::pubTransaction(
     boost::json::object pubObj;
     pubObj["transaction"] = RPC::toJson(*tx);
     pubObj["meta"] = RPC::toJson(*meta);
-    RPC::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta);
+    RPC::insertDeliveredAmount(
+        pubObj["meta"].as_object(), tx, meta, blobs.date);
     pubObj["type"] = "transaction";
     pubObj["validated"] = true;
     pubObj["status"] = "closed";

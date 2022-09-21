@@ -23,8 +23,6 @@ class NetworkValidatedLedgers
 
     std::condition_variable cv_;
 
-    bool stopping_ = false;
-
 public:
     static std::shared_ptr<NetworkValidatedLedgers>
     make_ValidatedLedgers()
