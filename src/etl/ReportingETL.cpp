@@ -919,6 +919,8 @@ ReportingETL::loadCacheFromClioPeer(
     std::string const& port,
     boost::asio::yield_context& yield)
 {
+    BOOST_LOG_TRIVIAL(info)
+        << "Loading cache from peer. ip = " << ip << " . port = " << port;
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
     namespace websocket = beast::websocket;  // from
@@ -930,7 +932,7 @@ ReportingETL::loadCacheFromClioPeer(
         // These objects perform our I/O
         tcp::resolver resolver{ioContext_};
 
-        BOOST_LOG_TRIVIAL(trace) << "Creating websocket";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Creating websocket";
         auto ws =
             std::make_unique<websocket::stream<beast::tcp_stream>>(ioContext_);
 
@@ -939,13 +941,14 @@ ReportingETL::loadCacheFromClioPeer(
         if (ec)
             return {};
 
-        BOOST_LOG_TRIVIAL(trace) << "Connecting websocket";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Connecting websocket";
         // Make the connection on the IP address we get from a lookup
         ws->next_layer().async_connect(results, yield[ec]);
         if (ec)
             return false;
 
-        BOOST_LOG_TRIVIAL(trace) << "Performing websocket handshake";
+        BOOST_LOG_TRIVIAL(trace)
+            << __func__ << "Performing websocket handshake";
         // Perform the websocket handshake
         ws->async_handshake(ip, "/", yield[ec]);
         if (ec)
@@ -953,7 +956,7 @@ ReportingETL::loadCacheFromClioPeer(
 
         std::optional<boost::json::value> marker;
 
-        BOOST_LOG_TRIVIAL(trace) << "Sending request";
+        BOOST_LOG_TRIVIAL(trace) << __func__ << "Sending request";
         auto getRequest = [&](auto marker) {
             boost::json::object request = {
                 {"command", "ledger_data"},
@@ -975,7 +978,8 @@ ReportingETL::loadCacheFromClioPeer(
                 yield[ec]);
             if (ec)
             {
-                BOOST_LOG_TRIVIAL(error) << "error writing = " << ec.message();
+                BOOST_LOG_TRIVIAL(error)
+                    << __func__ << "error writing = " << ec.message();
                 return false;
             }
 
@@ -983,28 +987,28 @@ ReportingETL::loadCacheFromClioPeer(
             ws->async_read(buffer, yield[ec]);
             if (ec)
             {
-                BOOST_LOG_TRIVIAL(error) << "error reading = " << ec.message();
+                BOOST_LOG_TRIVIAL(error)
+                    << __func__ << "error reading = " << ec.message();
                 return false;
             }
 
-            auto begin = static_cast<char const*>(buffer.data().data());
-            auto end = begin + buffer.data().size();
-            auto parsed = boost::json::parse(std::string(begin, end));
+            auto raw = beast::buffers_to_string(buffer.data());
+            auto parsed = boost::json::parse(raw);
 
             if (!parsed.is_object())
             {
                 BOOST_LOG_TRIVIAL(error)
-                    << "Error parsing response: " << std::string{begin, end};
+                    << __func__ << "Error parsing response: " << raw;
                 return false;
             }
             BOOST_LOG_TRIVIAL(trace)
-                << "Successfully parsed response " << parsed;
+                << __func__ << "Successfully parsed response " << parsed;
 
             auto response = parsed.as_object();
             if (response.contains("error"))
             {
                 BOOST_LOG_TRIVIAL(error)
-                    << "Response contains error: " << response;
+                    << __func__ << "Response contains error: " << response;
                 return false;
             }
             response = response["result"].as_object();
@@ -1033,7 +1037,8 @@ ReportingETL::loadCacheFromClioPeer(
                 if (!stateObject.key.parseHex(
                         obj.at("index").as_string().c_str()))
                 {
-                    BOOST_LOG_TRIVIAL(error) << "failed to parse object id";
+                    BOOST_LOG_TRIVIAL(error)
+                        << __func__ << "failed to parse object id";
                     return false;
                 }
                 boost::algorithm::unhex(
@@ -1058,7 +1063,8 @@ ReportingETL::loadCacheFromClioPeer(
     catch (std::exception const& e)
     {
         BOOST_LOG_TRIVIAL(error)
-            << "Encountered exception : " << e.what() << " - ip = " << ip;
+            << __func__ << "Encountered exception : " << e.what()
+            << " - ip = " << ip;
         return false;
     }
 }
@@ -1343,9 +1349,9 @@ ReportingETL::ReportingETL(
         if (cache.contains("page_fetch_size") &&
             cache.at("page_fetch_size").is_int64())
             cachePageFetchSize_ = cache.at("page_fetch_size").as_int64();
-        if (cache.contains("clio_peers") && cache.at("clio_peers").is_array())
+        if (cache.contains("peers") && cache.at("peers").is_array())
         {
-            boost::json::array peers = cache.at("clio_peers").as_array();
+            boost::json::array peers = cache.at("peers").as_array();
             for (auto& peer : peers)
             {
                 auto& clio = peer.as_object();
