@@ -266,59 +266,51 @@ public:
         try
         {
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
-            try
-            {
-                auto range = backend_->fetchLedgerRange();
-                if (!range)
-                    return sendError(RPC::Error::rpcNOT_READY);
-
-                std::optional<RPC::Context> context = RPC::make_WsContext(
-                    yield,
-                    request,
-                    backend_,
-                    subscriptions_.lock(),
-                    balancer_,
-                    etl_,
-                    shared_from_this(),
-                    *range,
-                    counters_,
-                    *ip);
-
-                if (!context)
-                    return sendError(RPC::Error::rpcBAD_SYNTAX);
-
-                response = getDefaultWsResponse(id);
-
-                auto start = std::chrono::system_clock::now();
-                auto v = RPC::buildResponse(*context);
-                auto end = std::chrono::system_clock::now();
-                auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-                    end - start);
-                logDuration(*context, us);
-
-                if (auto status = std::get_if<RPC::Status>(&v))
-                {
-                    counters_.rpcErrored(context->method);
-
-                    auto error = RPC::make_error(*status);
-
-                    if (!id.is_null())
-                        error["id"] = id;
-
-                    error["request"] = request;
-                    response = error;
-                }
-                else
-                {
-                    counters_.rpcComplete(context->method, us);
-
-                    response["result"] = std::get<boost::json::object>(v);
-                }
-            }
-            catch (Backend::DatabaseTimeout const& t)
-            {
-                BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+            auto range = backend_->fetchLedgerRange();
+            if (!range)
                 return sendError(RPC::Error::rpcNOT_READY);
+
+            std::optional<RPC::Context> context = RPC::make_WsContext(
+                yield,
+                request,
+                backend_,
+                subscriptions_.lock(),
+                balancer_,
+                etl_,
+                shared_from_this(),
+                *range,
+                counters_,
+                *ip);
+
+            if (!context)
+                return sendError(RPC::Error::rpcBAD_SYNTAX);
+
+            response = getDefaultWsResponse(id);
+
+            auto start = std::chrono::system_clock::now();
+            auto v = RPC::buildResponse(*context);
+            auto end = std::chrono::system_clock::now();
+            auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+                end - start);
+            logDuration(*context, us);
+
+            if (auto status = std::get_if<RPC::Status>(&v))
+            {
+                counters_.rpcErrored(context->method);
+
+                auto error = RPC::make_error(*status);
+
+                if (!id.is_null())
+                    error["id"] = id;
+
+                error["request"] = request;
+                response = error;
+            }
+            else
+            {
+                counters_.rpcComplete(context->method, us);
+
+                response["result"] = std::get<boost::json::object>(v);
             }
         }
         catch (std::exception const& e)

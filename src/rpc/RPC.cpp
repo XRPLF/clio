@@ -342,6 +342,13 @@ buildResponse(Context const& ctx)
     if (ctx.method == "ping")
         return boost::json::object{};
 
+    if (ctx.backend->isTooBusy())
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << __func__ << " Database is too busy. Rejecting request";
+        return Status{Error::rpcTOO_BUSY};
+    }
+
     auto method = handlerTable.getHandler(ctx.method);
 
     if (!method)
@@ -363,6 +370,11 @@ buildResponse(Context const& ctx)
     catch (AccountNotFoundError const& err)
     {
         return Status{Error::rpcACT_NOT_FOUND, err.what()};
+    }
+    catch (Backend::DatabaseTimeout const& t)
+    {
+        BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+        return Status{Error::rpcTOO_BUSY};
     }
     catch (std::exception const& err)
     {
