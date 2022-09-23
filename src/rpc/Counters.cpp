@@ -73,11 +73,11 @@ Counters::report()
     for (auto const& [method, info] : methodInfo_)
     {
         boost::json::object counters = {};
-        counters["started"] = std::to_string(info.started);
-        counters["finished"] = std::to_string(info.finished);
-        counters["errored"] = std::to_string(info.errored);
+        counters[JS(started)] = std::to_string(info.started);
+        counters[JS(finished)] = std::to_string(info.finished);
+        counters[JS(errored)] = std::to_string(info.errored);
         counters["forwarded"] = std::to_string(info.forwarded);
-        counters["duration_us"] = std::to_string(info.duration);
+        counters[JS(duration_us)] = std::to_string(info.duration);
 
         rpc[method] = std::move(counters);
     }
