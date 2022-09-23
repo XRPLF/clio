@@ -60,9 +60,8 @@ public:
         return true;
     }
 
-    // TODO: this is not actually being called. Wait for application refactor
     boost::json::object
-    report()
+    report() const
     {
         boost::json::object obj;
         obj["queued"] = queued_;

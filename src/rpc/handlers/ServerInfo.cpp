@@ -48,7 +48,7 @@ doServerInfo(Context const& context)
     if (admin)
     {
         info[JS(counters)] = boost::json::object{};
-        info[JS(counters)].as_object()[JS(rpc)] = context.counters.report();
+        info[JS(counters)].as_object() = context.counters.report();
         info[JS(counters)].as_object()["subscriptions"] =
             context.subscriptions->report();
     }
