@@ -244,7 +244,7 @@ private:
     /// following parent
     /// @param parent the previous ledger
     /// @param rawData data extracted from an ETL source
-    /// @return the newly built ledger and data to write to Postgres
+    /// @return the newly built ledger and data to write to the database
     std::pair<ripple::LedgerInfo, bool>
     buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData);
 
