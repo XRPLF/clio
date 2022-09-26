@@ -223,6 +223,7 @@ public:
         , etl_(etl)
         , dosGuard_(dosGuard)
         , queue_(numWorkerThreads, maxQueueSize)
+        , counters_(queue_)
     {
         boost::beast::error_code ec;
 

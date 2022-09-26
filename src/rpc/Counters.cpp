@@ -1,5 +1,6 @@
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <rpc/RPCHelpers.h>
 
 namespace RPC {
 
@@ -66,18 +67,21 @@ Counters::report()
 {
     std::shared_lock lk(mutex_);
     boost::json::object obj = {};
+    obj[JS(rpc)] = boost::json::object{};
+    auto& rpc = obj[JS(rpc)].as_object();
 
     for (auto const& [method, info] : methodInfo_)
     {
         boost::json::object counters = {};
-        counters["started"] = std::to_string(info.started);
-        counters["finished"] = std::to_string(info.finished);
-        counters["errored"] = std::to_string(info.errored);
+        counters[JS(started)] = std::to_string(info.started);
+        counters[JS(finished)] = std::to_string(info.finished);
+        counters[JS(errored)] = std::to_string(info.errored);
         counters["forwarded"] = std::to_string(info.forwarded);
-        counters["duration_us"] = std::to_string(info.duration);
+        counters[JS(duration_us)] = std::to_string(info.duration);
 
-        obj[method] = std::move(counters);
+        rpc[method] = std::move(counters);
     }
+    obj["work_queue"] = workQueue_.get().report();
 
     return obj;
 }
