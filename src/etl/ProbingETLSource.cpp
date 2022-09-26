@@ -69,7 +69,16 @@ boost::json::object
 ProbingETLSource::toJson() const
 {
     if (!currentSrc_)
-        return {};
+    {
+        boost::json::object sourcesJson = {
+            {"ws", plainSrc_->toJson()},
+            {"wss", sslSrc_->toJson()},
+        };
+
+        return {
+            {"probing", sourcesJson},
+        };
+    }
     return currentSrc_->toJson();
 }
 
