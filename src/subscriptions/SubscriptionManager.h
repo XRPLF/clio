@@ -31,12 +31,18 @@ public:
     unsubscribe(std::shared_ptr<WsBase> const& session);
 
     void
-    publish(std::shared_ptr<Message>& message);
+    publish(std::shared_ptr<Message> const& message);
 
     std::uint64_t
-    count()
+    count() const
     {
         return subCount_.load();
+    }
+
+    bool
+    empty() const
+    {
+        return count() == 0;
     }
 };
 
@@ -90,6 +96,7 @@ class SubscriptionManager
     Subscription txProposedSubscribers_;
     Subscription manifestSubscribers_;
     Subscription validationsSubscribers_;
+    Subscription bookChangesSubscribers_;
 
     SubscriptionMap<ripple::AccountID> accountSubscribers_;
     SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
@@ -122,6 +129,7 @@ public:
         , txProposedSubscribers_(ioc_)
         , manifestSubscribers_(ioc_)
         , validationsSubscribers_(ioc_)
+        , bookChangesSubscribers_(ioc_)
         , accountSubscribers_(ioc_)
         , accountProposedSubscribers_(ioc_)
         , bookSubscribers_(ioc_)
@@ -160,6 +168,11 @@ public:
         std::uint32_t txnCount);
 
     void
+    pubBookChanges(
+        ripple::LedgerInfo const& lgrInfo,
+        std::vector<Backend::TransactionAndMetadata> const& transactions);
+
+    void
     unsubLedger(session_ptr session);
 
     void
@@ -184,6 +197,12 @@ public:
 
     void
     unsubBook(ripple::Book const& book, session_ptr session);
+
+    void
+    subBookChanges(std::shared_ptr<WsBase> session);
+
+    void
+    unsubBookChanges(std::shared_ptr<WsBase> session);
 
     void
     subManifest(session_ptr session);
@@ -234,6 +253,7 @@ public:
         counts["account"] = accountSubscribers_.count();
         counts["accounts_proposed"] = accountProposedSubscribers_.count();
         counts["books"] = bookSubscribers_.count();
+        counts["book_changes"] = bookChangesSubscribers_.count();
 
         return counts;
     }

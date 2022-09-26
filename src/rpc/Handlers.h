@@ -45,7 +45,7 @@ Result
 doChannelVerify(Context const& context);
 
 // book methods
-Result
+[[nodiscard]] Result
 doBookChanges(Context const& context);
 
 Result
