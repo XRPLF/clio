@@ -89,9 +89,6 @@ protected:
     std::optional<LedgerRange> range;
     SimpleCache cache_;
 
-    // mutex used for open() and close()
-    mutable std::mutex mutex_;
-
 public:
     BackendInterface(boost::json::object const& config)
     {
