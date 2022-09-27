@@ -218,6 +218,12 @@ getAccount(
         return {};
     }
 
+    if (!request.contains(account))
+    {
+        return Status{
+            Error::rpcACT_NOT_FOUND, field.to_string() + "actNotFound"};
+    }
+
     return Status{Error::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
 }
 
