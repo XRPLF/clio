@@ -21,8 +21,14 @@ class WorkQueue
     std::atomic_uint64_t curSize_ = 0;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
+    std::vector<std::thread> threads_ = {};
+    boost::asio::io_context ioc_ = {};
+    std::optional<boost::asio::io_context::work> work_{ioc_};
+
 public:
-    WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
+    WorkQueue(
+        std::uint32_t numWorkers,
+        std::optional<uint32_t> maxSize = std::nullopt);
 
     template <typename F>
     bool
@@ -61,21 +67,7 @@ public:
     }
 
     boost::json::object
-    report() const
-    {
-        boost::json::object obj;
-        obj["queued"] = queued_;
-        obj["queued_duration_us"] = durationUs_;
-        obj["current_queue_size"] = curSize_;
-        obj["max_queue_size"] = maxSize_;
-        return obj;
-    }
-
-private:
-    std::vector<std::thread> threads_ = {};
-
-    boost::asio::io_context ioc_ = {};
-    std::optional<boost::asio::io_context::work> work_{ioc_};
+    report() const;
 };
 
 #endif  // CLIO_WORK_QUEUE_H

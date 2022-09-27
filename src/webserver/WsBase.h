@@ -272,6 +272,14 @@ public:
         boost::json::value const& id,
         boost::asio::yield_context& yield)
     {
+        if (dead())
+        {
+            BOOST_LOG_TRIVIAL(warning)
+                << __func__
+                << ": abandon request as ws session is already dead";
+            return;
+        }
+
         auto ip = derived().ip();
         if (!ip)
             return;
