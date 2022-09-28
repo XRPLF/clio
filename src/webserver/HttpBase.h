@@ -393,7 +393,7 @@ handle_request(
             subscriptions,
             balancer,
             etl,
-            tagFactory,
+            tagFactory.with(std::cref(http->tag())),
             *range,
             counters,
             ip);

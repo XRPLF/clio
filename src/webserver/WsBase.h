@@ -302,7 +302,7 @@ public:
                 balancer_,
                 etl_,
                 shared_from_this(),
-                tagFactory_,
+                tagFactory_.with(std::cref(tag())),
                 *range,
                 counters_,
                 *ip);

@@ -151,7 +151,6 @@ class TagDecoratorFactory final
     using parent_t =
         std::optional<std::reference_wrapper<BaseTagDecorator const>>;
 
-public:
     /**
      * @brief Represents the type of tag decorator
      */
@@ -161,35 +160,49 @@ public:
         UINT  /*! atomic_uint64_t tag, thread-safe, lock-free */
     };
 
-private:
     Type type_; /*! The type of TagDecorator this factory produces */
+    parent_t parent_ = std::nullopt; /*! The parent tag decorator to bind */
 
 public:
     ~TagDecoratorFactory() = default;
-    TagDecoratorFactory(boost::json::object const& config)
+
+    /**
+     * @brief Instantiates a tag decorator factory from `clio` configuration.
+     * @param config The configuration as a json object
+     */
+    explicit TagDecoratorFactory(boost::json::object const& config)
         : type_{TagDecoratorFactory::parseType(config)}
     {
     }
 
+private:
+    TagDecoratorFactory(Type type, parent_t parent) noexcept
+        : type_{type}, parent_{parent}
+    {
+    }
+
+public:
     /**
-     * @brief Instantiates the TagDecorator specified by `type_`.
-     *
-     * Note that if `parent` is specified it is your responsibility that the
-     * decorator referred to by `parent` outlives the decorator produced by this
-     * factory.
+     * @brief Instantiates the TagDecorator specified by `type_` with parent
+     * bound from `parent_`.
      *
      * @return std::unique_ptr<BaseTagDecorator> An instance of the requested
      * decorator
      */
     std::unique_ptr<BaseTagDecorator>
-    make(parent_t parent = std::nullopt) const;
+    make() const;
 
     /**
-     * @brief Parses the type of decorator out of the config.
+     * @brief Creates a new tag decorator factory with a bound parent tag
+     * decorator.
      *
-     * @param config The configuration as a json object
-     * @return Type The selected type of decorator
+     * @param parent The parent tag decorator to use
+     * @return TagDecoratorFactory A new instance of the tag decorator factory
      */
+    TagDecoratorFactory
+    with(parent_t parent) const noexcept;
+
+private:
     static Type
     parseType(boost::json::object const& config);
 };
@@ -209,15 +222,6 @@ protected:
      */
     explicit Taggable(util::TagDecoratorFactory const& tagFactory)
         : tagDecorator_{tagFactory.make()}
-    {
-    }
-
-    /**
-     * @brief New Taggable with specific decorator
-     * @param decorator The root decorator for this instance
-     */
-    explicit Taggable(decorator_t decorator)
-        : tagDecorator_{std::move(decorator)}
     {
     }
 

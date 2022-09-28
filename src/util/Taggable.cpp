@@ -33,16 +33,16 @@ UUIDTagGenerator::next()
 namespace util {
 
 std::unique_ptr<BaseTagDecorator>
-TagDecoratorFactory::make(parent_t parent) const
+TagDecoratorFactory::make() const
 {
     switch (type_)
     {
         case Type::UINT:
             return std::make_unique<TagDecorator<detail::UIntTagGenerator>>(
-                parent);
+                parent_);
         case Type::UUID:
             return std::make_unique<TagDecorator<detail::UUIDTagGenerator>>(
-                parent);
+                parent_);
         case Type::NONE:
         default:
             return std::make_unique<TagDecorator<detail::NullTagGenerator>>();
@@ -66,6 +66,12 @@ TagDecoratorFactory::parseType(boost::json::object const& config)
         throw std::runtime_error(
             "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
             "`null`");
+}
+
+TagDecoratorFactory
+TagDecoratorFactory::with(parent_t parent) const noexcept
+{
+    return TagDecoratorFactory(type_, parent);
 }
 
 }  // namespace util

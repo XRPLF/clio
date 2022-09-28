@@ -24,7 +24,7 @@ Context::Context(
     Backend::LedgerRange const& range_,
     Counters& counters_,
     std::string const& clientIp_)
-    : Taggable(tagFactory_.make(std::cref(session_->tag())))
+    : Taggable(tagFactory_)
     , yield(yield_)
     , method(command_)
     , version(version_)
