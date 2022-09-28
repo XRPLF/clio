@@ -118,64 +118,36 @@ class DOSGuard
             return it->second;
     }
 
-    // increment atomic request counter for ip in a threadsafe manner.
-    // returns result (not a reference)
     std::uint32_t
     incrementRequestCount(std::string const& ip)
     {
-        // reading ipReqiestCount_[ip] can potentially mutate the internal
-        // ipRequestCount_ data structure. One of two things will happen:
-        // 1) ipRequestCount_[ip] contains a reference to an atomic
-        // 2) ipRequestCount_[ip] creates a new reference
-        //      -this mutates the data structure
-
-        {
-            std::shared_lock read_lock(reqMtx_);
-            auto it = ipRequestCount_.find(ip);
-            if (it != ipRequestCount_.end())
-                return ipRequestCount_[ip]++;
-        }
-        {
-            // at this point the ip does not exist in the map. Must grab
-            // writer lock
-            std::unique_lock write_lock(reqMtx_);
-            // this will create and increment the atomic OR
-            // increment the atomic if another thread succeeded for this ip.
+        if (maxConcurrentRequests_ == -1)
+            return 0;  // doesn't matter what we return here
+        std::shared_lock lck{reqMtx_};
+        auto it = ipRequestCount_.find(ip);
+        if (it != ipRequestCount_.end())
             return ipRequestCount_[ip]++;
-        }
+        else
+            return ipRequestCount_[ip]++;
     }
 
     void
     decrementRequestCount(std::string const& ip)
     {
-        // assuming that ip is in the map
         {
             std::shared_lock read_lock(reqMtx_);
             auto it = ipRequestCount_.find(ip);
             if (it == ipRequestCount_.end())
-                assert(false);
+                return;  // might have swept since ip was added
             if (--ipRequestCount_[ip])
                 return;
         }
-        // erase if count is still zero
-        {
-            std::unique_lock write_lock(reqMtx_);
-            auto it = ipRequestCount_.find(ip);
-            if (it == ipRequestCount_.end())
-                return;  // another thread erased the reference
-
-            if (!it->second)  // if still zero
-                ipRequestCount_.erase(ip);
-        }
-        return;
     }
-
     bool
     isOk(std::string const& ip, std::uint32_t requestCount)
     {
         if (whitelist_.contains(ip))
             return true;
-        std::shared_lock lk(ftMtx_);
         bool fetchesOk = maxFetches_ == -1 || getFetches(ip) < maxFetches_;
         bool requestsOk = maxConcurrentRequests_ == -1 ||
             requestCount < maxConcurrentRequests_;
@@ -186,9 +158,9 @@ public:
     DOSGuard(boost::json::object const& config, boost::asio::io_context& ctx)
         : ctx_(ctx)
         , whitelist_(getWhitelist(config))
-        , maxFetches_(get(config, "max_fetches", 100))
-        , sweepInterval_(get(config, "sweep_interval", 1))
-        , maxConcurrentRequests_(get(config, "max_concurrent_requests", 4))
+        , maxFetches_(get(config, "max_fetches", -1))  // Off by default
+        , sweepInterval_(get(config, "sweep_interval", 10))
+        , maxConcurrentRequests_(get(config, "max_concurrent_requests", 1))
     {
         createTimer();
     }
@@ -218,8 +190,6 @@ public:
     {
         if (whitelist_.contains(ip))
             return true;
-        std::shared_lock flk(ftMtx_);
-        std::shared_lock rlk(reqMtx_);
         bool fetchesOk = maxFetches_ == -1 || getFetches(ip) < maxFetches_;
         bool requestsOk = maxConcurrentRequests_ == -1 ||
             getRequests(ip) < maxConcurrentRequests_;
@@ -252,8 +222,15 @@ public:
     void
     clear()
     {
-        std::unique_lock lck(ftMtx_);
-        ipFetchCount_.clear();
+        {
+            std::unique_lock lck{ftMtx_};
+            ipFetchCount_.clear();
+        }
+
+        {
+            std::unique_lock lck{reqMtx_};
+            ipRequestCount_.clear();
+        }
     }
 };
 #endif
