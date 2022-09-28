@@ -1009,6 +1009,15 @@ ReportingETL::loadCacheFromClioPeer(
             {
                 BOOST_LOG_TRIVIAL(error)
                     << __func__ << "Response contains error: " << response;
+                auto err = response["error"];
+                if (err.is_string() && err.as_string() == "lgrNotFound")
+                {
+                    BOOST_LOG_TRIVIAL(warning)
+                        << __func__
+                        << " ledger not found. ledger = " << ledgerIndex
+                        << ". trying again";
+                    continue;
+                }
                 return false;
             }
             response = response["result"].as_object();
