@@ -241,7 +241,8 @@ public:
         if (ec)
         {
             BOOST_LOG_TRIVIAL(error)
-                << "Failed to bind to endpoint: " << endpoint;
+                << "Failed to bind to endpoint: " << endpoint
+                << ". message: " << ec.message();
             throw std::runtime_error("Failed to bind to specified endpoint");
         }
 
@@ -250,7 +251,8 @@ public:
         if (ec)
         {
             BOOST_LOG_TRIVIAL(error)
-                << "Failed to listen at endpoint: " << endpoint;
+                << "Failed to listen at endpoint: " << endpoint
+                << ". message: " << ec.message();
             throw std::runtime_error("Failed to listen at specified endpoint");
         }
     }
