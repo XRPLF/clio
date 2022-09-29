@@ -26,7 +26,7 @@ std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow(
     boost::asio::yield_context& yield) const
 {
-    BOOST_LOG_TRIVIAL(debug) << __func__;
+    BOOST_LOG_TRIVIAL(trace) << __func__ << "(yield)";
     while (true)
     {
         try
@@ -43,7 +43,7 @@ BackendInterface::hardFetchLedgerRangeNoThrow(
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    BOOST_LOG_TRIVIAL(debug) << __func__;
+    BOOST_LOG_TRIVIAL(trace) << __func__ << "()";
     return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
 }
 

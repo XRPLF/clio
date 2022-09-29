@@ -18,9 +18,12 @@
 #include <string>
 #include <thread>
 
+#include <etl/ReportingETL.h>
+#include <main/Build.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
+#include <util/Taggable.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
 
@@ -37,7 +40,7 @@ static std::string defaultResponse =
 
 // From Boost Beast examples http_server_flex.cpp
 template <class Derived>
-class HttpBase
+class HttpBase : public util::Taggable
 {
     // Access the derived class, this is part of
     // the Curiously Recurring Template Pattern idiom.
@@ -91,6 +94,7 @@ class HttpBase
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
+    util::TagDecoratorFactory const& tagFactory_;
     DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& workQueue_;
@@ -132,7 +136,7 @@ protected:
         {
             ec_ = ec;
             BOOST_LOG_TRIVIAL(info)
-                << "httpFail: " << what << ": " << ec.message();
+                << tag() << __func__ << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().stream())
                 .socket()
                 .close(ec);
@@ -146,21 +150,29 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
+        util::TagDecoratorFactory const& tagFactory,
         DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer buffer)
-        : ioc_(ioc)
+        : Taggable(tagFactory)
+        , ioc_(ioc)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , workQueue_(queue)
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {
+        BOOST_LOG_TRIVIAL(debug) << tag() << "http session created";
+    }
+    virtual ~HttpBase()
+    {
+        BOOST_LOG_TRIVIAL(debug) << tag() << "http session closed";
     }
 
     void
@@ -211,6 +223,7 @@ public:
                 subscriptions_,
                 balancer_,
                 etl_,
+                tagFactory_,
                 dosGuard_,
                 counters_,
                 workQueue_);
@@ -220,6 +233,10 @@ public:
 
         if (!ip)
             return;
+
+        BOOST_LOG_TRIVIAL(debug) << tag() << "http::" << __func__
+                                 << " received request from ip = " << *ip
+                                 << " - posting to WorkQueue";
 
         auto session = derived().shared_from_this();
 
@@ -235,6 +252,7 @@ public:
                         subscriptions_,
                         balancer_,
                         etl_,
+                        tagFactory_,
                         dosGuard_,
                         counters_,
                         *ip,
@@ -242,7 +260,8 @@ public:
                 },
                 dosGuard_.isWhiteListed(*ip)))
         {
-            // Non-whitelist connection rejected due to full connection queue
+            // Non-whitelist connection rejected due to full connection
+            // queue
             http::response<http::string_body> res{
                 http::status::ok, req_.version()};
             res.set(
@@ -298,6 +317,7 @@ handle_request(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
+    util::TagDecoratorFactory const& tagFactory,
     DOSGuard& dosGuard,
     RPC::Counters& counters,
     std::string const& ip,
@@ -336,7 +356,9 @@ handle_request(
 
     try
     {
-        BOOST_LOG_TRIVIAL(debug) << "Received request: " << req.body();
+        BOOST_LOG_TRIVIAL(debug)
+            << http->tag()
+            << "http received request from work queue: " << req.body();
 
         boost::json::object request;
         std::string responseStr = "";
@@ -371,6 +393,7 @@ handle_request(
             subscriptions,
             balancer,
             etl,
+            tagFactory.with(std::cref(http->tag())),
             *range,
             counters,
             ip);
@@ -396,13 +419,11 @@ handle_request(
         {
             counters.rpcErrored(context->method);
             auto error = RPC::make_error(*status);
-
             error["request"] = request;
-
             result = error;
 
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__ << " Encountered error: " << responseStr;
+            BOOST_LOG_TRIVIAL(debug) << http->tag() << __func__
+                                     << " Encountered error: " << responseStr;
         }
         else
         {
@@ -437,7 +458,7 @@ handle_request(
     catch (std::exception const& e)
     {
         BOOST_LOG_TRIVIAL(error)
-            << __func__ << " Caught exception : " << e.what();
+            << http->tag() << __func__ << " Caught exception : " << e.what();
         return send(httpResponse(
             http::status::internal_server_error,
             "application/json",

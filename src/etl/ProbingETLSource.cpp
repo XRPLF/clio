@@ -8,8 +8,7 @@ ProbingETLSource::ProbingETLSource(
     std::shared_ptr<NetworkValidatedLedgers> nwvl,
     ETLLoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)
-    : ioc_{ioc}
-    , sslCtx_{std::move(sslCtx)}
+    : sslCtx_{std::move(sslCtx)}
     , sslSrc_{make_shared<SslETLSource>(
           config,
           ioc,

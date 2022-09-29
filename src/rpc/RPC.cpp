@@ -1,10 +1,45 @@
-#include <boost/asio/spawn.hpp>
 #include <etl/ETLSource.h>
 #include <rpc/Handlers.h>
 #include <rpc/RPCHelpers.h>
+#include <webserver/HttpBase.h>
+#include <webserver/WsBase.h>
+
+#include <boost/asio/spawn.hpp>
+
 #include <unordered_map>
 
 namespace RPC {
+
+Context::Context(
+    boost::asio::yield_context& yield_,
+    std::string const& command_,
+    std::uint32_t version_,
+    boost::json::object const& params_,
+    std::shared_ptr<BackendInterface const> const& backend_,
+    std::shared_ptr<SubscriptionManager> const& subscriptions_,
+    std::shared_ptr<ETLLoadBalancer> const& balancer_,
+    std::shared_ptr<ReportingETL const> const& etl_,
+    std::shared_ptr<WsBase> const& session_,
+    util::TagDecoratorFactory const& tagFactory_,
+    Backend::LedgerRange const& range_,
+    Counters& counters_,
+    std::string const& clientIp_)
+    : Taggable(tagFactory_)
+    , yield(yield_)
+    , method(command_)
+    , version(version_)
+    , params(params_)
+    , backend(backend_)
+    , subscriptions(subscriptions_)
+    , balancer(balancer_)
+    , etl(etl_)
+    , session(session_)
+    , range(range_)
+    , counters(counters_)
+    , clientIp(clientIp_)
+{
+    BOOST_LOG_TRIVIAL(debug) << tag() << "new Context created";
+}
 
 std::optional<Context>
 make_WsContext(
@@ -15,6 +50,7 @@ make_WsContext(
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<ReportingETL const> const& etl,
     std::shared_ptr<WsBase> const& session,
+    util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp)
@@ -30,7 +66,7 @@ make_WsContext(
 
     std::string command = commandValue.as_string().c_str();
 
-    return Context{
+    return std::make_optional<Context>(
         yc,
         command,
         1,
@@ -40,9 +76,10 @@ make_WsContext(
         balancer,
         etl,
         session,
+        tagFactory,
         range,
         counters,
-        clientIp};
+        clientIp);
 }
 
 std::optional<Context>
@@ -53,6 +90,7 @@ make_HttpContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<ReportingETL const> const& etl,
+    util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     RPC::Counters& counters,
     std::string const& clientIp)
@@ -76,7 +114,7 @@ make_HttpContext(
     if (!array.at(0).is_object())
         return {};
 
-    return Context{
+    return std::make_optional<Context>(
         yc,
         command,
         1,
@@ -86,9 +124,10 @@ make_HttpContext(
         balancer,
         etl,
         nullptr,
+        tagFactory,
         range,
         counters,
-        clientIp};
+        clientIp);
 }
 
 constexpr static WarningInfo warningInfos[]{
@@ -356,7 +395,13 @@ buildResponse(Context const& ctx)
 
     try
     {
+        BOOST_LOG_TRIVIAL(debug)
+            << ctx.tag() << __func__ << " start executing rpc `" << ctx.method
+            << '`';
         auto v = (*method)(ctx);
+        BOOST_LOG_TRIVIAL(debug)
+            << ctx.tag() << __func__ << " finish executing rpc `" << ctx.method
+            << '`';
 
         if (auto object = std::get_if<boost::json::object>(&v))
             (*object)["validated"] = true;
@@ -379,7 +424,7 @@ buildResponse(Context const& ctx)
     catch (std::exception const& err)
     {
         BOOST_LOG_TRIVIAL(error)
-            << __func__ << " caught exception : " << err.what();
+            << ctx.tag() << __func__ << " caught exception : " << err.what();
         return Status{Error::rpcINTERNAL};
     }
 }

@@ -98,7 +98,8 @@ target_sources(clio PRIVATE
   # Server
   src/rpc/handlers/ServerInfo.cpp
   # Utility
-  src/rpc/handlers/Random.cpp)
+  src/rpc/handlers/Random.cpp
+  src/util/Taggable.cpp)
 
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)

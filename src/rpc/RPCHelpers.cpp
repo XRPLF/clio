@@ -1,6 +1,8 @@
 #include <boost/algorithm/string.hpp>
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <webserver/WsBase.h>
+
 namespace RPC {
 
 std::optional<bool>
@@ -1471,6 +1473,7 @@ parseTaker(boost::json::value const& taker)
         return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
     return *takerID;
 }
+
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request)
 {
