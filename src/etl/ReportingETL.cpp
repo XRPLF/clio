@@ -1317,7 +1317,7 @@ ReportingETL::doWork()
 }
 
 ReportingETL::ReportingETL(
-    boost::json::object const& config,
+    clio::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
@@ -1330,60 +1330,55 @@ ReportingETL::ReportingETL(
     , publishStrand_(ioc)
     , networkValidatedLedgers_(ledgers)
 {
-    if (config.contains("start_sequence"))
-        startSequence_ = config.at("start_sequence").as_int64();
-    if (config.contains("finish_sequence"))
-        finishSequence_ = config.at("finish_sequence").as_int64();
-    if (config.contains("read_only"))
-        readOnly_ = config.at("read_only").as_bool();
-    if (config.contains("online_delete"))
+    startSequence_ = config.maybeValue<uint32_t>("start_sequence");
+    finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
+    readOnly_ = config.valueOr("read_only", readOnly_);
+
+    if (auto interval = config.maybeValue<uint32_t>("online_delete"); interval)
     {
-        int64_t interval = config.at("online_delete").as_int64();
-        uint32_t max = std::numeric_limits<uint32_t>::max();
-        if (interval > max)
+        auto const max = std::numeric_limits<uint32_t>::max();
+        if (*interval > max)
         {
             std::stringstream msg;
             msg << "online_delete cannot be greater than "
                 << std::to_string(max);
             throw std::runtime_error(msg.str());
         }
-        if (interval > 0)
-            onlineDeleteInterval_ = static_cast<uint32_t>(interval);
+        if (*interval > 0)
+            onlineDeleteInterval_ = *interval;
     }
-    if (config.contains("extractor_threads"))
-        extractorThreads_ = config.at("extractor_threads").as_int64();
-    if (config.contains("txn_threshold"))
-        txnThreshold_ = config.at("txn_threshold").as_int64();
+
+    extractorThreads_ =
+        config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
+    txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
     if (config.contains("cache"))
     {
-        auto cache = config.at("cache").as_object();
-        if (cache.contains("load") && cache.at("load").is_string())
+        auto const cache = config.section("cache");
+        if (auto entry = cache.maybeValue<std::string>("load"); entry)
         {
-            auto entry = config.at("cache").as_object().at("load").as_string();
-            boost::algorithm::to_lower(entry);
-            if (entry == "sync")
+            if (boost::iequals(*entry, "sync"))
                 cacheLoadStyle_ = CacheLoadStyle::SYNC;
-            if (entry == "async")
+            if (boost::iequals(*entry, "async"))
                 cacheLoadStyle_ = CacheLoadStyle::ASYNC;
-            if (entry == "none" || entry == "no")
+            if (boost::iequals(*entry, "none") or boost::iequals(*entry, "no"))
                 cacheLoadStyle_ = CacheLoadStyle::NOT_AT_ALL;
         }
-        if (cache.contains("num_diffs") && cache.at("num_diffs").is_int64())
-            numCacheDiffs_ = cache.at("num_diffs").as_int64();
-        if (cache.contains("num_markers") && cache.at("num_markers").is_int64())
-            numCacheMarkers_ = cache.at("num_markers").as_int64();
-        if (cache.contains("page_fetch_size") &&
-            cache.at("page_fetch_size").is_int64())
-            cachePageFetchSize_ = cache.at("page_fetch_size").as_int64();
-        if (cache.contains("peers") && cache.at("peers").is_array())
+
+        numCacheDiffs_ = cache.valueOr<size_t>("num_diffs", numCacheDiffs_);
+        numCacheMarkers_ =
+            cache.valueOr<size_t>("num_markers", numCacheMarkers_);
+        cachePageFetchSize_ =
+            cache.valueOr<size_t>("page_fetch_size", cachePageFetchSize_);
+
+        if (auto peers = cache.maybeArray("peers"); peers)
         {
-            auto const& peers = cache.at("peers").as_array();
-            for (auto const& peer : peers)
+            for (auto const& peer : *peers)
             {
-                auto const& clio = peer.as_object();
-                auto ip = clio.at("ip").as_string().c_str();
-                auto port = clio.at("port").as_int64();
-                clioPeers.emplace_back(ip, port);
+                auto ip = peer.value<std::string>("ip");
+                auto port = peer.value<uint32_t>("port");
+
+                // todo: use emplace_back when clang is ready
+                clioPeers.push_back({ip, port});
             }
             unsigned seed =
                 std::chrono::system_clock::now().time_since_epoch().count();

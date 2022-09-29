@@ -6,8 +6,11 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
-#include <etl/ETLSource.h>
+
 #include <mutex>
+
+#include <config/Config.h>
+#include <etl/ETLSource.h>
 
 /// This ETLSource implementation attempts to connect over both secure websocket
 /// and plain websocket. First to connect pauses the other and the probing is
@@ -23,7 +26,7 @@ class ProbingETLSource : public ETLSource
 
 public:
     ProbingETLSource(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,

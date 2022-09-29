@@ -23,6 +23,7 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <algorithm>
 #include <backend/BackendFactory.h>
+#include <config/Config.h>
 #include <cstdlib>
 #include <etl/ReportingETL.h>
 #include <fstream>
@@ -36,37 +37,16 @@
 #include <vector>
 #include <webserver/Listener.h>
 
-std::optional<boost::json::object>
-parse_config(const char* filename)
-{
-    try
-    {
-        std::ifstream in(filename, std::ios::in | std::ios::binary);
-        if (in)
-        {
-            std::stringstream contents;
-            contents << in.rdbuf();
-            in.close();
-            std::cout << contents.str() << std::endl;
-            boost::json::value value = boost::json::parse(contents.str());
-            return value.as_object();
-        }
-    }
-    catch (std::exception const& e)
-    {
-        std::cout << e.what() << std::endl;
-    }
-    return {};
-}
+using namespace clio;
 
 std::optional<ssl::context>
-parse_certs(boost::json::object const& config)
+parse_certs(Config const& config)
 {
     if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
         return {};
 
-    auto certFilename = config.at("ssl_cert_file").as_string().c_str();
-    auto keyFilename = config.at("ssl_key_file").as_string().c_str();
+    auto certFilename = config.value<std::string>("ssl_cert_file");
+    auto keyFilename = config.value<std::string>("ssl_key_file");
 
     std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
     if (!readCert)
@@ -74,7 +54,6 @@ parse_certs(boost::json::object const& config)
 
     std::stringstream contents;
     contents << readCert.rdbuf();
-    readCert.close();
     std::string cert = contents.str();
 
     std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
@@ -102,7 +81,7 @@ parse_certs(boost::json::object const& config)
 }
 
 void
-initLogging(boost::json::object const& config)
+initLogging(Config const& config)
 {
     namespace src = boost::log::sources;
     namespace keywords = boost::log::keywords;
@@ -110,35 +89,30 @@ initLogging(boost::json::object const& config)
     namespace trivial = boost::log::trivial;
     boost::log::add_common_attributes();
     std::string format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%";
-    if (!config.contains("log_to_console") ||
-        config.at("log_to_console").as_bool())
+    if (config.valueOr<bool>("log_to_console", true))
     {
         boost::log::add_console_log(std::cout, keywords::format = format);
     }
-    if (config.contains("log_directory"))
+
+    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir)
     {
-        if (!config.at("log_directory").is_string())
-            throw std::runtime_error("log directory must be a string");
-        boost::filesystem::path dirPath{
-            config.at("log_directory").as_string().c_str()};
+        boost::filesystem::path dirPath{*logDir};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
-        const int64_t rotationSize = config.contains("log_rotation_size")
-            ? config.at("log_rotation_size").as_int64() * 1024 * 1024u
-            : 2 * 1024 * 1024 * 1024u;
+        auto const rotationSize =
+            config.valueOr<int64_t>("log_rotation_size", 2 * 1024) * 1024 *
+            1024u;
         if (rotationSize <= 0)
             throw std::runtime_error(
                 "log rotation size must be greater than 0");
-        const int64_t rotationPeriod =
-            config.contains("log_rotation_hour_interval")
-            ? config.at("log_rotation_hour_interval").as_int64()
-            : 12u;
+        auto const rotationPeriod =
+            config.valueOr<int64_t>("log_rotation_hour_interval", 12u);
         if (rotationPeriod <= 0)
             throw std::runtime_error(
                 "log rotation time interval must be greater than 0");
-        const int64_t dirSize = config.contains("log_directory_max_size")
-            ? config.at("log_directory_max_size").as_int64() * 1024 * 1024u
-            : 50 * 1024 * 1024 * 1024u;
+        auto const dirSize =
+            config.valueOr<int64_t>("log_directory_max_size", 50 * 1024) *
+            1024 * 1024u;
         if (dirSize <= 0)
             throw std::runtime_error(
                 "log rotation directory max size must be greater than 0");
@@ -157,9 +131,7 @@ initLogging(boost::json::object const& config)
                 keywords::target = dirPath, keywords::max_size = dirSize));
         fileSink->locked_backend()->scan_for_files();
     }
-    auto const logLevel = config.contains("log_level")
-        ? config.at("log_level").as_string()
-        : "info";
+    auto const logLevel = config.valueOr<std::string>("log_level", "info");
     if (boost::iequals(logLevel, "trace"))
         boost::log::core::get()->set_filter(
             trivial::severity >= trivial::trace);
@@ -217,28 +189,24 @@ main(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    auto const config = parse_config(argv[1]);
+    auto const config = ConfigReader::open(argv[1]);
     if (!config)
     {
         std::cerr << "Couldnt parse config. Exiting..." << std::endl;
         return EXIT_FAILURE;
     }
 
-    initLogging(*config);
+    initLogging(config);
 
-    // Announce Clio version
     BOOST_LOG_TRIVIAL(info)
         << "Clio version: " << Build::getClioFullVersionString();
 
-    auto ctx = parse_certs(*config);
+    auto ctx = parse_certs(config);
     auto ctxRef = ctx
         ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
         : std::nullopt;
 
-    auto const threads = config->contains("io_threads")
-        ? config->at("io_threads").as_int64()
-        : 2;
-
+    auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
     {
         BOOST_LOG_TRIVIAL(fatal) << "io_threads is less than 0";
@@ -251,15 +219,15 @@ main(int argc, char* argv[])
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    DOSGuard dosGuard{config.value(), ioc};
+    DOSGuard dosGuard{config, ioc};
 
     // Interface to the database
     std::shared_ptr<BackendInterface> backend{
-        Backend::make_Backend(ioc, *config)};
+        Backend::make_Backend(ioc, config)};
 
     // Manages clients subscribed to streams
     std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager(*config, backend)};
+        SubscriptionManager::make_SubscriptionManager(config, backend)};
 
     // Tracks which ledgers have been validated by the
     // network
@@ -272,16 +240,16 @@ main(int argc, char* argv[])
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        *config, ioc, backend, subscriptions, ledgers);
+        config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only
     // mode, ETL only publishes
     auto etl = ReportingETL::make_ReportingETL(
-        *config, ioc, backend, subscriptions, balancer, ledgers);
+        config, ioc, backend, subscriptions, balancer, ledgers);
 
     // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(
-        *config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
+        config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope
