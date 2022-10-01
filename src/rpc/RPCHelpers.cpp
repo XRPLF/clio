@@ -1,8 +1,6 @@
 #include <boost/algorithm/string.hpp>
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
-#include <webserver/WsBase.h>
-
 namespace RPC {
 
 std::optional<bool>
@@ -218,6 +216,11 @@ getAccount(
     {
         account = a.value();
         return {};
+    }
+
+    if (!request.contains(account))
+    {
+        return Status{Error::rpcACT_NOT_FOUND, field.to_string() + "NotFound"};
     }
 
     return Status{Error::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
@@ -1473,7 +1476,6 @@ parseTaker(boost::json::value const& taker)
         return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
     return *takerID;
 }
-
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request)
 {
