@@ -1378,12 +1378,12 @@ parseBook(boost::json::object const& request)
     ripple::Currency pay_currency;
     if (!ripple::to_currency(
             pay_currency, taker_pays.at("currency").as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "badTakerPaysCurrency"};
+        return Status{Error::rpcSRC_CUR_MALFORMED, "badTakerPaysCurrency"};
 
     ripple::Currency get_currency;
     if (!ripple::to_currency(
             get_currency, taker_gets["currency"].as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "badTakerGetsCurrency"};
+        return Status{Error::rpcDST_AMT_MALFORMED, "badTakerGetsCurrency"};
 
     ripple::AccountID pay_issuer;
     if (taker_pays.contains("issuer"))
