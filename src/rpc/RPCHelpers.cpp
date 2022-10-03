@@ -1,8 +1,6 @@
 #include <boost/algorithm/string.hpp>
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
-#include <webserver/WsBase.h>
-
 namespace RPC {
 
 std::optional<bool>
@@ -1473,7 +1471,6 @@ parseTaker(boost::json::value const& taker)
         return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
     return *takerID;
 }
-
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request)
 {
@@ -1571,7 +1568,7 @@ traverseTransactions(
             if (context.range.maxSequence < min.as_int64() ||
                 context.range.minSequence > min.as_int64())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "ledgerSeqMinOutOfRange"};
+                    Error::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"};
             else
                 minIndex = boost::json::value_to<std::uint32_t>(min);
         }
@@ -1593,7 +1590,7 @@ traverseTransactions(
             if (context.range.maxSequence < max.as_int64() ||
                 context.range.minSequence > max.as_int64())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+                    Error::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"};
             else
                 maxIndex = boost::json::value_to<std::uint32_t>(max);
         }
