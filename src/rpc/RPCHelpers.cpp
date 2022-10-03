@@ -1646,8 +1646,13 @@ traverseTransactions(
 
     for (auto const& txnPlusMeta : blobs)
     {
-        if (txnPlusMeta.ledgerSequence < minIndex ||
-            txnPlusMeta.ledgerSequence > maxIndex)
+        if ((txnPlusMeta.ledgerSequence < minIndex && !forward) ||
+            (txnPlusMeta.ledgerSequence > maxIndex && forward))
+        {
+            response.erase(JS(marker));
+            break;
+        }
+        else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
@@ -1674,13 +1679,11 @@ traverseTransactions(
             obj[JS(date)] = txnPlusMeta.date;
         }
         obj[JS(validated)] = true;
-
         txns.push_back(obj);
     }
 
     response[JS(ledger_index_min)] = minIndex;
     response[JS(ledger_index_max)] = maxIndex;
-
     response[JS(transactions)] = txns;
 
     BOOST_LOG_TRIVIAL(info)
