@@ -77,6 +77,14 @@ private:
     // thread responsible for syncing the cache on startup
     std::thread cacheDownloader_;
 
+    struct ClioPeer
+    {
+        std::string ip;
+        int port;
+    };
+
+    std::vector<ClioPeer> clioPeers;
+
     std::thread worker_;
     boost::asio::io_context& ioContext_;
 
@@ -176,6 +184,16 @@ private:
     /// parameter, to populate synchronously, or not at all
     void
     loadCache(uint32_t seq);
+
+    void
+    loadCacheFromDb(uint32_t seq);
+
+    bool
+    loadCacheFromClioPeer(
+        uint32_t ledgerSequence,
+        std::string const& ip,
+        std::string const& port,
+        boost::asio::yield_context& yield);
 
     /// Run ETL. Extracts ledgers and writes them to the database, until a
     /// write conflict occurs (or the server shuts down).
