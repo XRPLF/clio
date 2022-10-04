@@ -21,7 +21,7 @@
             "grpc_port":"50051"
         }
     ],
-    "clio_peers": [],
+    "peers": [],
     "dos_guard":
     {
         "whitelist":["127.0.0.1"]
