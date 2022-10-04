@@ -1004,12 +1004,12 @@ ReportingETL::loadCacheFromClioPeer(
             BOOST_LOG_TRIVIAL(trace)
                 << __func__ << " Successfully parsed response " << parsed;
 
-            auto& response = parsed.as_object();
-            if (response.contains("error"))
+            if (auto const& response = parsed.as_object();
+                response.contains("error"))
             {
                 BOOST_LOG_TRIVIAL(error)
                     << __func__ << " Response contains error: " << response;
-                auto const& err = response["error"];
+                auto const& err = response.at("error");
                 if (err.is_string() && err.as_string() == "lgrNotFound")
                 {
                     BOOST_LOG_TRIVIAL(warning)
@@ -1020,7 +1020,8 @@ ReportingETL::loadCacheFromClioPeer(
                 }
                 return false;
             }
-            response = response["result"].as_object();
+            auto const& response = parsed.as_object()["result"].as_object();
+
             if (!response.contains("cache_full") ||
                 !response.at("cache_full").as_bool())
             {
@@ -1033,7 +1034,7 @@ ReportingETL::loadCacheFromClioPeer(
             else
                 marker = {};
 
-            auto const& state = response["state"].as_array();
+            auto const& state = response.at("state").as_array();
 
             std::vector<Backend::LedgerObject> objects;
             objects.reserve(state.size());
