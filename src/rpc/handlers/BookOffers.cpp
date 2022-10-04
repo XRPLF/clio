@@ -10,7 +10,6 @@
 
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
-#include <backend/Pg.h>
 
 namespace RPC {
 

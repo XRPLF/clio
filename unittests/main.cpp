@@ -37,20 +37,7 @@ TEST(BackendTest, Basic)
                     {"max_requests_outstanding", 1000},
                     {"indexer_key_shift", 2},
                     {"threads", 8}}}}}};
-            boost::json::object postgresConfig{
-                {"database",
-                 {{"type", "postgres"},
-                  {"experimental", true},
-                  {"postgres",
-                   {{"contact_point", "127.0.0.1"},
-                    {"username", "postgres"},
-                    {"database", keyspace.c_str()},
-                    {"password", "postgres"},
-                    {"indexer_key_shift", 2},
-                    {"max_connections", 100},
-                    {"threads", 8}}}}}};
-            std::vector<boost::json::object> configs = {
-                cassandraConfig, postgresConfig};
+            std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
                 std::cout << keyspace << std::endl;
@@ -1853,20 +1840,7 @@ TEST(Backend, cacheIntegration)
                     {"max_requests_outstanding", 1000},
                     {"indexer_key_shift", 2},
                     {"threads", 8}}}}}};
-            boost::json::object postgresConfig{
-                {"database",
-                 {{"type", "postgres"},
-                  {"experimental", true},
-                  {"postgres",
-                   {{"contact_point", "127.0.0.1"},
-                    {"username", "postgres"},
-                    {"database", keyspace.c_str()},
-                    {"password", "postgres"},
-                    {"indexer_key_shift", 2},
-                    {"max_connections", 100},
-                    {"threads", 8}}}}}};
-            std::vector<boost::json::object> configs = {
-                cassandraConfig, postgresConfig};
+            std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
                 std::cout << keyspace << std::endl;

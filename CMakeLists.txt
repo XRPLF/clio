@@ -45,7 +45,6 @@ include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
-include(CMake/deps/Postgres.cmake)
 
 target_sources(clio PRIVATE
   ## Main
@@ -53,8 +52,6 @@ target_sources(clio PRIVATE
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
-  src/backend/Pg.cpp
-  src/backend/PostgresBackend.cpp
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp

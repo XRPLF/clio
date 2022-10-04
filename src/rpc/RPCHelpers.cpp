@@ -1,6 +1,11 @@
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
+
+#include <ripple/basics/StringUtilities.h>
+
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+
 namespace RPC {
 
 std::optional<bool>
