@@ -1427,12 +1427,12 @@ parseBook(boost::json::object const& request)
         if (!ripple::to_issuer(
                 get_issuer, taker_gets.at("issuer").as_string().c_str()))
             return Status{
-                Error::rpcINVALID_PARAMS,
+                Error::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer."};
 
         if (get_issuer == ripple::noAccount())
             return Status{
-                Error::rpcINVALID_PARAMS,
+                Error::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer account "
                 "one."};
     }
@@ -1443,13 +1443,13 @@ parseBook(boost::json::object const& request)
 
     if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
         return Status{
-            Error::rpcINVALID_PARAMS,
+            Error::rpcDST_ISR_MALFORMED,
             "Unneeded field 'taker_gets.issuer' for XRP currency "
             "specification."};
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
         return Status{
-            Error::rpcINVALID_PARAMS,
+            Error::rpcDST_ISR_MALFORMED,
             "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
