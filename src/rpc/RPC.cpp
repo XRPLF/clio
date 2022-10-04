@@ -264,7 +264,7 @@ static HandlerTable handlerTable{
     {"account_offers", &doAccountOffers, LimitRange{10, 50, 256}},
     {"account_tx", &doAccountTx, LimitRange{1, 50, 100}},
     {"gateway_balances", &doGatewayBalances, {}},
-    {"noripple_check", &doNoRippleCheck, {}},
+    {"noripple_check", &doNoRippleCheck, LimitRange{1, 300, 500}},
     {"book_changes", &doBookChanges, {}},
     {"book_offers", &doBookOffers, LimitRange{1, 50, 100}},
     {"ledger", &doLedger, {}},
