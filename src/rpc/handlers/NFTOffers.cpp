@@ -13,9 +13,7 @@ namespace RPC {
 static void
 appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
 {
-    offers.push_back(boost::json::object_kind);
-    boost::json::object& obj(offers.back().as_object());
-
+    boost::json::object obj = {};
     obj[JS(index)] = ripple::to_string(offer.key());
     obj[JS(flags)] = (offer)[ripple::sfFlags];
     obj[JS(owner)] = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
@@ -29,6 +27,7 @@ appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
 
     obj[JS(amount)] = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
                                       .getJson(ripple::JsonOptions::none));
+    offers.push_back(std::move(obj));
 }
 
 static Result
@@ -55,10 +54,8 @@ enumerateNFTOffers(
         return status;
 
     boost::json::object response = {};
+    boost::json::array jsonOffers = {};
     response[JS(nft_id)] = ripple::to_string(tokenid);
-    response[JS(offers)] = boost::json::value(boost::json::array_kind);
-
-    auto& jsonOffers = response[JS(offers)].as_array();
 
     std::vector<ripple::SLE> offers;
     std::uint64_t reserve(limit);
@@ -100,13 +97,13 @@ enumerateNFTOffers(
         cursor,
         0,
         lgrInfo.seq,
-        limit,
+        reserve,
         {},
         context.yield,
         [&offers](ripple::SLE const& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER)
             {
-                offers.emplace_back(offer);
+                offers.push_back(offer);
                 return true;
             }
 
@@ -126,6 +123,7 @@ enumerateNFTOffers(
     for (auto const& offer : offers)
         appendNftOfferJson(offer, jsonOffers);
 
+    response.insert_or_assign(JS(offers), std::move(jsonOffers));
     return response;
 }
 
