@@ -78,7 +78,7 @@ doLedgerEntry(Context const& context)
                  .at(JS(owner))
                  .is_string())
         {
-            return Status{Error::rpcINVALID_PARAMS, "ownerNotString"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
         }
         else if (
             !request.at(JS(deposit_preauth))
