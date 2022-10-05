@@ -81,6 +81,12 @@ private:
     {
         std::string ip;
         int port;
+
+        // TODO: remove when clang catches up to gcc/msvc in regards to
+        // emplace_back with brace initialization (c++20)
+        ClioPeer(std::string ip, int port) : ip{ip}, port{port}
+        {
+        }
     };
 
     std::vector<ClioPeer> clioPeers;
