@@ -198,7 +198,9 @@ public:
     }
 
     void
-    on_read(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred)
+    on_read(
+        boost::beast::error_code ec,
+        [[maybe_unused]] std::size_t bytes_transferred)
     {
         // This means they closed the connection
         if (ec == http::error::end_of_stream)

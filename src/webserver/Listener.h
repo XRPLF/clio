@@ -218,7 +218,7 @@ public:
     Listener(
         boost::asio::io_context& ioc,
         uint32_t numWorkerThreads,
-        uint32_t maxQueueSize,
+        std::optional<uint32_t> maxQueueSize,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface const> backend,
@@ -349,11 +349,13 @@ make_HttpServer(
     uint32_t numThreads = std::thread::hardware_concurrency();
     if (config.contains("workers"))
         numThreads = config.at("workers").as_int64();
-    uint32_t maxQueueSize = 0;  // no max
+    std::optional<uint32_t> maxQueueSize = std::nullopt;
     if (serverConfig.contains("max_queue_size"))
         maxQueueSize = serverConfig.at("max_queue_size").as_int64();
+    auto const maxQueueSizeStr =
+        maxQueueSize ? std::to_string(*maxQueueSize) : std::string{"no limit"};
     BOOST_LOG_TRIVIAL(info) << __func__ << " Number of workers = " << numThreads
-                            << ". Max queue size = " << maxQueueSize;
+                            << ". Max queue size = " << maxQueueSizeStr;
 
     auto server = std::make_shared<HttpServer>(
         ioc,

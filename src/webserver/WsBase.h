@@ -275,7 +275,7 @@ public:
         if (dead())
         {
             BOOST_LOG_TRIVIAL(warning)
-                << __func__
+                << tag() << __func__
                 << ": abandon request as ws session is already dead";
             return;
         }
