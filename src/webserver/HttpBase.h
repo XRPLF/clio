@@ -31,9 +31,27 @@ using tcp = boost::asio::ip::tcp;
 
 static std::string defaultResponse =
     "<!DOCTYPE html><html><head><title>"
-    " Test page for reporting mode</title></head><body><h1>"
-    " Test</h1><p>This page shows xrpl reporting http(s) "
+    " Test page for clio</title></head><body><h1>"
+    " Test</h1><p>This page shows clio http(s) "
     "connectivity is working.</p></body></html>";
+
+http::response<http::string_body>
+makeHTTPResponse(
+    http::status const& status,
+    std::string const& content_type,
+    std::string const& message,
+    unsigned version,
+    bool keepAlive)
+{
+    http::response<http::string_body> res{status, version};
+    res.set(
+        http::field::server, "clio-server-" + Build::getClioVersionString());
+    res.set(http::field::content_type, content_type);
+    res.keep_alive(keepAlive);
+    res.body() = std::string(message);
+    res.prepare_payload();
+    return res;
+}
 
 // From Boost Beast examples http_server_flex.cpp
 template <class Derived>
@@ -222,11 +240,23 @@ public:
             return;
 
         auto session = derived().shared_from_this();
+        // The DOS guard allocates tickets to concurrent requests.
+        // The resource is automatically checked in when ticket goes out of
+        // scope.
+        auto ticket = dosGuard_.checkout(*ip);
+        if (!ticket.isValid())
+            return lambda_(makeHTTPResponse(
+                http::status::service_unavailable,
+                "text/plain",
+                "Server is overloaded",
+                req_.version(),
+                req_.keep_alive()));
 
         // Requests are handed using coroutines. Here we spawn a coroutine
         // which will asynchronously handle a request.
         if (!workQueue_.postCoro(
-                [this, ip, session](boost::asio::yield_context yield) {
+                [this, ip, session, t = std::move(ticket)](
+                    boost::asio::yield_context yield) {
                     handle_request(
                         yield,
                         std::move(req_),
@@ -242,18 +272,13 @@ public:
                 },
                 dosGuard_.isWhiteListed(*ip)))
         {
-            // Non-whitelist connection rejected due to full connection queue
-            http::response<http::string_body> res{
-                http::status::ok, req_.version()};
-            res.set(
-                http::field::server,
-                "clio-server-" + Build::getClioVersionString());
-            res.set(http::field::content_type, "application/json");
-            res.keep_alive(req_.keep_alive());
-            res.body() = boost::json::serialize(
-                RPC::make_error(RPC::Error::rpcTOO_BUSY));
-            res.prepare_payload();
-            lambda_(std::move(res));
+            lambda_(makeHTTPResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(
+                    RPC::make_error(RPC::Error::rpcTOO_BUSY)),
+                req_.version(),
+                req_.keep_alive()));
         }
     }
 
@@ -303,43 +328,21 @@ handle_request(
     std::string const& ip,
     std::shared_ptr<Session> http)
 {
-    auto const httpResponse = [&req](
-                                  http::status status,
-                                  std::string content_type,
-                                  std::string message) {
-        http::response<http::string_body> res{status, req.version()};
-        res.set(
-            http::field::server,
-            "clio-server-" + Build::getClioVersionString());
-        res.set(http::field::content_type, content_type);
-        res.keep_alive(req.keep_alive());
-        res.body() = std::string(message);
-        res.prepare_payload();
-        return res;
-    };
-
-    // The DOS guard allocates tickets to concurrent requests.
-    // The resource is automatically checked in when ticket goes out of scope.
-    auto ticket = dosGuard.checkout(ip);
-    if (!ticket.isValid())
-        return send(httpResponse(
-            http::status::ok,
-            "application/json",
-            boost::json::serialize(RPC::make_error(RPC::Error::rpcSLOW_DOWN))));
-
     if (req.method() == http::verb::get && req.body() == "")
-        return send(
-            httpResponse(http::status::ok, "text/html", defaultResponse));
+        return send(makeHTTPResponse(
+            http::status::ok,
+            "text/html",
+            defaultResponse,
+            req.version(),
+            req.keep_alive()));
 
     if (req.method() != http::verb::post)
-        return send(httpResponse(
-            http::status::bad_request, "text/html", "Expected a POST request"));
-
-    if (!dosGuard.isOk(ip))
-        return send(httpResponse(
-            http::status::service_unavailable,
-            "text/plain",
-            "Server is overloaded"));
+        return send(makeHTTPResponse(
+            http::status::bad_request,
+            "text/html",
+            "Expected a POST request",
+            req.version(),
+            req.keep_alive()));
 
     try
     {
@@ -356,20 +359,24 @@ handle_request(
         }
         catch (std::runtime_error const& e)
         {
-            return send(httpResponse(
+            return send(makeHTTPResponse(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX)),
+                req.version(),
+                req.keep_alive()));
         }
 
         auto range = backend->fetchLedgerRange();
         if (!range)
-            return send(httpResponse(
+            return send(makeHTTPResponse(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcNOT_READY))));
+                    RPC::make_error(RPC::Error::rpcNOT_READY)),
+                req.version(),
+                req.keep_alive()));
 
         std::optional<RPC::Context> context = RPC::make_HttpContext(
             yc,
@@ -383,11 +390,13 @@ handle_request(
             ip);
 
         if (!context)
-            return send(httpResponse(
+            return send(makeHTTPResponse(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX)),
+                req.version(),
+                req.keep_alive()));
 
         boost::json::object response{{"result", boost::json::object{}}};
         boost::json::object& result = response["result"].as_object();
@@ -438,17 +447,23 @@ handle_request(
             // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
         }
-        return send(
-            httpResponse(http::status::ok, "application/json", responseStr));
+        return send(makeHTTPResponse(
+            http::status::ok,
+            "application/json",
+            responseStr,
+            req.version(),
+            req.keep_alive()));
     }
     catch (std::exception const& e)
     {
         BOOST_LOG_TRIVIAL(error)
             << __func__ << " Caught exception : " << e.what();
-        return send(httpResponse(
+        return send(makeHTTPResponse(
             http::status::internal_server_error,
             "application/json",
-            boost::json::serialize(RPC::make_error(RPC::Error::rpcINTERNAL))));
+            boost::json::serialize(RPC::make_error(RPC::Error::rpcINTERNAL)),
+            req.version(),
+            req.keep_alive()));
     }
 }
 

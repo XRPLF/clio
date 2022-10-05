@@ -263,13 +263,6 @@ public:
             this->send(boost::json::serialize(e));
         };
 
-        // The DOS guard allocates tickets to concurrent requests.
-        // The resource is automatically checked in when ticket goes out of
-        // scope.
-        auto ticket = dosGuard_.checkout(*ip);
-        if (!ticket.isValid())
-            return sendError(RPC::Error::rpcSLOW_DOWN);
-
         try
         {
             BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
@@ -407,22 +400,22 @@ public:
         request = raw.as_object();
 
         auto id = request.contains("id") ? request.at("id") : nullptr;
+        // The DOS guard allocates tickets to concurrent requests.
+        // The resource is automatically checked in when ticket goes out of
+        // scope.
+        auto ticket = dosGuard_.checkout(*ip);
+        if (!ticket.isValid())
+            return sendError(RPC::Error::rpcSLOW_DOWN, id, request);
 
-        if (!dosGuard_.isOk(*ip))
-        {
-            sendError(RPC::Error::rpcSLOW_DOWN, id, request);
-        }
-        else
-        {
-            if (!queue_.postCoro(
-                    [shared_this = shared_from_this(),
-                     r = std::move(request),
-                     id](boost::asio::yield_context yield) {
-                        shared_this->handle_request(std::move(r), id, yield);
-                    },
-                    dosGuard_.isWhiteListed(*ip)))
-                sendError(RPC::Error::rpcTOO_BUSY, id, request);
-        }
+        if (!queue_.postCoro(
+                [shared_this = shared_from_this(),
+                 r = std::move(request),
+                 t = std::move(ticket),
+                 id](boost::asio::yield_context yield) {
+                    shared_this->handle_request(std::move(r), id, yield);
+                },
+                dosGuard_.isWhiteListed(*ip)))
+            sendError(RPC::Error::rpcTOO_BUSY, id, request);
 
         do_read();
     }

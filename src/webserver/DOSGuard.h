@@ -10,8 +10,8 @@
 class DOSGuard
 {
     boost::asio::io_context& ctx_;
-    std::shared_mutex fetchMtx_;  // protects ipFetchCount_
-    std::shared_mutex reqMtx_;    // protects ipRequestCount_
+    mutable std::shared_mutex fetchMtx_;  // protects ipFetchCount_
+    mutable std::shared_mutex reqMtx_;    // protects ipRequestCount_
     std::unordered_map<std::string, uint32_t> ipFetchCount_;
     std::unordered_map<std::string, uint32_t> ipRequestCount_;
     std::unordered_set<std::string> const whitelist_;
@@ -35,6 +35,9 @@ class DOSGuard
             count_ = cnt;
             lastSweep_ = sweep;
         }
+
+        RPCScope(RPCScope&& other) = default;
+        RPCScope(RPCScope const& other) = default;
 
         ~RPCScope()
         {
@@ -110,10 +113,10 @@ class DOSGuard
     }
 
     std::uint32_t
-    getFetches(std::string const& ip)
+    getFetches(std::string const& ip) const
     {
         std::shared_lock lk{fetchMtx_};
-        auto it = ipFetchCount_.find(ip);
+        auto const it = ipFetchCount_.find(ip);
         if (it == ipFetchCount_.end())
             return 0;
         else
@@ -121,10 +124,10 @@ class DOSGuard
     }
 
     std::uint32_t
-    getRequests(std::string const& ip)
+    getRequests(std::string const& ip) const
     {
         std::shared_lock lk{reqMtx_};
-        auto it = ipRequestCount_.find(ip);
+        auto const it = ipRequestCount_.find(ip);
         if (it == ipRequestCount_.end())
             return 0;
         else
@@ -154,7 +157,7 @@ class DOSGuard
             --it->second;
     }
     bool
-    isOk(std::string const& ip, std::uint32_t requestCount)
+    isOk(std::string const& ip, std::uint32_t requestCount) const
     {
         if (whitelist_.contains(ip))
             return true;
@@ -162,19 +165,6 @@ class DOSGuard
         bool requestsOk =
             !maxConcurrentRequests_ || requestCount <= *maxConcurrentRequests_;
         return fetchesOk && requestsOk;
-    }
-
-public:
-    DOSGuard(boost::json::object const& config, boost::asio::io_context& ctx)
-        : ctx_(ctx)
-        , whitelist_(getWhitelist(config))
-        , maxFetches_(get(config, "max_fetches", 100000000))  // 100 MB
-        , maxConcurrentRequests_(get(config, "max_concurrent_requests", 1))
-        , sweepInterval_(get(config, "sweep_interval", 10))
-        , lastSweep_(std::chrono::system_clock::now())
-    {
-        if (sweepInterval_)
-            createTimer();
     }
 
     void
@@ -192,21 +182,42 @@ public:
             });
     }
 
+    void
+    clear()
+    {
+        if (maxFetches_)
+        {
+            std::unique_lock lck{fetchMtx_};
+            ipFetchCount_.clear();
+        }
+
+        if (maxConcurrentRequests_)
+        {
+            std::unique_lock lck{reqMtx_};
+            // set time first, else requests might still decrement after the
+            // sweep
+            lastSweep_ = std::chrono::system_clock::now();
+            ipRequestCount_.clear();
+        }
+    }
+
+public:
+    DOSGuard(boost::json::object const& config, boost::asio::io_context& ctx)
+        : ctx_(ctx)
+        , whitelist_(getWhitelist(config))
+        , maxFetches_(get(config, "max_fetches", 100000000))  // 100 MB
+        , maxConcurrentRequests_(get(config, "max_concurrent_requests", 1))
+        , sweepInterval_(get(config, "sweep_interval", 10))
+        , lastSweep_(std::chrono::system_clock::now())
+    {
+        if (sweepInterval_)
+            createTimer();
+    }
+
     bool
     isWhiteListed(std::string const& ip)
     {
         return whitelist_.contains(ip);
-    }
-
-    bool
-    isOk(std::string const& ip)
-    {
-        if (whitelist_.contains(ip))
-            return true;
-        bool fetchesOk = !maxFetches_ || getFetches(ip) < maxFetches_;
-        bool requestsOk = !maxConcurrentRequests_ ||
-            getRequests(ip) < *maxConcurrentRequests_;
-        return fetchesOk && requestsOk;
     }
 
     RPCScope
@@ -230,25 +241,6 @@ public:
             else
                 count = (it->second += numObjects);
             return count < maxFetches_;
-        }
-    }
-
-    void
-    clear()
-    {
-        if (maxFetches_)
-        {
-            std::unique_lock lck{fetchMtx_};
-            ipFetchCount_.clear();
-        }
-
-        if (maxConcurrentRequests_)
-        {
-            std::unique_lock lck{reqMtx_};
-            // set time first, else requests might still decrement after the
-            // sweep
-            lastSweep_ = std::chrono::system_clock::now();
-            ipRequestCount_.clear();
         }
     }
 };
