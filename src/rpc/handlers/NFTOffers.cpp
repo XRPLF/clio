@@ -67,7 +67,7 @@ enumerateNFTOffers(
     response[JS(nft_id)] = ripple::to_string(tokenid);
 
     std::vector<ripple::SLE> offers;
-    std::uint64_t reserve(limit);
+    auto reserve = limit;
     ripple::uint256 cursor;
 
     if (request.contains(JS(marker)))
@@ -129,8 +129,14 @@ enumerateNFTOffers(
         offers.pop_back();
     }
 
-    for (auto const& offer : offers)
-        jsonOffers.push_back(json::value_from(offer));
+    std::transform(
+        std::cbegin(offers),
+        std::cend(offers),
+        std::back_inserter(jsonOffers),
+        [](auto const& offer) {
+            // uses tag_invoke at the top of this file
+            return json::value_from(offer);
+        });
 
     response.insert_or_assign(JS(offers), std::move(jsonOffers));
     return response;

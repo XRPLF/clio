@@ -202,10 +202,7 @@ private:
 };
 
 void
-tag_invoke(
-    const json::value_from_tag&,
-    json::value& jv,
-    BookChange const& change)
+tag_invoke(json::value_from_tag, json::value& jv, BookChange const& change)
 {
     auto amountStr = [](STAmount const& amount) -> std::string {
         return isXRP(amount) ? to_string(amount.xrp())
