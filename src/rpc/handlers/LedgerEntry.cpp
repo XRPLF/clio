@@ -312,10 +312,10 @@ doLedgerEntry(Context const& context)
                 return Status{Error::rpcINVALID_PARAMS, "malformedTicket"};
         }
         else if (
-            !request.at(JS(ticket)).as_object().contains(JS(account)) ||
-            !request.at(JS(ticket)).as_object().at(JS(account)).is_string())
+            !request.at(JS(ticket)).as_object().contains(JS(owner)) ||
+            !request.at(JS(ticket)).as_object().at(JS(owner)).is_string())
         {
-            return Status{Error::rpcINVALID_PARAMS, "malformedTicketAccount"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
         }
         else if (
             !request.at(JS(ticket)).as_object().contains(JS(ticket_seq)) ||
@@ -328,13 +328,12 @@ doLedgerEntry(Context const& context)
             auto const id =
                 ripple::parseBase58<ripple::AccountID>(request.at(JS(ticket))
                                                            .as_object()
-                                                           .at(JS(account))
+                                                           .at(JS(owner))
                                                            .as_string()
                                                            .c_str());
 
             if (!id)
-                return Status{
-                    Error::rpcINVALID_PARAMS, "malformedTicketAccount"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
             else
             {
                 std::uint32_t seq = request.at(JS(offer))
