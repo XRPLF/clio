@@ -656,7 +656,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE)> atOwnedNode)
+    std::function<void(ripple::SLE&&)> atOwnedNode)
 {
     auto parsedCursor =
         parseAccountCursor(backend, sequence, jsonCursor, accountID, yield);
@@ -688,7 +688,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE)> atOwnedNode)
+    std::function<void(ripple::SLE&&)> atOwnedNode)
 {
     auto cursor = AccountCursor({beast::zero, 0});
 
@@ -827,9 +827,7 @@ traverseOwnedNodes(
     for (auto i = 0; i < objects.size(); ++i)
     {
         ripple::SerialIter it{objects[i].data(), objects[i].size()};
-        ripple::SLE sle(it, keys[i]);
-
-        atOwnedNode(sle);
+        atOwnedNode(ripple::SLE{it, keys[i]});
     }
 
     if (limit == 0)

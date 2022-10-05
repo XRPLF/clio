@@ -105,7 +105,7 @@ doAccountOffers(Context const& context)
     response[JS(offers)] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at(JS(offers)).as_array();
 
-    auto const addToResponse = [&](ripple::SLE const& sle) {
+    auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltOFFER)
         {
             addOffer(jsonLines, sle);

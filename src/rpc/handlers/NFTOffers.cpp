@@ -8,29 +8,38 @@
 #include <algorithm>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace json = boost::json;
 
-static void
-appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
+namespace ripple {
+
+void
+tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
 {
-    boost::json::object obj = {};
-    obj[JS(index)] = ripple::to_string(offer.key());
-    obj[JS(flags)] = (offer)[ripple::sfFlags];
-    obj[JS(owner)] = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
+    auto amount = ::RPC::toBoostJson(
+        offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
 
-    if (offer.isFieldPresent(ripple::sfDestination))
-        obj[JS(destination)] =
-            ripple::toBase58(offer.getAccountID(ripple::sfDestination));
+    json::object obj = {
+        {JS(index), to_string(offer.key())},
+        {JS(flags), offer[sfFlags]},
+        {JS(owner), toBase58(offer.getAccountID(sfOwner))},
+        {JS(amount), std::move(amount)},
+    };
 
-    if (offer.isFieldPresent(ripple::sfExpiration))
-        obj[JS(expiration)] = offer.getFieldU32(ripple::sfExpiration);
+    if (offer.isFieldPresent(sfDestination))
+        obj.insert_or_assign(
+            JS(destination), toBase58(offer.getAccountID(sfDestination)));
 
-    obj[JS(amount)] = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
-                                      .getJson(ripple::JsonOptions::none));
-    offers.push_back(std::move(obj));
+    if (offer.isFieldPresent(sfExpiration))
+        obj.insert_or_assign(JS(expiration), offer.getFieldU32(sfExpiration));
+
+    jv = std::move(obj);
 }
 
-static Result
+}  // namespace ripple
+
+namespace RPC {
+
+Result
 enumerateNFTOffers(
     Context const& context,
     ripple::uint256 const& tokenid,
@@ -82,7 +91,7 @@ enumerateNFTOffers(
         if (tokenid != sle->getFieldH256(ripple::sfNFTokenID))
             return Status{Error::rpcINVALID_PARAMS, "invalidTokenid"};
 
-        appendNftOfferJson(*sle, jsonOffers);
+        jsonOffers.push_back(json::value_from(*sle));
         offers.reserve(reserve);
     }
     else
@@ -100,10 +109,10 @@ enumerateNFTOffers(
         reserve,
         {},
         context.yield,
-        [&offers](ripple::SLE const& offer) {
+        [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER)
             {
-                offers.push_back(offer);
+                offers.push_back(std::move(offer));
                 return true;
             }
 
@@ -121,7 +130,7 @@ enumerateNFTOffers(
     }
 
     for (auto const& offer : offers)
-        appendNftOfferJson(offer, jsonOffers);
+        jsonOffers.push_back(json::value_from(offer));
 
     response.insert_or_assign(JS(offers), std::move(jsonOffers));
     return response;

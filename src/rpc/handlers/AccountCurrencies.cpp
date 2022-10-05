@@ -35,7 +35,7 @@ doAccountCurrencies(Context const& context)
         return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::set<std::string> send, receive;
-    auto const addToResponse = [&](ripple::SLE const& sle) {
+    auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);

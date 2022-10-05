@@ -133,7 +133,7 @@ doAccountLines(Context const& context)
     response[JS(lines)] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at(JS(lines)).as_array();
 
-    auto const addToResponse = [&](ripple::SLE const& sle) -> void {
+    auto const addToResponse = [&](ripple::SLE&& sle) -> void {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             addLine(jsonLines, sle, accountID, peerAccount);

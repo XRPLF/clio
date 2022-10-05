@@ -79,7 +79,7 @@ doGatewayBalances(Context const& context)
     }
 
     // Traverse the cold wallet's trust lines
-    auto const addToResponse = [&](ripple::SLE const& sle) {
+    auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
