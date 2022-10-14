@@ -38,7 +38,7 @@ Context::Context(
     , counters(counters_)
     , clientIp(clientIp_)
 {
-    BOOST_LOG_TRIVIAL(debug) << tag() << "new Context created";
+    BOOST_LOG_TRIVIAL(trace) << tag() << "new Context created";
 }
 
 std::optional<Context>
@@ -395,11 +395,11 @@ buildResponse(Context const& ctx)
 
     try
     {
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << ctx.tag() << __func__ << " start executing rpc `" << ctx.method
             << '`';
         auto v = (*method)(ctx);
-        BOOST_LOG_TRIVIAL(debug)
+        BOOST_LOG_TRIVIAL(trace)
             << ctx.tag() << __func__ << " finish executing rpc `" << ctx.method
             << '`';
 

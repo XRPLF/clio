@@ -168,11 +168,11 @@ public:
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {
-        BOOST_LOG_TRIVIAL(debug) << tag() << "http session created";
+        BOOST_LOG_TRIVIAL(trace) << tag() << "http session created";
     }
     virtual ~HttpBase()
     {
-        BOOST_LOG_TRIVIAL(debug) << tag() << "http session closed";
+        BOOST_LOG_TRIVIAL(trace) << tag() << "http session closed";
     }
 
     void

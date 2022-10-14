@@ -147,7 +147,7 @@ public:
         , counters_(counters)
         , queue_(queue)
     {
-        BOOST_LOG_TRIVIAL(info) << tag() << "session created";
+        BOOST_LOG_TRIVIAL(trace) << tag() << "session created";
     }
     virtual ~WsSession()
     {
@@ -244,7 +244,7 @@ public:
         if (ec)
             return wsFail(ec, "accept");
 
-        BOOST_LOG_TRIVIAL(info) << tag() << "accepting new connection";
+        BOOST_LOG_TRIVIAL(trace) << tag() << "accepting new connection";
 
         // Read a message
         do_read();
@@ -428,7 +428,7 @@ public:
         }
         else
         {
-            BOOST_LOG_TRIVIAL(debug)
+            BOOST_LOG_TRIVIAL(trace)
                 << tag() << __func__ << " adding to work queue";
 
             if (!queue_.postCoro(
