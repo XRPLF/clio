@@ -76,6 +76,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountObjects.cpp
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/NoRippleCheck.cpp
+  # AMM
+  src/rpc/handlers/AMMInfo.cpp
   # NFT
   src/rpc/handlers/NFTHistory.cpp
   src/rpc/handlers/NFTInfo.cpp

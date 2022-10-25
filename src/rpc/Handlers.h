@@ -50,6 +50,10 @@ doBookChanges(Context const& context);
 Result
 doBookOffers(Context const& context);
 
+// AMM methods
+Result
+doAMMInfo(Context const& context);
+
 // NFT methods
 Result
 doNFTBuyOffers(Context const& context);

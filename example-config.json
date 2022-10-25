@@ -14,9 +14,9 @@
     },
     "etl_sources": [
         {
-            "ip": "127.0.0.1",
-            "ws_port": "6006",
-            "grpc_port": "50051"
+            "ip":"52.13.104.109",
+            "ws_port":"51233",
+            "grpc_port":"50051"
         }
     ],
     "dos_guard":

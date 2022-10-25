@@ -209,6 +209,7 @@ static HandlerTable handlerTable{
     {"book_offers", &doBookOffers, LimitRange{1, 50, 100}},
     {"ledger", &doLedger, {}},
     {"ledger_data", &doLedgerData, LimitRange{1, 100, 2048}},
+    {"amm_info", &doAMMInfo, {}},
     {"nft_buy_offers", &doNFTBuyOffers, LimitRange{1, 50, 100}},
     {"nft_history", &doNFTHistory, LimitRange{1, 50, 100}, true},
     {"nft_info", &doNFTInfo, {}, true},

@@ -131,11 +131,13 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     if (ec != boost::asio::error::operation_aborted &&
         ec != boost::asio::error::connection_refused)
     {
-        log_.error() << "error code = " << ec << " - " << toString();
+        log_.error() << "error code = " << ec << " (" << ec.message() << ") - "
+                     << toString();
     }
     else
     {
-        log_.warn() << "error code = " << ec << " - " << toString();
+        log_.warn() << "error code = " << ec << " (" << ec.message() << ") - "
+                    << toString();
     }
 
     // exponentially increasing timeouts, with a max of 30 seconds
