@@ -1,5 +1,5 @@
-set(RIPPLED_REPO "https://github.com/ripple/rippled.git")
-set(RIPPLED_BRANCH "1.9.2")
+set(RIPPLED_REPO "https://github.com/legleux/rippled.git")
+set(RIPPLED_BRANCH "nounity")
 set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
 set(patch_command ! grep operator!= src/ripple/protocol/Feature.h || git apply < ${CMAKE_CURRENT_SOURCE_DIR}/CMake/deps/Remove-bitset-operator.patch)
 message(STATUS "Cloning ${RIPPLED_REPO} branch ${RIPPLED_BRANCH}")
