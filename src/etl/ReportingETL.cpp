@@ -971,6 +971,7 @@ ReportingETL::loadCacheFromClioPeer(
             return request;
         };
 
+        bool started = false;
         do
         {
             // Send the message
@@ -1021,6 +1022,7 @@ ReportingETL::loadCacheFromClioPeer(
                 }
                 return false;
             }
+            started = true;
             auto const& response = parsed.as_object()["result"].as_object();
 
             if (!response.contains("cache_full") ||
@@ -1063,7 +1065,7 @@ ReportingETL::loadCacheFromClioPeer(
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " - At marker " << *marker;
 
-        } while (marker);
+        } while (marker || !started);
         BOOST_LOG_TRIVIAL(info)
             << __func__
             << " Finished downloading ledger from clio node. ip = " << ip;
