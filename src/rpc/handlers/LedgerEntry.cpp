@@ -209,7 +209,7 @@ doLedgerEntry(Context const& context)
                                                            .c_str());
 
             if (!id)
-                return Status{Error::rpcINVALID_PARAMS, "malformedOwner"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedAddress"};
             else
             {
                 std::uint32_t seq =
@@ -244,7 +244,7 @@ doLedgerEntry(Context const& context)
                 offer.at(JS(account)).as_string().c_str());
 
             if (!id)
-                return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+                return Status{Error::rpcINVALID_PARAMS, "malformedAddress"};
             else
             {
                 std::uint32_t seq =
@@ -293,7 +293,7 @@ doLedgerEntry(Context const& context)
             state.at(JS(accounts)).as_array().at(1).as_string().c_str());
 
         if (!id1 || !id2)
-            return Status{Error::rpcINVALID_PARAMS, "malformedAccounts"};
+            return Status{Error::rpcINVALID_PARAMS, "malformedAddresses"};
 
         else if (!ripple::to_currency(
                      currency, state.at(JS(currency)).as_string().c_str()))
