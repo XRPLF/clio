@@ -972,6 +972,7 @@ ReportingETL::loadCacheFromClioPeer(
         };
 
         bool started = false;
+        size_t numAttempts = 0;
         do
         {
             // Send the message
@@ -1014,10 +1015,22 @@ ReportingETL::loadCacheFromClioPeer(
                 auto const& err = response.at("error");
                 if (err.is_string() && err.as_string() == "lgrNotFound")
                 {
+                    ++numAttempts;
+                    if (numAttempts >= 5)
+                    {
+                        BOOST_LOG_TRIVIAL(error)
+                            << __func__
+                            << " ledger not found at peer after 5 attempts. "
+                               "peer = "
+                            << ip << " ledger = " << ledgerIndex
+                            << ". Check your config and the health of the peer";
+                        return false;
+                    }
                     BOOST_LOG_TRIVIAL(warning)
                         << __func__
                         << " ledger not found. ledger = " << ledgerIndex
-                        << ". trying again";
+                        << ". Sleeping and trying again";
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
                     continue;
                 }
                 return false;
