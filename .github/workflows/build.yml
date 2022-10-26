@@ -33,6 +33,9 @@ jobs:
       image: ${{ matrix.type.image }}
 
     steps:
+      - name: Check stats
+        run: cat /proc/meminfo | head -n1 && cat /proc/cpuinfo | grep processor | tail -1
+
       - uses: actions/checkout@v3
         with:
           path: clio
