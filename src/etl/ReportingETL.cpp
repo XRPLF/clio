@@ -971,6 +971,8 @@ ReportingETL::loadCacheFromClioPeer(
             return request;
         };
 
+        bool started = false;
+        size_t numAttempts = 0;
         do
         {
             // Send the message
@@ -1013,14 +1015,27 @@ ReportingETL::loadCacheFromClioPeer(
                 auto const& err = response.at("error");
                 if (err.is_string() && err.as_string() == "lgrNotFound")
                 {
+                    ++numAttempts;
+                    if (numAttempts >= 5)
+                    {
+                        BOOST_LOG_TRIVIAL(error)
+                            << __func__
+                            << " ledger not found at peer after 5 attempts. "
+                               "peer = "
+                            << ip << " ledger = " << ledgerIndex
+                            << ". Check your config and the health of the peer";
+                        return false;
+                    }
                     BOOST_LOG_TRIVIAL(warning)
                         << __func__
                         << " ledger not found. ledger = " << ledgerIndex
-                        << ". trying again";
+                        << ". Sleeping and trying again";
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
                     continue;
                 }
                 return false;
             }
+            started = true;
             auto const& response = parsed.as_object()["result"].as_object();
 
             if (!response.contains("cache_full") ||
@@ -1063,7 +1078,7 @@ ReportingETL::loadCacheFromClioPeer(
                 BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " - At marker " << *marker;
 
-        } while (marker);
+        } while (marker || !started);
         BOOST_LOG_TRIVIAL(info)
             << __func__
             << " Finished downloading ledger from clio node. ip = " << ip;
