@@ -273,7 +273,7 @@ doLedgerEntry(Context const& context)
         if (!state.contains(JS(currency)) ||
             !state.at(JS(currency)).is_string())
         {
-            return Status{Error::rpcINVALID_PARAMS, "malformedCurrency"};
+            return Status{Error::rpcINVALID_PARAMS, "invalidParams"};
         }
 
         if (!state.contains(JS(accounts)) ||
