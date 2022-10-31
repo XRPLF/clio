@@ -20,7 +20,7 @@ if(NOT GIT_COMMIT_HASH)
   endif()
   find_package(Git)
   if(Git_FOUND)
-      execute_process(COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=8
+      execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
           OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE gch)
       if(gch)
           set(GIT_COMMIT_HASH "${gch}")
@@ -29,6 +29,10 @@ if(NOT GIT_COMMIT_HASH)
       endif()
   endif()
 endif() #git
+if(PACKAGING)
+  add_definitions(-DPKG=1)
+endif()
+
 
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
@@ -41,7 +45,6 @@ include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
-include(CMake/deps/Postgres.cmake)
 
 target_sources(clio PRIVATE
   ## Main
@@ -49,8 +52,6 @@ target_sources(clio PRIVATE
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
-  src/backend/Pg.cpp
-  src/backend/PostgresBackend.cpp
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
@@ -98,7 +99,8 @@ target_sources(clio PRIVATE
   # Server
   src/rpc/handlers/ServerInfo.cpp
   # Utility
-  src/rpc/handlers/Random.cpp)
+  src/rpc/handlers/Random.cpp
+  src/util/Taggable.cpp)
 
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)

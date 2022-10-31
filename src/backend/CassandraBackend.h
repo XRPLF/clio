@@ -1026,13 +1026,13 @@ public:
     isTooBusy() const override;
 
     inline void
-    incremementOutstandingRequestCount() const
+    incrementOutstandingRequestCount() const
     {
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!canAddRequest())
             {
-                BOOST_LOG_TRIVIAL(info)
+                BOOST_LOG_TRIVIAL(debug)
                     << __func__ << " : "
                     << "Max outstanding requests reached. "
                     << "Waiting for other requests to finish";
@@ -1109,7 +1109,7 @@ public:
         bool isRetry) const
     {
         if (!isRetry)
-            incremementOutstandingRequestCount();
+            incrementOutstandingRequestCount();
         executeAsyncHelper(statement, callback, callbackData);
     }
 

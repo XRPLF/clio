@@ -77,6 +77,14 @@ private:
     // thread responsible for syncing the cache on startup
     std::thread cacheDownloader_;
 
+    struct ClioPeer
+    {
+        std::string ip;
+        int port;
+    };
+
+    std::vector<ClioPeer> clioPeers;
+
     std::thread worker_;
     boost::asio::io_context& ioContext_;
 
@@ -177,6 +185,16 @@ private:
     void
     loadCache(uint32_t seq);
 
+    void
+    loadCacheFromDb(uint32_t seq);
+
+    bool
+    loadCacheFromClioPeer(
+        uint32_t ledgerSequence,
+        std::string const& ip,
+        std::string const& port,
+        boost::asio::yield_context& yield);
+
     /// Run ETL. Extracts ledgers and writes them to the database, until a
     /// write conflict occurs (or the server shuts down).
     /// @note database must already be populated when this function is
@@ -244,7 +262,7 @@ private:
     /// following parent
     /// @param parent the previous ledger
     /// @param rawData data extracted from an ETL source
-    /// @return the newly built ledger and data to write to Postgres
+    /// @return the newly built ledger and data to write to the database
     std::pair<ripple::LedgerInfo, bool>
     buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData);
 

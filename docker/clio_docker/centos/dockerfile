@@ -1,0 +1,34 @@
+FROM centos:7
+
+ENV CLIO_DIR=/opt/clio/
+# ENV OPENSSL_DIR=/opt/openssl
+
+RUN yum -y install git epel-release centos-release-scl perl-IPC-Cmd openssl
+RUN yum install -y devtoolset-11
+ENV version=3.16
+ENV build=3
+# RUN curl -OJL https://cmake.org/files/v$version/cmake-$version.$build.tar.gz
+COPY install_cmake.sh /install_cmake.sh
+RUN /install_cmake.sh 3.16.3 /usr/local
+RUN source /opt/rh/devtoolset-11/enable
+WORKDIR /tmp
+# RUN mkdir $OPENSSL_DIR && cd $OPENSSL_DIR
+COPY build_git_centos7.sh build_git_centos7.sh
+
+RUN ./build_git_centos7.sh
+RUN git clone https://github.com/openssl/openssl
+WORKDIR /tmp/openssl
+RUN git checkout OpenSSL_1_1_1q
+#--prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
+RUN SSLDIR=$(openssl version -d | cut -d: -f2 | tr -d [:space:]\") && ./config -fPIC --prefix=/usr --openssldir=${SSLDIR} zlib shared && \
+    make -j $(nproc) && \
+    make install_sw
+WORKDIR /tmp
+RUN git clone https://github.com/xrplf/clio.git
+COPY build_boost.sh build_boost.sh
+ENV OPENSSL_ROOT=/opt/local/openssl
+ENV BOOST_ROOT=/boost
+RUN source scl_source enable devtoolset-11 && /tmp/build_boost.sh 1.75.0
+RUN yum install -y bison flex
+RUN source /opt/rh/devtoolset-11/enable && \
+    cd /tmp/clio && cmake -B build -Dtests=0 -Dlocal_libarchive=1 -Dunity=0 -DBUILD_TESTS=0 && cmake --build build --parallel $(nproc)

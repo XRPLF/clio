@@ -12,7 +12,8 @@ static std::unordered_set<std::string> validCommonStreams{
     "transactions",
     "transactions_proposed",
     "validations",
-    "manifests"};
+    "manifests",
+    "book_changes"};
 
 Status
 validateStreams(boost::json::object const& request)
@@ -57,6 +58,8 @@ subscribeToStreams(
             manager.subValidation(session);
         else if (s == "manifests")
             manager.subManifest(session);
+        else if (s == "book_changes")
+            manager.subBookChanges(session);
         else
             assert(false);
     }
@@ -85,6 +88,8 @@ unsubscribeToStreams(
             manager.unsubValidation(session);
         else if (s == "manifests")
             manager.unsubManifest(session);
+        else if (s == "book_changes")
+            manager.unsubBookChanges(session);
         else
             assert(false);
     }

@@ -32,6 +32,9 @@ char const* const versionString = "1.0.2"
     BOOST_PP_STRINGIZE(SANITIZER)
 #endif
 #endif
+#ifdef PKG
+        "-release"
+#endif
 
     //--------------------------------------------------------------------------
     ;

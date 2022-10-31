@@ -3,12 +3,6 @@ The correctness of new implementations can be verified via running unit tests. B
 ## Requirements
 ### 1. Cassandra cluster
 Have access to a **local (127.0.0.1)** Cassandra cluster, opened at port **9042**. Please ensure that the cluster is successfully running before running Unit Tests.
-### 2. Postgres server
-Have access to a **local (127.0.0.1)** Postgres server, opened at port **5432**. The server must also have a super user named **postgres** with password set to **postgres**. In addition, modify *postgresql.conf* with the following field values:
-```
-max_connections = 1000
-shared_buffers = 1280MB
-```
 ## Running
 To run the unit tests, first build Clio as normal, then execute `./clio_tests` to run the unit tests.
 

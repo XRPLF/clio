@@ -1,10 +1,16 @@
 #ifndef RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 #define RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
+
+#include <boost/asio/spawn.hpp>
+#include <boost/json.hpp>
+#include <boost/log/trivial.hpp>
+
 #include <ripple/ledger/ReadView.h>
-#include <boost/asio.hpp>
+
 #include <backend/DBHelpers.h>
 #include <backend/SimpleCache.h>
 #include <backend/Types.h>
+
 #include <thread>
 #include <type_traits>
 
@@ -88,9 +94,6 @@ protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
     SimpleCache cache_;
-
-    // mutex used for open() and close()
-    mutable std::mutex mutex_;
 
 public:
     BackendInterface(boost::json::object const& config)

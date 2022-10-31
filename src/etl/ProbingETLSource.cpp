@@ -8,8 +8,7 @@ ProbingETLSource::ProbingETLSource(
     std::shared_ptr<NetworkValidatedLedgers> nwvl,
     ETLLoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)
-    : ioc_{ioc}
-    , sslCtx_{std::move(sslCtx)}
+    : sslCtx_{std::move(sslCtx)}
     , sslSrc_{make_shared<SslETLSource>(
           config,
           ioc,
@@ -69,7 +68,16 @@ boost::json::object
 ProbingETLSource::toJson() const
 {
     if (!currentSrc_)
-        return {};
+    {
+        boost::json::object sourcesJson = {
+            {"ws", plainSrc_->toJson()},
+            {"wss", sslSrc_->toJson()},
+        };
+
+        return {
+            {"probing", sourcesJson},
+        };
+    }
     return currentSrc_->toJson();
 }
 

@@ -2,13 +2,18 @@
 #define REPORTING_RPC_H_INCLUDED
 
 #include <ripple/protocol/ErrorCodes.h>
+
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+
 #include <backend/BackendInterface.h>
-#include <optional>
 #include <rpc/Counters.h>
+#include <util/Taggable.h>
+
+#include <optional>
 #include <string>
 #include <variant>
+
 /*
  * This file contains various classes necessary for executing RPC handlers.
  * Context gives the handlers access to various other parts of the application
@@ -27,7 +32,7 @@ class ReportingETL;
 
 namespace RPC {
 
-struct Context
+struct Context : public util::Taggable
 {
     boost::asio::yield_context& yield;
     std::string method;
@@ -55,23 +60,10 @@ struct Context
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
         std::shared_ptr<ReportingETL const> const& etl_,
         std::shared_ptr<WsBase> const& session_,
+        util::TagDecoratorFactory const& tagFactory_,
         Backend::LedgerRange const& range_,
         Counters& counters_,
-        std::string const& clientIp_)
-        : yield(yield_)
-        , method(command_)
-        , version(version_)
-        , params(params_)
-        , backend(backend_)
-        , subscriptions(subscriptions_)
-        , balancer(balancer_)
-        , etl(etl_)
-        , session(session_)
-        , range(range_)
-        , counters(counters_)
-        , clientIp(clientIp_)
-    {
-    }
+        std::string const& clientIp_);
 };
 using Error = ripple::error_code_i;
 
@@ -204,6 +196,7 @@ make_WsContext(
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<ReportingETL const> const& etl,
     std::shared_ptr<WsBase> const& session,
+    util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);
@@ -216,6 +209,7 @@ make_HttpContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<ReportingETL const> const& etl,
+    util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);
@@ -237,7 +231,7 @@ void
 logDuration(Context const& ctx, T const& dur)
 {
     std::stringstream ss;
-    ss << "Request processing duration = "
+    ss << ctx.tag() << "Request processing duration = "
        << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
        << " milliseconds. request = " << ctx.params;
     auto seconds =

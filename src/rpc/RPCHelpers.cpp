@@ -1,6 +1,11 @@
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
+
+#include <ripple/basics/StringUtilities.h>
+
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+
 namespace RPC {
 
 std::optional<bool>
@@ -1356,7 +1361,7 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays"))
-        return Status{Error::rpcINVALID_PARAMS, "missingTakerPays"};
+        return Status{Error::rpcBAD_MARKET, "missingTakerPays"};
 
     if (!request.contains("taker_gets"))
         return Status{Error::rpcINVALID_PARAMS, "missingTakerGets"};
@@ -1384,12 +1389,12 @@ parseBook(boost::json::object const& request)
     ripple::Currency pay_currency;
     if (!ripple::to_currency(
             pay_currency, taker_pays.at("currency").as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "badTakerPaysCurrency"};
+        return Status{Error::rpcSRC_CUR_MALFORMED, "badTakerPaysCurrency"};
 
     ripple::Currency get_currency;
     if (!ripple::to_currency(
             get_currency, taker_gets["currency"].as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "badTakerGetsCurrency"};
+        return Status{Error::rpcDST_AMT_MALFORMED, "badTakerGetsCurrency"};
 
     ripple::AccountID pay_issuer;
     if (taker_pays.contains("issuer"))
@@ -1433,12 +1438,12 @@ parseBook(boost::json::object const& request)
         if (!ripple::to_issuer(
                 get_issuer, taker_gets.at("issuer").as_string().c_str()))
             return Status{
-                Error::rpcINVALID_PARAMS,
+                Error::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer."};
 
         if (get_issuer == ripple::noAccount())
             return Status{
-                Error::rpcINVALID_PARAMS,
+                Error::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer account "
                 "one."};
     }
@@ -1449,17 +1454,17 @@ parseBook(boost::json::object const& request)
 
     if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
         return Status{
-            Error::rpcINVALID_PARAMS,
+            Error::rpcDST_ISR_MALFORMED,
             "Unneeded field 'taker_gets.issuer' for XRP currency "
             "specification."};
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
         return Status{
-            Error::rpcINVALID_PARAMS,
+            Error::rpcDST_ISR_MALFORMED,
             "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
-        return Status{Error::rpcINVALID_PARAMS, "badMarket"};
+        return Status{Error::rpcBAD_MARKET, "badMarket"};
 
     return ripple::Book{{pay_currency, pay_issuer}, {get_currency, get_issuer}};
 }
@@ -1574,7 +1579,7 @@ traverseTransactions(
             if (context.range.maxSequence < min.as_int64() ||
                 context.range.minSequence > min.as_int64())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "ledgerSeqMinOutOfRange"};
+                    Error::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"};
             else
                 minIndex = boost::json::value_to<std::uint32_t>(min);
         }
@@ -1596,7 +1601,7 @@ traverseTransactions(
             if (context.range.maxSequence < max.as_int64() ||
                 context.range.minSequence > max.as_int64())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "ledgerSeqMaxOutOfRange"};
+                    Error::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"};
             else
                 maxIndex = boost::json::value_to<std::uint32_t>(max);
         }
@@ -1652,8 +1657,13 @@ traverseTransactions(
 
     for (auto const& txnPlusMeta : blobs)
     {
-        if (txnPlusMeta.ledgerSequence < minIndex ||
-            txnPlusMeta.ledgerSequence > maxIndex)
+        if ((txnPlusMeta.ledgerSequence < minIndex && !forward) ||
+            (txnPlusMeta.ledgerSequence > maxIndex && forward))
+        {
+            response.erase(JS(marker));
+            break;
+        }
+        else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
         {
             BOOST_LOG_TRIVIAL(debug)
                 << __func__
@@ -1680,13 +1690,11 @@ traverseTransactions(
             obj[JS(date)] = txnPlusMeta.date;
         }
         obj[JS(validated)] = true;
-
         txns.push_back(obj);
     }
 
     response[JS(ledger_index_min)] = minIndex;
     response[JS(ledger_index_max)] = maxIndex;
-
     response[JS(transactions)] = txns;
 
     BOOST_LOG_TRIVIAL(info)

@@ -1001,7 +1001,6 @@ CassandraBackend::open(bool readOnly)
 
     BOOST_LOG_TRIVIAL(info) << "Opening Cassandra Backend";
 
-    std::lock_guard<std::mutex> lock(mutex_);
     CassCluster* cluster = cass_cluster_new();
     if (!cluster)
         throw std::runtime_error("nodestore:: Failed to create CassCluster");
