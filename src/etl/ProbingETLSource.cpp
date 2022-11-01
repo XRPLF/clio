@@ -1,7 +1,7 @@
 #include <etl/ProbingETLSource.h>
 
 ProbingETLSource::ProbingETLSource(
-    boost::json::object const& config,
+    clio::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,

@@ -7,11 +7,13 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+
 #include <backend/BackendInterface.h>
+#include <config/Config.h>
+#include <etl/ETLHelpers.h>
 #include <subscriptions/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <etl/ETLHelpers.h>
 #include <grpcpp/grpcpp.h>
 
 class ETLLoadBalancer;
@@ -44,33 +46,27 @@ class ForwardCache
 
 public:
     ForwardCache(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioc,
         ETLSource const& source)
         : strand_(ioc), timer_(strand_), source_(source)
     {
-        if (config.contains("cache") && !config.at("cache").is_array())
-            throw std::runtime_error("ETLSource cache must be array");
-
-        if (config.contains("cache_duration") &&
-            !config.at("cache_duration").is_int64())
-            throw std::runtime_error(
-                "ETLSource cache_duration must be a number");
-
-        duration_ = config.contains("cache_duration")
-            ? config.at("cache_duration").as_int64()
-            : 10;
-
-        auto commands = config.contains("cache") ? config.at("cache").as_array()
-                                                 : boost::json::array{};
-
-        for (auto const& command : commands)
+        if (config.contains("cache"))
         {
-            if (!command.is_string())
-                throw std::runtime_error(
-                    "ETLSource forward command must be array of strings");
+            auto commands =
+                config.arrayOrThrow("cache", "ETLSource cache must be array");
 
-            latestForwarded_[command.as_string().c_str()] = {};
+            if (config.contains("cache_duration"))
+                duration_ = config.valueOrThrow<uint32_t>(
+                    "cache_duration",
+                    "ETLSource cache_duration must be a number");
+
+            for (auto const& command : commands)
+            {
+                auto key = command.valueOrThrow<std::string>(
+                    "ETLSource forward command must be array of strings");
+                latestForwarded_[key] = {};
+            }
         }
     }
 
@@ -262,7 +258,7 @@ public:
     /// Fetch ledger and load initial ledger will fail for this source
     /// Primarly used in read-only mode, to monitor when ledgers are validated
     ETLSourceImpl(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -279,20 +275,12 @@ public:
         , timer_(ioContext)
         , hooks_(hooks)
     {
-        if (config.contains("ip"))
+        ip_ = config.valueOr<std::string>("ip", {});
+        wsPort_ = config.valueOr<std::string>("ws_port", {});
+
+        if (auto value = config.maybeValue<std::string>("grpc_port"); value)
         {
-            auto ipJs = config.at("ip").as_string();
-            ip_ = {ipJs.c_str(), ipJs.size()};
-        }
-        if (config.contains("ws_port"))
-        {
-            auto portjs = config.at("ws_port").as_string();
-            wsPort_ = {portjs.c_str(), portjs.size()};
-        }
-        if (config.contains("grpc_port"))
-        {
-            auto portjs = config.at("grpc_port").as_string();
-            grpcPort_ = {portjs.c_str(), portjs.size()};
+            grpcPort_ = *value;
             try
             {
                 boost::asio::ip::tcp::endpoint endpoint{
@@ -498,7 +486,7 @@ class PlainETLSource : public ETLSourceImpl<PlainETLSource>
 
 public:
     PlainETLSource(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -547,7 +535,7 @@ class SslETLSource : public ETLSourceImpl<SslETLSource>
 
 public:
     SslETLSource(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
@@ -610,7 +598,7 @@ private:
 
 public:
     ETLLoadBalancer(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -618,7 +606,7 @@ public:
 
     static std::shared_ptr<ETLLoadBalancer>
     make_ETLLoadBalancer(
-        boost::json::object const& config,
+        clio::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,

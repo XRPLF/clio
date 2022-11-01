@@ -11,6 +11,8 @@
 #include <backend/SimpleCache.h>
 #include <backend/Types.h>
 
+#include <config/Config.h>
+
 #include <thread>
 #include <type_traits>
 
@@ -96,7 +98,7 @@ protected:
     SimpleCache cache_;
 
 public:
-    BackendInterface(boost::json::object const& config)
+    BackendInterface(clio::Config const& config)
     {
     }
     virtual ~BackendInterface()

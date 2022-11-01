@@ -913,7 +913,7 @@ ETLSourceImpl<Derived>::fetchLedger(
 
 static std::unique_ptr<ETLSource>
 make_ETLSource(
-    boost::json::object const& config,
+    clio::Config const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
@@ -934,27 +934,21 @@ make_ETLSource(
 }
 
 ETLLoadBalancer::ETLLoadBalancer(
-    boost::json::object const& config,
+    clio::Config const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl)
 {
-    if (config.contains("num_markers") && config.at("num_markers").is_int64())
-    {
-        downloadRanges_ = config.at("num_markers").as_int64();
-
-        downloadRanges_ = std::clamp(downloadRanges_, {1}, {256});
-    }
+    if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
+        downloadRanges_ = std::clamp(*value, 1u, 256u);
     else if (backend->fetchLedgerRange())
-    {
         downloadRanges_ = 4;
-    }
 
-    for (auto& entry : config.at("etl_sources").as_array())
+    for (auto const& entry : config.array("etl_sources"))
     {
         std::unique_ptr<ETLSource> source = make_ETLSource(
-            entry.as_object(), ioContext, backend, subscriptions, nwvl, *this);
+            entry, ioContext, backend, subscriptions, nwvl, *this);
 
         sources_.push_back(std::move(source));
         BOOST_LOG_TRIVIAL(info) << __func__ << " : added etl source - "

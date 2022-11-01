@@ -4,30 +4,23 @@
 #include <boost/algorithm/string.hpp>
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
+#include <config/Config.h>
 
 namespace Backend {
 std::shared_ptr<BackendInterface>
-make_Backend(boost::asio::io_context& ioc, boost::json::object const& config)
+make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
 {
     BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
 
-    boost::json::object dbConfig = config.at("database").as_object();
-
-    bool readOnly = false;
-    if (config.contains("read_only"))
-        readOnly = config.at("read_only").as_bool();
-
-    auto type = dbConfig.at("type").as_string();
-
+    auto readOnly = config.valueOr("read_only", false);
+    auto type = config.value<std::string>("database.type");
     std::shared_ptr<BackendInterface> backend = nullptr;
 
     if (boost::iequals(type, "cassandra"))
     {
-        if (config.contains("online_delete"))
-            dbConfig.at(type).as_object()["ttl"] =
-                config.at("online_delete").as_int64() * 4;
-        backend = std::make_shared<CassandraBackend>(
-            ioc, dbConfig.at(type).as_object());
+        auto cfg = config.section("database." + type);
+        auto ttl = config.valueOr<uint32_t>("online_delete", 0) * 4;
+        backend = std::make_shared<CassandraBackend>(ioc, cfg, ttl);
     }
 
     if (!backend)
