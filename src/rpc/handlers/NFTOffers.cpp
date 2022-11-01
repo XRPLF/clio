@@ -16,7 +16,7 @@ appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
     offers.push_back(boost::json::object_kind);
     boost::json::object& obj(offers.back().as_object());
 
-    obj[JS(index)] = ripple::to_string(offer.key());
+    obj[JS(nft_offer_index)] = ripple::to_string(offer.key());
     obj[JS(flags)] = (offer)[ripple::sfFlags];
     obj[JS(owner)] = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
 
