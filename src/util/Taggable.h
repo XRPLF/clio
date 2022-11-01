@@ -1,6 +1,7 @@
 #ifndef RIPPLE_UTIL_TAGDECORATOR_H
 #define RIPPLE_UTIL_TAGDECORATOR_H
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -9,6 +10,8 @@
 #include <optional>
 #include <ostream>
 #include <string>
+
+#include <config/Config.h>
 
 namespace util {
 namespace detail {
@@ -170,8 +173,8 @@ public:
      * @brief Instantiates a tag decorator factory from `clio` configuration.
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(boost::json::object const& config)
-        : type_{TagDecoratorFactory::parseType(config)}
+    explicit TagDecoratorFactory(clio::Config const& config)
+        : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
     {
     }
 
@@ -203,8 +206,23 @@ public:
     with(parent_t parent) const noexcept;
 
 private:
-    static Type
-    parseType(boost::json::object const& config);
+    friend Type
+    tag_invoke(boost::json::value_to_tag<Type>, boost::json::value const& value)
+    {
+        assert(value.is_string());
+        auto const& style = value.as_string();
+
+        if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
+            return TagDecoratorFactory::Type::UINT;
+        else if (boost::iequals(style, "null") || boost::iequals(style, "none"))
+            return TagDecoratorFactory::Type::NONE;
+        else if (boost::iequals(style, "uuid"))
+            return TagDecoratorFactory::Type::UUID;
+        else
+            throw std::runtime_error(
+                "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
+                "`null`");
+    }
 };
 
 /**

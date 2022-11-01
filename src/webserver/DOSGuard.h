@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <config/Config.h>
+
 class DOSGuard
 {
     boost::asio::io_context& ctx_;
@@ -15,66 +17,12 @@ class DOSGuard
     std::uint32_t const maxFetches_;
     std::uint32_t const sweepInterval_;
 
-    // Load config setting for DOSGuard
-    std::optional<boost::json::object>
-    getConfig(boost::json::object const& config) const
-    {
-        if (!config.contains("dos_guard"))
-            return {};
-
-        return config.at("dos_guard").as_object();
-    }
-
-    std::uint32_t
-    get(boost::json::object const& config,
-        std::string const& key,
-        std::uint32_t const fallback) const
-    {
-        try
-        {
-            if (auto const c = getConfig(config))
-                return c->at(key).as_int64();
-        }
-        catch (std::exception const& e)
-        {
-        }
-
-        return fallback;
-    }
-
-    std::unordered_set<std::string> const
-    getWhitelist(boost::json::object const& config) const
-    {
-        using T = std::unordered_set<std::string> const;
-
-        try
-        {
-            auto const& c = getConfig(config);
-            if (!c)
-                return T();
-
-            auto const& w = c->at("whitelist").as_array();
-
-            auto const transform = [](auto const& elem) {
-                return std::string(elem.as_string().c_str());
-            };
-
-            return T(
-                boost::transform_iterator(w.begin(), transform),
-                boost::transform_iterator(w.end(), transform));
-        }
-        catch (std::exception const& e)
-        {
-            return T();
-        }
-    }
-
 public:
-    DOSGuard(boost::json::object const& config, boost::asio::io_context& ctx)
-        : ctx_(ctx)
-        , whitelist_(getWhitelist(config))
-        , maxFetches_(get(config, "max_fetches", 100))
-        , sweepInterval_(get(config, "sweep_interval", 1))
+    DOSGuard(clio::Config const& config, boost::asio::io_context& ctx)
+        : ctx_{ctx}
+        , whitelist_{getWhitelist(config)}
+        , maxFetches_{config.valueOr("dos_guard.max_fetches", 100u)}
+        , sweepInterval_{config.valueOr("dos_guard.sweep_interval", 1u)}
     {
         createTimer();
     }
@@ -136,6 +84,20 @@ public:
     {
         std::unique_lock lck(mtx_);
         ipFetchCount_.clear();
+    }
+
+private:
+    std::unordered_set<std::string> const
+    getWhitelist(clio::Config const& config) const
+    {
+        using T = std::unordered_set<std::string> const;
+        auto whitelist = config.arrayOr("dos_guard.whitelist", {});
+        auto const transform = [](auto const& elem) {
+            return elem.template value<std::string>();
+        };
+        return T{
+            boost::transform_iterator(std::begin(whitelist), transform),
+            boost::transform_iterator(std::end(whitelist), transform)};
     }
 };
 #endif

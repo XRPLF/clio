@@ -9,6 +9,7 @@
 #include <boost/log/trivial.hpp>
 #include <backend/BackendFactory.h>
 #include <backend/BackendInterface.h>
+#include <config/Config.h>
 
 TEST(BackendTest, Basic)
 {
@@ -41,7 +42,7 @@ TEST(BackendTest, Basic)
             for (auto& config : configs)
             {
                 std::cout << keyspace << std::endl;
-                auto backend = Backend::make_Backend(ioc, config);
+                auto backend = Backend::make_Backend(ioc, clio::Config{config});
 
                 std::string rawHeader =
                     "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335"
@@ -1844,7 +1845,7 @@ TEST(Backend, cacheIntegration)
             for (auto& config : configs)
             {
                 std::cout << keyspace << std::endl;
-                auto backend = Backend::make_Backend(ioc, config);
+                auto backend = Backend::make_Backend(ioc, clio::Config{config});
                 backend->cache().setFull();
 
                 std::string rawHeader =

@@ -2,6 +2,7 @@
 #define SUBSCRIPTION_MANAGER_H
 
 #include <backend/BackendInterface.h>
+#include <config/Config.h>
 #include <memory>
 #include <subscriptions/Message.h>
 
@@ -107,17 +108,10 @@ class SubscriptionManager
 public:
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager(
-        boost::json::object const& config,
+        clio::Config const& config,
         std::shared_ptr<Backend::BackendInterface const> const& b)
     {
-        auto numThreads = 1;
-
-        if (config.contains("subscription_workers") &&
-            config.at("subscription_workers").is_int64())
-        {
-            numThreads = config.at("subscription_workers").as_int64();
-        }
-
+        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
         return std::make_shared<SubscriptionManager>(numThreads, b);
     }
 
