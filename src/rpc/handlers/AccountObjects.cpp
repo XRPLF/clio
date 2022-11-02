@@ -179,7 +179,7 @@ doAccountObjects(Context const& context)
     boost::json::array& jsonObjects =
         response.at(JS(account_objects)).as_array();
 
-    auto const addToResponse = [&](ripple::SLE const& sle) {
+    auto const addToResponse = [&](ripple::SLE&& sle) {
         if (!objectType || objectType == sle.getType())
         {
             jsonObjects.push_back(toJson(sle));

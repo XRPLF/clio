@@ -100,7 +100,7 @@ doNoRippleCheck(Context const& context)
          &accountSeq,
          &limit,
          &accountID,
-         &problems](auto const& ownedItem) {
+         &problems](ripple::SLE&& ownedItem) {
             if (ownedItem.getType() == ripple::ltRIPPLE_STATE)
             {
                 bool const bLow = accountID ==

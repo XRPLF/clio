@@ -87,7 +87,7 @@ doAccountChannels(Context const& context)
     response[JS(channels)] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonChannels = response.at(JS(channels)).as_array();
 
-    auto const addToResponse = [&](ripple::SLE const& sle) {
+    auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltPAYCHAN &&
             sle.getAccountID(ripple::sfAccount) == accountID &&
             (!destAccount ||

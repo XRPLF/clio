@@ -100,7 +100,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE)> atOwnedNode);
+    std::function<void(ripple::SLE&&)> atOwnedNode);
 
 std::variant<Status, AccountCursor>
 traverseOwnedNodes(
@@ -112,7 +112,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE)> atOwnedNode);
+    std::function<void(ripple::SLE&&)> atOwnedNode);
 
 std::shared_ptr<ripple::SLE const>
 read(
