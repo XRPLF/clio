@@ -1,15 +1,10 @@
 #ifndef RIPPLE_REPORTING_WS_BASE_SESSION_H
 #define RIPPLE_REPORTING_WS_BASE_SESSION_H
 
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
-
-#include <iostream>
-#include <memory>
-
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
@@ -18,6 +13,13 @@
 #include <util/Taggable.h>
 #include <webserver/DOSGuard.h>
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+
+#include <iostream>
+#include <memory>
+
+// TODO: Consider removing these. Visible to anyone including this header.
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
@@ -27,8 +29,8 @@ using tcp = boost::asio::ip::tcp;
 inline void
 logError(boost::beast::error_code ec, char const* what)
 {
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " : " << what << ": " << ec.message() << "\n";
+    static clio::Logger log{"WebServer"};
+    log.debug() << what << ": " << ec.message() << "\n";
 }
 
 inline boost::json::object
@@ -48,6 +50,8 @@ getDefaultWsResponse(boost::json::value const& id)
 class WsBase : public util::Taggable
 {
 protected:
+    clio::Logger log_{"WebServer"};
+    clio::Logger perfLog_{"Performance"};
     boost::system::error_code ec_;
 
 public:
@@ -114,8 +118,7 @@ class WsSession : public WsBase,
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            BOOST_LOG_TRIVIAL(info)
-                << tag() << __func__ << ": " << what << ": " << ec.message();
+            perfLog_.info() << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
 
             if (auto manager = subscriptions_.lock(); manager)
@@ -147,11 +150,11 @@ public:
         , counters_(counters)
         , queue_(queue)
     {
-        BOOST_LOG_TRIVIAL(info) << tag() << "session created";
+        perfLog_.info() << tag() << "session created";
     }
     virtual ~WsSession()
     {
-        BOOST_LOG_TRIVIAL(info) << tag() << "session closed";
+        perfLog_.info() << tag() << "session closed";
     }
 
     // Access the derived class, this is part of
@@ -244,7 +247,7 @@ public:
         if (ec)
             return wsFail(ec, "accept");
 
-        BOOST_LOG_TRIVIAL(info) << tag() << "accepting new connection";
+        perfLog_.info() << tag() << "accepting new connection";
 
         // Read a message
         do_read();
@@ -287,7 +290,7 @@ public:
 
         try
         {
-            BOOST_LOG_TRIVIAL(debug)
+            perfLog_.debug()
                 << tag() << "ws received request from work queue : " << request;
 
             auto range = backend_->fetchLedgerRange();
@@ -309,8 +312,7 @@ public:
 
             if (!context)
             {
-                BOOST_LOG_TRIVIAL(warning)
-                    << tag() << " could not create RPC context";
+                perfLog_.warn() << tag() << "Could not create RPC context";
                 return sendError(RPC::RippledError::rpcBAD_SYNTAX);
             }
 
@@ -344,8 +346,7 @@ public:
         }
         catch (std::exception const& e)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << tag() << __func__ << " caught exception : " << e.what();
+            perfLog_.error() << tag() << "Caught exception : " << e.what();
 
             return sendError(RPC::RippledError::rpcINTERNAL);
         }
@@ -385,8 +386,7 @@ public:
         if (!ip)
             return;
 
-        BOOST_LOG_TRIVIAL(info) << tag() << "ws::" << __func__
-                                << " received request from ip = " << *ip;
+        perfLog_.info() << tag() << "Received request from ip = " << *ip;
 
         auto sendError = [this, ip](
                              auto error,
@@ -399,7 +399,7 @@ public:
             e["request"] = request;
 
             auto responseStr = boost::json::serialize(e);
-            BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
+            log_.trace() << responseStr;
             dosGuard_.add(*ip, responseStr.size());
             send(std::move(responseStr));
         };
@@ -429,8 +429,7 @@ public:
         }
         else
         {
-            BOOST_LOG_TRIVIAL(debug)
-                << tag() << __func__ << " adding to work queue";
+            perfLog_.debug() << tag() << "Adding to work queue";
 
             if (!queue_.postCoro(
                     [shared_this = shared_from_this(),

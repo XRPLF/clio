@@ -99,19 +99,21 @@ target_sources(clio PRIVATE
   src/rpc/handlers/Subscribe.cpp
   # Server
   src/rpc/handlers/ServerInfo.cpp
-  # Utility
+  # Utilities
   src/rpc/handlers/Random.cpp
-  src/util/Taggable.cpp
-  src/config/Config.cpp)
+  src/config/Config.cpp
+  src/log/Logger.cpp
+  src/util/Taggable.cpp)
 
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests
+  add_executable(clio_tests 
     unittests/RPCErrors.cpp 
-    unittests/config.cpp 
-    unittests/main.cpp)
+    unittests/Backend.cpp
+    unittests/Logger.cpp
+    unittests/Config.cpp)
   include(CMake/deps/gtest.cmake)
 endif()
 

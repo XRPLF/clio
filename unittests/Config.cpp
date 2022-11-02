@@ -1,9 +1,8 @@
 #include <config/Config.h>
+#include <util/Fixtures.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/json/parse.hpp>
-#include <boost/log/core.hpp>
-#include <gtest/gtest.h>
 
 #include <cstdio>
 #include <exception>
@@ -34,17 +33,10 @@ constexpr static auto JSONData = R"JSON(
     }
 )JSON";
 
-class ConfigTest : public ::testing::Test
+class ConfigTest : public NoLoggerFixture
 {
 protected:
     Config cfg{json::parse(JSONData)};
-
-    void
-    SetUp() override
-    {
-        // disable logging in test
-        core::get()->set_logging_enabled(false);
-    }
 };
 
 TEST_F(ConfigTest, SanityCheck)

@@ -4,9 +4,11 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-#include <algorithm>
 #include <rpc/RPCHelpers.h>
+
+#include <boost/json.hpp>
+
+#include <algorithm>
 
 namespace json = boost::json;
 

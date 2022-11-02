@@ -3,8 +3,10 @@
 
 #include <backend/BackendInterface.h>
 #include <config/Config.h>
-#include <memory>
+#include <log/Logger.h>
 #include <subscriptions/Message.h>
+
+#include <memory>
 
 class WsBase;
 
@@ -87,6 +89,7 @@ public:
 class SubscriptionManager
 {
     using session_ptr = std::shared_ptr<WsBase>;
+    clio::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
@@ -134,8 +137,8 @@ public:
         // We will eventually want to clamp this to be the number of strands,
         // since adding more threads than we have strands won't see any
         // performance benefits
-        BOOST_LOG_TRIVIAL(info) << "Starting subscription manager with "
-                                << numThreads << " workers";
+        log_.info() << "Starting subscription manager with " << numThreads
+                    << " workers";
 
         workers_.reserve(numThreads);
         for (auto i = numThreads; i > 0; --i)

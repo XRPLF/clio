@@ -1,10 +1,11 @@
 #ifndef CLIO_WORK_QUEUE_H
 #define CLIO_WORK_QUEUE_H
 
+#include <log/Logger.h>
+
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <boost/log/trivial.hpp>
 
 #include <memory>
 #include <optional>
@@ -20,6 +21,7 @@ class WorkQueue
 
     std::atomic_uint64_t curSize_ = 0;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
+    clio::Logger log_{"RPC"};
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
@@ -30,10 +32,8 @@ public:
     {
         if (curSize_ >= maxSize_ && !isWhiteListed)
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__
-                << " queue is full. rejecting job. current size = " << curSize_
-                << " max size = " << maxSize_;
+            log_.warn() << "Queue is full. rejecting job. current size = "
+                        << curSize_ << " max size = " << maxSize_;
             return false;
         }
         ++curSize_;
@@ -52,8 +52,8 @@ public:
                 // durationUs_
                 ++queued_;
                 durationUs_ += wait;
-                BOOST_LOG_TRIVIAL(debug) << "WorkQueue wait time = " << wait
-                                         << " queue size = " << curSize_;
+                log_.info() << "WorkQueue wait time = " << wait
+                            << " queue size = " << curSize_;
                 f(yield);
                 --curSize_;
             });

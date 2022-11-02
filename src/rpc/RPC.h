@@ -1,14 +1,14 @@
 #ifndef REPORTING_RPC_H_INCLUDED
 #define REPORTING_RPC_H_INCLUDED
 
+#include <backend/BackendInterface.h>
+#include <log/Logger.h>
+#include <rpc/Counters.h>
 #include <rpc/Errors.h>
+#include <util/Taggable.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-
-#include <backend/BackendInterface.h>
-#include <rpc/Counters.h>
-#include <util/Taggable.h>
 
 #include <optional>
 #include <string>
@@ -34,6 +34,7 @@ namespace RPC {
 
 struct Context : public util::Taggable
 {
+    clio::Logger perfLog_{"Performance"};
     boost::asio::yield_context& yield;
     std::string method;
     std::uint32_t version;
@@ -129,6 +130,7 @@ template <class T>
 void
 logDuration(Context const& ctx, T const& dur)
 {
+    static clio::Logger log{"RPC"};
     std::stringstream ss;
     ss << ctx.tag() << "Request processing duration = "
        << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
@@ -136,11 +138,11 @@ logDuration(Context const& ctx, T const& dur)
     auto seconds =
         std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     if (seconds > 10)
-        BOOST_LOG_TRIVIAL(error) << ss.str();
+        log.error() << ss.str();
     else if (seconds > 1)
-        BOOST_LOG_TRIVIAL(warning) << ss.str();
+        log.warn() << ss.str();
     else
-        BOOST_LOG_TRIVIAL(info) << ss.str();
+        log.info() << ss.str();
 }
 
 }  // namespace RPC
