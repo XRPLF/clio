@@ -184,6 +184,8 @@ doLedgerData(Context const& context)
             objects.push_back(toJson(sle));
     }
     response[JS(state)] = std::move(objects);
+    if (outOfOrder)
+        response["cache_full"] = context.backend->cache().isFull();
     auto end2 = std::chrono::system_clock::now();
 
     time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)

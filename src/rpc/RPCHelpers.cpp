@@ -1,6 +1,11 @@
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
+
+#include <ripple/basics/StringUtilities.h>
+
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+
 namespace RPC {
 
 std::optional<bool>
@@ -1348,7 +1353,7 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays"))
-        return Status{Error::rpcINVALID_PARAMS, "missingTakerPays"};
+        return Status{Error::rpcBAD_MARKET, "missingTakerPays"};
 
     if (!request.contains("taker_gets"))
         return Status{Error::rpcINVALID_PARAMS, "missingTakerGets"};
@@ -1451,7 +1456,7 @@ parseBook(boost::json::object const& request)
             "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
-        return Status{Error::rpcINVALID_PARAMS, "badMarket"};
+        return Status{Error::rpcBAD_MARKET, "badMarket"};
 
     return ripple::Book{{pay_currency, pay_issuer}, {get_currency, get_issuer}};
 }

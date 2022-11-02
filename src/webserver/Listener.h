@@ -327,7 +327,7 @@ using HttpServer = Listener<HttpSession, SslHttpSession>;
 
 static std::shared_ptr<HttpServer>
 make_HttpServer(
-    boost::json::object const& config,
+    clio::Config const& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface const> backend,
@@ -339,19 +339,15 @@ make_HttpServer(
     if (!config.contains("server"))
         return nullptr;
 
-    auto const& serverConfig = config.at("server").as_object();
+    auto const serverConfig = config.section("server");
+    auto const address =
+        boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
+    auto const port = serverConfig.value<unsigned short>("port");
+    auto const numThreads = config.valueOr<uint32_t>(
+        "workers", std::thread::hardware_concurrency());
+    auto const maxQueueSize =
+        serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
 
-    auto const address = boost::asio::ip::make_address(
-        serverConfig.at("ip").as_string().c_str());
-    auto const port =
-        static_cast<unsigned short>(serverConfig.at("port").as_int64());
-
-    uint32_t numThreads = std::thread::hardware_concurrency();
-    if (config.contains("workers"))
-        numThreads = config.at("workers").as_int64();
-    uint32_t maxQueueSize = 0;  // no max
-    if (serverConfig.contains("max_queue_size"))
-        maxQueueSize = serverConfig.at("max_queue_size").as_int64();
     BOOST_LOG_TRIVIAL(info) << __func__ << " Number of workers = " << numThreads
                             << ". Max queue size = " << maxQueueSize;
 

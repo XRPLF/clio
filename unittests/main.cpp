@@ -9,6 +9,7 @@
 #include <boost/log/trivial.hpp>
 #include <backend/BackendFactory.h>
 #include <backend/BackendInterface.h>
+#include <config/Config.h>
 
 TEST(BackendTest, Basic)
 {
@@ -37,24 +38,11 @@ TEST(BackendTest, Basic)
                     {"max_requests_outstanding", 1000},
                     {"indexer_key_shift", 2},
                     {"threads", 8}}}}}};
-            boost::json::object postgresConfig{
-                {"database",
-                 {{"type", "postgres"},
-                  {"experimental", true},
-                  {"postgres",
-                   {{"contact_point", "127.0.0.1"},
-                    {"username", "postgres"},
-                    {"database", keyspace.c_str()},
-                    {"password", "postgres"},
-                    {"indexer_key_shift", 2},
-                    {"max_connections", 100},
-                    {"threads", 8}}}}}};
-            std::vector<boost::json::object> configs = {
-                cassandraConfig, postgresConfig};
+            std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
                 std::cout << keyspace << std::endl;
-                auto backend = Backend::make_Backend(ioc, config);
+                auto backend = Backend::make_Backend(ioc, clio::Config{config});
 
                 std::string rawHeader =
                     "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335"
@@ -1853,24 +1841,11 @@ TEST(Backend, cacheIntegration)
                     {"max_requests_outstanding", 1000},
                     {"indexer_key_shift", 2},
                     {"threads", 8}}}}}};
-            boost::json::object postgresConfig{
-                {"database",
-                 {{"type", "postgres"},
-                  {"experimental", true},
-                  {"postgres",
-                   {{"contact_point", "127.0.0.1"},
-                    {"username", "postgres"},
-                    {"database", keyspace.c_str()},
-                    {"password", "postgres"},
-                    {"indexer_key_shift", 2},
-                    {"max_connections", 100},
-                    {"threads", 8}}}}}};
-            std::vector<boost::json::object> configs = {
-                cassandraConfig, postgresConfig};
+            std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
                 std::cout << keyspace << std::endl;
-                auto backend = Backend::make_Backend(ioc, config);
+                auto backend = Backend::make_Backend(ioc, clio::Config{config});
                 backend->cache().setFull();
 
                 std::string rawHeader =

@@ -22,7 +22,7 @@ read-only mode. In read-only mode, the server does not perform ETL and simply
 publishes new ledgers as they are written to the database. 
 If the database is not updated within a certain time period
 (currently hard coded at 20 seconds), clio will begin the ETL
-process and start writing to the database. Postgres will report an error when
+process and start writing to the database. The database will report an error when
 trying to write a record with a key that already exists. ETL uses this error to
 determine that another process is writing to the database, and subsequently
 falls back to a soft read-only mode. clio can also operate in strict

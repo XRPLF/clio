@@ -18,6 +18,8 @@
 #include <mutex>
 #include <thread>
 
+#include <config/Config.h>
+
 namespace Backend {
 
 class CassandraPreparedStatement
@@ -670,15 +672,17 @@ private:
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
-    boost::json::object config_;
+    clio::Config config_;
+    uint32_t ttl_ = 0;
 
     mutable std::uint32_t ledgerSequence_ = 0;
 
 public:
     CassandraBackend(
         boost::asio::io_context& ioc,
-        boost::json::object const& config)
-        : BackendInterface(config), config_(config)
+        clio::Config const& config,
+        uint32_t ttl)
+        : BackendInterface(config), config_(config), ttl_(ttl)
     {
         work_.emplace(ioContext_);
         ioThread_ = std::thread([this]() { ioContext_.run(); });

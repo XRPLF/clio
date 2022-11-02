@@ -979,19 +979,6 @@ CassandraBackend::isTooBusy() const
 void
 CassandraBackend::open(bool readOnly)
 {
-    auto getString = [this](std::string const& field) -> std::string {
-        if (config_.contains(field))
-        {
-            auto jsonStr = config_[field].as_string();
-            return {jsonStr.c_str(), jsonStr.size()};
-        }
-        return {""};
-    };
-    auto getInt = [this](std::string const& field) -> std::optional<int> {
-        if (config_.contains(field) && config_.at(field).is_int64())
-            return config_[field].as_int64();
-        return {};
-    };
     if (open_)
     {
         assert(false);
@@ -1005,7 +992,8 @@ CassandraBackend::open(bool readOnly)
     if (!cluster)
         throw std::runtime_error("nodestore:: Failed to create CassCluster");
 
-    std::string secureConnectBundle = getString("secure_connect_bundle");
+    std::string secureConnectBundle =
+        config_.valueOr<std::string>("secure_connect_bundle", "");
 
     if (!secureConnectBundle.empty())
     {
@@ -1025,12 +1013,9 @@ CassandraBackend::open(bool readOnly)
     }
     else
     {
-        std::string contact_points = getString("contact_points");
-        if (contact_points.empty())
-        {
-            throw std::runtime_error(
-                "nodestore: Missing contact_points in Cassandra config");
-        }
+        std::string contact_points = config_.valueOrThrow<std::string>(
+            "contact_points",
+            "nodestore: Missing contact_points in Cassandra config");
         CassError rc =
             cass_cluster_set_contact_points(cluster, contact_points.c_str());
         if (rc != CASS_OK)
@@ -1043,7 +1028,7 @@ CassandraBackend::open(bool readOnly)
             throw std::runtime_error(ss.str());
         }
 
-        auto port = getInt("port");
+        auto port = config_.maybeValue<int>("port");
         if (port)
         {
             rc = cass_cluster_set_port(cluster, *port);
@@ -1069,15 +1054,16 @@ CassandraBackend::open(bool readOnly)
         throw std::runtime_error(ss.str());
     }
 
-    std::string username = getString("username");
-    if (username.size())
+    auto username = config_.maybeValue<std::string>("username");
+    if (username)
     {
-        BOOST_LOG_TRIVIAL(debug) << "user = " << username.c_str();
+        BOOST_LOG_TRIVIAL(debug) << "user = " << *username;
+        auto password = config_.value<std::string>("password");
         cass_cluster_set_credentials(
-            cluster, username.c_str(), getString("password").c_str());
+            cluster, username->c_str(), password.c_str());
     }
-    int threads =
-        getInt("threads").value_or(std::thread::hardware_concurrency());
+    auto threads =
+        config_.valueOr<int>("threads", std::thread::hardware_concurrency());
 
     rc = cass_cluster_set_num_threads_io(cluster, threads);
     if (rc != CASS_OK)
@@ -1087,14 +1073,13 @@ CassandraBackend::open(bool readOnly)
            << ", result: " << rc << ", " << cass_error_desc(rc);
         throw std::runtime_error(ss.str());
     }
-    if (getInt("max_write_requests_outstanding"))
-        maxWriteRequestsOutstanding = *getInt("max_write_requests_outstanding");
 
-    if (getInt("max_read_requests_outstanding"))
-        maxReadRequestsOutstanding = *getInt("max_read_requests_outstanding");
+    maxWriteRequestsOutstanding = config_.valueOr<int>(
+        "max_write_requests_outstanding", maxWriteRequestsOutstanding);
+    maxReadRequestsOutstanding = config_.valueOr<int>(
+        "max_read_requests_outstanding", maxReadRequestsOutstanding);
+    syncInterval_ = config_.valueOr<int>("sync_interval", syncInterval_);
 
-    if (getInt("sync_interval"))
-        syncInterval_ = *getInt("sync_interval");
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " sync interval is " << syncInterval_
         << ". max write requests outstanding is " << maxWriteRequestsOutstanding
@@ -1117,15 +1102,14 @@ CassandraBackend::open(bool readOnly)
         throw std::runtime_error(ss.str());
     }
 
-    std::string certfile = getString("certfile");
-    if (certfile.size())
+    if (auto certfile = config_.maybeValue<std::string>("certfile"); certfile)
     {
         std::ifstream fileStream(
-            boost::filesystem::path(certfile).string(), std::ios::in);
+            boost::filesystem::path(*certfile).string(), std::ios::in);
         if (!fileStream)
         {
             std::stringstream ss;
-            ss << "opening config file " << certfile;
+            ss << "opening config file " << *certfile;
             throw std::system_error(errno, std::generic_category(), ss.str());
         }
         std::string cert(
@@ -1134,7 +1118,7 @@ CassandraBackend::open(bool readOnly)
         if (fileStream.bad())
         {
             std::stringstream ss;
-            ss << "reading config file " << certfile;
+            ss << "reading config file " << *certfile;
             throw std::system_error(errno, std::generic_category(), ss.str());
         }
 
@@ -1153,7 +1137,7 @@ CassandraBackend::open(bool readOnly)
         cass_ssl_free(context);
     }
 
-    std::string keyspace = getString("keyspace");
+    auto keyspace = config_.valueOr<std::string>("keyspace", "");
     if (keyspace.empty())
     {
         BOOST_LOG_TRIVIAL(warning)
@@ -1161,9 +1145,8 @@ CassandraBackend::open(bool readOnly)
         keyspace = "clio";
     }
 
-    int rf = getInt("replication_factor") ? *getInt("replication_factor") : 3;
-
-    std::string tablePrefix = getString("table_prefix");
+    auto rf = config_.valueOr<int>("replication_factor", 3);
+    auto tablePrefix = config_.valueOr<std::string>("table_prefix", "");
     if (tablePrefix.empty())
     {
         BOOST_LOG_TRIVIAL(warning) << "Table prefix is empty";
@@ -1171,7 +1154,7 @@ CassandraBackend::open(bool readOnly)
 
     cass_cluster_set_connect_timeout(cluster, 10000);
 
-    int ttl = getInt("ttl") ? *getInt("ttl") * 2 : 0;
+    auto ttl = ttl_ * 2;
     BOOST_LOG_TRIVIAL(info)
         << __func__ << " setting ttl to " << std::to_string(ttl);
 

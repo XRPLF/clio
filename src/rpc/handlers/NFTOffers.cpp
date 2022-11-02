@@ -19,7 +19,7 @@ tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
         offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
 
     json::object obj = {
-        {JS(index), to_string(offer.key())},
+        {JS(nft_offer_index), to_string(offer.key())},
         {JS(flags), offer[sfFlags]},
         {JS(owner), toBase58(offer.getAccountID(sfOwner))},
         {JS(amount), std::move(amount)},

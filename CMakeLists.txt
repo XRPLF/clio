@@ -45,7 +45,6 @@ include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
-include(CMake/deps/Postgres.cmake)
 
 target_sources(clio PRIVATE
   ## Main
@@ -53,8 +52,6 @@ target_sources(clio PRIVATE
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
-  src/backend/Pg.cpp
-  src/backend/PostgresBackend.cpp
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
@@ -103,13 +100,16 @@ target_sources(clio PRIVATE
   src/rpc/handlers/ServerInfo.cpp
   # Utility
   src/rpc/handlers/Random.cpp
-  src/util/Taggable.cpp)
+  src/util/Taggable.cpp
+  src/config/Config.cpp)
 
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests unittests/main.cpp)
+  add_executable(clio_tests 
+    unittests/config.cpp 
+    unittests/main.cpp)
   include(CMake/deps/gtest.cmake)
 endif()
 

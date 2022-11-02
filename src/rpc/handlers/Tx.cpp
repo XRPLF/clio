@@ -1,5 +1,4 @@
 #include <backend/BackendInterface.h>
-#include <backend/Pg.h>
 #include <rpc/RPCHelpers.h>
 
 namespace RPC {

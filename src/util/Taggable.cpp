@@ -1,6 +1,5 @@
 #include <util/Taggable.h>
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -47,25 +46,6 @@ TagDecoratorFactory::make() const
         default:
             return std::make_unique<TagDecorator<detail::NullTagGenerator>>();
     }
-}
-
-TagDecoratorFactory::Type
-TagDecoratorFactory::parseType(boost::json::object const& config)
-{
-    if (!config.contains("log_tag_style"))
-        return TagDecoratorFactory::Type::NONE;
-
-    auto style = config.at("log_tag_style").as_string();
-    if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
-        return TagDecoratorFactory::Type::UINT;
-    else if (boost::iequals(style, "null") || boost::iequals(style, "none"))
-        return TagDecoratorFactory::Type::NONE;
-    else if (boost::iequals(style, "uuid"))
-        return TagDecoratorFactory::Type::UUID;
-    else
-        throw std::runtime_error(
-            "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
-            "`null`");
 }
 
 TagDecoratorFactory
