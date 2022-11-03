@@ -138,7 +138,7 @@ doGatewayBalances(Context const& context)
         return true;
     };
 
-    traverseOwnedNodes(
+    auto result = traverseOwnedNodes(
         *context.backend,
         accountID,
         lgrInfo.seq,
@@ -146,6 +146,8 @@ doGatewayBalances(Context const& context)
         {},
         context.yield,
         addToResponse);
+    if (auto status = std::get_if<RPC::Status>(&result))
+        return *status;
 
     if (!sums.empty())
     {
