@@ -18,17 +18,14 @@ static std::unordered_set<std::string> validCommonStreams{
 Status
 validateStreams(boost::json::object const& request)
 {
-    boost::json::array const& streams = request.at(JS(streams)).as_array();
-
-    for (auto const& stream : streams)
+    for (auto const& streams = request.at(JS(streams)).as_array();
+         auto const& stream : streams)
     {
         if (!stream.is_string())
             return Status{Error::rpcINVALID_PARAMS, "streamNotString"};
 
-        std::string s = stream.as_string().c_str();
-
-        if (validCommonStreams.find(s) == validCommonStreams.end())
-            return Status{Error::rpcINVALID_PARAMS, "invalidStream" + s};
+        if (!validCommonStreams.contains(stream.as_string().c_str()))
+            return Status{Error::rpcSTREAM_MALFORMED, "Stream malformed."};
     }
 
     return OK;
