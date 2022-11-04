@@ -103,11 +103,8 @@ validateAccounts(boost::json::array const& accounts)
         if (!account.is_string())
             return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
 
-        std::string s = account.as_string().c_str();
-        auto id = accountFromStringStrict(s);
-
-        if (!id)
-            return Status{Error::rpcINVALID_PARAMS, "invalidAccount" + s};
+        if (!accountFromStringStrict(account.as_string().c_str()))
+            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
     }
 
     return OK;
