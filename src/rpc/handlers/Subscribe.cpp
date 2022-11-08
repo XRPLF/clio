@@ -313,25 +313,30 @@ doSubscribe(Context const& context)
 
     if (request.contains(JS(accounts)))
     {
-        if (!request.at(JS(accounts)).is_array())
+        auto const& jsonAccounts = request.at(JS(accounts));
+        if (!jsonAccounts.is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
-        boost::json::array accounts = request.at(JS(accounts)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
 
     if (request.contains(JS(accounts_proposed)))
     {
-        if (!request.at(JS(accounts_proposed)).is_array())
+        auto const& jsonAccounts = request.at(JS(accounts_proposed));
+        if (!jsonAccounts.is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
-        boost::json::array accounts =
-            request.at(JS(accounts_proposed)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
@@ -393,25 +398,30 @@ doUnsubscribe(Context const& context)
 
     if (request.contains(JS(accounts)))
     {
-        if (!request.at(JS(accounts)).is_array())
+        auto const& jsonAccounts = request.at(JS(accounts));
+        if (!jsonAccounts.is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
 
-        boost::json::array accounts = request.at(JS(accounts)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
 
     if (request.contains(JS(accounts_proposed)))
     {
-        if (!request.at(JS(accounts_proposed)).is_array())
+        auto const& jsonAccounts = request.at(JS(accounts_proposed));
+        if (!jsonAccounts.is_array())
             return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
-        boost::json::array accounts =
-            request.at(JS(accounts_proposed)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
