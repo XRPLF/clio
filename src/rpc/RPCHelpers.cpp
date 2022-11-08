@@ -663,6 +663,10 @@ traverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
+    if (!backend.fetchLedgerObject(
+            ripple::keylet::account(accountID).key, sequence, yield))
+        return Status{Error::rpcACT_NOT_FOUND};
+
     auto parsedCursor =
         parseAccountCursor(backend, sequence, jsonCursor, accountID, yield);
 
