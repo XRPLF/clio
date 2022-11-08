@@ -25,7 +25,7 @@ validateStreams(boost::json::object const& request)
             return Status{Error::rpcINVALID_PARAMS, "streamNotString"};
 
         if (!validCommonStreams.contains(stream.as_string().c_str()))
-            return Status{Error::rpcSTREAM_MALFORMED, "Stream malformed."};
+            return Status{Error::rpcSTREAM_MALFORMED};
     }
 
     return OK;
