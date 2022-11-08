@@ -294,12 +294,6 @@ doSubscribe(Context const& context)
 {
     auto request = context.params;
 
-    if (!request.contains(JS(streams)) && !request.contains(JS(accounts)) &&
-        !request.contains(JS(accounts_proposed)) &&
-        !request.contains(JS(books)))
-        return Status{
-            Error::rpcINVALID_PARAMS, "does not contain valid subscription"};
-
     if (request.contains(JS(streams)))
     {
         if (!request.at(JS(streams)).is_array())
@@ -378,12 +372,6 @@ Result
 doUnsubscribe(Context const& context)
 {
     auto request = context.params;
-
-    if (!request.contains(JS(streams)) && !request.contains(JS(accounts)) &&
-        !request.contains(JS(accounts_proposed)) &&
-        !request.contains(JS(books)))
-        return Status{
-            Error::rpcINVALID_PARAMS, "does not contain valid subscription"};
 
     if (request.contains(JS(streams)))
     {
