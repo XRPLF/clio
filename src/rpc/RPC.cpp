@@ -305,6 +305,13 @@ isClioOnly(std::string const& method)
     return handlerTable.isClioOnly(method);
 }
 
+bool
+shouldSuppressValidatedFlag(RPC::Context const& context)
+{
+    return boost::iequals(context.method, "subscribe") ||
+        boost::iequals(context.method, "unsubscribe");
+}
+
 Status
 getLimit(RPC::Context const& context, std::uint32_t& limit)
 {
@@ -403,8 +410,11 @@ buildResponse(Context const& ctx)
             << ctx.tag() << __func__ << " finish executing rpc `" << ctx.method
             << '`';
 
-        if (auto object = std::get_if<boost::json::object>(&v))
+        if (auto object = std::get_if<boost::json::object>(&v);
+            object && not shouldSuppressValidatedFlag(ctx))
+        {
             (*object)["validated"] = true;
+        }
 
         return v;
     }
