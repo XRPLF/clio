@@ -121,10 +121,19 @@ doAccountLines(Context const& context)
     std::optional<std::string> marker = {};
     if (request.contains(JS(marker)))
     {
-        if (!request.at(JS(marker)).is_string())
+        if (not request.at(JS(marker)).is_string())
             return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
 
         marker = request.at(JS(marker)).as_string().c_str();
+    }
+
+    auto ignoreDefault = false;
+    if (request.contains(JS(ignore_default)))
+    {
+        if (not request.at(JS(ignore_default)).is_bool())
+            return Status{Error::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
+
+        ignoreDefault = request.at(JS(ignore_default)).as_bool();
     }
 
     response[JS(account)] = ripple::to_string(accountID);
@@ -136,7 +145,22 @@ doAccountLines(Context const& context)
     auto const addToResponse = [&](ripple::SLE&& sle) -> void {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            addLine(jsonLines, sle, accountID, peerAccount);
+            auto ignore = false;
+            if (ignoreDefault)
+            {
+                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() ==
+                    accountID)
+                    ignore =
+                        !(sle.getFieldU32(ripple::sfFlags) &
+                          ripple::lsfLowReserve);
+                else
+                    ignore =
+                        !(sle.getFieldU32(ripple::sfFlags) &
+                          ripple::lsfHighReserve);
+            }
+
+            if (!ignore)
+                addLine(jsonLines, sle, accountID, peerAccount);
         }
     };
 
