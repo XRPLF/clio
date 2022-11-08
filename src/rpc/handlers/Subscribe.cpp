@@ -340,7 +340,8 @@ doSubscribe(Context const& context)
     }
 
     std::vector<ripple::Book> books;
-    boost::json::array snapshot;
+    boost::json::object response;
+
     if (request.contains(JS(books)))
     {
         auto parsed =
@@ -351,10 +352,9 @@ doSubscribe(Context const& context)
             std::get<std::pair<std::vector<ripple::Book>, boost::json::array>>(
                 parsed);
         books = std::move(bks);
-        snapshot = std::move(snap);
+        response[JS(offers)] = std::move(snap);
     }
 
-    boost::json::object response;
     if (request.contains(JS(streams)))
         response = subscribeToStreams(
             context.yield, request, context.session, *context.subscriptions);
@@ -369,8 +369,6 @@ doSubscribe(Context const& context)
     if (request.contains(JS(books)))
         subscribeToBooks(books, context.session, *context.subscriptions);
 
-    if (snapshot.size())
-        response[JS(offers)] = snapshot;
     return response;
 }
 
