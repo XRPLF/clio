@@ -325,14 +325,15 @@ getLimit(RPC::Context const& context, std::uint32_t& limit)
 
     if (context.params.contains(JS(limit)))
     {
+        std::string errMsg = "Invalid field 'limit', not unsigned integer.";
         if (!context.params.at(JS(limit)).is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "limitNotInt"};
+            return Status{Error::rpcINVALID_PARAMS, errMsg};
 
-        limit = context.params.at(JS(limit)).as_int64();
-        if (limit <= 0)
-            return Status{Error::rpcINVALID_PARAMS, "limitNotPositive"};
+        int input = context.params.at(JS(limit)).as_int64();
+        if (input <= 0)
+            return Status{Error::rpcINVALID_PARAMS, errMsg};
 
-        limit = std::clamp(limit, lo, hi);
+        limit = std::clamp(static_cast<std::uint32_t>(input), lo, hi);
     }
     else
     {
