@@ -1,0 +1,23 @@
+#!/bin/bash
+
+exec 1>&2
+
+# format all relevant sources
+find src unittests -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.ipp' \) -print0 | xargs -0 clang-format -i
+
+# check how many lines differ
+lines=$(git diff | wc -l)
+
+# check if there is any updated files
+if [ "$lines" != "0" ]; then
+    cat <<\EOF
+
+                                   WARNING 
+-----------------------------------------------------------------------------
+  Automatically re-formatted code with `clang-format` - commit was aborted.
+  Please manually add any updated files and commit again.
+-----------------------------------------------------------------------------
+
+EOF
+    exit 1
+fi

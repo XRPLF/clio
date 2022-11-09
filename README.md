@@ -28,7 +28,7 @@ Use these instructions to build a Clio executable from the source. These instruc
 
 ```sh
 # Install dependencies
-  sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake
+  sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake clang-format
 
 # Compile Boost
   wget -O $HOME/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
