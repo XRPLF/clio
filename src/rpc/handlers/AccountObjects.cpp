@@ -63,6 +63,7 @@ doAccountNFTs(Context const& context)
 
     response[JS(account)] = ripple::toBase58(accountID);
     response[JS(validated)] = true;
+    response[JS(limit)] = limit;
 
     std::uint32_t numPages = 0;
     response[JS(account_nfts)] = boost::json::value(boost::json::array_kind);
