@@ -85,6 +85,7 @@ doAccountChannels(Context const& context)
 
     response[JS(account)] = ripple::to_string(accountID);
     response[JS(channels)] = boost::json::value(boost::json::array_kind);
+    response[JS(limit)] = limit;
     boost::json::array& jsonChannels = response.at(JS(channels)).as_array();
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
