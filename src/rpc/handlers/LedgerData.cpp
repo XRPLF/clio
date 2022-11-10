@@ -41,7 +41,7 @@ doLedgerData(Context const& context)
     if (request.contains("out_of_order"))
     {
         if (!request.at("out_of_order").is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "binaryFlagNotBool"};
         outOfOrder = request.at("out_of_order").as_bool();
     }
 
@@ -55,11 +55,13 @@ doLedgerData(Context const& context)
             {
                 if (!request.at(JS(marker)).is_int64())
                     return Status{
-                        Error::rpcINVALID_PARAMS, "markerNotStringOrInt"};
+                        RippledError::rpcINVALID_PARAMS,
+                        "markerNotStringOrInt"};
                 diffMarker = value_to<uint32_t>(request.at(JS(marker)));
             }
             else
-                return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+                return Status{
+                    RippledError::rpcINVALID_PARAMS, "markerNotString"};
         }
         else
         {
@@ -67,7 +69,8 @@ doLedgerData(Context const& context)
 
             marker = ripple::uint256{};
             if (!marker->parseHex(request.at(JS(marker)).as_string().c_str()))
-                return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
+                return Status{
+                    RippledError::rpcINVALID_PARAMS, "markerMalformed"};
         }
     }
 
@@ -115,7 +118,8 @@ doLedgerData(Context const& context)
         if (!outOfOrder &&
             !context.backend->fetchLedgerObject(
                 *marker, lgrInfo.seq, context.yield))
-            return Status{Error::rpcINVALID_PARAMS, "markerDoesNotExist"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"};
     }
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);

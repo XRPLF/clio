@@ -8,22 +8,24 @@
 
 #include <unordered_map>
 
+using namespace std;
+
 namespace RPC {
 
 Context::Context(
     boost::asio::yield_context& yield_,
-    std::string const& command_,
-    std::uint32_t version_,
+    string const& command_,
+    uint32_t version_,
     boost::json::object const& params_,
-    std::shared_ptr<BackendInterface const> const& backend_,
-    std::shared_ptr<SubscriptionManager> const& subscriptions_,
-    std::shared_ptr<ETLLoadBalancer> const& balancer_,
-    std::shared_ptr<ReportingETL const> const& etl_,
-    std::shared_ptr<WsBase> const& session_,
+    shared_ptr<BackendInterface const> const& backend_,
+    shared_ptr<SubscriptionManager> const& subscriptions_,
+    shared_ptr<ETLLoadBalancer> const& balancer_,
+    shared_ptr<ReportingETL const> const& etl_,
+    shared_ptr<WsBase> const& session_,
     util::TagDecoratorFactory const& tagFactory_,
     Backend::LedgerRange const& range_,
     Counters& counters_,
-    std::string const& clientIp_)
+    string const& clientIp_)
     : Taggable(tagFactory_)
     , yield(yield_)
     , method(command_)
@@ -41,19 +43,19 @@ Context::Context(
     BOOST_LOG_TRIVIAL(debug) << tag() << "new Context created";
 }
 
-std::optional<Context>
+optional<Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
-    std::shared_ptr<WsBase> const& session,
+    shared_ptr<BackendInterface const> const& backend,
+    shared_ptr<SubscriptionManager> const& subscriptions,
+    shared_ptr<ETLLoadBalancer> const& balancer,
+    shared_ptr<ReportingETL const> const& etl,
+    shared_ptr<WsBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     Counters& counters,
-    std::string const& clientIp)
+    string const& clientIp)
 {
     boost::json::value commandValue = nullptr;
     if (!request.contains("command") && request.contains("method"))
@@ -64,9 +66,9 @@ make_WsContext(
     if (!commandValue.is_string())
         return {};
 
-    std::string command = commandValue.as_string().c_str();
+    string command = commandValue.as_string().c_str();
 
-    return std::make_optional<Context>(
+    return make_optional<Context>(
         yc,
         command,
         1,
@@ -82,23 +84,23 @@ make_WsContext(
         clientIp);
 }
 
-std::optional<Context>
+optional<Context>
 make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    shared_ptr<BackendInterface const> const& backend,
+    shared_ptr<SubscriptionManager> const& subscriptions,
+    shared_ptr<ETLLoadBalancer> const& balancer,
+    shared_ptr<ReportingETL const> const& etl,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     RPC::Counters& counters,
-    std::string const& clientIp)
+    string const& clientIp)
 {
     if (!request.contains("method") || !request.at("method").is_string())
         return {};
 
-    std::string const& command = request.at("method").as_string().c_str();
+    string const& command = request.at("method").as_string().c_str();
 
     if (command == "subscribe" || command == "unsubscribe")
         return {};
@@ -114,7 +116,7 @@ make_HttpContext(
     if (!array.at(0).is_object())
         return {};
 
-    return std::make_optional<Context>(
+    return make_optional<Context>(
         yc,
         command,
         1,
@@ -130,107 +132,38 @@ make_HttpContext(
         clientIp);
 }
 
-constexpr static WarningInfo warningInfos[]{
-    {warnUNKNOWN, "Unknown warning"},
-    {warnRPC_CLIO,
-     "This is a clio server. clio only serves validated data. If you "
-     "want to talk to rippled, include 'ledger_index':'current' in your "
-     "request"},
-    {warnRPC_OUTDATED, "This server may be out of date"},
-    {warnRPC_RATE_LIMIT, "You are about to be rate limited"}};
-
-WarningInfo const&
-get_warning_info(warning_code code)
-{
-    for (WarningInfo const& info : warningInfos)
-    {
-        if (info.code == code)
-        {
-            return info;
-        }
-    }
-    throw(std::out_of_range("Invalid warning_code"));
-}
-
-boost::json::object
-make_warning(warning_code code)
-{
-    boost::json::object json;
-    WarningInfo const& info(get_warning_info(code));
-    json["id"] = code;
-    json["message"] = static_cast<std::string>(info.message);
-    return json;
-}
-
-boost::json::object
-make_error(Error err)
-{
-    boost::json::object json;
-    ripple::RPC::ErrorInfo const& info(ripple::RPC::get_error_info(err));
-    json["error"] = info.token;
-    json["error_code"] = static_cast<std::uint32_t>(err);
-    json["error_message"] = info.message;
-    json["status"] = "error";
-    json["type"] = "response";
-    return json;
-}
-
-boost::json::object
-make_error(Status const& status)
-{
-    if (status.error == ripple::rpcUNKNOWN)
-    {
-        return {
-            {"error", status.message},
-            {"type", "response"},
-            {"status", "error"}};
-    }
-
-    boost::json::object json;
-    ripple::RPC::ErrorInfo const& info(
-        ripple::RPC::get_error_info(status.error));
-    json["error"] =
-        status.strCode.size() ? status.strCode.c_str() : info.token.c_str();
-    json["error_code"] = static_cast<std::uint32_t>(status.error);
-    json["error_message"] =
-        status.message.size() ? status.message.c_str() : info.message.c_str();
-    json["status"] = "error";
-    json["type"] = "response";
-    return json;
-}
-
-using LimitRange = std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>;
-using HandlerFunction = std::function<Result(Context const&)>;
+using LimitRange = tuple<uint32_t, uint32_t, uint32_t>;
+using HandlerFunction = function<Result(Context const&)>;
 
 struct Handler
 {
-    std::string method;
-    std::function<Result(Context const&)> handler;
-    std::optional<LimitRange> limit;
+    string method;
+    function<Result(Context const&)> handler;
+    optional<LimitRange> limit;
     bool isClioOnly = false;
 };
 
 class HandlerTable
 {
-    std::unordered_map<std::string, Handler> handlerMap_;
+    unordered_map<string, Handler> handlerMap_;
 
 public:
-    HandlerTable(std::initializer_list<Handler> handlers)
+    HandlerTable(initializer_list<Handler> handlers)
     {
         for (auto const& handler : handlers)
         {
-            handlerMap_[handler.method] = std::move(handler);
+            handlerMap_[handler.method] = move(handler);
         }
     }
 
     bool
-    contains(std::string const& method)
+    contains(string const& method)
     {
         return handlerMap_.contains(method);
     }
 
-    std::optional<LimitRange>
-    getLimitRange(std::string const& command)
+    optional<LimitRange>
+    getLimitRange(string const& command)
     {
         if (!handlerMap_.contains(command))
             return {};
@@ -238,8 +171,8 @@ public:
         return handlerMap_[command].limit;
     }
 
-    std::optional<HandlerFunction>
-    getHandler(std::string const& command)
+    optional<HandlerFunction>
+    getHandler(string const& command)
     {
         if (!handlerMap_.contains(command))
             return {};
@@ -248,7 +181,7 @@ public:
     }
 
     bool
-    isClioOnly(std::string const& command)
+    isClioOnly(string const& command)
     {
         return handlerMap_.contains(command) && handlerMap_[command].isClioOnly;
     }
@@ -282,7 +215,7 @@ static HandlerTable handlerTable{
     {"transaction_entry", &doTransactionEntry, {}},
     {"random", &doRandom, {}}};
 
-static std::unordered_set<std::string> forwardCommands{
+static unordered_set<string> forwardCommands{
     "submit",
     "submit_multisigned",
     "fee",
@@ -294,13 +227,13 @@ static std::unordered_set<std::string> forwardCommands{
     "channel_verify"};
 
 bool
-validHandler(std::string const& method)
+validHandler(string const& method)
 {
     return handlerTable.contains(method) || forwardCommands.contains(method);
 }
 
 bool
-isClioOnly(std::string const& method)
+isClioOnly(string const& method)
 {
     return handlerTable.isClioOnly(method);
 }
@@ -313,27 +246,28 @@ shouldSuppressValidatedFlag(RPC::Context const& context)
 }
 
 Status
-getLimit(RPC::Context const& context, std::uint32_t& limit)
+getLimit(RPC::Context const& context, uint32_t& limit)
 {
     if (!handlerTable.getHandler(context.method))
-        return Status{Error::rpcUNKNOWN_COMMAND};
+        return Status{RippledError::rpcUNKNOWN_COMMAND};
 
     if (!handlerTable.getLimitRange(context.method))
-        return Status{Error::rpcINVALID_PARAMS, "rpcDoesNotRequireLimit"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "rpcDoesNotRequireLimit"};
 
     auto [lo, def, hi] = *handlerTable.getLimitRange(context.method);
 
     if (context.params.contains(JS(limit)))
     {
-        std::string errMsg = "Invalid field 'limit', not unsigned integer.";
+        string errMsg = "Invalid field 'limit', not unsigned integer.";
         if (!context.params.at(JS(limit)).is_int64())
-            return Status{Error::rpcINVALID_PARAMS, errMsg};
+            return Status{RippledError::rpcINVALID_PARAMS, errMsg};
 
         int input = context.params.at(JS(limit)).as_int64();
         if (input <= 0)
-            return Status{Error::rpcINVALID_PARAMS, errMsg};
+            return Status{RippledError::rpcINVALID_PARAMS, errMsg};
 
-        limit = std::clamp(static_cast<std::uint32_t>(input), lo, hi);
+        limit = clamp(static_cast<uint32_t>(input), lo, hi);
     }
     else
     {
@@ -378,7 +312,7 @@ buildResponse(Context const& ctx)
         ctx.counters.rpcForwarded(ctx.method);
 
         if (!res)
-            return Status{Error::rpcFAILED_TO_FORWARD};
+            return Status{RippledError::rpcFAILED_TO_FORWARD};
 
         if (res->contains("result") && res->at("result").is_object())
             return res->at("result").as_object();
@@ -393,13 +327,13 @@ buildResponse(Context const& ctx)
     {
         BOOST_LOG_TRIVIAL(error)
             << __func__ << " Database is too busy. Rejecting request";
-        return Status{Error::rpcTOO_BUSY};
+        return Status{RippledError::rpcTOO_BUSY};
     }
 
     auto method = handlerTable.getHandler(ctx.method);
 
     if (!method)
-        return Status{Error::rpcUNKNOWN_COMMAND};
+        return Status{RippledError::rpcUNKNOWN_COMMAND};
 
     try
     {
@@ -411,7 +345,7 @@ buildResponse(Context const& ctx)
             << ctx.tag() << __func__ << " finish executing rpc `" << ctx.method
             << '`';
 
-        if (auto object = std::get_if<boost::json::object>(&v);
+        if (auto object = get_if<boost::json::object>(&v);
             object && not shouldSuppressValidatedFlag(ctx))
         {
             (*object)["validated"] = true;
@@ -421,22 +355,22 @@ buildResponse(Context const& ctx)
     }
     catch (InvalidParamsError const& err)
     {
-        return Status{Error::rpcINVALID_PARAMS, err.what()};
+        return Status{RippledError::rpcINVALID_PARAMS, err.what()};
     }
     catch (AccountNotFoundError const& err)
     {
-        return Status{Error::rpcACT_NOT_FOUND, err.what()};
+        return Status{RippledError::rpcACT_NOT_FOUND, err.what()};
     }
     catch (Backend::DatabaseTimeout const& t)
     {
         BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-        return Status{Error::rpcTOO_BUSY};
+        return Status{RippledError::rpcTOO_BUSY};
     }
-    catch (std::exception const& err)
+    catch (exception const& err)
     {
         BOOST_LOG_TRIVIAL(error)
             << ctx.tag() << __func__ << " caught exception : " << err.what();
-        return Status{Error::rpcINTERNAL};
+        return Status{RippledError::rpcINTERNAL};
     }
 }
 

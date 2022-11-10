@@ -28,13 +28,14 @@ doChannelAuthorize(Context const& context)
     boost::json::object response = {};
 
     if (!request.contains(JS(amount)))
-        return Status{Error::rpcINVALID_PARAMS, "missingAmount"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingAmount"};
 
     if (!request.at(JS(amount)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "amountNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "amountNotString"};
 
     if (!request.contains(JS(key_type)) && !request.contains(JS(secret)))
-        return Status{Error::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
 
     auto v = keypairFromRequst(request);
     if (auto status = std::get_if<Status>(&v))
@@ -51,7 +52,8 @@ doChannelAuthorize(Context const& context)
         ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
 
     if (!optDrops)
-        return Status{Error::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
+        return Status{
+            RippledError::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
 
     std::uint64_t drops = *optDrops;
 
@@ -66,7 +68,7 @@ doChannelAuthorize(Context const& context)
     }
     catch (std::exception&)
     {
-        return Status{Error::rpcINTERNAL};
+        return Status{RippledError::rpcINTERNAL};
     }
 
     return response;

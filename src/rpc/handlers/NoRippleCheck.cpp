@@ -31,7 +31,8 @@ doNoRippleCheck(Context const& context)
         if (role == "gateway")
             roleGateway = true;
         else if (role != "user")
-            return Status{Error::rpcINVALID_PARAMS, "role field is invalid"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "role field is invalid"};
     }
 
     std::uint32_t limit = 300;

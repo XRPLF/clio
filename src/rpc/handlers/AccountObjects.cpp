@@ -45,13 +45,13 @@ doAccountNFTs(Context const& context)
         return status;
 
     if (!accountID)
-        return Status{Error::rpcINVALID_PARAMS, "malformedAccount"};
+        return Status{RippledError::rpcINVALID_PARAMS, "malformedAccount"};
 
     auto rawAcct = context.backend->fetchLedgerObject(
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
-        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::uint32_t limit;
     if (auto const status = getLimit(context, limit); status)
@@ -157,7 +157,7 @@ doAccountObjects(Context const& context)
     if (request.contains("marker"))
     {
         if (!request.at("marker").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         marker = request.at("marker").as_string().c_str();
     }
@@ -166,11 +166,11 @@ doAccountObjects(Context const& context)
     if (request.contains(JS(type)))
     {
         if (!request.at(JS(type)).is_string())
-            return Status{Error::rpcINVALID_PARAMS, "typeNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "typeNotString"};
 
         std::string typeAsString = request.at(JS(type)).as_string().c_str();
         if (types.find(typeAsString) == types.end())
-            return Status{Error::rpcINVALID_PARAMS, "typeInvalid"};
+            return Status{RippledError::rpcINVALID_PARAMS, "typeInvalid"};
 
         objectType = types[typeAsString];
     }

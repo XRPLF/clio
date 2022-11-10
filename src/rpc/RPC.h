@@ -1,7 +1,7 @@
 #ifndef REPORTING_RPC_H_INCLUDED
 #define REPORTING_RPC_H_INCLUDED
 
-#include <ripple/protocol/ErrorCodes.h>
+#include <rpc/Errors.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -65,7 +65,6 @@ struct Context : public util::Taggable
         Counters& counters_,
         std::string const& clientIp_);
 };
-using Error = ripple::error_code_i;
 
 struct AccountCursor
 {
@@ -85,107 +84,7 @@ struct AccountCursor
     }
 };
 
-struct Status
-{
-    Error error = Error::rpcSUCCESS;
-    std::string strCode = "";
-    std::string message = "";
-
-    Status(){};
-
-    Status(Error error_) : error(error_){};
-
-    // HACK. Some rippled handlers explicitly specify errors.
-    // This means that we have to be able to duplicate this
-    // functionality.
-    Status(std::string const& message_)
-        : error(ripple::rpcUNKNOWN), message(message_)
-    {
-    }
-
-    Status(Error error_, std::string message_)
-        : error(error_), message(message_)
-    {
-    }
-
-    Status(Error error_, std::string strCode_, std::string message_)
-        : error(error_), strCode(strCode_), message(message_)
-    {
-    }
-
-    /** Returns true if the Status is *not* OK. */
-    operator bool() const
-    {
-        return error != Error::rpcSUCCESS;
-    }
-};
-
-static Status OK;
-
 using Result = std::variant<Status, boost::json::object>;
-
-class InvalidParamsError : public std::exception
-{
-    std::string msg;
-
-public:
-    InvalidParamsError(std::string const& msg) : msg(msg)
-    {
-    }
-
-    const char*
-    what() const throw() override
-    {
-        return msg.c_str();
-    }
-};
-class AccountNotFoundError : public std::exception
-{
-    std::string account;
-
-public:
-    AccountNotFoundError(std::string const& acct) : account(acct)
-    {
-    }
-    const char*
-    what() const throw() override
-    {
-        return account.c_str();
-    }
-};
-
-enum warning_code {
-    warnUNKNOWN = -1,
-    warnRPC_CLIO = 2001,
-    warnRPC_OUTDATED = 2002,
-    warnRPC_RATE_LIMIT = 2003
-};
-
-struct WarningInfo
-{
-    constexpr WarningInfo() : code(warnUNKNOWN), message("unknown warning")
-    {
-    }
-
-    constexpr WarningInfo(warning_code code_, char const* message_)
-        : code(code_), message(message_)
-    {
-    }
-    warning_code code;
-    std::string_view const message;
-};
-
-WarningInfo const&
-get_warning_info(warning_code code);
-
-boost::json::object
-make_warning(warning_code code);
-
-boost::json::object
-make_error(Status const& status);
-
-boost::json::object
-make_error(Error err);
 
 std::optional<Context>
 make_WsContext(

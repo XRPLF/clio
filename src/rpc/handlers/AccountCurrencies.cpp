@@ -32,7 +32,7 @@ doAccountCurrencies(Context const& context)
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
-        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::set<std::string> send, receive;
     auto const addToResponse = [&](ripple::SLE&& sle) {

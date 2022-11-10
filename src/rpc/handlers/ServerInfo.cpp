@@ -16,7 +16,7 @@ doServerInfo(Context const& context)
     if (!range)
     {
         return Status{
-            Error::rpcNOT_READY,
+            RippledError::rpcNOT_READY,
             "emptyDatabase",
             "The server has no data in the database"};
     }
@@ -27,7 +27,7 @@ doServerInfo(Context const& context)
     auto fees = context.backend->fetchFees(lgrInfo->seq, context.yield);
 
     if (!lgrInfo || !fees)
-        return Status{Error::rpcINTERNAL};
+        return Status{RippledError::rpcINTERNAL};
 
     auto age = std::chrono::duration_cast<std::chrono::seconds>(
                    std::chrono::system_clock::now().time_since_epoch())

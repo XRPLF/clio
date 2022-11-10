@@ -62,7 +62,7 @@ doAccountChannels(Context const& context)
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
-        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     ripple::AccountID destAccount;
     if (auto const status =
@@ -78,7 +78,7 @@ doAccountChannels(Context const& context)
     if (request.contains(JS(marker)))
     {
         if (!request.at(JS(marker)).is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         marker = request.at(JS(marker)).as_string().c_str();
     }

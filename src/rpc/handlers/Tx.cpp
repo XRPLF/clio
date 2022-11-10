@@ -14,31 +14,31 @@ doTx(Context const& context)
     boost::json::object response = {};
 
     if (!request.contains(JS(transaction)))
-        return Status{Error::rpcINVALID_PARAMS, "specifyTransaction"};
+        return Status{RippledError::rpcINVALID_PARAMS, "specifyTransaction"};
 
     if (!request.at(JS(transaction)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "transactionNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "transactionNotString"};
 
     ripple::uint256 hash;
     if (!hash.parseHex(request.at(JS(transaction)).as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
+        return Status{RippledError::rpcINVALID_PARAMS, "malformedTransaction"};
 
     bool binary = false;
     if (request.contains(JS(binary)))
     {
         if (!request.at(JS(binary)).is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "binaryFlagNotBool"};
 
         binary = request.at(JS(binary)).as_bool();
     }
 
     auto range = context.backend->fetchLedgerRange();
     if (!range)
-        return Status{Error::rpcNOT_READY};
+        return Status{RippledError::rpcNOT_READY};
 
     auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
     if (!dbResponse)
-        return Status{Error::rpcTXN_NOT_FOUND};
+        return Status{RippledError::rpcTXN_NOT_FOUND};
 
     if (!binary)
     {

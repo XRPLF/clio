@@ -56,7 +56,7 @@ enumerateNFTOffers(
     // TODO: just check for existence without pulling
     if (!context.backend->fetchLedgerObject(
             directory.key, lgrInfo.seq, context.yield))
-        return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
+        return Status{RippledError::rpcOBJECT_NOT_FOUND, "notFound"};
 
     std::uint32_t limit;
     if (auto const status = getLimit(context, limit); status)
@@ -78,10 +78,10 @@ enumerateNFTOffers(
         auto const& marker(request.at(JS(marker)));
 
         if (!marker.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         if (!cursor.parseHex(marker.as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
+            return Status{RippledError::rpcINVALID_PARAMS, "malformedCursor"};
 
         auto const sle =
             read(ripple::keylet::nftoffer(cursor), lgrInfo, context);
@@ -90,7 +90,7 @@ enumerateNFTOffers(
             sle->getFieldU16(ripple::sfLedgerEntryType) !=
                 ripple::ltNFTOKEN_OFFER ||
             tokenid != sle->getFieldH256(ripple::sfNFTokenID))
-            return Status{Error::rpcINVALID_PARAMS};
+            return Status{RippledError::rpcINVALID_PARAMS};
 
         startHint = sle->getFieldU64(ripple::sfNFTokenOfferNode);
         jsonOffers.push_back(json::value_from(*sle));

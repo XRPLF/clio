@@ -22,10 +22,10 @@ validateStreams(boost::json::object const& request)
          auto const& stream : streams)
     {
         if (!stream.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "streamNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "streamNotString"};
 
         if (!validCommonStreams.contains(stream.as_string().c_str()))
-            return Status{Error::rpcSTREAM_MALFORMED};
+            return Status{RippledError::rpcSTREAM_MALFORMED};
     }
 
     return OK;
@@ -98,10 +98,10 @@ validateAccounts(boost::json::array const& accounts)
     for (auto const& account : accounts)
     {
         if (!account.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "accountNotString"};
 
         if (!accountFromStringStrict(account.as_string().c_str()))
-            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
     }
 
     return OK;
@@ -212,7 +212,7 @@ validateAndGetBooks(
     std::shared_ptr<Backend::BackendInterface const> const& backend)
 {
     if (!request.at(JS(books)).is_array())
-        return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
+        return Status{RippledError::rpcINVALID_PARAMS, "booksNotArray"};
     boost::json::array const& books = request.at(JS(books)).as_array();
 
     std::vector<ripple::Book> booksToSub;
@@ -294,7 +294,7 @@ doSubscribe(Context const& context)
     if (request.contains(JS(streams)))
     {
         if (!request.at(JS(streams)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
+            return Status{RippledError::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
 
@@ -306,11 +306,11 @@ doSubscribe(Context const& context)
     {
         auto const& jsonAccounts = request.at(JS(accounts));
         if (!jsonAccounts.is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
+            return Status{RippledError::rpcINVALID_PARAMS, "accountsNotArray"};
 
         auto const& accounts = jsonAccounts.as_array();
         if (accounts.empty())
-            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
         auto const status = validateAccounts(accounts);
         if (status)
@@ -321,11 +321,12 @@ doSubscribe(Context const& context)
     {
         auto const& jsonAccounts = request.at(JS(accounts_proposed));
         if (!jsonAccounts.is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
         auto const& accounts = jsonAccounts.as_array();
         if (accounts.empty())
-            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
         auto const status = validateAccounts(accounts);
         if (status)
@@ -373,7 +374,7 @@ doUnsubscribe(Context const& context)
     if (request.contains(JS(streams)))
     {
         if (!request.at(JS(streams)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
+            return Status{RippledError::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
 
@@ -385,11 +386,11 @@ doUnsubscribe(Context const& context)
     {
         auto const& jsonAccounts = request.at(JS(accounts));
         if (!jsonAccounts.is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
+            return Status{RippledError::rpcINVALID_PARAMS, "accountsNotArray"};
 
         auto const& accounts = jsonAccounts.as_array();
         if (accounts.empty())
-            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
         auto const status = validateAccounts(accounts);
         if (status)
@@ -400,11 +401,12 @@ doUnsubscribe(Context const& context)
     {
         auto const& jsonAccounts = request.at(JS(accounts_proposed));
         if (!jsonAccounts.is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
         auto const& accounts = jsonAccounts.as_array();
         if (accounts.empty())
-            return Status{Error::rpcACT_MALFORMED, "Account malformed."};
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
         auto const status = validateAccounts(accounts);
         if (status)

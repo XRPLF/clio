@@ -17,22 +17,22 @@ doChannelVerify(Context const& context)
     boost::json::object response = {};
 
     if (!request.contains(JS(amount)))
-        return Status{Error::rpcINVALID_PARAMS, "missingAmount"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingAmount"};
 
     if (!request.at(JS(amount)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "amountNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "amountNotString"};
 
     if (!request.contains(JS(signature)))
-        return Status{Error::rpcINVALID_PARAMS, "missingSignature"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingSignature"};
 
     if (!request.at(JS(signature)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "signatureNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "signatureNotString"};
 
     if (!request.contains(JS(public_key)))
-        return Status{Error::rpcINVALID_PARAMS, "missingPublicKey"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingPublicKey"};
 
     if (!request.at(JS(public_key)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "publicKeyNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "publicKeyNotString"};
 
     std::optional<ripple::PublicKey> pk;
     {
@@ -45,12 +45,14 @@ doChannelVerify(Context const& context)
         {
             auto pkHex = ripple::strUnHex(strPk);
             if (!pkHex)
-                return Status{Error::rpcPUBLIC_MALFORMED, "malformedPublicKey"};
+                return Status{
+                    RippledError::rpcPUBLIC_MALFORMED, "malformedPublicKey"};
 
             auto const pkType =
                 ripple::publicKeyType(ripple::makeSlice(*pkHex));
             if (!pkType)
-                return Status{Error::rpcPUBLIC_MALFORMED, "invalidKeyType"};
+                return Status{
+                    RippledError::rpcPUBLIC_MALFORMED, "invalidKeyType"};
 
             pk.emplace(ripple::makeSlice(*pkHex));
         }
@@ -64,14 +66,15 @@ doChannelVerify(Context const& context)
         ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
 
     if (!optDrops)
-        return Status{Error::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
+        return Status{
+            RippledError::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
 
     std::uint64_t drops = *optDrops;
 
     auto sig = ripple::strUnHex(request.at(JS(signature)).as_string().c_str());
 
     if (!sig || !sig->size())
-        return Status{Error::rpcINVALID_PARAMS, "invalidSignature"};
+        return Status{RippledError::rpcINVALID_PARAMS, "invalidSignature"};
 
     ripple::Serializer msg;
     ripple::serializePayChanAuthorization(
