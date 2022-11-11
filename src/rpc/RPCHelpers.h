@@ -36,7 +36,6 @@ parseAccountCursor(
     BackendInterface const& backend,
     std::uint32_t seq,
     std::optional<std::string> jsonCursor,
-    ripple::AccountID const& accountID,
     boost::asio::yield_context& yield);
 
 // TODO this function should probably be in a different file and namespace

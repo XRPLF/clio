@@ -442,8 +442,7 @@ doUnsubscribe(Context const& context)
     if (request.contains("books"))
         unsubscribeToBooks(books, context.session, *context.subscriptions);
 
-    boost::json::object response = {{"status", "success"}};
-    return response;
+    return boost::json::object{};
 }
 
 }  // namespace RPC
