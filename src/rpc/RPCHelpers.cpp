@@ -1461,7 +1461,7 @@ parseTaker(boost::json::value const& taker)
     takerID = accountFromStringStrict(taker.as_string().c_str());
 
     if (!takerID)
-        return Status{Error::rpcINVALID_PARAMS, "invalidTakerAccount"};
+        return Status{Error::rpcBAD_ISSUER, "invalidTakerAccount"};
     return *takerID;
 }
 bool
