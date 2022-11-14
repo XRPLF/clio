@@ -348,20 +348,6 @@ canHaveDeliveredAmount(
 }
 
 std::optional<ripple::AccountID>
-accountFromSeed(std::string const& account)
-{
-    auto const seed = ripple::parseGenericSeed(account);
-
-    if (!seed)
-        return {};
-
-    auto const keypair =
-        ripple::generateKeyPair(ripple::KeyType::secp256k1, *seed);
-
-    return ripple::calcAccountID(keypair.first);
-}
-
-std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account)
 {
     auto blob = ripple::strUnHex(account);
