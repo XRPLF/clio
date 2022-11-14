@@ -182,6 +182,13 @@ doGatewayBalances(Context const& context)
             return obj;
         };
 
+    auto containsHotWallet = [&](auto const& hw) {
+        return hotBalances.contains(hw);
+    };
+    if (not std::all_of(
+            hotWallets.begin(), hotWallets.end(), containsHotWallet))
+        return Status{Error::rpcINVALID_PARAMS, "invalidHotWallet"};
+
     if (auto balances = toJson(hotBalances); balances.size())
         response[JS(balances)] = balances;
     if (auto balances = toJson(frozenBalances); balances.size())
