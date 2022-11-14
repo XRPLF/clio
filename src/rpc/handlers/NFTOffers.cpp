@@ -69,6 +69,7 @@ enumerateNFTOffers(
     std::vector<ripple::SLE> offers;
     auto reserve = limit;
     ripple::uint256 cursor;
+    uint64_t startHint = 0;
 
     if (request.contains(JS(marker)))
     {
@@ -85,12 +86,13 @@ enumerateNFTOffers(
         auto const sle =
             read(ripple::keylet::nftoffer(cursor), lgrInfo, context);
 
-        if (!sle || tokenid != sle->getFieldH256(ripple::sfNFTokenID))
-            return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
+        if (!sle ||
+            sle->getFieldU16(ripple::sfLedgerEntryType) !=
+                ripple::ltNFTOKEN_OFFER ||
+            tokenid != sle->getFieldH256(ripple::sfNFTokenID))
+            return Status{Error::rpcINVALID_PARAMS};
 
-        if (tokenid != sle->getFieldH256(ripple::sfNFTokenID))
-            return Status{Error::rpcINVALID_PARAMS, "invalidTokenid"};
-
+        startHint = sle->getFieldU64(ripple::sfNFTokenOfferNode);
         jsonOffers.push_back(json::value_from(*sle));
         offers.reserve(reserve);
     }
@@ -104,7 +106,7 @@ enumerateNFTOffers(
         *context.backend,
         directory,
         cursor,
-        0,
+        startHint,
         lgrInfo.seq,
         reserve,
         {},
