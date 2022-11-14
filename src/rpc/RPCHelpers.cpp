@@ -1386,11 +1386,11 @@ parseBook(boost::json::object const& request)
 
         if (!ripple::to_issuer(
                 pay_issuer, taker_pays.at("issuer").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "badTakerPaysIssuer"};
+            return Status{Error::rpcSRC_ISR_MALFORMED, "badTakerPaysIssuer"};
 
         if (pay_issuer == ripple::noAccount())
             return Status{
-                Error::rpcINVALID_PARAMS, "badTakerPaysIssuerAccountOne"};
+                Error::rpcSRC_ISR_MALFORMED, "badTakerPaysIssuerAccountOne"};
     }
     else
     {
@@ -1399,15 +1399,18 @@ parseBook(boost::json::object const& request)
 
     if (isXRP(pay_currency) && !isXRP(pay_issuer))
         return Status{
-            Error::rpcINVALID_PARAMS,
+            Error::rpcSRC_ISR_MALFORMED,
             "Unneeded field 'taker_pays.issuer' for XRP currency "
             "specification."};
 
     if (!isXRP(pay_currency) && isXRP(pay_issuer))
         return Status{
-            Error::rpcINVALID_PARAMS,
+            Error::rpcSRC_ISR_MALFORMED,
             "Invalid field 'taker_pays.issuer', expected non-XRP "
             "issuer."};
+
+    if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
+        return Status{Error::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."};
 
     ripple::AccountID get_issuer;
 
