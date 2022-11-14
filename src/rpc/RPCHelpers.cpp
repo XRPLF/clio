@@ -592,7 +592,7 @@ ledgerInfoFromRequest(Context const& ctx)
     }
 
     if (!ledgerSequence)
-        return Status{Error::rpcLGR_NOT_FOUND, "ledgerIndexMalformed"};
+        return Status{Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
     auto lgrInfo =
         ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
