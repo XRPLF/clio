@@ -25,9 +25,6 @@ namespace RPC {
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
-std::optional<ripple::AccountID>
-accountFromSeed(std::string const& account);
-
 bool
 isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID);
 
