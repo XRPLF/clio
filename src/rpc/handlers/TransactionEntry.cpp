@@ -14,7 +14,7 @@ doTransactionEntry(Context const& context)
 
     ripple::uint256 hash;
     if (!hash.parseHex(getRequiredString(context.params, JS(tx_hash))))
-        return Status{Error::rpcINVALID_PARAMS, "malformedTransaction"};
+        return Status{RippledError::rpcINVALID_PARAMS, "malformedTransaction"};
 
     auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
@@ -28,7 +28,7 @@ doTransactionEntry(Context const& context)
     // is in a different ledger than the one specified.
     if (!dbResponse || dbResponse->ledgerSequence != lgrInfo.seq)
         return Status{
-            Error::rpcTXN_NOT_FOUND,
+            RippledError::rpcTXN_NOT_FOUND,
             "transactionNotFound",
             "Transaction not found."};
 

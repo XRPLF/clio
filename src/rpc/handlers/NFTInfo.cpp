@@ -45,7 +45,8 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
 
         if (!blob || blob->size() == 0)
             return Status{
-                Error::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
+                RippledError::rpcINTERNAL,
+                "Cannot find NFTokenPage for this NFT"};
 
         sle = ripple::STLedgerEntry(
             ripple::SerialIter{blob->data(), blob->size()}, nextKey);
@@ -57,7 +58,7 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
 
     if (!sle)
         return Status{
-            Error::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
+            RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
 
     auto const nfts = sle->getFieldArray(ripple::sfNFTokens);
     auto const nft = std::find_if(
@@ -70,7 +71,7 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
 
     if (nft == nfts.end())
         return Status{
-            Error::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
+            RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
 
     ripple::Blob const uriField = nft->getFieldVL(ripple::sfURI);
 
@@ -102,7 +103,7 @@ doNFTInfo(Context const& context)
     std::optional<Backend::NFT> dbResponse =
         context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
     if (!dbResponse)
-        return Status{Error::rpcOBJECT_NOT_FOUND, "NFT not found"};
+        return Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"};
 
     response["nft_id"] = ripple::strHex(dbResponse->tokenID);
     response["ledger_index"] = dbResponse->ledgerSequence;

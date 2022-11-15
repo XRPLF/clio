@@ -270,7 +270,7 @@ public:
             res.set(http::field::content_type, "application/json");
             res.keep_alive(req_.keep_alive());
             res.body() = boost::json::serialize(
-                RPC::make_error(RPC::Error::rpcTOO_BUSY));
+                RPC::makeError(RPC::RippledError::rpcTOO_BUSY));
             res.prepare_payload();
             lambda_(std::move(res));
         }
@@ -375,7 +375,7 @@ handle_request(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+                    RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
         }
 
         auto range = backend->fetchLedgerRange();
@@ -384,7 +384,7 @@ handle_request(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcNOT_READY))));
+                    RPC::makeError(RPC::RippledError::rpcNOT_READY))));
 
         std::optional<RPC::Context> context = RPC::make_HttpContext(
             yc,
@@ -403,7 +403,7 @@ handle_request(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::make_error(RPC::Error::rpcBAD_SYNTAX))));
+                    RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
 
         boost::json::object response{{"result", boost::json::object{}}};
         boost::json::object& result = response["result"].as_object();
@@ -418,7 +418,7 @@ handle_request(
         if (auto status = std::get_if<RPC::Status>(&v))
         {
             counters.rpcErrored(context->method);
-            auto error = RPC::make_error(*status);
+            auto error = RPC::makeError(*status);
             error["request"] = request;
             result = error;
 
@@ -438,16 +438,16 @@ handle_request(
         }
 
         boost::json::array warnings;
-        warnings.emplace_back(RPC::make_warning(RPC::warnRPC_CLIO));
+        warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
         auto lastCloseAge = context->etl->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
-            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_OUTDATED));
+            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         responseStr = boost::json::serialize(response);
         if (!dosGuard.add(ip, responseStr.size()))
         {
             response["warning"] = "load";
-            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_RATE_LIMIT));
+            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
             response["warnings"] = warnings;
             // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
@@ -462,7 +462,8 @@ handle_request(
         return send(httpResponse(
             http::status::internal_server_error,
             "application/json",
-            boost::json::serialize(RPC::make_error(RPC::Error::rpcINTERNAL))));
+            boost::json::serialize(
+                RPC::makeError(RPC::RippledError::rpcINTERNAL))));
     }
 }
 

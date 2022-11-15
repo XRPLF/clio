@@ -13,7 +13,7 @@ doLedger(Context const& context)
     if (params.contains(JS(binary)))
     {
         if (!params.at(JS(binary)).is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "binaryFlagNotBool"};
 
         binary = params.at(JS(binary)).as_bool();
     }
@@ -22,7 +22,8 @@ doLedger(Context const& context)
     if (params.contains(JS(transactions)))
     {
         if (!params.at(JS(transactions)).is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
 
         transactions = params.at(JS(transactions)).as_bool();
     }
@@ -31,7 +32,7 @@ doLedger(Context const& context)
     if (params.contains(JS(expand)))
     {
         if (!params.at(JS(expand)).is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "expandFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "expandFlagNotBool"};
 
         expand = params.at(JS(expand)).as_bool();
     }
@@ -40,7 +41,7 @@ doLedger(Context const& context)
     if (params.contains("diff"))
     {
         if (!params.at("diff").is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "diffFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "diffFlagNotBool"};
 
         diff = params.at("diff").as_bool();
     }

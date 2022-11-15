@@ -278,7 +278,7 @@ public:
 
         boost::json::object response = {};
         auto sendError = [this, &request, id](auto error) {
-            auto e = RPC::make_error(error);
+            auto e = RPC::makeError(error);
             if (!id.is_null())
                 e["id"] = id;
             e["request"] = request;
@@ -292,7 +292,7 @@ public:
 
             auto range = backend_->fetchLedgerRange();
             if (!range)
-                return sendError(RPC::Error::rpcNOT_READY);
+                return sendError(RPC::RippledError::rpcNOT_READY);
 
             std::optional<RPC::Context> context = RPC::make_WsContext(
                 yield,
@@ -311,7 +311,7 @@ public:
             {
                 BOOST_LOG_TRIVIAL(warning)
                     << tag() << " could not create RPC context";
-                return sendError(RPC::Error::rpcBAD_SYNTAX);
+                return sendError(RPC::RippledError::rpcBAD_SYNTAX);
             }
 
             response = getDefaultWsResponse(id);
@@ -327,7 +327,7 @@ public:
             {
                 counters_.rpcErrored(context->method);
 
-                auto error = RPC::make_error(*status);
+                auto error = RPC::makeError(*status);
 
                 if (!id.is_null())
                     error["id"] = id;
@@ -347,22 +347,22 @@ public:
             BOOST_LOG_TRIVIAL(error)
                 << tag() << __func__ << " caught exception : " << e.what();
 
-            return sendError(RPC::Error::rpcINTERNAL);
+            return sendError(RPC::RippledError::rpcINTERNAL);
         }
 
         boost::json::array warnings;
 
-        warnings.emplace_back(RPC::make_warning(RPC::warnRPC_CLIO));
+        warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
 
         auto lastCloseAge = etl_->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
-            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_OUTDATED));
+            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
         {
             response["warning"] = "load";
-            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_RATE_LIMIT));
+            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
             response["warnings"] = warnings;
             // reserialize if we need to include this warning
             responseStr = boost::json::serialize(response);
@@ -392,7 +392,7 @@ public:
                              auto error,
                              boost::json::value const& id,
                              boost::json::object const& request) {
-            auto e = RPC::make_error(error);
+            auto e = RPC::makeError(error);
 
             if (!id.is_null())
                 e["id"] = id;
@@ -417,14 +417,15 @@ public:
 
         boost::json::object request;
         if (!raw.is_object())
-            return sendError(RPC::Error::rpcINVALID_PARAMS, nullptr, request);
+            return sendError(
+                RPC::RippledError::rpcINVALID_PARAMS, nullptr, request);
         request = raw.as_object();
 
         auto id = request.contains("id") ? request.at("id") : nullptr;
 
         if (!dosGuard_.isOk(*ip))
         {
-            sendError(RPC::Error::rpcSLOW_DOWN, id, request);
+            sendError(RPC::RippledError::rpcSLOW_DOWN, id, request);
         }
         else
         {
@@ -438,7 +439,7 @@ public:
                         shared_this->handle_request(std::move(r), id, yield);
                     },
                     dosGuard_.isWhiteListed(*ip)))
-                sendError(RPC::Error::rpcTOO_BUSY, id, request);
+                sendError(RPC::RippledError::rpcTOO_BUSY, id, request);
         }
 
         do_read();

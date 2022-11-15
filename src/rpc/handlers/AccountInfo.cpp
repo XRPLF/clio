@@ -34,7 +34,7 @@ doAccountInfo(Context const& context)
     else if (request.contains(JS(ident)))
         strIdent = request.at(JS(ident)).as_string().c_str();
     else
-        return Status{Error::rpcACT_MALFORMED};
+        return Status{RippledError::rpcACT_MALFORMED};
 
     // We only need to fetch the ledger header because the ledger hash is
     // supposed to be included in the response. The ledger sequence is specified
@@ -48,7 +48,7 @@ doAccountInfo(Context const& context)
     // Get info on account.
     auto accountID = accountFromStringStrict(strIdent);
     if (!accountID)
-        return Status{Error::rpcACT_MALFORMED};
+        return Status{RippledError::rpcACT_MALFORMED};
 
     assert(accountID.has_value());
 
@@ -59,14 +59,14 @@ doAccountInfo(Context const& context)
 
     if (!dbResponse)
     {
-        return Status{Error::rpcACT_NOT_FOUND};
+        return Status{RippledError::rpcACT_NOT_FOUND};
     }
 
     ripple::STLedgerEntry sle{
         ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
 
     if (!key.check(sle))
-        return Status{Error::rpcDB_DESERIALIZATION};
+        return Status{RippledError::rpcDB_DESERIALIZATION};
 
     // if (!binary)
     //     response[JS(account_data)] = getJson(sle);
@@ -97,7 +97,7 @@ doAccountInfo(Context const& context)
                 ripple::SerialIter{signers->data(), signers->size()},
                 signersKey.key};
             if (!signersKey.check(sleSigners))
-                return Status{Error::rpcDB_DESERIALIZATION};
+                return Status{RippledError::rpcDB_DESERIALIZATION};
 
             signerList.push_back(toJson(sleSigners));
         }

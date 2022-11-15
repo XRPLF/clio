@@ -107,7 +107,7 @@ doAccountLines(Context const& context)
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
-        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::optional<ripple::AccountID> peerAccount;
     if (auto const status = getOptionalAccount(request, peerAccount, JS(peer));
@@ -122,7 +122,7 @@ doAccountLines(Context const& context)
     if (request.contains(JS(marker)))
     {
         if (not request.at(JS(marker)).is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         marker = request.at(JS(marker)).as_string().c_str();
     }
@@ -131,7 +131,8 @@ doAccountLines(Context const& context)
     if (request.contains(JS(ignore_default)))
     {
         if (not request.at(JS(ignore_default)).is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
 
         ignoreDefault = request.at(JS(ignore_default)).as_bool();
     }

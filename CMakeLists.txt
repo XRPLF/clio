@@ -61,6 +61,7 @@ target_sources(clio PRIVATE
   ## Subscriptions
   src/subscriptions/SubscriptionManager.cpp
   ## RPC
+  src/rpc/Errors.cpp
   src/rpc/RPC.cpp
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
@@ -107,7 +108,8 @@ add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests 
+  add_executable(clio_tests
+    unittests/RPCErrors.cpp 
     unittests/config.cpp 
     unittests/main.cpp)
   include(CMake/deps/gtest.cmake)

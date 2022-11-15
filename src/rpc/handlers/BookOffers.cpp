@@ -30,10 +30,10 @@ doBookOffers(Context const& context)
     if (request.contains("book"))
     {
         if (!request.at("book").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "bookNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "bookNotString"};
 
         if (!bookBase.parseHex(request.at("book").as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "invalidBook"};
+            return Status{RippledError::rpcINVALID_PARAMS, "invalidBook"};
     }
     else
     {

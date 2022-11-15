@@ -187,10 +187,10 @@ getHexMarker(boost::json::object const& request, ripple::uint256& marker)
     if (request.contains(JS(marker)))
     {
         if (!request.at(JS(marker)).is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         if (!marker.parseHex(request.at(JS(marker)).as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedMarker"};
+            return Status{RippledError::rpcINVALID_PARAMS, "malformedMarker"};
     }
 
     return {};
@@ -207,14 +207,14 @@ getAccount(
     {
         if (required)
             return Status{
-                Error::rpcINVALID_PARAMS, field.to_string() + "Missing"};
+                RippledError::rpcINVALID_PARAMS, field.to_string() + "Missing"};
 
         return {};
     }
 
     if (!request.at(field).is_string())
         return Status{
-            Error::rpcINVALID_PARAMS, field.to_string() + "NotString"};
+            RippledError::rpcINVALID_PARAMS, field.to_string() + "NotString"};
 
     if (auto a = accountFromStringStrict(request.at(field).as_string().c_str());
         a)
@@ -223,7 +223,8 @@ getAccount(
         return {};
     }
 
-    return Status{Error::rpcACT_MALFORMED, field.to_string() + "Malformed"};
+    return Status{
+        RippledError::rpcACT_MALFORMED, field.to_string() + "Malformed"};
 }
 
 Status
@@ -240,7 +241,7 @@ getOptionalAccount(
 
     if (!request.at(field).is_string())
         return Status{
-            Error::rpcINVALID_PARAMS, field.to_string() + "NotString"};
+            RippledError::rpcINVALID_PARAMS, field.to_string() + "NotString"};
 
     if (auto a = accountFromStringStrict(request.at(field).as_string().c_str());
         a)
@@ -249,7 +250,8 @@ getOptionalAccount(
         return {};
     }
 
-    return Status{Error::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
+    return Status{
+        RippledError::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
 }
 
 Status
@@ -286,13 +288,13 @@ Status
 getChannelId(boost::json::object const& request, ripple::uint256& channelId)
 {
     if (!request.contains(JS(channel_id)))
-        return Status{Error::rpcINVALID_PARAMS, "missingChannelID"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingChannelID"};
 
     if (!request.at(JS(channel_id)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "channelIDNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "channelIDNotString"};
 
     if (!channelId.parseHex(request.at(JS(channel_id)).as_string().c_str()))
-        return Status{Error::rpcCHANNEL_MALFORMED, "malformedChannelID"};
+        return Status{RippledError::rpcCHANNEL_MALFORMED, "malformedChannelID"};
 
     return {};
 }
@@ -554,16 +556,18 @@ ledgerInfoFromRequest(Context const& ctx)
     if (!hashValue.is_null())
     {
         if (!hashValue.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "ledgerHashNotString"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "ledgerHashNotString"};
 
         ripple::uint256 ledgerHash;
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "ledgerHashMalformed"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
         auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
 
         if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
-            return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+            return Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
 
         return *lgrInfo;
     }
@@ -592,13 +596,13 @@ ledgerInfoFromRequest(Context const& ctx)
     }
 
     if (!ledgerSequence)
-        return Status{Error::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
+        return Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
     auto lgrInfo =
         ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
-        return Status{Error::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+        return Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
 
     return *lgrInfo;
 }
@@ -651,7 +655,7 @@ traverseOwnedNodes(
 {
     if (!backend.fetchLedgerObject(
             ripple::keylet::account(accountID).key, sequence, yield))
-        return Status{Error::rpcACT_NOT_FOUND};
+        return Status{RippledError::rpcACT_NOT_FOUND};
 
     auto parsedCursor =
         parseAccountCursor(backend, sequence, jsonCursor, accountID, yield);
@@ -891,12 +895,12 @@ keypairFromRequst(boost::json::object const& request)
     }
 
     if (count == 0)
-        return Status{Error::rpcINVALID_PARAMS, "missing field secret"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missing field secret"};
 
     if (count > 1)
     {
         return Status{
-            Error::rpcINVALID_PARAMS,
+            RippledError::rpcINVALID_PARAMS,
             "Exactly one of the following must be specified: "
             " passphrase, secret, seed, or seed_hex"};
     }
@@ -907,17 +911,18 @@ keypairFromRequst(boost::json::object const& request)
     if (has_key_type)
     {
         if (!request.at("key_type").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "keyTypeNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "keyTypeNotString"};
 
         std::string key_type = request.at("key_type").as_string().c_str();
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
-            return Status{Error::rpcINVALID_PARAMS, "invalidFieldKeyType"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "invalidFieldKeyType"};
 
         if (secretType == "secret")
             return Status{
-                Error::rpcINVALID_PARAMS,
+                RippledError::rpcINVALID_PARAMS,
                 "The secret field is not allowed if key_type is used."};
     }
 
@@ -935,7 +940,7 @@ keypairFromRequst(boost::json::object const& request)
             if (keyType.value_or(ripple::KeyType::ed25519) !=
                 ripple::KeyType::ed25519)
                 return Status{
-                    Error::rpcINVALID_PARAMS,
+                    RippledError::rpcINVALID_PARAMS,
                     "Specified seed is for an Ed25519 wallet."};
 
             keyType = ripple::KeyType::ed25519;
@@ -951,7 +956,8 @@ keypairFromRequst(boost::json::object const& request)
         {
             if (!request.at(secretType).is_string())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "secret value must be string"};
+                    RippledError::rpcINVALID_PARAMS,
+                    "secret value must be string"};
 
             std::string key = request.at(secretType).as_string().c_str();
 
@@ -970,7 +976,7 @@ keypairFromRequst(boost::json::object const& request)
         {
             if (!request.at("secret").is_string())
                 return Status{
-                    Error::rpcINVALID_PARAMS,
+                    RippledError::rpcINVALID_PARAMS,
                     "field secret should be a string"};
 
             std::string secret = request.at("secret").as_string().c_str();
@@ -980,12 +986,14 @@ keypairFromRequst(boost::json::object const& request)
 
     if (!seed)
         return Status{
-            Error::rpcBAD_SEED, "Bad Seed: invalid field message secretType"};
+            RippledError::rpcBAD_SEED,
+            "Bad Seed: invalid field message secretType"};
 
     if (keyType != ripple::KeyType::secp256k1 &&
         keyType != ripple::KeyType::ed25519)
         return Status{
-            Error::rpcINVALID_PARAMS, "keypairForSignature: invalid key type"};
+            RippledError::rpcINVALID_PARAMS,
+            "keypairForSignature: invalid key type"};
 
     return generateKeyPair(*keyType, *seed);
 }
@@ -1343,54 +1351,63 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays"))
-        return Status{Error::rpcBAD_MARKET, "missingTakerPays"};
+        return Status{RippledError::rpcBAD_MARKET, "missingTakerPays"};
 
     if (!request.contains("taker_gets"))
-        return Status{Error::rpcINVALID_PARAMS, "missingTakerGets"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingTakerGets"};
 
     if (!request.at("taker_pays").is_object())
-        return Status{Error::rpcINVALID_PARAMS, "takerPaysNotObject"};
+        return Status{RippledError::rpcINVALID_PARAMS, "takerPaysNotObject"};
 
     if (!request.at("taker_gets").is_object())
-        return Status{Error::rpcINVALID_PARAMS, "takerGetsNotObject"};
+        return Status{RippledError::rpcINVALID_PARAMS, "takerGetsNotObject"};
 
     auto taker_pays = request.at("taker_pays").as_object();
     if (!taker_pays.contains("currency"))
-        return Status{Error::rpcINVALID_PARAMS, "missingTakerPaysCurrency"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "missingTakerPaysCurrency"};
 
     if (!taker_pays.at("currency").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "takerPaysCurrencyNotString"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "takerPaysCurrencyNotString"};
 
     auto taker_gets = request.at("taker_gets").as_object();
     if (!taker_gets.contains("currency"))
-        return Status{Error::rpcINVALID_PARAMS, "missingTakerGetsCurrency"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "missingTakerGetsCurrency"};
 
     if (!taker_gets.at("currency").is_string())
-        return Status{Error::rpcINVALID_PARAMS, "takerGetsCurrencyNotString"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "takerGetsCurrencyNotString"};
 
     ripple::Currency pay_currency;
     if (!ripple::to_currency(
             pay_currency, taker_pays.at("currency").as_string().c_str()))
-        return Status{Error::rpcSRC_CUR_MALFORMED, "badTakerPaysCurrency"};
+        return Status{
+            RippledError::rpcSRC_CUR_MALFORMED, "badTakerPaysCurrency"};
 
     ripple::Currency get_currency;
     if (!ripple::to_currency(
             get_currency, taker_gets["currency"].as_string().c_str()))
-        return Status{Error::rpcDST_AMT_MALFORMED, "badTakerGetsCurrency"};
+        return Status{
+            RippledError::rpcDST_AMT_MALFORMED, "badTakerGetsCurrency"};
 
     ripple::AccountID pay_issuer;
     if (taker_pays.contains("issuer"))
     {
         if (!taker_pays.at("issuer").is_string())
-            return Status{Error::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
 
         if (!ripple::to_issuer(
                 pay_issuer, taker_pays.at("issuer").as_string().c_str()))
-            return Status{Error::rpcSRC_ISR_MALFORMED, "badTakerPaysIssuer"};
+            return Status{
+                RippledError::rpcSRC_ISR_MALFORMED, "badTakerPaysIssuer"};
 
         if (pay_issuer == ripple::noAccount())
             return Status{
-                Error::rpcSRC_ISR_MALFORMED, "badTakerPaysIssuerAccountOne"};
+                RippledError::rpcSRC_ISR_MALFORMED,
+                "badTakerPaysIssuerAccountOne"};
     }
     else
     {
@@ -1399,18 +1416,19 @@ parseBook(boost::json::object const& request)
 
     if (isXRP(pay_currency) && !isXRP(pay_issuer))
         return Status{
-            Error::rpcSRC_ISR_MALFORMED,
+            RippledError::rpcSRC_ISR_MALFORMED,
             "Unneeded field 'taker_pays.issuer' for XRP currency "
             "specification."};
 
     if (!isXRP(pay_currency) && isXRP(pay_issuer))
         return Status{
-            Error::rpcSRC_ISR_MALFORMED,
+            RippledError::rpcSRC_ISR_MALFORMED,
             "Invalid field 'taker_pays.issuer', expected non-XRP "
             "issuer."};
 
     if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
-        return Status{Error::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."};
+        return Status{
+            RippledError::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."};
 
     ripple::AccountID get_issuer;
 
@@ -1418,17 +1436,18 @@ parseBook(boost::json::object const& request)
     {
         if (!taker_gets["issuer"].is_string())
             return Status{
-                Error::rpcINVALID_PARAMS, "taker_gets.issuer should be string"};
+                RippledError::rpcINVALID_PARAMS,
+                "taker_gets.issuer should be string"};
 
         if (!ripple::to_issuer(
                 get_issuer, taker_gets.at("issuer").as_string().c_str()))
             return Status{
-                Error::rpcDST_ISR_MALFORMED,
+                RippledError::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer."};
 
         if (get_issuer == ripple::noAccount())
             return Status{
-                Error::rpcDST_ISR_MALFORMED,
+                RippledError::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer account "
                 "one."};
     }
@@ -1439,17 +1458,17 @@ parseBook(boost::json::object const& request)
 
     if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
         return Status{
-            Error::rpcDST_ISR_MALFORMED,
+            RippledError::rpcDST_ISR_MALFORMED,
             "Unneeded field 'taker_gets.issuer' for XRP currency "
             "specification."};
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
         return Status{
-            Error::rpcDST_ISR_MALFORMED,
+            RippledError::rpcDST_ISR_MALFORMED,
             "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
-        return Status{Error::rpcBAD_MARKET, "badMarket"};
+        return Status{RippledError::rpcBAD_MARKET, "badMarket"};
 
     return ripple::Book{{pay_currency, pay_issuer}, {get_currency, get_issuer}};
 }
@@ -1459,12 +1478,12 @@ parseTaker(boost::json::value const& taker)
 {
     std::optional<ripple::AccountID> takerID = {};
     if (!taker.is_string())
-        return {Status{Error::rpcINVALID_PARAMS, "takerNotString"}};
+        return {Status{RippledError::rpcINVALID_PARAMS, "takerNotString"}};
 
     takerID = accountFromStringStrict(taker.as_string().c_str());
 
     if (!takerID)
-        return Status{Error::rpcBAD_ISSUER, "invalidTakerAccount"};
+        return Status{RippledError::rpcBAD_ISSUER, "invalidTakerAccount"};
     return *takerID;
 }
 bool
@@ -1486,14 +1505,14 @@ std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request)
 {
     if (!request.contains(JS(nft_id)))
-        return Status{Error::rpcINVALID_PARAMS, "missingTokenID"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingTokenID"};
 
     if (!request.at(JS(nft_id)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "tokenIDNotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, "tokenIDNotString"};
 
     ripple::uint256 tokenid;
     if (!tokenid.parseHex(request.at(JS(nft_id)).as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "malformedTokenID"};
+        return Status{RippledError::rpcINVALID_PARAMS, "malformedTokenID"};
 
     return tokenid;
 }
@@ -1521,7 +1540,7 @@ traverseTransactions(
     if (request.contains(JS(marker)))
     {
         if (!request.at(JS(marker)).is_object())
-            return Status{Error::rpcINVALID_PARAMS, "invalidMarker"};
+            return Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"};
         auto const& obj = request.at(JS(marker)).as_object();
 
         std::optional<std::uint32_t> transactionIndex = {};
@@ -1529,7 +1548,7 @@ traverseTransactions(
         {
             if (!obj.at(JS(seq)).is_int64())
                 return Status{
-                    Error::rpcINVALID_PARAMS, "transactionIndexNotInt"};
+                    RippledError::rpcINVALID_PARAMS, "transactionIndexNotInt"};
 
             transactionIndex =
                 boost::json::value_to<std::uint32_t>(obj.at(JS(seq)));
@@ -1539,14 +1558,16 @@ traverseTransactions(
         if (obj.contains(JS(ledger)))
         {
             if (!obj.at(JS(ledger)).is_int64())
-                return Status{Error::rpcINVALID_PARAMS, "ledgerIndexNotInt"};
+                return Status{
+                    RippledError::rpcINVALID_PARAMS, "ledgerIndexNotInt"};
 
             ledgerIndex =
                 boost::json::value_to<std::uint32_t>(obj.at(JS(ledger)));
         }
 
         if (!transactionIndex || !ledgerIndex)
-            return Status{Error::rpcINVALID_PARAMS, "missingLedgerOrSeq"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "missingLedgerOrSeq"};
 
         cursor = {*ledgerIndex, *transactionIndex};
     }
@@ -1557,14 +1578,16 @@ traverseTransactions(
         auto& min = request.at(JS(ledger_index_min));
 
         if (!min.is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
 
         if (min.as_int64() != -1)
         {
             if (context.range.maxSequence < min.as_int64() ||
                 context.range.minSequence > min.as_int64())
                 return Status{
-                    Error::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"};
+                    RippledError::rpcLGR_IDX_MALFORMED,
+                    "ledgerSeqMinOutOfRange"};
             else
                 minIndex = boost::json::value_to<std::uint32_t>(min);
         }
@@ -1579,20 +1602,22 @@ traverseTransactions(
         auto& max = request.at(JS(ledger_index_max));
 
         if (!max.is_int64())
-            return Status{Error::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
 
         if (max.as_int64() != -1)
         {
             if (context.range.maxSequence < max.as_int64() ||
                 context.range.minSequence > max.as_int64())
                 return Status{
-                    Error::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"};
+                    RippledError::rpcLGR_IDX_MALFORMED,
+                    "ledgerSeqMaxOutOfRange"};
             else
                 maxIndex = boost::json::value_to<std::uint32_t>(max);
         }
 
         if (minIndex > maxIndex)
-            return Status{Error::rpcINVALID_PARAMS, "invalidIndex"};
+            return Status{RippledError::rpcINVALID_PARAMS, "invalidIndex"};
 
         if (!forward && !cursor)
             cursor = {maxIndex, INT32_MAX};
@@ -1603,7 +1628,8 @@ traverseTransactions(
         if (request.contains(JS(ledger_index_max)) ||
             request.contains(JS(ledger_index_min)))
             return Status{
-                Error::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"};
+                RippledError::rpcINVALID_PARAMS,
+                "containsLedgerSpecifierAndRange"};
 
         auto v = ledgerInfoFromRequest(context);
         if (auto status = std::get_if<Status>(&v); status)

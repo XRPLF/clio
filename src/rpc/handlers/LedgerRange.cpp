@@ -12,7 +12,7 @@ doLedgerRange(Context const& context)
     auto range = context.backend->fetchLedgerRange();
     if (!range)
     {
-        return Status{Error::rpcNOT_READY, "rangeNotFound"};
+        return Status{RippledError::rpcNOT_READY, "rangeNotFound"};
     }
     else
     {
