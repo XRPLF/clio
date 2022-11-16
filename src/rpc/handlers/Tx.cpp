@@ -36,6 +36,32 @@ doTx(Context const& context)
     if (!range)
         return Status{RippledError::rpcNOT_READY};
 
+    if (request.contains(JS(min_ledger)) && request.contains(JS(max_ledger)))
+    {
+        if (request.at(JS(min_ledger)).is_int64() &&
+            request.at(JS(max_ledger)).is_int64())
+        {
+            const auto& minLedger = request.at(JS(min_ledger)).as_int64();
+            const auto& maxLedger = request.at(JS(max_ledger)).as_int64();
+
+            if (minLedger >= 0 && maxLedger >= 0 && maxLedger > minLedger)
+            {
+                if (maxLedger - minLedger > 1000)
+                    return Status{
+                        RippledError::rpcEXCESSIVE_LGR_RANGE,
+                        "excessiveLgrRange"};
+            }
+
+            else
+                return Status{
+                    RippledError::rpcLGR_IDXS_INVALID, "lgrIdxsInvalid"};
+        }
+
+        else
+            return Status{
+                RippledError::rpcLGR_IDX_MALFORMED, "lgrIdxMalformed"};
+    }
+
     auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
     if (!dbResponse)
         return Status{RippledError::rpcTXN_NOT_FOUND};
