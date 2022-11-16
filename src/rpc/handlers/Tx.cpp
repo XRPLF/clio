@@ -31,6 +31,17 @@ doTx(Context const& context)
 
         binary = request.at(JS(binary)).as_bool();
     }
+    uint32_t minLedger = getUInt(request, JS(min_ledger), 0);
+    uint32_t maxLedger = getUInt(request, JS(max_ledger), 0);
+    bool rangeSupplied = minLedger != 0 && maxLedger != 0;
+
+    if (rangeSupplied)
+    {
+        if (minLedger > maxLedger)
+            return Status{RippledError::rpcINVALID_LGR_RANGE};
+        if (maxLedger - minLedger > 1000)
+            return Status{RippledError::rpcEXCESSIVE_LGR_RANGE};
+    }
 
     auto range = context.backend->fetchLedgerRange();
     if (!range)
@@ -38,7 +49,17 @@ doTx(Context const& context)
 
     auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
     if (!dbResponse)
+    {
+        if (rangeSupplied)
+        {
+            bool searchedAll = range->maxSequence >= maxLedger &&
+                range->minSequence <= minLedger;
+            boost::json::object extra;
+            extra["searched_all"] = searchedAll;
+            return Status{RippledError::rpcTXN_NOT_FOUND, extra};
+        }
         return Status{RippledError::rpcTXN_NOT_FOUND};
+    }
 
     if (!binary)
     {

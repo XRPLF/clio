@@ -50,9 +50,12 @@ struct Status
     CombinedError code = RippledError::rpcSUCCESS;
     std::string error = "";
     std::string message = "";
+    std::optional<boost::json::object> extraInfo;
 
     Status() = default;
     /* implicit */ Status(CombinedError code) : code(code){};
+    Status(CombinedError code, boost::json::object const& extraInfo)
+        : code(code), extraInfo(extraInfo){};
 
     // HACK. Some rippled handlers explicitly specify errors.
     // This means that we have to be able to duplicate this

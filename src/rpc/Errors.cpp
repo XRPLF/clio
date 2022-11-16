@@ -106,7 +106,7 @@ makeError(Status const& status)
         return str.empty() ? nullopt : make_optional(str);
     };
 
-    return visit(
+    auto res = visit(
         overloadSet{
             [&status, &wrapOptional](RippledError err) {
                 if (err == ripple::rpcUNKNOWN)
@@ -130,6 +130,15 @@ makeError(Status const& status)
             },
         },
         status.code);
+    if (status.extraInfo)
+    {
+        for (auto it = status.extraInfo->begin(); it != status.extraInfo->end();
+             ++it)
+        {
+            res[it->key()] = it->value();
+        }
+    }
+    return res;
 }
 
 }  // namespace RPC
