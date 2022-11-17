@@ -54,7 +54,7 @@ struct Status
 
     Status() = default;
     /* implicit */ Status(CombinedError code) : code(code){};
-    Status(CombinedError code, boost::json::object const& extraInfo)
+    Status(CombinedError code, boost::json::object&& extraInfo)
         : code(code), extraInfo(extraInfo){};
 
     // HACK. Some rippled handlers explicitly specify errors.

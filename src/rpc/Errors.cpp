@@ -132,10 +132,9 @@ makeError(Status const& status)
         status.code);
     if (status.extraInfo)
     {
-        for (auto it = status.extraInfo->begin(); it != status.extraInfo->end();
-             ++it)
+        for (auto& [key, value] : status.extraInfo.value())
         {
-            res[it->key()] = it->value();
+            res[key] = value;
         }
     }
     return res;
