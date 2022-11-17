@@ -12,7 +12,7 @@ namespace Build {
 //  and follow the format described at http://semver.org/
 //------------------------------------------------------------------------------
 // clang-format off
-char const* const versionString = "1.0.2"
+char const* const versionString = "1.0.3"
 // clang-format on
 
 #if defined(DEBUG) || defined(SANITIZER)
