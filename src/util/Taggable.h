@@ -209,7 +209,8 @@ private:
     friend Type
     tag_invoke(boost::json::value_to_tag<Type>, boost::json::value const& value)
     {
-        assert(value.is_string());
+        if (not value.is_string())
+            throw std::runtime_error("`log_tag_style` must be a string");
         auto const& style = value.as_string();
 
         if (boost::iequals(style, "int") || boost::iequals(style, "uint"))

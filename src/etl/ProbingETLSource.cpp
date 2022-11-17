@@ -1,4 +1,7 @@
 #include <etl/ProbingETLSource.h>
+#include <log/Logger.h>
+
+using namespace clio;
 
 ProbingETLSource::ProbingETLSource(
     clio::Config const& config,
@@ -85,7 +88,8 @@ std::string
 ProbingETLSource::toString() const
 {
     if (!currentSrc_)
-        return "{ probing }";
+        return "{probing... ws: " + plainSrc_->toString() +
+            ", wss: " + sslSrc_->toString() + "}";
     return currentSrc_->toString();
 }
 
@@ -148,9 +152,8 @@ ProbingETLSource::make_SSLHooks() noexcept
                 {
                     plainSrc_->pause();
                     currentSrc_ = sslSrc_;
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Selected WSS as the main source: "
-                        << currentSrc_->toString();
+                    log_.info() << "Selected WSS as the main source: "
+                                << currentSrc_->toString();
                 }
                 return ETLSourceHooks::Action::PROCEED;
             },
@@ -179,9 +182,8 @@ ProbingETLSource::make_PlainHooks() noexcept
                 {
                     sslSrc_->pause();
                     currentSrc_ = plainSrc_;
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Selected Plain WS as the main source: "
-                        << currentSrc_->toString();
+                    log_.info() << "Selected Plain WS as the main source: "
+                                << currentSrc_->toString();
                 }
                 return ETLSourceHooks::Action::PROCEED;
             },

@@ -11,6 +11,7 @@ if(NOT googletest_POPULATED)
 endif()
 
 target_link_libraries(clio_tests PUBLIC clio gtest_main)
+target_include_directories(clio_tests PRIVATE unittests)
 
 enable_testing()
 

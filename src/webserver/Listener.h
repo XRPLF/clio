@@ -1,16 +1,17 @@
 #ifndef LISTENER_H
 #define LISTENER_H
 
-#include <boost/asio/dispatch.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
-
+#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <util/Taggable.h>
 #include <webserver/HttpSession.h>
 #include <webserver/PlainWsSession.h>
 #include <webserver/SslHttpSession.h>
 #include <webserver/SslWsSession.h>
+
+#include <boost/asio/dispatch.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
 
 #include <iostream>
 
@@ -23,6 +24,7 @@ class Detector
     using std::enable_shared_from_this<
         Detector<PlainSession, SslSession>>::shared_from_this;
 
+    clio::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
@@ -69,8 +71,7 @@ public:
         if (ec == net::ssl::error::stream_truncated)
             return;
 
-        BOOST_LOG_TRIVIAL(info)
-            << "Detector failed: " << message << ec.message() << std::endl;
+        log_.info() << "Detector failed (" << message << "): " << ec.message();
     }
 
     // Launch the detector
@@ -202,6 +203,7 @@ class Listener
     using std::enable_shared_from_this<
         Listener<PlainSession, SslSession>>::shared_from_this;
 
+    clio::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
@@ -255,9 +257,8 @@ public:
         acceptor_.bind(endpoint, ec);
         if (ec)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << "Failed to bind to endpoint: " << endpoint
-                << ". message: " << ec.message();
+            log_.error() << "Failed to bind to endpoint: " << endpoint
+                         << ". message: " << ec.message();
             throw std::runtime_error("Failed to bind to specified endpoint");
         }
 
@@ -265,9 +266,8 @@ public:
         acceptor_.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << "Failed to listen at endpoint: " << endpoint
-                << ". message: " << ec.message();
+            log_.error() << "Failed to listen at endpoint: " << endpoint
+                         << ". message: " << ec.message();
             throw std::runtime_error("Failed to listen at specified endpoint");
         }
     }
@@ -336,6 +336,7 @@ make_HttpServer(
     std::shared_ptr<ReportingETL const> etl,
     DOSGuard& dosGuard)
 {
+    static clio::Logger log{"WebServer"};
     if (!config.contains("server"))
         return nullptr;
 
@@ -348,8 +349,8 @@ make_HttpServer(
     auto const maxQueueSize =
         serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
 
-    BOOST_LOG_TRIVIAL(info) << __func__ << " Number of workers = " << numThreads
-                            << ". Max queue size = " << maxQueueSize;
+    log.info() << "Number of workers = " << numThreads
+               << ". Max queue size = " << maxQueueSize;
 
     auto server = std::make_shared<HttpServer>(
         ioc,

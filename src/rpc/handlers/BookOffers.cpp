@@ -4,12 +4,21 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-#include <algorithm>
-#include <rpc/RPCHelpers.h>
-
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
+#include <log/Logger.h>
+#include <rpc/RPCHelpers.h>
+
+#include <boost/json.hpp>
+
+#include <algorithm>
+
+using namespace clio;
+
+// local to compilation unit loggers
+namespace {
+clio::Logger gLog{"RPC"};
+}  // namespace
 
 namespace RPC {
 
@@ -64,11 +73,11 @@ doBookOffers(Context const& context)
         bookBase, lgrInfo.seq, limit, marker, context.yield);
     auto end = std::chrono::system_clock::now();
 
-    BOOST_LOG_TRIVIAL(warning)
-        << "Time loading books: "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-               .count()
-        << " milliseconds - request = " << request;
+    gLog.warn() << "Time loading books: "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       end - start)
+                       .count()
+                << " milliseconds - request = " << request;
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
@@ -78,11 +87,11 @@ doBookOffers(Context const& context)
 
     auto end2 = std::chrono::system_clock::now();
 
-    BOOST_LOG_TRIVIAL(warning)
-        << "Time transforming to json: "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - end)
-               .count()
-        << " milliseconds - request = " << request;
+    gLog.warn() << "Time transforming to json: "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       end2 - end)
+                       .count()
+                << " milliseconds - request = " << request;
 
     if (retMarker)
         response["marker"] = ripple::strHex(*retMarker);

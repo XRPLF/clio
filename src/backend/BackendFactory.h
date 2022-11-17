@@ -1,16 +1,19 @@
 #ifndef RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
 #define RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
 
-#include <boost/algorithm/string.hpp>
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
 #include <config/Config.h>
+#include <log/Logger.h>
+
+#include <boost/algorithm/string.hpp>
 
 namespace Backend {
 std::shared_ptr<BackendInterface>
 make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
 {
-    BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
+    static clio::Logger log{"Backend"};
+    log.info() << "Constructing BackendInterface";
 
     auto readOnly = config.valueOr("read_only", false);
     auto type = config.value<std::string>("database.type");
@@ -34,8 +37,7 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
         backend->updateRange(rng->maxSequence);
     }
 
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << ": Constructed BackendInterface Successfully";
+    log.info() << "Constructed BackendInterface Successfully";
 
     return backend;
 }

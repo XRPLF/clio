@@ -1,17 +1,15 @@
 #ifndef RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 #define RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <boost/log/trivial.hpp>
-
 #include <ripple/ledger/ReadView.h>
-
 #include <backend/DBHelpers.h>
 #include <backend/SimpleCache.h>
 #include <backend/Types.h>
-
 #include <config/Config.h>
+#include <log/Logger.h>
+
+#include <boost/asio/spawn.hpp>
+#include <boost/json.hpp>
 
 #include <thread>
 #include <type_traits>
@@ -46,6 +44,8 @@ template <class F>
 auto
 retryOnTimeout(F func, size_t waitMs = 500)
 {
+    static clio::Logger log{"Backend"};
+
     while (true)
     {
         try
@@ -54,9 +54,8 @@ retryOnTimeout(F func, size_t waitMs = 500)
         }
         catch (DatabaseTimeout& t)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << __func__
-                << " Database request timed out. Sleeping and retrying ... ";
+            log.error()
+                << "Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
         }
     }

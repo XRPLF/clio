@@ -8,6 +8,7 @@
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
+#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
@@ -55,6 +56,8 @@ class SubscriptionManager;
 class ReportingETL
 {
 private:
+    clio::Logger log_{"ETL"};
+
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> loadBalancer_;
@@ -300,7 +303,7 @@ private:
     void
     run()
     {
-        BOOST_LOG_TRIVIAL(info) << "Starting reporting etl";
+        log_.info() << "Starting reporting etl";
         stopping_ = false;
 
         doWork();
@@ -337,8 +340,8 @@ public:
 
     ~ReportingETL()
     {
-        BOOST_LOG_TRIVIAL(info) << "onStop called";
-        BOOST_LOG_TRIVIAL(debug) << "Stopping Reporting ETL";
+        log_.info() << "onStop called";
+        log_.debug() << "Stopping Reporting ETL";
         stopping_ = true;
 
         if (worker_.joinable())
@@ -346,7 +349,7 @@ public:
         if (cacheDownloader_.joinable())
             cacheDownloader_.join();
 
-        BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
+        log_.debug() << "Joined ReportingETL worker thread";
     }
 
     boost::json::object
