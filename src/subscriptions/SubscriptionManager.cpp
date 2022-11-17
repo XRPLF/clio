@@ -491,7 +491,7 @@ SubscriptionManager::subscribeHelper(
 {
     subs.subscribe(session, k);
     std::unique_lock lk(cleanupMtx_);
-    cleanupFuncs_[session].emplace_back(func);
+    cleanupFuncs_[session].push_back(std::move(func));
 }
 
 void
