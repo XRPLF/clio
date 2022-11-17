@@ -46,6 +46,12 @@ doLedger(Context const& context)
         diff = params.at("diff").as_bool();
     }
 
+    if (params.contains(JS(full)))
+        return Status{RippledError::rpcNOT_SUPPORTED};
+
+    if (params.contains(JS(accounts)))
+        return Status{RippledError::rpcNOT_SUPPORTED};
+
     auto v = ledgerInfoFromRequest(context);
     if (auto status = std::get_if<Status>(&v))
         return *status;
