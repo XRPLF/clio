@@ -19,6 +19,7 @@
 #include <thread>
 
 #include <etl/ReportingETL.h>
+#include <log/Logger.h>
 #include <main/Build.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
@@ -27,6 +28,7 @@
 #include <vector>
 #include <webserver/DOSGuard.h>
 
+// TODO: consider removing those - visible to anyone including this header
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
@@ -101,6 +103,7 @@ class HttpBase : public util::Taggable
     send_lambda lambda_;
 
 protected:
+    clio::Logger perfLog_{"Performance"};
     boost::beast::flat_buffer buffer_;
 
     bool
@@ -135,8 +138,7 @@ protected:
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            BOOST_LOG_TRIVIAL(info)
-                << tag() << __func__ << ": " << what << ": " << ec.message();
+            perfLog_.info() << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().stream())
                 .socket()
                 .close(ec);
@@ -168,11 +170,11 @@ public:
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {
-        BOOST_LOG_TRIVIAL(debug) << tag() << "http session created";
+        perfLog_.debug() << tag() << "http session created";
     }
     virtual ~HttpBase()
     {
-        BOOST_LOG_TRIVIAL(debug) << tag() << "http session closed";
+        perfLog_.debug() << tag() << "http session closed";
     }
 
     void
@@ -234,9 +236,8 @@ public:
         if (!ip)
             return;
 
-        BOOST_LOG_TRIVIAL(debug) << tag() << "http::" << __func__
-                                 << " received request from ip = " << *ip
-                                 << " - posting to WorkQueue";
+        perfLog_.debug() << tag() << "Received request from ip = " << *ip
+                         << " - posting to WorkQueue";
 
         auto session = derived().shared_from_this();
 
@@ -256,7 +257,8 @@ public:
                         dosGuard_,
                         counters_,
                         *ip,
-                        session);
+                        session,
+                        perfLog_);
                 },
                 dosGuard_.isWhiteListed(*ip)))
         {
@@ -321,7 +323,8 @@ handle_request(
     DOSGuard& dosGuard,
     RPC::Counters& counters,
     std::string const& ip,
-    std::shared_ptr<Session> http)
+    std::shared_ptr<Session> http,
+    clio::Logger& perfLog)
 {
     auto const httpResponse = [&req](
                                   http::status status,
@@ -356,9 +359,9 @@ handle_request(
 
     try
     {
-        BOOST_LOG_TRIVIAL(debug)
-            << http->tag()
-            << "http received request from work queue: " << req.body();
+        perfLog.debug() << http->tag()
+                        << "http received request from work queue: "
+                        << req.body();
 
         boost::json::object request;
         std::string responseStr = "";
@@ -422,8 +425,8 @@ handle_request(
             error["request"] = request;
             result = error;
 
-            BOOST_LOG_TRIVIAL(debug) << http->tag() << __func__
-                                     << " Encountered error: " << responseStr;
+            perfLog.debug()
+                << http->tag() << "Encountered error: " << responseStr;
         }
         else
         {
@@ -457,8 +460,7 @@ handle_request(
     }
     catch (std::exception const& e)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << http->tag() << __func__ << " Caught exception : " << e.what();
+        perfLog.error() << http->tag() << "Caught exception : " << e.what();
         return send(httpResponse(
             http::status::internal_server_error,
             "application/json",

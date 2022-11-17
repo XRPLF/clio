@@ -1,6 +1,6 @@
 #include <config/Config.h>
+#include <log/Logger.h>
 
-#include <boost/log/trivial.hpp>
 #include <fstream>
 
 namespace clio {
@@ -161,11 +161,11 @@ ConfigReader::open(std::filesystem::path path)
     }
     catch (std::exception const& e)
     {
-        BOOST_LOG_TRIVIAL(error) << "Could not read configuration file from '"
-                                 << path.string() << "': " << e.what();
+        LogService::error() << "Could not read configuration file from '"
+                            << path.string() << "': " << e.what();
     }
 
-    BOOST_LOG_TRIVIAL(warning) << "Using empty default configuration";
+    LogService::warn() << "Using empty default configuration";
     return Config{};
 }
 

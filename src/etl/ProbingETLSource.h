@@ -11,6 +11,7 @@
 
 #include <config/Config.h>
 #include <etl/ETLSource.h>
+#include <log/Logger.h>
 
 /// This ETLSource implementation attempts to connect over both secure websocket
 /// and plain websocket. First to connect pauses the other and the probing is
@@ -18,6 +19,8 @@
 /// connection the probing is kickstarted again.
 class ProbingETLSource : public ETLSource
 {
+    clio::Logger log_{"ETL"};
+
     std::mutex mtx_;
     boost::asio::ssl::context sslCtx_;
     std::shared_ptr<ETLSource> sslSrc_;

@@ -1,10 +1,17 @@
+#include <ripple/basics/StringUtilities.h>
+#include <backend/BackendInterface.h>
+#include <log/Logger.h>
+#include <rpc/RPCHelpers.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
-#include <ripple/basics/StringUtilities.h>
+using namespace clio;
 
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
+// local to compilation unit loggers
+namespace {
+clio::Logger gLog{"RPC"};
+}  // namespace
 
 namespace RPC {
 
@@ -412,12 +419,11 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
             blobs.metadata.begin(),
             blobs.metadata.end(),
             std::ostream_iterator<unsigned char>(meta));
-        BOOST_LOG_TRIVIAL(error)
-            << __func__
-            << " Failed to deserialize transaction. txn = " << txn.str()
-            << " - meta = " << meta.str()
-            << " txn length = " << std::to_string(blobs.transaction.size())
-            << " meta length = " << std::to_string(blobs.metadata.size());
+        gLog.error() << "Failed to deserialize transaction. txn = " << txn.str()
+                     << " - meta = " << meta.str() << " txn length = "
+                     << std::to_string(blobs.transaction.size())
+                     << " meta length = "
+                     << std::to_string(blobs.metadata.size());
         throw e;
     }
 }
@@ -807,21 +813,21 @@ traverseOwnedNodes(
     }
     auto end = std::chrono::system_clock::now();
 
-    BOOST_LOG_TRIVIAL(debug)
-        << "Time loading owned directories: "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-               .count()
-        << " milliseconds";
+    gLog.debug() << "Time loading owned directories: "
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(
+                        end - start)
+                        .count()
+                 << " milliseconds";
 
     start = std::chrono::system_clock::now();
     auto objects = backend.fetchLedgerObjects(keys, sequence, yield);
     end = std::chrono::system_clock::now();
 
-    BOOST_LOG_TRIVIAL(debug)
-        << "Time loading owned entries: "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-               .count()
-        << " milliseconds";
+    gLog.debug() << "Time loading owned entries: "
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(
+                        end - start)
+                        .count()
+                 << " milliseconds";
 
     for (auto i = 0; i < objects.size(); ++i)
     {
@@ -1341,7 +1347,7 @@ postProcessOrderBook(
         }
         catch (std::exception const& e)
         {
-            BOOST_LOG_TRIVIAL(error) << "caught exception: " << e.what();
+            gLog.error() << "caught exception: " << e.what();
         }
     }
     return jsonOffers;
@@ -1676,9 +1682,7 @@ traverseTransactions(
         }
         else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
         {
-            BOOST_LOG_TRIVIAL(debug)
-                << __func__
-                << " skipping over transactions from incomplete ledger";
+            gLog.debug() << "Skipping over transactions from incomplete ledger";
             continue;
         }
 
@@ -1708,12 +1712,11 @@ traverseTransactions(
     response[JS(ledger_index_max)] = maxIndex;
     response[JS(transactions)] = txns;
 
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " serialization took "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::system_clock::now() - serializationStart)
-               .count()
-        << " milliseconds";
+    gLog.info() << "serialization took "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::system_clock::now() - serializationStart)
+                       .count()
+                << " milliseconds";
 
     return response;
 }

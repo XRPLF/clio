@@ -107,8 +107,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             NFTsData(tokenIDResult.front(), *owner, txMeta, false)};
 
     std::stringstream msg;
-    msg << __func__ << " - unexpected NFTokenMint data in tx "
-        << sttx.getTransactionID();
+    msg << " - unexpected NFTokenMint data in tx " << sttx.getTransactionID();
     throw std::runtime_error(msg.str());
 }
 
@@ -173,7 +172,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     }
 
     std::stringstream msg;
-    msg << __func__ << " - could not determine owner at burntime for tx "
+    msg << " - could not determine owner at burntime for tx "
         << sttx.getTransactionID();
     throw std::runtime_error(msg.str());
 }
@@ -198,7 +197,7 @@ getNFTokenAcceptOfferData(
         if (affectedBuyOffer == txMeta.getNodes().end())
         {
             std::stringstream msg;
-            msg << __func__ << " - unexpected NFTokenAcceptOffer data in tx "
+            msg << " - unexpected NFTokenAcceptOffer data in tx "
                 << sttx.getTransactionID();
             throw std::runtime_error(msg.str());
         }
@@ -228,7 +227,7 @@ getNFTokenAcceptOfferData(
     if (affectedSellOffer == txMeta.getNodes().end())
     {
         std::stringstream msg;
-        msg << __func__ << " - unexpected NFTokenAcceptOffer data in tx "
+        msg << " - unexpected NFTokenAcceptOffer data in tx "
             << sttx.getTransactionID();
         throw std::runtime_error(msg.str());
     }
@@ -278,7 +277,7 @@ getNFTokenAcceptOfferData(
     }
 
     std::stringstream msg;
-    msg << __func__ << " - unexpected NFTokenAcceptOffer data in tx "
+    msg << " - unexpected NFTokenAcceptOffer data in tx "
         << sttx.getTransactionID();
     throw std::runtime_error(msg.str());
 }

@@ -1,9 +1,11 @@
 #include <ripple/app/ledger/LedgerToJson.h>
 #include <ripple/protocol/STLedgerEntry.h>
+#include <backend/BackendInterface.h>
+#include <log/Logger.h>
+#include <rpc/RPCHelpers.h>
+
 #include <boost/json.hpp>
 
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
 // Get state nodes from a ledger
 //   Inputs:
 //     limit:        integer, maximum number of entries
@@ -17,6 +19,13 @@
 //     marker:       resume point, if any
 //
 //
+
+using namespace clio;
+
+// local to compilation unit loggers
+namespace {
+clio::Logger gLog{"RPC"};
+}  // namespace
 
 namespace RPC {
 
@@ -65,7 +74,7 @@ doLedgerData(Context const& context)
         }
         else
         {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
+            gLog.debug() << "Parsing marker";
 
             marker = ripple::uint256{};
             if (!marker->parseHex(request.at(JS(marker)).as_string().c_str()))
@@ -168,9 +177,8 @@ doLedgerData(Context const& context)
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
 
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " number of results = " << results.size()
-        << " fetched in " << time << " microseconds";
+    gLog.debug() << "Number of results = " << results.size() << " fetched in "
+                 << time << " microseconds";
     boost::json::array objects;
     objects.reserve(results.size());
     for (auto const& [key, object] : results)
@@ -194,9 +202,8 @@ doLedgerData(Context const& context)
 
     time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)
                .count();
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " number of results = " << results.size()
-        << " serialized in " << time << " microseconds";
+    gLog.debug() << "Number of results = " << results.size()
+                 << " serialized in " << time << " microseconds";
 
     return response;
 }
