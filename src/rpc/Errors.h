@@ -81,6 +81,34 @@ struct Status
             return *err != RippledError::rpcSUCCESS;
         return true;
     }
+
+    /**
+     * @brief Returns true if the Status contains the desired @ref RippledError
+     *
+     * @param other The RippledError to match
+     * @return bool true if status matches given error; false otherwise
+     */
+    bool
+    operator==(RippledError other) const
+    {
+        if (auto err = std::get_if<RippledError>(&code))
+            return *err == other;
+        return false;
+    }
+
+    /**
+     * @brief Returns true if the Status contains the desired @ref ClioError
+     *
+     * @param other The RippledError to match
+     * @return bool true if status matches given error; false otherwise
+     */
+    bool
+    operator==(ClioError other) const
+    {
+        if (auto err = std::get_if<ClioError>(&code))
+            return *err == other;
+        return false;
+    }
 };
 
 /**

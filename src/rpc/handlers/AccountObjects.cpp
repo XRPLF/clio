@@ -202,8 +202,7 @@ doAccountObjects(Context const& context)
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;
 
-    auto nextMarker = std::get<RPC::AccountCursor>(next);
-
+    auto const& nextMarker = std::get<RPC::AccountCursor>(next);
     if (nextMarker.isNonZero())
         response[JS(marker)] = nextMarker.toString();
 

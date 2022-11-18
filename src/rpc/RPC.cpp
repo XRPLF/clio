@@ -352,7 +352,7 @@ buildResponse(Context const& ctx)
         if (auto object = get_if<boost::json::object>(&v);
             object && not shouldSuppressValidatedFlag(ctx))
         {
-            (*object)["validated"] = true;
+            (*object)[JS(validated)] = true;
         }
 
         return v;

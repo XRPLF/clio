@@ -73,13 +73,13 @@ struct AccountCursor
     std::uint32_t hint;
 
     std::string
-    toString()
+    toString() const
     {
         return ripple::strHex(index) + "," + std::to_string(hint);
     }
 
     bool
-    isNonZero()
+    isNonZero() const
     {
         return index.isNonZero() || hint != 0;
     }
