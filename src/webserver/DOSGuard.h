@@ -235,7 +235,7 @@ public:
         {
             std::unique_lock lck{fetchMtx_};
             auto it = ipFetchCount_.find(ip);
-            auto count = 0;
+            uint32_t count = 0;
             if (it == ipFetchCount_.end())
                 count = ipFetchCount_[ip] = numObjects;
             else
