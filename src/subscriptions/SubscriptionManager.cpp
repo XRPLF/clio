@@ -479,7 +479,7 @@ SubscriptionManager::subscribeHelper(
 {
     subs.subscribe(session);
     std::unique_lock lk(cleanupMtx_);
-    cleanupFuncs_[session].emplace_back(func);
+    cleanupFuncs_[session].push_back(std::move(func));
 }
 template <typename Key>
 void
