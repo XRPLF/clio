@@ -13,16 +13,19 @@ class DOSGuard
     boost::asio::io_context& ctx_;
     std::mutex mtx_;  // protects ipFetchCount_
     std::unordered_map<std::string, std::uint32_t> ipFetchCount_;
+    std::unordered_map<std::string, std::uint32_t> ipConnCount_;
     std::unordered_set<std::string> const whitelist_;
     std::uint32_t const maxFetches_;
     std::uint32_t const sweepInterval_;
+    std::uint32_t const maxConnCount_;
 
 public:
     DOSGuard(clio::Config const& config, boost::asio::io_context& ctx)
         : ctx_{ctx}
         , whitelist_{getWhitelist(config)}
-        , maxFetches_{config.valueOr("dos_guard.max_fetches", 100u)}
-        , sweepInterval_{config.valueOr("dos_guard.sweep_interval", 1u)}
+        , maxFetches_{config.valueOr("dos_guard.max_fetches", 100000000u)}
+        , sweepInterval_{config.valueOr("dos_guard.sweep_interval", 10u)}
+        , maxConnCount_{config.valueOr("dos_guard.max_connections", 1u)}
     {
         createTimer();
     }
@@ -54,11 +57,44 @@ public:
             return true;
 
         std::unique_lock lck(mtx_);
-        auto it = ipFetchCount_.find(ip);
-        if (it == ipFetchCount_.end())
-            return true;
+        bool fetchesOk = true;
+        bool connsOk = true;
+        {
+            auto it = ipFetchCount_.find(ip);
+            if (it != ipFetchCount_.end())
+                fetchesOk = it->second <= maxFetches_;
+        }
+        {
+            auto it = ipConnCount_.find(ip);
+            assert(it != ipConnCount_.end());
+            if (it != ipConnCount_.end())
+            {
+                connsOk = it->second <= maxConnCount_;
+            }
+        }
 
-        return it->second < maxFetches_;
+        return fetchesOk && connsOk;
+    }
+
+    void
+    increment(std::string const& ip)
+    {
+        if (whitelist_.contains(ip))
+            return;
+        std::unique_lock lck{mtx_};
+        ipConnCount_[ip]++;
+    }
+
+    void
+    decrement(std::string const& ip)
+    {
+        if (whitelist_.contains(ip))
+            return;
+        std::unique_lock lck{mtx_};
+        assert(ipConnCount_[ip] > 0);
+        ipConnCount_[ip]--;
+        if (ipConnCount_[ip] == 0)
+            ipConnCount_.erase(ip);
     }
 
     bool

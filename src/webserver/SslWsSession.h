@@ -30,6 +30,7 @@ public:
     explicit SslWsSession(
         boost::asio::io_context& ioc,
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -41,6 +42,7 @@ public:
         boost::beast::flat_buffer&& b)
         : WsSession(
               ioc,
+              ip,
               backend,
               subscriptions,
               balancer,
@@ -63,20 +65,7 @@ public:
     std::optional<std::string>
     ip()
     {
-        try
-        {
-            return ws()
-                .next_layer()
-                .next_layer()
-                .socket()
-                .remote_endpoint()
-                .address()
-                .to_string();
-        }
-        catch (std::exception const&)
-        {
-            return {};
-        }
+        return ip_;
     }
 };
 
@@ -86,6 +75,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
+    std::optional<std::string> ip_;
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
@@ -99,6 +89,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
 public:
     SslWsUpgrader(
         boost::asio::io_context& ioc,
+        std::optional<std::string> ip,
         boost::asio::ip::tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface const> backend,
@@ -113,6 +104,7 @@ public:
         : ioc_(ioc)
         , https_(std::move(socket), ctx)
         , buffer_(std::move(b))
+        , ip_(ip)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
@@ -126,6 +118,7 @@ public:
     SslWsUpgrader(
         boost::asio::io_context& ioc,
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -139,6 +132,7 @@ public:
         : ioc_(ioc)
         , https_(std::move(stream))
         , buffer_(std::move(b))
+        , ip_(ip)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
@@ -211,6 +205,7 @@ private:
         std::make_shared<SslWsSession>(
             ioc_,
             std::move(https_),
+            ip_,
             backend_,
             subscriptions_,
             balancer_,

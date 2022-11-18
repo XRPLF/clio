@@ -32,6 +32,7 @@ public:
     explicit PlainWsSession(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::socket&& socket,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -43,6 +44,7 @@ public:
         boost::beast::flat_buffer&& buffer)
         : WsSession(
               ioc,
+              ip,
               backend,
               subscriptions,
               balancer,
@@ -65,19 +67,7 @@ public:
     std::optional<std::string>
     ip()
     {
-        try
-        {
-            return ws()
-                .next_layer()
-                .socket()
-                .remote_endpoint()
-                .address()
-                .to_string();
-        }
-        catch (std::exception const&)
-        {
-            return {};
-        }
+        return ip_;
     }
 
     ~PlainWsSession() = default;
@@ -98,11 +88,13 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     RPC::Counters& counters_;
     WorkQueue& queue_;
     http::request<http::string_body> req_;
+    std::optional<std::string> ip_;
 
 public:
     WsUpgrader(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::socket&& socket,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -123,11 +115,13 @@ public:
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
+        , ip_(ip)
     {
     }
     WsUpgrader(
         boost::asio::io_context& ioc,
         boost::beast::tcp_stream&& stream,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -150,6 +144,7 @@ public:
         , counters_(counters)
         , queue_(queue)
         , req_(std::move(req))
+        , ip_(ip)
     {
     }
 
@@ -198,6 +193,7 @@ private:
         std::make_shared<PlainWsSession>(
             ioc_,
             http_.release_socket(),
+            ip_,
             backend_,
             subscriptions_,
             balancer_,

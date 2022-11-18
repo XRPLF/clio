@@ -105,6 +105,7 @@ class HttpBase : public util::Taggable
 protected:
     clio::Logger perfLog_{"Performance"};
     boost::beast::flat_buffer buffer_;
+    bool upgraded_ = false;
 
     bool
     dead()
@@ -172,9 +173,16 @@ public:
     {
         perfLog_.debug() << tag() << "http session created";
     }
+
     virtual ~HttpBase()
     {
         perfLog_.debug() << tag() << "http session closed";
+    }
+
+    DOSGuard&
+    dosGuard()
+    {
+        return dosGuard_;
     }
 
     void
@@ -213,12 +221,14 @@ public:
 
         if (boost::beast::websocket::is_upgrade(req_))
         {
+            upgraded_ = true;
             // Disable the timeout.
             // The websocket::stream uses its own timeout settings.
             boost::beast::get_lowest_layer(derived().stream()).expires_never();
             return make_websocket_session(
                 ioc_,
                 derived().release_stream(),
+                derived().ip(),
                 std::move(req_),
                 std::move(buffer_),
                 backend_,
