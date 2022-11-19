@@ -67,60 +67,6 @@ jobs:
           name: clio_tests-${{ matrix.type.suffix }}
           path: ${{ github.workspace }}/clio_tests
 
-  sign:
-    name: Sign packages
-    needs: build_clio
-    runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release' || github.ref == 'refs/heads/develop'
-    env:
-      GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
-      GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
-    strategy:
-      fail-fast: false
-      matrix:
-        type:
-          - suffix: deb
-            image: ubuntu:20.04
-            script: dpkg
-          # - suffix: rpm
-          #   image: centos:7
-          #   script: rpm
-    container:
-      image: ${{ matrix.type.image }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install dpkg-sig
-        run: |
-          apt-get update && apt-get install -y dpkg-sig gnupg
-      - name: Get package artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: clio_${{ matrix.type.suffix }}_packages
-
-      - name: find packages
-        run: find . -name "*.${{ matrix.type.suffix }}"
-
-      - name: Sign packages
-        uses: ./.github/actions/sign
-
-
-      - name: Verify the signature
-        run: |
-          set -e
-          for PKG in $(ls *.deb); do
-            gpg --verify "${PKG}"
-          done
-
-      - name: Get short SHA
-        id: shortsha
-        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
-
-      - name: Artifact signed packages
-        uses: actions/upload-artifact@v2
-        with:
-          name: signed-clio-deb-packages-${{ steps.shortsha.outputs.sha8 }}
-          path: ${{ github.workspace }}/*.deb
-
   test_clio:
     name: Test Clio
     runs-on: [self-hosted, Linux]
