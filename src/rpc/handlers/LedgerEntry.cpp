@@ -40,7 +40,13 @@ doLedgerEntry(Context const& context)
         if (!key.parseHex(request.at(JS(index)).as_string().c_str()))
             return Status{RippledError::rpcINVALID_PARAMS, "malformedIndex"};
     }
-    else if (request.contains(JS(account_root)))
+    if (request.contains(JS(ledger_index)))
+    {
+        if (!request.at(JS(ledger_index)).is_string() &&
+            !request.at(JS(ledger_index)).is_int64())
+            return Status{RippledError::rpcLGR_IDX_MALFORMED};
+    }
+    if (request.contains(JS(account_root)))
     {
         if (!request.at(JS(account_root)).is_string())
             return Status{
@@ -53,7 +59,7 @@ doLedgerEntry(Context const& context)
         else
             key = ripple::keylet::account(*account).key;
     }
-    else if (request.contains(JS(check)))
+    if (request.contains(JS(check)))
     {
         if (!request.at(JS(check)).is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "checkNotString"};
@@ -63,7 +69,7 @@ doLedgerEntry(Context const& context)
             return Status{RippledError::rpcINVALID_PARAMS, "checkMalformed"};
         }
     }
-    else if (request.contains(JS(deposit_preauth)))
+    if (request.contains(JS(deposit_preauth)))
     {
         if (!request.at(JS(deposit_preauth)).is_object())
         {
@@ -118,7 +124,7 @@ doLedgerEntry(Context const& context)
                 key = ripple::keylet::depositPreauth(*owner, *authorized).key;
         }
     }
-    else if (request.contains(JS(directory)))
+    if (request.contains(JS(directory)))
     {
         if (!request.at(JS(directory)).is_object())
         {
@@ -191,7 +197,7 @@ doLedgerEntry(Context const& context)
             }
         }
     }
-    else if (request.contains(JS(escrow)))
+    if (request.contains(JS(escrow)))
     {
         if (!request.at(JS(escrow)).is_object())
         {
@@ -230,7 +236,7 @@ doLedgerEntry(Context const& context)
             }
         }
     }
-    else if (request.contains(JS(offer)))
+    if (request.contains(JS(offer)))
     {
         if (!request.at(JS(offer)).is_object())
         {
@@ -266,7 +272,7 @@ doLedgerEntry(Context const& context)
             }
         }
     }
-    else if (request.contains(JS(payment_channel)))
+    if (request.contains(JS(payment_channel)))
     {
         if (!request.at(JS(payment_channel)).is_string())
             return Status{
@@ -276,7 +282,7 @@ doLedgerEntry(Context const& context)
             return Status{
                 RippledError::rpcINVALID_PARAMS, "malformedPaymentChannel"};
     }
-    else if (request.contains(JS(ripple_state)))
+    if (request.contains(JS(ripple_state)))
     {
         if (!request.at(JS(ripple_state)).is_object())
             return Status{
@@ -319,7 +325,7 @@ doLedgerEntry(Context const& context)
 
         key = ripple::keylet::line(*id1, *id2, currency).key;
     }
-    else if (request.contains(JS(ticket)))
+    if (request.contains(JS(ticket)))
     {
         if (!request.at(JS(ticket)).is_object())
         {
@@ -365,10 +371,6 @@ doLedgerEntry(Context const& context)
                 key = ripple::getTicketIndex(*id, seq);
             }
         }
-    }
-    else
-    {
-        return Status{RippledError::rpcINVALID_PARAMS, "unknownOption"};
     }
 
     auto dbResponse =
