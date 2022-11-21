@@ -1317,7 +1317,7 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays"))
-        return Status{RippledError::rpcBAD_MARKET, "missingTakerPays"};
+        return Status{RippledError::rpcSRC_CUR_MALFORMED, "missingTakerPays"};
 
     if (!request.contains("taker_gets"))
         return Status{RippledError::rpcINVALID_PARAMS, "missingTakerGets"};
@@ -1331,7 +1331,7 @@ parseBook(boost::json::object const& request)
     auto taker_pays = request.at("taker_pays").as_object();
     if (!taker_pays.contains("currency"))
         return Status{
-            RippledError::rpcINVALID_PARAMS, "missingTakerPaysCurrency"};
+            RippledError::rpcSRC_CUR_MALFORMED, "missingTakerPaysCurrency"};
 
     if (!taker_pays.at("currency").is_string())
         return Status{
@@ -1391,6 +1391,12 @@ parseBook(boost::json::object const& request)
             RippledError::rpcSRC_ISR_MALFORMED,
             "Invalid field 'taker_pays.issuer', expected non-XRP "
             "issuer."};
+
+    if (isXRP(pay_currency) && isXRP(pay_issuer))
+        return Status{
+            RippledError::rpcSRC_CUR_MALFORMED,
+            "Unneeded field 'taker_pays.issuer' for XRP currency "
+            "specification."};
 
     if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
         return Status{
