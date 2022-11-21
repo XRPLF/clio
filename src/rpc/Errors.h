@@ -17,6 +17,8 @@ namespace RPC {
  */
 enum class ClioError {
     rpcMALFORMED_CURRENCY = 5000,
+    rpcMALFORMED_REQUEST = 5001,
+    rpcMALFORMED_OWNER = 5002,
 };
 
 /**
