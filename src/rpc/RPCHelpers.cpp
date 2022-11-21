@@ -193,8 +193,7 @@ getAccount(
         return {};
     }
 
-    return Status{
-        RippledError::rpcACT_MALFORMED, field.to_string() + "Malformed"};
+    return Status{RippledError::rpcACT_NOT_FOUND};
 }
 
 Status
