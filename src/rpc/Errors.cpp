@@ -55,6 +55,10 @@ getErrorInfo(ClioError code)
         {ClioError::rpcMALFORMED_CURRENCY,
          "malformedCurrency",
          "Malformed currency."},
+        {ClioError::rpcMALFORMED_REQUEST,
+         "malformedRequest",
+         "Malformed request."},
+        {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };

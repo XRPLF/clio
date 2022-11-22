@@ -29,6 +29,9 @@ doLedgerEntry(Context const& context)
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     ripple::uint256 key;
+
+    // Note: according to docs, only 1 of the below should be specified at any
+    // time. see https://xrpl.org/ledger_entry.html#ledger_entry
     if (request.contains(JS(index)))
     {
         if (!request.at(JS(index)).is_string())
@@ -325,24 +328,24 @@ doLedgerEntry(Context const& context)
         {
             if (!request.at(JS(ticket)).is_string())
                 return Status{
-                    RippledError::rpcINVALID_PARAMS, "ticketNotString"};
+                    ClioError::rpcMALFORMED_REQUEST, "ticketNotString"};
 
             if (!key.parseHex(request.at(JS(ticket)).as_string().c_str()))
                 return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedTicket"};
+                    ClioError::rpcMALFORMED_REQUEST, "malformedTicket"};
         }
         else if (
             !request.at(JS(ticket)).as_object().contains(JS(owner)) ||
             !request.at(JS(ticket)).as_object().at(JS(owner)).is_string())
         {
-            return Status{RippledError::rpcINVALID_PARAMS, "malformedOwner"};
+            return Status{ClioError::rpcMALFORMED_REQUEST};
         }
         else if (
             !request.at(JS(ticket)).as_object().contains(JS(ticket_seq)) ||
             !request.at(JS(ticket)).as_object().at(JS(ticket_seq)).is_int64())
         {
             return Status{
-                RippledError::rpcINVALID_PARAMS, "malformedTicketSeq"};
+                ClioError::rpcMALFORMED_REQUEST, "malformedTicketSeq"};
         }
         else
         {
@@ -354,8 +357,7 @@ doLedgerEntry(Context const& context)
                                                            .c_str());
 
             if (!id)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedOwner"};
+                return Status{ClioError::rpcMALFORMED_OWNER};
             else
             {
                 std::uint32_t seq = request.at(JS(offer))
