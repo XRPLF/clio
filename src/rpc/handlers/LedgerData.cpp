@@ -107,7 +107,6 @@ doLedgerData(Context const& context)
             header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
             header[JS(close_time_resolution)] =
                 lgrInfo.closeTimeResolution.count();
-            header[JS(closed)] = true;
             header[JS(hash)] = ripple::strHex(lgrInfo.hash);
             header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
             header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
@@ -120,6 +119,7 @@ doLedgerData(Context const& context)
             header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
         }
 
+        header[JS(closed)] = true;
         response[JS(ledger)] = header;
     }
     else
