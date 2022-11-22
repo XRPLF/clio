@@ -59,6 +59,9 @@ getErrorInfo(ClioError code)
          "malformedRequest",
          "Malformed request."},
         {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
+        {ClioError::rpcMALFORMED_ADDRESS,
+         "malformedAddress",
+         "Malformed address."},
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
