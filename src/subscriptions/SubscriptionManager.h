@@ -259,13 +259,28 @@ private:
     void
     sendAll(std::string const& pubMsg, std::unordered_set<session_ptr>& subs);
 
+    using CleanupFunction = std::function<void(session_ptr)>;
+
+    void
+    subscribeHelper(
+        std::shared_ptr<WsBase>& session,
+        Subscription& subs,
+        CleanupFunction&& func);
+
+    template <typename Key>
+    void
+    subscribeHelper(
+        std::shared_ptr<WsBase>& session,
+        Key const& k,
+        SubscriptionMap<Key>& subs,
+        CleanupFunction&& func);
+
     /**
      * This is how we chose to cleanup subscriptions that have been closed.
      * Each time we add a subscriber, we add the opposite lambda that
      * unsubscribes that subscriber when cleanup is called with the session that
      * closed.
      */
-    using CleanupFunction = std::function<void(session_ptr)>;
     std::mutex cleanupMtx_;
     std::unordered_map<session_ptr, std::vector<CleanupFunction>>
         cleanupFuncs_ = {};
