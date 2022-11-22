@@ -49,7 +49,7 @@ doLedgerEntry(Context const& context)
         auto const account = ripple::parseBase58<ripple::AccountID>(
             request.at(JS(account_root)).as_string().c_str());
         if (!account || account->isZero())
-            return Status{RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+            return Status{ClioError::rpcMALFORMED_ADDRESS};
         else
             key = ripple::keylet::account(*account).key;
     }
@@ -175,8 +175,7 @@ doLedgerEntry(Context const& context)
 
                 if (!ownerID)
                 {
-                    return Status{
-                        RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+                    return Status{ClioError::rpcMALFORMED_ADDRESS};
                 }
                 else
                 {
@@ -222,8 +221,7 @@ doLedgerEntry(Context const& context)
                                                            .c_str());
 
             if (!id)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+                return Status{ClioError::rpcMALFORMED_ADDRESS};
             else
             {
                 std::uint32_t seq =
@@ -259,8 +257,7 @@ doLedgerEntry(Context const& context)
                 offer.at(JS(account)).as_string().c_str());
 
             if (!id)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+                return Status{ClioError::rpcMALFORMED_ADDRESS};
             else
             {
                 std::uint32_t seq =
@@ -313,7 +310,7 @@ doLedgerEntry(Context const& context)
 
         if (!id1 || !id2)
             return Status{
-                RippledError::rpcINVALID_PARAMS, "malformedAddresses"};
+                ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"};
 
         else if (!ripple::to_currency(
                      currency, state.at(JS(currency)).as_string().c_str()))
