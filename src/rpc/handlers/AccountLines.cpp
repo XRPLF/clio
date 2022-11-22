@@ -140,7 +140,6 @@ doAccountLines(Context const& context)
     response[JS(account)] = ripple::to_string(accountID);
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
-    response[JS(limit)] = limit;
     response[JS(lines)] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at(JS(lines)).as_array();
 
@@ -181,7 +180,10 @@ doAccountLines(Context const& context)
     auto nextMarker = std::get<RPC::AccountCursor>(next);
 
     if (nextMarker.isNonZero())
+    {
         response[JS(marker)] = nextMarker.toString();
+        response[JS(limit)] = limit;
+    }
 
     return response;
 }

@@ -100,7 +100,6 @@ doAccountOffers(Context const& context)
     }
 
     response[JS(account)] = ripple::to_string(accountID);
-    response[JS(limit)] = limit;
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
     response[JS(offers)] = boost::json::value(boost::json::array_kind);
@@ -130,7 +129,10 @@ doAccountOffers(Context const& context)
     auto nextMarker = std::get<RPC::AccountCursor>(next);
 
     if (nextMarker.isNonZero())
+    {
         response[JS(marker)] = nextMarker.toString();
+        response[JS(limit)] = limit;
+    }
 
     return response;
 }
