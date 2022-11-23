@@ -1,5 +1,4 @@
-#ifndef CLIO_SUBSCRIPTION_MESSAGE_H
-#define CLIO_SUBSCRIPTION_MESSAGE_H
+#pragma once
 
 #include <string>
 
@@ -36,5 +35,3 @@ public:
         return message_.size();
     }
 };
-
-#endif  // CLIO_SUBSCRIPTION_MESSAGE_H

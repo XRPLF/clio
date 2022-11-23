@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
-#define RIPPLE_APP_REPORTING_BACKENDINTERFACE_H_INCLUDED
+#pragma once
 
 #include <ripple/ledger/ReadView.h>
 #include <backend/DBHelpers.h>
@@ -643,4 +642,3 @@ private:
 
 }  // namespace Backend
 using BackendInterface = Backend::BackendInterface;
-#endif

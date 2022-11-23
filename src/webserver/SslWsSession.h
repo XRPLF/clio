@@ -1,5 +1,4 @@
-#ifndef RIPPLE_REPORTING_SSL_WS_SESSION_H
-#define RIPPLE_REPORTING_SSL_WS_SESSION_H
+#pragma once
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
@@ -223,5 +222,3 @@ private:
             ->run(std::move(req_));
     }
 };
-
-#endif  // RIPPLE_REPORTING_SSL_WS_SESSION_H

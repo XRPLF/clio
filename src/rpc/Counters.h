@@ -1,5 +1,4 @@
-#ifndef RPC_COUNTERS_H
-#define RPC_COUNTERS_H
+#pragma once
 
 #include <boost/json.hpp>
 #include <chrono>
@@ -53,5 +52,3 @@ public:
 };
 
 }  // namespace RPC
-
-#endif  // RPC_COUNTERS_H

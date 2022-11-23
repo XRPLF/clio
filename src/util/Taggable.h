@@ -1,5 +1,4 @@
-#ifndef RIPPLE_UTIL_TAGDECORATOR_H
-#define RIPPLE_UTIL_TAGDECORATOR_H
+#pragma once
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
@@ -259,5 +258,3 @@ public:
 };
 
 }  // namespace util
-
-#endif  // RIPPLE_UTIL_TAGDECORATOR_H

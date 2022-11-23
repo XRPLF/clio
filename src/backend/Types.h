@@ -1,5 +1,5 @@
-#ifndef CLIO_TYPES_H_INCLUDED
-#define CLIO_TYPES_H_INCLUDED
+#pragma once
+
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <optional>
@@ -89,4 +89,3 @@ constexpr ripple::uint256 lastKey{
 constexpr ripple::uint256 hi192{
     "0000000000000000000000000000000000000000000000001111111111111111"};
 }  // namespace Backend
-#endif

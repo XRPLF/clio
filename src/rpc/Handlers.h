@@ -1,5 +1,4 @@
-#ifndef REPORTING_HANDLERS_H_INCLUDED
-#define REPORTING_HANDLERS_H_INCLUDED
+#pragma once
 
 #include <rpc/RPC.h>
 
@@ -102,4 +101,3 @@ doServerInfo(Context const& context);
 Result
 doRandom(Context const& context);
 }  // namespace RPC
-#endif

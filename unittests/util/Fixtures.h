@@ -1,5 +1,4 @@
-#ifndef CLIO_UNITTEST_FIXTURES_H
-#define CLIO_UNITTEST_FIXTURES_H
+#pragma once
 
 #include <ios>
 #include <mutex>
@@ -89,5 +88,3 @@ protected:
         boost::log::core::get()->set_logging_enabled(false);
     }
 };
-
-#endif  // CLIO_UNITTEST_FIXTURES_H
