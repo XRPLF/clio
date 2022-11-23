@@ -1,5 +1,4 @@
-#ifndef SUBSCRIPTION_MANAGER_H
-#define SUBSCRIPTION_MANAGER_H
+#pragma once
 
 #include <backend/BackendInterface.h>
 #include <config/Config.h>
@@ -285,5 +284,3 @@ private:
     std::unordered_map<session_ptr, std::vector<CleanupFunction>>
         cleanupFuncs_ = {};
 };
-
-#endif  // SUBSCRIPTION_MANAGER_H

@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_REPORTING_PROBINGETLSOURCE_H_INCLUDED
-#define RIPPLE_APP_REPORTING_PROBINGETLSOURCE_H_INCLUDED
+#pragma once
 
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
@@ -92,5 +91,3 @@ private:
     ETLSourceHooks
     make_PlainHooks() noexcept;
 };
-
-#endif

@@ -1,5 +1,5 @@
-#ifndef RIPPLE_APP_REPORTING_ETLHELPERS_H_INCLUDED
-#define RIPPLE_APP_REPORTING_ETLHELPERS_H_INCLUDED
+#pragma once
+
 #include <ripple/basics/base_uint.h>
 #include <condition_variable>
 #include <mutex>
@@ -171,5 +171,3 @@ getMarkers(size_t numMarkers)
     }
     return markers;
 }
-
-#endif  // RIPPLE_APP_REPORTING_ETLHELPERS_H_INCLUDED

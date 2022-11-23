@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_REPORTING_CASSANDRABACKEND_H_INCLUDED
-#define RIPPLE_APP_REPORTING_CASSANDRABACKEND_H_INCLUDED
+#pragma once
 
 #include <ripple/basics/base_uint.h>
 #include <backend/BackendInterface.h>
@@ -1258,4 +1257,3 @@ public:
 };
 
 }  // namespace Backend
-#endif

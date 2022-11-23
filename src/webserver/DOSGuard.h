@@ -1,5 +1,4 @@
-#ifndef RIPPLE_REPORTING_DOS_GUARD_H
-#define RIPPLE_REPORTING_DOS_GUARD_H
+#pragma once
 
 #include <boost/asio.hpp>
 #include <string>
@@ -100,4 +99,3 @@ private:
             boost::transform_iterator(std::end(whitelist), transform)};
     }
 };
-#endif
