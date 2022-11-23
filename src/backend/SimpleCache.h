@@ -1,5 +1,4 @@
-#ifndef CLIO_SIMPLECACHE_H_INCLUDED
-#define CLIO_SIMPLECACHE_H_INCLUDED
+#pragma once
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/hardened_hash.h>
@@ -78,4 +77,3 @@ public:
 };
 
 }  // namespace Backend
-#endif

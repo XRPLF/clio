@@ -1,5 +1,4 @@
-#ifndef RIPPLE_REPORTING_WS_BASE_SESSION_H
-#define RIPPLE_REPORTING_WS_BASE_SESSION_H
+#pragma once
 
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
@@ -444,5 +443,3 @@ public:
         do_read();
     }
 };
-
-#endif  // RIPPLE_REPORTING_WS_BASE_SESSION_H

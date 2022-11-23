@@ -1,5 +1,4 @@
-#ifndef RIPPLE_UTIL_LOGGER_H
-#define RIPPLE_UTIL_LOGGER_H
+#pragma once
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -253,5 +252,3 @@ public:
 };
 
 };  // namespace clio
-
-#endif  // RIPPLE_UTIL_LOGGER_H

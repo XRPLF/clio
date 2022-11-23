@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
-#define RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
+#pragma once
 
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
@@ -42,5 +41,3 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
     return backend;
 }
 }  // namespace Backend
-
-#endif  // RIPPLE_REPORTING_BACKEND_FACTORY

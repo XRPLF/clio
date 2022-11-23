@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_REPORTING_REPORTINGETL_H_INCLUDED
-#define RIPPLE_APP_REPORTING_REPORTINGETL_H_INCLUDED
+#pragma once
 
 #include <ripple/ledger/ReadView.h>
 #include <boost/algorithm/string.hpp>
@@ -395,5 +394,3 @@ public:
         return now - (rippleEpochStart + closeTime);
     }
 };
-
-#endif

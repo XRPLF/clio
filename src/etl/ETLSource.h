@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_REPORTING_ETLSOURCE_H_INCLUDED
-#define RIPPLE_APP_REPORTING_ETLSOURCE_H_INCLUDED
+#pragma once
 
 #include <backend/BackendInterface.h>
 #include <config/Config.h>
@@ -704,5 +703,3 @@ private:
     bool
     execute(Func f, uint32_t ledgerSequence);
 };
-
-#endif

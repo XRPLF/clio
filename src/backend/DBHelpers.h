@@ -1,5 +1,4 @@
-#ifndef CLIO_BACKEND_DBHELPERS_H_INCLUDED
-#define CLIO_BACKEND_DBHELPERS_H_INCLUDED
+#pragma once
 
 #include <ripple/basics/Log.h>
 #include <ripple/basics/StringUtilities.h>
@@ -181,4 +180,3 @@ uint256ToString(ripple::uint256 const& uint)
 }
 
 static constexpr std::uint32_t rippleEpochStart = 946684800;
-#endif

@@ -1,6 +1,5 @@
+#pragma once
 
-#ifndef XRPL_REPORTING_RPCHELPERS_H_INCLUDED
-#define XRPL_REPORTING_RPCHELPERS_H_INCLUDED
 /*
  * This file contains a variety of utility functions used when executing
  * the handlers
@@ -272,4 +271,3 @@ computeBookChanges(
     std::vector<Backend::TransactionAndMetadata> const& transactions);
 
 }  // namespace RPC
-#endif

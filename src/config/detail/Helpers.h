@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_CONFIG_DETAIL_H_INCLUDED
-#define RIPPLE_APP_CONFIG_DETAIL_H_INCLUDED
+#pragma once
 
 #include <optional>
 #include <queue>
@@ -144,5 +143,3 @@ typeName<double>()
 }
 
 };  // namespace clio::detail
-
-#endif  // RIPPLE_APP_CONFIG_DETAIL_H_INCLUDED

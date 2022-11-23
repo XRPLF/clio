@@ -1,5 +1,4 @@
-#ifndef RIPPLE_APP_CONFIG_H_INCLUDED
-#define RIPPLE_APP_CONFIG_H_INCLUDED
+#pragma once
 
 #include <config/detail/Helpers.h>
 
@@ -385,5 +384,3 @@ public:
 };
 
 }  // namespace clio
-
-#endif  // RIPPLE_APP_CONFIG_H_INCLUDED

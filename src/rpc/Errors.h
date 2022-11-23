@@ -1,5 +1,4 @@
-#ifndef REPORTING_RPC_ERRORS_H_INCLUDED
-#define REPORTING_RPC_ERRORS_H_INCLUDED
+#pragma once
 
 #include <ripple/protocol/ErrorCodes.h>
 
@@ -236,5 +235,3 @@ makeError(
     std::optional<std::string_view> customMessage = std::nullopt);
 
 }  // namespace RPC
-
-#endif  // REPORTING_RPC_ERRORS_H_INCLUDED

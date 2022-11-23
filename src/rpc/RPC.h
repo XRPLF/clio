@@ -1,5 +1,4 @@
-#ifndef REPORTING_RPC_H_INCLUDED
-#define REPORTING_RPC_H_INCLUDED
+#pragma once
 
 #include <backend/BackendInterface.h>
 #include <log/Logger.h>
@@ -146,5 +145,3 @@ logDuration(Context const& ctx, T const& dur)
 }
 
 }  // namespace RPC
-
-#endif  // REPORTING_RPC_H_INCLUDED

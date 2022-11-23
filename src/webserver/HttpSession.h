@@ -1,5 +1,4 @@
-#ifndef RIPPLE_REPORTING_HTTP_SESSION_H
-#define RIPPLE_REPORTING_HTTP_SESSION_H
+#pragma once
 
 #include <webserver/HttpBase.h>
 
@@ -91,5 +90,3 @@ public:
         // At this point the connection is closed gracefully
     }
 };
-
-#endif  // RIPPLE_REPORTING_HTTP_SESSION_H

@@ -1,5 +1,4 @@
-#ifndef RIPPLE_REPORTING_HTTP_BASE_SESSION_H
-#define RIPPLE_REPORTING_HTTP_BASE_SESSION_H
+#pragma once
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/spawn.hpp>
@@ -468,5 +467,3 @@ handle_request(
                 RPC::makeError(RPC::RippledError::rpcINTERNAL))));
     }
 }
-
-#endif  // RIPPLE_REPORTING_HTTP_BASE_SESSION_H

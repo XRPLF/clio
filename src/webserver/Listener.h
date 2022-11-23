@@ -1,5 +1,4 @@
-#ifndef LISTENER_H
-#define LISTENER_H
+#pragma once
 
 #include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
@@ -369,5 +368,3 @@ make_HttpServer(
     return server;
 }
 }  // namespace Server
-
-#endif  // LISTENER_H

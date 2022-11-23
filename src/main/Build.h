@@ -1,5 +1,4 @@
-#ifndef CLIO_BUILD_INFO_H
-#define CLIO_BUILD_INFO_H
+#pragma once
 
 #include <string>
 
@@ -12,5 +11,3 @@ std::string const&
 getClioFullVersionString();
 
 }  // namespace Build
-
-#endif  // CLIO_BUILD_INFO_H

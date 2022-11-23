@@ -1,5 +1,4 @@
-#ifndef CLIO_WORK_QUEUE_H
-#define CLIO_WORK_QUEUE_H
+#pragma once
 
 #include <log/Logger.h>
 
@@ -77,5 +76,3 @@ private:
     boost::asio::io_context ioc_ = {};
     std::optional<boost::asio::io_context::work> work_{ioc_};
 };
-
-#endif  // CLIO_WORK_QUEUE_H
