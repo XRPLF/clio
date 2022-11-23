@@ -1539,47 +1539,54 @@ traverseTransactions(
     }
 
     auto minIndex = context.range.minSequence;
+    auto maxIndex = context.range.maxSequence;
+    std::optional<int64_t> min;
+    std::optional<int64_t> max;
+
     if (request.contains(JS(ledger_index_min)))
     {
-        auto& min = request.at(JS(ledger_index_min));
-
-        if (!min.is_int64())
+        if (!request.at(JS(ledger_index_min)).is_int64())
+        {
             return Status{
                 RippledError::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
+        }
 
-        if (min.as_int64() != -1)
+        min = request.at(JS(ledger_index_min)).as_int64();
+
+        if (*min != -1)
         {
-            if (context.range.maxSequence < min.as_int64() ||
-                context.range.minSequence > min.as_int64())
+            if (context.range.maxSequence < *min ||
+                context.range.minSequence > *min)
                 return Status{
                     RippledError::rpcLGR_IDX_MALFORMED,
                     "ledgerSeqMinOutOfRange"};
             else
-                minIndex = boost::json::value_to<std::uint32_t>(min);
+                minIndex = static_cast<uint32_t>(*min);
         }
 
         if (forward && !cursor)
             cursor = {minIndex, 0};
     }
 
-    auto maxIndex = context.range.maxSequence;
     if (request.contains(JS(ledger_index_max)))
     {
-        auto& max = request.at(JS(ledger_index_max));
-
-        if (!max.is_int64())
+        if (!request.at(JS(ledger_index_max)).is_int64())
+        {
             return Status{
                 RippledError::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
+        }
 
-        if (max.as_int64() != -1)
+        max = request.at(JS(ledger_index_max)).as_int64();
+
+        if (*max != -1)
         {
-            if (context.range.maxSequence < max.as_int64() ||
-                context.range.minSequence > max.as_int64())
+            if (context.range.maxSequence < *max ||
+                context.range.minSequence > *max)
                 return Status{
                     RippledError::rpcLGR_IDX_MALFORMED,
                     "ledgerSeqMaxOutOfRange"};
             else
-                maxIndex = boost::json::value_to<std::uint32_t>(max);
+                maxIndex = static_cast<uint32_t>(*max);
         }
 
         if (minIndex > maxIndex)
@@ -1587,6 +1594,11 @@ traverseTransactions(
 
         if (!forward && !cursor)
             cursor = {maxIndex, INT32_MAX};
+    }
+
+    if (max && min && *max < *min)
+    {
+        return Status{RippledError::rpcLGR_IDXS_INVALID, "lgrIdxsInvalid"};
     }
 
     if (request.contains(JS(ledger_index)) || request.contains(JS(ledger_hash)))
