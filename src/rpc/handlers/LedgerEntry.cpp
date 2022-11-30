@@ -38,7 +38,7 @@ doLedgerEntry(Context const& context)
             return Status{RippledError::rpcINVALID_PARAMS, "indexNotString"};
 
         if (!key.parseHex(request.at(JS(index)).as_string().c_str()))
-            return Status{RippledError::rpcINVALID_PARAMS, "malformedIndex"};
+            return Status{ClioError::rpcMALFORMED_REQUEST};
     }
     else if (request.contains(JS(account_root)))
     {
