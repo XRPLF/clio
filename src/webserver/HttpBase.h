@@ -417,9 +417,7 @@ handle_request(
                 boost::json::serialize(
                     RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
 
-        boost::json::object response{{"result", boost::json::object{}}};
-        boost::json::object& result = response["result"].as_object();
-
+        boost::json::object response;
         auto start = std::chrono::system_clock::now();
         auto v = RPC::buildResponse(*context);
         auto end = std::chrono::system_clock::now();
@@ -432,7 +430,7 @@ handle_request(
             counters.rpcErrored(context->method);
             auto error = RPC::makeError(*status);
             error["request"] = request;
-            result = error;
+            response["result"] = error;
 
             perfLog.debug()
                 << http->tag() << "Encountered error: " << responseStr;
@@ -443,10 +441,15 @@ handle_request(
             // requests as successful.
 
             counters.rpcComplete(context->method, us);
-            result = std::get<boost::json::object>(v);
+
+            auto result = std::get<boost::json::object>(v);
+            if (result.contains("result") && result.at("result").is_object())
+                result = result.at("result").as_object();
 
             if (!result.contains("error"))
                 result["status"] = "success";
+
+            response["result"] = result;
         }
 
         boost::json::array warnings;

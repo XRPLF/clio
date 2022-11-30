@@ -39,7 +39,6 @@ getDefaultWsResponse(boost::json::value const& id)
     if (!id.is_null())
         defaultResp["id"] = id;
 
-    defaultResp["result"] = boost::json::object_kind;
     defaultResp["status"] = "success";
     defaultResp["type"] = "response";
 
@@ -348,7 +347,18 @@ public:
             {
                 counters_.rpcComplete(context->method, us);
 
-                response["result"] = std::get<boost::json::object>(v);
+                auto const& result = std::get<boost::json::object>(v);
+                auto const isForwarded = result.contains("forwarded") &&
+                    result.at("forwarded").is_bool() &&
+                    result.at("forwarded").as_bool();
+
+                // if the result is forwarded - just use it as is
+                // but keep all default fields in the response too.
+                if (isForwarded)
+                    for (auto const& [k, v] : result)
+                        response.insert_or_assign(k, v);
+                else
+                    response["result"] = result;
             }
         }
         catch (std::exception const& e)

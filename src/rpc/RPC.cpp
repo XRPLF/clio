@@ -321,9 +321,6 @@ buildResponse(Context const& ctx)
         if (!res)
             return Status{RippledError::rpcFAILED_TO_FORWARD};
 
-        if (res->contains("result") && res->at("result").is_object())
-            return res->at("result").as_object();
-
         return *res;
     }
 
