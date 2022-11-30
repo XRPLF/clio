@@ -1,1 +1,6 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-narrowing -Wno-dangling-else -Wno-deprecated-declarations")
+target_compile_options(clio  
+  PUBLIC -Wall
+         -Werror 
+         -Wno-narrowing
+         -Wno-deprecated-declarations 
+         -Wno-dangling-else)

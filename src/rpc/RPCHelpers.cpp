@@ -1317,46 +1317,48 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays"))
-        return Status{RippledError::rpcBAD_MARKET, "missingTakerPays"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "Missing field 'taker_pays'"};
 
     if (!request.contains("taker_gets"))
-        return Status{RippledError::rpcINVALID_PARAMS, "missingTakerGets"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS, "Missing field 'taker_gets'"};
 
     if (!request.at("taker_pays").is_object())
-        return Status{RippledError::rpcINVALID_PARAMS, "takerPaysNotObject"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS,
+            "Field 'taker_pays' is not an object"};
 
     if (!request.at("taker_gets").is_object())
-        return Status{RippledError::rpcINVALID_PARAMS, "takerGetsNotObject"};
+        return Status{
+            RippledError::rpcINVALID_PARAMS,
+            "Field 'taker_gets' is not an object"};
 
     auto taker_pays = request.at("taker_pays").as_object();
     if (!taker_pays.contains("currency"))
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "missingTakerPaysCurrency"};
+        return Status{RippledError::rpcSRC_CUR_MALFORMED};
 
     if (!taker_pays.at("currency").is_string())
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "takerPaysCurrencyNotString"};
+        return Status{RippledError::rpcSRC_CUR_MALFORMED};
 
     auto taker_gets = request.at("taker_gets").as_object();
     if (!taker_gets.contains("currency"))
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "missingTakerGetsCurrency"};
+        return Status{RippledError::rpcDST_AMT_MALFORMED};
 
     if (!taker_gets.at("currency").is_string())
         return Status{
-            RippledError::rpcINVALID_PARAMS, "takerGetsCurrencyNotString"};
+            RippledError::rpcDST_AMT_MALFORMED,
+        };
 
     ripple::Currency pay_currency;
     if (!ripple::to_currency(
             pay_currency, taker_pays.at("currency").as_string().c_str()))
-        return Status{
-            RippledError::rpcSRC_CUR_MALFORMED, "badTakerPaysCurrency"};
+        return Status{RippledError::rpcSRC_CUR_MALFORMED};
 
     ripple::Currency get_currency;
     if (!ripple::to_currency(
             get_currency, taker_gets["currency"].as_string().c_str()))
-        return Status{
-            RippledError::rpcDST_AMT_MALFORMED, "badTakerGetsCurrency"};
+        return Status{RippledError::rpcDST_AMT_MALFORMED};
 
     ripple::AccountID pay_issuer;
     if (taker_pays.contains("issuer"))
@@ -1367,13 +1369,10 @@ parseBook(boost::json::object const& request)
 
         if (!ripple::to_issuer(
                 pay_issuer, taker_pays.at("issuer").as_string().c_str()))
-            return Status{
-                RippledError::rpcSRC_ISR_MALFORMED, "badTakerPaysIssuer"};
+            return Status{RippledError::rpcSRC_ISR_MALFORMED};
 
         if (pay_issuer == ripple::noAccount())
-            return Status{
-                RippledError::rpcSRC_ISR_MALFORMED,
-                "badTakerPaysIssuerAccountOne"};
+            return Status{RippledError::rpcSRC_ISR_MALFORMED};
     }
     else
     {
