@@ -53,8 +53,8 @@ protected:
             stream_, keywords::format = "%Channel%:%Severity% %Message%");
         auto min_severity = expr::channel_severity_filter(
             clio::log_channel, clio::log_severity);
-        min_severity["General"] = clio::Severity::DEBUG;
-        min_severity["Trace"] = clio::Severity::TRACE;
+        min_severity["General"] = clio::Severity::DBG;
+        min_severity["Trace"] = clio::Severity::TRC;
         core->set_filter(min_severity);
         core->set_logging_enabled(true);
     }
