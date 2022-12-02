@@ -15,7 +15,7 @@ namespace Build {
 char const* const versionString = "1.0.3"
 // clang-format on
 
-#if defined(DEBUG) || defined(SANITIZER)
+#if defined(DEBUG) || defined(SANITIZER) || defined(RELEASE)
     "+"
 #ifdef CLIO_GIT_COMMIT_HASH
     CLIO_GIT_COMMIT_HASH
@@ -36,6 +36,9 @@ char const* const versionString = "1.0.3"
         "-release"
 #endif
 
+#define VAL(CLIO_GIT_COMMIT_HASH) #CLIO_GIT_COMMIT_HASH
+#define TOSTRING(CLIO_GIT_COMMIT_HASH) VAL(CLIO_GIT_COMMIT_HASH)
+
     //--------------------------------------------------------------------------
     ;
 
@@ -44,10 +47,12 @@ getClioVersionString()
 {
     static std::string const value = [] {
         std::string const s = versionString;
+        std::string const t = std::to_string(CLIO_GIT_COMMIT_HASH);
         beast::SemanticVersion v;
         if (!v.parse(s) || v.print() != s)
             throw std::runtime_error(s + ": Bad server version string");
-        return s;
+        std::string const result = s + ", Git Commit Hash: " + t;
+        return result;
     }();
     return value;
 }
