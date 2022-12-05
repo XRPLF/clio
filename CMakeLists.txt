@@ -64,6 +64,7 @@ target_sources(clio PRIVATE
   src/rpc/Errors.cpp
   src/rpc/RPC.cpp
   src/rpc/RPCHelpers.cpp
+  src/rpc/AMMHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
   ## RPC Methods

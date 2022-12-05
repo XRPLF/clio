@@ -1,48 +1,35 @@
-#include <rpc/RPCHelpers.h>
-
-// {
-//   amm: <ident>,
-//   ledger_current_index : <ledger_index> // Omitted if ledger_index is
-//   provided instead ledger_index : <ledger_index> // Omitted if
-//   ledger_current_index is provided instead validated: <boolean>
-// }
+#include <rpc/AMMHelpers.h>
 
 namespace RPC {
 
 ripple::Expected<ripple::Issue, ripple::error_code_i>
-getIssue(boost::json::value const& v)
+getIssue(boost::json::value const& request)
 {
-    if (!v.is_object())
+    if (!request.is_object())
         return ripple::Unexpected(ripple::rpcAMM_ISSUE_MALFORMED);
 
     ripple::Issue issue = ripple::xrpIssue();
-
-    if (!v.as_object().contains(JS(currency)))
+    if (!request.as_object().contains(JS(currency)))
         return ripple::Unexpected(ripple::rpcAMM_ISSUE_MALFORMED);
 
-    auto const& currency = v.at(JS(currency));
-
+    auto const& currency = request.at(JS(currency));
     if (!ripple::to_currency(issue.currency, currency.as_string().c_str()))
         return ripple::Unexpected(ripple::rpcAMM_ISSUE_MALFORMED);
 
     if (isXRP(issue.currency))
     {
-        if (v.as_object().contains(JS(issuer)))
+        if (request.as_object().contains(JS(issuer)))
             return ripple::Unexpected(ripple::rpcAMM_ISSUE_MALFORMED);
 
         return issue;
     }
 
-    if (!v.as_object().contains(JS(issuer)))
+    if (!request.as_object().contains(JS(issuer)))
         return ripple::Unexpected(ripple::rpcAMM_ISSUE_MALFORMED);
 
-    boost::json::value const& issuer = v.at(JS(issuer));
-
-    if (!issuer.is_string() ||
+    if (auto const& issuer = request.at(JS(issuer)); !issuer.is_string() ||
         !ripple::to_issuer(issue.account, issuer.as_string().c_str()))
-    {
         return ripple::Unexpected(ripple::rpcAMM_ISSUE_MALFORMED);
-    }
 
     return issue;
 }
@@ -69,14 +56,11 @@ doAMMInfo(Context const& context)
     else
         issue2 = *i;
 
-    // get ledger info
     auto v = ledgerInfoFromRequest(context);
-
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-
     if (params.contains(JS(account)))
     {
         if (auto const status =

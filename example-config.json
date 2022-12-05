@@ -14,20 +14,25 @@
     },
     "etl_sources": [
         {
-            "ip":"52.13.104.109",
-            "ws_port":"51233",
-            "grpc_port":"50051"
+            "ip": "127.0.0.1",
+            "ws_port": "6006",
+            "grpc_port": "50051"
         }
     ],
-    "dos_guard":
-    {
-        "whitelist":["127.0.0.1"]
+    "dos_guard": {
+        "whitelist": [
+            "127.0.0.1"
+        ]
     },
-    "cache":
-    {
-        "peers": [{"ip":"127.0.0.1","port":51234}]
+    "cache": {
+        "peers": [
+            {
+                "ip": "127.0.0.1",
+                "port": 51234
+            }
+        ]
     },
-    "server":{
+    "server": {
         "ip": "0.0.0.0",
         "port": 51233
     },
