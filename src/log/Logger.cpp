@@ -33,18 +33,18 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
     auto const& logLevel = value.as_string();
 
     if (boost::iequals(logLevel, "trace"))
-        return Severity::TRACE;
+        return Severity::TRC;
     else if (boost::iequals(logLevel, "debug"))
-        return Severity::DEBUG;
+        return Severity::DBG;
     else if (boost::iequals(logLevel, "info"))
-        return Severity::INFO;
+        return Severity::NFO;
     else if (
         boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
-        return Severity::WARNING;
+        return Severity::WRN;
     else if (boost::iequals(logLevel, "error"))
-        return Severity::ERROR;
+        return Severity::ERR;
     else if (boost::iequals(logLevel, "fatal"))
-        return Severity::FATAL;
+        return Severity::FTL;
     else
         throw std::runtime_error(
             "Could not parse `log_level`: expected `trace`, `debug`, `info`, "
@@ -103,8 +103,7 @@ LogService::init(Config const& config)
 
     // get default severity, can be overridden per channel using
     // the `log_channels` array
-    auto defaultSeverity =
-        config.valueOr<Severity>("log_level", Severity::INFO);
+    auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
     static constexpr std::array<const char*, 7> channels = {
         "General",
         "WebServer",
@@ -122,7 +121,7 @@ LogService::init(Config const& config)
     for (auto const& channel : channels)
         min_severity[channel] = defaultSeverity;
     min_severity["Alert"] =
-        Severity::WARNING;  // Channel for alerts, always warning severity
+        Severity::WRN;  // Channel for alerts, always warning severity
 
     for (auto const overrides = config.arrayOr("log_channels", {});
          auto const& cfg : overrides)
@@ -143,34 +142,34 @@ LogService::init(Config const& config)
 }
 
 Logger::Pump
-Logger::trace(source_location_t const loc) const
+Logger::trace(source_location_t const& loc) const
 {
-    return {logger_, Severity::TRACE, loc};
+    return {logger_, Severity::TRC, loc};
 };
 Logger::Pump
-Logger::debug(source_location_t const loc) const
+Logger::debug(source_location_t const& loc) const
 {
-    return {logger_, Severity::DEBUG, loc};
+    return {logger_, Severity::DBG, loc};
 };
 Logger::Pump
-Logger::info(source_location_t const loc) const
+Logger::info(source_location_t const& loc) const
 {
-    return {logger_, Severity::INFO, loc};
+    return {logger_, Severity::NFO, loc};
 };
 Logger::Pump
-Logger::warn(source_location_t const loc) const
+Logger::warn(source_location_t const& loc) const
 {
-    return {logger_, Severity::WARNING, loc};
+    return {logger_, Severity::WRN, loc};
 };
 Logger::Pump
-Logger::error(source_location_t const loc) const
+Logger::error(source_location_t const& loc) const
 {
-    return {logger_, Severity::ERROR, loc};
+    return {logger_, Severity::ERR, loc};
 };
 Logger::Pump
-Logger::fatal(source_location_t const loc) const
+Logger::fatal(source_location_t const& loc) const
 {
-    return {logger_, Severity::FATAL, loc};
+    return {logger_, Severity::FTL, loc};
 };
 
 std::string

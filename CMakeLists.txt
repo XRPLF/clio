@@ -33,7 +33,6 @@ if(PACKAGING)
   add_definitions(-DPKG=1)
 endif()
 
-
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
@@ -45,6 +44,7 @@ include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
+include(CMake/deps/SourceLocation.cmake)
 
 target_sources(clio PRIVATE
   ## Main

@@ -27,7 +27,7 @@ TEST_F(BackendTest, Basic)
     boost::asio::spawn(
         ioc, [&done, &work, &ioc](boost::asio::yield_context yield) {
             boost::log::core::get()->set_filter(
-                clio::log_severity >= clio::Severity::WARNING);
+                clio::log_severity >= clio::Severity::WRN);
             std::string keyspace = "clio_test_" +
                 std::to_string(std::chrono::system_clock::now()
                                    .time_since_epoch()
@@ -1161,7 +1161,7 @@ TEST_F(BackendTest, cache)
 {
     using namespace Backend;
     boost::log::core::get()->set_filter(
-        clio::log_severity >= clio::Severity::WARNING);
+        clio::log_severity >= clio::Severity::WRN);
     SimpleCache cache;
     ASSERT_FALSE(cache.isFull());
     cache.setFull();
@@ -1403,7 +1403,7 @@ TEST_F(BackendTest, cacheBackground)
 {
     using namespace Backend;
     boost::log::core::get()->set_filter(
-        clio::log_severity >= clio::Severity::WARNING);
+        clio::log_severity >= clio::Severity::WRN);
     SimpleCache cache;
     ASSERT_FALSE(cache.isFull());
     ASSERT_EQ(cache.size(), 0);
@@ -1813,7 +1813,7 @@ TEST_F(BackendTest, cacheIntegration)
     boost::asio::spawn(
         ioc, [&ioc, &done, &work](boost::asio::yield_context yield) {
             boost::log::core::get()->set_filter(
-                clio::log_severity >= clio::Severity::WARNING);
+                clio::log_severity >= clio::Severity::WRN);
             std::string keyspace = "clio_test_" +
                 std::to_string(std::chrono::system_clock::now()
                                    .time_since_epoch()
