@@ -35,9 +35,15 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
 
-// Note: clang still does not provide non-experimental support, gcc does
-// TODO: start using <source_location> once clang catches up on c++20
+#if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
+// this is used by fully compatible compilers like gcc
+#include <source_location>
+
+#elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
+// this is used by clang on linux where source_location is still not out of
+// experimental headers
 #include <experimental/source_location>
+#endif
 
 #include <optional>
 #include <string>
@@ -45,18 +51,53 @@
 namespace clio {
 
 class Config;
+#if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
+using source_location_t = std::source_location;
+#define CURRENT_SRC_LOCATION source_location_t::current()
+
+#elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
 using source_location_t = std::experimental::source_location;
+#define CURRENT_SRC_LOCATION source_location_t::current()
+
+#else
+// A workaround for AppleClang that is lacking source_location atm.
+// TODO: remove this workaround when all compilers catch up to c++20
+class SourceLocation
+{
+    std::string_view file_;
+    std::size_t line_;
+
+public:
+    SourceLocation(std::string_view file, std::size_t line)
+        : file_{file}, line_{line}
+    {
+    }
+    std::string_view
+    file_name() const
+    {
+        return file_;
+    }
+    std::size_t
+    line() const
+    {
+        return line_;
+    }
+};
+using source_location_t = SourceLocation;
+#define CURRENT_SRC_LOCATION \
+    source_location_t(__builtin_FILE(), __builtin_LINE())
+#endif
 
 /**
  * @brief Custom severity levels for @ref Logger.
  */
 enum class Severity {
-    TRACE,
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR,
-    FATAL,
+    TRC,
+    DBG,
+    NFO,
+    WRN,
+    ERR,
+    FTL,
 };
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_severity, "Severity", Severity);
@@ -175,29 +216,29 @@ public:
     Logger&
     operator=(Logger&&) = default;
 
-    /*! Interface for logging at @ref Severity::TRACE severity */
+    /*! Interface for logging at @ref Severity::TRC severity */
     [[nodiscard]] Pump
-    trace(source_location_t const loc = source_location_t::current()) const;
+    trace(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::DEBUG severity */
+    /*! Interface for logging at @ref Severity::DBG severity */
     [[nodiscard]] Pump
-    debug(source_location_t const loc = source_location_t::current()) const;
+    debug(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
 
     /*! Interface for logging at @ref Severity::INFO severity */
     [[nodiscard]] Pump
-    info(source_location_t const loc = source_location_t::current()) const;
+    info(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::WARNING severity */
+    /*! Interface for logging at @ref Severity::WRN severity */
     [[nodiscard]] Pump
-    warn(source_location_t const loc = source_location_t::current()) const;
+    warn(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::ERROR severity */
+    /*! Interface for logging at @ref Severity::ERR severity */
     [[nodiscard]] Pump
-    error(source_location_t const loc = source_location_t::current()) const;
+    error(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::FATAL severity */
+    /*! Interface for logging at @ref Severity::FTL severity */
     [[nodiscard]] Pump
-    fatal(source_location_t const loc = source_location_t::current()) const;
+    fatal(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
 };
 
 /**
@@ -220,51 +261,51 @@ public:
     static void
     init(Config const& config);
 
-    /*! Globally accesible General logger at @ref Severity::TRACE severity */
+    /*! Globally accesible General logger at @ref Severity::TRC severity */
     [[nodiscard]] static Logger::Pump
-    trace(source_location_t const loc = source_location_t::current())
+    trace(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.trace(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::TRACE severity */
+    /*! Globally accesible General logger at @ref Severity::DBG severity */
     [[nodiscard]] static Logger::Pump
-    debug(source_location_t const loc = source_location_t::current())
+    debug(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.debug(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::INFO severity */
+    /*! Globally accesible General logger at @ref Severity::NFO severity */
     [[nodiscard]] static Logger::Pump
-    info(source_location_t const loc = source_location_t::current())
+    info(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.info(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::WARNING severity */
+    /*! Globally accesible General logger at @ref Severity::WRN severity */
     [[nodiscard]] static Logger::Pump
-    warn(source_location_t const loc = source_location_t::current())
+    warn(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.warn(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::ERROR severity */
+    /*! Globally accesible General logger at @ref Severity::ERR severity */
     [[nodiscard]] static Logger::Pump
-    error(source_location_t const loc = source_location_t::current())
+    error(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.error(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::FATAL severity */
+    /*! Globally accesible General logger at @ref Severity::FTL severity */
     [[nodiscard]] static Logger::Pump
-    fatal(source_location_t const loc = source_location_t::current())
+    fatal(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.fatal(loc);
     }
 
     /*! Globally accesible Alert logger */
     [[nodiscard]] static Logger::Pump
-    alert(source_location_t const loc = source_location_t::current())
+    alert(source_location_t const& loc = CURRENT_SRC_LOCATION)
     {
         return alert_log_.warn(loc);
     }
