@@ -165,7 +165,6 @@ ConfigReader::open(std::filesystem::path path)
                             << path.string() << "': " << e.what();
     }
 
-    LogService::warn() << "Using empty default configuration";
     return Config{};
 }
 
