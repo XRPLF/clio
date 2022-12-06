@@ -15,14 +15,12 @@ namespace Build {
 char const* const versionString = "1.0.4-rc1"
 // clang-format on
 
-#if defined(DEBUG) || defined(SANITIZER)
     "+"
-#ifdef CLIO_GIT_COMMIT_HASH
-    CLIO_GIT_COMMIT_HASH
-    "."
+#ifdef CLIO_BUILD
+    CLIO_BUILD
 #endif
 #ifdef DEBUG
-    "DEBUG"
+    ".DEBUG"
 #ifdef SANITIZER
     "."
 #endif
@@ -31,7 +29,7 @@ char const* const versionString = "1.0.4-rc1"
 #ifdef SANITIZER
     BOOST_PP_STRINGIZE(SANITIZER)
 #endif
-#endif
+
 #ifdef PKG
         "-release"
 #endif

@@ -21,11 +21,13 @@ if(NOT GIT_COMMIT_HASH)
   find_package(Git)
   if(Git_FOUND)
       execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE gch)
-      if(gch)
-          set(GIT_COMMIT_HASH "${gch}")
-          message(STATUS "Git commit: ${GIT_COMMIT_HASH}")
-          add_definitions(-DCLIO_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE git-ref)
+      execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE branch)
+      if(git-ref)
+          set(BUILD "${branch}-${git-ref}")
+          message(STATUS "Build version: ${BUILD}")
+          add_definitions(-DCLIO_BUILD="${BUILD}")
       endif()
   endif()
 endif() #git
@@ -109,8 +111,8 @@ add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests 
-    unittests/RPCErrors.cpp 
+  add_executable(clio_tests
+    unittests/RPCErrors.cpp
     unittests/Backend.cpp
     unittests/Logger.cpp
     unittests/Config.cpp)
