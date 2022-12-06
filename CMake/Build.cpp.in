@@ -25,33 +25,9 @@
 #include <stdexcept>
 
 namespace Build {
-
-//--------------------------------------------------------------------------
-//  The build version number. You must edit this for each release
-//  and follow the format described at http://semver.org/
-//------------------------------------------------------------------------------
 // clang-format off
-char const* const versionString = "1.0.3"
-    // clang-format on
-    "+"
-#ifdef CLIO_BUILD
-    CLIO_BUILD
-#endif
-#ifdef DEBUG
-    ".DEBUG"
-#ifdef SANITIZER
-    "."
-#endif
-#endif
-
-#ifdef SANITIZER
-    BOOST_PP_STRINGIZE(SANITIZER)
-#endif
-
-#ifdef PKG
-        "-release"
-#endif
-    ;
+static constexpr char versionString[] = "@VERSION@";
+// clang-format on
 
 std::string const&
 getClioVersionString()

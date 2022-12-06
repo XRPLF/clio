@@ -14,7 +14,7 @@ changes=$(diff <(echo "$first") <(echo "$second") | wc -l | sed -e 's/^[[:space:
 if [ "$changes" != "0" ]; then
     cat <<\EOF
 
-                                   WARNING 
+                                   WARNING
 -----------------------------------------------------------------------------
   Automatically re-formatted code with `clang-format` - commit was aborted.
   Please manually add any updated files and commit again.
@@ -23,3 +23,5 @@ if [ "$changes" != "0" ]; then
 EOF
     exit 1
 fi
+
+.githooks/ensure_release_tag.sh
