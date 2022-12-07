@@ -12,6 +12,7 @@ class HttpSession : public HttpBase<HttpSession>,
                     public std::enable_shared_from_this<HttpSession>
 {
     boost::beast::tcp_stream stream_;
+    std::optional<std::string> ip_;
 
 public:
     // Take ownership of the socket
@@ -40,6 +41,21 @@ public:
               std::move(buffer))
         , stream_(std::move(socket))
     {
+        try
+        {
+            ip_ = stream_.socket().remote_endpoint().address().to_string();
+        }
+        catch (std::exception const&)
+        {
+        }
+        if (ip_)
+            HttpBase::dosGuard().increment(*ip_);
+    }
+
+    ~HttpSession()
+    {
+        if (ip_ and not upgraded_)
+            HttpBase::dosGuard().decrement(*ip_);
     }
 
     boost::beast::tcp_stream&
@@ -56,14 +72,7 @@ public:
     std::optional<std::string>
     ip()
     {
-        try
-        {
-            return stream_.socket().remote_endpoint().address().to_string();
-        }
-        catch (std::exception const&)
-        {
-            return {};
-        }
+        return ip_;
     }
 
     // Start the asynchronous operation

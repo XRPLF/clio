@@ -137,6 +137,7 @@ void
 make_websocket_session(
     boost::asio::io_context& ioc,
     boost::beast::tcp_stream stream,
+    std::optional<std::string> const& ip,
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
@@ -151,6 +152,7 @@ make_websocket_session(
     std::make_shared<WsUpgrader>(
         ioc,
         std::move(stream),
+        ip,
         backend,
         subscriptions,
         balancer,
@@ -168,6 +170,7 @@ void
 make_websocket_session(
     boost::asio::io_context& ioc,
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+    std::optional<std::string> const& ip,
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
@@ -182,6 +185,7 @@ make_websocket_session(
     std::make_shared<SslWsUpgrader>(
         ioc,
         std::move(stream),
+        ip,
         backend,
         subscriptions,
         balancer,
