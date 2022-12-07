@@ -111,6 +111,9 @@ class WsSession : public WsBase,
     bool sending_ = false;
     std::queue<std::shared_ptr<Message>> messages_;
 
+protected:
+    std::optional<std::string> ip_;
+
     void
     wsFail(boost::beast::error_code ec, char const* what)
     {
@@ -128,6 +131,7 @@ class WsSession : public WsBase,
 public:
     explicit WsSession(
         boost::asio::io_context& ioc,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
@@ -148,12 +152,16 @@ public:
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
+        , ip_(ip)
     {
         perfLog_.info() << tag() << "session created";
     }
+
     virtual ~WsSession()
     {
         perfLog_.info() << tag() << "session closed";
+        if (ip_)
+            dosGuard_.decrement(*ip_);
     }
 
     // Access the derived class, this is part of
