@@ -50,29 +50,18 @@ doAccountInfo(Context const& context)
     if (!accountID)
         return Status{RippledError::rpcACT_MALFORMED};
 
-    assert(accountID.has_value());
-
     auto key = ripple::keylet::account(accountID.value());
-
     std::optional<std::vector<unsigned char>> dbResponse =
         context.backend->fetchLedgerObject(key.key, lgrInfo.seq, context.yield);
 
     if (!dbResponse)
-    {
         return Status{RippledError::rpcACT_NOT_FOUND};
-    }
 
     ripple::STLedgerEntry sle{
         ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
 
     if (!key.check(sle))
         return Status{RippledError::rpcDB_DESERIALIZATION};
-
-    // if (!binary)
-    //     response[JS(account_data)] = getJson(sle);
-    // else
-    //     response[JS(account_data)] = ripple::strHex(*dbResponse);
-    // response[JS(db_time)] = time;
 
     response[JS(account_data)] = toJson(sle);
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
