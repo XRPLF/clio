@@ -22,10 +22,8 @@ if(NOT GIT_COMMIT_HASH)
   if(Git_FOUND)
       execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
           OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE git-ref)
-      execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
-          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE branch)
       if(git-ref)
-          set(BUILD "${branch}-${git-ref}")
+          set(BUILD "${git-ref}")
           message(STATUS "Build version: ${BUILD}")
           add_definitions(-DCLIO_BUILD="${BUILD}")
       endif()
