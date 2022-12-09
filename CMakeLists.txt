@@ -52,6 +52,9 @@ target_sources(clio PRIVATE
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
+  ## NextGen RPC
+  src/rpc/common/Specs.cpp
+  src/rpc/common/Validators.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -97,12 +100,16 @@ target_link_libraries(clio_server PUBLIC clio)
 if(BUILD_TESTS)
   set(TEST_TARGET clio_tests)
   add_executable(${TEST_TARGET}
-  unittests/RPCErrors.cpp
-  unittests/Backend.cpp
-  unittests/Logger.cpp
-  unittests/Config.cpp
-  unittests/ProfilerTest.cpp
-  unittests/DOSGuard.cpp)
+    unittests/Playground.cpp
+    unittests/Backend.cpp
+    unittests/Logger.cpp
+    unittests/Config.cpp
+    unittests/ProfilerTest.cpp
+    unittests/DOSGuard.cpp
+    unittests/rpc/ErrorTests.cpp
+    unittests/rpc/BaseTests.cpp
+    unittests/rpc/handlers/TestHandlerTests.cpp
+    unittests/rpc/handlers/DefaultProcessorTests.cpp)
   include(CMake/deps/gtest.cmake)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
