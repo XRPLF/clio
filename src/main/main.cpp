@@ -45,7 +45,7 @@ namespace po = boost::program_options;
 std::string
 parseCli(int argc, char* argv[])
 {
-    static constexpr char defaultConfigPath[] = "/etc/clio.json";
+    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
 
     // clang-format off
     po::options_description description("Options");
