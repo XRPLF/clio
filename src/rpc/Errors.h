@@ -21,7 +21,7 @@
 
 #include <ripple/protocol/ErrorCodes.h>
 
-#include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
 #include <optional>
 #include <string>
