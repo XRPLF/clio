@@ -16,7 +16,9 @@
 #include <boost/asio/strand.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/json.hpp>
+#include <boost/program_options.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -31,9 +33,65 @@
 #include <vector>
 
 using namespace clio;
+namespace po = boost::program_options;
 
+/**
+ * @brief Parse command line and return path to configuration file
+ *
+ * @param argc
+ * @param argv
+ * @return std::string Path to configuration file
+ */
+std::string
+parseCli(int argc, char* argv[])
+{
+    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
+
+    // clang-format off
+    po::options_description description("Options");
+    description.add_options()
+        ("help,h", "print help message and exit")
+        ("version,v", "print version and exit")
+        ("conf,c", po::value<std::string>()->default_value(defaultConfigPath), "configuration file")
+    ;
+    // clang-format on
+    po::positional_options_description positional;
+    positional.add("conf", 1);
+
+    po::variables_map parsed;
+    po::store(
+        po::command_line_parser(argc, argv)
+            .options(description)
+            .positional(positional)
+            .run(),
+        parsed);
+    po::notify(parsed);
+
+    if (parsed.count("version"))
+    {
+        std::cout << Build::getClioFullVersionString() << '\n';
+        std::exit(EXIT_SUCCESS);
+    }
+
+    if (parsed.count("help"))
+    {
+        std::cout << "Clio server " << Build::getClioFullVersionString()
+                  << "\n\n"
+                  << description;
+        std::exit(EXIT_SUCCESS);
+    }
+
+    return parsed["conf"].as<std::string>();
+}
+
+/**
+ * @brief Parse certificates from configuration file
+ *
+ * @param config The configuration
+ * @return std::optional<ssl::context> SSL context if certificates were parsed
+ */
 std::optional<ssl::context>
-parse_certs(Config const& config)
+parseCerts(Config const& config)
 {
     if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
         return {};
@@ -73,6 +131,12 @@ parse_certs(Config const& config)
     return ctx;
 }
 
+/**
+ * @brief Start context threads
+ *
+ * @param ioc Context
+ * @param numThreads Number of worker threads to start
+ */
 void
 start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 {
@@ -88,33 +152,19 @@ int
 main(int argc, char* argv[])
 try
 {
-    // Check command line arguments.
-    if (argc != 2)
-    {
-        std::cerr << "Usage: clio_server "
-                     "<config_file> \n"
-                  << "Example:\n"
-                  << "    clio_server config.json \n";
-        return EXIT_FAILURE;
-    }
-
-    if (std::string{argv[1]} == "-v" || std::string{argv[1]} == "--version")
-    {
-        std::cout << Build::getClioFullVersionString() << std::endl;
-        return EXIT_SUCCESS;
-    }
-
-    auto const config = ConfigReader::open(argv[1]);
+    auto const configPath = parseCli(argc, argv);
+    auto const config = ConfigReader::open(configPath);
     if (!config)
     {
-        std::cerr << "Couldnt parse config. Exiting..." << std::endl;
+        std::cerr << "Couldnt parse config '" << configPath << "'."
+                  << std::endl;
         return EXIT_FAILURE;
     }
 
     LogService::init(config);
     LogService::info() << "Clio version: " << Build::getClioFullVersionString();
 
-    auto ctx = parse_certs(config);
+    auto ctx = parseCerts(config);
     auto ctxRef = ctx
         ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
         : std::nullopt;
@@ -127,7 +177,7 @@ try
     }
     LogService::info() << "Number of io threads = " << threads;
 
-    // io context to handle all incoming requests, as well as other things
+    // IO context to handle all incoming requests, as well as other things
     // This is not the only io context in the application
     boost::asio::io_context ioc{threads};
 
