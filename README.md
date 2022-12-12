@@ -74,11 +74,11 @@ you are running multiple Clio nodes.
 
 In addition, the parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top level of precedence of our Clio config. `ssl_cert_file` specifies the filepath for your SSL cert while `ssl_key_file` specifies the filepath for your SSL key. It is up to you how to change ownership of these folders for your designated Clio user. Your options include:
 - Copying the two files as root somewhere that's accessible by the Clio user, then running `sudo chown` to your user
-- Changing the permissiosn directly so it's readable by your CLio user
+- Changing the permissions directly so it's readable by your Clio user
 - Running Clio as root (strongly discouraged)
 
 An example of how to include `ssl_cert_file` and `ssl_key_file` in the Clio config are below:
-```sh
+```json
 {
     "server":{
         "ip": "0.0.0.0",
