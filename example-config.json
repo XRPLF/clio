@@ -67,6 +67,8 @@
     "log_tag_style": "uint",
     "extractor_threads": 8,
     "read_only": false,
+    //"start_sequence": [integer] the ledger index to start from,
+    //"finish_sequence": [integer] the ledger index to finish at,
     //"ssl_cert_file" : "/full/path/to/cert.file",
     //"ssl_key_file" : "/full/path/to/key.file"
 }
