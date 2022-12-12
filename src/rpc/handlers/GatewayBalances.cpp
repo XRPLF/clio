@@ -25,7 +25,7 @@ doGatewayBalances(Context const& context)
     std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
     std::set<ripple::AccountID> hotWallets;
 
-    if (request.contains("hot_wallet"))
+    if (request.contains(JS(hotwallet)))
     {
         auto getAccountID =
             [](auto const& j) -> std::optional<ripple::AccountID> {
@@ -44,7 +44,7 @@ doGatewayBalances(Context const& context)
             return {};
         };
 
-        auto const& hw = request.at("hot_wallet");
+        auto const& hw = request.at(JS(hotwallet));
         bool valid = true;
 
         // null is treated as a valid 0-sized array of hotwallet
@@ -110,7 +110,7 @@ doGatewayBalances(Context const& context)
             if (hotWallets.count(peer) > 0)
             {
                 // This is a specified hot wallet
-                hotBalances[peer].push_back(balance);
+                hotBalances[peer].push_back(-balance);
             }
             else if (balSign > 0)
             {
@@ -120,7 +120,7 @@ doGatewayBalances(Context const& context)
             else if (freeze)
             {
                 // An obligation the gateway has frozen
-                frozenBalances[peer].push_back(balance);
+                frozenBalances[peer].push_back(-balance);
             }
             else
             {
