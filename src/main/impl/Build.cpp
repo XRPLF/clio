@@ -30,8 +30,9 @@ namespace Build {
 //  The build version number. You must edit this for each release
 //  and follow the format described at http://semver.org/
 //------------------------------------------------------------------------------
-char const* const versionString =
-    "1.0.3"
+// clang-format off
+char const* const versionString = "1.0.3"
+    // clang-format on
     "+"
 #ifdef CLIO_BUILD
     CLIO_BUILD
@@ -50,8 +51,6 @@ char const* const versionString =
 #ifdef PKG
         "-release"
 #endif
-
-    //--------------------------------------------------------------------------
     ;
 
 std::string const&
