@@ -32,8 +32,9 @@ namespace Build {
 //------------------------------------------------------------------------------
 char const* const versionString =
     "1.0.3"
+    "+"
 #ifdef CLIO_BUILD
-    "+" CLIO_BUILD
+    CLIO_BUILD
 #endif
 #ifdef DEBUG
     ".DEBUG"
