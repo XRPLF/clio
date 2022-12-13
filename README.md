@@ -22,7 +22,7 @@ from which data can be extracted. The rippled node does not need to be running o
 
 ## Building
 
-Clio is built with CMake. Clio requires at least GCC-11 (C++20), and Boost 1.75.0 or later.
+Clio is built with CMake. Clio requires at least GCC-11/clang-14.0.0 (C++20), and Boost 1.75.0.
 
 Use these instructions to build a Clio executable from the source. These instructions were tested on Ubuntu 20.04 LTS.
 
@@ -79,13 +79,11 @@ In addition, the parameter `start_sequence` can be included and configured withi
 
 In addition, the optional parameter `finish_sequence` can be added to the json file as well, specifying where the ledger can stop.
 
-To add `start_sequence` and/or `finish_sequence` to the config.json file appropriately, they will be on the same top level of precedence as other parameters (such as database, etl_sources, read_only, etc.) and be specified with an integer. Here is an example below, added at the end of the config.json:
+To add `start_sequence` and/or `finish_sequence` to the config.json file appropriately, they will be on the same top level of precedence as other parameters (such as `database`, `etl_sources`, `read_only`, etc.) and be specified with an integer. Here is an example snippet from the config file:
 
 ```json
-    ...
-    "read_only": false,
-    "start_sequence": [integer] the ledger index to start from
-    "finish_sequence": [integer] the ledger index to finish at
+"start_sequence": 12345,
+"finish_sequence": 54321
 ```
 
 The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top level of precedence of our Clio config. `ssl_cert_file` specifies the filepath for your SSL cert while `ssl_key_file` specifies the filepath for your SSL key. It is up to you how to change ownership of these folders for your designated Clio user. Your options include:
@@ -93,16 +91,15 @@ The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top l
 - Changing the permissions directly so it's readable by your Clio user
 - Running Clio as root (strongly discouraged)
 
-An example of how to include `ssl_cert_file` and `ssl_key_file` in the Clio config are below:
+An example of how to specify `ssl_cert_file` and `ssl_key_file` in the config:
+
 ```json
-{
-    "server":{
-        "ip": "0.0.0.0",
-        "port": 51233
-    },
-    "ssl_cert_file" : "/full/path/to/cert.file",
-    "ssl_key_file" : "/full/path/to/key.file"
-}
+"server":{
+    "ip": "0.0.0.0",
+    "port": 51233
+},
+"ssl_cert_file" : "/full/path/to/cert.file",
+"ssl_key_file" : "/full/path/to/key.file"
 ```
 
 Once your config files are ready, start rippled and Clio. It doesn't matter which you
@@ -185,8 +182,32 @@ You must:
 ## Logging
 Clio provides several logging options, all are configurable via the config file and are detailed below.
 
-`log_level`: The minimum level of severity at which the log message will be outputted.
+`log_level`: The minimum level of severity at which the log message will be outputted by default.
 Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. Defaults to `info`.
+
+`log_format`: The format of log lines produced by clio. Defaults to `"%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%"`.
+Each of the variables expands like so
+- `TimeStamp`: The full date and time of the log entry
+- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)  
+- `ThreadID`: The ID of the thread the log entry is written from
+- `Channel`: The channel that this log entry was sent to
+- `Severity`: The severity (aka log level) the entry was sent at
+- `Message`: The actual log message
+
+`log_channels`: An array of json objects, each overriding properties for a logging `channel`. 
+At the moment of writing, only `log_level` can be overriden using this mechanism.
+
+Each object is of this format:
+```json
+{
+    "channel": "Backend",
+    "log_level": "fatal"
+}
+``` 
+If no override is present for a given channel, that channel will log at the severity specified by the global `log_level`.
+Overridable log channels: `Backend`, `WebServer`, `Subscriptions`, `RPC`, `ETL` and `Performance`.
+
+> **Note:** See `example-config.json` for more details. 
 
 `log_to_console`: Enable/disable log output to console. Options are `true`/`false`. Defaults to true.
 
@@ -202,6 +223,11 @@ rotate the current log file. Defaults to 12 hours.
 
 Note, time-based log rotation occurs dependently on size-based log rotation, where if a
 size-based log rotation occurs, the timer for the time-based rotation will reset.
+
+`log_tag_style`: Tag implementation to use. Must be one of:
+- `uint`: Lock free and threadsafe but outputs just a simple unsigned integer 
+- `uuid`: Threadsafe and outputs a UUID tag
+- `none`: Don't use tagging at all
 
 ## Cassandra / Scylla Administration
 
