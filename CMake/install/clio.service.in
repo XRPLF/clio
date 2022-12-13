@@ -11,6 +11,7 @@ ExecStart=@CLIO_INSTALL_DIR@/bin/clio_server @CLIO_INSTALL_DIR@/etc/config.json
 Restart=on-failure
 User=clio
 Group=clio
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
