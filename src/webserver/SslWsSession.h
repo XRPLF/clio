@@ -54,7 +54,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& b)
@@ -99,7 +99,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    DOSGuard& dosGuard_;
+    clio::DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
     http::request<http::string_body> req_;
@@ -115,7 +115,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& b)
@@ -142,7 +142,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& b,

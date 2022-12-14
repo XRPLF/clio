@@ -115,7 +115,7 @@ class HttpBase : public util::Taggable
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    DOSGuard& dosGuard_;
+    clio::DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& workQueue_;
     send_lambda lambda_;
@@ -172,7 +172,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer buffer)
@@ -197,7 +197,7 @@ public:
         perfLog_.debug() << tag() << "http session closed";
     }
 
-    DOSGuard&
+    clio::DOSGuard&
     dosGuard()
     {
         return dosGuard_;
@@ -348,7 +348,7 @@ handle_request(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    DOSGuard& dosGuard,
+    clio::DOSGuard& dosGuard,
     RPC::Counters& counters,
     std::string const& ip,
     std::shared_ptr<Session> http,
