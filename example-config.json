@@ -21,7 +21,16 @@
     ],
     "dos_guard":
     {
-        "whitelist":["127.0.0.1"]
+        "whitelist":["127.0.0.1"], // comma-separated list of ips to exclude from rate limiting
+        /* The below values are the default values and are only specified here
+         * for documentation purposes. The rate limiter currently limits
+         * connections and bandwidth per ip. The rate limiter looks at the raw
+         * ip of a client connection, and so requests routed through a load
+         * balancer will all have the same ip and be treated as a single client
+         */
+        "max_fetches":100000000, // max bytes per ip per sweep interval
+        "max_connections":1, // max connections per ip
+        "sweep_interval": 10 // time in seconds before resetting bytes per ip count
     },
     "cache":
     {
@@ -29,7 +38,11 @@
     },
     "server":{
         "ip": "0.0.0.0",
-        "port": 51233
+        "port": 51233,
+        /* Max number of requests to queue up before rejecting further requests.
+        * Defaults to 0, which disables the limit
+        */
+        "max_queue_size":500
     },
     "log_channels": [
         {

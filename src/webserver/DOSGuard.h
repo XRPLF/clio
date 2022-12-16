@@ -36,6 +36,7 @@ class DOSGuard
     std::uint32_t const maxFetches_;
     std::uint32_t const sweepInterval_;
     std::uint32_t const maxConnCount_;
+    clio::Logger log_{"RPC"};
 
 public:
     DOSGuard(clio::Config const& config, boost::asio::io_context& ctx)
@@ -90,6 +91,8 @@ public:
                 connsOk = it->second <= maxConnCount_;
             }
         }
+        if (!fetchesOk || !connsOk)
+            log_.warn() << "Client surpassed the rate limit. ip = " << ip;
 
         return fetchesOk && connsOk;
     }
