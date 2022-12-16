@@ -114,6 +114,7 @@ if(BUILD_TESTS)
     unittests/Backend.cpp
     unittests/Logger.cpp
     unittests/Config.cpp
+    unittests/ProfilerTest.cpp
     unittests/DOSGuard.cpp)
   include(CMake/deps/gtest.cmake)
 endif()

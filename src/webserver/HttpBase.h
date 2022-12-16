@@ -42,6 +42,7 @@
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
+#include <util/Profiler.h>
 #include <util/Taggable.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
@@ -437,11 +438,10 @@ handle_request(
                     RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
 
         boost::json::object response;
-        auto start = std::chrono::system_clock::now();
-        auto v = RPC::buildResponse(*context);
-        auto end = std::chrono::system_clock::now();
-        auto us =
-            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        auto [v, timeDiff] =
+            util::timed([&]() { return RPC::buildResponse(*context); });
+
+        auto us = std::chrono::duration<int, std::milli>(timeDiff);
         RPC::logDuration(*context, us);
 
         if (auto status = std::get_if<RPC::Status>(&v))

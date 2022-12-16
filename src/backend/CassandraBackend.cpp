@@ -21,6 +21,7 @@
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
 #include <log/Logger.h>
+#include <util/Profiler.h>
 
 #include <functional>
 #include <unordered_map>
@@ -524,32 +525,30 @@ CassandraBackend::fetchTransactions(
     std::vector<TransactionAndMetadata> results{numHashes};
     std::vector<std::shared_ptr<ReadCallbackData<result_type>>> cbs;
     cbs.reserve(numHashes);
-    auto start = std::chrono::system_clock::now();
+    auto timeDiff = util::timed([&]() {
+        for (std::size_t i = 0; i < hashes.size(); ++i)
+        {
+            CassandraStatement statement{selectTransaction_};
+            statement.bindNextBytes(hashes[i]);
 
-    for (std::size_t i = 0; i < hashes.size(); ++i)
-    {
-        CassandraStatement statement{selectTransaction_};
-        statement.bindNextBytes(hashes[i]);
+            cbs.push_back(std::make_shared<ReadCallbackData<result_type>>(
+                numOutstanding, handler, [i, &results](auto& result) {
+                    if (result.hasResult())
+                        results[i] = {
+                            result.getBytes(),
+                            result.getBytes(),
+                            result.getUInt32(),
+                            result.getUInt32()};
+                }));
 
-        cbs.push_back(std::make_shared<ReadCallbackData<result_type>>(
-            numOutstanding, handler, [i, &results](auto& result) {
-                if (result.hasResult())
-                    results[i] = {
-                        result.getBytes(),
-                        result.getBytes(),
-                        result.getUInt32(),
-                        result.getUInt32()};
-            }));
+            executeAsyncRead(statement, processAsyncRead, *cbs[i]);
+        }
+        assert(results.size() == cbs.size());
 
-        executeAsyncRead(statement, processAsyncRead, *cbs[i]);
-    }
-    assert(results.size() == cbs.size());
-
-    // suspend the coroutine until completion handler is called.
-    result.get();
-    numReadRequestsOutstanding_ -= hashes.size();
-
-    auto end = std::chrono::system_clock::now();
+        // suspend the coroutine until completion handler is called.
+        result.get();
+        numReadRequestsOutstanding_ -= hashes.size();
+    });
     for (auto const& cb : cbs)
     {
         if (cb->errored)
@@ -557,10 +556,7 @@ CassandraBackend::fetchTransactions(
     }
 
     log_.debug() << "Fetched " << numHashes
-                 << " transactions from Cassandra in "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        end - start)
-                        .count()
+                 << " transactions from Cassandra in " << timeDiff
                  << " milliseconds";
     return results;
 }

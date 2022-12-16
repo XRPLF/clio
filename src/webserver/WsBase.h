@@ -28,6 +28,7 @@
 #include <rpc/WorkQueue.h>
 #include <subscriptions/Message.h>
 #include <subscriptions/SubscriptionManager.h>
+#include <util/Profiler.h>
 #include <util/Taggable.h>
 #include <webserver/DOSGuard.h>
 
@@ -343,11 +344,10 @@ public:
 
             response = getDefaultWsResponse(id);
 
-            auto start = std::chrono::system_clock::now();
-            auto v = RPC::buildResponse(*context);
-            auto end = std::chrono::system_clock::now();
-            auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-                end - start);
+            auto [v, timeDiff] =
+                util::timed([&]() { return RPC::buildResponse(*context); });
+
+            auto us = std::chrono::duration<int, std::milli>(timeDiff);
             logDuration(*context, us);
 
             if (auto status = std::get_if<RPC::Status>(&v))

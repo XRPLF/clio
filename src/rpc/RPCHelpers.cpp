@@ -21,6 +21,7 @@
 #include <backend/BackendInterface.h>
 #include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Profiler.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -798,14 +799,10 @@ traverseOwnedNodes(
                         .count()
                  << " milliseconds";
 
-    start = std::chrono::system_clock::now();
-    auto objects = backend.fetchLedgerObjects(keys, sequence, yield);
-    end = std::chrono::system_clock::now();
+    auto [objects, timeDiff] = util::timed(
+        [&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
-    gLog.debug() << "Time loading owned entries: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        end - start)
-                        .count()
+    gLog.debug() << "Time loading owned entries: " << timeDiff
                  << " milliseconds";
 
     for (auto i = 0; i < objects.size(); ++i)
@@ -1652,60 +1649,58 @@ traverseTransactions(
     boost::json::array txns;
     auto [blobs, retCursor] = transactionFetcher(
         context.backend, limit, forward, cursor, context.yield);
-    auto serializationStart = std::chrono::system_clock::now();
-
-    if (retCursor)
-    {
-        boost::json::object cursorJson;
-        cursorJson[JS(ledger)] = retCursor->ledgerSequence;
-        cursorJson[JS(seq)] = retCursor->transactionIndex;
-        response[JS(marker)] = cursorJson;
-    }
-
-    for (auto const& txnPlusMeta : blobs)
-    {
-        if ((txnPlusMeta.ledgerSequence < minIndex && !forward) ||
-            (txnPlusMeta.ledgerSequence > maxIndex && forward))
+    auto timeDiff = util::timed([&, &retCursor = retCursor, &blobs = blobs]() {
+        if (retCursor)
         {
-            response.erase(JS(marker));
-            break;
-        }
-        else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
-        {
-            gLog.debug() << "Skipping over transactions from incomplete ledger";
-            continue;
+            boost::json::object cursorJson;
+            cursorJson[JS(ledger)] = retCursor->ledgerSequence;
+            cursorJson[JS(seq)] = retCursor->transactionIndex;
+            response[JS(marker)] = cursorJson;
         }
 
-        boost::json::object obj;
-
-        if (!binary)
+        for (auto const& txnPlusMeta : blobs)
         {
-            auto [txn, meta] = toExpandedJson(txnPlusMeta);
-            obj[JS(meta)] = meta;
-            obj[JS(tx)] = txn;
-            obj[JS(tx)].as_object()[JS(ledger_index)] =
-                txnPlusMeta.ledgerSequence;
-            obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
-        }
-        else
-        {
-            obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
-            obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
-            obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-            obj[JS(date)] = txnPlusMeta.date;
-        }
-        obj[JS(validated)] = true;
-        txns.push_back(obj);
-    }
+            if ((txnPlusMeta.ledgerSequence < minIndex && !forward) ||
+                (txnPlusMeta.ledgerSequence > maxIndex && forward))
+            {
+                response.erase(JS(marker));
+                break;
+            }
+            else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
+            {
+                gLog.debug()
+                    << "Skipping over transactions from incomplete ledger";
+                continue;
+            }
 
-    response[JS(ledger_index_min)] = minIndex;
-    response[JS(ledger_index_max)] = maxIndex;
-    response[JS(transactions)] = txns;
+            boost::json::object obj;
 
-    gLog.info() << "serialization took "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(
-                       std::chrono::system_clock::now() - serializationStart)
-                       .count()
+            if (!binary)
+            {
+                auto [txn, meta] = toExpandedJson(txnPlusMeta);
+                obj[JS(meta)] = meta;
+                obj[JS(tx)] = txn;
+                obj[JS(tx)].as_object()[JS(ledger_index)] =
+                    txnPlusMeta.ledgerSequence;
+                obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
+            }
+            else
+            {
+                obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
+                obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
+                obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+                obj[JS(date)] = txnPlusMeta.date;
+            }
+            obj[JS(validated)] = true;
+            txns.push_back(obj);
+        }
+
+        response[JS(ledger_index_min)] = minIndex;
+        response[JS(ledger_index_max)] = maxIndex;
+        response[JS(transactions)] = txns;
+    });
+    gLog.info() << "serialization took " << timeDiff
+
                 << " milliseconds";
 
     return response;
