@@ -1,4 +1,3 @@
-# Clio
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
 historical ledger and transaction data are stored in a more space-efficient format,
 using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
@@ -15,7 +14,9 @@ Clio does not connect to the peer-to-peer network. Instead, Clio extracts data f
 from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
 
 
-## Requirements
+## Requirements {#requirements}
+
+
 1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
 
 2. Access to one or more rippled nodes. Can be local or remote.
@@ -74,7 +75,7 @@ you are running multiple Clio nodes.
 
 
 In addition, the parameter `start_sequence` can be included and configured within the top level of the config file. This parameter specifies the sequence of first ledger to extract if the database is empty. Note that ETL extracts ledgers in order and that no backfilling functionality currently exists, meaning Clio will not retroactively learn ledgers older than the one you specify. Choosing to specify this or not will yield the following behavior:
-- If this setting is absent and the database is empty, ETL will start with the next ledger validated by the network. 
+- If this setting is absent and the database is empty, ETL will start with the next ledger validated by the network.
 - If this setting is present and the database is not empty, an exception is thrown.
 
 In addition, the optional parameter `finish_sequence` can be added to the json file as well, specifying where the ledger can stop.
@@ -188,13 +189,13 @@ Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. Defa
 `log_format`: The format of log lines produced by clio. Defaults to `"%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%"`.
 Each of the variables expands like so
 - `TimeStamp`: The full date and time of the log entry
-- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)  
+- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)
 - `ThreadID`: The ID of the thread the log entry is written from
 - `Channel`: The channel that this log entry was sent to
 - `Severity`: The severity (aka log level) the entry was sent at
 - `Message`: The actual log message
 
-`log_channels`: An array of json objects, each overriding properties for a logging `channel`. 
+`log_channels`: An array of json objects, each overriding properties for a logging `channel`.
 At the moment of writing, only `log_level` can be overriden using this mechanism.
 
 Each object is of this format:
@@ -203,11 +204,11 @@ Each object is of this format:
     "channel": "Backend",
     "log_level": "fatal"
 }
-``` 
+```
 If no override is present for a given channel, that channel will log at the severity specified by the global `log_level`.
 Overridable log channels: `Backend`, `WebServer`, `Subscriptions`, `RPC`, `ETL` and `Performance`.
 
-> **Note:** See `example-config.json` for more details. 
+> **Note:** See `example-config.json` for more details.
 
 `log_to_console`: Enable/disable log output to console. Options are `true`/`false`. Defaults to true.
 
@@ -225,7 +226,7 @@ Note, time-based log rotation occurs dependently on size-based log rotation, whe
 size-based log rotation occurs, the timer for the time-based rotation will reset.
 
 `log_tag_style`: Tag implementation to use. Must be one of:
-- `uint`: Lock free and threadsafe but outputs just a simple unsigned integer 
+- `uint`: Lock free and threadsafe but outputs just a simple unsigned integer
 - `uuid`: Threadsafe and outputs a UUID tag
 - `none`: Don't use tagging at all
 

@@ -6,9 +6,10 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
   message(FATAL_ERROR "GCC 11+ required for building clio")
 endif()
 
-option(BUILD_TESTS "Build tests" TRUE)
-
+option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_DOC "Build documentation" OFF)
 option(VERBOSE "Verbose build" TRUE)
+
 if(VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
   set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
@@ -29,6 +30,11 @@ if(NOT GIT_COMMIT_HASH)
       endif()
   endif()
 endif() #git
+
+if(DEFINED DOCS)
+  include(CMake/docs.cmake)
+  return()
+endif()
 if(PACKAGING)
   add_definitions(-DPKG=1)
 endif()

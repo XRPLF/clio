@@ -1,0 +1,45 @@
+name: Doxygen GitHub Pages Deploy Action
+on:
+  push:
+    branches:  [master, release, develop, develop-next]
+  pull_request:
+    branches:  [master, release, develop, develop-next]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build docs
+        run: |
+          sudo apt-get update && sudo apt-get install -y doxygen
+          cmake -S . -B build -DDOCS=1 && cmake --build build --target doc_doxygen
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: build/docs/html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
