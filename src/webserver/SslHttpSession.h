@@ -44,7 +44,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer buffer)

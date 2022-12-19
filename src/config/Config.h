@@ -362,7 +362,7 @@ private:
         }
         else if constexpr (std::is_same_v<Return, double>)
         {
-            if (not value.is_double())
+            if (not value.is_number())
                 has_error = true;
         }
         else if constexpr (
