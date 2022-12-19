@@ -51,7 +51,7 @@ class Detector
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    DOSGuard& dosGuard_;
+    clio::DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
     boost::beast::flat_buffer buffer_;
@@ -66,7 +66,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue)
         : ioc_(ioc)
@@ -164,7 +164,7 @@ make_websocket_session(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    DOSGuard& dosGuard,
+    clio::DOSGuard& dosGuard,
     RPC::Counters& counters,
     WorkQueue& queue)
 {
@@ -197,7 +197,7 @@ make_websocket_session(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    DOSGuard& dosGuard,
+    clio::DOSGuard& dosGuard,
     RPC::Counters& counters,
     WorkQueue& queue)
 {
@@ -234,7 +234,7 @@ class Listener
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory tagFactory_;
-    DOSGuard& dosGuard_;
+    clio::DOSGuard& dosGuard_;
     WorkQueue queue_;
     RPC::Counters counters_;
 
@@ -250,7 +250,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory tagFactory,
-        DOSGuard& dosGuard)
+        clio::DOSGuard& dosGuard)
         : ioc_(ioc)
         , ctx_(ctx)
         , acceptor_(net::make_strand(ioc))
@@ -356,7 +356,7 @@ make_HttpServer(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
-    DOSGuard& dosGuard)
+    clio::DOSGuard& dosGuard)
 {
     static clio::Logger log{"WebServer"};
     if (!config.contains("server"))

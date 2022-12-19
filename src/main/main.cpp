@@ -201,20 +201,19 @@ try
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    DOSGuard dosGuard{config, ioc};
+    auto sweepHandler = IntervalSweepHandler{config, ioc};
+    auto dosGuard = DOSGuard{config, sweepHandler};
 
     // Interface to the database
-    std::shared_ptr<BackendInterface> backend{
-        Backend::make_Backend(ioc, config)};
+    auto backend = Backend::make_Backend(ioc, config);
 
     // Manages clients subscribed to streams
-    std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager(config, backend)};
+    auto subscriptions =
+        SubscriptionManager::make_SubscriptionManager(config, backend);
 
     // Tracks which ledgers have been validated by the
     // network
-    std::shared_ptr<NetworkValidatedLedgers> ledgers{
-        NetworkValidatedLedgers::make_ValidatedLedgers()};
+    auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
 
     // Handles the connection to one or more rippled nodes.
     // ETL uses the balancer to extract data.

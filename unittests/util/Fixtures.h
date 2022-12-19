@@ -21,6 +21,9 @@
 
 #include <ios>
 #include <mutex>
+#include <thread>
+
+#include <boost/asio.hpp>
 
 #include <gtest/gtest.h>
 #include <log/Logger.h>
@@ -106,4 +109,47 @@ protected:
         LoggerFixture::SetUp();
         boost::log::core::get()->set_logging_enabled(false);
     }
+};
+
+/**
+ * @brief Fixture with an embedded boost::asio context running on a thread
+ *
+ * This is meant to be used as a base for other fixtures.
+ */
+struct AsyncAsioContextTest : public NoLoggerFixture
+{
+    AsyncAsioContextTest()
+    {
+        work.emplace(ctx);  // make sure ctx does not stop on its own
+    }
+
+    ~AsyncAsioContextTest()
+    {
+        work.reset();
+        ctx.stop();
+    }
+
+protected:
+    boost::asio::io_context ctx;
+
+private:
+    std::optional<boost::asio::io_service::work> work;
+    std::jthread runner{[this] { ctx.run(); }};
+};
+
+/**
+ * @brief Fixture with an embedded boost::asio context that is not running by
+ * default but can be progressed on the calling thread
+ *
+ * Use `run_for(duration)` etc. directly on `ctx`.
+ * This is meant to be used as a base for other fixtures.
+ */
+struct SyncAsioContextTest : public NoLoggerFixture
+{
+    SyncAsioContextTest()
+    {
+    }
+
+protected:
+    boost::asio::io_context ctx;
 };
