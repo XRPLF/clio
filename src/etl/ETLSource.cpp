@@ -31,6 +31,7 @@
 #include <etl/ReportingETL.h>
 #include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Profiler.h>
 
 #include <thread>
 
@@ -807,66 +808,68 @@ ETLSourceImpl<Derived>::loadInitialLedger(
         backend_->cache().setFull();
         if (!cacheOnly)
         {
-            auto start = std::chrono::system_clock::now();
-            for (auto& key : edgeKeys)
-            {
-                log_.debug() << "Writing edge key = " << ripple::strHex(key);
-                auto succ = backend_->cache().getSuccessor(
-                    *ripple::uint256::fromVoidChecked(key), sequence);
-                if (succ)
-                    backend_->writeSuccessor(
-                        std::move(key), sequence, uint256ToString(succ->key));
-            }
-            ripple::uint256 prev = Backend::firstKey;
-            while (auto cur = backend_->cache().getSuccessor(prev, sequence))
-            {
-                assert(cur);
-                if (prev == Backend::firstKey)
+            auto seconds = util::timed<std::chrono::seconds>([&]() {
+                for (auto& key : edgeKeys)
                 {
-                    backend_->writeSuccessor(
-                        uint256ToString(prev),
-                        sequence,
-                        uint256ToString(cur->key));
+                    log_.debug()
+                        << "Writing edge key = " << ripple::strHex(key);
+                    auto succ = backend_->cache().getSuccessor(
+                        *ripple::uint256::fromVoidChecked(key), sequence);
+                    if (succ)
+                        backend_->writeSuccessor(
+                            std::move(key),
+                            sequence,
+                            uint256ToString(succ->key));
                 }
-
-                if (isBookDir(cur->key, cur->blob))
+                ripple::uint256 prev = Backend::firstKey;
+                while (auto cur =
+                           backend_->cache().getSuccessor(prev, sequence))
                 {
-                    auto base = getBookBase(cur->key);
-                    // make sure the base is not an actual object
-                    if (!backend_->cache().get(cur->key, sequence))
+                    assert(cur);
+                    if (prev == Backend::firstKey)
                     {
-                        auto succ =
-                            backend_->cache().getSuccessor(base, sequence);
-                        assert(succ);
-                        if (succ->key == cur->key)
-                        {
-                            log_.debug() << "Writing book successor = "
-                                         << ripple::strHex(base) << " - "
-                                         << ripple::strHex(cur->key);
-
-                            backend_->writeSuccessor(
-                                uint256ToString(base),
-                                sequence,
-                                uint256ToString(cur->key));
-                        }
+                        backend_->writeSuccessor(
+                            uint256ToString(prev),
+                            sequence,
+                            uint256ToString(cur->key));
                     }
-                    ++numWrites;
+
+                    if (isBookDir(cur->key, cur->blob))
+                    {
+                        auto base = getBookBase(cur->key);
+                        // make sure the base is not an actual object
+                        if (!backend_->cache().get(cur->key, sequence))
+                        {
+                            auto succ =
+                                backend_->cache().getSuccessor(base, sequence);
+                            assert(succ);
+                            if (succ->key == cur->key)
+                            {
+                                log_.debug() << "Writing book successor = "
+                                             << ripple::strHex(base) << " - "
+                                             << ripple::strHex(cur->key);
+
+                                backend_->writeSuccessor(
+                                    uint256ToString(base),
+                                    sequence,
+                                    uint256ToString(cur->key));
+                            }
+                        }
+                        ++numWrites;
+                    }
+                    prev = std::move(cur->key);
+                    if (numWrites % 100000 == 0 && numWrites != 0)
+                        log_.info()
+                            << "Wrote " << numWrites << " book successors";
                 }
-                prev = std::move(cur->key);
-                if (numWrites % 100000 == 0 && numWrites != 0)
-                    log_.info() << "Wrote " << numWrites << " book successors";
-            }
 
-            backend_->writeSuccessor(
-                uint256ToString(prev),
-                sequence,
-                uint256ToString(Backend::lastKey));
+                backend_->writeSuccessor(
+                    uint256ToString(prev),
+                    sequence,
+                    uint256ToString(Backend::lastKey));
 
-            ++numWrites;
-            auto end = std::chrono::system_clock::now();
-            auto seconds =
-                std::chrono::duration_cast<std::chrono::seconds>(end - start)
-                    .count();
+                ++numWrites;
+            });
             log_.info()
                 << "Looping through cache and submitting all writes took "
                 << seconds

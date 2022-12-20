@@ -108,7 +108,6 @@ public:
         }
         {
             auto it = ipConnCount_.find(ip);
-            assert(it != ipConnCount_.end());
             if (it != ipConnCount_.end())
             {
                 connsOk = it->second <= maxConnCount_;

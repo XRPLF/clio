@@ -24,6 +24,7 @@
 #include <etl/ReportingETL.h>
 #include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
+#include <util/Profiler.h>
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -137,40 +138,39 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
     log_.debug() << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
-    auto start = std::chrono::system_clock::now();
+    auto timeDiff = util::timed<std::chrono::duration<double>>([&]() {
+        backend_->startWrites();
 
-    backend_->startWrites();
+        log_.debug() << "Started writes";
 
-    log_.debug() << "Started writes";
+        backend_->writeLedger(
+            lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
 
-    backend_->writeLedger(
-        lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
+        log_.debug() << "Wrote ledger";
+        FormattedTransactionsData insertTxResult =
+            insertTransactions(lgrInfo, *ledgerData);
+        log_.debug() << "Inserted txns";
 
-    log_.debug() << "Wrote ledger";
-    FormattedTransactionsData insertTxResult =
-        insertTransactions(lgrInfo, *ledgerData);
-    log_.debug() << "Inserted txns";
+        // download the full account state map. This function downloads full
+        // ledger data and pushes the downloaded data into the writeQueue.
+        // asyncWriter consumes from the queue and inserts the data into the
+        // Ledger object. Once the below call returns, all data has been pushed
+        // into the queue
+        loadBalancer_->loadInitialLedger(startingSequence);
 
-    // download the full account state map. This function downloads full ledger
-    // data and pushes the downloaded data into the writeQueue. asyncWriter
-    // consumes from the queue and inserts the data into the Ledger object.
-    // Once the below call returns, all data has been pushed into the queue
-    loadBalancer_->loadInitialLedger(startingSequence);
+        log_.debug() << "Loaded initial ledger";
 
-    log_.debug() << "Loaded initial ledger";
-
-    if (!stopping_)
-    {
-        backend_->writeAccountTransactions(
-            std::move(insertTxResult.accountTxData));
-        backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
-        backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
-    }
-    backend_->finishWrites(startingSequence);
-
-    auto end = std::chrono::system_clock::now();
-    log_.debug() << "Time to download and store ledger = "
-                 << ((end - start).count()) / 1000000000.0;
+        if (!stopping_)
+        {
+            backend_->writeAccountTransactions(
+                std::move(insertTxResult.accountTxData));
+            backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
+            backend_->writeNFTTransactions(
+                std::move(insertTxResult.nfTokenTxData));
+        }
+        backend_->finishWrites(startingSequence);
+    });
+    log_.debug() << "Time to download and store ledger = " << timeDiff;
     return lgrInfo;
 }
 
@@ -530,10 +530,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
     log_.debug() << "wrote account_tx";
 
-    auto start = std::chrono::system_clock::now();
-    bool success = backend_->finishWrites(lgrInfo.seq);
-    auto end = std::chrono::system_clock::now();
-    auto duration = ((end - start).count()) / 1000000000.0;
+    auto [success, duration] = util::timed<std::chrono::duration<double>>(
+        [&]() { return backend_->finishWrites(lgrInfo.seq); });
 
     log_.debug() << "Finished writes. took " << std::to_string(duration);
     log_.debug() << "Finished ledger update. " << detail::toString(lgrInfo);
@@ -620,12 +618,10 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                        currentSequence) &&
                    !writeConflict && !isStopping())
             {
-                auto start = std::chrono::system_clock::now();
-                std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-                    fetchResponse{fetchLedgerDataAndDiff(currentSequence)};
-                auto end = std::chrono::system_clock::now();
-
-                auto time = ((end - start).count()) / 1000000000.0;
+                auto [fetchResponse, time] =
+                    util::timed<std::chrono::duration<double>>([&]() {
+                        return fetchLedgerDataAndDiff(currentSequence);
+                    });
                 totalTime += time;
 
                 // if the fetch is unsuccessful, stop. fetchLedger only
