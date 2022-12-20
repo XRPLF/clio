@@ -127,6 +127,7 @@ struct AsyncAsioContextTest : public NoLoggerFixture
     {
         work.reset();
         ctx.stop();
+        runner.join();
     }
 
 protected:
@@ -134,7 +135,7 @@ protected:
 
 private:
     std::optional<boost::asio::io_service::work> work;
-    std::jthread runner{[this] { ctx.run(); }};
+    std::thread runner{[this] { ctx.run(); }};
 };
 
 /**

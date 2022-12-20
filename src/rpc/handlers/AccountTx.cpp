@@ -19,6 +19,7 @@
 
 #include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Profiler.h>
 
 using namespace clio;
 
@@ -37,27 +38,23 @@ doAccountTx(Context const& context)
         return status;
 
     constexpr std::string_view outerFuncName = __func__;
-    auto const maybeResponse =
-        traverseTransactions(
-            context,
-            [&accountID, &outerFuncName](
-                std::shared_ptr<Backend::BackendInterface const> const& backend,
-                std::uint32_t const limit,
-                bool const forward,
-                std::optional<Backend::TransactionsCursor> const& cursorIn,
-                boost::asio::yield_context& yield) {
-                auto const start = std::chrono::system_clock::now();
-                auto const txnsAndCursor = backend->fetchAccountTransactions(
+    auto const maybeResponse = traverseTransactions(
+        context,
+        [&accountID, &outerFuncName](
+            std::shared_ptr<Backend::BackendInterface const> const& backend,
+            std::uint32_t const limit,
+            bool const forward,
+            std::optional<Backend::TransactionsCursor> const& cursorIn,
+            boost::asio::yield_context& yield) {
+            auto [txnsAndCursor, timeDiff] = util::timed([&]() {
+                return backend->fetchAccountTransactions(
                     accountID, limit, forward, cursorIn, yield);
-                gLog.info()
-                    << outerFuncName << " db fetch took "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           std::chrono::system_clock::now() - start)
-                           .count()
-                    << " milliseconds - num blobs = "
-                    << txnsAndCursor.txns.size();
-                return txnsAndCursor;
             });
+            gLog.info() << outerFuncName << " db fetch took " << timeDiff
+                        << " milliseconds - num blobs = "
+                        << txnsAndCursor.txns.size();
+            return txnsAndCursor;
+        });
 
     if (auto const status = std::get_if<Status>(&maybeResponse); status)
         return *status;
