@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <config/detail/Helpers.h>
+#include <util/config/detail/Helpers.h>
 
 #include <boost/json.hpp>
 #include <filesystem>
@@ -27,7 +27,7 @@
 #include <string>
 #include <string_view>
 
-namespace clio {
+namespace clio::util {
 
 /**
  * @brief Convenience wrapper to query a JSON configuration file.
@@ -402,4 +402,4 @@ public:
     open(std::filesystem::path path);
 };
 
-}  // namespace clio
+}  // namespace clio::util

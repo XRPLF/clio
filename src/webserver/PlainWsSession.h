@@ -32,13 +32,18 @@
 
 #include <iostream>
 
+namespace clio {
+namespace etl {
+class ReportingETL;
+}  // namespace etl
+
+namespace web {
+
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
 namespace websocket = boost::beast::websocket;
 using tcp = boost::asio::ip::tcp;
-
-class ReportingETL;
 
 // Echoes back all received WebSocket messages
 class PlainWsSession : public WsSession<PlainWsSession>
@@ -52,13 +57,13 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
         : WsSession(
               ioc,
@@ -98,13 +103,13 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::ETLLoadBalancer> balancer_;
+    std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
+    web::DOSGuard& dosGuard_;
+    rpc::Counters& counters_;
+    rpc::WorkQueue& queue_;
     http::request<http::string_body> req_;
     std::optional<std::string> ip_;
 
@@ -114,13 +119,13 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue,
         boost::beast::flat_buffer&& b)
         : ioc_(ioc)
         , http_(std::move(socket))
@@ -141,13 +146,13 @@ public:
         boost::beast::tcp_stream&& stream,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
         : ioc_(ioc)
@@ -224,3 +229,6 @@ private:
             ->run(std::move(req_));
     }
 };
+
+}  // namespace web
+}  // namespace clio

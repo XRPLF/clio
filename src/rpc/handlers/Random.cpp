@@ -24,7 +24,7 @@
 
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doRandom(Context const& context)
@@ -37,4 +37,4 @@ doRandom(Context const& context)
     return result;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

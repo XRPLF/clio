@@ -19,14 +19,15 @@
 
 #include <util/Fixtures.h>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 #include <webserver/DOSGuard.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
 using namespace testing;
-using namespace clio;
+using namespace clio::util;
+using namespace clio::web;
 using namespace std;
 namespace json = boost::json;
 

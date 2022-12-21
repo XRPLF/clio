@@ -22,7 +22,7 @@
 #include <ripple/basics/base_uint.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 #include <cassandra.h>
 
@@ -39,14 +39,14 @@
 #include <mutex>
 #include <thread>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 
-namespace Backend {
+namespace clio::data {
 
 class CassandraPreparedStatement
 {
 private:
-    clio::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
     CassPrepared const* prepared_ = nullptr;
 
 public:
@@ -108,7 +108,7 @@ class CassandraStatement
 {
     CassStatement* statement_ = nullptr;
     size_t curBindingIndex_ = 0;
-    clio::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
 
 public:
     CassandraStatement(CassandraPreparedStatement const& prepared)
@@ -298,7 +298,7 @@ public:
 
 class CassandraResult
 {
-    clio::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
     CassResult const* result_ = nullptr;
     CassRow const* row_ = nullptr;
     CassIterator* iter_ = nullptr;
@@ -620,7 +620,7 @@ private:
         return ret;
     }
 
-    clio::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
     std::atomic<bool> open_{false};
 
     std::unique_ptr<CassSession, void (*)(CassSession*)> session_{
@@ -696,7 +696,7 @@ private:
     std::optional<boost::asio::io_context::work> work_;
     std::thread ioThread_;
 
-    clio::Config config_;
+    util::Config config_;
     uint32_t ttl_ = 0;
 
     mutable std::uint32_t ledgerSequence_ = 0;
@@ -704,7 +704,7 @@ private:
 public:
     CassandraBackend(
         boost::asio::io_context& ioc,
-        clio::Config const& config,
+        util::Config const& config,
         uint32_t ttl)
         : BackendInterface(config), config_(config), ttl_(ttl)
     {
@@ -1275,4 +1275,4 @@ public:
     }
 };
 
-}  // namespace Backend
+}  // namespace clio::data

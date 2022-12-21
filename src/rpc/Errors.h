@@ -28,7 +28,7 @@
 #include <string_view>
 #include <variant>
 
-namespace RPC {
+namespace clio::rpc {
 
 /**
  * @brief Custom clio RPC Errors.
@@ -253,4 +253,4 @@ makeError(
     std::optional<std::string_view> customError = std::nullopt,
     std::optional<std::string_view> customMessage = std::nullopt);
 
-}  // namespace RPC
+}  // namespace clio::rpc

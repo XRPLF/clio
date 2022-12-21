@@ -17,17 +17,21 @@
 */
 //==============================================================================
 
+#include <backend/BackendInterface.h>
 #include <etl/ProbingETLSource.h>
-#include <log/Logger.h>
+#include <subscriptions/SubscriptionManager.h>
+#include <util/log/Logger.h>
 
-using namespace clio;
+namespace clio::etl {
+using namespace data;
+using namespace subscription;
 
 ProbingETLSource::ProbingETLSource(
-    clio::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioc,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> nwvl,
+    std::shared_ptr<data::BackendInterface> backend,
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
     ETLLoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)
     : sslCtx_{std::move(sslCtx)}
@@ -217,3 +221,5 @@ ProbingETLSource::make_PlainHooks() noexcept
                 return ETLSourceHooks::Action::STOP;
             }};
 }
+
+}  // namespace clio::etl

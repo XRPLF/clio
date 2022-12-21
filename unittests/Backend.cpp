@@ -17,20 +17,25 @@
 */
 //==============================================================================
 
-#include <backend/BackendFactory.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
-#include <config/Config.h>
+#include <backend/Factories.h>
 #include <etl/ReportingETL.h>
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Fixtures.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
+
+using namespace clio;
+using namespace clio::data;
+using namespace clio::etl;
+using namespace clio::rpc;
 
 class BackendTest : public NoLoggerFixture
 {
@@ -46,7 +51,7 @@ TEST_F(BackendTest, Basic)
     boost::asio::spawn(
         ioc, [&done, &work, &ioc](boost::asio::yield_context yield) {
             boost::log::core::get()->set_filter(
-                clio::log_severity >= clio::Severity::WRN);
+                util::log_severity >= util::Severity::WRN);
             std::string keyspace = "clio_test_" +
                 std::to_string(std::chrono::system_clock::now()
                                    .time_since_epoch()
@@ -66,7 +71,7 @@ TEST_F(BackendTest, Basic)
             std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
-                auto backend = Backend::make_Backend(ioc, clio::Config{config});
+                auto backend = make_Backend(ioc, util::Config{config});
 
                 std::string rawHeader =
                     "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335"
@@ -98,7 +103,7 @@ TEST_F(BackendTest, Basic)
                     return uint.fromVoid((void const*)bin.data());
                 };
                 auto ledgerInfoToBinaryString = [](auto const& info) {
-                    auto blob = RPC::ledgerInfoToBlob(info, true);
+                    auto blob = rpc::ledgerInfoToBlob(info, true);
                     std::string strBlob;
                     for (auto c : blob)
                     {
@@ -114,9 +119,9 @@ TEST_F(BackendTest, Basic)
                 backend->startWrites();
                 backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
                 backend->writeSuccessor(
-                    uint256ToString(Backend::firstKey),
+                    uint256ToString(data::firstKey),
                     lgrInfo.seq,
-                    uint256ToString(Backend::lastKey));
+                    uint256ToString(data::lastKey));
                 ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -136,8 +141,8 @@ TEST_F(BackendTest, Basic)
                     ASSERT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfo.seq);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(lgrInfo),
-                        RPC::ledgerInfoToBlob(*retLgr));
+                        rpc::ledgerInfoToBlob(lgrInfo),
+                        rpc::ledgerInfoToBlob(*retLgr));
                 }
 
                 EXPECT_FALSE(
@@ -174,19 +179,19 @@ TEST_F(BackendTest, Basic)
                     EXPECT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfoNext.seq);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     EXPECT_NE(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoOld));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoOld));
                     retLgr = backend->fetchLedgerBySequence(
                         lgrInfoNext.seq - 1, yield);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoOld));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoOld));
                     EXPECT_NE(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     retLgr = backend->fetchLedgerBySequence(
                         lgrInfoNext.seq - 2, yield);
                     EXPECT_FALSE(
@@ -508,13 +513,13 @@ TEST_F(BackendTest, Basic)
                         lgrInfoNext.seq,
                         std::string{accountBlob});
                     backend->writeSuccessor(
-                        uint256ToString(Backend::firstKey),
+                        uint256ToString(data::firstKey),
                         lgrInfoNext.seq,
                         std::string{accountIndexBlob});
                     backend->writeSuccessor(
                         std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey));
+                        uint256ToString(data::lastKey));
 
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
@@ -528,8 +533,8 @@ TEST_F(BackendTest, Basic)
                         backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     auto txns = backend->fetchAllTransactionsInLedger(
                         lgrInfoNext.seq, yield);
                     EXPECT_EQ(txns.size(), 1);
@@ -634,8 +639,8 @@ TEST_F(BackendTest, Basic)
                         backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     auto txns = backend->fetchAllTransactionsInLedger(
                         lgrInfoNext.seq, yield);
                     EXPECT_EQ(txns.size(), 0);
@@ -681,9 +686,9 @@ TEST_F(BackendTest, Basic)
                         lgrInfoNext.seq,
                         std::string{});
                     backend->writeSuccessor(
-                        uint256ToString(Backend::firstKey),
+                        uint256ToString(data::firstKey),
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey));
+                        uint256ToString(data::lastKey));
 
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
@@ -696,8 +701,8 @@ TEST_F(BackendTest, Basic)
                         backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     auto txns = backend->fetchAllTransactionsInLedger(
                         lgrInfoNext.seq, yield);
                     EXPECT_EQ(txns.size(), 0);
@@ -859,7 +864,7 @@ TEST_F(BackendTest, Basic)
                                 backend->writeSuccessor(
                                     std::string{objs[i].first},
                                     lgrInfo.seq,
-                                    uint256ToString(Backend::lastKey));
+                                    uint256ToString(data::lastKey));
                         }
                         if (state.count(lgrInfo.seq - 1))
                             backend->writeSuccessor(
@@ -869,7 +874,7 @@ TEST_F(BackendTest, Basic)
                                 std::string{objs[0].first});
                         else
                             backend->writeSuccessor(
-                                uint256ToString(Backend::firstKey),
+                                uint256ToString(data::firstKey),
                                 lgrInfo.seq,
                                 std::string{objs[0].first});
                     }
@@ -891,12 +896,12 @@ TEST_F(BackendTest, Basic)
                     auto retLgr = backend->fetchLedgerBySequence(seq, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfo));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfo));
                     // retLgr = backend->fetchLedgerByHash(lgrInfo.hash);
                     // EXPECT_TRUE(retLgr);
-                    // EXPECT_EQ(RPC::ledgerInfoToBlob(*retLgr),
-                    // RPC::ledgerInfoToBlob(lgrInfo));
+                    // EXPECT_EQ(rpc::ledgerInfoToBlob(*retLgr),
+                    // rpc::ledgerInfoToBlob(lgrInfo));
                     auto retTxns =
                         backend->fetchAllTransactionsInLedger(seq, yield);
                     for (auto [hash, txn, meta] : txns)
@@ -918,8 +923,8 @@ TEST_F(BackendTest, Basic)
                     }
                     for (auto [account, data] : accountTx)
                     {
-                        std::vector<Backend::TransactionAndMetadata> retData;
-                        std::optional<Backend::TransactionsCursor> cursor;
+                        std::vector<data::TransactionAndMetadata> retData;
+                        std::optional<data::TransactionsCursor> cursor;
                         do
                         {
                             uint32_t limit = 10;
@@ -987,8 +992,8 @@ TEST_F(BackendTest, Basic)
                         }
                     }
 
-                    Backend::LedgerPage page;
-                    std::vector<Backend::LedgerObject> retObjs;
+                    data::LedgerPage page;
+                    std::vector<data::LedgerObject> retObjs;
                     size_t numLoops = 0;
                     do
                     {
@@ -1178,9 +1183,8 @@ TEST_F(BackendTest, Basic)
 
 TEST_F(BackendTest, cache)
 {
-    using namespace Backend;
     boost::log::core::get()->set_filter(
-        clio::log_severity >= clio::Severity::WRN);
+        util::log_severity >= util::Severity::WRN);
     SimpleCache cache;
     ASSERT_FALSE(cache.isFull());
     cache.setFull();
@@ -1420,9 +1424,8 @@ TEST_F(BackendTest, cache)
 
 TEST_F(BackendTest, cacheBackground)
 {
-    using namespace Backend;
     boost::log::core::get()->set_filter(
-        clio::log_severity >= clio::Severity::WRN);
+        util::log_severity >= util::Severity::WRN);
     SimpleCache cache;
     ASSERT_FALSE(cache.isFull());
     ASSERT_EQ(cache.size(), 0);
@@ -1832,7 +1835,7 @@ TEST_F(BackendTest, cacheIntegration)
     boost::asio::spawn(
         ioc, [&ioc, &done, &work](boost::asio::yield_context yield) {
             boost::log::core::get()->set_filter(
-                clio::log_severity >= clio::Severity::WRN);
+                util::log_severity >= util::Severity::WRN);
             std::string keyspace = "clio_test_" +
                 std::to_string(std::chrono::system_clock::now()
                                    .time_since_epoch()
@@ -1852,7 +1855,7 @@ TEST_F(BackendTest, cacheIntegration)
             std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
-                auto backend = Backend::make_Backend(ioc, clio::Config{config});
+                auto backend = make_Backend(ioc, util::Config{config});
                 backend->cache().setFull();
 
                 std::string rawHeader =
@@ -1898,7 +1901,7 @@ TEST_F(BackendTest, cacheIntegration)
                     return uint.fromVoid((void const*)bin.data());
                 };
                 auto ledgerInfoToBinaryString = [](auto const& info) {
-                    auto blob = RPC::ledgerInfoToBlob(info, true);
+                    auto blob = rpc::ledgerInfoToBlob(info, true);
                     std::string strBlob;
                     for (auto c : blob)
                     {
@@ -1917,9 +1920,9 @@ TEST_F(BackendTest, cacheIntegration)
                 backend->startWrites();
                 backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
                 backend->writeSuccessor(
-                    uint256ToString(Backend::firstKey),
+                    uint256ToString(data::firstKey),
                     lgrInfo.seq,
-                    uint256ToString(Backend::lastKey));
+                    uint256ToString(data::lastKey));
                 ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
                 {
                     auto rng = backend->fetchLedgerRange();
@@ -1939,8 +1942,8 @@ TEST_F(BackendTest, cacheIntegration)
                     ASSERT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfo.seq);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(lgrInfo),
-                        RPC::ledgerInfoToBlob(*retLgr));
+                        rpc::ledgerInfoToBlob(lgrInfo),
+                        rpc::ledgerInfoToBlob(*retLgr));
                 }
 
                 EXPECT_FALSE(
@@ -1977,20 +1980,20 @@ TEST_F(BackendTest, cacheIntegration)
                     EXPECT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfoNext.seq);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     EXPECT_NE(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoOld));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoOld));
                     retLgr = backend->fetchLedgerBySequence(
                         lgrInfoNext.seq - 1, yield);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoOld));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoOld));
 
                     EXPECT_NE(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     retLgr = backend->fetchLedgerBySequence(
                         lgrInfoNext.seq - 2, yield);
                     EXPECT_FALSE(
@@ -2027,13 +2030,13 @@ TEST_F(BackendTest, cacheIntegration)
                         {{*key, {accountBlob.begin(), accountBlob.end()}}},
                         lgrInfoNext.seq);
                     backend->writeSuccessor(
-                        uint256ToString(Backend::firstKey),
+                        uint256ToString(data::firstKey),
                         lgrInfoNext.seq,
                         std::string{accountIndexBlob});
                     backend->writeSuccessor(
                         std::string{accountIndexBlob},
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey));
+                        uint256ToString(data::lastKey));
 
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
@@ -2047,8 +2050,8 @@ TEST_F(BackendTest, cacheIntegration)
                         backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfoNext));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfoNext));
                     ripple::uint256 key256;
                     EXPECT_TRUE(key256.parseHex(accountIndexHex));
                     auto obj = backend->fetchLedgerObject(
@@ -2152,9 +2155,9 @@ TEST_F(BackendTest, cacheIntegration)
                         lgrInfoNext.seq,
                         std::string{});
                     backend->writeSuccessor(
-                        uint256ToString(Backend::firstKey),
+                        uint256ToString(data::firstKey),
                         lgrInfoNext.seq,
-                        uint256ToString(Backend::lastKey));
+                        uint256ToString(data::lastKey));
 
                     ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
                 }
@@ -2233,7 +2236,7 @@ TEST_F(BackendTest, cacheIntegration)
 
                     backend->writeLedger(
                         lgrInfo, std::move(ledgerInfoToBinaryString(lgrInfo)));
-                    std::vector<Backend::LedgerObject> cacheUpdates;
+                    std::vector<data::LedgerObject> cacheUpdates;
                     for (auto [key, obj] : objs)
                     {
                         backend->writeLedgerObject(
@@ -2262,7 +2265,7 @@ TEST_F(BackendTest, cacheIntegration)
                                 backend->writeSuccessor(
                                     std::string{objs[i].first},
                                     lgrInfo.seq,
-                                    uint256ToString(Backend::lastKey));
+                                    uint256ToString(data::lastKey));
                         }
                         if (state.count(lgrInfo.seq - 1))
                             backend->writeSuccessor(
@@ -2272,7 +2275,7 @@ TEST_F(BackendTest, cacheIntegration)
                                 std::string{objs[0].first});
                         else
                             backend->writeSuccessor(
-                                uint256ToString(Backend::firstKey),
+                                uint256ToString(data::firstKey),
                                 lgrInfo.seq,
                                 std::string{objs[0].first});
                     }
@@ -2289,13 +2292,13 @@ TEST_F(BackendTest, cacheIntegration)
                     auto retLgr = backend->fetchLedgerBySequence(seq, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfo));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfo));
                     retLgr = backend->fetchLedgerByHash(lgrInfo.hash, yield);
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
-                        RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfo));
+                        rpc::ledgerInfoToBlob(*retLgr),
+                        rpc::ledgerInfoToBlob(lgrInfo));
                     std::vector<ripple::uint256> keys;
                     for (auto [key, obj] : objs)
                     {
@@ -2337,8 +2340,8 @@ TEST_F(BackendTest, cacheIntegration)
                             }
                         }
                     }
-                    Backend::LedgerPage page;
-                    std::vector<Backend::LedgerObject> retObjs;
+                    data::LedgerPage page;
+                    std::vector<data::LedgerObject> retObjs;
                     size_t numLoops = 0;
                     do
                     {

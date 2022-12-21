@@ -48,7 +48,7 @@
 #include <optional>
 #include <string>
 
-namespace clio {
+namespace clio::util {
 
 class Config;
 #if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
@@ -311,4 +311,4 @@ public:
     }
 };
 
-};  // namespace clio
+};  // namespace clio::util

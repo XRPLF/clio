@@ -22,7 +22,6 @@
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
-#include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
@@ -30,6 +29,7 @@
 #include <subscriptions/SubscriptionManager.h>
 #include <util/Profiler.h>
 #include <util/Taggable.h>
+#include <util/log/Logger.h>
 #include <webserver/DOSGuard.h>
 
 #include <boost/beast/core.hpp>
@@ -45,10 +45,12 @@ namespace ssl = boost::asio::ssl;
 namespace websocket = boost::beast::websocket;
 using tcp = boost::asio::ip::tcp;
 
+namespace clio::web {
+
 inline void
 logError(boost::beast::error_code ec, char const* what)
 {
-    static clio::Logger log{"WebServer"};
+    static util::Logger log{"WebServer"};
     log.debug() << what << ": " << ec.message() << "\n";
 }
 
@@ -68,8 +70,8 @@ getDefaultWsResponse(boost::json::value const& id)
 class WsBase : public util::Taggable
 {
 protected:
-    clio::Logger log_{"WebServer"};
-    clio::Logger perfLog_{"Performance"};
+    util::Logger log_{"WebServer"};
+    util::Logger perfLog_{"Performance"};
     boost::system::error_code ec_;
 
 public:
@@ -83,7 +85,7 @@ public:
      * @param msg The message to send
      */
     virtual void
-    send(std::shared_ptr<Message> msg) = 0;
+    send(std::shared_ptr<subscription::Message> msg) = 0;
 
     virtual ~WsBase() = default;
 
@@ -101,9 +103,6 @@ public:
     }
 };
 
-class SubscriptionManager;
-class ETLLoadBalancer;
-
 // Echoes back all received WebSocket messages
 template <typename Derived>
 class WsSession : public WsBase,
@@ -116,19 +115,19 @@ class WsSession : public WsBase,
     boost::asio::io_context& ioc_;
     std::shared_ptr<BackendInterface const> backend_;
     // has to be a weak ptr because SubscriptionManager maintains collections
-    // of std::shared_ptr<WsBase> objects. If this were shared, there would be
-    // a cyclical dependency that would block destruction
-    std::weak_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    // of std::shared_ptr<web::WsBase> objects. If this were shared, there would
+    // be a cyclical dependency that would block destruction
+    std::weak_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::ETLLoadBalancer> balancer_;
+    std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
+    web::DOSGuard& dosGuard_;
+    rpc::Counters& counters_;
+    rpc::WorkQueue& queue_;
     std::mutex mtx_;
 
     bool sending_ = false;
-    std::queue<std::shared_ptr<Message>> messages_;
+    std::queue<std::shared_ptr<subscription::Message>> messages_;
 
 protected:
     std::optional<std::string> ip_;
@@ -151,14 +150,14 @@ public:
     explicit WsSession(
         boost::asio::io_context& ioc,
         std::optional<std::string> ip,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<data::BackendInterface const> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
         : WsBase(tagFactory)
         , buffer_(std::move(buffer))
@@ -226,7 +225,7 @@ public:
     }
 
     void
-    send(std::shared_ptr<Message> msg) override
+    send(std::shared_ptr<subscription::Message> msg) override
     {
         net::dispatch(
             derived().ws().get_executor(),
@@ -241,7 +240,8 @@ public:
     void
     send(std::string&& msg)
     {
-        auto sharedMsg = std::make_shared<Message>(std::move(msg));
+        auto sharedMsg =
+            std::make_shared<subscription::Message>(std::move(msg));
         send(sharedMsg);
     }
 
@@ -307,7 +307,7 @@ public:
 
         boost::json::object response = {};
         auto sendError = [this, &request, id](auto error) {
-            auto e = RPC::makeError(error);
+            auto e = rpc::makeError(error);
             if (!id.is_null())
                 e["id"] = id;
             e["request"] = request;
@@ -321,9 +321,9 @@ public:
 
             auto range = backend_->fetchLedgerRange();
             if (!range)
-                return sendError(RPC::RippledError::rpcNOT_READY);
+                return sendError(rpc::RippledError::rpcNOT_READY);
 
-            std::optional<RPC::Context> context = RPC::make_WsContext(
+            std::optional<rpc::Context> context = rpc::make_WsContext(
                 yield,
                 request,
                 backend_,
@@ -339,22 +339,22 @@ public:
             if (!context)
             {
                 perfLog_.warn() << tag() << "Could not create RPC context";
-                return sendError(RPC::RippledError::rpcBAD_SYNTAX);
+                return sendError(rpc::RippledError::rpcBAD_SYNTAX);
             }
 
             response = getDefaultWsResponse(id);
 
             auto [v, timeDiff] =
-                util::timed([&]() { return RPC::buildResponse(*context); });
+                util::timed([&]() { return rpc::buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
             logDuration(*context, us);
 
-            if (auto status = std::get_if<RPC::Status>(&v))
+            if (auto status = std::get_if<rpc::Status>(&v))
             {
                 counters_.rpcErrored(context->method);
 
-                auto error = RPC::makeError(*status);
+                auto error = rpc::makeError(*status);
 
                 if (!id.is_null())
                     error["id"] = id;
@@ -384,22 +384,22 @@ public:
         {
             perfLog_.error() << tag() << "Caught exception : " << e.what();
 
-            return sendError(RPC::RippledError::rpcINTERNAL);
+            return sendError(rpc::RippledError::rpcINTERNAL);
         }
 
         boost::json::array warnings;
 
-        warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
+        warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
 
         auto lastCloseAge = etl_->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
-            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
+            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
         {
             response["warning"] = "load";
-            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
+            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
             response["warnings"] = warnings;
             // reserialize if we need to include this warning
             responseStr = boost::json::serialize(response);
@@ -428,7 +428,7 @@ public:
                              auto error,
                              boost::json::value const& id,
                              boost::json::object const& request) {
-            auto e = RPC::makeError(error);
+            auto e = rpc::makeError(error);
 
             if (!id.is_null())
                 e["id"] = id;
@@ -454,14 +454,14 @@ public:
         boost::json::object request;
         if (!raw.is_object())
             return sendError(
-                RPC::RippledError::rpcINVALID_PARAMS, nullptr, request);
+                rpc::RippledError::rpcINVALID_PARAMS, nullptr, request);
         request = raw.as_object();
 
         auto id = request.contains("id") ? request.at("id") : nullptr;
 
         if (!dosGuard_.isOk(*ip))
         {
-            sendError(RPC::RippledError::rpcSLOW_DOWN, id, request);
+            sendError(rpc::RippledError::rpcSLOW_DOWN, id, request);
         }
         else
         {
@@ -474,9 +474,11 @@ public:
                         shared_this->handle_request(std::move(r), id, yield);
                     },
                     dosGuard_.isWhiteListed(*ip)))
-                sendError(RPC::RippledError::rpcTOO_BUSY, id, request);
+                sendError(rpc::RippledError::rpcTOO_BUSY, id, request);
         }
 
         do_read();
     }
 };
+
+}  // namespace clio::web

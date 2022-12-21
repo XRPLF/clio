@@ -19,7 +19,7 @@
 
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doTransactionEntry(Context const& context)
@@ -59,4 +59,4 @@ doTransactionEntry(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

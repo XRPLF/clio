@@ -35,7 +35,7 @@ template <class... Ts>
 overloadSet(Ts...) -> overloadSet<Ts...>;
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
 
 WarningInfo const&
 getWarningInfo(WarningCode code)
@@ -166,4 +166,4 @@ makeError(Status const& status)
     return res;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

@@ -30,6 +30,8 @@
 
 #include <backend/Types.h>
 
+namespace clio::data {
+
 /// Struct used to keep track of what to write to
 /// account_transactions/account_tx tables
 struct AccountTransactionsData
@@ -199,3 +201,5 @@ uint256ToString(ripple::uint256 const& uint)
 }
 
 static constexpr std::uint32_t rippleEpochStart = 946684800;
+
+}  // namespace clio::data

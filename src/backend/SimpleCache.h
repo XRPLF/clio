@@ -27,7 +27,9 @@
 #include <shared_mutex>
 #include <utility>
 #include <vector>
-namespace Backend {
+
+namespace clio::data {
+
 class SimpleCache
 {
     struct CacheEntry
@@ -95,4 +97,4 @@ public:
     getSuccessorHitRate() const;
 };
 
-}  // namespace Backend
+}  // namespace clio::data

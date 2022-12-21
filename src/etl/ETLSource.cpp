@@ -29,13 +29,14 @@
 #include <etl/ETLSource.h>
 #include <etl/ProbingETLSource.h>
 #include <etl/ReportingETL.h>
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <thread>
 
-using namespace clio;
+namespace clio::etl {
+using namespace data;
 
 void
 ForwardCache::freshen()
@@ -87,7 +88,7 @@ ForwardCache::get(boost::json::object const& request) const
 
     if (!command)
         return {};
-    if (RPC::specifiesCurrentOrClosedLedger(request))
+    if (rpc::specifiesCurrentOrClosedLedger(request))
         return {};
 
     std::shared_lock lk(mtx_);
@@ -563,7 +564,7 @@ ETLSourceImpl<Derived>::handleMessage()
 
 class AsyncCallData
 {
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> cur_;
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> next_;
@@ -659,7 +660,7 @@ public:
         }
 
         log_.trace() << "Writing objects";
-        std::vector<Backend::LedgerObject> cacheUpdates;
+        std::vector<LedgerObject> cacheUpdates;
         cacheUpdates.reserve(cur_->ledger_objects().objects_size());
         for (int i = 0; i < cur_->ledger_objects().objects_size(); ++i)
         {
@@ -821,12 +822,12 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                             sequence,
                             uint256ToString(succ->key));
                 }
-                ripple::uint256 prev = Backend::firstKey;
+                ripple::uint256 prev = data::firstKey;
                 while (auto cur =
                            backend_->cache().getSuccessor(prev, sequence))
                 {
                     assert(cur);
-                    if (prev == Backend::firstKey)
+                    if (prev == data::firstKey)
                     {
                         backend_->writeSuccessor(
                             uint256ToString(prev),
@@ -866,7 +867,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                 backend_->writeSuccessor(
                     uint256ToString(prev),
                     sequence,
-                    uint256ToString(Backend::lastKey));
+                    uint256ToString(data::lastKey));
 
                 ++numWrites;
             });
@@ -912,11 +913,11 @@ ETLSourceImpl<Derived>::fetchLedger(
 
 static std::unique_ptr<ETLSource>
 make_ETLSource(
-    clio::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioContext,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
+    std::shared_ptr<data::BackendInterface> backend,
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<etl::NetworkValidatedLedgers> networkValidatedLedgers,
     ETLLoadBalancer& balancer)
 {
     auto src = std::make_unique<ProbingETLSource>(
@@ -933,11 +934,11 @@ make_ETLSource(
 }
 
 ETLLoadBalancer::ETLLoadBalancer(
-    clio::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioContext,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> nwvl)
+    std::shared_ptr<data::BackendInterface> backend,
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<etl::NetworkValidatedLedgers> nwvl)
 {
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
         downloadRanges_ = std::clamp(*value, 1u, 256u);
@@ -1194,3 +1195,5 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
     }
     return true;
 }
+
+}  // namespace clio::etl

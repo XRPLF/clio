@@ -18,9 +18,9 @@
 //==============================================================================
 
 #include <etl/ETLSource.h>
-#include <log/Logger.h>
 #include <rpc/Handlers.h>
 #include <rpc/RPCHelpers.h>
+#include <util/log/Logger.h>
 #include <webserver/HttpBase.h>
 #include <webserver/WsBase.h>
 
@@ -33,23 +33,24 @@ using namespace clio;
 
 // local to compilation unit loggers
 namespace {
-clio::Logger gPerfLog{"Performance"};
-clio::Logger gLog{"RPC"};
+util::Logger gPerfLog{"Performance"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
+
 Context::Context(
     boost::asio::yield_context& yield_,
     string const& command_,
     uint32_t version_,
     boost::json::object const& params_,
     shared_ptr<BackendInterface const> const& backend_,
-    shared_ptr<SubscriptionManager> const& subscriptions_,
-    shared_ptr<ETLLoadBalancer> const& balancer_,
-    shared_ptr<ReportingETL const> const& etl_,
-    shared_ptr<WsBase> const& session_,
+    shared_ptr<subscription::SubscriptionManager> const& subscriptions_,
+    shared_ptr<etl::ETLLoadBalancer> const& balancer_,
+    shared_ptr<etl::ReportingETL const> const& etl_,
+    shared_ptr<web::WsBase> const& session_,
     util::TagDecoratorFactory const& tagFactory_,
-    Backend::LedgerRange const& range_,
+    data::LedgerRange const& range_,
     Counters& counters_,
     string const& clientIp_)
     : Taggable(tagFactory_)
@@ -74,12 +75,12 @@ make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     shared_ptr<BackendInterface const> const& backend,
-    shared_ptr<SubscriptionManager> const& subscriptions,
-    shared_ptr<ETLLoadBalancer> const& balancer,
-    shared_ptr<ReportingETL const> const& etl,
-    shared_ptr<WsBase> const& session,
+    shared_ptr<subscription::SubscriptionManager> const& subscriptions,
+    shared_ptr<etl::ETLLoadBalancer> const& balancer,
+    shared_ptr<etl::ReportingETL const> const& etl,
+    shared_ptr<web::WsBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    data::LedgerRange const& range,
     Counters& counters,
     string const& clientIp)
 {
@@ -115,12 +116,12 @@ make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     shared_ptr<BackendInterface const> const& backend,
-    shared_ptr<SubscriptionManager> const& subscriptions,
-    shared_ptr<ETLLoadBalancer> const& balancer,
-    shared_ptr<ReportingETL const> const& etl,
+    shared_ptr<subscription::SubscriptionManager> const& subscriptions,
+    shared_ptr<etl::ETLLoadBalancer> const& balancer,
+    shared_ptr<etl::ReportingETL const> const& etl,
     util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
-    RPC::Counters& counters,
+    data::LedgerRange const& range,
+    rpc::Counters& counters,
     string const& clientIp)
 {
     if (!request.contains("method") || !request.at("method").is_string())
@@ -265,14 +266,14 @@ isClioOnly(string const& method)
 }
 
 bool
-shouldSuppressValidatedFlag(RPC::Context const& context)
+shouldSuppressValidatedFlag(rpc::Context const& context)
 {
     return boost::iequals(context.method, "subscribe") ||
         boost::iequals(context.method, "unsubscribe");
 }
 
 Status
-getLimit(RPC::Context const& context, uint32_t& limit)
+getLimit(rpc::Context const& context, uint32_t& limit)
 {
     if (!handlerTable.getHandler(context.method))
         return Status{RippledError::rpcUNKNOWN_COMMAND};
@@ -381,7 +382,7 @@ buildResponse(Context const& ctx)
     {
         return Status{RippledError::rpcACT_NOT_FOUND, err.what()};
     }
-    catch (Backend::DatabaseTimeout const& t)
+    catch (data::DatabaseTimeout const& t)
     {
         gLog.error() << "Database timeout";
         return Status{RippledError::rpcTOO_BUSY};
@@ -393,4 +394,4 @@ buildResponse(Context const& ctx)
     }
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

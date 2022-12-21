@@ -21,7 +21,8 @@
 #include <thread>
 #include <util/Profiler.h>
 
-using namespace util;
+using namespace clio::util;
+
 TEST(TimedTest, HasReturnValue)
 {
     auto [ret, time] = timed([]() {

@@ -21,10 +21,7 @@
 
 #include <rpc/RPC.h>
 
-namespace RPC {
-/*
- * This file just contains declarations for all of the handlers
- */
+namespace clio::rpc {
 
 // account state methods
 Result
@@ -55,7 +52,6 @@ Result
 doNoRippleCheck(Context const& context);
 
 // channels methods
-
 Result
 doChannelAuthorize(Context const& context);
 
@@ -119,4 +115,5 @@ doServerInfo(Context const& context);
 // Utility methods
 Result
 doRandom(Context const& context);
-}  // namespace RPC
+
+}  // namespace clio::rpc

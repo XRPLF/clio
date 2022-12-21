@@ -25,10 +25,14 @@
 #undef GRPC_ASAN_ENABLED
 #endif
 
-#include <backend/BackendFactory.h>
-#include <config/Config.h>
+#include <backend/Factories.h>
+#include <etl/Factories.h>
+#include <subscriptions/Factories.h>
+#include <webserver/Factories.h>
+
 #include <etl/ReportingETL.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 #include <webserver/Listener.h>
 
 #include <boost/asio/dispatch.hpp>
@@ -51,7 +55,11 @@
 #include <thread>
 #include <vector>
 
-using namespace clio;
+using namespace clio::data;
+using namespace clio::etl;
+using namespace clio::subscription;
+using namespace clio::util;
+using namespace clio::web;
 namespace po = boost::program_options;
 
 /**
@@ -205,31 +213,29 @@ try
     auto dosGuard = DOSGuard{config, sweepHandler};
 
     // Interface to the database
-    auto backend = Backend::make_Backend(ioc, config);
+    auto backend = make_Backend(ioc, config);
 
     // Manages clients subscribed to streams
-    auto subscriptions =
-        SubscriptionManager::make_SubscriptionManager(config, backend);
+    auto subscriptions = make_SubscriptionManager(config, backend);
 
-    // Tracks which ledgers have been validated by the
-    // network
-    auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
+    // Tracks which ledgers have been validated by the network
+    auto ledgers = make_ValidatedLedgers();
 
     // Handles the connection to one or more rippled nodes.
     // ETL uses the balancer to extract data.
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
-    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        config, ioc, backend, subscriptions, ledgers);
+    auto balancer =
+        make_ETLLoadBalancer(config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only
     // mode, ETL only publishes
-    auto etl = ReportingETL::make_ReportingETL(
+    auto etl = make_ReportingETL(
         config, ioc, backend, subscriptions, balancer, ledgers);
 
     // The server handles incoming RPCs
-    auto httpServer = Server::make_HttpServer(
+    auto httpServer = make_HttpServer(
         config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.

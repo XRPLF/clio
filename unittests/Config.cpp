@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <config/Config.h>
 #include <util/Fixtures.h>
+#include <util/config/Config.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/json/parse.hpp>
@@ -28,7 +28,7 @@
 #include <fstream>
 #include <iostream>
 
-using namespace clio;
+using namespace clio::util;
 using namespace boost::log;
 using namespace std;
 namespace json = boost::json;

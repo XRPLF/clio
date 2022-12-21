@@ -26,7 +26,7 @@
 #include <boost/asio.hpp>
 
 #include <gtest/gtest.h>
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 /**
  * @brief Fixture with LogService support.
@@ -57,10 +57,11 @@ protected:
     void
     SetUp() override
     {
+        using namespace clio;
         static std::once_flag once_;
         std::call_once(once_, [] {
             boost::log::add_common_attributes();
-            boost::log::register_simple_formatter_factory<clio::Severity, char>(
+            boost::log::register_simple_formatter_factory<util::Severity, char>(
                 "Severity");
         });
 
@@ -74,9 +75,9 @@ protected:
         boost::log::add_console_log(
             stream_, keywords::format = "%Channel%:%Severity% %Message%");
         auto min_severity = expr::channel_severity_filter(
-            clio::log_channel, clio::log_severity);
-        min_severity["General"] = clio::Severity::DBG;
-        min_severity["Trace"] = clio::Severity::TRC;
+            util::log_channel, util::log_severity);
+        min_severity["General"] = util::Severity::DBG;
+        min_severity["Trace"] = util::Severity::TRC;
         core->set_filter(min_severity);
         core->set_logging_enabled(true);
     }

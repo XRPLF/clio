@@ -29,9 +29,9 @@
 #include <ostream>
 #include <string>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 
-namespace util {
+namespace clio::util {
 namespace detail {
 
 /**
@@ -191,7 +191,7 @@ public:
      * @brief Instantiates a tag decorator factory from `clio` configuration.
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(clio::Config const& config)
+    explicit TagDecoratorFactory(Config const& config)
         : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
     {
     }
@@ -276,4 +276,4 @@ public:
     }
 };
 
-}  // namespace util
+}  // namespace clio::util

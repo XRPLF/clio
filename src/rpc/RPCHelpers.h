@@ -39,7 +39,8 @@
 // Access (SF)ield name (S)trings
 #define SFS(x) ripple::x.jsonName.c_str()
 
-namespace RPC {
+namespace clio::rpc {
+
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
@@ -60,18 +61,18 @@ parseAccountCursor(
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::STObject const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs);
+deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs);
 
 // TODO this function should probably be in a different file and namespace
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::TxMeta const>>
 deserializeTxPlusMeta(
-    Backend::TransactionAndMetadata const& blobs,
+    data::TransactionAndMetadata const& blobs,
     std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs);
+toExpandedJson(data::TransactionAndMetadata const& blobs);
 
 bool
 insertDeliveredAmount(
@@ -193,10 +194,10 @@ xrpLiquid(
 
 boost::json::array
 postProcessOrderBook(
-    std::vector<Backend::LedgerObject> const& offers,
+    std::vector<data::LedgerObject> const& offers,
     ripple::Book const& book,
     ripple::AccountID const& takerID,
-    Backend::BackendInterface const& backend,
+    data::BackendInterface const& backend,
     std::uint32_t ledgerSequence,
     boost::asio::yield_context& yield);
 
@@ -277,16 +278,16 @@ getNFTID(boost::json::object const& request);
 std::variant<Status, boost::json::object>
 traverseTransactions(
     Context const& context,
-    std::function<Backend::TransactionsAndCursor(
-        std::shared_ptr<Backend::BackendInterface const> const& backend,
+    std::function<data::TransactionsAndCursor(
+        std::shared_ptr<data::BackendInterface const> const& backend,
         std::uint32_t const,
         bool const,
-        std::optional<Backend::TransactionsCursor> const&,
+        std::optional<data::TransactionsCursor> const&,
         boost::asio::yield_context& yield)> transactionFetcher);
 
 [[nodiscard]] boost::json::object const
 computeBookChanges(
     ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions);
+    std::vector<data::TransactionAndMetadata> const& transactions);
 
-}  // namespace RPC
+}  // namespace clio::rpc

@@ -21,21 +21,22 @@
 
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
-#include <config/Config.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <boost/algorithm/string.hpp>
 
-namespace Backend {
-std::shared_ptr<BackendInterface>
-make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
+namespace clio::data {
+
+static std::shared_ptr<data::BackendInterface>
+make_Backend(boost::asio::io_context& ioc, util::Config const& config)
 {
-    static clio::Logger log{"Backend"};
+    static util::Logger log{"Backend"};
     log.info() << "Constructing BackendInterface";
 
     auto readOnly = config.valueOr("read_only", false);
     auto type = config.value<std::string>("database.type");
-    std::shared_ptr<BackendInterface> backend = nullptr;
+    std::shared_ptr<data::BackendInterface> backend = nullptr;
 
     if (boost::iequals(type, "cassandra"))
     {
@@ -59,4 +60,5 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
 
     return backend;
 }
-}  // namespace Backend
+
+}  // namespace clio::data

@@ -26,6 +26,8 @@
 #include <queue>
 #include <sstream>
 
+namespace clio::etl {
+
 /// This datastructure is used to keep track of the sequence of the most recent
 /// ledger validated by the network. There are two methods that will wait until
 /// certain conditions are met. This datastructure is able to be "stopped". When
@@ -43,12 +45,6 @@ class NetworkValidatedLedgers
     std::condition_variable cv_;
 
 public:
-    static std::shared_ptr<NetworkValidatedLedgers>
-    make_ValidatedLedgers()
-    {
-        return std::make_shared<NetworkValidatedLedgers>();
-    }
-
     /// Notify the datastructure that idx has been validated by the network
     /// @param idx sequence validated by network
     void
@@ -190,3 +186,5 @@ getMarkers(size_t numMarkers)
     }
     return markers;
 }
+
+}  // namespace clio::etl

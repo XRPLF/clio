@@ -19,18 +19,19 @@
 
 #pragma once
 
+#include <backend/BackendInterface.h>
+#include <etl/ETLSource.h>
+#include <subscriptions/SubscriptionManager.h>
+#include <util/log/Logger.h>
+
 #include <ripple/ledger/ReadView.h>
+#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
+#include <grpcpp/grpcpp.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/websocket.hpp>
-#include <backend/BackendInterface.h>
-#include <etl/ETLSource.h>
-#include <log/Logger.h>
-#include <subscriptions/SubscriptionManager.h>
-
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
 
 #include <condition_variable>
 #include <mutex>
@@ -38,23 +39,28 @@
 
 #include <chrono>
 
+namespace clio {
+namespace backend {
+struct AccountTransactionsData;
+struct NFTTransactionsData;
+struct NFTsData;
+}  // namespace backend
+
+namespace etl {
+
 /**
  * Helper function for the ReportingETL, implemented in NFTHelpers.cpp, to
  * pull to-write data out of a transaction that relates to NFTs.
  */
-std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+std::pair<std::vector<data::NFTTransactionsData>, std::optional<data::NFTsData>>
 getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
-struct AccountTransactionsData;
-struct NFTTransactionsData;
-struct NFTsData;
 struct FormattedTransactionsData
 {
-    std::vector<AccountTransactionsData> accountTxData;
-    std::vector<NFTTransactionsData> nfTokenTxData;
-    std::vector<NFTsData> nfTokensData;
+    std::vector<data::AccountTransactionsData> accountTxData;
+    std::vector<data::NFTTransactionsData> nfTokenTxData;
+    std::vector<data::NFTsData> nfTokensData;
 };
-class SubscriptionManager;
 
 /**
  * This class is responsible for continuously extracting data from a
@@ -74,11 +80,11 @@ class SubscriptionManager;
 class ReportingETL
 {
 private:
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
-    std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> loadBalancer_;
+    std::shared_ptr<data::BackendInterface> backend_;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::ETLLoadBalancer> loadBalancer_;
     std::optional<std::uint32_t> onlineDeleteInterval_;
     std::uint32_t extractorThreads_ = 1;
 
@@ -129,7 +135,7 @@ private:
 
     /// Mechanism for detecting when the network has validated a new ledger.
     /// This class provides a way to wait for a specific ledger to be validated
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
+    std::shared_ptr<etl::NetworkValidatedLedgers> networkValidatedLedgers_;
 
     /// Whether the software is stopping
     std::atomic_bool stopping_ = false;
@@ -332,27 +338,26 @@ private:
 
 public:
     ReportingETL(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<NetworkValidatedLedgers> ledgers);
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::NetworkValidatedLedgers> ledgers);
 
-    static std::shared_ptr<ReportingETL>
+    static std::shared_ptr<etl::ReportingETL>
     make_ReportingETL(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<NetworkValidatedLedgers> ledgers)
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::NetworkValidatedLedgers> ledgers)
     {
-        auto etl = std::make_shared<ReportingETL>(
+        auto etl = std::make_shared<etl::ReportingETL>(
             config, ioc, backend, subscriptions, balancer, ledgers);
 
         etl->run();
-
         return etl;
     }
 
@@ -408,8 +413,11 @@ public:
                        std::chrono::system_clock::now().time_since_epoch())
                        .count();
         auto closeTime = lastCloseTime_.time_since_epoch().count();
-        if (now < (rippleEpochStart + closeTime))
+        if (now < (data::rippleEpochStart + closeTime))
             return 0;
-        return now - (rippleEpochStart + closeTime);
+        return now - (data::rippleEpochStart + closeTime);
     }
 };
+
+}  // namespace etl
+}  // namespace clio

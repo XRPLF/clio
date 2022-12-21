@@ -29,7 +29,7 @@
 namespace json = boost::json;
 using namespace ripple;
 
-namespace RPC {
+namespace clio::rpc {
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -59,7 +59,7 @@ public:
      * @return std::vector<BookChange> Book changes
      */
     [[nodiscard]] static std::vector<BookChange>
-    compute(std::vector<Backend::TransactionAndMetadata> const& transactions)
+    compute(std::vector<data::TransactionAndMetadata> const& transactions)
     {
         return HandlerImpl{}(transactions);
     }
@@ -73,7 +73,7 @@ private:
     public:
         [[nodiscard]] std::vector<BookChange>
         operator()(
-            std::vector<Backend::TransactionAndMetadata> const& transactions)
+            std::vector<data::TransactionAndMetadata> const& transactions)
         {
             for (auto const& tx : transactions)
                 handleBookChange(tx);
@@ -191,7 +191,7 @@ private:
         }
 
         void
-        handleBookChange(Backend::TransactionAndMetadata const& blob)
+        handleBookChange(data::TransactionAndMetadata const& blob)
         {
             auto const [tx, meta] = deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(sfTransactionType))
@@ -247,7 +247,7 @@ tag_invoke(json::value_from_tag, json::value& jv, BookChange const& change)
 json::object const
 computeBookChanges(
     ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions)
+    std::vector<data::TransactionAndMetadata> const& transactions)
 {
     return {
         {JS(type), "bookChanges"},
@@ -272,4 +272,4 @@ doBookChanges(Context const& context)
     return computeBookChanges(lgrInfo, transactions);
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

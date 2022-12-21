@@ -25,9 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace Backend {
-
-// *** return types
+namespace clio::data {
 
 using Blob = std::vector<unsigned char>;
 
@@ -101,10 +99,12 @@ struct LedgerRange
     std::uint32_t minSequence;
     std::uint32_t maxSequence;
 };
+
 constexpr ripple::uint256 firstKey{
     "0000000000000000000000000000000000000000000000000000000000000000"};
 constexpr ripple::uint256 lastKey{
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
 constexpr ripple::uint256 hi192{
     "0000000000000000000000000000000000000000000000001111111111111111"};
-}  // namespace Backend
+
+}  // namespace clio::data

@@ -37,15 +37,17 @@
 #include <thread>
 
 #include <etl/ReportingETL.h>
-#include <log/Logger.h>
 #include <main/Build.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
 #include <util/Profiler.h>
 #include <util/Taggable.h>
+#include <util/log/Logger.h>
 #include <vector>
 #include <webserver/DOSGuard.h>
+
+namespace clio::web {
 
 // TODO: consider removing those - visible to anyone including this header
 namespace http = boost::beast::http;
@@ -112,17 +114,17 @@ class HttpBase : public util::Taggable
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::ETLLoadBalancer> balancer_;
+    std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& workQueue_;
+    web::DOSGuard& dosGuard_;
+    rpc::Counters& counters_;
+    rpc::WorkQueue& workQueue_;
     send_lambda lambda_;
 
 protected:
-    clio::Logger perfLog_{"Performance"};
+    util::Logger perfLog_{"Performance"};
     boost::beast::flat_buffer buffer_;
     bool upgraded_ = false;
 
@@ -169,13 +171,13 @@ public:
     HttpBase(
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue,
         boost::beast::flat_buffer buffer)
         : Taggable(tagFactory)
         , ioc_(ioc)
@@ -198,7 +200,7 @@ public:
         perfLog_.debug() << tag() << "http session closed";
     }
 
-    clio::DOSGuard&
+    web::DOSGuard&
     dosGuard()
     {
         return dosGuard_;
@@ -301,7 +303,7 @@ public:
             res.set(http::field::content_type, "application/json");
             res.keep_alive(req_.keep_alive());
             res.body() = boost::json::serialize(
-                RPC::makeError(RPC::RippledError::rpcTOO_BUSY));
+                rpc::makeError(rpc::RippledError::rpcTOO_BUSY));
             res.prepare_payload();
             lambda_(std::move(res));
         }
@@ -345,15 +347,15 @@ handle_request(
         request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
     std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<etl::ETLLoadBalancer> balancer,
+    std::shared_ptr<etl::ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    clio::DOSGuard& dosGuard,
-    RPC::Counters& counters,
+    web::DOSGuard& dosGuard,
+    rpc::Counters& counters,
     std::string const& ip,
     std::shared_ptr<Session> http,
-    clio::Logger& perfLog)
+    util::Logger& perfLog)
 {
     auto const httpResponse = [&req](
                                   http::status status,
@@ -407,7 +409,7 @@ handle_request(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
+                    rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX))));
         }
 
         auto range = backend->fetchLedgerRange();
@@ -416,9 +418,9 @@ handle_request(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcNOT_READY))));
+                    rpc::makeError(rpc::RippledError::rpcNOT_READY))));
 
-        std::optional<RPC::Context> context = RPC::make_HttpContext(
+        std::optional<rpc::Context> context = rpc::make_HttpContext(
             yc,
             request,
             backend,
@@ -435,19 +437,19 @@ handle_request(
                 http::status::ok,
                 "application/json",
                 boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
+                    rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX))));
 
         boost::json::object response;
         auto [v, timeDiff] =
-            util::timed([&]() { return RPC::buildResponse(*context); });
+            util::timed([&]() { return rpc::buildResponse(*context); });
 
         auto us = std::chrono::duration<int, std::milli>(timeDiff);
-        RPC::logDuration(*context, us);
+        rpc::logDuration(*context, us);
 
-        if (auto status = std::get_if<RPC::Status>(&v))
+        if (auto status = std::get_if<rpc::Status>(&v))
         {
             counters.rpcErrored(context->method);
-            auto error = RPC::makeError(*status);
+            auto error = rpc::makeError(*status);
             error["request"] = request;
             response["result"] = error;
 
@@ -472,16 +474,16 @@ handle_request(
         }
 
         boost::json::array warnings;
-        warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
+        warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
         auto lastCloseAge = context->etl->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
-            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
+            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         responseStr = boost::json::serialize(response);
         if (!dosGuard.add(ip, responseStr.size()))
         {
             response["warning"] = "load";
-            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
+            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
             response["warnings"] = warnings;
             // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
@@ -496,6 +498,8 @@ handle_request(
             http::status::internal_server_error,
             "application/json",
             boost::json::serialize(
-                RPC::makeError(RPC::RippledError::rpcINTERNAL))));
+                rpc::makeError(rpc::RippledError::rpcINTERNAL))));
     }
 }
+
+}  // namespace clio::web

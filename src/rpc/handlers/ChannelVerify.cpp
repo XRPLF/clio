@@ -27,7 +27,7 @@
 #include <optional>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doChannelVerify(Context const& context)
@@ -105,4 +105,4 @@ doChannelVerify(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

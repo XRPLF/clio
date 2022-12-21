@@ -31,7 +31,7 @@
 #include <backend/DBHelpers.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 void
 addLine(
@@ -194,10 +194,10 @@ doAccountLines(Context const& context)
         context.yield,
         addToResponse);
 
-    if (auto status = std::get_if<RPC::Status>(&next))
+    if (auto status = std::get_if<rpc::Status>(&next))
         return *status;
 
-    auto nextMarker = std::get<RPC::AccountCursor>(next);
+    auto nextMarker = std::get<rpc::AccountCursor>(next);
 
     if (nextMarker.isNonZero())
         response[JS(marker)] = nextMarker.toString();
@@ -205,4 +205,4 @@ doAccountLines(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

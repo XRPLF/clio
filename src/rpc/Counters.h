@@ -28,7 +28,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace RPC {
+namespace clio::rpc {
 
 class Counters
 {
@@ -70,4 +70,4 @@ public:
     report();
 };
 
-}  // namespace RPC
+}  // namespace clio::rpc

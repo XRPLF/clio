@@ -27,9 +27,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 
-namespace clio {
+namespace clio::web {
 
 class BaseDOSGuard
 {
@@ -55,7 +55,7 @@ class BasicDOSGuard : public BaseDOSGuard
 
     std::uint32_t const maxFetches_;
     std::uint32_t const maxConnCount_;
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
 public:
     /**
@@ -64,7 +64,7 @@ public:
      * @param config Clio config
      * @param sweepHandler Sweep handler that implements the sweeping behaviour
      */
-    BasicDOSGuard(clio::Config const& config, SweepHandler& sweepHandler)
+    BasicDOSGuard(util::Config const& config, SweepHandler& sweepHandler)
         : whitelist_{getWhitelist(config)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", 100000000u)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", 1u)}
@@ -193,7 +193,7 @@ public:
 
 private:
     [[nodiscard]] std::unordered_set<std::string> const
-    getWhitelist(clio::Config const& config) const
+    getWhitelist(util::Config const& config) const
     {
         using T = std::unordered_set<std::string> const;
         auto whitelist = config.arrayOr("dos_guard.whitelist", {});
@@ -225,7 +225,7 @@ public:
      * @param ctx The boost::asio::io_context
      */
     IntervalSweepHandler(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ctx)
         : sweepInterval_{std::max(
               1u,
@@ -273,4 +273,4 @@ private:
 
 using DOSGuard = BasicDOSGuard<IntervalSweepHandler>;
 
-}  // namespace clio
+}  // namespace clio::web

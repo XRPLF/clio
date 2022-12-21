@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
@@ -31,6 +31,8 @@
 #include <shared_mutex>
 #include <thread>
 
+namespace clio::rpc {
+
 class WorkQueue
 {
     // these are cumulative for the lifetime of the process
@@ -39,7 +41,7 @@ class WorkQueue
 
     std::atomic_uint64_t curSize_ = 0;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
@@ -95,3 +97,5 @@ private:
     boost::asio::io_context ioc_ = {};
     std::optional<boost::asio::io_context::work> work_{ioc_};
 };
+
+}  // namespace clio::rpc

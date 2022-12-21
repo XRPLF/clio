@@ -22,7 +22,7 @@
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
 
-using namespace RPC;
+using namespace clio::rpc;
 using namespace std;
 
 namespace {

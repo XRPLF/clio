@@ -19,9 +19,9 @@
 
 #include <ripple/basics/StringUtilities.h>
 #include <backend/BackendInterface.h>
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -30,10 +30,10 @@ using namespace clio;
 
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"RPC"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
 
 std::optional<bool>
 getBool(boost::json::object const& request, std::string const& field)
@@ -370,7 +370,7 @@ accountFromStringStrict(std::string const& account)
 std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::STObject const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
+deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
 {
     try
     {
@@ -415,7 +415,7 @@ std::pair<
     std::shared_ptr<ripple::STTx const>,
     std::shared_ptr<ripple::TxMeta const>>
 deserializeTxPlusMeta(
-    Backend::TransactionAndMetadata const& blobs,
+    data::TransactionAndMetadata const& blobs,
     std::uint32_t seq)
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
@@ -436,7 +436,7 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs)
+toExpandedJson(data::TransactionAndMetadata const& blobs)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
@@ -1197,10 +1197,10 @@ transferRate(
 
 boost::json::array
 postProcessOrderBook(
-    std::vector<Backend::LedgerObject> const& offers,
+    std::vector<data::LedgerObject> const& offers,
     ripple::Book const& book,
     ripple::AccountID const& takerID,
-    Backend::BackendInterface const& backend,
+    data::BackendInterface const& backend,
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield)
 {
@@ -1503,11 +1503,11 @@ getNFTID(boost::json::object const& request)
 std::variant<Status, boost::json::object>
 traverseTransactions(
     Context const& context,
-    std::function<Backend::TransactionsAndCursor(
-        std::shared_ptr<Backend::BackendInterface const> const& backend,
+    std::function<data::TransactionsAndCursor(
+        std::shared_ptr<data::BackendInterface const> const& backend,
         std::uint32_t const,
         bool const,
-        std::optional<Backend::TransactionsCursor> const&,
+        std::optional<data::TransactionsCursor> const&,
         boost::asio::yield_context& yield)> transactionFetcher)
 {
     auto request = context.params;
@@ -1516,7 +1516,7 @@ traverseTransactions(
     bool const binary = getBool(request, JS(binary), false);
     bool const forward = getBool(request, JS(forward), false);
 
-    std::optional<Backend::TransactionsCursor> cursor;
+    std::optional<data::TransactionsCursor> cursor;
 
     if (request.contains(JS(marker)))
     {
@@ -1704,4 +1704,4 @@ traverseTransactions(
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

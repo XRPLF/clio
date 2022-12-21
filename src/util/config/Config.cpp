@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include <config/Config.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <fstream>
 
-namespace clio {
+namespace clio::util {
 
 // Note: `store_(store)` MUST use `()` instead of `{}` otherwise gcc
 // picks `initializer_list` constructor and anything passed becomes an
@@ -187,4 +187,4 @@ ConfigReader::open(std::filesystem::path path)
     return Config{};
 }
 
-}  // namespace clio
+}  // namespace clio::util

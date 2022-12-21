@@ -23,8 +23,8 @@
 #include <backend/DBHelpers.h>
 #include <backend/SimpleCache.h>
 #include <backend/Types.h>
-#include <config/Config.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -32,7 +32,7 @@
 #include <thread>
 #include <type_traits>
 
-namespace Backend {
+namespace clio::data {
 
 /**
  * @brief Throws an error when database read time limit is exceeded.
@@ -62,7 +62,7 @@ template <class F>
 auto
 retryOnTimeout(F func, size_t waitMs = 500)
 {
-    static clio::Logger log{"Backend"};
+    static util::Logger log{"Backend"};
 
     while (true)
     {
@@ -182,7 +182,7 @@ protected:
      */
 
 public:
-    BackendInterface(clio::Config const& config)
+    BackendInterface(util::Config const& config)
     {
     }
     virtual ~BackendInterface()
@@ -659,5 +659,6 @@ private:
     doFinishWrites() = 0;
 };
 
-}  // namespace Backend
-using BackendInterface = Backend::BackendInterface;
+}  // namespace clio::data
+
+using BackendInterface = clio::data::BackendInterface;

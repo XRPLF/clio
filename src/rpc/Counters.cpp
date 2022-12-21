@@ -21,7 +21,7 @@
 #include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 void
 Counters::initializeCounter(std::string const& method)
@@ -105,4 +105,4 @@ Counters::report()
     return obj;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

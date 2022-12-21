@@ -17,13 +17,16 @@
 */
 //==============================================================================
 
+#include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
+#include <util/log/Logger.h>
+
 #include <ripple/app/ledger/LedgerToJson.h>
 #include <ripple/protocol/STLedgerEntry.h>
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
-#include <rpc/RPCHelpers.h>
 
 #include <boost/json.hpp>
+
+using namespace clio;
 
 // Get state nodes from a ledger
 //   Inputs:
@@ -39,14 +42,12 @@
 //
 //
 
-using namespace clio;
-
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"RPC"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
 
 using boost::json::value_to;
 
@@ -154,7 +155,7 @@ doLedgerData(Context const& context)
     response[JS(ledger_index)] = lgrInfo.seq;
 
     auto start = std::chrono::system_clock::now();
-    std::vector<Backend::LedgerObject> results;
+    std::vector<data::LedgerObject> results;
     if (diffMarker)
     {
         assert(outOfOrder);
@@ -227,4 +228,4 @@ doLedgerData(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

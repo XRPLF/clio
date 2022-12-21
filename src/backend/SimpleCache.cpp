@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <backend/SimpleCache.h>
-namespace Backend {
+namespace clio::data {
 
 uint32_t
 SimpleCache::latestLedgerSequence() const
@@ -154,4 +154,5 @@ SimpleCache::getSuccessorHitRate() const
         return 1;
     return ((float)successorHitCounter_) / successorReqCounter_;
 }
-}  // namespace Backend
+
+}  // namespace clio::data

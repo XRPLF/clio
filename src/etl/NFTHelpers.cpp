@@ -27,6 +27,9 @@
 #include <backend/DBHelpers.h>
 #include <backend/Types.h>
 
+namespace clio::etl {
+using namespace data;
+
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
@@ -386,3 +389,5 @@ getNFTData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             return {{}, {}};
     }
 }
+
+}  // namespace clio::etl

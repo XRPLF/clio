@@ -27,9 +27,11 @@
 
 #include <mutex>
 
-#include <config/Config.h>
 #include <etl/ETLSource.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
+
+namespace clio::etl {
 
 /// This ETLSource implementation attempts to connect over both secure websocket
 /// and plain websocket. First to connect pauses the other and the probing is
@@ -37,7 +39,7 @@
 /// connection the probing is kickstarted again.
 class ProbingETLSource : public ETLSource
 {
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::mutex mtx_;
     boost::asio::ssl::context sslCtx_;
@@ -47,11 +49,11 @@ class ProbingETLSource : public ETLSource
 
 public:
     ProbingETLSource(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> nwvl,
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         boost::asio::ssl::context sslCtx = boost::asio::ssl::context{
             boost::asio::ssl::context::tlsv12});
@@ -110,3 +112,5 @@ private:
     ETLSourceHooks
     make_PlainHooks() noexcept;
 };
+
+}  // namespace clio::etl

@@ -20,7 +20,7 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doGatewayBalances(Context const& context)
@@ -165,7 +165,7 @@ doGatewayBalances(Context const& context)
         {},
         context.yield,
         addToResponse);
-    if (auto status = std::get_if<RPC::Status>(&result))
+    if (auto status = std::get_if<rpc::Status>(&result))
         return *status;
 
     if (!sums.empty())
@@ -219,4 +219,4 @@ doGatewayBalances(Context const& context)
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     return response;
 }
-}  // namespace RPC
+}  // namespace clio::rpc

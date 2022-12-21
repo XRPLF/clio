@@ -17,18 +17,18 @@
 */
 //==============================================================================
 
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 using namespace clio;
 
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"RPC"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doNFTHistory(Context const& context)
@@ -42,12 +42,11 @@ doNFTHistory(Context const& context)
     auto const maybeResponse = traverseTransactions(
         context,
         [&tokenID, &outerFuncName](
-            std::shared_ptr<Backend::BackendInterface const> const& backend,
+            std::shared_ptr<data::BackendInterface const> const& backend,
             std::uint32_t const limit,
             bool const forward,
-            std::optional<Backend::TransactionsCursor> const& cursorIn,
-            boost::asio::yield_context& yield)
-            -> Backend::TransactionsAndCursor {
+            std::optional<data::TransactionsCursor> const& cursorIn,
+            boost::asio::yield_context& yield) -> data::TransactionsAndCursor {
             auto const [txnsAndCursor, timeDiff] =
                 util::timed([&, &tokenID = tokenID]() {
                     return backend->fetchNFTTransactions(
@@ -67,4 +66,4 @@ doNFTHistory(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

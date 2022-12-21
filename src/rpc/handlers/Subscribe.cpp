@@ -23,7 +23,9 @@
 
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
+using namespace subscription;
+using namespace web;
 
 // these are the streams that take no arguments
 static std::unordered_set<std::string> validCommonStreams{
@@ -228,14 +230,14 @@ std::variant<Status, std::pair<std::vector<ripple::Book>, boost::json::array>>
 validateAndGetBooks(
     boost::asio::yield_context& yield,
     boost::json::object const& request,
-    std::shared_ptr<Backend::BackendInterface const> const& backend)
+    std::shared_ptr<data::BackendInterface const> const& backend)
 {
     if (!request.at(JS(books)).is_array())
         return Status{RippledError::rpcINVALID_PARAMS, "booksNotArray"};
     boost::json::array const& books = request.at(JS(books)).as_array();
 
     std::vector<ripple::Book> booksToSub;
-    std::optional<Backend::LedgerRange> rng;
+    std::optional<data::LedgerRange> rng;
     boost::json::array snapshot;
     for (auto const& book : books)
     {
@@ -464,4 +466,4 @@ doUnsubscribe(Context const& context)
     return boost::json::object{};
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

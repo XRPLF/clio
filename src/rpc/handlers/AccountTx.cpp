@@ -17,18 +17,18 @@
 */
 //==============================================================================
 
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 using namespace clio;
 
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"RPC"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doAccountTx(Context const& context)
@@ -41,10 +41,10 @@ doAccountTx(Context const& context)
     auto const maybeResponse = traverseTransactions(
         context,
         [&accountID, &outerFuncName](
-            std::shared_ptr<Backend::BackendInterface const> const& backend,
+            std::shared_ptr<data::BackendInterface const> const& backend,
             std::uint32_t const limit,
             bool const forward,
-            std::optional<Backend::TransactionsCursor> const& cursorIn,
+            std::optional<data::TransactionsCursor> const& cursorIn,
             boost::asio::yield_context& yield) {
             auto [txnsAndCursor, timeDiff] = util::timed([&]() {
                 return backend->fetchAccountTransactions(
@@ -64,4 +64,4 @@ doAccountTx(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

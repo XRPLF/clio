@@ -21,6 +21,8 @@
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
+namespace clio::subscription {
+
 template <class T>
 inline void
 sendToSubscribers(
@@ -47,7 +49,7 @@ sendToSubscribers(
 template <class T>
 inline void
 addSession(
-    std::shared_ptr<WsBase> session,
+    std::shared_ptr<web::WsBase> session,
     T& subscribers,
     std::atomic_uint64_t& counter)
 {
@@ -61,7 +63,7 @@ addSession(
 template <class T>
 inline void
 removeSession(
-    std::shared_ptr<WsBase> session,
+    std::shared_ptr<web::WsBase> session,
     T& subscribers,
     std::atomic_uint64_t& counter)
 {
@@ -73,7 +75,7 @@ removeSession(
 }
 
 void
-Subscription::subscribe(std::shared_ptr<WsBase> const& session)
+Subscription::subscribe(std::shared_ptr<web::WsBase> const& session)
 {
     boost::asio::post(strand_, [this, session]() {
         addSession(session, subscribers_, subCount_);
@@ -81,7 +83,7 @@ Subscription::subscribe(std::shared_ptr<WsBase> const& session)
 }
 
 void
-Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
+Subscription::unsubscribe(std::shared_ptr<web::WsBase> const& session)
 {
     boost::asio::post(strand_, [this, session]() {
         removeSession(session, subscribers_, subCount_);
@@ -99,7 +101,7 @@ Subscription::publish(std::shared_ptr<Message> const& message)
 template <class Key>
 void
 SubscriptionMap<Key>::subscribe(
-    std::shared_ptr<WsBase> const& session,
+    std::shared_ptr<web::WsBase> const& session,
     Key const& account)
 {
     boost::asio::post(strand_, [this, session, account]() {
@@ -110,7 +112,7 @@ SubscriptionMap<Key>::subscribe(
 template <class Key>
 void
 SubscriptionMap<Key>::unsubscribe(
-    std::shared_ptr<WsBase> const& session,
+    std::shared_ptr<web::WsBase> const& session,
     Key const& account)
 {
     boost::asio::post(strand_, [this, account, session]() {
@@ -159,10 +161,10 @@ getLedgerPubMessage(
     pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
     pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
 
-    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
-    pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
-    pubMsg["reserve_base"] = RPC::toBoostJson(fees.reserve.jsonClipped());
-    pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
+    pubMsg["fee_ref"] = rpc::toBoostJson(fees.units.jsonClipped());
+    pubMsg["fee_base"] = rpc::toBoostJson(fees.base.jsonClipped());
+    pubMsg["reserve_base"] = rpc::toBoostJson(fees.reserve.jsonClipped());
+    pubMsg["reserve_inc"] = rpc::toBoostJson(fees.increment.jsonClipped());
 
     pubMsg["validated_ledgers"] = ledgerRange;
     pubMsg["txn_count"] = txnCount;
@@ -172,7 +174,7 @@ getLedgerPubMessage(
 boost::json::object
 SubscriptionManager::subLedger(
     boost::asio::yield_context& yield,
-    std::shared_ptr<WsBase> session)
+    std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(session, ledgerSubscribers_, [this](session_ptr session) {
         unsubLedger(session);
@@ -198,13 +200,13 @@ SubscriptionManager::subLedger(
 }
 
 void
-SubscriptionManager::unsubLedger(std::shared_ptr<WsBase> session)
+SubscriptionManager::unsubLedger(std::shared_ptr<web::WsBase> session)
 {
     ledgerSubscribers_.unsubscribe(session);
 }
 
 void
-SubscriptionManager::subTransactions(std::shared_ptr<WsBase> session)
+SubscriptionManager::subTransactions(std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(session, txSubscribers_, [this](session_ptr session) {
         unsubTransactions(session);
@@ -212,7 +214,7 @@ SubscriptionManager::subTransactions(std::shared_ptr<WsBase> session)
 }
 
 void
-SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase> session)
+SubscriptionManager::unsubTransactions(std::shared_ptr<web::WsBase> session)
 {
     txSubscribers_.unsubscribe(session);
 }
@@ -220,7 +222,7 @@ SubscriptionManager::unsubTransactions(std::shared_ptr<WsBase> session)
 void
 SubscriptionManager::subAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<web::WsBase>& session)
 {
     subscribeHelper(
         session,
@@ -234,7 +236,7 @@ SubscriptionManager::subAccount(
 void
 SubscriptionManager::unsubAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<WsBase>& session)
+    std::shared_ptr<web::WsBase>& session)
 {
     accountSubscribers_.unsubscribe(session, account);
 }
@@ -242,7 +244,7 @@ SubscriptionManager::unsubAccount(
 void
 SubscriptionManager::subBook(
     ripple::Book const& book,
-    std::shared_ptr<WsBase> session)
+    std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(
         session, book, bookSubscribers_, [this, book](session_ptr session) {
@@ -253,13 +255,13 @@ SubscriptionManager::subBook(
 void
 SubscriptionManager::unsubBook(
     ripple::Book const& book,
-    std::shared_ptr<WsBase> session)
+    std::shared_ptr<web::WsBase> session)
 {
     bookSubscribers_.unsubscribe(session, book);
 }
 
 void
-SubscriptionManager::subBookChanges(std::shared_ptr<WsBase> session)
+SubscriptionManager::subBookChanges(std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(
         session, bookChangesSubscribers_, [this](session_ptr session) {
@@ -268,7 +270,7 @@ SubscriptionManager::subBookChanges(std::shared_ptr<WsBase> session)
 }
 
 void
-SubscriptionManager::unsubBookChanges(std::shared_ptr<WsBase> session)
+SubscriptionManager::unsubBookChanges(std::shared_ptr<web::WsBase> session)
 {
     bookChangesSubscribers_.unsubscribe(session);
 }
@@ -288,14 +290,14 @@ SubscriptionManager::pubLedger(
 
 void
 SubscriptionManager::pubTransaction(
-    Backend::TransactionAndMetadata const& blobs,
+    data::TransactionAndMetadata const& blobs,
     ripple::LedgerInfo const& lgrInfo)
 {
-    auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, lgrInfo.seq);
+    auto [tx, meta] = rpc::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
-    pubObj["transaction"] = RPC::toJson(*tx);
-    pubObj["meta"] = RPC::toJson(*meta);
-    RPC::insertDeliveredAmount(
+    pubObj["transaction"] = rpc::toJson(*tx);
+    pubObj["meta"] = rpc::toJson(*meta);
+    rpc::insertDeliveredAmount(
         pubObj["meta"].as_object(), tx, meta, blobs.date);
     pubObj["type"] = "transaction";
     pubObj["validated"] = true;
@@ -320,13 +322,13 @@ SubscriptionManager::pubTransaction(
         {
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
-                Backend::synchronous([&](boost::asio::yield_context& yield) {
-                    ownerFunds = RPC::accountFunds(
+                data::synchronous([&](boost::asio::yield_context& yield) {
+                    ownerFunds = rpc::accountFunds(
                         *backend_, lgrInfo.seq, amount, account, yield);
                 });
             };
 
-            Backend::retryOnTimeout(fetchFundsSynchronous);
+            data::retryOnTimeout(fetchFundsSynchronous);
 
             pubObj["transaction"].as_object()["owner_funds"] =
                 ownerFunds.getText();
@@ -386,12 +388,12 @@ SubscriptionManager::pubTransaction(
 void
 SubscriptionManager::pubBookChanges(
     ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions)
+    std::vector<data::TransactionAndMetadata> const& transactions)
 {
     if (bookChangesSubscribers_.empty())
         return;
 
-    auto const json = RPC::computeBookChanges(lgrInfo, transactions);
+    auto const json = rpc::computeBookChanges(lgrInfo, transactions);
     auto const bookChangesMsg =
         std::make_shared<Message>(boost::json::serialize(json));
     bookChangesSubscribers_.publish(bookChangesMsg);
@@ -405,7 +407,7 @@ SubscriptionManager::forwardProposedTransaction(
     txProposedSubscribers_.publish(pubMsg);
 
     auto transaction = response.at("transaction").as_object();
-    auto accounts = RPC::getAccountsFromTransaction(transaction);
+    auto accounts = rpc::getAccountsFromTransaction(transaction);
 
     for (ripple::AccountID const& account : accounts)
         accountProposedSubscribers_.publish(pubMsg, account);
@@ -428,7 +430,7 @@ SubscriptionManager::forwardValidation(boost::json::object const& response)
 void
 SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<WsBase> session)
+    std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(
         session,
@@ -440,7 +442,7 @@ SubscriptionManager::subProposedAccount(
 }
 
 void
-SubscriptionManager::subManifest(std::shared_ptr<WsBase> session)
+SubscriptionManager::subManifest(std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(session, manifestSubscribers_, [this](session_ptr session) {
         unsubManifest(session);
@@ -448,13 +450,13 @@ SubscriptionManager::subManifest(std::shared_ptr<WsBase> session)
 }
 
 void
-SubscriptionManager::unsubManifest(std::shared_ptr<WsBase> session)
+SubscriptionManager::unsubManifest(std::shared_ptr<web::WsBase> session)
 {
     manifestSubscribers_.unsubscribe(session);
 }
 
 void
-SubscriptionManager::subValidation(std::shared_ptr<WsBase> session)
+SubscriptionManager::subValidation(std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(
         session, validationsSubscribers_, [this](session_ptr session) {
@@ -463,7 +465,7 @@ SubscriptionManager::subValidation(std::shared_ptr<WsBase> session)
 }
 
 void
-SubscriptionManager::unsubValidation(std::shared_ptr<WsBase> session)
+SubscriptionManager::unsubValidation(std::shared_ptr<web::WsBase> session)
 {
     validationsSubscribers_.unsubscribe(session);
 }
@@ -471,13 +473,14 @@ SubscriptionManager::unsubValidation(std::shared_ptr<WsBase> session)
 void
 SubscriptionManager::unsubProposedAccount(
     ripple::AccountID const& account,
-    std::shared_ptr<WsBase> session)
+    std::shared_ptr<web::WsBase> session)
 {
     accountProposedSubscribers_.unsubscribe(session, account);
 }
 
 void
-SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase> session)
+SubscriptionManager::subProposedTransactions(
+    std::shared_ptr<web::WsBase> session)
 {
     subscribeHelper(
         session, txProposedSubscribers_, [this](session_ptr session) {
@@ -486,13 +489,14 @@ SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase> session)
 }
 
 void
-SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase> session)
+SubscriptionManager::unsubProposedTransactions(
+    std::shared_ptr<web::WsBase> session)
 {
     txProposedSubscribers_.unsubscribe(session);
 }
 void
 SubscriptionManager::subscribeHelper(
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<web::WsBase>& session,
     Subscription& subs,
     CleanupFunction&& func)
 {
@@ -503,7 +507,7 @@ SubscriptionManager::subscribeHelper(
 template <typename Key>
 void
 SubscriptionManager::subscribeHelper(
-    std::shared_ptr<WsBase>& session,
+    std::shared_ptr<web::WsBase>& session,
     Key const& k,
     SubscriptionMap<Key>& subs,
     CleanupFunction&& func)
@@ -514,7 +518,7 @@ SubscriptionManager::subscribeHelper(
 }
 
 void
-SubscriptionManager::cleanup(std::shared_ptr<WsBase> session)
+SubscriptionManager::cleanup(std::shared_ptr<web::WsBase> session)
 {
     std::unique_lock lk(cleanupMtx_);
     if (!cleanupFuncs_.contains(session))
@@ -527,3 +531,5 @@ SubscriptionManager::cleanup(std::shared_ptr<WsBase> session)
 
     cleanupFuncs_.erase(session);
 }
+
+}  // namespace clio::subscription

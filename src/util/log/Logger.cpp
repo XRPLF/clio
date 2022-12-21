@@ -17,14 +17,14 @@
 */
 //==============================================================================
 
-#include <config/Config.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <algorithm>
 #include <array>
 #include <filesystem>
 
-namespace clio {
+namespace clio::util {
 
 Logger LogService::general_log_ = Logger{"General"};
 Logger LogService::alert_log_ = Logger{"Alert"};
@@ -206,4 +206,4 @@ Logger::Pump::pretty_path(source_location_t const& loc, size_t max_depth) const
         std::to_string(loc.line());
 }
 
-}  // namespace clio
+}  // namespace clio::util

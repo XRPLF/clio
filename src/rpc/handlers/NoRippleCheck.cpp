@@ -20,7 +20,7 @@
 #include <ripple/protocol/TxFlags.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 boost::json::object
 getBaseTx(
@@ -31,7 +31,7 @@ getBaseTx(
     boost::json::object tx;
     tx[JS(Sequence)] = accountSeq;
     tx[JS(Account)] = ripple::toBase58(accountID);
-    tx[JS(Fee)] = RPC::toBoostJson(fees.units.jsonClipped());
+    tx[JS(Fee)] = rpc::toBoostJson(fees.units.jsonClipped());
     return tx;
 }
 
@@ -163,7 +163,7 @@ doNoRippleCheck(Context const& context)
                         limitAmount.setIssuer(peer);
                         auto tx = getBaseTx(accountID, accountSeq++, *fees);
                         tx[JS(TransactionType)] = JS(TrustSet);
-                        tx[JS(LimitAmount)] = RPC::toBoostJson(
+                        tx[JS(LimitAmount)] = rpc::toBoostJson(
                             limitAmount.getJson(ripple::JsonOptions::none));
                         tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple
                                                   : ripple::tfSetNoRipple;
@@ -187,4 +187,4 @@ doNoRippleCheck(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

@@ -20,16 +20,17 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 using namespace clio;
 
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"Backend"};
+util::Logger gLog{"Backend"};
 }  // namespace
 
-namespace Backend {
+namespace clio::data {
+
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
@@ -343,4 +344,4 @@ BackendInterface::fetchFees(
     return fees;
 }
 
-}  // namespace Backend
+}  // namespace clio::data

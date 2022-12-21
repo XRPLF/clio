@@ -20,10 +20,10 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
 #include <util/Taggable.h>
+#include <util/log/Logger.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -43,16 +43,23 @@
  * folder, use RPCHelpers.h.
  */
 
-class WsBase;
-class SubscriptionManager;
+namespace clio {
+namespace etl {
 class ETLLoadBalancer;
 class ReportingETL;
+}  // namespace etl
+namespace web {
+class WsBase;
+}  // namespace web
+namespace subscription {
+class SubscriptionManager;
+}  // namespace subscription
 
-namespace RPC {
+namespace rpc {
 
 struct Context : public util::Taggable
 {
-    clio::Logger perfLog_{"Performance"};
+    util::Logger perfLog_{"Performance"};
     boost::asio::yield_context& yield;
     std::string method;
     std::uint32_t version;
@@ -61,11 +68,11 @@ struct Context : public util::Taggable
     // this needs to be an actual shared_ptr, not a reference. The above
     // references refer to shared_ptr members of WsBase, but WsBase contains
     // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
-    std::shared_ptr<SubscriptionManager> subscriptions;
-    std::shared_ptr<ETLLoadBalancer> const& balancer;
-    std::shared_ptr<ReportingETL const> const& etl;
-    std::shared_ptr<WsBase> session;
-    Backend::LedgerRange const& range;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions;
+    std::shared_ptr<etl::ETLLoadBalancer> const& balancer;
+    std::shared_ptr<etl::ReportingETL const> const& etl;
+    std::shared_ptr<web::WsBase> session;
+    data::LedgerRange const& range;
     Counters& counters;
     std::string clientIp;
 
@@ -75,12 +82,13 @@ struct Context : public util::Taggable
         std::uint32_t version_,
         boost::json::object const& params_,
         std::shared_ptr<BackendInterface const> const& backend_,
-        std::shared_ptr<SubscriptionManager> const& subscriptions_,
-        std::shared_ptr<ETLLoadBalancer> const& balancer_,
-        std::shared_ptr<ReportingETL const> const& etl_,
-        std::shared_ptr<WsBase> const& session_,
+        std::shared_ptr<subscription::SubscriptionManager> const&
+            subscriptions_,
+        std::shared_ptr<etl::ETLLoadBalancer> const& balancer_,
+        std::shared_ptr<etl::ReportingETL const> const& etl_,
+        std::shared_ptr<web::WsBase> const& session_,
         util::TagDecoratorFactory const& tagFactory_,
-        Backend::LedgerRange const& range_,
+        data::LedgerRange const& range_,
         Counters& counters_,
         std::string const& clientIp_);
 };
@@ -110,12 +118,12 @@ make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
-    std::shared_ptr<WsBase> const& session,
+    std::shared_ptr<subscription::SubscriptionManager> const& subscriptions,
+    std::shared_ptr<etl::ETLLoadBalancer> const& balancer,
+    std::shared_ptr<etl::ReportingETL const> const& etl,
+    std::shared_ptr<web::WsBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    data::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);
 
@@ -124,11 +132,11 @@ make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    std::shared_ptr<subscription::SubscriptionManager> const& subscriptions,
+    std::shared_ptr<etl::ETLLoadBalancer> const& balancer,
+    std::shared_ptr<etl::ReportingETL const> const& etl,
     util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    data::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);
 
@@ -142,13 +150,13 @@ bool
 isClioOnly(std::string const& method);
 
 Status
-getLimit(RPC::Context const& context, std::uint32_t& limit);
+getLimit(rpc::Context const& context, std::uint32_t& limit);
 
 template <class T>
 void
 logDuration(Context const& ctx, T const& dur)
 {
-    static clio::Logger log{"RPC"};
+    static util::Logger log{"RPC"};
     std::stringstream ss;
     ss << ctx.tag() << "Request processing duration = "
        << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
@@ -163,4 +171,5 @@ logDuration(Context const& ctx, T const& dur)
         log.info() << ss.str();
 }
 
-}  // namespace RPC
+}  // namespace rpc
+}  // namespace clio

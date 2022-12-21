@@ -30,13 +30,12 @@
 #include <algorithm>
 
 namespace json = boost::json;
-
 namespace ripple {
 
 void
 tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
 {
-    auto amount = ::RPC::toBoostJson(
+    auto amount = clio::rpc::toBoostJson(
         offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
 
     json::object obj = {
@@ -58,7 +57,7 @@ tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
 
 }  // namespace ripple
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 enumerateNFTOffers(
@@ -142,7 +141,7 @@ enumerateNFTOffers(
             return false;
         });
 
-    if (auto status = std::get_if<RPC::Status>(&result))
+    if (auto status = std::get_if<rpc::Status>(&result))
         return *status;
 
     if (offers.size() == reserve)
@@ -195,4 +194,4 @@ doNFTBuyOffers(Context const& context)
     return doNFTOffers(context, false);
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

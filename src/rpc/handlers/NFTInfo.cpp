@@ -30,10 +30,10 @@
 //   ledger_index: <ledger_index>
 // }
 
-namespace RPC {
+namespace clio::rpc {
 
 std::variant<std::monostate, std::string, Status>
-getURI(Backend::NFT const& dbResponse, Context const& context)
+getURI(data::NFT const& dbResponse, Context const& context)
 {
     // Fetch URI from ledger
     // The correct page will be > bookmark and <= last. We need to calculate
@@ -119,7 +119,7 @@ doNFTInfo(Context const& context)
         return *status;
     auto const lgrInfo = std::get<ripple::LedgerInfo>(maybeLedgerInfo);
 
-    std::optional<Backend::NFT> dbResponse =
+    std::optional<data::NFT> dbResponse =
         context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
     if (!dbResponse)
         return Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"};
@@ -154,4 +154,4 @@ doNFTInfo(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

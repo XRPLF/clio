@@ -23,7 +23,7 @@
 #include <main/Build.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doServerInfo(Context const& context)
@@ -118,4 +118,4 @@ doServerInfo(Context const& context)
 
     return response;
 }
-}  // namespace RPC
+}  // namespace clio::rpc

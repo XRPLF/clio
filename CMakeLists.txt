@@ -49,6 +49,10 @@ include(CMake/deps/SourceLocation.cmake)
 target_sources(clio PRIVATE
   ## Main
   src/main/impl/Build.cpp
+  ## Util
+  src/util/config/Config.cpp
+  src/util/log/Logger.cpp
+  src/util/Taggable.cpp
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
@@ -100,10 +104,7 @@ target_sources(clio PRIVATE
   # Server
   src/rpc/handlers/ServerInfo.cpp
   # Utilities
-  src/rpc/handlers/Random.cpp
-  src/config/Config.cpp
-  src/log/Logger.cpp
-  src/util/Taggable.cpp)
+  src/rpc/handlers/Random.cpp)
 
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
@@ -114,7 +115,7 @@ if(BUILD_TESTS)
     unittests/Backend.cpp
     unittests/Logger.cpp
     unittests/Config.cpp
-    unittests/ProfilerTest.cpp
+    unittests/Timed.cpp
     unittests/DOSGuard.cpp)
   include(CMake/deps/gtest.cmake)
 endif()

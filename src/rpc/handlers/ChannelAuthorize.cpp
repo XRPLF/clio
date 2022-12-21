@@ -27,7 +27,7 @@
 #include <optional>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 void
 serializePayChanAuthorization(
@@ -93,4 +93,4 @@ doChannelAuthorize(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

@@ -21,6 +21,8 @@
 
 #include <webserver/HttpBase.h>
 
+namespace clio::web {
+
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
@@ -40,13 +42,13 @@ public:
         tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue,
         boost::beast::flat_buffer buffer)
         : HttpBase<SslHttpSession>(
               ioc,
@@ -153,3 +155,5 @@ public:
         // At this point the connection is closed gracefully
     }
 };
+
+}  // namespace clio::web

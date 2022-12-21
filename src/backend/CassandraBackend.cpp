@@ -20,15 +20,15 @@
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
-#include <log/Logger.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <functional>
 #include <unordered_map>
 
 using namespace clio;
 
-namespace Backend {
+namespace clio::data {
 
 // Type alias for async completion handlers
 using completion_token = boost::asio::yield_context;
@@ -40,7 +40,7 @@ template <class T, class F>
 void
 processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
 {
-    static clio::Logger log{"Backend"};
+    static util::Logger log{"Backend"};
 
     CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
@@ -1645,4 +1645,5 @@ CassandraBackend::open(bool readOnly)
 
     log_.info() << "Opened CassandraBackend successfully";
 }
-}  // namespace Backend
+
+}  // namespace clio::data

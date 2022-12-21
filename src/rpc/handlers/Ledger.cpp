@@ -20,7 +20,7 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doLedger(Context const& context)
@@ -180,4 +180,4 @@ doLedger(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

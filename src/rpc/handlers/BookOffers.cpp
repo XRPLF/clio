@@ -25,8 +25,8 @@
 #include <ripple/protocol/jss.h>
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
+#include <util/log/Logger.h>
 
 #include <boost/json.hpp>
 
@@ -36,10 +36,10 @@ using namespace clio;
 
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"RPC"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doBookOffers(Context const& context)
@@ -118,4 +118,4 @@ doBookOffers(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

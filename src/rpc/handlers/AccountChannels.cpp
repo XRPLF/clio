@@ -30,7 +30,7 @@
 
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 void
 addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
@@ -131,10 +131,10 @@ doAccountChannels(Context const& context)
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
 
-    if (auto status = std::get_if<RPC::Status>(&next))
+    if (auto status = std::get_if<rpc::Status>(&next))
         return *status;
 
-    auto nextMarker = std::get<RPC::AccountCursor>(next);
+    auto nextMarker = std::get<rpc::AccountCursor>(next);
 
     if (nextMarker.isNonZero())
         response[JS(marker)] = nextMarker.toString();
@@ -142,4 +142,4 @@ doAccountChannels(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

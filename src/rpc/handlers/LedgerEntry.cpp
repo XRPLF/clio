@@ -29,7 +29,7 @@
 //   ...
 // }
 
-namespace RPC {
+namespace clio::rpc {
 
 using boost::json::value_to;
 
@@ -414,4 +414,4 @@ doLedgerEntry(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

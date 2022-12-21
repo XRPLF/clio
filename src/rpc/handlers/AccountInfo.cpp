@@ -39,7 +39,7 @@
 //                         //   error.
 // }
 
-namespace RPC {
+namespace clio::rpc {
 
 Result
 doAccountInfo(Context const& context)
@@ -117,4 +117,4 @@ doAccountInfo(Context const& context)
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

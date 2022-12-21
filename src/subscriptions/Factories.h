@@ -17,18 +17,26 @@
 */
 //==============================================================================
 
-#include <rpc/WorkQueue.h>
+#pragma once
 
-namespace clio::rpc {
+#include <backend/BackendInterface.h>
+#include <subscriptions/SubscriptionManager.h>
+#include <util/config/Config.h>
 
-WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
+#include <memory>
+
+namespace clio::subscription {
+
+using namespace data;
+using namespace util;
+
+static std::shared_ptr<SubscriptionManager>
+make_SubscriptionManager(
+    Config const& config,
+    std::shared_ptr<BackendInterface const> const& b)
 {
-    if (maxSize != 0)
-        maxSize_ = maxSize;
-    while (--numWorkers)
-    {
-        threads_.emplace_back([this] { ioc_.run(); });
-    }
+    auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
+    return std::make_shared<SubscriptionManager>(numThreads, b);
 }
 
-}  // namespace clio::rpc
+}  // namespace clio::subscription

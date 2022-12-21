@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <util/Taggable.h>
+#include <util/log/Logger.h>
 #include <webserver/HttpSession.h>
 #include <webserver/PlainWsSession.h>
 #include <webserver/SslHttpSession.h>
@@ -33,7 +33,12 @@
 
 #include <iostream>
 
+namespace clio {
+namespace subscription {
 class SubscriptionManager;
+}
+
+namespace web {
 
 template <class PlainSession, class SslSession>
 class Detector
@@ -42,18 +47,18 @@ class Detector
     using std::enable_shared_from_this<
         Detector<PlainSession, SslSession>>::shared_from_this;
 
-    clio::Logger log_{"WebServer"};
+    util::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::ETLLoadBalancer> balancer_;
+    std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
+    web::DOSGuard& dosGuard_;
+    rpc::Counters& counters_;
+    rpc::WorkQueue& queue_;
     boost::beast::flat_buffer buffer_;
 
 public:
@@ -62,13 +67,13 @@ public:
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue)
+        web::DOSGuard& dosGuard,
+        rpc::Counters& counters,
+        rpc::WorkQueue& queue)
         : ioc_(ioc)
         , stream_(std::move(socket))
         , ctx_(ctx)
@@ -160,13 +165,13 @@ make_websocket_session(
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<etl::ETLLoadBalancer> balancer,
+    std::shared_ptr<etl::ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    clio::DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    WorkQueue& queue)
+    web::DOSGuard& dosGuard,
+    rpc::Counters& counters,
+    rpc::WorkQueue& queue)
 {
     std::make_shared<WsUpgrader>(
         ioc,
@@ -193,13 +198,13 @@ make_websocket_session(
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<etl::ETLLoadBalancer> balancer,
+    std::shared_ptr<etl::ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    clio::DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    WorkQueue& queue)
+    web::DOSGuard& dosGuard,
+    rpc::Counters& counters,
+    rpc::WorkQueue& queue)
 {
     std::make_shared<SslWsUpgrader>(
         ioc,
@@ -225,18 +230,18 @@ class Listener
     using std::enable_shared_from_this<
         Listener<PlainSession, SslSession>>::shared_from_this;
 
-    clio::Logger log_{"WebServer"};
+    util::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::ETLLoadBalancer> balancer_;
+    std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory tagFactory_;
-    clio::DOSGuard& dosGuard_;
-    WorkQueue queue_;
-    RPC::Counters counters_;
+    web::DOSGuard& dosGuard_;
+    rpc::WorkQueue queue_;
+    rpc::Counters counters_;
 
 public:
     Listener(
@@ -246,11 +251,11 @@ public:
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::ETLLoadBalancer> balancer,
+        std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory tagFactory,
-        clio::DOSGuard& dosGuard)
+        web::DOSGuard& dosGuard)
         : ioc_(ioc)
         , ctx_(ctx)
         , acceptor_(net::make_strand(ioc))
@@ -342,52 +347,8 @@ private:
     }
 };
 
-namespace Server {
-
 using WebsocketServer = Listener<WsUpgrader, SslWsUpgrader>;
 using HttpServer = Listener<HttpSession, SslHttpSession>;
 
-static std::shared_ptr<HttpServer>
-make_HttpServer(
-    clio::Config const& config,
-    boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<ssl::context>> sslCtx,
-    std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
-    clio::DOSGuard& dosGuard)
-{
-    static clio::Logger log{"WebServer"};
-    if (!config.contains("server"))
-        return nullptr;
-
-    auto const serverConfig = config.section("server");
-    auto const address =
-        boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
-    auto const port = serverConfig.value<unsigned short>("port");
-    auto const numThreads = config.valueOr<uint32_t>(
-        "workers", std::thread::hardware_concurrency());
-    auto const maxQueueSize =
-        serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
-
-    log.info() << "Number of workers = " << numThreads
-               << ". Max queue size = " << maxQueueSize;
-
-    auto server = std::make_shared<HttpServer>(
-        ioc,
-        numThreads,
-        maxQueueSize,
-        sslCtx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        util::TagDecoratorFactory(config),
-        dosGuard);
-
-    server->run();
-    return server;
-}
-}  // namespace Server
+}  // namespace web
+}  // namespace clio

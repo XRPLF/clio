@@ -20,18 +20,24 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <config/Config.h>
-#include <log/Logger.h>
 #include <subscriptions/Message.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <memory>
 
+namespace clio {
+
+namespace web {
 class WsBase;
+}  // namespace web
+
+namespace subscription {
 
 class Subscription
 {
     boost::asio::io_context::strand strand_;
-    std::unordered_set<std::shared_ptr<WsBase>> subscribers_ = {};
+    std::unordered_set<std::shared_ptr<web::WsBase>> subscribers_ = {};
     std::atomic_uint64_t subCount_ = 0;
 
 public:
@@ -46,10 +52,10 @@ public:
     ~Subscription() = default;
 
     void
-    subscribe(std::shared_ptr<WsBase> const& session);
+    subscribe(std::shared_ptr<web::WsBase> const& session);
 
     void
-    unsubscribe(std::shared_ptr<WsBase> const& session);
+    unsubscribe(std::shared_ptr<web::WsBase> const& session);
 
     void
     publish(std::shared_ptr<Message> const& message);
@@ -70,7 +76,7 @@ public:
 template <class Key>
 class SubscriptionMap
 {
-    using ptr = std::shared_ptr<WsBase>;
+    using ptr = std::shared_ptr<web::WsBase>;
     using subscribers = std::set<ptr>;
 
     boost::asio::io_context::strand strand_;
@@ -89,10 +95,10 @@ public:
     ~SubscriptionMap() = default;
 
     void
-    subscribe(std::shared_ptr<WsBase> const& session, Key const& key);
+    subscribe(std::shared_ptr<web::WsBase> const& session, Key const& key);
 
     void
-    unsubscribe(std::shared_ptr<WsBase> const& session, Key const& key);
+    unsubscribe(std::shared_ptr<web::WsBase> const& session, Key const& key);
 
     void
     publish(std::shared_ptr<Message>& message, Key const& key);
@@ -106,8 +112,8 @@ public:
 
 class SubscriptionManager
 {
-    using session_ptr = std::shared_ptr<WsBase>;
-    clio::Logger log_{"Subscriptions"};
+    using session_ptr = std::shared_ptr<web::WsBase>;
+    util::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
@@ -124,21 +130,12 @@ class SubscriptionManager
     SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
     SubscriptionMap<ripple::Book> bookSubscribers_;
 
-    std::shared_ptr<Backend::BackendInterface const> backend_;
+    std::shared_ptr<data::BackendInterface const> backend_;
 
 public:
-    static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(
-        clio::Config const& config,
-        std::shared_ptr<Backend::BackendInterface const> const& b)
-    {
-        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
-        return std::make_shared<SubscriptionManager>(numThreads, b);
-    }
-
     SubscriptionManager(
         std::uint64_t numThreads,
-        std::shared_ptr<Backend::BackendInterface const> const& b)
+        std::shared_ptr<data::BackendInterface const> const& b)
         : ledgerSubscribers_(ioc_)
         , txSubscribers_(ioc_)
         , txProposedSubscribers_(ioc_)
@@ -185,7 +182,7 @@ public:
     void
     pubBookChanges(
         ripple::LedgerInfo const& lgrInfo,
-        std::vector<Backend::TransactionAndMetadata> const& transactions);
+        std::vector<data::TransactionAndMetadata> const& transactions);
 
     void
     unsubLedger(session_ptr session);
@@ -198,7 +195,7 @@ public:
 
     void
     pubTransaction(
-        Backend::TransactionAndMetadata const& blobs,
+        data::TransactionAndMetadata const& blobs,
         ripple::LedgerInfo const& lgrInfo);
 
     void
@@ -214,10 +211,10 @@ public:
     unsubBook(ripple::Book const& book, session_ptr session);
 
     void
-    subBookChanges(std::shared_ptr<WsBase> session);
+    subBookChanges(std::shared_ptr<web::WsBase> session);
 
     void
-    unsubBookChanges(std::shared_ptr<WsBase> session);
+    unsubBookChanges(std::shared_ptr<web::WsBase> session);
 
     void
     subManifest(session_ptr session);
@@ -281,14 +278,14 @@ private:
 
     void
     subscribeHelper(
-        std::shared_ptr<WsBase>& session,
+        std::shared_ptr<web::WsBase>& session,
         Subscription& subs,
         CleanupFunction&& func);
 
     template <typename Key>
     void
     subscribeHelper(
-        std::shared_ptr<WsBase>& session,
+        std::shared_ptr<web::WsBase>& session,
         Key const& k,
         SubscriptionMap<Key>& subs,
         CleanupFunction&& func);
@@ -303,3 +300,6 @@ private:
     std::unordered_map<session_ptr, std::vector<CleanupFunction>>
         cleanupFuncs_ = {};
 };
+
+}  // namespace subscription
+}  // namespace clio

@@ -33,7 +33,7 @@
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
 
-namespace RPC {
+namespace clio::rpc {
 
 std::unordered_map<std::string, ripple::LedgerEntryType> types{
     {"state", ripple::ltRIPPLE_STATE},
@@ -218,14 +218,14 @@ doAccountObjects(Context const& context)
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
 
-    if (auto status = std::get_if<RPC::Status>(&next))
+    if (auto status = std::get_if<rpc::Status>(&next))
         return *status;
 
-    auto const& nextMarker = std::get<RPC::AccountCursor>(next);
+    auto const& nextMarker = std::get<rpc::AccountCursor>(next);
     if (nextMarker.isNonZero())
         response[JS(marker)] = nextMarker.toString();
 
     return response;
 }
 
-}  // namespace RPC
+}  // namespace clio::rpc

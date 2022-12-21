@@ -24,6 +24,8 @@
 #include <fstream>
 #include <optional>
 
+namespace clio::web {
+
 namespace ssl = boost::asio::ssl;
 
 static std::optional<ssl::context>
@@ -61,3 +63,5 @@ parse_certs(const char* certFilename, const char* keyFilename)
 
     return ctx;
 }
+
+}  // namespace clio::web

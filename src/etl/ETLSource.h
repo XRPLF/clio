@@ -20,10 +20,10 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <config/Config.h>
 #include <etl/ETLHelpers.h>
-#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
@@ -35,23 +35,28 @@
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 
+namespace clio {
+namespace subscription {
+class SubscriptionManager;
+}
+
+namespace etl {
 class ETLLoadBalancer;
 class ETLSource;
 class ProbingETLSource;
-class SubscriptionManager;
 
 /// This class manages a connection to a single ETL source. This is almost
 /// always a rippled node, but really could be another reporting node. This
 /// class subscribes to the ledgers and transactions_proposed streams of the
-/// associated rippled node, and keeps track of which ledgers the rippled node
-/// has. This class also has methods for extracting said ledgers. Lastly this
-/// class forwards transactions received on the transactions_proposed streams to
-/// any subscribers.
+/// associated rippled node, and keeps track of which ledgers the rippled
+/// node has. This class also has methods for extracting said ledgers.
+/// Lastly this class forwards transactions received on the
+/// transactions_proposed streams to any subscribers.
 class ForwardCache
 {
     using response_type = std::optional<boost::json::object>;
 
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
     mutable std::atomic_bool stopping_ = false;
     mutable std::shared_mutex mtx_;
     std::unordered_map<std::string, response_type> latestForwarded_;
@@ -66,7 +71,7 @@ class ForwardCache
 
 public:
     ForwardCache(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         ETLSource const& source)
         : strand_(ioc), timer_(strand_), source_(source)
@@ -148,7 +153,7 @@ public:
     }
 
 protected:
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
 private:
     friend ForwardCache;
@@ -186,7 +191,7 @@ class ETLSourceImpl : public ETLSource
 
     std::string validatedLedgersRaw_{"N/A"};
 
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
+    std::shared_ptr<etl::NetworkValidatedLedgers> networkValidatedLedgers_;
 
     // beast::Journal journal_;
 
@@ -204,8 +209,8 @@ class ETLSourceImpl : public ETLSource
     std::chrono::system_clock::time_point lastMsgTime_;
     mutable std::mutex lastMsgTimeMtx_;
 
-    std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<data::BackendInterface> backend_;
+    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
     ETLLoadBalancer& balancer_;
 
     ForwardCache forwardCache_;
@@ -279,13 +284,14 @@ public:
 
     /// Create ETL source without gRPC endpoint
     /// Fetch ledger and load initial ledger will fail for this source
-    /// Primarly used in read-only mode, to monitor when ledgers are validated
+    /// Primarly used in read-only mode, to monitor when ledgers are
+    /// validated
     ETLSourceImpl(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioContext,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::NetworkValidatedLedgers> networkValidatedLedgers,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
         : resolver_(boost::asio::make_strand(ioContext))
@@ -340,8 +346,8 @@ public:
             else if (sequence < pair.first)
             {
                 // validatedLedgers_ is a sorted list of disjoint ranges
-                // if the sequence comes before this range, the sequence will
-                // come before all subsequent ranges
+                // if the sequence comes before this range, the sequence
+                // will come before all subsequent ranges
                 return false;
             }
         }
@@ -380,7 +386,8 @@ public:
             return left.first < right.first;
         });
 
-        // we only hold the lock here, to avoid blocking while string processing
+        // we only hold the lock here, to avoid blocking while string
+        // processing
         std::lock_guard lck(mtx_);
         validatedLedgers_ = std::move(pairs);
         validatedLedgersRaw_ = range;
@@ -397,8 +404,8 @@ public:
 
     /// Fetch the specified ledger
     /// @param ledgerSequence sequence of the ledger to fetch
-    /// @getObjects whether to get the account state diff between this ledger
-    /// and the prior one
+    /// @getObjects whether to get the account state diff between this
+    /// ledger and the prior one
     /// @return the extracted data and the result status
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedger(
@@ -505,11 +512,11 @@ class PlainETLSource : public ETLSourceImpl<PlainETLSource>
 
 public:
     PlainETLSource(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> nwvl,
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
         : ETLSourceImpl(
@@ -554,12 +561,12 @@ class SslETLSource : public ETLSourceImpl<SslETLSource>
 
 public:
     SslETLSource(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> nwvl,
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
         : ETLSourceImpl(
@@ -602,38 +609,26 @@ public:
     }
 };
 
-/// This class is used to manage connections to transaction processing processes
-/// This class spawns a listener for each etl source, which listens to messages
-/// on the ledgers stream (to keep track of which ledgers have been validated by
-/// the network, and the range of ledgers each etl source has). This class also
-/// allows requests for ledger data to be load balanced across all possible etl
-/// sources.
+/// This class is used to manage connections to transaction processing
+/// processes This class spawns a listener for each etl source, which
+/// listens to messages on the ledgers stream (to keep track of which
+/// ledgers have been validated by the network, and the range of ledgers
+/// each etl source has). This class also allows requests for ledger data to
+/// be load balanced across all possible etl sources.
 class ETLLoadBalancer
 {
 private:
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
     std::vector<std::unique_ptr<ETLSource>> sources_;
     std::uint32_t downloadRanges_ = 16;
 
 public:
     ETLLoadBalancer(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioContext,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> nwvl);
-
-    static std::shared_ptr<ETLLoadBalancer>
-    make_ETLLoadBalancer(
-        clio::Config const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
-    {
-        return std::make_shared<ETLLoadBalancer>(
-            config, ioc, backend, subscriptions, validatedLedgers);
-    }
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<etl::NetworkValidatedLedgers> nwvl);
 
     ~ETLLoadBalancer()
     {
@@ -645,26 +640,26 @@ public:
     void
     loadInitialLedger(uint32_t sequence, bool cacheOnly = false);
 
-    /// Fetch data for a specific ledger. This function will continuously try
-    /// to fetch data for the specified ledger until the fetch succeeds, the
-    /// ledger is found in the database, or the server is shutting down.
+    /// Fetch data for a specific ledger. This function will continuously
+    /// try to fetch data for the specified ledger until the fetch succeeds,
+    /// the ledger is found in the database, or the server is shutting down.
     /// @param ledgerSequence sequence of ledger to fetch data for
     /// @param getObjects if true, fetch diff between specified ledger and
     /// previous
-    /// @return the extracted data, if extraction was successful. If the ledger
-    /// was found in the database or the server is shutting down, the optional
-    /// will be empty
+    /// @return the extracted data, if extraction was successful. If the
+    /// ledger was found in the database or the server is shutting down, the
+    /// optional will be empty
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedger(
         uint32_t ledgerSequence,
         bool getObjects,
         bool getObjectNeighbors);
 
-    /// Determine whether messages received on the transactions_proposed stream
-    /// should be forwarded to subscribing clients. The server subscribes to
-    /// transactions_proposed on multiple ETLSources, yet only forwards messages
-    /// from one source at any given time (to avoid sending duplicate messages
-    /// to clients).
+    /// Determine whether messages received on the transactions_proposed
+    /// stream should be forwarded to subscribing clients. The server
+    /// subscribes to transactions_proposed on multiple ETLSources, yet only
+    /// forwards messages from one source at any given time (to avoid
+    /// sending duplicate messages to clients).
     /// @param in ETLSource in question
     /// @return true if messages should be forwarded
     bool
@@ -709,11 +704,11 @@ public:
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a
-    /// bool. Attempt to execute f for one randomly chosen ETLSource that has
-    /// the specified ledger. If f returns false, another randomly chosen
-    /// ETLSource is used. The process repeats until f returns true.
-    /// @param f function to execute. This function takes the ETL source as an
-    /// argument, and returns a bool.
+    /// bool. Attempt to execute f for one randomly chosen ETLSource that
+    /// has the specified ledger. If f returns false, another randomly
+    /// chosen ETLSource is used. The process repeats until f returns true.
+    /// @param f function to execute. This function takes the ETL source as
+    /// an argument, and returns a bool.
     /// @param ledgerSequence f is executed for each ETLSource that has this
     /// ledger
     /// @return true if f was eventually executed successfully. false if the
@@ -722,3 +717,6 @@ private:
     bool
     execute(Func f, uint32_t ledgerSequence);
 };
+
+}  // namespace etl
+}  // namespace clio
