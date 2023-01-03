@@ -48,13 +48,24 @@ public:
 template <typename SweepHandler>
 class BasicDOSGuard : public BaseDOSGuard
 {
-    mutable std::mutex mtx_;  // protects ipFetchCount_
-    std::unordered_map<std::string, std::uint32_t> ipFetchCount_;
+    // Accumulated state per IP, state will be reset accordingly
+    struct ClientState
+    {
+        // accumulated transfered byte
+        std::uint32_t transferedByte = 0;
+        // accumulated served requests count
+        std::uint32_t requestsCount = 0;
+    };
+
+    mutable std::mutex mtx_;
+    // accumulated states map
+    std::unordered_map<std::string, ClientState> ipState_;
     std::unordered_map<std::string, std::uint32_t> ipConnCount_;
     std::unordered_set<std::string> const whitelist_;
 
     std::uint32_t const maxFetches_;
     std::uint32_t const maxConnCount_;
+    std::uint32_t const maxRequestCount_;
     clio::Logger log_{"RPC"};
 
 public:
@@ -68,6 +79,7 @@ public:
         : whitelist_{getWhitelist(config)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", 100000000u)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", 1u)}
+        , maxRequestCount_{config.valueOr("dos_guard.max_requests", 10u)}
     {
         sweepHandler.setup(this);
     }
@@ -98,25 +110,33 @@ public:
         if (whitelist_.contains(ip))
             return true;
 
-        std::unique_lock lck(mtx_);
-        bool fetchesOk = true;
-        bool connsOk = true;
         {
-            auto it = ipFetchCount_.find(ip);
-            if (it != ipFetchCount_.end())
-                fetchesOk = it->second <= maxFetches_;
-        }
-        {
+            std::unique_lock lck(mtx_);
+            if (ipState_.find(ip) != ipState_.end())
+            {
+                auto [transferedByte, requests] = ipState_.at(ip);
+                if (transferedByte > maxFetches_ || requests > maxRequestCount_)
+                {
+                    log_.warn()
+                        << "Dosguard:Client surpassed the rate limit. ip = "
+                        << ip << " Transfered Byte:" << transferedByte
+                        << " Requests:" << requests;
+                    return false;
+                }
+            }
             auto it = ipConnCount_.find(ip);
             if (it != ipConnCount_.end())
             {
-                connsOk = it->second <= maxConnCount_;
+                if (it->second > maxConnCount_)
+                {
+                    log_.warn()
+                        << "Dosguard:Client surpassed the rate limit. ip = "
+                        << ip << " Concurrent connection:" << it->second;
+                    return false;
+                }
             }
         }
-        if (!fetchesOk || !connsOk)
-            log_.warn() << "Client surpassed the rate limit. ip = " << ip;
-
-        return fetchesOk && connsOk;
+        return true;
     }
 
     /**
@@ -170,11 +190,32 @@ public:
 
         {
             std::unique_lock lck(mtx_);
-            auto it = ipFetchCount_.find(ip);
-            if (it == ipFetchCount_.end())
-                ipFetchCount_[ip] = numObjects;
-            else
-                it->second += numObjects;
+            ipState_[ip].transferedByte += numObjects;
+        }
+
+        return isOk(ip);
+    }
+
+    /**
+     * @brief Adds one request for the given ip address.
+     *
+     * If the total sums up to a value equal or larger than maxRequestCount_
+     * the operation is no longer allowed and false is returned; true is
+     * returned otherwise.
+     *
+     * @param ip
+     * @return true
+     * @return false
+     */
+    [[maybe_unused]] bool
+    request(std::string const& ip) noexcept
+    {
+        if (whitelist_.contains(ip))
+            return true;
+
+        {
+            std::unique_lock lck(mtx_);
+            ipState_[ip].requestsCount++;
         }
 
         return isOk(ip);
@@ -188,7 +229,7 @@ public:
     clear() noexcept override
     {
         std::unique_lock lck(mtx_);
-        ipFetchCount_.clear();
+        ipState_.clear();
     }
 
 private:
