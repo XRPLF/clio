@@ -1597,9 +1597,7 @@ traverseTransactions(
         {
             if (context.range.maxSequence < *max ||
                 context.range.minSequence > *max)
-                return Status{
-                    RippledError::rpcLGR_IDX_MALFORMED,
-                    "ledgerSeqMaxOutOfRange"};
+                return Status{RippledError::rpcLGR_IDX_MALFORMED};
             else
                 maxIndex = static_cast<uint32_t>(*max);
         }
