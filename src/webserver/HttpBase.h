@@ -114,7 +114,7 @@ class HttpBase : public util::Taggable
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::ETLLoadBalancer> balancer_;
     std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
@@ -171,7 +171,7 @@ public:
     HttpBase(
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
@@ -347,7 +347,7 @@ handle_request(
         request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
     std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::ETLLoadBalancer> balancer,
     std::shared_ptr<etl::ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,

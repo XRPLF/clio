@@ -20,9 +20,9 @@
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/beast/core/CurrentThreadName.h>
 
-#include <backend/DBHelpers.h>
+#include <data/DBHelpers.h>
 #include <etl/ReportingETL.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
 
@@ -1251,7 +1251,7 @@ ReportingETL::ReportingETL(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<data::BackendInterface> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::ETLLoadBalancer> balancer,
     std::shared_ptr<etl::NetworkValidatedLedgers> ledgers)
     : backend_(backend)

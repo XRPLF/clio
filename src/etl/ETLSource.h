@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 
@@ -36,7 +36,7 @@
 #include <boost/beast/websocket.hpp>
 
 namespace clio {
-namespace subscription {
+namespace feed {
 class SubscriptionManager;
 }
 
@@ -210,7 +210,7 @@ class ETLSourceImpl : public ETLSource
     mutable std::mutex lastMsgTimeMtx_;
 
     std::shared_ptr<data::BackendInterface> backend_;
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     ETLLoadBalancer& balancer_;
 
     ForwardCache forwardCache_;
@@ -290,7 +290,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::NetworkValidatedLedgers> networkValidatedLedgers,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
@@ -515,7 +515,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
@@ -565,7 +565,7 @@ public:
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
@@ -627,7 +627,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::NetworkValidatedLedgers> nwvl);
 
     ~ETLLoadBalancer()

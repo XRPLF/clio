@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
 #include <util/Taggable.h>
@@ -51,9 +51,9 @@ class ReportingETL;
 namespace web {
 class WsBase;
 }  // namespace web
-namespace subscription {
+namespace feed {
 class SubscriptionManager;
-}  // namespace subscription
+}  // namespace feed
 
 namespace rpc {
 
@@ -68,7 +68,7 @@ struct Context : public util::Taggable
     // this needs to be an actual shared_ptr, not a reference. The above
     // references refer to shared_ptr members of WsBase, but WsBase contains
     // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions;
     std::shared_ptr<etl::ETLLoadBalancer> const& balancer;
     std::shared_ptr<etl::ReportingETL const> const& etl;
     std::shared_ptr<web::WsBase> session;
@@ -82,8 +82,7 @@ struct Context : public util::Taggable
         std::uint32_t version_,
         boost::json::object const& params_,
         std::shared_ptr<BackendInterface const> const& backend_,
-        std::shared_ptr<subscription::SubscriptionManager> const&
-            subscriptions_,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions_,
         std::shared_ptr<etl::ETLLoadBalancer> const& balancer_,
         std::shared_ptr<etl::ReportingETL const> const& etl_,
         std::shared_ptr<web::WsBase> const& session_,
@@ -118,7 +117,7 @@ make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<subscription::SubscriptionManager> const& subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
     std::shared_ptr<etl::ETLLoadBalancer> const& balancer,
     std::shared_ptr<etl::ReportingETL const> const& etl,
     std::shared_ptr<web::WsBase> const& session,
@@ -132,7 +131,7 @@ make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<subscription::SubscriptionManager> const& subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
     std::shared_ptr<etl::ETLLoadBalancer> const& balancer,
     std::shared_ptr<etl::ReportingETL const> const& etl,
     util::TagDecoratorFactory const& tagFactory,

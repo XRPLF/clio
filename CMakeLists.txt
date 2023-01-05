@@ -54,16 +54,16 @@ target_sources(clio PRIVATE
   src/util/log/Logger.cpp
   src/util/Taggable.cpp
   ## Backend
-  src/backend/BackendInterface.cpp
-  src/backend/CassandraBackend.cpp
-  src/backend/SimpleCache.cpp
+  src/data/BackendInterface.cpp
+  src/data/CassandraBackend.cpp
+  src/data/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
   src/etl/ProbingETLSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ReportingETL.cpp
   ## Subscriptions
-  src/subscriptions/SubscriptionManager.cpp
+  src/feed/SubscriptionManager.cpp
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/RPC.cpp

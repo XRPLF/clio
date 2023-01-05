@@ -30,8 +30,8 @@
 #include <algorithm>
 #include <rpc/RPCHelpers.h>
 
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 
 namespace clio::rpc {
 

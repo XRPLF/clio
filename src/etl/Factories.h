@@ -19,18 +19,18 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 
 #include <memory>
 
 namespace clio::etl {
 using namespace data;
-using namespace subscription;
+using namespace feed;
 using namespace util;
 
 static std::shared_ptr<ETLLoadBalancer>

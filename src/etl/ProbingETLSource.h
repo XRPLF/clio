@@ -52,7 +52,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         boost::asio::ssl::context sslCtx = boost::asio::ssl::context{

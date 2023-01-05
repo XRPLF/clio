@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
 #include <etl/ETLSource.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 #include <webserver/Listener.h>
 
@@ -32,7 +32,7 @@ namespace clio::web {
 
 using namespace data;
 using namespace etl;
-using namespace subscription;
+using namespace feed;
 using namespace util;
 
 static std::shared_ptr<HttpServer>

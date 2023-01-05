@@ -20,7 +20,7 @@
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/basics/ToString.h>
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
 #include <boost/json.hpp>

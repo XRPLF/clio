@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <backend/CassandraBackend.h>
+#include <data/BackendInterface.h>
+#include <data/CassandraBackend.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 

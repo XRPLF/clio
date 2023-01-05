@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <data/BackendInterface.h>
+#include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 
 #include <memory>
 
-namespace clio::subscription {
+namespace clio::feed {
 
 using namespace data;
 using namespace util;
@@ -39,4 +39,4 @@ make_SubscriptionManager(
     return std::make_shared<SubscriptionManager>(numThreads, b);
 }
 
-}  // namespace clio::subscription
+}  // namespace clio::feed

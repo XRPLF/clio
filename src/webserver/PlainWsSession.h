@@ -57,7 +57,7 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
@@ -103,7 +103,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::ETLLoadBalancer> balancer_;
     std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
@@ -119,7 +119,7 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
@@ -146,7 +146,7 @@ public:
         boost::beast::tcp_stream&& stream,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,

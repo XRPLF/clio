@@ -19,14 +19,14 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLSource.h>
 #include <etl/ReportingETL.h>
+#include <feed/Message.h>
+#include <feed/SubscriptionManager.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
 #include <rpc/WorkQueue.h>
-#include <subscriptions/Message.h>
-#include <subscriptions/SubscriptionManager.h>
 #include <util/Profiler.h>
 #include <util/Taggable.h>
 #include <util/log/Logger.h>
@@ -85,7 +85,7 @@ public:
      * @param msg The message to send
      */
     virtual void
-    send(std::shared_ptr<subscription::Message> msg) = 0;
+    send(std::shared_ptr<feed::Message> msg) = 0;
 
     virtual ~WsBase() = default;
 
@@ -117,7 +117,7 @@ class WsSession : public WsBase,
     // has to be a weak ptr because SubscriptionManager maintains collections
     // of std::shared_ptr<web::WsBase> objects. If this were shared, there would
     // be a cyclical dependency that would block destruction
-    std::weak_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::weak_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::ETLLoadBalancer> balancer_;
     std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
@@ -127,7 +127,7 @@ class WsSession : public WsBase,
     std::mutex mtx_;
 
     bool sending_ = false;
-    std::queue<std::shared_ptr<subscription::Message>> messages_;
+    std::queue<std::shared_ptr<feed::Message>> messages_;
 
 protected:
     std::optional<std::string> ip_;
@@ -151,7 +151,7 @@ public:
         boost::asio::io_context& ioc,
         std::optional<std::string> ip,
         std::shared_ptr<data::BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
@@ -225,7 +225,7 @@ public:
     }
 
     void
-    send(std::shared_ptr<subscription::Message> msg) override
+    send(std::shared_ptr<feed::Message> msg) override
     {
         net::dispatch(
             derived().ws().get_executor(),
@@ -240,8 +240,7 @@ public:
     void
     send(std::string&& msg)
     {
-        auto sharedMsg =
-            std::make_shared<subscription::Message>(std::move(msg));
+        auto sharedMsg = std::make_shared<feed::Message>(std::move(msg));
         send(sharedMsg);
     }
 

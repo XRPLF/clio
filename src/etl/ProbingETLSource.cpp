@@ -17,20 +17,20 @@
 */
 //==============================================================================
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/ProbingETLSource.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/log/Logger.h>
 
 namespace clio::etl {
 using namespace data;
-using namespace subscription;
+using namespace feed;
 
 ProbingETLSource::ProbingETLSource(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<data::BackendInterface> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::NetworkValidatedLedgers> nwvl,
     ETLLoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)

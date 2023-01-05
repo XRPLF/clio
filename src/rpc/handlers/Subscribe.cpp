@@ -18,13 +18,13 @@
 //==============================================================================
 
 #include <boost/json.hpp>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
 #include <rpc/RPCHelpers.h>
 
 namespace clio::rpc {
-using namespace subscription;
+using namespace feed;
 using namespace web;
 
 // these are the streams that take no arguments

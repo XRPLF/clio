@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/Taggable.h>
 #include <util/log/Logger.h>
 #include <webserver/HttpSession.h>
@@ -34,7 +34,7 @@
 #include <iostream>
 
 namespace clio {
-namespace subscription {
+namespace feed {
 class SubscriptionManager;
 }
 
@@ -52,7 +52,7 @@ class Detector
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::ETLLoadBalancer> balancer_;
     std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
@@ -67,7 +67,7 @@ public:
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
@@ -165,7 +165,7 @@ make_websocket_session(
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::ETLLoadBalancer> balancer,
     std::shared_ptr<etl::ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
@@ -198,7 +198,7 @@ make_websocket_session(
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::ETLLoadBalancer> balancer,
     std::shared_ptr<etl::ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
@@ -235,7 +235,7 @@ class Listener
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
     std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::ETLLoadBalancer> balancer_;
     std::shared_ptr<etl::ReportingETL const> etl_;
     util::TagDecoratorFactory tagFactory_;
@@ -251,7 +251,7 @@ public:
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory tagFactory,

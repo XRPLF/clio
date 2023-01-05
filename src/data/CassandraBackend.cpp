@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
-#include <backend/CassandraBackend.h>
-#include <backend/DBHelpers.h>
+#include <data/CassandraBackend.h>
+#include <data/DBHelpers.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
 

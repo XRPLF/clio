@@ -25,7 +25,7 @@
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 
-#include <backend/DBHelpers.h>
+#include <data/DBHelpers.h>
 #include <etl/ETLSource.h>
 #include <etl/ProbingETLSource.h>
 #include <etl/ReportingETL.h>
@@ -916,7 +916,7 @@ make_ETLSource(
     util::Config const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<data::BackendInterface> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::NetworkValidatedLedgers> networkValidatedLedgers,
     ETLLoadBalancer& balancer)
 {
@@ -937,7 +937,7 @@ ETLLoadBalancer::ETLLoadBalancer(
     util::Config const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<data::BackendInterface> backend,
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<etl::NetworkValidatedLedgers> nwvl)
 {
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)

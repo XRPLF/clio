@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
+#include <feed/SubscriptionManager.h>
 #include <rpc/RPCHelpers.h>
-#include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
 
-namespace clio::subscription {
+namespace clio::feed {
 
 template <class T>
 inline void
@@ -532,4 +532,4 @@ SubscriptionManager::cleanup(std::shared_ptr<web::WsBase> session)
     cleanupFuncs_.erase(session);
 }
 
-}  // namespace clio::subscription
+}  // namespace clio::feed

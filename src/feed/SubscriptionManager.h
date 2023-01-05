@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <subscriptions/Message.h>
+#include <data/BackendInterface.h>
+#include <feed/Message.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 
@@ -32,7 +32,7 @@ namespace web {
 class WsBase;
 }  // namespace web
 
-namespace subscription {
+namespace feed {
 
 class Subscription
 {
@@ -301,5 +301,5 @@ private:
         cleanupFuncs_ = {};
 };
 
-}  // namespace subscription
+}  // namespace feed
 }  // namespace clio

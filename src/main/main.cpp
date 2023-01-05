@@ -25,9 +25,9 @@
 #undef GRPC_ASAN_ENABLED
 #endif
 
-#include <backend/Factories.h>
+#include <data/Factories.h>
 #include <etl/Factories.h>
-#include <subscriptions/Factories.h>
+#include <feed/Factories.h>
 #include <webserver/Factories.h>
 
 #include <etl/ReportingETL.h>
@@ -57,7 +57,7 @@
 
 using namespace clio::data;
 using namespace clio::etl;
-using namespace clio::subscription;
+using namespace clio::feed;
 using namespace clio::util;
 using namespace clio::web;
 namespace po = boost::program_options;

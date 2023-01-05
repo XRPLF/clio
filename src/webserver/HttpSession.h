@@ -41,7 +41,7 @@ public:
         boost::asio::io_context& ioc,
         tcp::socket&& socket,
         std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,

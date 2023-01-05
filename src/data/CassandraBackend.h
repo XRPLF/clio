@@ -20,8 +20,8 @@
 #pragma once
 
 #include <ripple/basics/base_uint.h>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 #include <util/log/Logger.h>
 
 #include <cassandra.h>

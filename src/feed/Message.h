@@ -21,7 +21,7 @@
 
 #include <string>
 
-namespace clio::subscription {
+namespace clio::feed {
 
 // This class should only be constructed once, then it can
 // be read from in parallel by many websocket senders
@@ -57,4 +57,4 @@ public:
     }
 };
 
-}  // namespace clio::subscription
+}  // namespace clio::feed

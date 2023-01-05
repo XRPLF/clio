@@ -23,8 +23,8 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/jss.h>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 #include <rpc/RPCHelpers.h>
 #include <util/log/Logger.h>
 

@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-#include <backend/Factories.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
+#include <data/Factories.h>
 #include <etl/ReportingETL.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Fixtures.h>

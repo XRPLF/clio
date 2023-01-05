@@ -27,8 +27,8 @@
 #include <boost/json.hpp>
 
 #include <algorithm>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 #include <rpc/RPCHelpers.h>
 
 namespace clio::rpc {

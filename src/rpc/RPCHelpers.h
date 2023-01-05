@@ -29,7 +29,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/jss.h>
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPC.h>
 
 // Useful macro for borrowing from ripple::jss

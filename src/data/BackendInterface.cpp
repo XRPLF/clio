@@ -19,7 +19,7 @@
 
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <util/log/Logger.h>
 
 using namespace clio;

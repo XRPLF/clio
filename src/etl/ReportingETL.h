@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLSource.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/log/Logger.h>
 
 #include <ripple/ledger/ReadView.h>
@@ -83,7 +83,7 @@ private:
     util::Logger log_{"ETL"};
 
     std::shared_ptr<data::BackendInterface> backend_;
-    std::shared_ptr<subscription::SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::ETLLoadBalancer> loadBalancer_;
     std::optional<std::uint32_t> onlineDeleteInterval_;
     std::uint32_t extractorThreads_ = 1;
@@ -341,7 +341,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::NetworkValidatedLedgers> ledgers);
 
@@ -350,7 +350,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<data::BackendInterface> backend,
-        std::shared_ptr<subscription::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<etl::ETLLoadBalancer> balancer,
         std::shared_ptr<etl::NetworkValidatedLedgers> ledgers)
     {
