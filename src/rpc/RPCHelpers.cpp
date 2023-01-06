@@ -1597,7 +1597,7 @@ traverseTransactions(
         {
             if (context.range.maxSequence < *max ||
                 context.range.minSequence > *max)
-                return Status{RippledError::rpcLGR_IDX_MALFORMED};
+                return Status{RippledError::rpcLGR_IDXS_INVALID};
             else
                 maxIndex = static_cast<uint32_t>(*max);
         }
