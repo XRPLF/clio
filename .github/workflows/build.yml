@@ -17,7 +17,7 @@ jobs:
 
   build_clio:
     name: Build Clio
-    runs-on: [self-hosted, rippled-runner-dind]
+    runs-on: [self-hosted,Linux]
     needs: lint
     strategy:
       fail-fast: false
