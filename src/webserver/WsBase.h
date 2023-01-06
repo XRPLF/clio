@@ -452,19 +452,22 @@ public:
         }(std::move(msg));
 
         boost::json::object request;
-        if (!raw.is_object())
-            return sendError(
-                RPC::RippledError::rpcINVALID_PARAMS, nullptr, request);
-        request = raw.as_object();
-
-        auto id = request.contains("id") ? request.at("id") : nullptr;
-
-        if (!dosGuard_.isOk(*ip))
+        // dosGuard served request++ and check ip address
+        // dosGuard should check before any request, even invalid request
+        if (!dosGuard_.request(*ip))
         {
-            sendError(RPC::RippledError::rpcSLOW_DOWN, id, request);
+            sendError(RPC::RippledError::rpcSLOW_DOWN, nullptr, request);
+        }
+        else if (!raw.is_object())
+        {
+            // handle invalid request and async read again
+            sendError(RPC::RippledError::rpcINVALID_PARAMS, nullptr, request);
         }
         else
         {
+            request = raw.as_object();
+
+            auto id = request.contains("id") ? request.at("id") : nullptr;
             perfLog_.debug() << tag() << "Adding to work queue";
 
             if (!queue_.postCoro(

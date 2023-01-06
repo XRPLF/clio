@@ -238,6 +238,27 @@ public:
         if (ec)
             return httpFail(ec, "read");
 
+        auto ip = derived().ip();
+
+        if (!ip)
+        {
+            return;
+        }
+
+        auto const httpResponse = [&](http::status status,
+                                      std::string content_type,
+                                      std::string message) {
+            http::response<http::string_body> res{status, req_.version()};
+            res.set(
+                http::field::server,
+                "clio-server-" + Build::getClioVersionString());
+            res.set(http::field::content_type, content_type);
+            res.keep_alive(req_.keep_alive());
+            res.body() = std::string(message);
+            res.prepare_payload();
+            return res;
+        };
+
         if (boost::beast::websocket::is_upgrade(req_))
         {
             upgraded_ = true;
@@ -260,10 +281,16 @@ public:
                 workQueue_);
         }
 
-        auto ip = derived().ip();
-
-        if (!ip)
-            return;
+        // to avoid overwhelm work queue, the request limit check should be
+        // before posting to queue the web socket creation will be guarded via
+        // connection limit
+        if (!dosGuard_.request(ip.value()))
+        {
+            return lambda_(httpResponse(
+                http::status::service_unavailable,
+                "text/plain",
+                "Server is overloaded"));
+        }
 
         perfLog_.debug() << tag() << "Received request from ip = " << *ip
                          << " - posting to WorkQueue";
@@ -293,17 +320,11 @@ public:
         {
             // Non-whitelist connection rejected due to full connection
             // queue
-            http::response<http::string_body> res{
-                http::status::ok, req_.version()};
-            res.set(
-                http::field::server,
-                "clio-server-" + Build::getClioVersionString());
-            res.set(http::field::content_type, "application/json");
-            res.keep_alive(req_.keep_alive());
-            res.body() = boost::json::serialize(
-                RPC::makeError(RPC::RippledError::rpcTOO_BUSY));
-            res.prepare_payload();
-            lambda_(std::move(res));
+            lambda_(httpResponse(
+                http::status::ok,
+                "application/json",
+                boost::json::serialize(
+                    RPC::makeError(RPC::RippledError::rpcTOO_BUSY))));
         }
     }
 
@@ -379,12 +400,6 @@ handle_request(
     if (req.method() != http::verb::post)
         return send(httpResponse(
             http::status::bad_request, "text/html", "Expected a POST request"));
-
-    if (!dosGuard.isOk(ip))
-        return send(httpResponse(
-            http::status::service_unavailable,
-            "text/plain",
-            "Server is overloaded"));
 
     try
     {
