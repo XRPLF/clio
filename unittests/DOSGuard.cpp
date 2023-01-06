@@ -37,6 +37,7 @@ constexpr static auto JSONData = R"JSON(
             "max_fetches": 100,
             "sweep_interval": 1,
             "max_connections": 2,
+            "max_requests": 3,
             "whitelist": ["127.0.0.1"]
         }
     }
@@ -124,6 +125,30 @@ TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
 
     sweepHandler.sweep();         // pretend sweep called from timer
     EXPECT_TRUE(guard.isOk(IP));  // can fetch again
+}
+
+TEST_F(DOSGuardTest, RequestLimit)
+{
+    EXPECT_TRUE(guard.request(IP));
+    EXPECT_TRUE(guard.request(IP));
+    EXPECT_TRUE(guard.request(IP));
+    EXPECT_TRUE(guard.isOk(IP));
+    EXPECT_FALSE(guard.request(IP));
+    EXPECT_FALSE(guard.isOk(IP));
+    guard.clear();
+    EXPECT_TRUE(guard.isOk(IP));  // can request again
+}
+
+TEST_F(DOSGuardTest, RequestLimitOnTimer)
+{
+    EXPECT_TRUE(guard.request(IP));
+    EXPECT_TRUE(guard.request(IP));
+    EXPECT_TRUE(guard.request(IP));
+    EXPECT_TRUE(guard.isOk(IP));
+    EXPECT_FALSE(guard.request(IP));
+    EXPECT_FALSE(guard.isOk(IP));
+    sweepHandler.sweep();
+    EXPECT_TRUE(guard.isOk(IP));  // can request again
 }
 
 template <typename SweepHandler>
