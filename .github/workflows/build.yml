@@ -128,7 +128,7 @@ jobs:
 
   test_clio:
     name: Test Clio
-    runs-on: [self-hosted, Linux]
+    runs-on: [self-hosted, rippled-runner-dind]
     needs: build_clio
     strategy:
       fail-fast: false
