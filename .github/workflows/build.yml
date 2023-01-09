@@ -32,17 +32,19 @@ jobs:
 
     container:
       image: ${{ matrix.type.image }}
-
+      # options: --user 1001
     steps:
       - uses: actions/checkout@v3
         with:
           path: clio
+          fetch-depth: 0
 
       - name: Clone Clio packaging repo
         uses: actions/checkout@v3
         with:
           path: clio-packages
           repository: XRPLF/clio-packages
+          ref: main
 
       - name: Build
         shell: bash
