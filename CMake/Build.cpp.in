@@ -25,9 +25,7 @@
 #include <stdexcept>
 
 namespace Build {
-// clang-format off
 static constexpr char versionString[] = "@VERSION@";
-// clang-format on
 
 std::string const&
 getClioVersionString()
