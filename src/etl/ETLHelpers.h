@@ -159,7 +159,7 @@ public:
     std::optional<T>
     tryPop()
     {
-        std::unique_lock lck(m_);
+        std::scoped_lock lck(m_);
         if (queue_.empty())
             return {};
         T ret = std::move(queue_.front());

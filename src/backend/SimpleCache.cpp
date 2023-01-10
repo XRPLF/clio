@@ -37,7 +37,7 @@ SimpleCache::update(
         return;
 
     {
-        std::unique_lock lck{mtx_};
+        std::scoped_lock lck{mtx_};
         if (seq > latestSeq_)
         {
             assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
@@ -125,7 +125,7 @@ SimpleCache::setFull()
         return;
 
     full_ = true;
-    std::unique_lock lck{mtx_};
+    std::scoped_lock lck{mtx_};
     deletes_.clear();
 }
 

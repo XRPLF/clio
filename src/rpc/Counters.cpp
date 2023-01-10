@@ -30,7 +30,7 @@ Counters::initializeCounter(std::string const& method)
     if (methodInfo_.count(method) == 0)
     {
         lk.unlock();
-        std::unique_lock ulk(mutex_);
+        std::scoped_lock ulk(mutex_);
 
         // This calls the default constructor for methodInfo of the method.
         methodInfo_[method];
