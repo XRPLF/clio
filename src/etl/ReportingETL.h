@@ -174,7 +174,7 @@ private:
     void
     setLastPublish()
     {
-        std::unique_lock lck(publishTimeMtx_);
+        std::scoped_lock lck(publishTimeMtx_);
         lastPublish_ = std::chrono::system_clock::now();
     }
 
@@ -186,7 +186,7 @@ private:
     void
     setLastClose(std::chrono::time_point<ripple::NetClock> lastCloseTime)
     {
-        std::unique_lock lck(closeTimeMtx_);
+        std::scoped_lock lck(closeTimeMtx_);
         lastCloseTime_ = lastCloseTime;
     }
 

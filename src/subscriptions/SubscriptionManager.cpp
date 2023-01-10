@@ -497,7 +497,7 @@ SubscriptionManager::subscribeHelper(
     CleanupFunction&& func)
 {
     subs.subscribe(session);
-    std::unique_lock lk(cleanupMtx_);
+    std::scoped_lock lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
 }
 template <typename Key>
@@ -509,14 +509,14 @@ SubscriptionManager::subscribeHelper(
     CleanupFunction&& func)
 {
     subs.subscribe(session, k);
-    std::unique_lock lk(cleanupMtx_);
+    std::scoped_lock lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
 }
 
 void
 SubscriptionManager::cleanup(std::shared_ptr<WsBase> session)
 {
-    std::unique_lock lk(cleanupMtx_);
+    std::scoped_lock lk(cleanupMtx_);
     if (!cleanupFuncs_.contains(session))
         return;
 

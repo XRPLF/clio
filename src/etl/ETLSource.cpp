@@ -58,7 +58,7 @@ ForwardCache::freshen()
                     resp = {};
 
                 {
-                    std::unique_lock lk(mtx_);
+                    std::scoped_lock lk(mtx_);
                     latestForwarded_[command] = resp;
                 }
             });
@@ -68,7 +68,7 @@ ForwardCache::freshen()
 void
 ForwardCache::clear()
 {
-    std::unique_lock lk(mtx_);
+    std::scoped_lock lk(mtx_);
     for (auto& cacheEntry : latestForwarded_)
         latestForwarded_[cacheEntry.first] = {};
 }

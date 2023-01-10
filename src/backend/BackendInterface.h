@@ -246,7 +246,7 @@ public:
     void
     updateRange(uint32_t newMax)
     {
-        std::unique_lock lck(rngMtx_);
+        std::scoped_lock lck(rngMtx_);
         assert(!range || newMax >= range->maxSequence);
         if (!range)
             range = {newMax, newMax};
