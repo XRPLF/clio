@@ -31,8 +31,8 @@ namespace Build {
 //  and follow the format described at http://semver.org/
 //------------------------------------------------------------------------------
 // clang-format off
-char const* const versionString = "1.0.4-rc1"
-// clang-format on
+char const* const versionString = "1.0.4-rc2"
+    // clang-format on
 
     "+"
 #ifdef CLIO_BUILD
