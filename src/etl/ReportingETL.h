@@ -1,5 +1,23 @@
-#ifndef RIPPLE_APP_REPORTING_REPORTINGETL_H_INCLUDED
-#define RIPPLE_APP_REPORTING_REPORTINGETL_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <ripple/ledger/ReadView.h>
 #include <boost/algorithm/string.hpp>
@@ -8,6 +26,7 @@
 #include <boost/beast/websocket.hpp>
 #include <backend/BackendInterface.h>
 #include <etl/ETLSource.h>
+#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
 
 #include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
@@ -55,6 +74,8 @@ class SubscriptionManager;
 class ReportingETL
 {
 private:
+    clio::Logger log_{"ETL"};
+
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> loadBalancer_;
@@ -300,7 +321,7 @@ private:
     void
     run()
     {
-        BOOST_LOG_TRIVIAL(info) << "Starting reporting etl";
+        log_.info() << "Starting reporting etl";
         stopping_ = false;
 
         doWork();
@@ -337,8 +358,8 @@ public:
 
     ~ReportingETL()
     {
-        BOOST_LOG_TRIVIAL(info) << "onStop called";
-        BOOST_LOG_TRIVIAL(debug) << "Stopping Reporting ETL";
+        log_.info() << "onStop called";
+        log_.debug() << "Stopping Reporting ETL";
         stopping_ = true;
 
         if (worker_.joinable())
@@ -346,7 +367,7 @@ public:
         if (cacheDownloader_.joinable())
             cacheDownloader_.join();
 
-        BOOST_LOG_TRIVIAL(debug) << "Joined ReportingETL worker thread";
+        log_.debug() << "Joined ReportingETL worker thread";
     }
 
     boost::json::object
@@ -392,5 +413,3 @@ public:
         return now - (rippleEpochStart + closeTime);
     }
 };
-
-#endif

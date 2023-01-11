@@ -1,17 +1,42 @@
-#include <algorithm>
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include <backend/BackendFactory.h>
+#include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
+#include <config/Config.h>
 #include <etl/ReportingETL.h>
-#include <gtest/gtest.h>
+#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Fixtures.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
-#include <boost/log/trivial.hpp>
-#include <backend/BackendFactory.h>
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
+#include <gtest/gtest.h>
 
-TEST(BackendTest, Basic)
+#include <algorithm>
+
+class BackendTest : public NoLoggerFixture
+{
+};
+
+TEST_F(BackendTest, Basic)
 {
     boost::asio::io_context ioc;
     std::optional<boost::asio::io_context::work> work;
@@ -21,7 +46,7 @@ TEST(BackendTest, Basic)
     boost::asio::spawn(
         ioc, [&done, &work, &ioc](boost::asio::yield_context yield) {
             boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::warning);
+                clio::log_severity >= clio::Severity::WRN);
             std::string keyspace = "clio_test_" +
                 std::to_string(std::chrono::system_clock::now()
                                    .time_since_epoch()
@@ -41,7 +66,6 @@ TEST(BackendTest, Basic)
             std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
-                std::cout << keyspace << std::endl;
                 auto backend = Backend::make_Backend(ioc, clio::Config{config});
 
                 std::string rawHeader =
@@ -107,10 +131,8 @@ TEST(BackendTest, Basic)
                 }
 
                 {
-                    std::cout << "fetching ledger by sequence" << std::endl;
                     auto retLgr =
                         backend->fetchLedgerBySequence(lgrInfo.seq, yield);
-                    std::cout << "fetched ledger by sequence" << std::endl;
                     ASSERT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfo.seq);
                     EXPECT_EQ(
@@ -147,10 +169,8 @@ TEST(BackendTest, Basic)
                     EXPECT_EQ(seq, lgrInfoNext.seq);
                 }
                 {
-                    std::cout << "fetching ledger by sequence" << std::endl;
                     auto retLgr =
                         backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
-                    std::cout << "fetched ledger by sequence" << std::endl;
                     EXPECT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfoNext.seq);
                     EXPECT_EQ(
@@ -802,9 +822,6 @@ TEST(BackendTest, Basic)
                                        auto objs,
                                        auto accountTx,
                                        auto state) {
-                    std::cout
-                        << "writing ledger = " << std::to_string(lgrInfo.seq)
-                        << std::endl;
                     backend->startWrites();
 
                     backend->writeLedger(
@@ -978,11 +995,6 @@ TEST(BackendTest, Basic)
                         uint32_t limit = 10;
                         page = backend->fetchLedgerPage(
                             page.cursor, seq, limit, false, yield);
-                        std::cout << "fetched a page " << page.objects.size()
-                                  << std::endl;
-                        if (page.cursor)
-                            std::cout << ripple::strHex(*page.cursor)
-                                      << std::endl;
                         // if (page.cursor)
                         //    EXPECT_EQ(page.objects.size(), limit);
                         retObjs.insert(
@@ -1007,8 +1019,7 @@ TEST(BackendTest, Basic)
                             }
                         }
                         if (found != (obj.second.size() != 0))
-                            std::cout << ripple::strHex(obj.first) << std::endl;
-                        ASSERT_EQ(found, obj.second.size() != 0);
+                            ASSERT_EQ(found, obj.second.size() != 0);
                     }
                 };
 
@@ -1148,15 +1159,12 @@ TEST(BackendTest, Basic)
 
                 for (auto [seq, diff] : state)
                 {
-                    std::cout << "flatteneing" << std::endl;
                     auto flat = flatten(seq);
-                    std::cout << "flattened" << std::endl;
                     checkLedger(
                         lgrInfos[seq],
                         allTxns[seq],
                         flat,
                         flattenAccountTx(seq));
-                    std::cout << "checked" << std::endl;
                 }
             }
 
@@ -1168,11 +1176,11 @@ TEST(BackendTest, Basic)
     EXPECT_EQ(done, true);
 }
 
-TEST(Backend, cache)
+TEST_F(BackendTest, cache)
 {
     using namespace Backend;
     boost::log::core::get()->set_filter(
-        boost::log::trivial::severity >= boost::log::trivial::warning);
+        clio::log_severity >= clio::Severity::WRN);
     SimpleCache cache;
     ASSERT_FALSE(cache.isFull());
     cache.setFull();
@@ -1410,11 +1418,11 @@ TEST(Backend, cache)
     }
 }
 
-TEST(Backend, cacheBackground)
+TEST_F(BackendTest, cacheBackground)
 {
     using namespace Backend;
     boost::log::core::get()->set_filter(
-        boost::log::trivial::severity >= boost::log::trivial::warning);
+        clio::log_severity >= clio::Severity::WRN);
     SimpleCache cache;
     ASSERT_FALSE(cache.isFull());
     ASSERT_EQ(cache.size(), 0);
@@ -1814,7 +1822,7 @@ TEST(Backend, cacheBackground)
     ASSERT_EQ(idx, allObjs.size());
 }
 
-TEST(Backend, cacheIntegration)
+TEST_F(BackendTest, cacheIntegration)
 {
     boost::asio::io_context ioc;
     std::optional<boost::asio::io_context::work> work;
@@ -1824,7 +1832,7 @@ TEST(Backend, cacheIntegration)
     boost::asio::spawn(
         ioc, [&ioc, &done, &work](boost::asio::yield_context yield) {
             boost::log::core::get()->set_filter(
-                boost::log::trivial::severity >= boost::log::trivial::warning);
+                clio::log_severity >= clio::Severity::WRN);
             std::string keyspace = "clio_test_" +
                 std::to_string(std::chrono::system_clock::now()
                                    .time_since_epoch()
@@ -1844,7 +1852,6 @@ TEST(Backend, cacheIntegration)
             std::vector<boost::json::object> configs = {cassandraConfig};
             for (auto& config : configs)
             {
-                std::cout << keyspace << std::endl;
                 auto backend = Backend::make_Backend(ioc, clio::Config{config});
                 backend->cache().setFull();
 
@@ -1927,10 +1934,8 @@ TEST(Backend, cacheIntegration)
                 }
 
                 {
-                    std::cout << "fetching ledger by sequence" << std::endl;
                     auto retLgr =
                         backend->fetchLedgerBySequence(lgrInfo.seq, yield);
-                    std::cout << "fetched ledger by sequence" << std::endl;
                     ASSERT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfo.seq);
                     EXPECT_EQ(
@@ -1967,10 +1972,8 @@ TEST(Backend, cacheIntegration)
                     EXPECT_EQ(seq, lgrInfoNext.seq);
                 }
                 {
-                    std::cout << "fetching ledger by sequence" << std::endl;
                     auto retLgr =
                         backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
-                    std::cout << "fetched ledger by sequence" << std::endl;
                     EXPECT_TRUE(retLgr.has_value());
                     EXPECT_EQ(retLgr->seq, lgrInfoNext.seq);
                     EXPECT_EQ(
@@ -2226,8 +2229,6 @@ TEST(Backend, cacheIntegration)
                     return lgrInfo;
                 };
                 auto writeLedger = [&](auto lgrInfo, auto objs, auto state) {
-                    std::cout << "writing ledger = "
-                              << std::to_string(lgrInfo.seq);
                     backend->startWrites();
 
                     backend->writeLedger(
@@ -2344,11 +2345,6 @@ TEST(Backend, cacheIntegration)
                         uint32_t limit = 10;
                         page = backend->fetchLedgerPage(
                             page.cursor, seq, limit, false, yield);
-                        std::cout << "fetched a page " << page.objects.size()
-                                  << std::endl;
-                        if (page.cursor)
-                            std::cout << ripple::strHex(*page.cursor)
-                                      << std::endl;
                         // if (page.cursor)
                         //    EXPECT_EQ(page.objects.size(), limit);
                         retObjs.insert(
@@ -2372,8 +2368,7 @@ TEST(Backend, cacheIntegration)
                             }
                         }
                         if (found != (obj.second.size() != 0))
-                            std::cout << ripple::strHex(obj.first) << std::endl;
-                        ASSERT_EQ(found, obj.second.size() != 0);
+                            ASSERT_EQ(found, obj.second.size() != 0);
                     }
                 };
 
@@ -2437,11 +2432,8 @@ TEST(Backend, cacheIntegration)
 
                 for (auto [seq, diff] : state)
                 {
-                    std::cout << "flatteneing" << std::endl;
                     auto flat = flatten(seq);
-                    std::cout << "flattened" << std::endl;
                     checkLedger(lgrInfos[seq], flat);
-                    std::cout << "checked" << std::endl;
                 }
             }
 

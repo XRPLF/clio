@@ -1,17 +1,38 @@
-#ifndef RIPPLE_APP_REPORTING_CASSANDRABACKEND_H_INCLUDED
-#define RIPPLE_APP_REPORTING_CASSANDRABACKEND_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <ripple/basics/base_uint.h>
+#include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
+#include <log/Logger.h>
+
+#include <cassandra.h>
+
 #include <boost/asio.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/json.hpp>
-#include <boost/log/trivial.hpp>
+
 #include <atomic>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-#include <cassandra.h>
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -25,6 +46,7 @@ namespace Backend {
 class CassandraPreparedStatement
 {
 private:
+    clio::Logger log_{"Backend"};
     CassPrepared const* prepared_ = nullptr;
 
 public:
@@ -65,7 +87,7 @@ public:
             std::stringstream ss;
             ss << "nodestore: Error preparing statement : " << rc << ", "
                << cass_error_desc(rc) << ". query : " << query;
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+            log_.error() << ss.str();
         }
         cass_future_free(prepareFuture);
         return rc == CASS_OK;
@@ -73,7 +95,7 @@ public:
 
     ~CassandraPreparedStatement()
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__;
+        log_.trace() << "called";
         if (prepared_)
         {
             cass_prepared_free(prepared_);
@@ -86,6 +108,7 @@ class CassandraStatement
 {
     CassStatement* statement_ = nullptr;
     size_t curBindingIndex_ = 0;
+    clio::Logger log_{"Backend"};
 
 public:
     CassandraStatement(CassandraPreparedStatement const& prepared)
@@ -123,7 +146,7 @@ public:
             std::stringstream ss;
             ss << "Error binding boolean to statement: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         curBindingIndex_++;
@@ -179,7 +202,7 @@ public:
             std::stringstream ss;
             ss << "Error binding bytes to statement: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         curBindingIndex_++;
@@ -191,8 +214,8 @@ public:
         if (!statement_)
             throw std::runtime_error(
                 "CassandraStatement::bindNextUInt - statement_ is null");
-        BOOST_LOG_TRIVIAL(trace)
-            << std::to_string(curBindingIndex_) << " " << std::to_string(value);
+        log_.trace() << std::to_string(curBindingIndex_) << " "
+                     << std::to_string(value);
         CassError rc =
             cass_statement_bind_int32(statement_, curBindingIndex_, value);
         if (rc != CASS_OK)
@@ -200,7 +223,7 @@ public:
             std::stringstream ss;
             ss << "Error binding uint to statement: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         curBindingIndex_++;
@@ -225,7 +248,7 @@ public:
             std::stringstream ss;
             ss << "Error binding int to statement: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         curBindingIndex_++;
@@ -241,7 +264,7 @@ public:
             std::stringstream ss;
             ss << "Error binding int to tuple: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         rc = cass_tuple_set_int64(tuple, 1, second);
@@ -250,7 +273,7 @@ public:
             std::stringstream ss;
             ss << "Error binding int to tuple: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         rc = cass_statement_bind_tuple(statement_, curBindingIndex_, tuple);
@@ -259,7 +282,7 @@ public:
             std::stringstream ss;
             ss << "Error binding tuple to statement: " << rc << ", "
                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << __func__ << " : " << ss.str();
+            log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
         cass_tuple_free(tuple);
@@ -275,6 +298,7 @@ public:
 
 class CassandraResult
 {
+    clio::Logger log_{"Backend"};
     CassResult const* result_ = nullptr;
     CassRow const* row_ = nullptr;
     CassIterator* iter_ = nullptr;
@@ -365,7 +389,7 @@ public:
             std::stringstream msg;
             msg << "CassandraResult::getBytes - error getting value: " << rc
                 << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << msg.str();
+            log_.error() << msg.str();
             throw std::runtime_error(msg.str());
         }
         curGetIndex_++;
@@ -386,7 +410,7 @@ public:
             std::stringstream msg;
             msg << "CassandraResult::getuint256 - error getting value: " << rc
                 << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << msg.str();
+            log_.error() << msg.str();
             throw std::runtime_error(msg.str());
         }
         curGetIndex_++;
@@ -406,7 +430,7 @@ public:
             std::stringstream msg;
             msg << "CassandraResult::getInt64 - error getting value: " << rc
                 << ", " << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << msg.str();
+            log_.error() << msg.str();
             throw std::runtime_error(msg.str());
         }
         ++curGetIndex_;
@@ -490,10 +514,9 @@ public:
     {
         if (!row_)
         {
-            std::stringstream msg;
-            msg << __func__ << " - no result";
-            BOOST_LOG_TRIVIAL(error) << msg.str();
-            throw std::runtime_error(msg.str());
+            std::string msg{"No result"};
+            log_.error() << msg;
+            throw std::runtime_error(msg);
         }
         cass_bool_t val;
         CassError rc =
@@ -501,9 +524,8 @@ public:
         if (rc != CASS_OK)
         {
             std::stringstream msg;
-            msg << __func__ << " - error getting value: " << rc << ", "
-                << cass_error_desc(rc);
-            BOOST_LOG_TRIVIAL(error) << msg.str();
+            msg << "Error getting value: " << rc << ", " << cass_error_desc(rc);
+            log_.error() << msg.str();
             throw std::runtime_error(msg.str());
         }
         ++curGetIndex_;
@@ -518,6 +540,7 @@ public:
             cass_iterator_free(iter_);
     }
 };
+
 inline bool
 isTimeout(CassError rc)
 {
@@ -597,6 +620,7 @@ private:
         return ret;
     }
 
+    clio::Logger log_{"Backend"};
     std::atomic<bool> open_{false};
 
     std::unique_ptr<CassSession, void (*)(CassSession*)> session_{
@@ -751,13 +775,11 @@ public:
         statement.bindNextInt(ledgerSequence_ - 1);
         if (!executeSyncUpdate(statement))
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " Update failed for ledger "
-                << std::to_string(ledgerSequence_) << ". Returning";
+            log_.warn() << "Update failed for ledger "
+                        << std::to_string(ledgerSequence_) << ". Returning";
             return false;
         }
-        BOOST_LOG_TRIVIAL(info) << __func__ << " Committed ledger "
-                                << std::to_string(ledgerSequence_);
+        log_.info() << "Committed ledger " << std::to_string(ledgerSequence_);
         return true;
     }
 
@@ -791,22 +813,20 @@ public:
                 statement.bindNextInt(lastSync_);
             if (!executeSyncUpdate(statement))
             {
-                BOOST_LOG_TRIVIAL(warning)
-                    << __func__ << " Update failed for ledger "
-                    << std::to_string(ledgerSequence_) << ". Returning";
+                log_.warn() << "Update failed for ledger "
+                            << std::to_string(ledgerSequence_) << ". Returning";
                 return false;
             }
-            BOOST_LOG_TRIVIAL(info) << __func__ << " Committed ledger "
-                                    << std::to_string(ledgerSequence_);
+            log_.info() << "Committed ledger "
+                        << std::to_string(ledgerSequence_);
             lastSync_ = ledgerSequence_;
         }
         else
         {
-            BOOST_LOG_TRIVIAL(info)
-                << __func__ << " Skipping commit. sync interval is "
-                << std::to_string(syncInterval_) << " - last sync is "
-                << std::to_string(lastSync_) << " - ledger sequence is "
-                << std::to_string(ledgerSequence_);
+            log_.info() << "Skipping commit. sync interval is "
+                        << std::to_string(syncInterval_) << " - last sync is "
+                        << std::to_string(lastSync_) << " - ledger sequence is "
+                        << std::to_string(ledgerSequence_);
         }
         return true;
     }
@@ -826,12 +846,12 @@ public:
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__;
+        log_.trace() << "called";
         CassandraStatement statement{selectLatestLedger_};
         CassandraResult result = executeAsyncRead(statement, yield);
         if (!result.hasResult())
         {
-            BOOST_LOG_TRIVIAL(error)
+            log_.error()
                 << "CassandraBackend::fetchLatestLedgerSequence - no rows";
             return {};
         }
@@ -843,13 +863,13 @@ public:
         std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__;
+        log_.trace() << "called";
         CassandraStatement statement{selectLedgerBySeq_};
         statement.bindNextInt(sequence);
         CassandraResult result = executeAsyncRead(statement, yield);
         if (!result)
         {
-            BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+            log_.error() << "No rows";
             return {};
         }
         std::vector<unsigned char> header = result.getBytes();
@@ -869,7 +889,7 @@ public:
 
         if (!result.hasResult())
         {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
+            log_.debug() << "No rows returned";
             return {};
         }
 
@@ -916,7 +936,7 @@ public:
     std::optional<int64_t>
     getToken(void const* key, boost::asio::yield_context& yield) const
     {
-        BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+        log_.trace() << "Fetching from cassandra";
         CassandraStatement statement{getToken_};
         statement.bindNextBytes(key, 32);
 
@@ -924,7 +944,7 @@ public:
 
         if (!result)
         {
-            BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+            log_.error() << "No rows";
             return {};
         }
         int64_t token = result.getInt64();
@@ -939,14 +959,14 @@ public:
         ripple::uint256 const& hash,
         boost::asio::yield_context& yield) const override
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__;
+        log_.trace() << "called";
         CassandraStatement statement{selectTransaction_};
         statement.bindNextBytes(hash);
         CassandraResult result = executeAsyncRead(statement, yield);
 
         if (!result)
         {
-            BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+            log_.error() << "No rows";
             return {};
         }
         return {
@@ -1036,10 +1056,8 @@ public:
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!canAddRequest())
             {
-                BOOST_LOG_TRIVIAL(debug)
-                    << __func__ << " : "
-                    << "Max outstanding requests reached. "
-                    << "Waiting for other requests to finish";
+                log_.debug() << "Max outstanding requests reached. "
+                             << "Waiting for other requests to finish";
                 throttleCv_.wait(lck, [this]() { return canAddRequest(); });
             }
         }
@@ -1142,7 +1160,7 @@ public:
                 ss << "Cassandra sync write error";
                 ss << ", retrying";
                 ss << ": " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(warning) << ss.str();
+                log_.warn() << ss.str();
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } while (rc != CASS_OK);
@@ -1166,7 +1184,7 @@ public:
                 ss << "Cassandra sync update error";
                 ss << ", retrying";
                 ss << ": " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(warning) << ss.str();
+                log_.warn() << ss.str();
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } while (rc != CASS_OK);
@@ -1176,7 +1194,7 @@ public:
         CassRow const* row = cass_result_first_row(res);
         if (!row)
         {
-            BOOST_LOG_TRIVIAL(error) << "executeSyncUpdate - no rows";
+            log_.error() << "executeSyncUpdate - no rows";
             cass_result_free(res);
             return false;
         }
@@ -1185,16 +1203,14 @@ public:
         if (rc != CASS_OK)
         {
             cass_result_free(res);
-            BOOST_LOG_TRIVIAL(error)
-                << "executeSyncUpdate - error getting result " << rc << ", "
-                << cass_error_desc(rc);
+            log_.error() << "executeSyncUpdate - error getting result " << rc
+                         << ", " << cass_error_desc(rc);
             return false;
         }
         cass_result_free(res);
         if (success != cass_true && timedOut)
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__ << " Update failed, but timedOut is true";
+            log_.warn() << "Update failed, but timedOut is true";
             // if there was a timeout, the update may have succeeded in the
             // background on the first attempt. To determine if this happened,
             // we query the range from the db, making sure the range is what
@@ -1230,15 +1246,14 @@ public:
 
             if (ec)
             {
-                BOOST_LOG_TRIVIAL(error)
-                    << "Cannot read async cass_future_error_code";
+                log_.error() << "Cannot read async cass_future_error_code";
             }
             if (rc != CASS_OK)
             {
                 std::stringstream ss;
                 ss << "Cassandra executeAsyncRead error";
                 ss << ": " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
+                log_.error() << ss.str();
             }
             if (isTimeout(rc))
             {
@@ -1261,4 +1276,3 @@ public:
 };
 
 }  // namespace Backend
-#endif

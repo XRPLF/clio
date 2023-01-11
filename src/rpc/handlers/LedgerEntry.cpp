@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
@@ -29,13 +48,16 @@ doLedgerEntry(Context const& context)
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     ripple::uint256 key;
+
+    // Note: according to docs, only 1 of the below should be specified at any
+    // time. see https://xrpl.org/ledger_entry.html#ledger_entry
     if (request.contains(JS(index)))
     {
         if (!request.at(JS(index)).is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "indexNotString"};
 
         if (!key.parseHex(request.at(JS(index)).as_string().c_str()))
-            return Status{RippledError::rpcINVALID_PARAMS, "malformedIndex"};
+            return Status{ClioError::rpcMALFORMED_REQUEST};
     }
     else if (request.contains(JS(account_root)))
     {
@@ -46,7 +68,7 @@ doLedgerEntry(Context const& context)
         auto const account = ripple::parseBase58<ripple::AccountID>(
             request.at(JS(account_root)).as_string().c_str());
         if (!account || account->isZero())
-            return Status{RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+            return Status{ClioError::rpcMALFORMED_ADDRESS};
         else
             key = ripple::keylet::account(*account).key;
     }
@@ -172,8 +194,7 @@ doLedgerEntry(Context const& context)
 
                 if (!ownerID)
                 {
-                    return Status{
-                        RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+                    return Status{ClioError::rpcMALFORMED_ADDRESS};
                 }
                 else
                 {
@@ -219,8 +240,7 @@ doLedgerEntry(Context const& context)
                                                            .c_str());
 
             if (!id)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+                return Status{ClioError::rpcMALFORMED_ADDRESS};
             else
             {
                 std::uint32_t seq =
@@ -256,8 +276,7 @@ doLedgerEntry(Context const& context)
                 offer.at(JS(account)).as_string().c_str());
 
             if (!id)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedAddress"};
+                return Status{ClioError::rpcMALFORMED_ADDRESS};
             else
             {
                 std::uint32_t seq =
@@ -310,7 +329,7 @@ doLedgerEntry(Context const& context)
 
         if (!id1 || !id2)
             return Status{
-                RippledError::rpcINVALID_PARAMS, "malformedAddresses"};
+                ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"};
 
         else if (!ripple::to_currency(
                      currency, state.at(JS(currency)).as_string().c_str()))
@@ -325,24 +344,24 @@ doLedgerEntry(Context const& context)
         {
             if (!request.at(JS(ticket)).is_string())
                 return Status{
-                    RippledError::rpcINVALID_PARAMS, "ticketNotString"};
+                    ClioError::rpcMALFORMED_REQUEST, "ticketNotString"};
 
             if (!key.parseHex(request.at(JS(ticket)).as_string().c_str()))
                 return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedTicket"};
+                    ClioError::rpcMALFORMED_REQUEST, "malformedTicket"};
         }
         else if (
             !request.at(JS(ticket)).as_object().contains(JS(owner)) ||
             !request.at(JS(ticket)).as_object().at(JS(owner)).is_string())
         {
-            return Status{RippledError::rpcINVALID_PARAMS, "malformedOwner"};
+            return Status{ClioError::rpcMALFORMED_REQUEST};
         }
         else if (
             !request.at(JS(ticket)).as_object().contains(JS(ticket_seq)) ||
             !request.at(JS(ticket)).as_object().at(JS(ticket_seq)).is_int64())
         {
             return Status{
-                RippledError::rpcINVALID_PARAMS, "malformedTicketSeq"};
+                ClioError::rpcMALFORMED_REQUEST, "malformedTicketSeq"};
         }
         else
         {
@@ -354,8 +373,7 @@ doLedgerEntry(Context const& context)
                                                            .c_str());
 
             if (!id)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "malformedOwner"};
+                return Status{ClioError::rpcMALFORMED_OWNER};
             else
             {
                 std::uint32_t seq = request.at(JS(offer))

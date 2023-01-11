@@ -1,16 +1,35 @@
-#ifndef LISTENER_H
-#define LISTENER_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
 
-#include <boost/asio/dispatch.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
 
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <util/Taggable.h>
 #include <webserver/HttpSession.h>
 #include <webserver/PlainWsSession.h>
 #include <webserver/SslHttpSession.h>
 #include <webserver/SslWsSession.h>
+
+#include <boost/asio/dispatch.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
 
 #include <iostream>
 
@@ -23,6 +42,7 @@ class Detector
     using std::enable_shared_from_this<
         Detector<PlainSession, SslSession>>::shared_from_this;
 
+    clio::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
@@ -31,7 +51,7 @@ class Detector
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
-    DOSGuard& dosGuard_;
+    clio::DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
     boost::beast::flat_buffer buffer_;
@@ -46,7 +66,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        DOSGuard& dosGuard,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue)
         : ioc_(ioc)
@@ -69,8 +89,7 @@ public:
         if (ec == net::ssl::error::stream_truncated)
             return;
 
-        BOOST_LOG_TRIVIAL(info)
-            << "Detector failed: " << message << ec.message() << std::endl;
+        log_.info() << "Detector failed (" << message << "): " << ec.message();
     }
 
     // Launch the detector
@@ -137,6 +156,7 @@ void
 make_websocket_session(
     boost::asio::io_context& ioc,
     boost::beast::tcp_stream stream,
+    std::optional<std::string> const& ip,
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
@@ -144,13 +164,14 @@ make_websocket_session(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    DOSGuard& dosGuard,
+    clio::DOSGuard& dosGuard,
     RPC::Counters& counters,
     WorkQueue& queue)
 {
     std::make_shared<WsUpgrader>(
         ioc,
         std::move(stream),
+        ip,
         backend,
         subscriptions,
         balancer,
@@ -168,6 +189,7 @@ void
 make_websocket_session(
     boost::asio::io_context& ioc,
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+    std::optional<std::string> const& ip,
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
@@ -175,13 +197,14 @@ make_websocket_session(
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    DOSGuard& dosGuard,
+    clio::DOSGuard& dosGuard,
     RPC::Counters& counters,
     WorkQueue& queue)
 {
     std::make_shared<SslWsUpgrader>(
         ioc,
         std::move(stream),
+        ip,
         backend,
         subscriptions,
         balancer,
@@ -202,6 +225,7 @@ class Listener
     using std::enable_shared_from_this<
         Listener<PlainSession, SslSession>>::shared_from_this;
 
+    clio::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
@@ -210,7 +234,7 @@ class Listener
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory tagFactory_;
-    DOSGuard& dosGuard_;
+    clio::DOSGuard& dosGuard_;
     WorkQueue queue_;
     RPC::Counters counters_;
 
@@ -226,7 +250,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory tagFactory,
-        DOSGuard& dosGuard)
+        clio::DOSGuard& dosGuard)
         : ioc_(ioc)
         , ctx_(ctx)
         , acceptor_(net::make_strand(ioc))
@@ -255,9 +279,8 @@ public:
         acceptor_.bind(endpoint, ec);
         if (ec)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << "Failed to bind to endpoint: " << endpoint
-                << ". message: " << ec.message();
+            log_.error() << "Failed to bind to endpoint: " << endpoint
+                         << ". message: " << ec.message();
             throw std::runtime_error("Failed to bind to specified endpoint");
         }
 
@@ -265,9 +288,8 @@ public:
         acceptor_.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << "Failed to listen at endpoint: " << endpoint
-                << ". message: " << ec.message();
+            log_.error() << "Failed to listen at endpoint: " << endpoint
+                         << ". message: " << ec.message();
             throw std::runtime_error("Failed to listen at specified endpoint");
         }
     }
@@ -334,8 +356,9 @@ make_HttpServer(
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
-    DOSGuard& dosGuard)
+    clio::DOSGuard& dosGuard)
 {
+    static clio::Logger log{"WebServer"};
     if (!config.contains("server"))
         return nullptr;
 
@@ -348,8 +371,8 @@ make_HttpServer(
     auto const maxQueueSize =
         serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
 
-    BOOST_LOG_TRIVIAL(info) << __func__ << " Number of workers = " << numThreads
-                            << ". Max queue size = " << maxQueueSize;
+    log.info() << "Number of workers = " << numThreads
+               << ". Max queue size = " << maxQueueSize;
 
     auto server = std::make_shared<HttpServer>(
         ioc,
@@ -368,5 +391,3 @@ make_HttpServer(
     return server;
 }
 }  // namespace Server
-
-#endif  // LISTENER_H

@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/json.hpp>
@@ -50,29 +69,18 @@ doAccountInfo(Context const& context)
     if (!accountID)
         return Status{RippledError::rpcACT_MALFORMED};
 
-    assert(accountID.has_value());
-
     auto key = ripple::keylet::account(accountID.value());
-
     std::optional<std::vector<unsigned char>> dbResponse =
         context.backend->fetchLedgerObject(key.key, lgrInfo.seq, context.yield);
 
     if (!dbResponse)
-    {
         return Status{RippledError::rpcACT_NOT_FOUND};
-    }
 
     ripple::STLedgerEntry sle{
         ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
 
     if (!key.check(sle))
         return Status{RippledError::rpcDB_DESERIALIZATION};
-
-    // if (!binary)
-    //     response[JS(account_data)] = getJson(sle);
-    // else
-    //     response[JS(account_data)] = ripple::strHex(*dbResponse);
-    // response[JS(db_time)] = time;
 
     response[JS(account_data)] = toJson(sle);
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);

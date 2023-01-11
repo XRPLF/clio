@@ -1,4 +1,26 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <etl/ProbingETLSource.h>
+#include <log/Logger.h>
+
+using namespace clio;
 
 ProbingETLSource::ProbingETLSource(
     clio::Config const& config,
@@ -85,7 +107,8 @@ std::string
 ProbingETLSource::toString() const
 {
     if (!currentSrc_)
-        return "{ probing }";
+        return "{probing... ws: " + plainSrc_->toString() +
+            ", wss: " + sslSrc_->toString() + "}";
     return currentSrc_->toString();
 }
 
@@ -148,9 +171,8 @@ ProbingETLSource::make_SSLHooks() noexcept
                 {
                     plainSrc_->pause();
                     currentSrc_ = sslSrc_;
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Selected WSS as the main source: "
-                        << currentSrc_->toString();
+                    log_.info() << "Selected WSS as the main source: "
+                                << currentSrc_->toString();
                 }
                 return ETLSourceHooks::Action::PROCEED;
             },
@@ -179,9 +201,8 @@ ProbingETLSource::make_PlainHooks() noexcept
                 {
                     sslSrc_->pause();
                     currentSrc_ = plainSrc_;
-                    BOOST_LOG_TRIVIAL(info)
-                        << "Selected Plain WS as the main source: "
-                        << currentSrc_->toString();
+                    log_.info() << "Selected Plain WS as the main source: "
+                                << currentSrc_->toString();
                 }
                 return ETLSourceHooks::Action::PROCEED;
             },

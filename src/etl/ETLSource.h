@@ -1,5 +1,32 @@
-#ifndef RIPPLE_APP_REPORTING_ETLSOURCE_H_INCLUDED
-#define RIPPLE_APP_REPORTING_ETLSOURCE_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <backend/BackendInterface.h>
+#include <config/Config.h>
+#include <etl/ETLHelpers.h>
+#include <log/Logger.h>
+#include <subscriptions/SubscriptionManager.h>
+
+#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
+#include <grpcpp/grpcpp.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -7,14 +34,6 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
-
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
-#include <etl/ETLHelpers.h>
-#include <subscriptions/SubscriptionManager.h>
-
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
 
 class ETLLoadBalancer;
 class ETLSource;
@@ -32,6 +51,7 @@ class ForwardCache
 {
     using response_type = std::optional<boost::json::object>;
 
+    clio::Logger log_{"ETL"};
     mutable std::atomic_bool stopping_ = false;
     mutable std::shared_mutex mtx_;
     std::unordered_map<std::string, response_type> latestForwarded_;
@@ -127,6 +147,9 @@ public:
     {
     }
 
+protected:
+    clio::Logger log_{"ETL"};
+
 private:
     friend ForwardCache;
     friend ProbingETLSource;
@@ -161,7 +184,7 @@ class ETLSourceImpl : public ETLSource
 
     std::vector<std::pair<uint32_t, uint32_t>> validatedLedgers_;
 
-    std::string validatedLedgersRaw_;
+    std::string validatedLedgersRaw_{"N/A"};
 
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
 
@@ -218,7 +241,7 @@ protected:
     void
     run() override
     {
-        BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << toString();
+        log_.trace() << toString();
 
         auto const host = ip_;
         auto const port = wsPort_;
@@ -292,14 +315,12 @@ public:
                 stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
                     grpc::CreateCustomChannel(
                         ss.str(), grpc::InsecureChannelCredentials(), chArgs));
-                BOOST_LOG_TRIVIAL(debug)
-                    << "Made stub for remote = " << toString();
+                log_.debug() << "Made stub for remote = " << toString();
             }
             catch (std::exception const& e)
             {
-                BOOST_LOG_TRIVIAL(debug)
-                    << "Exception while creating stub = " << e.what()
-                    << " . Remote = " << toString();
+                log_.debug() << "Exception while creating stub = " << e.what()
+                             << " . Remote = " << toString();
             }
         }
     }
@@ -371,7 +392,6 @@ public:
     getValidatedRange() const
     {
         std::lock_guard lck(mtx_);
-
         return validatedLedgersRaw_;
     }
 
@@ -389,9 +409,8 @@ public:
     std::string
     toString() const override
     {
-        return "{ validated_ledger : " + getValidatedRange() +
-            " , ip : " + ip_ + " , web socket port : " + wsPort_ +
-            ", grpc port : " + grpcPort_ + " }";
+        return "{validated_ledger: " + getValidatedRange() + ", ip: " + ip_ +
+            ", web socket port: " + wsPort_ + ", grpc port: " + grpcPort_ + "}";
     }
 
     boost::json::object
@@ -592,8 +611,8 @@ public:
 class ETLLoadBalancer
 {
 private:
+    clio::Logger log_{"ETL"};
     std::vector<std::unique_ptr<ETLSource>> sources_;
-
     std::uint32_t downloadRanges_ = 16;
 
 public:
@@ -703,5 +722,3 @@ private:
     bool
     execute(Func f, uint32_t ledgerSequence);
 };
-
-#endif

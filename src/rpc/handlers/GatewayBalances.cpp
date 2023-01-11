@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
@@ -25,7 +44,7 @@ doGatewayBalances(Context const& context)
     std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
     std::set<ripple::AccountID> hotWallets;
 
-    if (request.contains("hot_wallet"))
+    if (request.contains(JS(hotwallet)))
     {
         auto getAccountID =
             [](auto const& j) -> std::optional<ripple::AccountID> {
@@ -44,7 +63,7 @@ doGatewayBalances(Context const& context)
             return {};
         };
 
-        auto const& hw = request.at("hot_wallet");
+        auto const& hw = request.at(JS(hotwallet));
         bool valid = true;
 
         // null is treated as a valid 0-sized array of hotwallet
@@ -110,7 +129,7 @@ doGatewayBalances(Context const& context)
             if (hotWallets.count(peer) > 0)
             {
                 // This is a specified hot wallet
-                hotBalances[peer].push_back(balance);
+                hotBalances[peer].push_back(-balance);
             }
             else if (balSign > 0)
             {
@@ -120,7 +139,7 @@ doGatewayBalances(Context const& context)
             else if (freeze)
             {
                 // An obligation the gateway has frozen
-                frozenBalances[peer].push_back(balance);
+                frozenBalances[peer].push_back(-balance);
             }
             else
             {

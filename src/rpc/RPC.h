@@ -1,14 +1,32 @@
-#ifndef REPORTING_RPC_H_INCLUDED
-#define REPORTING_RPC_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
 
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <backend/BackendInterface.h>
+#include <log/Logger.h>
+#include <rpc/Counters.h>
 #include <rpc/Errors.h>
+#include <util/Taggable.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-
-#include <backend/BackendInterface.h>
-#include <rpc/Counters.h>
-#include <util/Taggable.h>
 
 #include <optional>
 #include <string>
@@ -34,6 +52,7 @@ namespace RPC {
 
 struct Context : public util::Taggable
 {
+    clio::Logger perfLog_{"Performance"};
     boost::asio::yield_context& yield;
     std::string method;
     std::uint32_t version;
@@ -72,13 +91,13 @@ struct AccountCursor
     std::uint32_t hint;
 
     std::string
-    toString()
+    toString() const
     {
         return ripple::strHex(index) + "," + std::to_string(hint);
     }
 
     bool
-    isNonZero()
+    isNonZero() const
     {
         return index.isNonZero() || hint != 0;
     }
@@ -129,6 +148,7 @@ template <class T>
 void
 logDuration(Context const& ctx, T const& dur)
 {
+    static clio::Logger log{"RPC"};
     std::stringstream ss;
     ss << ctx.tag() << "Request processing duration = "
        << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
@@ -136,13 +156,11 @@ logDuration(Context const& ctx, T const& dur)
     auto seconds =
         std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     if (seconds > 10)
-        BOOST_LOG_TRIVIAL(error) << ss.str();
+        log.error() << ss.str();
     else if (seconds > 1)
-        BOOST_LOG_TRIVIAL(warning) << ss.str();
+        log.warn() << ss.str();
     else
-        BOOST_LOG_TRIVIAL(info) << ss.str();
+        log.info() << ss.str();
 }
 
 }  // namespace RPC
-
-#endif  // REPORTING_RPC_H_INCLUDED

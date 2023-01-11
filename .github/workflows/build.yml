@@ -1,9 +1,9 @@
 name: Build Clio
 on:
   push:
-    branches:  [master, release, develop, develop-next]
+    branches:  [master, release/*, develop, develop-next]
   pull_request:
-    branches:  [master, release, develop, develop-next]
+    branches:  [master, release/*, develop, develop-next]
   workflow_dispatch:
 
 jobs:
@@ -29,6 +29,7 @@ jobs:
           - suffix: rpm
             image: rippleci/clio-rpm-builder:2022-09-17
             script: rpm
+
     container:
       image: ${{ matrix.type.image }}
 
@@ -67,59 +68,63 @@ jobs:
           name: clio_tests-${{ matrix.type.suffix }}
           path: ${{ github.workspace }}/clio_tests
 
-  sign:
-    name: Sign packages
-    needs: build_clio
-    runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release' || github.ref == 'refs/heads/develop'
-    env:
-      GPG_KEY_B64: ${{ secrets.GPG_KEY_B64 }}
-      GPG_KEY_PASS_B64: ${{ secrets.GPG_KEY_PASS_B64 }}
+  build_dev:
+    name: ${{ matrix.os.name }} test
+    needs: lint
+    continue-on-error: ${{ matrix.os.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        type:
-          - suffix: deb
-            image: ubuntu:20.04
-            script: dpkg
-          # - suffix: rpm
-          #   image: centos:7
-          #   script: rpm
-    container:
-      image: ${{ matrix.type.image }}
+        os:
+          - name: ubuntu-22.04
+            experimental: true
+          - name: macos-11
+            experimental: true
+          - name: macos-12
+            experimental: false
+    runs-on: ${{ matrix.os.name }}
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Install dpkg-sig
-        run: |
-          apt-get update && apt-get install -y dpkg-sig gnupg
-      - name: Get package artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: clio_${{ matrix.type.suffix }}_packages
+    - uses: actions/checkout@v3
+      with:
+        path: clio
 
-      - name: find packages
-        run: find . -name "*.${{ matrix.type.suffix }}"
+    - name: Check Boost cache
+      id: boost
+      uses: actions/cache@v3
+      with:
+        path: boost
+        key: ${{ runner.os }}-boost
 
-      - name: Sign packages
-        uses: ./.github/actions/sign
+    - name: Build boost
+      if: steps.boost.outputs.cache-hit != 'true'
+      run: |
+        curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
+        tar zxf boost_1_77_0.tar.gz
+        mv boost_1_77_0 boost
+        cd boost
+        ./bootstrap.sh
+        if [[ ${{ matrix.os.name }} =~ mac ]];then
+          mac_flags='cxxflags="-std=c++14"'
+        fi
+        ./b2 ${mac_flags}
 
+    - name: install deps
+      run: |
+        if [[ ${{ matrix.os.name }} =~ mac ]];then
+            brew install pkg-config protobuf openssl ninja cassandra-cpp-driver bison
+        elif [[ ${{matrix.os.name }} =~ ubuntu ]];then
+            sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format
+        fi
 
-      - name: Verify the signature
-        run: |
-          set -e
-          for PKG in $(ls *.deb); do
-            gpg --verify "${PKG}"
-          done
-
-      - name: Get short SHA
-        id: shortsha
-        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
-
-      - name: Artifact signed packages
-        uses: actions/upload-artifact@v2
-        with:
-          name: signed-clio-deb-packages-${{ steps.shortsha.outputs.sha8 }}
-          path: ${{ github.workspace }}/*.deb
+    - name: Build clio
+      run: |
+        export BOOST_ROOT=$(pwd)/boost
+        cd clio
+        cmake -B build
+        if ! cmake --build build -j$(nproc); then
+          echo '# 🔥${{ matrix.os.name }}🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
+        fi
 
   test_clio:
     name: Test Clio

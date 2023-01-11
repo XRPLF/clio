@@ -17,28 +17,43 @@
 */
 //==============================================================================
 
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
+#pragma once
 
-namespace RPC {
+#include <chrono>
+#include <type_traits>
+#include <utility>
 
-Result
-doLedgerRange(Context const& context)
+namespace util {
+
+/**
+ * @brief Profiler function to measure the time consuming
+ * @param func function object, can be a lamdba or function wrapper
+ * @return return a pair if function wrapper has return value: result of
+ * function wrapper and the elapsed time(ms) during executing the given
+ * function only return the elapsed time if function wrapper does not have
+ * return value
+ */
+template <typename U = std::chrono::milliseconds, typename F>
+[[nodiscard]] auto
+timed(F&& func)
 {
-    boost::json::object response = {};
+    auto start = std::chrono::system_clock::now();
 
-    auto range = context.backend->fetchLedgerRange();
-    if (!range)
+    if constexpr (std::is_same_v<decltype(func()), void>)
     {
-        return Status{RippledError::rpcNOT_READY, "rangeNotFound"};
+        func();
+        return std::chrono::duration_cast<U>(
+                   std::chrono::system_clock::now() - start)
+            .count();
     }
     else
     {
-        response[JS(ledger_index_min)] = range->minSequence;
-        response[JS(ledger_index_max)] = range->maxSequence;
+        auto ret = func();
+        auto elapsed = std::chrono::duration_cast<U>(
+                           std::chrono::system_clock::now() - start)
+                           .count();
+        return std::make_pair(ret, elapsed);
     }
-
-    return response;
 }
 
-}  // namespace RPC
+}  // namespace util

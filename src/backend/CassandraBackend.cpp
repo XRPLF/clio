@@ -1,8 +1,32 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <backend/CassandraBackend.h>
 #include <backend/DBHelpers.h>
+#include <log/Logger.h>
+#include <util/Profiler.h>
+
 #include <functional>
 #include <unordered_map>
+
+using namespace clio;
 
 namespace Backend {
 
@@ -16,6 +40,8 @@ template <class T, class F>
 void
 processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
 {
+    static clio::Logger log{"Backend"};
+
     CassandraBackend const& backend = *requestParams.backend;
     auto rc = cass_future_error_code(fut);
     if (rc != CASS_OK)
@@ -23,11 +49,11 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
         // exponential backoff with a max wait of 2^10 ms (about 1 second)
         auto wait = std::chrono::milliseconds(
             lround(std::pow(2, std::min(10u, requestParams.currentRetries))));
-        BOOST_LOG_TRIVIAL(error)
-            << "ERROR!!! Cassandra write error: " << rc << ", "
-            << cass_error_desc(rc) << " id= " << requestParams.toString()
-            << ", current retries " << requestParams.currentRetries
-            << ", retrying in " << wait.count() << " milliseconds";
+        log.error() << "ERROR!!! Cassandra write error: " << rc << ", "
+                    << cass_error_desc(rc)
+                    << " id= " << requestParams.toString()
+                    << ", current retries " << requestParams.currentRetries
+                    << ", retrying in " << wait.count() << " milliseconds";
         ++requestParams.currentRetries;
         std::shared_ptr<boost::asio::steady_timer> timer =
             std::make_shared<boost::asio::steady_timer>(
@@ -40,11 +66,11 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
     }
     else
     {
-        BOOST_LOG_TRIVIAL(trace)
-            << __func__ << " Succesfully inserted a record";
+        log.trace() << "Succesfully inserted a record";
         requestParams.finish();
     }
 }
+
 template <class T>
 void
 processAsyncWrite(CassFuture* fut, void* cbData)
@@ -155,6 +181,7 @@ makeAndExecuteAsyncWrite(
     auto* cb = new WriteCallbackData<T, B>(b, std::move(d), bind, id);
     cb->start();
 }
+
 template <class T, class B>
 std::shared_ptr<BulkWriteCallbackData<T, B>>
 makeAndExecuteBulkAsyncWrite(
@@ -170,13 +197,14 @@ makeAndExecuteBulkAsyncWrite(
     cb->start();
     return cb;
 }
+
 void
 CassandraBackend::doWriteLedgerObject(
     std::string&& key,
     std::uint32_t const seq,
     std::string&& blob)
 {
-    BOOST_LOG_TRIVIAL(trace) << "Writing ledger object to cassandra";
+    log_.trace() << "Writing ledger object to cassandra";
     if (range)
         makeAndExecuteAsyncWrite(
             this,
@@ -204,15 +232,16 @@ CassandraBackend::doWriteLedgerObject(
         },
         "ledger_object");
 }
+
 void
 CassandraBackend::writeSuccessor(
     std::string&& key,
     std::uint32_t const seq,
     std::string&& successor)
 {
-    BOOST_LOG_TRIVIAL(trace)
-        << "Writing successor. key = " << key
-        << " seq = " << std::to_string(seq) << " successor = " << successor;
+    log_.trace() << "Writing successor. key = " << key.size() << " bytes. "
+                 << " seq = " << std::to_string(seq)
+                 << " successor = " << successor.size() << " bytes.";
     assert(key.size() != 0);
     assert(successor.size() != 0);
     makeAndExecuteAsyncWrite(
@@ -319,7 +348,7 @@ CassandraBackend::writeTransaction(
     std::string&& transaction,
     std::string&& metadata)
 {
-    BOOST_LOG_TRIVIAL(trace) << "Writing txn to cassandra";
+    log_.trace() << "Writing txn to cassandra";
     std::string hashCpy = hash;
 
     makeAndExecuteAsyncWrite(
@@ -393,13 +422,13 @@ CassandraBackend::writeNFTs(std::vector<NFTsData>&& data)
 std::optional<LedgerRange>
 CassandraBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 {
-    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+    log_.trace() << "Fetching from cassandra";
     CassandraStatement statement{selectLedgerRange_};
     CassandraResult result = executeAsyncRead(statement, yield);
 
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " - no rows";
+        log_.error() << "No rows";
         return {};
     }
     LedgerRange range;
@@ -496,43 +525,39 @@ CassandraBackend::fetchTransactions(
     std::vector<TransactionAndMetadata> results{numHashes};
     std::vector<std::shared_ptr<ReadCallbackData<result_type>>> cbs;
     cbs.reserve(numHashes);
-    auto start = std::chrono::system_clock::now();
+    auto timeDiff = util::timed([&]() {
+        for (std::size_t i = 0; i < hashes.size(); ++i)
+        {
+            CassandraStatement statement{selectTransaction_};
+            statement.bindNextBytes(hashes[i]);
 
-    for (std::size_t i = 0; i < hashes.size(); ++i)
-    {
-        CassandraStatement statement{selectTransaction_};
-        statement.bindNextBytes(hashes[i]);
+            cbs.push_back(std::make_shared<ReadCallbackData<result_type>>(
+                numOutstanding, handler, [i, &results](auto& result) {
+                    if (result.hasResult())
+                        results[i] = {
+                            result.getBytes(),
+                            result.getBytes(),
+                            result.getUInt32(),
+                            result.getUInt32()};
+                }));
 
-        cbs.push_back(std::make_shared<ReadCallbackData<result_type>>(
-            numOutstanding, handler, [i, &results](auto& result) {
-                if (result.hasResult())
-                    results[i] = {
-                        result.getBytes(),
-                        result.getBytes(),
-                        result.getUInt32(),
-                        result.getUInt32()};
-            }));
+            executeAsyncRead(statement, processAsyncRead, *cbs[i]);
+        }
+        assert(results.size() == cbs.size());
 
-        executeAsyncRead(statement, processAsyncRead, *cbs[i]);
-    }
-    assert(results.size() == cbs.size());
-
-    // suspend the coroutine until completion handler is called.
-    result.get();
-    numReadRequestsOutstanding_ -= hashes.size();
-
-    auto end = std::chrono::system_clock::now();
+        // suspend the coroutine until completion handler is called.
+        result.get();
+        numReadRequestsOutstanding_ -= hashes.size();
+    });
     for (auto const& cb : cbs)
     {
         if (cb->errored)
             throw DatabaseTimeout();
     }
 
-    BOOST_LOG_TRIVIAL(debug)
-        << "Fetched " << numHashes << " transactions from Cassandra in "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-               .count()
-        << " milliseconds";
+    log_.debug() << "Fetched " << numHashes
+                 << " transactions from Cassandra in " << timeDiff
+                 << " milliseconds";
     return results;
 }
 
@@ -550,9 +575,7 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     auto end = std::chrono::system_clock::now();
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__
-            << " - no rows . ledger = " << std::to_string(ledgerSequence);
+        log_.error() << "No rows. Ledger = " << std::to_string(ledgerSequence);
         return {};
     }
     std::vector<ripple::uint256> hashes;
@@ -560,12 +583,12 @@ CassandraBackend::fetchAllTransactionHashesInLedger(
     {
         hashes.push_back(result.getUInt256());
     } while (result.nextRow());
-    BOOST_LOG_TRIVIAL(debug)
-        << "Fetched " << hashes.size()
-        << " transaction hashes from Cassandra in "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-               .count()
-        << " milliseconds";
+    log_.debug() << "Fetched " << hashes.size()
+                 << " transaction hashes from Cassandra in "
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(
+                        end - start)
+                        .count()
+                 << " milliseconds";
     return hashes;
 }
 
@@ -613,9 +636,9 @@ CassandraBackend::fetchNFTTransactions(
     {
         statement.bindNextIntTuple(
             cursor->ledgerSequence, cursor->transactionIndex);
-        BOOST_LOG_TRIVIAL(debug) << " token_id = " << ripple::strHex(tokenID)
-                                 << " tuple = " << cursor->ledgerSequence
-                                 << " : " << cursor->transactionIndex;
+        log_.debug() << "token_id = " << ripple::strHex(tokenID)
+                     << " tuple = " << cursor->ledgerSequence
+                     << cursor->transactionIndex;
     }
     else
     {
@@ -624,9 +647,8 @@ CassandraBackend::fetchNFTTransactions(
             forward ? 0 : std::numeric_limits<std::uint32_t>::max();
 
         statement.bindNextIntTuple(placeHolder, placeHolder);
-        BOOST_LOG_TRIVIAL(debug)
-            << " token_id = " << ripple::strHex(tokenID) << " idx = " << seq
-            << " tuple = " << placeHolder;
+        log_.debug() << "token_id = " << ripple::strHex(tokenID)
+                     << " idx = " << seq << " tuple = " << placeHolder;
     }
 
     statement.bindNextUInt(limit);
@@ -635,19 +657,19 @@ CassandraBackend::fetchNFTTransactions(
 
     if (!result.hasResult())
     {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
+        log_.debug() << "No rows returned";
         return {};
     }
 
     std::vector<ripple::uint256> hashes = {};
     auto numRows = result.numRows();
-    BOOST_LOG_TRIVIAL(info) << "num_rows = " << numRows;
+    log_.info() << "num_rows = " << numRows;
     do
     {
         hashes.push_back(result.getUInt256());
         if (--numRows == 0)
         {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " setting cursor";
+            log_.debug() << "Setting cursor";
             auto const [lgrSeq, txnIdx] = result.getInt64Tuple();
             cursor = {
                 static_cast<std::uint32_t>(lgrSeq),
@@ -662,11 +684,11 @@ CassandraBackend::fetchNFTTransactions(
     } while (result.nextRow());
 
     auto txns = fetchTransactions(hashes, yield);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << " txns = " << txns.size();
+    log_.debug() << "Txns = " << txns.size();
 
     if (txns.size() == limit)
     {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " returning cursor";
+        log_.debug() << "Returning cursor";
         return {txns, cursor};
     }
 
@@ -698,9 +720,9 @@ CassandraBackend::fetchAccountTransactions(
     {
         statement.bindNextIntTuple(
             cursor->ledgerSequence, cursor->transactionIndex);
-        BOOST_LOG_TRIVIAL(debug) << " account = " << ripple::strHex(account)
-                                 << " tuple = " << cursor->ledgerSequence
-                                 << " : " << cursor->transactionIndex;
+        log_.debug() << "account = " << ripple::strHex(account)
+                     << " tuple = " << cursor->ledgerSequence
+                     << cursor->transactionIndex;
     }
     else
     {
@@ -709,9 +731,8 @@ CassandraBackend::fetchAccountTransactions(
             forward ? 0 : std::numeric_limits<std::uint32_t>::max();
 
         statement.bindNextIntTuple(placeHolder, placeHolder);
-        BOOST_LOG_TRIVIAL(debug)
-            << " account = " << ripple::strHex(account) << " idx = " << seq
-            << " tuple = " << placeHolder;
+        log_.debug() << "account = " << ripple::strHex(account)
+                     << " idx = " << seq << " tuple = " << placeHolder;
     }
     statement.bindNextUInt(limit);
 
@@ -719,19 +740,19 @@ CassandraBackend::fetchAccountTransactions(
 
     if (!result.hasResult())
     {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows returned";
+        log_.debug() << "No rows returned";
         return {};
     }
 
     std::vector<ripple::uint256> hashes = {};
     auto numRows = result.numRows();
-    BOOST_LOG_TRIVIAL(info) << "num_rows = " << std::to_string(numRows);
+    log_.info() << "num_rows = " << std::to_string(numRows);
     do
     {
         hashes.push_back(result.getUInt256());
         if (--numRows == 0)
         {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " setting cursor";
+            log_.debug() << "Setting cursor";
             auto [lgrSeq, txnIdx] = result.getInt64Tuple();
             cursor = {
                 static_cast<std::uint32_t>(lgrSeq),
@@ -746,11 +767,11 @@ CassandraBackend::fetchAccountTransactions(
     } while (result.nextRow());
 
     auto txns = fetchTransactions(hashes, yield);
-    BOOST_LOG_TRIVIAL(debug) << __func__ << "txns = " << txns.size();
+    log_.debug() << "Txns = " << txns.size();
 
     if (txns.size() == limit)
     {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " returning cursor";
+        log_.debug() << "Returning cursor";
         return {txns, cursor};
     }
 
@@ -763,7 +784,7 @@ CassandraBackend::doFetchSuccessorKey(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
-    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+    log_.trace() << "Fetching from cassandra";
     CassandraStatement statement{selectSuccessor_};
     statement.bindNextBytes(key);
     statement.bindNextInt(ledgerSequence);
@@ -772,7 +793,7 @@ CassandraBackend::doFetchSuccessorKey(
 
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
+        log_.debug() << "No rows";
         return {};
     }
     auto next = result.getUInt256();
@@ -787,7 +808,7 @@ CassandraBackend::doFetchLedgerObject(
     std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
-    BOOST_LOG_TRIVIAL(trace) << "Fetching from cassandra";
+    log_.trace() << "Fetching from cassandra";
     CassandraStatement statement{selectObject_};
     statement.bindNextBytes(key);
     statement.bindNextInt(sequence);
@@ -796,7 +817,7 @@ CassandraBackend::doFetchLedgerObject(
 
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " - no rows";
+        log_.debug() << "No rows";
         return {};
     }
     auto res = result.getBytes();
@@ -820,8 +841,7 @@ CassandraBackend::doFetchLedgerObjects(
     result_type result(handler);
 
     std::size_t const numKeys = keys.size();
-    BOOST_LOG_TRIVIAL(trace)
-        << "Fetching " << numKeys << " records from Cassandra";
+    log_.trace() << "Fetching " << numKeys << " records from Cassandra";
     std::atomic_int numOutstanding = numKeys;
     std::vector<Blob> results{numKeys};
     std::vector<std::shared_ptr<ReadCallbackData<result_type>>> cbs;
@@ -850,8 +870,7 @@ CassandraBackend::doFetchLedgerObjects(
             throw DatabaseTimeout();
     }
 
-    BOOST_LOG_TRIVIAL(trace)
-        << "Fetched " << numKeys << " records from Cassandra";
+    log_.trace() << "Fetched " << numKeys << " records from Cassandra";
     return results;
 }
 
@@ -870,9 +889,7 @@ CassandraBackend::fetchLedgerDiff(
 
     if (!result)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__
-            << " - no rows . ledger = " << std::to_string(ledgerSequence);
+        log_.error() << "No rows. Ledger = " << std::to_string(ledgerSequence);
         return {};
     }
     std::vector<ripple::uint256> keys;
@@ -880,11 +897,12 @@ CassandraBackend::fetchLedgerDiff(
     {
         keys.push_back(result.getUInt256());
     } while (result.nextRow());
-    BOOST_LOG_TRIVIAL(debug)
-        << "Fetched " << keys.size() << " diff hashes from Cassandra in "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-               .count()
-        << " milliseconds";
+    log_.debug() << "Fetched " << keys.size()
+                 << " diff hashes from Cassandra in "
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(
+                        end - start)
+                        .count()
+                 << " milliseconds";
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     std::vector<LedgerObject> results;
     std::transform(
@@ -951,12 +969,12 @@ CassandraBackend::doOnlineDelete(
                 cv));
 
             std::unique_lock<std::mutex> lck(mtx);
-            BOOST_LOG_TRIVIAL(trace) << __func__ << "Got the mutex";
+            log_.trace() << "Got the mutex";
             cv.wait(lck, [&numOutstanding, concurrentLimit]() {
                 return numOutstanding < concurrentLimit;
             });
         }
-        BOOST_LOG_TRIVIAL(debug) << __func__ << " fetched a page";
+        log_.debug() << "Fetched a page";
         cursor = curCursor;
         if (!cursor)
             break;
@@ -982,11 +1000,11 @@ CassandraBackend::open(bool readOnly)
     if (open_)
     {
         assert(false);
-        BOOST_LOG_TRIVIAL(error) << "database is already open";
+        log_.error() << "Database is already open";
         return;
     }
 
-    BOOST_LOG_TRIVIAL(info) << "Opening Cassandra Backend";
+    log_.info() << "Opening Cassandra Backend";
 
     CassCluster* cluster = cass_cluster_new();
     if (!cluster)
@@ -1002,9 +1020,9 @@ CassandraBackend::open(bool readOnly)
         if (cass_cluster_set_cloud_secure_connection_bundle(
                 cluster, secureConnectBundle.c_str()) != CASS_OK)
         {
-            BOOST_LOG_TRIVIAL(error) << "Unable to configure cloud using the "
-                                        "secure connection bundle: "
-                                     << secureConnectBundle;
+            log_.error() << "Unable to configure cloud using the "
+                            "secure connection bundle: "
+                         << secureConnectBundle;
             throw std::runtime_error(
                 "nodestore: Failed to connect using secure connection "
                 "bundle");
@@ -1057,7 +1075,7 @@ CassandraBackend::open(bool readOnly)
     auto username = config_.maybeValue<std::string>("username");
     if (username)
     {
-        BOOST_LOG_TRIVIAL(debug) << "user = " << *username;
+        log_.debug() << "user = " << *username;
         auto password = config_.value<std::string>("password");
         cass_cluster_set_credentials(
             cluster, username->c_str(), password.c_str());
@@ -1080,10 +1098,11 @@ CassandraBackend::open(bool readOnly)
         "max_read_requests_outstanding", maxReadRequestsOutstanding);
     syncInterval_ = config_.valueOr<int>("sync_interval", syncInterval_);
 
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " sync interval is " << syncInterval_
-        << ". max write requests outstanding is " << maxWriteRequestsOutstanding
-        << ". max read requests outstanding is " << maxReadRequestsOutstanding;
+    log_.info() << "Sync interval is " << syncInterval_
+                << ". max write requests outstanding is "
+                << maxWriteRequestsOutstanding
+                << ". max read requests outstanding is "
+                << maxReadRequestsOutstanding;
 
     cass_cluster_set_request_timeout(cluster, 10000);
 
@@ -1098,7 +1117,7 @@ CassandraBackend::open(bool readOnly)
         ss << "nodestore: Error setting Cassandra max core connections per "
               "host"
            << ", result: " << rc << ", " << cass_error_desc(rc);
-        BOOST_LOG_TRIVIAL(error) << ss.str();
+        log_.error() << ss.str();
         throw std::runtime_error(ss.str());
     }
 
@@ -1140,8 +1159,7 @@ CassandraBackend::open(bool readOnly)
     auto keyspace = config_.valueOr<std::string>("keyspace", "");
     if (keyspace.empty())
     {
-        BOOST_LOG_TRIVIAL(warning)
-            << "No keyspace specified. Using keyspace clio";
+        log_.warn() << "No keyspace specified. Using keyspace clio";
         keyspace = "clio";
     }
 
@@ -1149,14 +1167,13 @@ CassandraBackend::open(bool readOnly)
     auto tablePrefix = config_.valueOr<std::string>("table_prefix", "");
     if (tablePrefix.empty())
     {
-        BOOST_LOG_TRIVIAL(warning) << "Table prefix is empty";
+        log_.warn() << "Table prefix is empty";
     }
 
     cass_cluster_set_connect_timeout(cluster, 10000);
 
     auto ttl = ttl_ * 2;
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << " setting ttl to " << std::to_string(ttl);
+    log_.info() << "Setting ttl to " << std::to_string(ttl);
 
     auto executeSimpleStatement = [this](std::string const& query) {
         CassStatement* statement = makeStatement(query.c_str(), 0);
@@ -1169,7 +1186,7 @@ CassandraBackend::open(bool readOnly)
             std::stringstream ss;
             ss << "nodestore: Error executing simple statement: " << rc << ", "
                << cass_error_desc(rc) << " - " << query;
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+            log_.error() << ss.str();
             return false;
         }
         return true;
@@ -1192,7 +1209,7 @@ CassandraBackend::open(bool readOnly)
             ss << "nodestore: Error connecting Cassandra session keyspace: "
                << rc << ", " << cass_error_desc(rc)
                << ", trying to create it ourselves";
-            BOOST_LOG_TRIVIAL(error) << ss.str();
+            log_.error() << ss.str();
             // if the keyspace doesn't exist, try to create it
             session_.reset(cass_session_new());
             fut = cass_session_connect(session_.get(), cluster);
@@ -1203,7 +1220,7 @@ CassandraBackend::open(bool readOnly)
                 std::stringstream ss;
                 ss << "nodestore: Error connecting Cassandra session at all: "
                    << rc << ", " << cass_error_desc(rc);
-                BOOST_LOG_TRIVIAL(error) << ss.str();
+                log_.error() << ss.str();
             }
             else
             {
@@ -1626,6 +1643,6 @@ CassandraBackend::open(bool readOnly)
 
     open_ = true;
 
-    BOOST_LOG_TRIVIAL(info) << "Opened CassandraBackend successfully";
+    log_.info() << "Opened CassandraBackend successfully";
 }
 }  // namespace Backend

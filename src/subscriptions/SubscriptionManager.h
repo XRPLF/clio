@@ -1,10 +1,30 @@
-#ifndef SUBSCRIPTION_MANAGER_H
-#define SUBSCRIPTION_MANAGER_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <backend/BackendInterface.h>
 #include <config/Config.h>
-#include <memory>
+#include <log/Logger.h>
 #include <subscriptions/Message.h>
+
+#include <memory>
 
 class WsBase;
 
@@ -87,6 +107,7 @@ public:
 class SubscriptionManager
 {
     using session_ptr = std::shared_ptr<WsBase>;
+    clio::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
@@ -134,8 +155,8 @@ public:
         // We will eventually want to clamp this to be the number of strands,
         // since adding more threads than we have strands won't see any
         // performance benefits
-        BOOST_LOG_TRIVIAL(info) << "Starting subscription manager with "
-                                << numThreads << " workers";
+        log_.info() << "Starting subscription manager with " << numThreads
+                    << " workers";
 
         workers_.reserve(numThreads);
         for (auto i = numThreads; i > 0; --i)
@@ -256,16 +277,29 @@ private:
     void
     sendAll(std::string const& pubMsg, std::unordered_set<session_ptr>& subs);
 
+    using CleanupFunction = std::function<void(session_ptr)>;
+
+    void
+    subscribeHelper(
+        std::shared_ptr<WsBase>& session,
+        Subscription& subs,
+        CleanupFunction&& func);
+
+    template <typename Key>
+    void
+    subscribeHelper(
+        std::shared_ptr<WsBase>& session,
+        Key const& k,
+        SubscriptionMap<Key>& subs,
+        CleanupFunction&& func);
+
     /**
      * This is how we chose to cleanup subscriptions that have been closed.
      * Each time we add a subscriber, we add the opposite lambda that
      * unsubscribes that subscriber when cleanup is called with the session that
      * closed.
      */
-    using CleanupFunction = std::function<void(session_ptr)>;
     std::mutex cleanupMtx_;
     std::unordered_map<session_ptr, std::vector<CleanupFunction>>
         cleanupFuncs_ = {};
 };
-
-#endif  // SUBSCRIPTION_MANAGER_H

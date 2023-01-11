@@ -1,4 +1,24 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <etl/ETLSource.h>
+#include <log/Logger.h>
 #include <rpc/Handlers.h>
 #include <rpc/RPCHelpers.h>
 #include <webserver/HttpBase.h>
@@ -9,9 +29,15 @@
 #include <unordered_map>
 
 using namespace std;
+using namespace clio;
+
+// local to compilation unit loggers
+namespace {
+clio::Logger gPerfLog{"Performance"};
+clio::Logger gLog{"RPC"};
+}  // namespace
 
 namespace RPC {
-
 Context::Context(
     boost::asio::yield_context& yield_,
     string const& command_,
@@ -40,7 +66,7 @@ Context::Context(
     , counters(counters_)
     , clientIp(clientIp_)
 {
-    BOOST_LOG_TRIVIAL(debug) << tag() << "new Context created";
+    gPerfLog.debug() << tag() << "new Context created";
 }
 
 optional<Context>
@@ -314,9 +340,6 @@ buildResponse(Context const& ctx)
         if (!res)
             return Status{RippledError::rpcFAILED_TO_FORWARD};
 
-        if (res->contains("result") && res->at("result").is_object())
-            return res->at("result").as_object();
-
         return *res;
     }
 
@@ -325,8 +348,7 @@ buildResponse(Context const& ctx)
 
     if (ctx.backend->isTooBusy())
     {
-        BOOST_LOG_TRIVIAL(error)
-            << __func__ << " Database is too busy. Rejecting request";
+        gLog.error() << "Database is too busy. Rejecting request";
         return Status{RippledError::rpcTOO_BUSY};
     }
 
@@ -337,18 +359,16 @@ buildResponse(Context const& ctx)
 
     try
     {
-        BOOST_LOG_TRIVIAL(debug)
-            << ctx.tag() << __func__ << " start executing rpc `" << ctx.method
-            << '`';
+        gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method
+                         << '`';
         auto v = (*method)(ctx);
-        BOOST_LOG_TRIVIAL(debug)
-            << ctx.tag() << __func__ << " finish executing rpc `" << ctx.method
-            << '`';
+        gPerfLog.debug() << ctx.tag() << " finish executing rpc `" << ctx.method
+                         << '`';
 
         if (auto object = get_if<boost::json::object>(&v);
             object && not shouldSuppressValidatedFlag(ctx))
         {
-            (*object)["validated"] = true;
+            (*object)[JS(validated)] = true;
         }
 
         return v;
@@ -363,13 +383,12 @@ buildResponse(Context const& ctx)
     }
     catch (Backend::DatabaseTimeout const& t)
     {
-        BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
+        gLog.error() << "Database timeout";
         return Status{RippledError::rpcTOO_BUSY};
     }
     catch (exception const& err)
     {
-        BOOST_LOG_TRIVIAL(error)
-            << ctx.tag() << __func__ << " caught exception : " << err.what();
+        gLog.error() << ctx.tag() << " caught exception: " << err.what();
         return Status{RippledError::rpcINTERNAL};
     }
 }
