@@ -95,14 +95,21 @@ add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests
-    unittests/RPCErrors.cpp
-    unittests/Backend.cpp
-    unittests/Logger.cpp
-    unittests/Config.cpp
-    unittests/ProfilerTest.cpp
-    unittests/DOSGuard.cpp)
+  set(TEST_TARGET clio_tests)
+  add_executable(${TEST_TARGET}
+  unittests/RPCErrors.cpp
+  unittests/Backend.cpp
+  unittests/Logger.cpp
+  unittests/Config.cpp
+  unittests/ProfilerTest.cpp
+  unittests/DOSGuard.cpp)
   include(CMake/deps/gtest.cmake)
+
+  # if CODE_COVERAGE enable, add clio_test-ccov
+  if(CODE_COVERAGE)
+    include(CMake/coverage.cmake)
+    add_converage(${TEST_TARGET})
+  endif()
 endif()
 
 include(CMake/install/install.cmake)
