@@ -993,7 +993,7 @@ ETLLoadBalancer::fetchLedger(
             }
             else
             {
-                log.warn() << "Error getting ledger = " << ledgerSequence
+                log.warn() << "Could not fetch ledger " << ledgerSequence
                            << ", Reply: " << response.DebugString()
                            << ", error_code: " << status.error_code()
                            << ", error_msg: " << status.error_message()
@@ -1186,9 +1186,9 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
         numAttempts++;
         if (numAttempts % sources_.size() == 0)
         {
-            log_.error() << "Error executing function "
-                         << " - ledger sequence = " << ledgerSequence
-                         << " - Tried all sources. Sleeping and trying again";
+            log_.info() << "Ledger sequence " << ledgerSequence
+                        << " is not yet available from any configured sources. "
+                        << "Sleeping and trying again";
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }
