@@ -9,7 +9,11 @@ execute_process(COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} OUTPUT_VARIABLE REV OUT
 
 set(GIT_COMMAND branch --show-current)
 execute_process(COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} OUTPUT_VARIABLE BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
+
+if(BRANCH STREQUAL "")
+  set(BRANCH "dev")
+endif()
+
 if(NOT (BRANCH MATCHES master OR BRANCH MATCHES release/*)) # for develop and any other branch name YYYYMMDDHMS-<branch>-<git-ref>
   execute_process(COMMAND date +%Y%m%d%H%M%S OUTPUT_VARIABLE DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
   set(VERSION "${DATE}-${BRANCH}-${REV}")
