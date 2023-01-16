@@ -25,7 +25,8 @@ static constexpr char versionString[] = "@VERSION@";
 std::string const&
 getClioVersionString()
 {
-    return versionString;
+    static std::string const value = versionString;
+    return value;
 }
 
 std::string const&
