@@ -17,12 +17,7 @@
 */
 //==============================================================================
 
-#include <ripple/beast/core/SemanticVersion.h>
-#include <boost/preprocessor/stringize.hpp>
-#include <algorithm>
 #include <main/Build.h>
-#include <optional>
-#include <stdexcept>
 
 namespace Build {
 static constexpr char versionString[] = "@VERSION@";
@@ -30,14 +25,7 @@ static constexpr char versionString[] = "@VERSION@";
 std::string const&
 getClioVersionString()
 {
-    static std::string const value = [] {
-        std::string const s = versionString;
-        beast::SemanticVersion v;
-        if (!v.parse(s) || v.print() != s)
-            throw std::runtime_error(s + ": Bad server version string");
-        return s;
-    }();
-    return value;
+    return versionString;
 }
 
 std::string const&
