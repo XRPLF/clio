@@ -35,8 +35,26 @@ function(add_converage module)
         add_custom_command(TARGET ${module}-ccov POST_BUILD
             COMMENT "Open ${module}-llvm-cov/index.html in your browser to view the coverage report."
         )
+    elseif("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+        find_program(LCOV_PATH gcovr)
+        find_program(GCOV_PATH gcov)
+        IF(NOT GCOV_PATH)
+	       MESSAGE(FATAL_ERROR "gcov not found! Aborting...")
+        ENDIF() # NOT GCOV_PATH
+        message("LCOV" ${LCOV_PATH} "  " ${PROJECT_BINARY_DIR} )
+        target_compile_options(${module} PRIVATE -fprofile-arcs -ftest-coverage -fPIC )
+        target_link_options(${module} PRIVATE -fprofile-arcs -ftest-coverage -fPIC )
+
+        ADD_CUSTOM_TARGET(${module}-ccov
+            COMMAND ${module}
+            COMMAND rm -rf ${module}-llvm-cov
+            COMMAND mkdir ${module}-llvm-cov
+            COMMAND python3 -m gcovr --html --html-details -r ${CMAKE_SOURCE_DIR} --object-directory=${PROJECT_BINARY_DIR} -o ${module}-llvm-cov/index.html
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Running gcovr to produce Cobertura code coverage report."
+        )
+
     else()
-        # gcc WIP
         message(FATAL_ERROR "Complier not support yet")
     endif()
 endfunction()

@@ -53,10 +53,32 @@ jobs:
           if [ ${{ matrix.type.suffix }} == "rpm" ]; then
             source /opt/rh/devtoolset-11/enable
           fi
-          cmake -S clio-packages -B clio-packages/build -DCLIO_ROOT=$CLIO_ROOT
+          cmake -S clio-packages -B clio-packages/build -DCLIO_ROOT=$CLIO_ROOT -DCODE_COVERAGE=on
           cmake --build clio-packages/build --parallel $(nproc)
+          
           cp ./clio-packages/build/clio-prefix/src/clio-build/clio_tests .
           mv ./clio-packages/build/*.${{ matrix.type.suffix }} .
+          cd ./clio-packages/build/clio-prefix/src/clio-build
+
+      - name: Build
+        shell: bash
+        run: |
+            export CLIO_ROOT=$(realpath clio)
+            pip3 install gcovr
+            rm -rf ./coverage
+            mkdir ./coverage
+            python3 -m gcovr --html --html-details -r $CLIO_ROOT --object-directory=. -o ./coverage/clover.xml
+
+      - name: Run tests
+        timeout-minutes: 10
+        uses: ./.github/actions/test
+      
+      - name: coverage
+        uses: danhunsaker/clover-reporter-action@v0.2.17-clover
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          clover-file: ./coverage/clover.xml
+    
 
       - name: Artifact packages
         uses: actions/upload-artifact@v3
@@ -70,63 +92,6 @@ jobs:
           name: clio_tests-${{ matrix.type.suffix }}
           path: ${{ github.workspace }}/clio_tests
 
-  build_dev:
-    name: ${{ matrix.os.name }} test
-    needs: lint
-    continue-on-error: ${{ matrix.os.experimental }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - name: ubuntu-22.04
-            experimental: true
-          - name: macos-11
-            experimental: true
-          - name: macos-12
-            experimental: false
-    runs-on: ${{ matrix.os.name }}
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        path: clio
-
-    - name: Check Boost cache
-      id: boost
-      uses: actions/cache@v3
-      with:
-        path: boost
-        key: ${{ runner.os }}-boost
-
-    - name: Build boost
-      if: steps.boost.outputs.cache-hit != 'true'
-      run: |
-        curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
-        tar zxf boost_1_77_0.tar.gz
-        mv boost_1_77_0 boost
-        cd boost
-        ./bootstrap.sh
-        if [[ ${{ matrix.os.name }} =~ mac ]];then
-          mac_flags='cxxflags="-std=c++14"'
-        fi
-        ./b2 ${mac_flags}
-
-    - name: install deps
-      run: |
-        if [[ ${{ matrix.os.name }} =~ mac ]];then
-            brew install pkg-config protobuf openssl ninja cassandra-cpp-driver bison
-        elif [[ ${{matrix.os.name }} =~ ubuntu ]];then
-            sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format
-        fi
-
-    - name: Build clio
-      run: |
-        export BOOST_ROOT=$(pwd)/boost
-        cd clio
-        cmake -B build
-        if ! cmake --build build -j$(nproc); then
-          echo '# 🔥${{ matrix.os.name }}🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
-        fi
 
   test_clio:
     name: Test Clio
