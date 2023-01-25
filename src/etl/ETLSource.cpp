@@ -1159,7 +1159,11 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
 
         log_.debug() << "Attempting to execute func. ledger sequence = "
                      << ledgerSequence << " - source = " << source->toString();
-        if (source->hasLedger(ledgerSequence) || true)
+        // Originally, it was (source->hasLedger(ledgerSequence) || true)
+        /* Sometimes rippled has ledger but doesn't actually know. However,
+        but this does NOT happen in the normal case and is safe to remove
+        This || true is only needed when loading full history standalone */
+        if (source->hasLedger(ledgerSequence))
         {
             bool res = f(source);
             if (res)
