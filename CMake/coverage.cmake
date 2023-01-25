@@ -12,12 +12,12 @@ function(add_converage module)
     # set Flags
     target_compile_options(${module} PRIVATE -fprofile-instr-generate
                                              -fcoverage-mapping)
-    target_link_options(${module} PRIVATE -fprofile-instr-generate
+    target_link_options(${module} PUBLIC -fprofile-instr-generate
                         -fcoverage-mapping)
 
     target_compile_options(clio PRIVATE -fprofile-instr-generate
                                         -fcoverage-mapping)
-    target_link_options(clio PRIVATE -fprofile-instr-generate
+    target_link_options(clio PUBLIC -fprofile-instr-generate
                         -fcoverage-mapping)
 
     # llvm-cov
