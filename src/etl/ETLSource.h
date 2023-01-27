@@ -484,7 +484,7 @@ public:
 
     /// Callback
     void
-    onRead(boost::beast::error_code ec, size_t size);
+    onRead(boost::beast::error_code ec, size_t);
 
     /// Handle the most recently received message
     /// @return true if the message was handled successfully. false on error

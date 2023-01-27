@@ -27,7 +27,7 @@
 namespace RPC {
 
 Result
-doRandom(Context const& context)
+doRandom([[maybe_unused]] Context const& context)
 {
     ripple::uint256 rand;
 

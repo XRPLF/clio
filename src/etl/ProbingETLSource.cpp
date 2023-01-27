@@ -177,7 +177,7 @@ ProbingETLSource::make_SSLHooks() noexcept
                 return ETLSourceHooks::Action::PROCEED;
             },
             // onDisconnected
-            [this](auto ec) {
+            [this]([[maybe_unused]] auto ec) {
                 std::lock_guard lck(mtx_);
                 if (currentSrc_)
                 {
@@ -207,7 +207,7 @@ ProbingETLSource::make_PlainHooks() noexcept
                 return ETLSourceHooks::Action::PROCEED;
             },
             // onDisconnected
-            [this](auto ec) {
+            [this]([[maybe_unused]] auto ec) {
                 std::lock_guard lck(mtx_);
                 if (currentSrc_)
                 {

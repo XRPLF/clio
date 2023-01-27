@@ -162,9 +162,9 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     size_t waitTime = std::min(pow(2, numFailures_), 30.0);
     numFailures_++;
     timer_.expires_after(boost::asio::chrono::seconds(waitTime));
-    timer_.async_wait([this](auto ec) {
-        bool startAgain = (ec != boost::asio::error::operation_aborted);
-        log_.trace() << "async_wait : ec = " << ec;
+    timer_.async_wait([this](auto e) {
+        bool startAgain = (e != boost::asio::error::operation_aborted);
+        log_.trace() << "async_wait : ec = " << e;
         derived().close(startAgain);
     });
 }
@@ -277,8 +277,8 @@ ETLSourceImpl<Derived>::onResolve(
         boost::beast::get_lowest_layer(derived().ws())
             .expires_after(std::chrono::seconds(30));
         boost::beast::get_lowest_layer(derived().ws())
-            .async_connect(results, [this](auto ec, auto ep) {
-                derived().onConnect(ec, ep);
+            .async_connect(results, [this](auto e, auto ep) {
+                derived().onConnect(e, ep);
             });
     }
 }
@@ -320,7 +320,7 @@ PlainETLSource::onConnect(
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         // Perform the websocket handshake
         derived().ws().async_handshake(
-            host, "/", [this](auto ec) { onHandshake(ec); });
+            host, "/", [this](auto e) { onHandshake(e); });
     }
 }
 
@@ -362,7 +362,7 @@ SslETLSource::onConnect(
         // Perform the websocket handshake
         ws().next_layer().async_handshake(
             boost::asio::ssl::stream_base::client,
-            [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
+            [this, endpoint](auto e) { onSslHandshake(e, endpoint); });
     }
 }
 
@@ -380,7 +380,7 @@ SslETLSource::onSslHandshake(
         // Perform the websocket handshake
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         // Perform the websocket handshake
-        ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
+        ws().async_handshake(host, "/", [this](auto e) { onHandshake(e); });
     }
 }
 
@@ -421,7 +421,7 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
         // Send the message
         derived().ws().async_write(
             boost::asio::buffer(s),
-            [this](auto ec, size_t size) { onWrite(ec, size); });
+            [this](auto e, size_t size) { onWrite(e, size); });
     }
 }
 
@@ -429,7 +429,7 @@ template <class Derived>
 void
 ETLSourceImpl<Derived>::onWrite(
     boost::beast::error_code ec,
-    size_t bytesWritten)
+    [[maybe_unused]] size_t bytesWritten)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
@@ -440,13 +440,13 @@ ETLSourceImpl<Derived>::onWrite(
     else
     {
         derived().ws().async_read(
-            readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
+            readBuffer_, [this](auto e, size_t size) { onRead(e, size); });
     }
 }
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
+ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     // if error or error reading message, start over
@@ -462,7 +462,7 @@ ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
 
         log_.trace() << "calling async_read - " << toString();
         derived().ws().async_read(
-            readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
+            readBuffer_, [this](auto e, size_t size) { onRead(e, size); });
     }
 }
 

@@ -344,13 +344,13 @@ public:
 
             response = getDefaultWsResponse(id);
 
-            auto [v, timeDiff] =
+            auto [builtResponse, timeDiff] =
                 util::timed([&]() { return RPC::buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
             logDuration(*context, us);
 
-            if (auto status = std::get_if<RPC::Status>(&v))
+            if (auto status = std::get_if<RPC::Status>(&builtResponse))
             {
                 counters_.rpcErrored(context->method);
 
@@ -366,7 +366,8 @@ public:
             {
                 counters_.rpcComplete(context->method, us);
 
-                auto const& result = std::get<boost::json::object>(v);
+                auto const& result =
+                    std::get<boost::json::object>(builtResponse);
                 auto const isForwarded = result.contains("forwarded") &&
                     result.at("forwarded").is_bool() &&
                     result.at("forwarded").as_bool();
@@ -415,7 +416,7 @@ public:
         if (ec)
             return wsFail(ec, "read");
 
-        std::string msg{
+        std::string message{
             static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         auto ip = derived().ip();
 
@@ -449,7 +450,7 @@ public:
             {
                 return boost::json::value{nullptr};
             }
-        }(std::move(msg));
+        }(std::move(message));
 
         boost::json::object request;
         // dosGuard served request++ and check ip address

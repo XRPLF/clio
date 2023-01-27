@@ -213,6 +213,7 @@ private:
                 case ttOFFER_CREATE:
                     if (tx->isFieldPresent(sfOfferSequence))
                         return tx->getFieldU32(sfOfferSequence);
+                    [[fallthrough]];
                 default:
                     return std::nullopt;
             }

@@ -32,11 +32,11 @@ doGatewayBalances(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
+    auto ledgerInfoContext = ledgerInfoFromRequest(context);
+    if (auto status = std::get_if<Status>(&ledgerInfoContext))
         return *status;
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto lgrInfo = std::get<ripple::LedgerInfo>(ledgerInfoContext);
 
     std::map<ripple::Currency, ripple::STAmount> sums;
     std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances;
@@ -171,9 +171,9 @@ doGatewayBalances(Context const& context)
     if (!sums.empty())
     {
         boost::json::object obj;
-        for (auto const& [k, v] : sums)
+        for (auto const& [k, ldgrInfoCtxt] : sums)
         {
-            obj[ripple::to_string(k)] = v.getText();
+            obj[ripple::to_string(k)] = ldgrInfoCtxt.getText();
         }
         response[JS(obligations)] = std::move(obj);
     }

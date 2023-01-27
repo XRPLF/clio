@@ -56,13 +56,13 @@ doLedger(Context const& context)
         expand = params.at(JS(expand)).as_bool();
     }
 
-    bool diff = false;
+    bool wantDiff = false;
     if (params.contains("diff"))
     {
         if (!params.at("diff").is_bool())
             return Status{RippledError::rpcINVALID_PARAMS, "diffFlagNotBool"};
 
-        diff = params.at("diff").as_bool();
+        wantDiff = params.at("diff").as_bool();
     }
 
     if (params.contains(JS(full)))
@@ -149,7 +149,7 @@ doLedger(Context const& context)
         }
     }
 
-    if (diff)
+    if (wantDiff)
     {
         header["diff"] = boost::json::value(boost::json::array_kind);
         boost::json::array& jsonDiff = header.at("diff").as_array();

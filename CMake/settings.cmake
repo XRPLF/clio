@@ -3,4 +3,10 @@ target_compile_options(clio
          -Werror 
          -Wno-narrowing
          -Wno-deprecated-declarations 
-         -Wno-dangling-else)
+         -Wno-dangling-else
+         -Wextra 
+         -Wshadow
+         -Wnon-virtual-dtor
+         -pedantic
+         -Wno-error=unused-parameter
+         )

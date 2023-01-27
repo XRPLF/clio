@@ -89,7 +89,7 @@ doBookOffers(Context const& context)
 
     auto start = std::chrono::system_clock::now();
     auto [offers, retMarker] = context.backend->fetchBookOffers(
-        bookBase, lgrInfo.seq, limit, marker, context.yield);
+        bookBase, lgrInfo.seq, limit, context.yield);
     auto end = std::chrono::system_clock::now();
 
     gLog.warn() << "Time loading books: "

@@ -23,7 +23,6 @@
 #include <backend/DBHelpers.h>
 #include <backend/SimpleCache.h>
 #include <backend/Types.h>
-#include <config/Config.h>
 #include <log/Logger.h>
 
 #include <boost/asio/spawn.hpp>
@@ -182,7 +181,7 @@ protected:
      */
 
 public:
-    BackendInterface(clio::Config const& config)
+    BackendInterface()
     {
     }
     virtual ~BackendInterface()
@@ -479,7 +478,6 @@ public:
         ripple::uint256 const& book,
         std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
-        std::optional<ripple::uint256> const& cursor,
         boost::asio::yield_context& yield) const;
 
     /**

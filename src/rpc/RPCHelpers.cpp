@@ -103,10 +103,10 @@ getRequiredUInt(boost::json::object const& request, std::string const& field)
 
 std::optional<AccountCursor>
 parseAccountCursor(
-    BackendInterface const& backend,
-    std::uint32_t seq,
+    [[maybe_unused]] BackendInterface const& backend,
+    [[maybe_unused]] std::uint32_t seq,
     std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield)
+    [[maybe_unused]] boost::asio::yield_context& yield)
 {
     ripple::uint256 cursorIndex = beast::zero;
     std::uint64_t startHint = 0;
@@ -672,7 +672,7 @@ traverseOwnedNodes(
     std::uint32_t const startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
+    [[maybe_unused]] std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
@@ -699,10 +699,10 @@ traverseOwnedNodes(
         if (!hintDir)
             return Status(ripple::rpcINVALID_PARAMS, "Invalid marker");
 
-        ripple::SerialIter it{hintDir->data(), hintDir->size()};
-        ripple::SLE sle{it, hintIndex.key};
+        ripple::SerialIter itHint{hintDir->data(), hintDir->size()};
+        ripple::SLE hintSle{itHint, hintIndex.key};
 
-        if (auto const& indexes = sle.getFieldV256(ripple::sfIndexes);
+        if (auto const& indexes = hintSle.getFieldV256(ripple::sfIndexes);
             std::find(std::begin(indexes), std::end(indexes), hexMarker) ==
             std::end(indexes))
         {
@@ -721,10 +721,10 @@ traverseOwnedNodes(
                 return Status(
                     ripple::rpcINVALID_PARAMS, "Owner directory not found");
 
-            ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
-            ripple::SLE sle{it, currentIndex.key};
+            ripple::SerialIter itOwner{ownerDir->data(), ownerDir->size()};
+            ripple::SLE sleOwner{itOwner, currentIndex.key};
 
-            for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
+            for (auto const& key : sleOwner.getFieldV256(ripple::sfIndexes))
             {
                 if (!found)
                 {
@@ -742,7 +742,7 @@ traverseOwnedNodes(
                 }
             }
 
-            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
+            auto const uNodeNext = sleOwner.getFieldU64(ripple::sfIndexNext);
 
             if (limit == 0)
             {

@@ -724,8 +724,8 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                         });
 
                     log_.info() << "Finished online delete";
-                    auto rng = backend_->fetchLedgerRange();
-                    minSequence = rng->minSequence;
+                    auto rg = backend_->fetchLedgerRange();
+                    minSequence = rg->minSequence;
                     deleting_ = false;
                 });
             }
@@ -826,8 +826,8 @@ ReportingETL::monitor()
                  << "Starting monitor loop. sequence = " << nextSequence;
     while (true)
     {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
-            rng && rng->maxSequence >= nextSequence)
+        if (auto rg = backend_->hardFetchLedgerRangeNoThrow();
+            rg && rg->maxSequence >= nextSequence)
         {
             publishLedger(nextSequence, {});
             ++nextSequence;
@@ -908,7 +908,7 @@ ReportingETL::loadCacheFromClioPeer(
         std::optional<boost::json::value> marker;
 
         log_.trace() << "Sending request";
-        auto getRequest = [&](auto marker) {
+        auto getRequest = [&]([[maybe_unused]] auto _) {
             boost::json::object request = {
                 {"command", "ledger_data"},
                 {"ledger_index", ledgerIndex},
@@ -1153,10 +1153,10 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
                 [this, seq, start, end, numRemaining, startTime, markers](
                     boost::asio::yield_context yield) {
                     std::optional<ripple::uint256> cursor = start;
-                    std::string cursorStr = cursor.has_value()
+                    std::string crsrStr = cursor.has_value()
                         ? ripple::strHex(cursor.value())
                         : ripple::strHex(Backend::firstKey);
-                    log_.debug() << "Starting a cursor: " << cursorStr
+                    log_.debug() << "Starting a cursor: " << crsrStr
                                  << " markers = " << *markers;
 
                     while (!stopping_)
@@ -1175,7 +1175,7 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
                             << "Loading cache. cache size = "
                             << backend_->cache().size() << " - cursor = "
                             << ripple::strHex(res.cursor.value())
-                            << " start = " << cursorStr
+                            << " start = " << crsrStr
                             << " markers = " << *markers;
 
                         cursor = std::move(res.cursor);
@@ -1196,7 +1196,7 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
                     else
                     {
                         log_.info() << "Finished a cursor. num remaining = "
-                                    << *numRemaining << " start = " << cursorStr
+                                    << *numRemaining << " start = " << crsrStr
                                     << " markers = " << *markers;
                     }
                 });
@@ -1221,8 +1221,8 @@ ReportingETL::monitorReadOnly()
     latestSequence++;
     while (true)
     {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
-            rng && rng->maxSequence >= latestSequence)
+        if (auto rg = backend_->hardFetchLedgerRangeNoThrow();
+            rg && rg->maxSequence >= latestSequence)
         {
             publishLedger(latestSequence, {});
             latestSequence = latestSequence + 1;

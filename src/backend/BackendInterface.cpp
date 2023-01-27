@@ -173,7 +173,6 @@ BackendInterface::fetchBookOffers(
     ripple::uint256 const& book,
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
-    std::optional<ripple::uint256> const& cursor,
     boost::asio::yield_context& yield) const
 {
     // TODO try to speed this up. This can take a few seconds. The goal is

@@ -260,14 +260,13 @@ validateAndGetBooks(
                     return status;
 
             auto getOrderBook = [&snapshot, &backend, &rng, &takerID](
-                                    auto book,
-                                    boost::asio::yield_context& yield) {
-                auto bookBase = getBookBase(book);
+                                    auto bk, boost::asio::yield_context& yld) {
+                auto bookBase = getBookBase(bk);
                 auto [offers, retMarker] = backend->fetchBookOffers(
-                    bookBase, rng->maxSequence, 200, {}, yield);
+                    bookBase, rng->maxSequence, 200, yld);
 
                 auto orderBook = postProcessOrderBook(
-                    offers, book, takerID, *backend, rng->maxSequence, yield);
+                    offers, bk, takerID, *backend, rng->maxSequence, yld);
                 std::copy(
                     orderBook.begin(),
                     orderBook.end(),

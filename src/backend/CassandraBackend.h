@@ -574,16 +574,16 @@ cass_future_error_code(CassFuture* fut, CompletionToken&& token)
         }
     };
 
-    auto resume = [](CassFuture* fut, void* data) -> void {
+    auto resume = [](CassFuture* ftr, void* data) -> void {
         HandlerWrapper* hw = (HandlerWrapper*)data;
 
         boost::asio::post(
             boost::asio::get_associated_executor(hw->handler),
-            [fut, hw, handler = std::move(hw->handler)]() mutable {
+            [ftr, hw, handler = std::move(hw->handler)]() mutable {
                 delete hw;
 
                 handler(
-                    boost::system::error_code{}, cass_future_error_code(fut));
+                    boost::system::error_code{}, cass_future_error_code(ftr));
             });
     };
 
@@ -703,10 +703,10 @@ private:
 
 public:
     CassandraBackend(
-        boost::asio::io_context& ioc,
+        [[maybe_unused]] boost::asio::io_context& ioc,
         clio::Config const& config,
         uint32_t ttl)
-        : BackendInterface(config), config_(config), ttl_(ttl)
+        : config_(config), ttl_(ttl)
     {
         work_.emplace(ioContext_);
         ioThread_ = std::thread([this]() { ioContext_.run(); });

@@ -174,8 +174,8 @@ SubscriptionManager::subLedger(
     boost::asio::yield_context& yield,
     std::shared_ptr<WsBase> session)
 {
-    subscribeHelper(session, ledgerSubscribers_, [this](session_ptr session) {
-        unsubLedger(session);
+    subscribeHelper(session, ledgerSubscribers_, [this](session_ptr sesh) {
+        unsubLedger(sesh);
     });
 
     auto ledgerRange = backend_->fetchLedgerRange();
@@ -206,8 +206,8 @@ SubscriptionManager::unsubLedger(std::shared_ptr<WsBase> session)
 void
 SubscriptionManager::subTransactions(std::shared_ptr<WsBase> session)
 {
-    subscribeHelper(session, txSubscribers_, [this](session_ptr session) {
-        unsubTransactions(session);
+    subscribeHelper(session, txSubscribers_, [this](session_ptr sesh) {
+        unsubTransactions(sesh);
     });
 }
 
@@ -226,9 +226,7 @@ SubscriptionManager::subAccount(
         session,
         account,
         accountSubscribers_,
-        [this, account](session_ptr session) {
-            unsubAccount(account, session);
-        });
+        [this, account](session_ptr sesh) { unsubAccount(account, sesh); });
 }
 
 void
@@ -245,8 +243,8 @@ SubscriptionManager::subBook(
     std::shared_ptr<WsBase> session)
 {
     subscribeHelper(
-        session, book, bookSubscribers_, [this, book](session_ptr session) {
-            unsubBook(book, session);
+        session, book, bookSubscribers_, [this, book](session_ptr sesh) {
+            unsubBook(book, sesh);
         });
 }
 
@@ -261,10 +259,9 @@ SubscriptionManager::unsubBook(
 void
 SubscriptionManager::subBookChanges(std::shared_ptr<WsBase> session)
 {
-    subscribeHelper(
-        session, bookChangesSubscribers_, [this](session_ptr session) {
-            unsubBookChanges(session);
-        });
+    subscribeHelper(session, bookChangesSubscribers_, [this](session_ptr sesh) {
+        unsubBookChanges(sesh);
+    });
 }
 
 void
@@ -434,16 +431,16 @@ SubscriptionManager::subProposedAccount(
         session,
         account,
         accountProposedSubscribers_,
-        [this, account](session_ptr session) {
-            unsubProposedAccount(account, session);
+        [this, account](session_ptr sesh) {
+            unsubProposedAccount(account, sesh);
         });
 }
 
 void
 SubscriptionManager::subManifest(std::shared_ptr<WsBase> session)
 {
-    subscribeHelper(session, manifestSubscribers_, [this](session_ptr session) {
-        unsubManifest(session);
+    subscribeHelper(session, manifestSubscribers_, [this](session_ptr sesh) {
+        unsubManifest(sesh);
     });
 }
 
@@ -456,10 +453,9 @@ SubscriptionManager::unsubManifest(std::shared_ptr<WsBase> session)
 void
 SubscriptionManager::subValidation(std::shared_ptr<WsBase> session)
 {
-    subscribeHelper(
-        session, validationsSubscribers_, [this](session_ptr session) {
-            unsubValidation(session);
-        });
+    subscribeHelper(session, validationsSubscribers_, [this](session_ptr sesh) {
+        unsubValidation(sesh);
+    });
 }
 
 void
@@ -479,10 +475,9 @@ SubscriptionManager::unsubProposedAccount(
 void
 SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase> session)
 {
-    subscribeHelper(
-        session, txProposedSubscribers_, [this](session_ptr session) {
-            unsubProposedTransactions(session);
-        });
+    subscribeHelper(session, txProposedSubscribers_, [this](session_ptr sesh) {
+        unsubProposedTransactions(sesh);
+    });
 }
 
 void

@@ -74,25 +74,24 @@ struct Status
     std::optional<boost::json::object> extraInfo;
 
     Status() = default;
-    /* implicit */ Status(CombinedError code) : code(code){};
-    Status(CombinedError code, boost::json::object&& extraInfo)
-        : code(code), extraInfo(std::move(extraInfo)){};
+    /* implicit */ Status(CombinedError cde) : code(cde){};
+    Status(CombinedError cde, boost::json::object&& xtraInf)
+        : code(cde), extraInfo(std::move(xtraInf)){};
 
     // HACK. Some rippled handlers explicitly specify errors.
     // This means that we have to be able to duplicate this
     // functionality.
-    explicit Status(std::string const& message)
-        : code(ripple::rpcUNKNOWN), message(message)
+    explicit Status(std::string const& msg)
+        : code(ripple::rpcUNKNOWN), message(msg)
     {
     }
 
-    Status(CombinedError code, std::string message)
-        : code(code), message(message)
+    Status(CombinedError cde, std::string msg) : code(cde), message(msg)
     {
     }
 
-    Status(CombinedError code, std::string error, std::string message)
-        : code(code), error(error), message(message)
+    Status(CombinedError cde, std::string err, std::string msg)
+        : code(cde), error(err), message(msg)
     {
     }
 
@@ -151,8 +150,8 @@ enum WarningCode {
 struct WarningInfo
 {
     constexpr WarningInfo() = default;
-    constexpr WarningInfo(WarningCode code, char const* message)
-        : code(code), message(message)
+    constexpr WarningInfo(WarningCode cde, char const* msg)
+        : code(cde), message(msg)
     {
     }
 
@@ -168,7 +167,7 @@ class InvalidParamsError : public std::exception
     std::string msg;
 
 public:
-    explicit InvalidParamsError(std::string const& msg) : msg(msg)
+    explicit InvalidParamsError(std::string const& m) : msg(m)
     {
     }
 

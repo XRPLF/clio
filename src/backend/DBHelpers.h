@@ -41,12 +41,12 @@ struct AccountTransactionsData
 
     AccountTransactionsData(
         ripple::TxMeta& meta,
-        ripple::uint256 const& txHash,
-        beast::Journal& j)
+        ripple::uint256 const& txHsh,
+        [[maybe_unused]] beast::Journal& j)
         : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
-        , txHash(txHash)
+        , txHash(txHsh)
     {
     }
 
@@ -63,13 +63,13 @@ struct NFTTransactionsData
     ripple::uint256 txHash;
 
     NFTTransactionsData(
-        ripple::uint256 const& tokenID,
+        ripple::uint256 const& tknID,
         ripple::TxMeta const& meta,
-        ripple::uint256 const& txHash)
-        : tokenID(tokenID)
+        ripple::uint256 const& txHsh)
+        : tokenID(tknID)
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
-        , txHash(txHash)
+        , txHash(txHsh)
     {
     }
 };
@@ -91,15 +91,15 @@ struct NFTsData
     bool isBurned;
 
     NFTsData(
-        ripple::uint256 const& tokenID,
-        ripple::AccountID const& owner,
+        ripple::uint256 const& tknID,
+        ripple::AccountID const& ownr,
         ripple::TxMeta const& meta,
-        bool isBurned)
-        : tokenID(tokenID)
+        bool isBurn)
+        : tokenID(tknID)
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
-        , owner(owner)
-        , isBurned(isBurned)
+        , owner(ownr)
+        , isBurned(isBurn)
     {
     }
 };
@@ -193,9 +193,9 @@ deserializeHeader(ripple::Slice data)
 }
 
 inline std::string
-uint256ToString(ripple::uint256 const& uint)
+uint256ToString(ripple::uint256 const& u)
 {
-    return {reinterpret_cast<const char*>(uint.data()), uint.size()};
+    return {reinterpret_cast<const char*>(u.data()), u.size()};
 }
 
 static constexpr std::uint32_t rippleEpochStart = 946684800;
