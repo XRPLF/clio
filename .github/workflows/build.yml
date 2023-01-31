@@ -1,9 +1,9 @@
 name: Build Clio
 on:
   push:
-    branches:  [master, release/*, develop, develop-next]
+    branches: [master, release/*, develop, develop-next]
   pull_request:
-    branches:  [master, release/*, develop, develop-next]
+    branches: [master, release/*, develop, develop-next]
   workflow_dispatch:
 
 jobs:
@@ -70,59 +70,48 @@ jobs:
           path: ${{ github.workspace }}/clio_tests
 
   build_dev:
-    name: ${{ matrix.os.name }} test
+    name: Build on Mac/Clang14 and run tests
     needs: lint
-    continue-on-error: ${{ matrix.os.experimental }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - name: macos-11
-            experimental: true
-          - name: macos-12
-            experimental: false
-    runs-on: ${{ matrix.os.name }}
+    continue-on-error: false
+    runs-on: macos-12
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        path: clio
+      - uses: actions/checkout@v3
+        with:
+          path: clio
 
-    - name: Check Boost cache
-      id: boost
-      uses: actions/cache@v3
-      with:
-        path: boost
-        key: ${{ runner.os }}-boost
+      - name: Check Boost cache
+        id: boost
+        uses: actions/cache@v3
+        with:
+          path: boost
+          key: ${{ runner.os }}-boost
 
-    - name: Build boost
-      if: steps.boost.outputs.cache-hit != 'true'
-      run: |
-        curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
-        tar zxf boost_1_77_0.tar.gz
-        mv boost_1_77_0 boost
-        cd boost
-        ./bootstrap.sh
-        if [[ ${{ matrix.os.name }} =~ mac ]];then
-          mac_flags='cxxflags="-std=c++14"'
-        fi
-        ./b2 ${mac_flags}
-    - name: install deps
-      run: |
-        if [[ ${{ matrix.os.name }} =~ mac ]];then
-            brew install pkg-config protobuf openssl ninja cassandra-cpp-driver bison
-        elif [[ ${{matrix.os.name }} =~ ubuntu ]];then
-            sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format
-        fi
-    - name: Build clio
-      run: |
-        export BOOST_ROOT=$(pwd)/boost
-        cd clio
-        cmake -B build
-        if ! cmake --build build -j$(nproc); then
-          echo '# 🔥${{ matrix.os.name }}🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
-        fi
-        
+      - name: Build boost
+        if: steps.boost.outputs.cache-hit != 'true'
+        run: |
+          curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
+          tar zxf boost_1_77_0.tar.gz
+          mv boost_1_77_0 boost
+          cd boost
+          ./bootstrap.sh
+          ./b2 cxxflags="-std=c++14"
+      - name: install deps
+        run: |
+          brew install pkg-config protobuf openssl ninja cassandra-cpp-driver bison
+      - name: Build clio
+        run: |
+          export BOOST_ROOT=$(pwd)/boost
+          cd clio
+          cmake -B build
+          if ! cmake --build build -j$(nproc); then
+            echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Run Test
+        run: |
+          cd clio/build
+          ./clio_tests --gtest_filter="-Backend*"
+
   test_clio:
     name: Test Clio
     runs-on: [self-hosted, Linux]
@@ -150,57 +139,57 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        path: clio
+      - uses: actions/checkout@v3
+        with:
+          path: clio
 
-    - name: Check Boost cache
-      id: boost
-      uses: actions/cache@v3
-      with:
-        path: boost
-        key: ${{ runner.os }}-boost
+      - name: Check Boost cache
+        id: boost
+        uses: actions/cache@v3
+        with:
+          path: boost
+          key: ${{ runner.os }}-boost
 
-    - name: Build boost
-      if: steps.boost.outputs.cache-hit != 'true'
-      run: |
-        curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
-        tar zxf boost_1_77_0.tar.gz
-        mv boost_1_77_0 boost
-        cd boost
-        ./bootstrap.sh
-        ./b2
+      - name: Build boost
+        if: steps.boost.outputs.cache-hit != 'true'
+        run: |
+          curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
+          tar zxf boost_1_77_0.tar.gz
+          mv boost_1_77_0 boost
+          cd boost
+          ./bootstrap.sh
+          ./b2
 
-    - name: install deps
-      run: |
+      - name: install deps
+        run: |
           sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format gcovr
 
-    - name: Build clio
-      run: |
-        export BOOST_ROOT=$(pwd)/boost
-        cd clio
-        cmake -B build -DCODE_COVERAGE=on -DTEST_PARAMETER='--gtest_filter="-Backend*"'
-        if ! cmake --build build -j$(nproc); then
-          echo '# 🔥Ubuntu build🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
-        fi
-        cd build
-        make clio_tests-ccov
+      - name: Build clio
+        run: |
+          export BOOST_ROOT=$(pwd)/boost
+          cd clio
+          cmake -B build -DCODE_COVERAGE=on -DTEST_PARAMETER='--gtest_filter="-Backend*"'
+          if ! cmake --build build -j$(nproc); then
+            echo '# 🔥Ubuntu build🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
+          fi
+          cd build
+          make clio_tests-ccov
 
-    - name: Code Coverage Summary Report
-      uses: irongut/CodeCoverageSummary@v1.2.0
-      with:
-        filename: clio/build/clio_tests-gcc-cov/out.xml
-        badge: true
-        output: both
-        format: markdown
+      - name: Code Coverage Summary Report
+        uses: irongut/CodeCoverageSummary@v1.2.0
+        with:
+          filename: clio/build/clio_tests-gcc-cov/out.xml
+          badge: true
+          output: both
+          format: markdown
 
-    - name: Save PR number and ccov report
-      run: |
+      - name: Save PR number and ccov report
+        run: |
           mkdir -p ./UnitTestCoverage
           echo ${{ github.event.number }} > ./UnitTestCoverage/NR
           cp clio/build/clio_tests-gcc-cov/report.html ./UnitTestCoverage/report.html
           cp code-coverage-results.md ./UnitTestCoverage/out.md
-    - uses: actions/upload-artifact@v2
-      with:
-        name: UnitTestCoverage
-        path: UnitTestCoverage/
+      - uses: actions/upload-artifact@v2
+        with:
+          name: UnitTestCoverage
+          path: UnitTestCoverage/
