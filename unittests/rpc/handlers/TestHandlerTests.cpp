@@ -75,8 +75,8 @@ TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
         "limit": 10
     })");
 
-    auto const output = handler.process(
-        input);  // validation succeeds but handler itself returns error
+    // validation succeeds but handler itself returns error
+    auto const output = handler.process(input);
     ASSERT_FALSE(output);
 
     auto const err = RPC::makeError(output.error());

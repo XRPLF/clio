@@ -63,6 +63,7 @@ struct RpcSpec final
     [[nodiscard]] MaybeError
     validate(boost::json::value const& value) const;
 
+private:
     std::vector<FieldSpec> fields_;
 };
 
