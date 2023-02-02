@@ -38,7 +38,7 @@ struct FieldSpec final
      *
      * @tparam Requirements The types of requirements @ref Requirement
      * @param key The key in a JSON object that the field validates
-     * @param requirements The requirements, each of them have to fullfil
+     * @param requirements The requirements, each of them have to fulfil
      * the @ref Requirement concept
      */
     template <Requirement... Requirements>

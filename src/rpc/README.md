@@ -20,7 +20,7 @@ See `common` subfolder.
 ## Implementing a (NextGen) handler
 See `unittests/rpc` for exmaples.
 
-Handlers need to fullfil the requirements specified by the **`Handler`** concept (see `rpc/common/Concepts.h`):
+Handlers need to fulfil the requirements specified by the **`Handler`** concept (see `rpc/common/Concepts.h`):
 - Expose types: 
 	* `Input` - The POD struct which acts as input for the handler
 	* `Output` - The POD struct which acts as output of a valid handler invocation

@@ -41,7 +41,7 @@ public:
      * @tparam HandlerType The real type of wrapped handler class
      * @tparam ProcessingStrategy A strategy that implements how processing of
      * JSON is to be done
-     * @param handler The handler to wrap. Required to fullfil the @ref Handler
+     * @param handler The handler to wrap. Required to fulfil the @ref Handler
      * concept.
      */
     template <
