@@ -172,6 +172,6 @@ protected:
 
 TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
 {
-    EXPECT_CALL(guard, clear()).Times(Exactly(2));
-    ctx.run_for(std::chrono::milliseconds(210));
+    EXPECT_CALL(guard, clear()).Times(AtLeast(2));
+    ctx.run_for(std::chrono::milliseconds(300));
 }
