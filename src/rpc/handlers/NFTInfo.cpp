@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
 #include <boost/json.hpp>
@@ -45,7 +64,8 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
 
         if (!blob || blob->size() == 0)
             return Status{
-                Error::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
+                RippledError::rpcINTERNAL,
+                "Cannot find NFTokenPage for this NFT"};
 
         sle = ripple::STLedgerEntry(
             ripple::SerialIter{blob->data(), blob->size()}, nextKey);
@@ -57,7 +77,7 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
 
     if (!sle)
         return Status{
-            Error::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
+            RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
 
     auto const nfts = sle->getFieldArray(ripple::sfNFTokens);
     auto const nft = std::find_if(
@@ -70,7 +90,7 @@ getURI(Backend::NFT const& dbResponse, Context const& context)
 
     if (nft == nfts.end())
         return Status{
-            Error::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
+            RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
 
     ripple::Blob const uriField = nft->getFieldVL(ripple::sfURI);
 
@@ -89,29 +109,20 @@ doNFTInfo(Context const& context)
     auto request = context.params;
     boost::json::object response = {};
 
-    if (!request.contains("nft_id"))
-        return Status{Error::rpcINVALID_PARAMS, "Missing nft_id"};
-
-    auto const& jsonTokenID = request.at("nft_id");
-    if (!jsonTokenID.is_string())
-        return Status{Error::rpcINVALID_PARAMS, "nft_id is not a string"};
-
-    ripple::uint256 tokenID;
-    if (!tokenID.parseHex(jsonTokenID.as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "Malformed nft_id"};
-
-    // We only need to fetch the ledger header because the ledger hash is
-    // supposed to be included in the response. The ledger sequence is specified
-    // in the request
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
+    auto const maybeTokenID = getNFTID(request);
+    if (auto const status = std::get_if<Status>(&maybeTokenID); status)
         return *status;
-    ripple::LedgerInfo lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const tokenID = std::get<ripple::uint256>(maybeTokenID);
+
+    auto const maybeLedgerInfo = ledgerInfoFromRequest(context);
+    if (auto status = std::get_if<Status>(&maybeLedgerInfo); status)
+        return *status;
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(maybeLedgerInfo);
 
     std::optional<Backend::NFT> dbResponse =
         context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
     if (!dbResponse)
-        return Status{Error::rpcOBJECT_NOT_FOUND, "NFT not found"};
+        return Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"};
 
     response["nft_id"] = ripple::strHex(dbResponse->tokenID);
     response["ledger_index"] = dbResponse->ledgerSequence;
@@ -130,10 +141,10 @@ doNFTInfo(Context const& context)
     {
         auto const maybeURI = getURI(*dbResponse, context);
         // An error occurred
-        if (Status const* status = std::get_if<Status>(&maybeURI))
+        if (Status const* status = std::get_if<Status>(&maybeURI); status)
             return *status;
         // A URI was found
-        if (std::string const* uri = std::get_if<std::string>(&maybeURI))
+        if (std::string const* uri = std::get_if<std::string>(&maybeURI); uri)
             response["uri"] = *uri;
         // A URI was not found, explicitly set to null
         else

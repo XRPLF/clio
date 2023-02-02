@@ -1,10 +1,29 @@
-#ifndef CLIO_WORK_QUEUE_H
-#define CLIO_WORK_QUEUE_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <log/Logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <boost/log/trivial.hpp>
 
 #include <memory>
 #include <optional>
@@ -20,6 +39,7 @@ class WorkQueue
 
     std::atomic_uint64_t curSize_ = 0;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
+    clio::Logger log_{"RPC"};
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
@@ -30,10 +50,8 @@ public:
     {
         if (curSize_ >= maxSize_ && !isWhiteListed)
         {
-            BOOST_LOG_TRIVIAL(warning)
-                << __func__
-                << " queue is full. rejecting job. current size = " << curSize_
-                << " max size = " << maxSize_;
+            log_.warn() << "Queue is full. rejecting job. current size = "
+                        << curSize_ << " max size = " << maxSize_;
             return false;
         }
         ++curSize_;
@@ -52,17 +70,16 @@ public:
                 // durationUs_
                 ++queued_;
                 durationUs_ += wait;
-                BOOST_LOG_TRIVIAL(debug) << "WorkQueue wait time = " << wait
-                                         << " queue size = " << curSize_;
+                log_.info() << "WorkQueue wait time = " << wait
+                            << " queue size = " << curSize_;
                 f(yield);
                 --curSize_;
             });
         return true;
     }
 
-    // TODO: this is not actually being called. Wait for application refactor
     boost::json::object
-    report()
+    report() const
     {
         boost::json::object obj;
         obj["queued"] = queued_;
@@ -78,5 +95,3 @@ private:
     boost::asio::io_context ioc_ = {};
     std::optional<boost::asio::io_context::work> work_{ioc_};
 };
-
-#endif  // CLIO_WORK_QUEUE_H

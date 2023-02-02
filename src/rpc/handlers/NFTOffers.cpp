@@ -1,37 +1,66 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-#include <algorithm>
 #include <rpc/RPCHelpers.h>
+
+#include <boost/json.hpp>
+
+#include <algorithm>
+
+namespace json = boost::json;
+
+namespace ripple {
+
+void
+tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
+{
+    auto amount = ::RPC::toBoostJson(
+        offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
+
+    json::object obj = {
+        {JS(nft_offer_index), to_string(offer.key())},
+        {JS(flags), offer[sfFlags]},
+        {JS(owner), toBase58(offer.getAccountID(sfOwner))},
+        {JS(amount), std::move(amount)},
+    };
+
+    if (offer.isFieldPresent(sfDestination))
+        obj.insert_or_assign(
+            JS(destination), toBase58(offer.getAccountID(sfDestination)));
+
+    if (offer.isFieldPresent(sfExpiration))
+        obj.insert_or_assign(JS(expiration), offer.getFieldU32(sfExpiration));
+
+    jv = std::move(obj);
+}
+
+}  // namespace ripple
 
 namespace RPC {
 
-static void
-appendNftOfferJson(ripple::SLE const& offer, boost::json::array& offers)
-{
-    offers.push_back(boost::json::object_kind);
-    boost::json::object& obj(offers.back().as_object());
-
-    obj[JS(index)] = ripple::to_string(offer.key());
-    obj[JS(flags)] = (offer)[ripple::sfFlags];
-    obj[JS(owner)] = ripple::toBase58(offer.getAccountID(ripple::sfOwner));
-
-    if (offer.isFieldPresent(ripple::sfDestination))
-        obj[JS(destination)] =
-            ripple::toBase58(offer.getAccountID(ripple::sfDestination));
-
-    if (offer.isFieldPresent(ripple::sfExpiration))
-        obj[JS(expiration)] = offer.getFieldU32(ripple::sfExpiration);
-
-    obj[JS(amount)] = toBoostJson(offer.getFieldAmount(ripple::sfAmount)
-                                      .getJson(ripple::JsonOptions::none));
-}
-
-static Result
+Result
 enumerateNFTOffers(
     Context const& context,
     ripple::uint256 const& tokenid,
@@ -48,21 +77,20 @@ enumerateNFTOffers(
     // TODO: just check for existence without pulling
     if (!context.backend->fetchLedgerObject(
             directory.key, lgrInfo.seq, context.yield))
-        return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
+        return Status{RippledError::rpcOBJECT_NOT_FOUND, "notFound"};
 
     std::uint32_t limit;
     if (auto const status = getLimit(context, limit); status)
         return status;
 
     boost::json::object response = {};
+    boost::json::array jsonOffers = {};
     response[JS(nft_id)] = ripple::to_string(tokenid);
-    response[JS(offers)] = boost::json::value(boost::json::array_kind);
-
-    auto& jsonOffers = response[JS(offers)].as_array();
 
     std::vector<ripple::SLE> offers;
-    std::uint64_t reserve(limit);
+    auto reserve = limit;
     ripple::uint256 cursor;
+    uint64_t startHint = 0;
 
     if (request.contains(JS(marker)))
     {
@@ -71,21 +99,22 @@ enumerateNFTOffers(
         auto const& marker(request.at(JS(marker)));
 
         if (!marker.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         if (!cursor.parseHex(marker.as_string().c_str()))
-            return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
+            return Status{RippledError::rpcINVALID_PARAMS, "malformedCursor"};
 
         auto const sle =
             read(ripple::keylet::nftoffer(cursor), lgrInfo, context);
 
-        if (!sle || tokenid != sle->getFieldH256(ripple::sfNFTokenID))
-            return Status{Error::rpcOBJECT_NOT_FOUND, "notFound"};
+        if (!sle ||
+            sle->getFieldU16(ripple::sfLedgerEntryType) !=
+                ripple::ltNFTOKEN_OFFER ||
+            tokenid != sle->getFieldH256(ripple::sfNFTokenID))
+            return Status{RippledError::rpcINVALID_PARAMS};
 
-        if (tokenid != sle->getFieldH256(ripple::sfNFTokenID))
-            return Status{Error::rpcINVALID_PARAMS, "invalidTokenid"};
-
-        appendNftOfferJson(*sle, jsonOffers);
+        startHint = sle->getFieldU64(ripple::sfNFTokenOfferNode);
+        jsonOffers.push_back(json::value_from(*sle));
         offers.reserve(reserve);
     }
     else
@@ -98,15 +127,15 @@ enumerateNFTOffers(
         *context.backend,
         directory,
         cursor,
-        0,
+        startHint,
         lgrInfo.seq,
-        limit,
+        reserve,
         {},
         context.yield,
-        [&offers](ripple::SLE const& offer) {
+        [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER)
             {
-                offers.emplace_back(offer);
+                offers.push_back(std::move(offer));
                 return true;
             }
 
@@ -123,32 +152,23 @@ enumerateNFTOffers(
         offers.pop_back();
     }
 
-    for (auto const& offer : offers)
-        appendNftOfferJson(offer, jsonOffers);
+    std::transform(
+        std::cbegin(offers),
+        std::cend(offers),
+        std::back_inserter(jsonOffers),
+        [](auto const& offer) {
+            // uses tag_invoke at the top of this file
+            return json::value_from(offer);
+        });
 
+    response.insert_or_assign(JS(offers), std::move(jsonOffers));
     return response;
-}
-
-std::variant<ripple::uint256, Status>
-getTokenid(boost::json::object const& request)
-{
-    if (!request.contains(JS(nft_id)))
-        return Status{Error::rpcINVALID_PARAMS, "missingTokenid"};
-
-    if (!request.at(JS(nft_id)).is_string())
-        return Status{Error::rpcINVALID_PARAMS, "tokenidNotString"};
-
-    ripple::uint256 tokenid;
-    if (!tokenid.parseHex(request.at(JS(nft_id)).as_string().c_str()))
-        return Status{Error::rpcINVALID_PARAMS, "malformedCursor"};
-
-    return tokenid;
 }
 
 Result
 doNFTOffers(Context const& context, bool sells)
 {
-    auto const v = getTokenid(context.params);
+    auto const v = getNFTID(context.params);
     if (auto const status = std::get_if<Status>(&v))
         return *status;
 

@@ -1,12 +1,33 @@
-#ifndef CLIO_BACKEND_DBHELPERS_H_INCLUDED
-#define CLIO_BACKEND_DBHELPERS_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <ripple/basics/Log.h>
+#include <ripple/basics/StringUtilities.h>
+#include <ripple/ledger/ReadView.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAccount.h>
 #include <ripple/protocol/TxMeta.h>
+
 #include <boost/container/flat_set.hpp>
-#include <backend/Pg.h>
+
 #include <backend/Types.h>
 
 /// Struct used to keep track of what to write to
@@ -178,4 +199,3 @@ uint256ToString(ripple::uint256 const& uint)
 }
 
 static constexpr std::uint32_t rippleEpochStart = 946684800;
-#endif

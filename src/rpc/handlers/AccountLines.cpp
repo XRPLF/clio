@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/app/paths/TrustLine.h>
 #include <ripple/basics/StringUtilities.h>
@@ -107,7 +126,7 @@ doAccountLines(Context const& context)
         ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
-        return Status{Error::rpcACT_NOT_FOUND, "accountNotFound"};
+        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::optional<ripple::AccountID> peerAccount;
     if (auto const status = getOptionalAccount(request, peerAccount, JS(peer));
@@ -121,22 +140,48 @@ doAccountLines(Context const& context)
     std::optional<std::string> marker = {};
     if (request.contains(JS(marker)))
     {
-        if (!request.at(JS(marker)).is_string())
-            return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+        if (not request.at(JS(marker)).is_string())
+            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
 
         marker = request.at(JS(marker)).as_string().c_str();
+    }
+
+    auto ignoreDefault = false;
+    if (request.contains(JS(ignore_default)))
+    {
+        if (not request.at(JS(ignore_default)).is_bool())
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
+
+        ignoreDefault = request.at(JS(ignore_default)).as_bool();
     }
 
     response[JS(account)] = ripple::to_string(accountID);
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
+    response[JS(limit)] = limit;
     response[JS(lines)] = boost::json::value(boost::json::array_kind);
     boost::json::array& jsonLines = response.at(JS(lines)).as_array();
 
-    auto const addToResponse = [&](ripple::SLE const& sle) -> void {
+    auto const addToResponse = [&](ripple::SLE&& sle) -> void {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            addLine(jsonLines, sle, accountID, peerAccount);
+            auto ignore = false;
+            if (ignoreDefault)
+            {
+                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() ==
+                    accountID)
+                    ignore =
+                        !(sle.getFieldU32(ripple::sfFlags) &
+                          ripple::lsfLowReserve);
+                else
+                    ignore =
+                        !(sle.getFieldU32(ripple::sfFlags) &
+                          ripple::lsfHighReserve);
+            }
+
+            if (!ignore)
+                addLine(jsonLines, sle, accountID, peerAccount);
         }
     };
 

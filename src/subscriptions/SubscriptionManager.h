@@ -1,9 +1,30 @@
-#ifndef SUBSCRIPTION_MANAGER_H
-#define SUBSCRIPTION_MANAGER_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <backend/BackendInterface.h>
-#include <memory>
+#include <config/Config.h>
+#include <log/Logger.h>
 #include <subscriptions/Message.h>
+
+#include <memory>
 
 class WsBase;
 
@@ -31,12 +52,18 @@ public:
     unsubscribe(std::shared_ptr<WsBase> const& session);
 
     void
-    publish(std::shared_ptr<Message>& message);
+    publish(std::shared_ptr<Message> const& message);
 
     std::uint64_t
-    count()
+    count() const
     {
         return subCount_.load();
+    }
+
+    bool
+    empty() const
+    {
+        return count() == 0;
     }
 };
 
@@ -80,6 +107,7 @@ public:
 class SubscriptionManager
 {
     using session_ptr = std::shared_ptr<WsBase>;
+    clio::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
@@ -90,6 +118,7 @@ class SubscriptionManager
     Subscription txProposedSubscribers_;
     Subscription manifestSubscribers_;
     Subscription validationsSubscribers_;
+    Subscription bookChangesSubscribers_;
 
     SubscriptionMap<ripple::AccountID> accountSubscribers_;
     SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
@@ -100,17 +129,10 @@ class SubscriptionManager
 public:
     static std::shared_ptr<SubscriptionManager>
     make_SubscriptionManager(
-        boost::json::object const& config,
+        clio::Config const& config,
         std::shared_ptr<Backend::BackendInterface const> const& b)
     {
-        auto numThreads = 1;
-
-        if (config.contains("subscription_workers") &&
-            config.at("subscription_workers").is_int64())
-        {
-            numThreads = config.at("subscription_workers").as_int64();
-        }
-
+        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
         return std::make_shared<SubscriptionManager>(numThreads, b);
     }
 
@@ -122,6 +144,7 @@ public:
         , txProposedSubscribers_(ioc_)
         , manifestSubscribers_(ioc_)
         , validationsSubscribers_(ioc_)
+        , bookChangesSubscribers_(ioc_)
         , accountSubscribers_(ioc_)
         , accountProposedSubscribers_(ioc_)
         , bookSubscribers_(ioc_)
@@ -132,8 +155,8 @@ public:
         // We will eventually want to clamp this to be the number of strands,
         // since adding more threads than we have strands won't see any
         // performance benefits
-        BOOST_LOG_TRIVIAL(info) << "Starting subscription manager with "
-                                << numThreads << " workers";
+        log_.info() << "Starting subscription manager with " << numThreads
+                    << " workers";
 
         workers_.reserve(numThreads);
         for (auto i = numThreads; i > 0; --i)
@@ -160,6 +183,11 @@ public:
         std::uint32_t txnCount);
 
     void
+    pubBookChanges(
+        ripple::LedgerInfo const& lgrInfo,
+        std::vector<Backend::TransactionAndMetadata> const& transactions);
+
+    void
     unsubLedger(session_ptr session);
 
     void
@@ -184,6 +212,12 @@ public:
 
     void
     unsubBook(ripple::Book const& book, session_ptr session);
+
+    void
+    subBookChanges(std::shared_ptr<WsBase> session);
+
+    void
+    unsubBookChanges(std::shared_ptr<WsBase> session);
 
     void
     subManifest(session_ptr session);
@@ -234,6 +268,7 @@ public:
         counts["account"] = accountSubscribers_.count();
         counts["accounts_proposed"] = accountProposedSubscribers_.count();
         counts["books"] = bookSubscribers_.count();
+        counts["book_changes"] = bookChangesSubscribers_.count();
 
         return counts;
     }
@@ -242,16 +277,29 @@ private:
     void
     sendAll(std::string const& pubMsg, std::unordered_set<session_ptr>& subs);
 
+    using CleanupFunction = std::function<void(session_ptr)>;
+
+    void
+    subscribeHelper(
+        std::shared_ptr<WsBase>& session,
+        Subscription& subs,
+        CleanupFunction&& func);
+
+    template <typename Key>
+    void
+    subscribeHelper(
+        std::shared_ptr<WsBase>& session,
+        Key const& k,
+        SubscriptionMap<Key>& subs,
+        CleanupFunction&& func);
+
     /**
      * This is how we chose to cleanup subscriptions that have been closed.
      * Each time we add a subscriber, we add the opposite lambda that
      * unsubscribes that subscriber when cleanup is called with the session that
      * closed.
      */
-    using CleanupFunction = std::function<void(session_ptr)>;
     std::mutex cleanupMtx_;
     std::unordered_map<session_ptr, std::vector<CleanupFunction>>
         cleanupFuncs_ = {};
 };
-
-#endif  // SUBSCRIPTION_MANAGER_H

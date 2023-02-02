@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <grpc/impl/codegen/port_platform.h>
 #ifdef GRPC_TSAN_ENABLED
 #undef GRPC_TSAN_ENABLED
@@ -6,25 +25,22 @@
 #undef GRPC_ASAN_ENABLED
 #endif
 
+#include <backend/BackendFactory.h>
+#include <config/Config.h>
+#include <etl/ReportingETL.h>
+#include <log/Logger.h>
+#include <webserver/Listener.h>
+
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/json.hpp>
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/support/date_time.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/utility/setup/file.hpp>
+#include <boost/program_options.hpp>
+
 #include <algorithm>
-#include <backend/BackendFactory.h>
 #include <cstdlib>
-#include <etl/ReportingETL.h>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -34,39 +50,73 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <webserver/Listener.h>
 
-std::optional<boost::json::object>
-parse_config(const char* filename)
+using namespace clio;
+namespace po = boost::program_options;
+
+/**
+ * @brief Parse command line and return path to configuration file
+ *
+ * @param argc
+ * @param argv
+ * @return std::string Path to configuration file
+ */
+std::string
+parseCli(int argc, char* argv[])
 {
-    try
+    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
+
+    // clang-format off
+    po::options_description description("Options");
+    description.add_options()
+        ("help,h", "print help message and exit")
+        ("version,v", "print version and exit")
+        ("conf,c", po::value<std::string>()->default_value(defaultConfigPath), "configuration file")
+    ;
+    // clang-format on
+    po::positional_options_description positional;
+    positional.add("conf", 1);
+
+    po::variables_map parsed;
+    po::store(
+        po::command_line_parser(argc, argv)
+            .options(description)
+            .positional(positional)
+            .run(),
+        parsed);
+    po::notify(parsed);
+
+    if (parsed.count("version"))
     {
-        std::ifstream in(filename, std::ios::in | std::ios::binary);
-        if (in)
-        {
-            std::stringstream contents;
-            contents << in.rdbuf();
-            in.close();
-            std::cout << contents.str() << std::endl;
-            boost::json::value value = boost::json::parse(contents.str());
-            return value.as_object();
-        }
+        std::cout << Build::getClioFullVersionString() << '\n';
+        std::exit(EXIT_SUCCESS);
     }
-    catch (std::exception const& e)
+
+    if (parsed.count("help"))
     {
-        std::cout << e.what() << std::endl;
+        std::cout << "Clio server " << Build::getClioFullVersionString()
+                  << "\n\n"
+                  << description;
+        std::exit(EXIT_SUCCESS);
     }
-    return {};
+
+    return parsed["conf"].as<std::string>();
 }
 
+/**
+ * @brief Parse certificates from configuration file
+ *
+ * @param config The configuration
+ * @return std::optional<ssl::context> SSL context if certificates were parsed
+ */
 std::optional<ssl::context>
-parse_certs(boost::json::object const& config)
+parseCerts(Config const& config)
 {
     if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
         return {};
 
-    auto certFilename = config.at("ssl_cert_file").as_string().c_str();
-    auto keyFilename = config.at("ssl_key_file").as_string().c_str();
+    auto certFilename = config.value<std::string>("ssl_cert_file");
+    auto keyFilename = config.value<std::string>("ssl_key_file");
 
     std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
     if (!readCert)
@@ -74,7 +124,6 @@ parse_certs(boost::json::object const& config)
 
     std::stringstream contents;
     contents << readCert.rdbuf();
-    readCert.close();
     std::string cert = contents.str();
 
     std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
@@ -101,92 +150,12 @@ parse_certs(boost::json::object const& config)
     return ctx;
 }
 
-void
-initLogging(boost::json::object const& config)
-{
-    namespace src = boost::log::sources;
-    namespace keywords = boost::log::keywords;
-    namespace sinks = boost::log::sinks;
-    namespace trivial = boost::log::trivial;
-    boost::log::add_common_attributes();
-    std::string format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%";
-    if (!config.contains("log_to_console") ||
-        config.at("log_to_console").as_bool())
-    {
-        boost::log::add_console_log(std::cout, keywords::format = format);
-    }
-    if (config.contains("log_directory"))
-    {
-        if (!config.at("log_directory").is_string())
-            throw std::runtime_error("log directory must be a string");
-        boost::filesystem::path dirPath{
-            config.at("log_directory").as_string().c_str()};
-        if (!boost::filesystem::exists(dirPath))
-            boost::filesystem::create_directories(dirPath);
-        const int64_t rotationSize = config.contains("log_rotation_size")
-            ? config.at("log_rotation_size").as_int64() * 1024 * 1024u
-            : 2 * 1024 * 1024 * 1024u;
-        if (rotationSize <= 0)
-            throw std::runtime_error(
-                "log rotation size must be greater than 0");
-        const int64_t rotationPeriod =
-            config.contains("log_rotation_hour_interval")
-            ? config.at("log_rotation_hour_interval").as_int64()
-            : 12u;
-        if (rotationPeriod <= 0)
-            throw std::runtime_error(
-                "log rotation time interval must be greater than 0");
-        const int64_t dirSize = config.contains("log_directory_max_size")
-            ? config.at("log_directory_max_size").as_int64() * 1024 * 1024u
-            : 50 * 1024 * 1024 * 1024u;
-        if (dirSize <= 0)
-            throw std::runtime_error(
-                "log rotation directory max size must be greater than 0");
-        auto fileSink = boost::log::add_file_log(
-            keywords::file_name = dirPath / "clio.log",
-            keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
-            keywords::auto_flush = true,
-            keywords::format = format,
-            keywords::open_mode = std::ios_base::app,
-            keywords::rotation_size = rotationSize,
-            keywords::time_based_rotation =
-                sinks::file::rotation_at_time_interval(
-                    boost::posix_time::hours(rotationPeriod)));
-        fileSink->locked_backend()->set_file_collector(
-            sinks::file::make_collector(
-                keywords::target = dirPath, keywords::max_size = dirSize));
-        fileSink->locked_backend()->scan_for_files();
-    }
-    auto const logLevel = config.contains("log_level")
-        ? config.at("log_level").as_string()
-        : "info";
-    if (boost::iequals(logLevel, "trace"))
-        boost::log::core::get()->set_filter(
-            trivial::severity >= trivial::trace);
-    else if (boost::iequals(logLevel, "debug"))
-        boost::log::core::get()->set_filter(
-            trivial::severity >= trivial::debug);
-    else if (boost::iequals(logLevel, "info"))
-        boost::log::core::get()->set_filter(trivial::severity >= trivial::info);
-    else if (
-        boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
-        boost::log::core::get()->set_filter(
-            trivial::severity >= trivial::warning);
-    else if (boost::iequals(logLevel, "error"))
-        boost::log::core::get()->set_filter(
-            trivial::severity >= trivial::error);
-    else if (boost::iequals(logLevel, "fatal"))
-        boost::log::core::get()->set_filter(
-            trivial::severity >= trivial::fatal);
-    else
-    {
-        BOOST_LOG_TRIVIAL(warning) << "Unrecognized log level: " << logLevel
-                                   << ". Setting log level to info";
-        boost::log::core::get()->set_filter(trivial::severity >= trivial::info);
-    }
-    BOOST_LOG_TRIVIAL(info) << "Log level = " << logLevel;
-}
-
+/**
+ * @brief Start context threads
+ *
+ * @param ioc Context
+ * @param numThreads Number of worker threads to start
+ */
 void
 start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 {
@@ -200,71 +169,51 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 
 int
 main(int argc, char* argv[])
+try
 {
-    // Check command line arguments.
-    if (argc != 2)
-    {
-        std::cerr << "Usage: clio_server "
-                     "<config_file> \n"
-                  << "Example:\n"
-                  << "    clio_server config.json \n";
-        return EXIT_FAILURE;
-    }
-
-    if (std::string{argv[1]} == "-v" || std::string{argv[1]} == "--version")
-    {
-        std::cout << Build::getClioFullVersionString() << std::endl;
-        return EXIT_SUCCESS;
-    }
-
-    auto const config = parse_config(argv[1]);
+    auto const configPath = parseCli(argc, argv);
+    auto const config = ConfigReader::open(configPath);
     if (!config)
     {
-        std::cerr << "Couldnt parse config. Exiting..." << std::endl;
+        std::cerr << "Couldnt parse config '" << configPath << "'."
+                  << std::endl;
         return EXIT_FAILURE;
     }
 
-    initLogging(*config);
+    LogService::init(config);
+    LogService::info() << "Clio version: " << Build::getClioFullVersionString();
 
-    // Announce Clio version
-    BOOST_LOG_TRIVIAL(info)
-        << "Clio version: " << Build::getClioFullVersionString();
-
-    auto ctx = parse_certs(*config);
+    auto ctx = parseCerts(config);
     auto ctxRef = ctx
         ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
         : std::nullopt;
 
-    auto const threads = config->contains("io_threads")
-        ? config->at("io_threads").as_int64()
-        : 2;
-
+    auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
     {
-        BOOST_LOG_TRIVIAL(fatal) << "io_threads is less than 0";
+        LogService::fatal() << "io_threads is less than 0";
         return EXIT_FAILURE;
     }
-    BOOST_LOG_TRIVIAL(info) << "Number of io threads = " << threads;
+    LogService::info() << "Number of io threads = " << threads;
 
-    // io context to handle all incoming requests, as well as other things
+    // IO context to handle all incoming requests, as well as other things
     // This is not the only io context in the application
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    DOSGuard dosGuard{config.value(), ioc};
+    auto sweepHandler = IntervalSweepHandler{config, ioc};
+    auto dosGuard = DOSGuard{config, sweepHandler};
 
     // Interface to the database
-    std::shared_ptr<BackendInterface> backend{
-        Backend::make_Backend(ioc, *config)};
+    auto backend = Backend::make_Backend(ioc, config);
 
     // Manages clients subscribed to streams
-    std::shared_ptr<SubscriptionManager> subscriptions{
-        SubscriptionManager::make_SubscriptionManager(*config, backend)};
+    auto subscriptions =
+        SubscriptionManager::make_SubscriptionManager(config, backend);
 
     // Tracks which ledgers have been validated by the
     // network
-    std::shared_ptr<NetworkValidatedLedgers> ledgers{
-        NetworkValidatedLedgers::make_ValidatedLedgers()};
+    auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
 
     // Handles the connection to one or more rippled nodes.
     // ETL uses the balancer to extract data.
@@ -272,16 +221,16 @@ main(int argc, char* argv[])
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
     auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        *config, ioc, backend, subscriptions, ledgers);
+        config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only
     // mode, ETL only publishes
     auto etl = ReportingETL::make_ReportingETL(
-        *config, ioc, backend, subscriptions, balancer, ledgers);
+        config, ioc, backend, subscriptions, balancer, ledgers);
 
     // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(
-        *config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
+        config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope
@@ -289,4 +238,8 @@ main(int argc, char* argv[])
     start(ioc, threads);
 
     return EXIT_SUCCESS;
+}
+catch (std::exception const& e)
+{
+    LogService::fatal() << "Exit on exception: " << e.what();
 }

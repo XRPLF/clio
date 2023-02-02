@@ -1,6 +1,24 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
 
-#ifndef XRPL_REPORTING_RPCHELPERS_H_INCLUDED
-#define XRPL_REPORTING_RPCHELPERS_H_INCLUDED
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
 /*
  * This file contains a variety of utility functions used when executing
  * the handlers
@@ -24,8 +42,6 @@
 namespace RPC {
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
-std::optional<ripple::AccountID>
-accountFromSeed(std::string const& account);
 
 bool
 isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID);
@@ -38,7 +54,6 @@ parseAccountCursor(
     BackendInterface const& backend,
     std::uint32_t seq,
     std::optional<std::string> jsonCursor,
-    ripple::AccountID const& accountID,
     boost::asio::yield_context& yield);
 
 // TODO this function should probably be in a different file and namespace
@@ -99,7 +114,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE)> atOwnedNode);
+    std::function<void(ripple::SLE&&)> atOwnedNode);
 
 std::variant<Status, AccountCursor>
 traverseOwnedNodes(
@@ -111,7 +126,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE)> atOwnedNode);
+    std::function<void(ripple::SLE&&)> atOwnedNode);
 
 std::shared_ptr<ripple::SLE const>
 read(
@@ -254,5 +269,24 @@ getChannelId(boost::json::object const& request, ripple::uint256& channelId);
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request);
 
+std::variant<ripple::uint256, Status>
+getNFTID(boost::json::object const& request);
+
+// This function is the driver for both `account_tx` and `nft_tx` and should
+// be used for any future transaction enumeration APIs.
+std::variant<Status, boost::json::object>
+traverseTransactions(
+    Context const& context,
+    std::function<Backend::TransactionsAndCursor(
+        std::shared_ptr<Backend::BackendInterface const> const& backend,
+        std::uint32_t const,
+        bool const,
+        std::optional<Backend::TransactionsCursor> const&,
+        boost::asio::yield_context& yield)> transactionFetcher);
+
+[[nodiscard]] boost::json::object const
+computeBookChanges(
+    ripple::LedgerInfo const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions);
+
 }  // namespace RPC
-#endif

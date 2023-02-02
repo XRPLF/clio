@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <rpc/RPCHelpers.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
@@ -70,7 +89,7 @@ Subscription::unsubscribe(std::shared_ptr<WsBase> const& session)
 }
 
 void
-Subscription::publish(std::shared_ptr<Message>& message)
+Subscription::publish(std::shared_ptr<Message> const& message)
 {
     boost::asio::post(strand_, [this, message]() {
         sendToSubscribers(message, subscribers_, subCount_);
@@ -155,7 +174,9 @@ SubscriptionManager::subLedger(
     boost::asio::yield_context& yield,
     std::shared_ptr<WsBase> session)
 {
-    ledgerSubscribers_.subscribe(session);
+    subscribeHelper(session, ledgerSubscribers_, [this](session_ptr session) {
+        unsubLedger(session);
+    });
 
     auto ledgerRange = backend_->fetchLedgerRange();
     assert(ledgerRange);
@@ -185,7 +206,9 @@ SubscriptionManager::unsubLedger(std::shared_ptr<WsBase> session)
 void
 SubscriptionManager::subTransactions(std::shared_ptr<WsBase> session)
 {
-    txSubscribers_.subscribe(session);
+    subscribeHelper(session, txSubscribers_, [this](session_ptr session) {
+        unsubTransactions(session);
+    });
 }
 
 void
@@ -199,12 +222,13 @@ SubscriptionManager::subAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase>& session)
 {
-    accountSubscribers_.subscribe(session, account);
-
-    std::unique_lock lk(cleanupMtx_);
-    cleanupFuncs_[session].emplace_back([this, account](session_ptr session) {
-        unsubAccount(account, session);
-    });
+    subscribeHelper(
+        session,
+        account,
+        accountSubscribers_,
+        [this, account](session_ptr session) {
+            unsubAccount(account, session);
+        });
 }
 
 void
@@ -220,11 +244,10 @@ SubscriptionManager::subBook(
     ripple::Book const& book,
     std::shared_ptr<WsBase> session)
 {
-    bookSubscribers_.subscribe(session, book);
-
-    std::unique_lock lk(cleanupMtx_);
-    cleanupFuncs_[session].emplace_back(
-        [this, book](session_ptr session) { unsubBook(book, session); });
+    subscribeHelper(
+        session, book, bookSubscribers_, [this, book](session_ptr session) {
+            unsubBook(book, session);
+        });
 }
 
 void
@@ -233,6 +256,21 @@ SubscriptionManager::unsubBook(
     std::shared_ptr<WsBase> session)
 {
     bookSubscribers_.unsubscribe(session, book);
+}
+
+void
+SubscriptionManager::subBookChanges(std::shared_ptr<WsBase> session)
+{
+    subscribeHelper(
+        session, bookChangesSubscribers_, [this](session_ptr session) {
+            unsubBookChanges(session);
+        });
+}
+
+void
+SubscriptionManager::unsubBookChanges(std::shared_ptr<WsBase> session)
+{
+    bookChangesSubscribers_.unsubscribe(session);
 }
 
 void
@@ -346,6 +384,20 @@ SubscriptionManager::pubTransaction(
 }
 
 void
+SubscriptionManager::pubBookChanges(
+    ripple::LedgerInfo const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions)
+{
+    if (bookChangesSubscribers_.empty())
+        return;
+
+    auto const json = RPC::computeBookChanges(lgrInfo, transactions);
+    auto const bookChangesMsg =
+        std::make_shared<Message>(boost::json::serialize(json));
+    bookChangesSubscribers_.publish(bookChangesMsg);
+}
+
+void
 SubscriptionManager::forwardProposedTransaction(
     boost::json::object const& response)
 {
@@ -378,13 +430,21 @@ SubscriptionManager::subProposedAccount(
     ripple::AccountID const& account,
     std::shared_ptr<WsBase> session)
 {
-    accountProposedSubscribers_.subscribe(session, account);
+    subscribeHelper(
+        session,
+        account,
+        accountProposedSubscribers_,
+        [this, account](session_ptr session) {
+            unsubProposedAccount(account, session);
+        });
 }
 
 void
 SubscriptionManager::subManifest(std::shared_ptr<WsBase> session)
 {
-    manifestSubscribers_.subscribe(session);
+    subscribeHelper(session, manifestSubscribers_, [this](session_ptr session) {
+        unsubManifest(session);
+    });
 }
 
 void
@@ -396,7 +456,10 @@ SubscriptionManager::unsubManifest(std::shared_ptr<WsBase> session)
 void
 SubscriptionManager::subValidation(std::shared_ptr<WsBase> session)
 {
-    validationsSubscribers_.subscribe(session);
+    subscribeHelper(
+        session, validationsSubscribers_, [this](session_ptr session) {
+            unsubValidation(session);
+        });
 }
 
 void
@@ -416,13 +479,38 @@ SubscriptionManager::unsubProposedAccount(
 void
 SubscriptionManager::subProposedTransactions(std::shared_ptr<WsBase> session)
 {
-    txProposedSubscribers_.subscribe(session);
+    subscribeHelper(
+        session, txProposedSubscribers_, [this](session_ptr session) {
+            unsubProposedTransactions(session);
+        });
 }
 
 void
 SubscriptionManager::unsubProposedTransactions(std::shared_ptr<WsBase> session)
 {
     txProposedSubscribers_.unsubscribe(session);
+}
+void
+SubscriptionManager::subscribeHelper(
+    std::shared_ptr<WsBase>& session,
+    Subscription& subs,
+    CleanupFunction&& func)
+{
+    subs.subscribe(session);
+    std::unique_lock lk(cleanupMtx_);
+    cleanupFuncs_[session].push_back(std::move(func));
+}
+template <typename Key>
+void
+SubscriptionManager::subscribeHelper(
+    std::shared_ptr<WsBase>& session,
+    Key const& k,
+    SubscriptionMap<Key>& subs,
+    CleanupFunction&& func)
+{
+    subs.subscribe(session, k);
+    std::unique_lock lk(cleanupMtx_);
+    cleanupFuncs_[session].push_back(std::move(func));
 }
 
 void

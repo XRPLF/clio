@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <boost/json.hpp>
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>
@@ -12,22 +31,20 @@ static std::unordered_set<std::string> validCommonStreams{
     "transactions",
     "transactions_proposed",
     "validations",
-    "manifests"};
+    "manifests",
+    "book_changes"};
 
 Status
 validateStreams(boost::json::object const& request)
 {
-    boost::json::array const& streams = request.at(JS(streams)).as_array();
-
-    for (auto const& stream : streams)
+    for (auto const& streams = request.at(JS(streams)).as_array();
+         auto const& stream : streams)
     {
         if (!stream.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "streamNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "streamNotString"};
 
-        std::string s = stream.as_string().c_str();
-
-        if (validCommonStreams.find(s) == validCommonStreams.end())
-            return Status{Error::rpcINVALID_PARAMS, "invalidStream" + s};
+        if (!validCommonStreams.contains(stream.as_string().c_str()))
+            return Status{RippledError::rpcSTREAM_MALFORMED};
     }
 
     return OK;
@@ -57,6 +74,8 @@ subscribeToStreams(
             manager.subValidation(session);
         else if (s == "manifests")
             manager.subManifest(session);
+        else if (s == "book_changes")
+            manager.subBookChanges(session);
         else
             assert(false);
     }
@@ -85,6 +104,8 @@ unsubscribeToStreams(
             manager.unsubValidation(session);
         else if (s == "manifests")
             manager.unsubManifest(session);
+        else if (s == "book_changes")
+            manager.unsubBookChanges(session);
         else
             assert(false);
     }
@@ -96,13 +117,10 @@ validateAccounts(boost::json::array const& accounts)
     for (auto const& account : accounts)
     {
         if (!account.is_string())
-            return Status{Error::rpcINVALID_PARAMS, "accountNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "accountNotString"};
 
-        std::string s = account.as_string().c_str();
-        auto id = accountFromStringStrict(s);
-
-        if (!id)
-            return Status{Error::rpcINVALID_PARAMS, "invalidAccount" + s};
+        if (!accountFromStringStrict(account.as_string().c_str()))
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
     }
 
     return OK;
@@ -213,7 +231,7 @@ validateAndGetBooks(
     std::shared_ptr<Backend::BackendInterface const> const& backend)
 {
     if (!request.at(JS(books)).is_array())
-        return Status{Error::rpcINVALID_PARAMS, "booksNotArray"};
+        return Status{RippledError::rpcINVALID_PARAMS, "booksNotArray"};
     boost::json::array const& books = request.at(JS(books)).as_array();
 
     std::vector<ripple::Book> booksToSub;
@@ -292,16 +310,10 @@ doSubscribe(Context const& context)
 {
     auto request = context.params;
 
-    if (!request.contains(JS(streams)) && !request.contains(JS(accounts)) &&
-        !request.contains(JS(accounts_proposed)) &&
-        !request.contains(JS(books)))
-        return Status{
-            Error::rpcINVALID_PARAMS, "does not contain valid subscription"};
-
     if (request.contains(JS(streams)))
     {
         if (!request.at(JS(streams)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
+            return Status{RippledError::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
 
@@ -311,31 +323,38 @@ doSubscribe(Context const& context)
 
     if (request.contains(JS(accounts)))
     {
-        if (!request.at(JS(accounts)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
+        auto const& jsonAccounts = request.at(JS(accounts));
+        if (!jsonAccounts.is_array())
+            return Status{RippledError::rpcINVALID_PARAMS, "accountsNotArray"};
 
-        boost::json::array accounts = request.at(JS(accounts)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
 
     if (request.contains(JS(accounts_proposed)))
     {
-        if (!request.at(JS(accounts_proposed)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
+        auto const& jsonAccounts = request.at(JS(accounts_proposed));
+        if (!jsonAccounts.is_array())
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
-        boost::json::array accounts =
-            request.at(JS(accounts_proposed)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
 
     std::vector<ripple::Book> books;
-    boost::json::array snapshot;
+    boost::json::object response;
+
     if (request.contains(JS(books)))
     {
         auto parsed =
@@ -346,10 +365,9 @@ doSubscribe(Context const& context)
             std::get<std::pair<std::vector<ripple::Book>, boost::json::array>>(
                 parsed);
         books = std::move(bks);
-        snapshot = std::move(snap);
+        response[JS(offers)] = std::move(snap);
     }
 
-    boost::json::object response;
     if (request.contains(JS(streams)))
         response = subscribeToStreams(
             context.yield, request, context.session, *context.subscriptions);
@@ -364,8 +382,6 @@ doSubscribe(Context const& context)
     if (request.contains(JS(books)))
         subscribeToBooks(books, context.session, *context.subscriptions);
 
-    if (snapshot.size())
-        response[JS(offers)] = snapshot;
     return response;
 }
 
@@ -374,16 +390,10 @@ doUnsubscribe(Context const& context)
 {
     auto request = context.params;
 
-    if (!request.contains(JS(streams)) && !request.contains(JS(accounts)) &&
-        !request.contains(JS(accounts_proposed)) &&
-        !request.contains(JS(books)))
-        return Status{
-            Error::rpcINVALID_PARAMS, "does not contain valid subscription"};
-
     if (request.contains(JS(streams)))
     {
         if (!request.at(JS(streams)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "streamsNotArray"};
+            return Status{RippledError::rpcINVALID_PARAMS, "streamsNotArray"};
 
         auto status = validateStreams(request);
 
@@ -393,25 +403,31 @@ doUnsubscribe(Context const& context)
 
     if (request.contains(JS(accounts)))
     {
-        if (!request.at(JS(accounts)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsNotArray"};
+        auto const& jsonAccounts = request.at(JS(accounts));
+        if (!jsonAccounts.is_array())
+            return Status{RippledError::rpcINVALID_PARAMS, "accountsNotArray"};
 
-        boost::json::array accounts = request.at(JS(accounts)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
 
     if (request.contains(JS(accounts_proposed)))
     {
-        if (!request.at(JS(accounts_proposed)).is_array())
-            return Status{Error::rpcINVALID_PARAMS, "accountsProposedNotArray"};
+        auto const& jsonAccounts = request.at(JS(accounts_proposed));
+        if (!jsonAccounts.is_array())
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "accountsProposedNotArray"};
 
-        boost::json::array accounts =
-            request.at(JS(accounts_proposed)).as_array();
-        auto status = validateAccounts(accounts);
+        auto const& accounts = jsonAccounts.as_array();
+        if (accounts.empty())
+            return Status{RippledError::rpcACT_MALFORMED, "Account malformed."};
 
+        auto const status = validateAccounts(accounts);
         if (status)
             return status;
     }
@@ -445,8 +461,7 @@ doUnsubscribe(Context const& context)
     if (request.contains("books"))
         unsubscribeToBooks(books, context.session, *context.subscriptions);
 
-    boost::json::object response = {{"status", "success"}};
-    return response;
+    return boost::json::object{};
 }
 
 }  // namespace RPC

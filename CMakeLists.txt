@@ -20,15 +20,18 @@ if(NOT GIT_COMMIT_HASH)
   endif()
   find_package(Git)
   if(Git_FOUND)
-      execute_process(COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=8
-          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE gch)
-      if(gch)
-          set(GIT_COMMIT_HASH "${gch}")
-          message(STATUS "Git commit: ${GIT_COMMIT_HASH}")
-          add_definitions(-DCLIO_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+      execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+          OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE git-ref)
+      if(git-ref)
+          set(BUILD "${git-ref}")
+          message(STATUS "Build version: ${BUILD}")
+          add_definitions(-DCLIO_BUILD="${BUILD}")
       endif()
   endif()
 endif() #git
+if(PACKAGING)
+  add_definitions(-DPKG=1)
+endif()
 
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
@@ -41,7 +44,7 @@ include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
 include(CMake/deps/Boost.cmake)
 include(CMake/deps/cassandra.cmake)
-include(CMake/deps/Postgres.cmake)
+include(CMake/deps/SourceLocation.cmake)
 
 target_sources(clio PRIVATE
   ## Main
@@ -49,8 +52,6 @@ target_sources(clio PRIVATE
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
-  src/backend/Pg.cpp
-  src/backend/PostgresBackend.cpp
   src/backend/SimpleCache.cpp
   ## ETL
   src/etl/ETLSource.cpp
@@ -60,6 +61,7 @@ target_sources(clio PRIVATE
   ## Subscriptions
   src/subscriptions/SubscriptionManager.cpp
   ## RPC
+  src/rpc/Errors.cpp
   src/rpc/RPC.cpp
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
@@ -75,7 +77,9 @@ target_sources(clio PRIVATE
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/NoRippleCheck.cpp
   # NFT
+  src/rpc/handlers/NFTHistory.cpp
   src/rpc/handlers/NFTInfo.cpp
+  src/rpc/handlers/NFTOffers.cpp
   # Ledger
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp
@@ -88,8 +92,6 @@ target_sources(clio PRIVATE
   # Dex
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
-  # NFT
-  src/rpc/handlers/NFTOffers.cpp
   # Payment Channel
   src/rpc/handlers/ChannelAuthorize.cpp
   src/rpc/handlers/ChannelVerify.cpp
@@ -97,14 +99,23 @@ target_sources(clio PRIVATE
   src/rpc/handlers/Subscribe.cpp
   # Server
   src/rpc/handlers/ServerInfo.cpp
-  # Utility
-  src/rpc/handlers/Random.cpp)
+  # Utilities
+  src/rpc/handlers/Random.cpp
+  src/config/Config.cpp
+  src/log/Logger.cpp
+  src/util/Taggable.cpp)
 
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
 if(BUILD_TESTS)
-  add_executable(clio_tests unittests/main.cpp)
+  add_executable(clio_tests
+    unittests/RPCErrors.cpp
+    unittests/Backend.cpp
+    unittests/Logger.cpp
+    unittests/Config.cpp
+    unittests/ProfilerTest.cpp
+    unittests/DOSGuard.cpp)
   include(CMake/deps/gtest.cmake)
 endif()
 

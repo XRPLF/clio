@@ -1,5 +1,23 @@
-#ifndef RIPPLE_REPORTING_HTTPS_SESSION_H
-#define RIPPLE_REPORTING_HTTPS_SESSION_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <webserver/HttpBase.h>
 
@@ -13,6 +31,7 @@ class SslHttpSession : public HttpBase<SslHttpSession>,
                        public std::enable_shared_from_this<SslHttpSession>
 {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
+    std::optional<std::string> ip_;
 
 public:
     // Take ownership of the socket
@@ -24,7 +43,8 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
+        util::TagDecoratorFactory const& tagFactory,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer buffer)
@@ -34,12 +54,32 @@ public:
               subscriptions,
               balancer,
               etl,
+              tagFactory,
               dosGuard,
               counters,
               queue,
               std::move(buffer))
         , stream_(std::move(socket), ctx)
     {
+        try
+        {
+            ip_ = stream_.next_layer()
+                      .socket()
+                      .remote_endpoint()
+                      .address()
+                      .to_string();
+        }
+        catch (std::exception const&)
+        {
+        }
+        if (ip_)
+            HttpBase::dosGuard().increment(*ip_);
+    }
+
+    ~SslHttpSession()
+    {
+        if (ip_ and not upgraded_)
+            HttpBase::dosGuard().decrement(*ip_);
     }
 
     boost::beast::ssl_stream<boost::beast::tcp_stream>&
@@ -56,18 +96,7 @@ public:
     std::optional<std::string>
     ip()
     {
-        try
-        {
-            return stream_.next_layer()
-                .socket()
-                .remote_endpoint()
-                .address()
-                .to_string();
-        }
-        catch (std::exception const&)
-        {
-            return {};
-        }
+        return ip_;
     }
 
     // Start the asynchronous operation
@@ -124,5 +153,3 @@ public:
         // At this point the connection is closed gracefully
     }
 };
-
-#endif  // RIPPLE_REPORTING_HTTPS_SESSION_H

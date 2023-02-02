@@ -1,9 +1,30 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
 #include <ripple/app/ledger/LedgerToJson.h>
 #include <ripple/protocol/STLedgerEntry.h>
+#include <backend/BackendInterface.h>
+#include <log/Logger.h>
+#include <rpc/RPCHelpers.h>
+
 #include <boost/json.hpp>
 
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
 // Get state nodes from a ledger
 //   Inputs:
 //     limit:        integer, maximum number of entries
@@ -17,6 +38,13 @@
 //     marker:       resume point, if any
 //
 //
+
+using namespace clio;
+
+// local to compilation unit loggers
+namespace {
+clio::Logger gLog{"RPC"};
+}  // namespace
 
 namespace RPC {
 
@@ -41,7 +69,7 @@ doLedgerData(Context const& context)
     if (request.contains("out_of_order"))
     {
         if (!request.at("out_of_order").is_bool())
-            return Status{Error::rpcINVALID_PARAMS, "binaryFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "binaryFlagNotBool"};
         outOfOrder = request.at("out_of_order").as_bool();
     }
 
@@ -55,19 +83,22 @@ doLedgerData(Context const& context)
             {
                 if (!request.at(JS(marker)).is_int64())
                     return Status{
-                        Error::rpcINVALID_PARAMS, "markerNotStringOrInt"};
+                        RippledError::rpcINVALID_PARAMS,
+                        "markerNotStringOrInt"};
                 diffMarker = value_to<uint32_t>(request.at(JS(marker)));
             }
             else
-                return Status{Error::rpcINVALID_PARAMS, "markerNotString"};
+                return Status{
+                    RippledError::rpcINVALID_PARAMS, "markerNotString"};
         }
         else
         {
-            BOOST_LOG_TRIVIAL(debug) << __func__ << " : parsing marker";
+            gLog.debug() << "Parsing marker";
 
             marker = ripple::uint256{};
             if (!marker->parseHex(request.at(JS(marker)).as_string().c_str()))
-                return Status{Error::rpcINVALID_PARAMS, "markerMalformed"};
+                return Status{
+                    RippledError::rpcINVALID_PARAMS, "markerMalformed"};
         }
     }
 
@@ -95,7 +126,6 @@ doLedgerData(Context const& context)
             header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
             header[JS(close_time_resolution)] =
                 lgrInfo.closeTimeResolution.count();
-            header[JS(closed)] = true;
             header[JS(hash)] = ripple::strHex(lgrInfo.hash);
             header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
             header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
@@ -108,6 +138,7 @@ doLedgerData(Context const& context)
             header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
         }
 
+        header[JS(closed)] = true;
         response[JS(ledger)] = header;
     }
     else
@@ -115,7 +146,8 @@ doLedgerData(Context const& context)
         if (!outOfOrder &&
             !context.backend->fetchLedgerObject(
                 *marker, lgrInfo.seq, context.yield))
-            return Status{Error::rpcINVALID_PARAMS, "markerDoesNotExist"};
+            return Status{
+                RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"};
     }
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
@@ -164,9 +196,8 @@ doLedgerData(Context const& context)
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
 
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " number of results = " << results.size()
-        << " fetched in " << time << " microseconds";
+    gLog.debug() << "Number of results = " << results.size() << " fetched in "
+                 << time << " microseconds";
     boost::json::array objects;
     objects.reserve(results.size());
     for (auto const& [key, object] : results)
@@ -184,13 +215,14 @@ doLedgerData(Context const& context)
             objects.push_back(toJson(sle));
     }
     response[JS(state)] = std::move(objects);
+    if (outOfOrder)
+        response["cache_full"] = context.backend->cache().isFull();
     auto end2 = std::chrono::system_clock::now();
 
     time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)
                .count();
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " number of results = " << results.size()
-        << " serialized in " << time << " microseconds";
+    gLog.debug() << "Number of results = " << results.size()
+                 << " serialized in " << time << " microseconds";
 
     return response;
 }

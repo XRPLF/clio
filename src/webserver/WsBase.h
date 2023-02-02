@@ -1,5 +1,36 @@
-#ifndef RIPPLE_REPORTING_WS_BASE_SESSION_H
-#define RIPPLE_REPORTING_WS_BASE_SESSION_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <backend/BackendInterface.h>
+#include <etl/ETLSource.h>
+#include <etl/ReportingETL.h>
+#include <log/Logger.h>
+#include <rpc/Counters.h>
+#include <rpc/RPC.h>
+#include <rpc/WorkQueue.h>
+#include <subscriptions/Message.h>
+#include <subscriptions/SubscriptionManager.h>
+#include <util/Profiler.h>
+#include <util/Taggable.h>
+#include <webserver/DOSGuard.h>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -7,16 +38,7 @@
 #include <iostream>
 #include <memory>
 
-#include <backend/BackendInterface.h>
-#include <etl/ETLSource.h>
-#include <etl/ReportingETL.h>
-#include <rpc/Counters.h>
-#include <rpc/RPC.h>
-#include <rpc/WorkQueue.h>
-#include <subscriptions/Message.h>
-#include <subscriptions/SubscriptionManager.h>
-#include <webserver/DOSGuard.h>
-
+// TODO: Consider removing these. Visible to anyone including this header.
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
@@ -26,8 +48,8 @@ using tcp = boost::asio::ip::tcp;
 inline void
 logError(boost::beast::error_code ec, char const* what)
 {
-    BOOST_LOG_TRIVIAL(debug)
-        << __func__ << " : " << what << ": " << ec.message() << "\n";
+    static clio::Logger log{"WebServer"};
+    log.debug() << what << ": " << ec.message() << "\n";
 }
 
 inline boost::json::object
@@ -37,27 +59,41 @@ getDefaultWsResponse(boost::json::value const& id)
     if (!id.is_null())
         defaultResp["id"] = id;
 
-    defaultResp["result"] = boost::json::object_kind;
     defaultResp["status"] = "success";
     defaultResp["type"] = "response";
 
     return defaultResp;
 }
 
-class WsBase
+class WsBase : public util::Taggable
 {
 protected:
+    clio::Logger log_{"WebServer"};
+    clio::Logger perfLog_{"Performance"};
     boost::system::error_code ec_;
 
 public:
-    // Send, that enables SubscriptionManager to publish to clients
-    virtual void
-    send(std::shared_ptr<Message> msg) = 0;
-
-    virtual ~WsBase()
+    explicit WsBase(util::TagDecoratorFactory const& tagFactory)
+        : Taggable{tagFactory}
     {
     }
 
+    /**
+     * @brief Send, that enables SubscriptionManager to publish to clients
+     * @param msg The message to send
+     */
+    virtual void
+    send(std::shared_ptr<Message> msg) = 0;
+
+    virtual ~WsBase() = default;
+
+    /**
+     * @brief Indicates whether the connection had an error and is considered
+     * dead
+     *
+     * @return true
+     * @return false
+     */
     bool
     dead()
     {
@@ -69,7 +105,7 @@ class SubscriptionManager;
 class ETLLoadBalancer;
 
 // Echoes back all received WebSocket messages
-template <class Derived>
+template <typename Derived>
 class WsSession : public WsBase,
                   public std::enable_shared_from_this<WsSession<Derived>>
 {
@@ -85,7 +121,8 @@ class WsSession : public WsBase,
     std::weak_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
+    util::TagDecoratorFactory const& tagFactory_;
+    clio::DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
     std::mutex mtx_;
@@ -93,14 +130,16 @@ class WsSession : public WsBase,
     bool sending_ = false;
     std::queue<std::shared_ptr<Message>> messages_;
 
+protected:
+    std::optional<std::string> ip_;
+
     void
     wsFail(boost::beast::error_code ec, char const* what)
     {
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            BOOST_LOG_TRIVIAL(info)
-                << "wsFail: " << what << ": " << ec.message();
+            perfLog_.info() << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
 
             if (auto manager = subscriptions_.lock(); manager)
@@ -111,27 +150,37 @@ class WsSession : public WsBase,
 public:
     explicit WsSession(
         boost::asio::io_context& ioc,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
+        util::TagDecoratorFactory const& tagFactory,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
-        : buffer_(std::move(buffer))
+        : WsBase(tagFactory)
+        , buffer_(std::move(buffer))
         , ioc_(ioc)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
+        , ip_(ip)
     {
+        perfLog_.info() << tag() << "session created";
     }
+
     virtual ~WsSession()
     {
+        perfLog_.info() << tag() << "session closed";
+        if (ip_)
+            dosGuard_.decrement(*ip_);
     }
 
     // Access the derived class, this is part of
@@ -224,6 +273,8 @@ public:
         if (ec)
             return wsFail(ec, "accept");
 
+        perfLog_.info() << tag() << "accepting new connection";
+
         // Read a message
         do_read();
     }
@@ -256,7 +307,7 @@ public:
 
         boost::json::object response = {};
         auto sendError = [this, &request, id](auto error) {
-            auto e = RPC::make_error(error);
+            auto e = RPC::makeError(error);
             if (!id.is_null())
                 e["id"] = id;
             e["request"] = request;
@@ -265,83 +316,90 @@ public:
 
         try
         {
-            BOOST_LOG_TRIVIAL(debug) << " received request : " << request;
-            try
+            perfLog_.debug()
+                << tag() << "ws received request from work queue : " << request;
+
+            auto range = backend_->fetchLedgerRange();
+            if (!range)
+                return sendError(RPC::RippledError::rpcNOT_READY);
+
+            std::optional<RPC::Context> context = RPC::make_WsContext(
+                yield,
+                request,
+                backend_,
+                subscriptions_.lock(),
+                balancer_,
+                etl_,
+                shared_from_this(),
+                tagFactory_.with(std::cref(tag())),
+                *range,
+                counters_,
+                *ip);
+
+            if (!context)
             {
-                auto range = backend_->fetchLedgerRange();
-                if (!range)
-                    return sendError(RPC::Error::rpcNOT_READY);
-
-                std::optional<RPC::Context> context = RPC::make_WsContext(
-                    yield,
-                    request,
-                    backend_,
-                    subscriptions_.lock(),
-                    balancer_,
-                    etl_,
-                    shared_from_this(),
-                    *range,
-                    counters_,
-                    *ip);
-
-                if (!context)
-                    return sendError(RPC::Error::rpcBAD_SYNTAX);
-
-                response = getDefaultWsResponse(id);
-
-                auto start = std::chrono::system_clock::now();
-                auto v = RPC::buildResponse(*context);
-                auto end = std::chrono::system_clock::now();
-                auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-                    end - start);
-                logDuration(*context, us);
-
-                if (auto status = std::get_if<RPC::Status>(&v))
-                {
-                    counters_.rpcErrored(context->method);
-
-                    auto error = RPC::make_error(*status);
-
-                    if (!id.is_null())
-                        error["id"] = id;
-
-                    error["request"] = request;
-                    response = error;
-                }
-                else
-                {
-                    counters_.rpcComplete(context->method, us);
-
-                    response["result"] = std::get<boost::json::object>(v);
-                }
+                perfLog_.warn() << tag() << "Could not create RPC context";
+                return sendError(RPC::RippledError::rpcBAD_SYNTAX);
             }
-            catch (Backend::DatabaseTimeout const& t)
+
+            response = getDefaultWsResponse(id);
+
+            auto [v, timeDiff] =
+                util::timed([&]() { return RPC::buildResponse(*context); });
+
+            auto us = std::chrono::duration<int, std::milli>(timeDiff);
+            logDuration(*context, us);
+
+            if (auto status = std::get_if<RPC::Status>(&v))
             {
-                BOOST_LOG_TRIVIAL(error) << __func__ << " Database timeout";
-                return sendError(RPC::Error::rpcNOT_READY);
+                counters_.rpcErrored(context->method);
+
+                auto error = RPC::makeError(*status);
+
+                if (!id.is_null())
+                    error["id"] = id;
+
+                error["request"] = request;
+                response = error;
+            }
+            else
+            {
+                counters_.rpcComplete(context->method, us);
+
+                auto const& result = std::get<boost::json::object>(v);
+                auto const isForwarded = result.contains("forwarded") &&
+                    result.at("forwarded").is_bool() &&
+                    result.at("forwarded").as_bool();
+
+                // if the result is forwarded - just use it as is
+                // but keep all default fields in the response too.
+                if (isForwarded)
+                    for (auto const& [k, v] : result)
+                        response.insert_or_assign(k, v);
+                else
+                    response["result"] = result;
             }
         }
         catch (std::exception const& e)
         {
-            BOOST_LOG_TRIVIAL(error)
-                << __func__ << " caught exception : " << e.what();
+            perfLog_.error() << tag() << "Caught exception : " << e.what();
 
-            return sendError(RPC::Error::rpcINTERNAL);
+            return sendError(RPC::RippledError::rpcINTERNAL);
         }
 
         boost::json::array warnings;
 
-        warnings.emplace_back(RPC::make_warning(RPC::warnRPC_CLIO));
+        warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
 
         auto lastCloseAge = etl_->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
-            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_OUTDATED));
+            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;
         std::string responseStr = boost::json::serialize(response);
         if (!dosGuard_.add(*ip, responseStr.size()))
         {
             response["warning"] = "load";
-            warnings.emplace_back(RPC::make_warning(RPC::warnRPC_RATE_LIMIT));
+            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
             response["warnings"] = warnings;
             // reserialize if we need to include this warning
             responseStr = boost::json::serialize(response);
@@ -364,21 +422,20 @@ public:
         if (!ip)
             return;
 
-        BOOST_LOG_TRIVIAL(debug)
-            << __func__ << " received request from ip = " << *ip;
+        perfLog_.info() << tag() << "Received request from ip = " << *ip;
 
         auto sendError = [this, ip](
                              auto error,
                              boost::json::value const& id,
                              boost::json::object const& request) {
-            auto e = RPC::make_error(error);
+            auto e = RPC::makeError(error);
 
             if (!id.is_null())
                 e["id"] = id;
             e["request"] = request;
 
             auto responseStr = boost::json::serialize(e);
-            BOOST_LOG_TRIVIAL(trace) << __func__ << " : " << responseStr;
+            log_.trace() << responseStr;
             dosGuard_.add(*ip, responseStr.size());
             send(std::move(responseStr));
         };
@@ -395,18 +452,24 @@ public:
         }(std::move(msg));
 
         boost::json::object request;
-        if (!raw.is_object())
-            return sendError(RPC::Error::rpcINVALID_PARAMS, nullptr, request);
-        request = raw.as_object();
-
-        auto id = request.contains("id") ? request.at("id") : nullptr;
-
-        if (!dosGuard_.isOk(*ip))
+        // dosGuard served request++ and check ip address
+        // dosGuard should check before any request, even invalid request
+        if (!dosGuard_.request(*ip))
         {
-            sendError(RPC::Error::rpcSLOW_DOWN, id, request);
+            sendError(RPC::RippledError::rpcSLOW_DOWN, nullptr, request);
+        }
+        else if (!raw.is_object())
+        {
+            // handle invalid request and async read again
+            sendError(RPC::RippledError::rpcINVALID_PARAMS, nullptr, request);
         }
         else
         {
+            request = raw.as_object();
+
+            auto id = request.contains("id") ? request.at("id") : nullptr;
+            perfLog_.debug() << tag() << "Adding to work queue";
+
             if (!queue_.postCoro(
                     [shared_this = shared_from_this(),
                      r = std::move(request),
@@ -414,11 +477,9 @@ public:
                         shared_this->handle_request(std::move(r), id, yield);
                     },
                     dosGuard_.isWhiteListed(*ip)))
-                sendError(RPC::Error::rpcTOO_BUSY, id, request);
+                sendError(RPC::RippledError::rpcTOO_BUSY, id, request);
         }
 
         do_read();
     }
 };
-
-#endif  // RIPPLE_REPORTING_WS_BASE_SESSION_H

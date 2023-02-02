@@ -13,6 +13,13 @@ To contribute, please:
 
 > **Note:** Please make sure you read the [Style guide](#style-guide).
 
+## Install git hooks
+Please make sure to run the following command in order to use git hooks that are helpful for `clio` development.
+
+``` bash
+git config --local core.hooksPath .githooks
+```
+
 ## Git commands
 This sections offers a detailed look at the git commands you will need to use to get your PR submitted. 
 Please note that there are more than one way to do this and these commands are only  provided for your convenience.
@@ -117,7 +124,11 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 ## Existing Maintainers
 
 * [cjcobb23](https://github.com/cjcobb23) (Ripple)
-* [natenichols](https://github.com/natenichols) (Ripple)
 * [legleux](https://github.com/legleux) (Ripple)
 * [undertome](https://github.com/undertome) (Ripple)
 * [godexsoft](https://github.com/godexsoft) (Ripple)
+* [officialfrancismendoza](https://github.com/officialfrancismendoza) (Ripple)
+
+## Honorable ex-Maintainers
+
+* [natenichols](https://github.com/natenichols) (ex-Ripple)

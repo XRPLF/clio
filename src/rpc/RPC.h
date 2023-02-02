@@ -1,14 +1,37 @@
-#ifndef REPORTING_RPC_H_INCLUDED
-#define REPORTING_RPC_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
 
-#include <ripple/protocol/ErrorCodes.h>
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <backend/BackendInterface.h>
+#include <log/Logger.h>
+#include <rpc/Counters.h>
+#include <rpc/Errors.h>
+#include <util/Taggable.h>
+
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <backend/BackendInterface.h>
+
 #include <optional>
-#include <rpc/Counters.h>
 #include <string>
 #include <variant>
+
 /*
  * This file contains various classes necessary for executing RPC handlers.
  * Context gives the handlers access to various other parts of the application
@@ -27,8 +50,9 @@ class ReportingETL;
 
 namespace RPC {
 
-struct Context
+struct Context : public util::Taggable
 {
+    clio::Logger perfLog_{"Performance"};
     boost::asio::yield_context& yield;
     std::string method;
     std::uint32_t version;
@@ -55,25 +79,11 @@ struct Context
         std::shared_ptr<ETLLoadBalancer> const& balancer_,
         std::shared_ptr<ReportingETL const> const& etl_,
         std::shared_ptr<WsBase> const& session_,
+        util::TagDecoratorFactory const& tagFactory_,
         Backend::LedgerRange const& range_,
         Counters& counters_,
-        std::string const& clientIp_)
-        : yield(yield_)
-        , method(command_)
-        , version(version_)
-        , params(params_)
-        , backend(backend_)
-        , subscriptions(subscriptions_)
-        , balancer(balancer_)
-        , etl(etl_)
-        , session(session_)
-        , range(range_)
-        , counters(counters_)
-        , clientIp(clientIp_)
-    {
-    }
+        std::string const& clientIp_);
 };
-using Error = ripple::error_code_i;
 
 struct AccountCursor
 {
@@ -81,119 +91,19 @@ struct AccountCursor
     std::uint32_t hint;
 
     std::string
-    toString()
+    toString() const
     {
         return ripple::strHex(index) + "," + std::to_string(hint);
     }
 
     bool
-    isNonZero()
+    isNonZero() const
     {
         return index.isNonZero() || hint != 0;
     }
 };
 
-struct Status
-{
-    Error error = Error::rpcSUCCESS;
-    std::string strCode = "";
-    std::string message = "";
-
-    Status(){};
-
-    Status(Error error_) : error(error_){};
-
-    // HACK. Some rippled handlers explicitly specify errors.
-    // This means that we have to be able to duplicate this
-    // functionality.
-    Status(std::string const& message_)
-        : error(ripple::rpcUNKNOWN), message(message_)
-    {
-    }
-
-    Status(Error error_, std::string message_)
-        : error(error_), message(message_)
-    {
-    }
-
-    Status(Error error_, std::string strCode_, std::string message_)
-        : error(error_), strCode(strCode_), message(message_)
-    {
-    }
-
-    /** Returns true if the Status is *not* OK. */
-    operator bool() const
-    {
-        return error != Error::rpcSUCCESS;
-    }
-};
-
-static Status OK;
-
 using Result = std::variant<Status, boost::json::object>;
-
-class InvalidParamsError : public std::exception
-{
-    std::string msg;
-
-public:
-    InvalidParamsError(std::string const& msg) : msg(msg)
-    {
-    }
-
-    const char*
-    what() const throw() override
-    {
-        return msg.c_str();
-    }
-};
-class AccountNotFoundError : public std::exception
-{
-    std::string account;
-
-public:
-    AccountNotFoundError(std::string const& acct) : account(acct)
-    {
-    }
-    const char*
-    what() const throw() override
-    {
-        return account.c_str();
-    }
-};
-
-enum warning_code {
-    warnUNKNOWN = -1,
-    warnRPC_CLIO = 2001,
-    warnRPC_OUTDATED = 2002,
-    warnRPC_RATE_LIMIT = 2003
-};
-
-struct WarningInfo
-{
-    constexpr WarningInfo() : code(warnUNKNOWN), message("unknown warning")
-    {
-    }
-
-    constexpr WarningInfo(warning_code code_, char const* message_)
-        : code(code_), message(message_)
-    {
-    }
-    warning_code code;
-    std::string_view const message;
-};
-
-WarningInfo const&
-get_warning_info(warning_code code);
-
-boost::json::object
-make_warning(warning_code code);
-
-boost::json::object
-make_error(Status const& status);
-
-boost::json::object
-make_error(Error err);
 
 std::optional<Context>
 make_WsContext(
@@ -204,6 +114,7 @@ make_WsContext(
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<ReportingETL const> const& etl,
     std::shared_ptr<WsBase> const& session,
+    util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);
@@ -216,6 +127,7 @@ make_HttpContext(
     std::shared_ptr<SubscriptionManager> const& subscriptions,
     std::shared_ptr<ETLLoadBalancer> const& balancer,
     std::shared_ptr<ReportingETL const> const& etl,
+    util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     Counters& counters,
     std::string const& clientIp);
@@ -226,6 +138,9 @@ buildResponse(Context const& ctx);
 bool
 validHandler(std::string const& method);
 
+bool
+isClioOnly(std::string const& method);
+
 Status
 getLimit(RPC::Context const& context, std::uint32_t& limit);
 
@@ -233,20 +148,19 @@ template <class T>
 void
 logDuration(Context const& ctx, T const& dur)
 {
+    static clio::Logger log{"RPC"};
     std::stringstream ss;
-    ss << "Request processing duration = "
+    ss << ctx.tag() << "Request processing duration = "
        << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
        << " milliseconds. request = " << ctx.params;
     auto seconds =
         std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     if (seconds > 10)
-        BOOST_LOG_TRIVIAL(error) << ss.str();
+        log.error() << ss.str();
     else if (seconds > 1)
-        BOOST_LOG_TRIVIAL(warning) << ss.str();
+        log.warn() << ss.str();
     else
-        BOOST_LOG_TRIVIAL(info) << ss.str();
+        log.info() << ss.str();
 }
 
 }  // namespace RPC
-
-#endif  // REPORTING_RPC_H_INCLUDED

@@ -1,47 +1,47 @@
-#ifndef RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
-#define RIPPLE_APP_REPORTING_BACKENDFACTORY_H_INCLUDED
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
 
-#include <boost/algorithm/string.hpp>
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
-#include <backend/PostgresBackend.h>
+#include <config/Config.h>
+#include <log/Logger.h>
+
+#include <boost/algorithm/string.hpp>
 
 namespace Backend {
 std::shared_ptr<BackendInterface>
-make_Backend(boost::asio::io_context& ioc, boost::json::object const& config)
+make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
 {
-    BOOST_LOG_TRIVIAL(info) << __func__ << ": Constructing BackendInterface";
+    static clio::Logger log{"Backend"};
+    log.info() << "Constructing BackendInterface";
 
-    boost::json::object dbConfig = config.at("database").as_object();
-
-    bool readOnly = false;
-    if (config.contains("read_only"))
-        readOnly = config.at("read_only").as_bool();
-
-    auto type = dbConfig.at("type").as_string();
-
+    auto readOnly = config.valueOr("read_only", false);
+    auto type = config.value<std::string>("database.type");
     std::shared_ptr<BackendInterface> backend = nullptr;
 
     if (boost::iequals(type, "cassandra"))
     {
-        if (config.contains("online_delete"))
-            dbConfig.at(type).as_object()["ttl"] =
-                config.at("online_delete").as_int64() * 4;
-        backend = std::make_shared<CassandraBackend>(
-            ioc, dbConfig.at(type).as_object());
-    }
-    else if (boost::iequals(type, "postgres"))
-    {
-        if (dbConfig.contains("experimental") &&
-            dbConfig.at("experimental").is_bool() &&
-            dbConfig.at("experimental").as_bool())
-            backend = std::make_shared<PostgresBackend>(
-                ioc, dbConfig.at(type).as_object());
-        else
-            BOOST_LOG_TRIVIAL(fatal)
-                << "Postgres support is experimental at this time. "
-                << "If you would really like to use Postgres, add "
-                   "\"experimental\":true to your database config";
+        auto cfg = config.section("database." + type);
+        auto ttl = config.valueOr<uint32_t>("online_delete", 0) * 4;
+        backend = std::make_shared<CassandraBackend>(ioc, cfg, ttl);
     }
 
     if (!backend)
@@ -55,11 +55,8 @@ make_Backend(boost::asio::io_context& ioc, boost::json::object const& config)
         backend->updateRange(rng->maxSequence);
     }
 
-    BOOST_LOG_TRIVIAL(info)
-        << __func__ << ": Constructed BackendInterface Successfully";
+    log.info() << "Constructed BackendInterface Successfully";
 
     return backend;
 }
 }  // namespace Backend
-
-#endif  // RIPPLE_REPORTING_BACKEND_FACTORY

@@ -1,5 +1,23 @@
-#ifndef RIPPLE_REPORTING_WS_SESSION_H
-#define RIPPLE_REPORTING_WS_SESSION_H
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
@@ -32,20 +50,24 @@ public:
     explicit PlainWsSession(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::socket&& socket,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
+        util::TagDecoratorFactory const& tagFactory,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
         : WsSession(
               ioc,
+              ip,
               backend,
               subscriptions,
               balancer,
               etl,
+              tagFactory,
               dosGuard,
               counters,
               queue,
@@ -63,19 +85,7 @@ public:
     std::optional<std::string>
     ip()
     {
-        try
-        {
-            return ws()
-                .next_layer()
-                .socket()
-                .remote_endpoint()
-                .address()
-                .to_string();
-        }
-        catch (std::exception const&)
-        {
-            return {};
-        }
+        return ip_;
     }
 
     ~PlainWsSession() = default;
@@ -91,20 +101,24 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
-    DOSGuard& dosGuard_;
+    util::TagDecoratorFactory const& tagFactory_;
+    clio::DOSGuard& dosGuard_;
     RPC::Counters& counters_;
     WorkQueue& queue_;
     http::request<http::string_body> req_;
+    std::optional<std::string> ip_;
 
 public:
     WsUpgrader(
         boost::asio::io_context& ioc,
         boost::asio::ip::tcp::socket&& socket,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
+        util::TagDecoratorFactory const& tagFactory,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& b)
@@ -115,19 +129,23 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
+        , ip_(ip)
     {
     }
     WsUpgrader(
         boost::asio::io_context& ioc,
         boost::beast::tcp_stream&& stream,
+        std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
-        DOSGuard& dosGuard,
+        util::TagDecoratorFactory const& tagFactory,
+        clio::DOSGuard& dosGuard,
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& b,
@@ -139,10 +157,12 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
+        , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , counters_(counters)
         , queue_(queue)
         , req_(std::move(req))
+        , ip_(ip)
     {
     }
 
@@ -191,10 +211,12 @@ private:
         std::make_shared<PlainWsSession>(
             ioc_,
             http_.release_socket(),
+            ip_,
             backend_,
             subscriptions_,
             balancer_,
             etl_,
+            tagFactory_,
             dosGuard_,
             counters_,
             queue_,
@@ -202,5 +224,3 @@ private:
             ->run(std::move(req_));
     }
 };
-
-#endif  // RIPPLE_REPORTING_WS_SESSION_H
