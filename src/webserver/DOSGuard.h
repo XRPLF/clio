@@ -77,9 +77,9 @@ public:
      */
     BasicDOSGuard(clio::Config const& config, SweepHandler& sweepHandler)
         : whitelist_{getWhitelist(config)}
-        , maxFetches_{config.valueOr("dos_guard.max_fetches", 100000000u)}
-        , maxConnCount_{config.valueOr("dos_guard.max_connections", 1u)}
-        , maxRequestCount_{config.valueOr("dos_guard.max_requests", 10u)}
+        , maxFetches_{config.valueOr("dos_guard.max_fetches", 1000000u)}
+        , maxConnCount_{config.valueOr("dos_guard.max_connections", 20u)}
+        , maxRequestCount_{config.valueOr("dos_guard.max_requests", 20u)}
     {
         sweepHandler.setup(this);
     }
@@ -271,7 +271,7 @@ public:
         : sweepInterval_{std::max(
               1u,
               static_cast<uint32_t>(
-                  config.valueOr("dos_guard.sweep_interval", 10.0) * 1000.0))}
+                  config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
         , ctx_{std::ref(ctx)}
     {
     }
