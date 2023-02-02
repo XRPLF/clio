@@ -33,6 +33,14 @@ namespace RPCng {
  */
 struct FieldSpec final
 {
+    /**
+     * @brief Construct a field specification out of a set of requirements
+     *
+     * @tparam Requirements The types of requirements @ref Requirement
+     * @param key The key in a JSON object that the field validates
+     * @param requirements The requirements, each of them have to fullfil
+     * the @ref Requirement concept
+     */
     template <Requirement... Requirements>
     FieldSpec(std::string const& key, Requirements&&... requirements)
         : validator_{detail::makeFieldValidator<Requirements...>(
@@ -41,6 +49,12 @@ struct FieldSpec final
     {
     }
 
+    /**
+     * @brief Validates the passed JSON value using the stored requirements
+     *
+     * @param value The JSON value to validate
+     * @return Nothing on success; @ref RPC::Status on error
+     */
     [[nodiscard]] MaybeError
     validate(boost::json::value const& value) const;
 
@@ -56,10 +70,21 @@ private:
  */
 struct RpcSpec final
 {
+    /**
+     * @brief Construct a full RPC request specification
+     *
+     * @param fields The fields of the RPC specification @ref FieldSpec
+     */
     RpcSpec(std::initializer_list<FieldSpec> fields) : fields_{fields}
     {
     }
 
+    /**
+     * @brief Validates the passed JSON value using the stored field specs
+     *
+     * @param value The JSON value to validate
+     * @return Nothing on success; @ref RPC::Status on error
+     */
     [[nodiscard]] MaybeError
     validate(boost::json::value const& value) const;
 
