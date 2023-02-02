@@ -22,8 +22,8 @@ See `unittests/rpc` for exmaples.
 
 Handlers need to fullfil the requirements specified by the **`Handler`** concept (see `rpc/common/Concepts.h`):
 - Expose types: 
-    - `Input` - The POD struct which acts as input for the handler
-	- `Output` - The POD struct which acts as output of a valid handler invocation
+	* `Input` - The POD struct which acts as input for the handler
+	* `Output` - The POD struct which acts as output of a valid handler invocation
 - Have a `spec()` member function returning a const reference to an **`RpcSpec`** describing the JSON input.
 - Have a `process(Input)` member function that operates on `Input` POD and returns `HandlerReturnType<Output>`
 - Implement `value_from` and `value_to` support using `tag_invoke` as per `boost::json` documentation for these functions.
