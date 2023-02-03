@@ -802,19 +802,17 @@ TEST_F(BackendTest, Basic)
                 auto generateNextLedger = [seed](auto lgrInfo) {
                     ++lgrInfo.seq;
                     lgrInfo.parentHash = lgrInfo.hash;
-                    std::srand(std::time(nullptr));
+                    static auto randomEngine = std::default_random_engine(seed);
                     std::shuffle(
                         lgrInfo.txHash.begin(),
                         lgrInfo.txHash.end(),
-                        std::default_random_engine(seed));
+                        randomEngine);
                     std::shuffle(
                         lgrInfo.accountHash.begin(),
                         lgrInfo.accountHash.end(),
-                        std::default_random_engine(seed));
+                        randomEngine);
                     std::shuffle(
-                        lgrInfo.hash.begin(),
-                        lgrInfo.hash.end(),
-                        std::default_random_engine(seed));
+                        lgrInfo.hash.begin(), lgrInfo.hash.end(), randomEngine);
                     return lgrInfo;
                 };
                 auto writeLedger = [&](auto lgrInfo,
@@ -2213,19 +2211,17 @@ TEST_F(BackendTest, cacheIntegration)
                 auto generateNextLedger = [seed](auto lgrInfo) {
                     ++lgrInfo.seq;
                     lgrInfo.parentHash = lgrInfo.hash;
-                    std::srand(std::time(nullptr));
+                    static auto randomEngine = std::default_random_engine(seed);
                     std::shuffle(
                         lgrInfo.txHash.begin(),
                         lgrInfo.txHash.end(),
-                        std::default_random_engine(seed));
+                        randomEngine);
                     std::shuffle(
                         lgrInfo.accountHash.begin(),
                         lgrInfo.accountHash.end(),
-                        std::default_random_engine(seed));
+                        randomEngine);
                     std::shuffle(
-                        lgrInfo.hash.begin(),
-                        lgrInfo.hash.end(),
-                        std::default_random_engine(seed));
+                        lgrInfo.hash.begin(), lgrInfo.hash.end(), randomEngine);
                     return lgrInfo;
                 };
                 auto writeLedger = [&](auto lgrInfo, auto objs, auto state) {
@@ -2295,7 +2291,14 @@ TEST_F(BackendTest, cacheIntegration)
                     EXPECT_TRUE(retLgr);
                     EXPECT_EQ(
                         RPC::ledgerInfoToBlob(*retLgr),
-                        RPC::ledgerInfoToBlob(lgrInfo));
+                        RPC::ledgerInfoToBlob(lgrInfo))
+                        << "retLgr seq:" << retLgr->seq
+                        << "; lgrInfo seq:" << lgrInfo.seq
+                        << "; retLgr hash:" << retLgr->hash
+                        << "; lgrInfo hash:" << lgrInfo.hash
+                        << "; retLgr parentHash:" << retLgr->parentHash
+                        << "; lgr Info parentHash:" << lgrInfo.parentHash;
+
                     std::vector<ripple::uint256> keys;
                     for (auto [key, obj] : objs)
                     {
