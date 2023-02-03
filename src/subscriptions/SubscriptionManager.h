@@ -95,7 +95,7 @@ public:
     unsubscribe(std::shared_ptr<WsBase> const& session, Key const& key);
 
     void
-    publish(std::shared_ptr<Message>& message, Key const& key);
+    publish(std::shared_ptr<Message> const& message, Key const& key);
 
     std::uint64_t
     count()
@@ -103,6 +103,106 @@ public:
         return subCount_.load();
     }
 };
+
+template <class T>
+inline void
+sendToSubscribers(
+    std::shared_ptr<Message> const& message,
+    T& subscribers,
+    std::atomic_uint64_t& counter)
+{
+    for (auto it = subscribers.begin(); it != subscribers.end();)
+    {
+        auto& session = *it;
+        if (session->dead())
+        {
+            it = subscribers.erase(it);
+            --counter;
+        }
+        else
+        {
+            session->send(message);
+            ++it;
+        }
+    }
+}
+
+template <class T>
+inline void
+addSession(
+    std::shared_ptr<WsBase> session,
+    T& subscribers,
+    std::atomic_uint64_t& counter)
+{
+    if (!subscribers.contains(session))
+    {
+        subscribers.insert(session);
+        ++counter;
+    }
+}
+
+template <class T>
+inline void
+removeSession(
+    std::shared_ptr<WsBase> session,
+    T& subscribers,
+    std::atomic_uint64_t& counter)
+{
+    if (subscribers.contains(session))
+    {
+        subscribers.erase(session);
+        --counter;
+    }
+}
+
+template <class Key>
+void
+SubscriptionMap<Key>::subscribe(
+    std::shared_ptr<WsBase> const& session,
+    Key const& account)
+{
+    boost::asio::post(strand_, [this, session, account]() {
+        addSession(session, subscribers_[account], subCount_);
+    });
+}
+
+template <class Key>
+void
+SubscriptionMap<Key>::unsubscribe(
+    std::shared_ptr<WsBase> const& session,
+    Key const& account)
+{
+    boost::asio::post(strand_, [this, account, session]() {
+        if (!subscribers_.contains(account))
+            return;
+
+        if (!subscribers_[account].contains(session))
+            return;
+
+        --subCount_;
+
+        subscribers_[account].erase(session);
+
+        if (subscribers_[account].size() == 0)
+        {
+            subscribers_.erase(account);
+        }
+    });
+}
+
+template <class Key>
+void
+SubscriptionMap<Key>::publish(
+    std::shared_ptr<Message> const& message,
+    Key const& account)
+{
+    boost::asio::post(strand_, [this, account, message]() {
+        if (!subscribers_.contains(account))
+            return;
+
+        sendToSubscribers(message, subscribers_[account], subCount_);
+    });
+}
 
 class SubscriptionManager
 {

@@ -106,6 +106,9 @@ if(BUILD_TESTS)
     unittests/Config.cpp
     unittests/ProfilerTest.cpp
     unittests/DOSGuard.cpp
+    unittests/SubscriptionTest.cpp
+    unittests/SubscriptionManagerTest.cpp
+    unittests/util/TestObject.cpp
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp

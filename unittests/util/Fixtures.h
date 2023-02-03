@@ -25,6 +25,7 @@
 
 #include <boost/asio.hpp>
 
+#include "MockBackend.h"
 #include <gtest/gtest.h>
 #include <log/Logger.h>
 
@@ -153,4 +154,26 @@ struct SyncAsioContextTest : public NoLoggerFixture
 
 protected:
     boost::asio::io_context ctx;
+};
+
+/**
+ * @brief Fixture with an mock backend
+ */
+struct MockBackendTest : public NoLoggerFixture
+{
+    void
+    SetUp() override
+    {
+        NoLoggerFixture::SetUp();
+        clio::Config cfg;
+        mockBackendPtr = std::make_shared<MockBackend>(cfg);
+    }
+    void
+    TearDown() override
+    {
+        mockBackendPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<BackendInterface> mockBackendPtr;
 };

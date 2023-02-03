@@ -30,7 +30,6 @@
 #include <optional>
 #include <string>
 
-using namespace testing;
 using namespace clio;
 using namespace std;
 
