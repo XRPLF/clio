@@ -76,10 +76,22 @@ class Section final
     std::vector<FieldSpec> specs;
 
 public:
+    /**
+     * @brief Construct new section validator from a list of specs
+     *
+     * @param specs List of specs @ref FieldSpec
+     */
     explicit Section(std::initializer_list<FieldSpec> specs) : specs{specs}
     {
     }
 
+    /**
+     * @brief Verify that the JSON value representing the section is valid
+     * according to the given specs
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the section from the outer object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
 };
@@ -99,6 +111,13 @@ struct Required final
 template <typename... Types>
 struct Type final
 {
+    /**
+     * @brief Verify that the JSON value is (one) of specified type(s)
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
@@ -126,10 +145,23 @@ class Between final
     Type max_;
 
 public:
+    /**
+     * @brief Construct the validator storing min and max values
+     *
+     * @param min
+     * @param max
+     */
     explicit Between(Type min, Type max) : min_{min}, max_{max}
     {
     }
 
+    /**
+     * @brief Verify that the JSON value is within a certain range
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
@@ -157,10 +189,22 @@ class EqualTo final
     Type original_;
 
 public:
+    /**
+     * @brief Construct the validator with stored original value
+     *
+     * @param original The original value to store
+     */
     explicit EqualTo(Type original) : original_{original}
     {
     }
 
+    /**
+     * @brief Verify that the JSON value is equal to the stored original
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
@@ -192,10 +236,22 @@ class OneOf final
     std::vector<Type> options_;
 
 public:
+    /**
+     * @brief Construct the validator with stored options
+     *
+     * @param options The list of allowed options
+     */
     explicit OneOf(std::initializer_list<Type> options) : options_{options}
     {
     }
 
+    /**
+     * @brief Verify that the JSON value is one of the stored options
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
@@ -229,11 +285,25 @@ class ValidateArrayAt final
     std::vector<FieldSpec> specs_;
 
 public:
+    /**
+     * @brief Constructs a validator that validates the specified element of a
+     * JSON array
+     *
+     * @param idx The index inside the array to validate
+     * @param specs The specifications to validate against
+     */
     ValidateArrayAt(std::size_t idx, std::initializer_list<FieldSpec> specs)
         : idx_{idx}, specs_{specs}
     {
     }
 
+    /**
+     * @brief Verify that the JSON array element at given index is valid
+     * according the stored specs
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the array from the outer object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
 };
@@ -247,11 +317,25 @@ class CustomValidator final
         validator_;
 
 public:
+    /**
+     * @brief Constructs a custom validator from any supported callable
+     *
+     * @tparam Fn The type of callable
+     * @param fn The callable/function object
+     */
     template <typename Fn>
     explicit CustomValidator(Fn&& fn) : validator_{std::forward<Fn>(fn)}
     {
     }
 
+    /**
+     * @brief Verify that the JSON value is valid according to the custom
+     * validation function stored
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
 };

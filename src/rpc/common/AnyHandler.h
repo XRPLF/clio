@@ -27,10 +27,23 @@ namespace RPCng {
 
 /**
  * @brief A type-erased Handler that can contain any (NextGen) RPC handler class
+ *
+ * This allows to store different handlers in one map/vector etc.
+ * Support for copying was added in order to allow storing in a
+ * map/unordered_map using the initializer_list constructor.
  */
 class AnyHandler final
 {
 public:
+    /**
+     * @brief Type-erases any handler class.
+     *
+     * @tparam HandlerType The real type of wrapped handler class
+     * @tparam ProcessingStrategy A strategy that implements how processing of
+     * JSON is to be done
+     * @param handler The handler to wrap. Required to fulfil the @ref Handler
+     * concept.
+     */
     template <
         Handler HandlerType,
         typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
@@ -55,6 +68,12 @@ public:
     AnyHandler&
     operator=(AnyHandler&&) = default;
 
+    /**
+     * @brief Process incoming JSON by the stored handler
+     *
+     * @param value The JSON to process
+     * @return JSON result or @ref RPC::Status on error
+     */
     [[nodiscard]] ReturnType
     process(boost::json::value const& value) const
     {
