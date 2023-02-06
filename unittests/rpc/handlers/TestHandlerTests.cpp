@@ -50,6 +50,16 @@ TEST_F(RPCTestHandlerTest, HandlerSuccess)
     EXPECT_EQ(val.as_object().at("computed").as_string(), "world_10");
 }
 
+TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
+{
+    auto const handler = AnyHandler{NoInputHandlerFake{}};
+    auto const output = handler.process(json::parse(R"({})"));
+    ASSERT_TRUE(output);
+
+    auto const val = output.value();
+    EXPECT_EQ(val.as_object().at("computed").as_string(), "test");
+}
+
 TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 {
     auto const handler = AnyHandler{HandlerFake{}};

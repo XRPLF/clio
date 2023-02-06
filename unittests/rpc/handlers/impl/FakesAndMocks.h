@@ -98,6 +98,19 @@ public:
     }
 };
 
+class NoInputHandlerFake
+{
+public:
+    using Output = TestOutput;
+    using Result = RPCng::HandlerReturnType<Output>;
+
+    Result
+    process() const
+    {
+        return Output{"test"};
+    }
+};
+
 // example handler that returns custom error
 class FailingHandlerFake
 {
@@ -163,6 +176,14 @@ struct HandlerMock
 
     MOCK_METHOD(RPCng::RpcSpecConstRef, spec, (), (const));
     MOCK_METHOD(Result, process, (Input), (const));
+};
+
+struct HandlerWithoutInputMock
+{
+    using Output = InOutFake;
+    using Result = RPCng::HandlerReturnType<Output>;
+
+    MOCK_METHOD(Result, process, (), (const));
 };
 
 }  // namespace unittests::detail

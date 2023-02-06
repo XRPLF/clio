@@ -17,50 +17,21 @@
 */
 //==============================================================================
 
-#pragma once
+#include <rpc/common/AnyHandler.h>
+#include <rpc/ngHandlers/Ping.h>
+#include <util/Fixtures.h>
 
-#include <rpc/Errors.h>
-#include <util/Expected.h>
+using namespace RPCng;
 
-#include <boost/json/value.hpp>
-
-namespace RPCng {
-
-/**
- * @brief Return type used for Validators that can return error but don't have
- * specific value to return
- */
-using MaybeError = util::Expected<void, RPC::Status>;
-
-/**
- * @brief The type that represents just the error part of @ref MaybeError
- */
-using Error = util::Unexpected<RPC::Status>;
-
-/**
- * @brief Return type for each individual handler
- */
-template <typename OutputType>
-using HandlerReturnType = util::Expected<OutputType, RPC::Status>;
-
-/**
- * @brief The final return type out of RPC engine
- */
-using ReturnType = util::Expected<boost::json::value, RPC::Status>;
-
-struct RpcSpec;
-struct FieldSpec;
-
-using RpcSpecConstRef = RpcSpec const&;
-
-struct VoidOutput
+class RPCHandlerTest : public NoLoggerFixture
 {
 };
 
-inline void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput)
+// example handler tests
+TEST_F(RPCHandlerTest, Ping)
 {
-    jv = boost::json::object{};
+    auto const handler = AnyHandler{PingHandler{}};
+    auto const output = handler.process(boost::json::parse(R"({})"));
+    ASSERT_TRUE(output);
+    EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
 }
-
-}  // namespace RPCng

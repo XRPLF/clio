@@ -52,6 +52,19 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
     ASSERT_TRUE(ret);  // no error
 }
 
+TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
+{
+    HandlerWithoutInputMock handler;
+    RPCng::detail::DefaultProcessor<HandlerWithoutInputMock> processor;
+
+    auto const data = InOutFake{"works"};
+    auto const input = json::parse(R"({})");
+    EXPECT_CALL(handler, process()).WillOnce(Return(data));
+
+    auto const ret = processor(handler, input);
+    ASSERT_TRUE(ret);  // no error
+}
+
 TEST_F(RPCDefaultProcessorTest, InvalidInput)
 {
     HandlerMock handler;
