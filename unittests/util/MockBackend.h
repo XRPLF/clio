@@ -27,7 +27,7 @@ using namespace Backend;
 class MockBackend : public BackendInterface
 {
 public:
-    MockBackend(clio::Config cfg) : BackendInterface(cfg)
+    MockBackend(clio::Config)
     {
     }
     MOCK_METHOD(

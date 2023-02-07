@@ -708,7 +708,7 @@ public:
         boost::asio::io_context& ioc,
         clio::Config const& config,
         uint32_t ttl)
-        : BackendInterface(config), config_(config), ttl_(ttl)
+        : config_(config), ttl_(ttl)
     {
         work_.emplace(ioContext_);
         ioThread_ = std::thread([this]() { ioContext_.run(); });
@@ -934,27 +934,6 @@ public:
         ripple::uint256 const& key,
         std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override;
-
-    std::optional<int64_t>
-    getToken(void const* key, boost::asio::yield_context& yield) const
-    {
-        log_.trace() << "Fetching from cassandra";
-        CassandraStatement statement{getToken_};
-        statement.bindNextBytes(key, 32);
-
-        CassandraResult result = executeAsyncRead(statement, yield);
-
-        if (!result)
-        {
-            log_.error() << "No rows";
-            return {};
-        }
-        int64_t token = result.getInt64();
-        if (token == INT64_MAX)
-            return {};
-        else
-            return token + 1;
-    }
 
     std::optional<TransactionAndMetadata>
     fetchTransaction(

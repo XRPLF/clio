@@ -2,11 +2,9 @@
 /*
     This file is part of clio: https://github.com/XRPLF/clio
     Copyright (c) 2023, the clio developers.
-
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
     copyright notice and this permission notice appear in all copies.
-
     THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
     WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
     MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -235,18 +233,23 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 {
     // clang-format off
     auto spec = RpcSpec{
-        {"mix", Required{}, 
-                Type<std::string,json::object>{},
-                IfType<json::object>{
-                        Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
-                        Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
-                        },
-                IfType<std::string>{Uint256HexStringValidator,}
+        {"mix", 
+            Required{}, Type<std::string, json::object>{},
+            IfType<json::object>{
+                Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+                Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
+            },
+            IfType<std::string>{
+                Uint256HexStringValidator
+            }
         },
-        {"mix2",Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
-                Type<std::string,json::object>{}}
+        {"mix2",
+            Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}, 
+            Type<std::string, json::object>{}
+        },
     };
     // clang-format on
+
     // if json object pass
     auto passingInput =
         json::parse(R"({ "mix": {"limit": 42, "limit2": 22} })");

@@ -349,6 +349,8 @@ private:
     [[nodiscard]] Return
     checkedAs(key_type key, boost::json::value const& value) const
     {
+        using boost::json::value_to;
+
         auto has_error = false;
         if constexpr (std::is_same_v<Return, bool>)
         {
@@ -379,7 +381,7 @@ private:
                 std::string{to_string(value.kind())} +
                 "' in JSON but requested '" + detail::typeName<Return>() + "'");
 
-        return boost::json::value_to<Return>(value);
+        return value_to<Return>(value);
     }
 
     std::optional<boost::json::value>

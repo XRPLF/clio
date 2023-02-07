@@ -659,10 +659,13 @@ public:
             call(stub, cq);
         }
 
-        log_.trace() << "Writing objects";
+        auto const numObjects = cur_->ledger_objects().objects_size();
+        log_.debug() << "Writing " << numObjects << " objects";
+
         std::vector<Backend::LedgerObject> cacheUpdates;
-        cacheUpdates.reserve(cur_->ledger_objects().objects_size());
-        for (int i = 0; i < cur_->ledger_objects().objects_size(); ++i)
+        cacheUpdates.reserve(numObjects);
+
+        for (int i = 0; i < numObjects; ++i)
         {
             auto& obj = *(cur_->mutable_ledger_objects()->mutable_objects(i));
             if (!more && nextPrefix_ != 0x00)
@@ -691,7 +694,8 @@ public:
         }
         backend.cache().update(
             cacheUpdates, request_.ledger().sequence(), cacheOnly);
-        log_.trace() << "Wrote objects";
+        log_.debug() << "Wrote " << numObjects
+                     << " objects. Got more: " << (more ? "YES" : "NO");
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
