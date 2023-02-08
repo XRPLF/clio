@@ -49,12 +49,21 @@ concept Requirement = requires(T a) {
  */
 // clang-format off
 template <typename T>
-concept Handler = requires(T a, typename T::Input in, typename T::Output out) {
+concept HandlerWithInput = requires(T a, typename T::Input in, typename T::Output out) {
     { a.spec() } -> std::same_as<RpcSpecConstRef>;
-    { a.process(in) } -> std::same_as<HandlerReturnType<decltype(out)>>;
-} 
-&& boost::json::has_value_from<typename T::Output>::value
-&& boost::json::has_value_to<typename T::Input>::value;
+    { a.process(in) } -> std::same_as<HandlerReturnType<decltype(out)>>;}
+    && boost::json::has_value_to<typename T::Input>::value;
+
+template <typename T>
+concept HandlerWithoutInput = requires(T a, typename T::Output out) {
+    { a.process() } -> std::same_as<HandlerReturnType<decltype(out)>>;};
+
+template <typename T>
+concept Handler = 
+(HandlerWithInput<T>
+||
+HandlerWithoutInput<T>)
+&& boost::json::has_value_from<typename T::Output>::value;
 // clang-format on
 
 }  // namespace RPCng

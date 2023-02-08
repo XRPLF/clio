@@ -24,6 +24,9 @@
 
 namespace RPCng::detail {
 
+template <typename>
+static constexpr bool unsupported_handler_v = false;
+
 template <Handler HandlerType>
 struct DefaultProcessor final
 {
@@ -33,19 +36,35 @@ struct DefaultProcessor final
     {
         using boost::json::value_from;
         using boost::json::value_to;
+        if constexpr (HandlerWithInput<HandlerType>)
+        {
+            // first we run validation
+            auto const spec = handler.spec();
+            if (auto const ret = spec.validate(value); not ret)
+                return Error{ret.error()};  // forward Status
 
-        // first we run validation
-        auto const spec = handler.spec();
-        if (auto const ret = spec.validate(value); not ret)
-            return Error{ret.error()};  // forward Status
+            auto const inData = value_to<typename HandlerType::Input>(value);
 
-        auto const inData = value_to<typename HandlerType::Input>(value);
-
-        // real handler is given expected Input, not json
-        if (auto const ret = handler.process(inData); not ret)
-            return Error{ret.error()};  // forward Status
+            // real handler is given expected Input, not json
+            if (auto const ret = handler.process(inData); not ret)
+                return Error{ret.error()};  // forward Status
+            else
+                return value_from(ret.value());
+        }
+        else if constexpr (HandlerWithoutInput<HandlerType>)
+        {
+            // no input to pass, ignore the value
+            if (auto const ret = handler.process(); not ret)
+                return Error{ret.error()};  // forward Status
+            else
+                return value_from(ret.value());
+        }
         else
-            return value_from(ret.value());
+        {
+            // when concept HandlerWithInput and HandlerWithoutInput not cover
+            // all Handler case
+            static_assert(unsupported_handler_v<HandlerType>);
+        }
     }
 };
 

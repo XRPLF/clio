@@ -19,48 +19,20 @@
 
 #pragma once
 
-#include <rpc/Errors.h>
-#include <util/Expected.h>
-
-#include <boost/json/value.hpp>
+#include <rpc/common/Types.h>
 
 namespace RPCng {
 
-/**
- * @brief Return type used for Validators that can return error but don't have
- * specific value to return
- */
-using MaybeError = util::Expected<void, RPC::Status>;
-
-/**
- * @brief The type that represents just the error part of @ref MaybeError
- */
-using Error = util::Unexpected<RPC::Status>;
-
-/**
- * @brief Return type for each individual handler
- */
-template <typename OutputType>
-using HandlerReturnType = util::Expected<OutputType, RPC::Status>;
-
-/**
- * @brief The final return type out of RPC engine
- */
-using ReturnType = util::Expected<boost::json::value, RPC::Status>;
-
-struct RpcSpec;
-struct FieldSpec;
-
-using RpcSpecConstRef = RpcSpec const&;
-
-struct VoidOutput
+class PingHandler
 {
+public:
+    using Output = VoidOutput;
+    using Result = HandlerReturnType<Output>;
+
+    Result
+    process() const
+    {
+        return Output{};
+    }
 };
-
-inline void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput)
-{
-    jv = boost::json::object{};
-}
-
 }  // namespace RPCng

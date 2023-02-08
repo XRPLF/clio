@@ -112,7 +112,8 @@ if(BUILD_TESTS)
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
-    unittests/rpc/handlers/DefaultProcessorTests.cpp)
+    unittests/rpc/handlers/DefaultProcessorTests.cpp
+    unittests/rpc/handlers/PingTest.cpp)
   include(CMake/deps/gtest.cmake)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
