@@ -115,7 +115,7 @@ To change your code to conform use `clang-format -i <your changed files>`.
 Maintainers are ecosystem participants with elevated access to the repository. They are able to push new code, make decisions on when a release should be made, etc.
 
 ## Code Review
-PRs must be reviewed and approved by at least one of the maintainers before it can be merged.
+A PR must be reviewed and approved by at least one of the maintainers before it can be merged.
 
 ## Adding and Removing
 New maintainers can be proposed by two existing maintainers, subject to a vote by a quorum of the existing maintainers. A minimum of 50% support and a 50% participation is required. In the event of a tie vote, the addition of the new maintainer will be rejected.
@@ -124,9 +124,9 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 
 ## Existing Maintainers
 
-* [legleux](https://github.com/legleux) (Ripple)
-* [undertome](https://github.com/undertome) (Ripple)
+* [cindyyan317](https://github.com/cindyyan317) (Ripple)
 * [godexsoft](https://github.com/godexsoft) (Ripple)
+* [legleux](https://github.com/legleux) (Ripple)
 * [officialfrancismendoza](https://github.com/officialfrancismendoza) (Ripple)
 
 ## Honorable ex-Maintainers
