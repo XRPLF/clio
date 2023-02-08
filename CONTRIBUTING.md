@@ -3,18 +3,18 @@ Thank you for your interest in contributing to the `clio` project 🙏
 
 To contribute, please:
 1. Fork the repository under your own user.
-2. Create a new branch on which to write your changes.
+2. Create a new branch on which to commit/push your changes.
 3. Write and test your code.
 4. Ensure that your code compiles with the provided build engine and update the provided build engine as part of your PR where needed and where appropriate.
 5. Where applicable, write test cases for your code and include those in `unittests`.
 6. Ensure your code passes automated checks (e.g. clang-format)
-7. Squash your commits (i.e. rebase) into as few commits as is reasonable to describe your changes at a high level (typically a single commit for a small change.). See below for more details.
+7. Squash your commits (i.e. rebase) into as few commits as is reasonable to describe your changes at a high level (typically a single commit for a small change). See below for more details.
 8. Open a PR to the main repository onto the _develop_ branch, and follow the provided template.
 
-> **Note:** Please make sure you read the [Style guide](#style-guide).
+> **Note:** Please read the [Style guide](#style-guide).
 
 ## Install git hooks
-Please make sure to run the following command in order to use git hooks that are helpful for `clio` development.
+Please run the following command in order to use git hooks that are helpful for `clio` development.
 
 ``` bash
 git config --local core.hooksPath .githooks
@@ -22,10 +22,10 @@ git config --local core.hooksPath .githooks
 
 ## Git commands
 This sections offers a detailed look at the git commands you will need to use to get your PR submitted. 
-Please note that there are more than one way to do this and these commands are only  provided for your convenience.
+Please note that there are more than one way to do this and these commands are provided for your convenience.
 At this point it's assumed that you have already finished working on your feature/bug.
 
-> **Important:** Before you issue any of the commands below, please hit the `Sync fork` button and make sure your fork's `develop` branch is up to date with the main `clio` repository.
+> **Important:** Before you issue any of the commands below, please hit the `Sync fork` button and make sure your fork's `develop` branch is up-to-date with the main `clio` repository.
 
 ``` bash
 # Create a backup of your branch
@@ -37,16 +37,16 @@ git pull origin develop
 git checkout <your feature branch>
 git rebase -i develop
 ```
-For each commit in the list other than the first one please select `s` to squash.
-After this is done you will have the opportunity to write a message for the squashed commit.
+For each commit in the list other than the first one, enter `s` to squash.
+After this is done, you will have the opportunity to write a message for the squashed commit.
 
-> **Hint:** Please use **imperative mood** commit message capitalizing the first word of the subject.
+> **Hint:** Please use **imperative mood** in the commit message, and capitalize the first word.
 
 ``` bash
 # You should now have a single commit on top of a commit in `develop`
 git log
 ```
-> **Todo:** In case there are merge conflicts, please resolve them now
+> **Note:** If there are merge conflicts, please resolve them now.
 
 ``` bash
 # Use the same commit message as you did above
@@ -54,16 +54,16 @@ git commit -m 'Your message'
 git rebase --continue
 ```
 
-> **Important:** If you have no GPG keys setup please follow [this tutorial](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-gpg-key-to-your-github-account)
+> **Important:** If you have no GPG keys set up, please follow [this tutorial](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-gpg-key-to-your-github-account)
 
 ``` bash
-# Sign the commit with your GPG key and finally push your changes to the repo
+# Sign the commit with your GPG key, and push your changes
 git commit --amend -S
 git push --force
 ```
 
 ## Fixing issues found during code review
-While your code is in review it's possible that some changes will be requested by the reviewer.
+While your code is in review, it's possible that some changes will be requested by reviewer(s).
 This section describes the process of adding your fixes.
 
 We assume that you already made the required changes on your feature branch.
@@ -72,25 +72,26 @@ We assume that you already made the required changes on your feature branch.
 # Add the changed code
 git add <paths to add>
 
-# Add a folded commit message (so you can squash them later)
+# Add a [FOLD] commit message (so you remember to squash it later)
 # while also signing it with your GPG key
 git commit -S -m "[FOLD] Your commit message"
 
 # And finally push your changes
 git push
 ```
-## After code review
-Last but not least, when your PR is approved you still have to `Squash and merge` your code. 
-Luckily there is a button for that towards the bottom of the PR's page on github.
 
-> **Important:** Please leave the automatically generated link to PR in the subject line **and** in the description field please add `"Fixes #ISSUE_ID"` (replacing `ISSUE_ID` with yours).
+## After code review
+When your PR is approved and ready to merge, use `Squash and merge`.
+The button for that is near the bottom of the PR's page on GitHub.
+
+> **Important:** Please leave the automatically-generated mention/link to the PR in the subject line **and** in the description field add `"Fix #ISSUE_ID"` (replacing `ISSUE_ID` with yours) if the PR fixes an issue.
 > **Note:** See [issues](https://github.com/XRPLF/clio/issues) to find the `ISSUE_ID` for the feature/bug you were working on.
 
 # Style guide
-This is a non-exhaustive list of recommended style guidelines. These are not always strictly enforced and serve as a way to keep the codebase coherent rather than a set of _thou shalt not_ commandments.
+This is a non-exhaustive list of recommended style guidelines. These are not always strictly enforced and serve as a way to keep the codebase coherent.
 
 ## Formatting
-All code must conform to `clang-format` version 10, unless the result would be unreasonably difficult to read or maintain.
+Code must conform to `clang-format` version 10, unless the result would be unreasonably difficult to read or maintain.
 To change your code to conform use `clang-format -i <your changed files>`.
 
 ## Avoid
@@ -114,7 +115,7 @@ To change your code to conform use `clang-format -i <your changed files>`.
 Maintainers are ecosystem participants with elevated access to the repository. They are able to push new code, make decisions on when a release should be made, etc.
 
 ## Code Review
-PRs must be reviewed by at least one of the maintainers.
+PRs must be reviewed and approved by at least one of the maintainers before it can be merged.
 
 ## Adding and Removing
 New maintainers can be proposed by two existing maintainers, subject to a vote by a quorum of the existing maintainers. A minimum of 50% support and a 50% participation is required. In the event of a tie vote, the addition of the new maintainer will be rejected.
@@ -123,7 +124,6 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 
 ## Existing Maintainers
 
-* [cjcobb23](https://github.com/cjcobb23) (Ripple)
 * [legleux](https://github.com/legleux) (Ripple)
 * [undertome](https://github.com/undertome) (Ripple)
 * [godexsoft](https://github.com/godexsoft) (Ripple)
@@ -131,4 +131,5 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 
 ## Honorable ex-Maintainers
 
+* [cjcobb23](https://github.com/cjcobb23) (ex-Ripple)
 * [natenichols](https://github.com/natenichols) (ex-Ripple)
