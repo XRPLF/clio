@@ -19,8 +19,12 @@
 
 #pragma once
 
+#include <backend/BackendInterface.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+
+#include <boost/asio/spawn.hpp>
+
 #include <vector>
 
 namespace RPCng {
@@ -64,11 +68,26 @@ public:
         std::optional<std::string> marker;
     };
 
+    // clang-format off
+    validation::CustomValidator hexFormatCheck = validation::CustomValidator{
+        [](boost::json::value const& value, std::string_view key) -> MaybeError {
+            ripple::uint256 ledgerHash;
+        if (!ledgerHash.parseHex(value.as_string().c_str()))
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"}};
+            return MaybeError{};
+        }
+    };
+    // clang-format on
+
     using Input = HandlerInput;
     using Output = HandlerOutput;
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountChannelsHandler()
+    AccountChannelsHandler(
+        boost::asio::yield_context& yieldCtx,
+        std::shared_ptr<BackendInterface const> const& sharedPtrBackend)
+        : yieldCtx_(yieldCtx), sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -79,7 +98,7 @@ public:
         static const RpcSpec rpcSpec = {
             {"account", validation::Required{}, validation::Type<std::string>{}},
             {"destination_account", validation::Type<std::string>{}},
-            {"ledger_hash", validation::Type<std::string>{}},
+            {"ledger_hash", validation::Type<std::string>{},hexFormatCheck},
             {"limit", validation::Type<uint32_t>{}},
             {"ledger_index", validation::Type<uint64_t, std::string>{}},
             {"marker", validation::Type<std::string>{}}
@@ -90,10 +109,12 @@ public:
     }
 
     Result
-    process(Input input) const
-    {
-        return Output{};
-    }
+    process(Input input) const;
+
+private:
+    // dependencies
+    const boost::asio::yield_context& yieldCtx_;
+    std::shared_ptr<BackendInterface const> const& sharedPtrBackend_;
 };
 
 inline AccountChannelsHandler::Input

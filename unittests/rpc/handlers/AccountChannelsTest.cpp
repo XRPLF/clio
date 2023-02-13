@@ -24,19 +24,42 @@
 using namespace RPCng;
 namespace json = boost::json;
 
-class AccountHandlerTest : public NoLoggerFixture
+class RPCAccountHandlerTest : public SyncAsioContextTest
 {
+    void
+    SetUp() override
+    {
+        SyncAsioContextTest::SetUp();
+        clio::Config cfg;
+        mockBackendPtr = std::make_shared<MockBackend>(cfg);
+    }
+    void
+    TearDown() override
+    {
+        mockBackendPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<BackendInterface> mockBackendPtr;
 };
 
 // example handler tests
-TEST_F(AccountHandlerTest, NormalPath)
+TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
 {
-    auto const handler = AnyHandler{AccountChannelsHandler{}};
-    auto const input = json::parse(R"({ 
-        "hello": "not world", 
-        "limit": 10
-    })");
-    auto const output = handler.process(input);
-    ASSERT_TRUE(output);
-    EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        auto const handler =
+            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const input = json::parse(R"({ 
+        "account": "myaccount", 
+        "limit": 10,
+        "ledger_hash": "xxx"
+        })");
+        auto const output = handler.process(input);
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerHashMalformed");
+    });
+    ctx.run();
 }

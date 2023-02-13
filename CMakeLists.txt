@@ -55,6 +55,8 @@ target_sources(clio PRIVATE
   ## NextGen RPC
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
+  ## NextGen RPC handler
+  src/rpc/ngHandlers/AccountChannels.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
