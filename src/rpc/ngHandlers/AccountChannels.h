@@ -21,21 +21,49 @@
 
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+#include <vector>
 
 namespace RPCng {
 class AccountChannelsHandler
 {
 public:
+    struct ChannelResponse
+    {
+        std::string channelID;
+        std::string account;
+        std::string accountDestination;
+        std::string amount;
+        std::string balance;
+        std::string publicKey;
+        std::string publicKeyHex;
+        uint64_t settleDelay;
+        uint64_t expiration;
+        uint64_t cancelAfter;
+        uint32_t sourceTag;
+        uint32_t destinationTag;
+    };
+
     struct HandlerOutput
     {
-        std::string computed;
+        std::vector<ChannelResponse> channels;
+        std::string account;
+        std::string ledgerHash;
+        uint64_t ledgerIndex;
+        bool validated;
+        uint32_t limit;
+        std::string marker;
     };
 
     struct HandlerInput
     {
-        std::string hello;
+        std::string account;
+        std::optional<std::string> destinationAccount;
+        std::optional<std::string> ledgerHash;
+        std::optional<uint64_t> ledgerIndex;
         std::optional<uint32_t> limit;
+        std::optional<std::string> marker;
     };
+
     using Input = HandlerInput;
     using Output = HandlerOutput;
     using Result = RPCng::HandlerReturnType<Output>;
@@ -49,8 +77,12 @@ public:
     {
         // clang-format off
         static const RpcSpec rpcSpec = {
-            {"hello", validation::Required{}, validation::Type<std::string>{}, validation::EqualTo{"world"}},
-            {"limit", validation::Type<uint32_t>{}, validation::Between<uint32_t>{0, 100}} // optional field
+            {"account", validation::Required{}, validation::Type<std::string>{}},
+            {"destination_account", validation::Type<std::string>{}},
+            {"ledger_hash", validation::Type<std::string>{}},
+            {"limit", validation::Type<uint32_t>{}},
+            {"ledger_index", validation::Type<uint64_t, std::string>{}},
+            {"marker", validation::Type<std::string>{}}
         };
         // clang-format on
 
@@ -60,8 +92,7 @@ public:
     Result
     process(Input input) const
     {
-        return Output{
-            input.hello + '_' + std::to_string(input.limit.value_or(0))};
+        return Output{};
     }
 };
 
@@ -70,11 +101,41 @@ tag_invoke(
     boost::json::value_to_tag<AccountChannelsHandler::Input>,
     boost::json::value const& jv)
 {
+    auto jsonObject = jv.as_object();
     std::optional<uint32_t> optLimit;
-    if (jv.as_object().contains("limit"))
+    if (jsonObject.contains("limit"))
+    {
         optLimit = jv.at("limit").as_int64();
+    }
+    std::optional<std::string> optMarker;
+    if (jsonObject.contains("marker"))
+    {
+        optMarker = jv.at("marker").as_string().c_str();
+    }
+    std::optional<std::string> optLedgerHash;
+    if (jsonObject.contains("ledger_hash"))
+    {
+        optLedgerHash = jv.at("ledger_hash").as_string().c_str();
+    }
+    std::optional<std::string> optDestinationAccount;
+    if (jsonObject.contains("destination_account"))
+    {
+        optDestinationAccount =
+            jv.at("destination_account").as_string().c_str();
+    }
+    std::optional<uint64_t> optLedgerIndex;
+    if (jsonObject.contains("ledger_index"))
+    {
+        optLedgerIndex = jv.at("ledger_index").as_uint64();
+    }
 
-    return {jv.as_object().at("hello").as_string().c_str(), optLimit};
+    return AccountChannelsHandler::Input{
+        .ledgerIndex = optLedgerIndex,
+        .ledgerHash = optLedgerHash,
+        .destinationAccount = optDestinationAccount,
+        .marker = optMarker,
+        .limit = optLimit,
+        .account = jv.at("account").as_string().c_str()};
 }
 
 inline void
@@ -83,7 +144,7 @@ tag_invoke(
     boost::json::value& jv,
     AccountChannelsHandler::Output output)
 {
-    jv = {{"computed", output.computed}};
+    // jv = {{"computed", output.computed}};
 }
 
 }  // namespace RPCng
