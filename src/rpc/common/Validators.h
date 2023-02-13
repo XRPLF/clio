@@ -360,4 +360,17 @@ extern CustomValidator LedgerIndexValidator;
  */
 extern CustomValidator LedgerHashValidator;
 
+/**
+ * @brief Provide a common used validator for account
+ * Account must be a string and the converted public key is valid
+ */
+extern CustomValidator AccountValidator;
+
+/**
+ * @brief Provide a common used validator for marker
+ *  Marker is composed of a comma separated index and start hint. The
+ *   former will be read as hex, and the latter can cast to uint64.
+ */
+extern CustomValidator MarkerValidator;
+
 }  // namespace RPCng::validation

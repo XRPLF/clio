@@ -280,3 +280,46 @@ TEST_F(RPCBaseTest, LedgerIndexValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
 }
+
+TEST_F(RPCBaseTest, AccountValidator)
+{
+    auto spec = RpcSpec{
+        {"account", AccountValidator},
+    };
+    auto failingInput = json::parse(R"({ "account": 256 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput =
+        json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(
+        R"({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    auto passingInput =
+        json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    passingInput = json::parse(
+        R"({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+}
+
+TEST_F(RPCBaseTest, MarkerValidator)
+{
+    auto spec = RpcSpec{
+        {"marker", MarkerValidator},
+    };
+    auto failingInput = json::parse(R"({ "marker": 256 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(R"({ "marker": "testtest" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(R"({ "marker": "ABAB1234:1H" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    auto passingInput = json::parse(R"({ "account": "ABAB1234:123" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+}

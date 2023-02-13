@@ -102,11 +102,7 @@ getRequiredUInt(boost::json::object const& request, std::string const& field)
 }
 
 std::optional<AccountCursor>
-parseAccountCursor(
-    BackendInterface const& backend,
-    std::uint32_t seq,
-    std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield)
+parseAccountCursor(std::optional<std::string> jsonCursor)
 {
     ripple::uint256 cursorIndex = beast::zero;
     std::uint64_t startHint = 0;
@@ -596,6 +592,39 @@ ledgerInfoFromRequest(Context const& ctx)
     return *lgrInfo;
 }
 
+// extract ledgerInfoFromRequest's parameter from context
+std::variant<Status, ripple::LedgerInfo>
+getLedgerInfoFromHashOrSeq(
+    BackendInterface const& backend,
+    boost::asio::yield_context& yield,
+    std::optional<std::string> ledgerHash,
+    std::optional<uint32_t> ledgerIndex,
+    uint32_t maxSeq)
+{
+    std::optional<ripple::LedgerInfo> lgrInfo;
+    auto const err =
+        RPC::Status{RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+    if (ledgerHash)
+    {
+        lgrInfo =
+            backend.fetchLedgerByHash(ripple::uint256{*ledgerHash}, yield);
+        if (!lgrInfo || lgrInfo->seq > maxSeq)
+            return err;
+
+        return *lgrInfo;
+    }
+    const auto ledgerSequence = ledgerIndex.value_or(maxSeq);
+    // return without check db
+    if (ledgerSequence > maxSeq)
+        return err;
+
+    lgrInfo = backend.fetchLedgerBySequence(ledgerSequence, yield);
+    if (!lgrInfo)
+        return err;
+
+    return *lgrInfo;
+}
+
 std::vector<unsigned char>
 ledgerInfoToBlob(ripple::LedgerInfo const& info, bool includeHash)
 {
@@ -646,10 +675,36 @@ traverseOwnedNodes(
             ripple::keylet::account(accountID).key, sequence, yield))
         return Status{RippledError::rpcACT_NOT_FOUND};
 
-    auto maybeCursor = parseAccountCursor(backend, sequence, jsonCursor, yield);
+    auto const maybeCursor = parseAccountCursor(jsonCursor);
     if (!maybeCursor)
         return Status(ripple::rpcINVALID_PARAMS, "Malformed cursor");
 
+    auto [hexCursor, startHint] = *maybeCursor;
+
+    return traverseOwnedNodes(
+        backend,
+        ripple::keylet::ownerDir(accountID),
+        hexCursor,
+        startHint,
+        sequence,
+        limit,
+        jsonCursor,
+        yield,
+        atOwnedNode);
+}
+
+std::variant<Status, AccountCursor>
+ngTraverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::AccountID const& accountID,
+    std::uint32_t sequence,
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE&&)> atOwnedNode)
+{
+    auto maybeCursor = parseAccountCursor(jsonCursor);
+    // the format is checked in RPC framework level
     auto [hexCursor, startHint] = *maybeCursor;
 
     return traverseOwnedNodes(
