@@ -144,7 +144,6 @@ if(NOT cassandra)
 else()
     message("Found system installed cassandra cpp driver")
     message(${cassandra})
-    message(${cassandra_includes})
     if("${CMAKE_C_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang"
      OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang")
      find_path(cassandra_includes NAMES cassandra.h HINTS $(brew --prefix)/include REQUIRED)
