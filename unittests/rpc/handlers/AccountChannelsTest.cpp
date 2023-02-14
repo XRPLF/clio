@@ -43,7 +43,6 @@ protected:
     std::shared_ptr<BackendInterface> mockBackendPtr;
 };
 
-// example handler tests
 TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
@@ -60,6 +59,27 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerHashMalformed");
+    });
+    ctx.run();
+}
+
+TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
+{
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        auto const handler =
+            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const input = json::parse(R"({ 
+        "account": "myaccount", 
+        "limit": 10,
+        "ledger_hash": 123
+        })");
+        auto const output = handler.process(input);
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        std::cout << err.at("error_message").as_string() << std::endl;
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerHashNotString");
     });
     ctx.run();
 }

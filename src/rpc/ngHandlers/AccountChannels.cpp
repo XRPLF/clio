@@ -21,16 +21,50 @@
 
 namespace RPCng {
 
+std::variant<RPC::Status, ripple::LedgerInfo>
+AccountChannelsHandler::getLedgerInfoFromHashOrSeq(
+    std::optional<std::string> ledgerHash,
+    std::optional<uint32_t> ledgerIndex,
+    uint32_t maxSeq)
+{
+    if (!ledgerHash)
+    {
+        auto lgrInfo =
+            sharedPtrBackend_->fetchLedgerByHash(ledgerHash, ctx.yield);
+
+        if (!lgrInfo || lgrInfo->seq > maxSeq)
+            return Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+
+        return *lgrInfo;
+    }
+
+    uint64_t ledgerSequence = ledgerIndex ? ledgerIndex.value() : maxSeq;
+
+    lgrInfo =
+        sharedPtrBackend_->fetchLedgerBySequence(*ledgerSequence, yieldCtx_);
+
+    if (!lgrInfo || lgrInfo->seq > maxSeq)
+        return RPC::Status{
+            RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+
+    return *lgrInfo;
+}
+
 AccountChannelsHandler::Result
 AccountChannelsHandler::process(AccountChannelsHandler::Input input) const
 {
+    std::optional<ripple::LedgerInfo> lgrInfo;
+    auto range = sharedPtrBackend_->fetchLedgerRange();
+    assert(range);
     if (input.ledgerHash)
     {
-        ripple::uint256 ledgerHash;
-        if (!ledgerHash.parseHex(input.ledgerHash.value()))
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"}};
+        ripple::uint256 ledgerHash{input.ledgerHash.value().c_str()};
+        lgrInfo = sharedPtrBackend_->fetchLedgerByHash(ledgerHash, yieldCtx_);
+        if (!lgrInfo || lgrInfo->seq > range->maxSequence)
+            return RPCng::Error{RPC::Status{
+                RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"}};
     }
+
     return Output{};
 }
 }  // namespace RPCng

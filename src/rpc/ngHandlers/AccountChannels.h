@@ -52,7 +52,7 @@ public:
         std::vector<ChannelResponse> channels;
         std::string account;
         std::string ledgerHash;
-        uint64_t ledgerIndex;
+        uint32_t ledgerIndex;
         bool validated;
         uint32_t limit;
         std::string marker;
@@ -63,7 +63,7 @@ public:
         std::string account;
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
-        std::optional<uint64_t> ledgerIndex;
+        std::optional<uint32_t> ledgerIndex;
         std::optional<uint32_t> limit;
         std::optional<std::string> marker;
     };
@@ -75,6 +75,30 @@ public:
         if (!ledgerHash.parseHex(value.as_string().c_str()))
             return Error{RPC::Status{
                 RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"}};
+            return MaybeError{};
+        }
+    };
+
+    validation::CustomValidator ledgerIndexFormatCheck = validation::CustomValidator{
+        [](boost::json::value const& value, std::string_view key) -> MaybeError {
+            auto err = Error{RPC::Status{
+                        RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
+            if(!value.is_string() && !value.is_uint64()){
+                return err;
+            }
+            if(value.is_string()){
+                std::optional<std::uint32_t> index = {};
+                try
+                {
+                    index = boost::lexical_cast<std::uint32_t>(value);
+                }
+                catch (boost::bad_lexical_cast const&)
+                {
+                    if(value.as_string() != "validated"){
+                        return err;
+                    }
+                } 
+            }
             return MaybeError{};
         }
     };
@@ -113,8 +137,16 @@ public:
 
 private:
     // dependencies
-    const boost::asio::yield_context& yieldCtx_;
+    boost::asio::yield_context& yieldCtx_;
     std::shared_ptr<BackendInterface const> const& sharedPtrBackend_;
+
+    // this function will be used across RPC , eventually we will put it to a
+    // common place
+    std::variant<RPC::Status, ripple::LedgerInfo>
+    getLedgerInfoFromHashOrSeq(
+        std::optional<std::string> ledgerHash,
+        std::optional<uint32_t> ledgerIndex,
+        uint32_t maxSeq);
 };
 
 inline AccountChannelsHandler::Input
