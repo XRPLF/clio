@@ -17,7 +17,7 @@ jobs:
 
   build_clio:
     name: Build Clio
-    runs-on: [self-hosted, Linux]
+    runs-on: [self-hosted, Linux, heavy]
     needs: lint
     strategy:
       fail-fast: false
@@ -32,7 +32,6 @@ jobs:
 
     container:
       image: ${{ matrix.type.image }}
-      # options: --user 1001
     steps:
       - uses: actions/checkout@v3
         with:
@@ -106,6 +105,7 @@ jobs:
           cmake -B build
           if ! cmake --build build -j$(nproc); then
             echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
       - name: Run Test
         run: |
@@ -171,6 +171,7 @@ jobs:
           cmake -B build -DCODE_COVERAGE=on -DTEST_PARAMETER='--gtest_filter="-Backend*"'
           if ! cmake --build build -j$(nproc); then
             echo '# 🔥Ubuntu build🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
           cd build
           make clio_tests-ccov
