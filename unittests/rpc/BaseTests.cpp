@@ -242,3 +242,41 @@ TEST_F(RPCBaseTest, CustomValidator)
     auto failingInput = json::parse(R"({ "taker": "wrongformat" })");
     ASSERT_FALSE(spec.validate(failingInput));
 }
+
+TEST_F(RPCBaseTest, LedgerHashValidator)
+{
+    auto spec = RpcSpec{
+        {"ledgerHash", LedgerHashValidator},
+    };
+    auto passingInput = json::parse(
+        R"({ "ledgerHash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "ledgerHash": "wrongformat" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(R"({ "ledgerHash": 256 })");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "ledgerHashNotString");
+}
+
+TEST_F(RPCBaseTest, LedgerIndexValidator)
+{
+    auto spec = RpcSpec{
+        {"ledgerIndex", LedgerIndexValidator},
+    };
+    auto passingInput = json::parse(R"({ "ledgerIndex": "validated" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    passingInput = json::parse(R"({ "ledgerIndex": "256" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    passingInput = json::parse(R"({ "ledgerIndex": 256 })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "ledgerIndex": "wrongformat" })");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
+}

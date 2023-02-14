@@ -19,9 +19,13 @@
 
 #pragma once
 
+#include <ripple/basics/base_uint.h>
+
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Types.h>
+
+#include <charconv>
 
 namespace RPCng::validation {
 
@@ -339,5 +343,24 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
 };
+
+/**
+ * @brief Helper function to check if sv is an uint32 number or not
+ */
+[[nodiscard]] bool
+checkIsU32Numeric(std::string_view sv);
+
+/**
+ * @brief Provide a common used validator for ledger hash
+ * LedgerHash must be a string and hex
+ */
+extern CustomValidator LedgerIndexValidator;
+
+/**
+ * @brief Provide a common used validator for ledger index
+ * LedgerIndex must be a string or int
+ * If it is string, it must be "validated" or "int"
+ */
+extern CustomValidator LedgerHashValidator;
 
 }  // namespace RPCng::validation
