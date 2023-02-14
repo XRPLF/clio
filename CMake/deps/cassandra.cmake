@@ -151,15 +151,9 @@ else()
      find_path(cassandra_includes NAMES cassandra.h REQUIRED)
     endif()
     message(${cassandra_includes})
-    execute_process(
-       COMMAND ls -l ${cassandra_includes}/cassandra.h
-       OUTPUT_VARIABLE out
-    )
-    message(${out})
     get_filename_component(CASSANDRA_HEADER ${cassandra_includes}/cassandra.h REALPATH)
     get_filename_component(CASSANDRA_HEADER_DIR ${CASSANDRA_HEADER} DIRECTORY)
     target_link_libraries (clio PUBLIC ${cassandra})
-    target_include_directories(clio SYSTEM PUBLIC ${cassandra_includes})
     target_include_directories(clio PUBLIC ${CASSANDRA_HEADER_DIR})
     message(${CASSANDRA_HEADER_DIR})
 endif()
