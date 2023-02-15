@@ -619,6 +619,7 @@ private:
         std::unordered_set<std::string> convertedIPsToStrings;
         std::unordered_set<std::string> subnetInstances;
         std::unordered_set<std::string> resultsSet;
+        std::unordered_set<std::string> nonCIDRSet;
 
         // Lambda function to cast to string
         auto const transform = [](auto const& elem) {
@@ -646,13 +647,20 @@ private:
                 // to result
                 subnetInstances.insert(subnetIPIterator);
                 resultsSet.insert(subnetIPIterator);
-                convertedIPsToStrings.erase(subnetIPIterator);
+            }
+
+            // Push IP to separate data structure for nonCIDR
+            else if (
+                subnetIPIterator.find("/") == std::string::npos &&
+                checkValidityOfWhitelist(subnetIPIterator) == true)
+            {
+                nonCIDRSet.insert(subnetIPIterator);
             }
         }
 
         // O(N^2) | Automatic filtering of IPs that don't meet rules
         // NOTE: This is the COMPLEMENT SET of subnet
-        for (auto const& candidateIPs : convertedIPsToStrings)
+        for (auto const& candidateIPs : nonCIDRSet)
         {
             // Boolean values reset for every iteration
             bool inSubnet = false;
