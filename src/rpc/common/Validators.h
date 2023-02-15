@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <ripple/basics/base_uint.h>
-
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Types.h>
@@ -359,7 +357,8 @@ extern CustomValidator LedgerIndexValidator;
 /**
  * @brief Provide a common used validator for ledger index
  * LedgerIndex must be a string or int
- * If it is string, it must be "validated" or "int"
+ * If the specified LedgerIndex is a string, it's value must be either
+ * "validated" or a valid integer value represented as a string.
  */
 extern CustomValidator LedgerHashValidator;
 

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <ripple/basics/base_uint.h>
 #include <rpc/common/Validators.h>
 
 #include <boost/json/value.hpp>
