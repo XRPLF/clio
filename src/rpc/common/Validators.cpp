@@ -22,6 +22,7 @@
 
 #include <boost/json/value.hpp>
 
+#include <charconv>
 #include <string_view>
 
 namespace RPCng::validation {
