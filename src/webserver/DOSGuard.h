@@ -416,6 +416,25 @@ public:
     }
 
     /**
+     * @brief Checks if IP address is malformed
+     *
+     * @param ip IP address to check
+     */
+    [[nodiscard]] bool
+    isValidIPMixed(std::string const& ip) const
+    {
+        try
+        {
+            boost::asio::ip::address::from_string(ip);
+            return true;
+        }
+        catch (const std::exception& e)
+        {
+            return false;
+        }
+    }
+
+    /**
      * @brief Check whether an ip address is in the whitelist or not
      *
      * @param ip The ip address to check (raw IP, NO CIDR)
@@ -432,21 +451,10 @@ public:
         }
 
         // CASE #2: Check if IP has malformed input.
-        boost::system::error_code error_code;
-        boost::asio::ip::address addr =
-            boost::asio::ip::make_address(ip, error_code);
-
-        // Neither a valid IPv4 nor a valid IPv6 address
-        if (error_code)
+        if (!isValidIPMixed(ip))
         {
-            // throw std::invalid_argument(error_code.message());
             return false;
         }
-
-        // // CASE #3: O(1) | Check if IP has exact raw copy in whitelist
-        // if (whitelist_.find(ip)!= whitelist_.end()) {
-        //     return true;
-        // }
 
         // CASE #4: If valid IP, O(N) run through vector
         for (auto const& ipInWhitelist : whitelist_)
