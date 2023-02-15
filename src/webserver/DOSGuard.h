@@ -204,7 +204,6 @@ public:
         std::string const& ip,
         std::string const& subnetIPwCIDR) const
     {
-        // [!!!] TODO: Check and see if restoring condition helps
         // ip being checked does not have CIDR
         if (subnetIPwCIDR.find("/") != std::string::npos &&
             checkParsedIPv4Address(ip) == true)
@@ -252,7 +251,6 @@ public:
         std::string const& ip,
         std::string const& subnetIPwCIDR) const
     {
-        // [!!!] TODO: Check and see if restoring condition helps
         // ip being checked does not have CIDR
         if (subnetIPwCIDR.find("/") != std::string::npos &&
             checkParsedIPv6Address(ip) == true)
@@ -379,18 +377,19 @@ public:
     checkIfInSubnetMixed(std::string const& ip, std::string const& subnetIP)
         const
     {
-        // [!!!] TODO: Restore extra checks for subnetIP
         // Check that both addresses are IPv4
-        if (ip.find(".") != std::string::npos)
+        if (ip.find(".") != std::string::npos &&
+            subnetIP.find(".") != std::string::npos)
         {
             return isIPv4AddressInSubnet(ip, subnetIP);
         }
 
-        // [!!!] TODO: Restore extra checks for subnetIP
         // Check that both addresses are IPv6
         else if (
-            ip.find(":") != std::string::npos ||
-            ip.find("::") != std::string::npos)
+            (ip.find(":") != std::string::npos ||
+             ip.find("::") != std::string::npos) &&
+            (subnetIP.find(":") != std::string::npos ||
+             subnetIP.find("::") != std::string::npos))
         {
             return isIPv6AddressInSubnet(ip, subnetIP);
         }
@@ -417,24 +416,6 @@ public:
     }
 
     /**
-     * @brief Checks if IP address is malformed
-     *
-     */
-    [[nodiscard]] bool
-    isValidIPMixed(std::string const& ip) const
-    {
-        try
-        {
-            boost::asio::ip::address::from_string(ip);
-            return true;
-        }
-        catch (const std::exception& e)
-        {
-            return false;
-        }
-    }
-
-    /**
      * @brief Check whether an ip address is in the whitelist or not
      *
      * @param ip The ip address to check (raw IP, NO CIDR)
@@ -451,8 +432,14 @@ public:
         }
 
         // CASE #2: Check if IP has malformed input.
-        if (!isValidIPMixed(ip))
+        boost::system::error_code error_code;
+        boost::asio::ip::address addr =
+            boost::asio::ip::make_address(ip, error_code);
+
+        // Neither a valid IPv4 nor a valid IPv6 address
+        if (error_code)
         {
+            // throw std::invalid_argument(error_code.message());
             return false;
         }
 
