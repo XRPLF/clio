@@ -340,4 +340,24 @@ public:
     verify(boost::json::value const& value, std::string_view key) const;
 };
 
+/**
+ * @brief Helper function to check if sv is an uint32 number or not
+ */
+[[nodiscard]] bool
+checkIsU32Numeric(std::string_view sv);
+
+/**
+ * @brief Provide a common used validator for ledger hash
+ * LedgerHash must be a string and hex
+ */
+extern CustomValidator LedgerIndexValidator;
+
+/**
+ * @brief Provide a common used validator for ledger index
+ * LedgerIndex must be a string or int
+ * If the specified LedgerIndex is a string, it's value must be either
+ * "validated" or a valid integer value represented as a string.
+ */
+extern CustomValidator LedgerHashValidator;
+
 }  // namespace RPCng::validation

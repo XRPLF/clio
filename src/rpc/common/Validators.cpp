@@ -17,10 +17,12 @@
 */
 //==============================================================================
 
+#include <ripple/basics/base_uint.h>
 #include <rpc/common/Validators.h>
 
 #include <boost/json/value.hpp>
 
+#include <charconv>
 #include <string_view>
 
 namespace RPCng::validation {
@@ -85,5 +87,43 @@ CustomValidator::verify(boost::json::value const& value, std::string_view key)
 
     return validator_(value.as_object().at(key.data()), key);
 }
+
+[[nodiscard]] bool
+checkIsU32Numeric(std::string_view sv)
+{
+    uint32_t unused;
+    auto [_, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), unused);
+    return ec == std::errc();
+}
+
+CustomValidator LedgerHashValidator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashNotString"}};
+        }
+        ripple::uint256 ledgerHash;
+        if (!ledgerHash.parseHex(value.as_string().c_str()))
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"}};
+        return MaybeError{};
+    }};
+
+CustomValidator LedgerIndexValidator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        auto err = Error{RPC::Status{
+            RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
+        if (!value.is_string() && !(value.is_uint64() || value.is_int64()))
+        {
+            return err;
+        }
+        if (value.is_string() && value.as_string() != "validated" &&
+            !checkIsU32Numeric(value.as_string().c_str()))
+        {
+            return err;
+        }
+        return MaybeError{};
+    }};
 
 }  // namespace RPCng::validation
