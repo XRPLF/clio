@@ -243,3 +243,45 @@ CreateMetaDataForCancelOffer(
     metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
+
+ripple::STObject
+CreateOwnerDirLedgerObject(
+    std::vector<ripple::uint256> indexes,
+    std::string_view rootIndex)
+{
+    ripple::STObject ownerDir(ripple::sfLedgerEntry);
+    ownerDir.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDIR_NODE);
+    ownerDir.setFieldV256(ripple::sfIndexes, ripple::STVector256{indexes});
+    ownerDir.setFieldH256(ripple::sfRootIndex, ripple::uint256{rootIndex});
+    ownerDir.setFieldU32(ripple::sfFlags, 0);
+    return ownerDir;
+}
+
+ripple::STObject
+CreatePaymentChannelLedgerObject(
+    std::string_view accountId,
+    std::string_view destId,
+    int amount,
+    int balance,
+    uint32_t settleDelay,
+    std::string_view previousTxnId,
+    uint32_t previousTxnSeq)
+{
+    ripple::STObject channel(ripple::sfLedgerEntry);
+    channel.setFieldU16(ripple::sfLedgerEntryType, ripple::ltPAYCHAN);
+    channel.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    channel.setAccountID(ripple::sfDestination, GetAccountIDWithString(destId));
+    channel.setFieldAmount(ripple::sfAmount, ripple::STAmount(amount, false));
+    channel.setFieldAmount(ripple::sfBalance, ripple::STAmount(balance, false));
+    channel.setFieldU32(ripple::sfSettleDelay, settleDelay);
+    channel.setFieldU64(ripple::sfOwnerNode, 0);
+    channel.setFieldH256(
+        ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
+    channel.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
+    channel.setFieldU32(ripple::sfFlags, 0);
+    uint8_t key[33] = {0};
+    key[0] = 2;  // KeyType::secp256k1
+    ripple::Slice slice(key, 33);
+    channel.setFieldVL(ripple::sfPublicKey, slice);
+    return channel;
+}

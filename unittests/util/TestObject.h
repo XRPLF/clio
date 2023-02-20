@@ -135,3 +135,24 @@ CreateMetaDataForCancelOffer(
     uint32_t transactionIndex,
     int finalTakerGets,
     int finalTakerPays);
+
+/*
+ * Create a owner dir ledger object
+ */
+[[nodiscard]] ripple::STObject
+CreateOwnerDirLedgerObject(
+    std::vector<ripple::uint256> indexes,
+    std::string_view rootIndex);
+
+/*
+ * Create a payment channel ledger object
+ */
+[[nodiscard]] ripple::STObject
+CreatePaymentChannelLedgerObject(
+    std::string_view accountId,
+    std::string_view destId,
+    int amount,
+    int balance,
+    uint32_t settleDelay,
+    std::string_view previousTxnId,
+    uint32_t previousTxnSeq);
