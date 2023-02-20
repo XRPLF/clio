@@ -680,6 +680,8 @@ traverseOwnedNodes(
 
     auto const rootIndex = owner;
     auto currentIndex = rootIndex;
+    // track the current page we are accessing, will return it as the next hint
+    auto currentPage = startHint;
 
     std::vector<ripple::uint256> keys;
     // Only reserve 2048 nodes when fetching all owned ledger objects. If there
@@ -742,11 +744,12 @@ traverseOwnedNodes(
                 }
             }
 
+            // the next page
             auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
 
             if (limit == 0)
             {
-                cursor = AccountCursor({keys.back(), uNodeNext});
+                cursor = AccountCursor({keys.back(), currentPage});
                 break;
             }
 
@@ -754,6 +757,7 @@ traverseOwnedNodes(
                 break;
 
             currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
+            currentPage = uNodeNext;
         }
     }
     else
@@ -781,7 +785,7 @@ traverseOwnedNodes(
 
             if (limit == 0)
             {
-                cursor = AccountCursor({keys.back(), uNodeNext});
+                cursor = AccountCursor({keys.back(), currentPage});
                 break;
             }
 
@@ -789,6 +793,7 @@ traverseOwnedNodes(
                 break;
 
             currentIndex = ripple::keylet::page(rootIndex, uNodeNext);
+            currentPage = uNodeNext;
         }
     }
     auto end = std::chrono::system_clock::now();
