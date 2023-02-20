@@ -122,6 +122,7 @@ class HttpBase : public util::Taggable
     send_lambda lambda_;
 
 protected:
+    clio::Logger log_{"WebServer"};
     clio::Logger perfLog_{"Performance"};
     boost::beast::flat_buffer buffer_;
     bool upgraded_ = false;
@@ -292,8 +293,8 @@ public:
                 "Server is overloaded"));
         }
 
-        perfLog_.debug() << tag() << "Received request from ip = " << *ip
-                         << " - posting to WorkQueue";
+        log_.info() << tag() << "Received request from ip = " << *ip
+                    << " - posting to WorkQueue";
 
         auto session = derived().shared_from_this();
 

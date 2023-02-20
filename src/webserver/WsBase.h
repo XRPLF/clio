@@ -316,8 +316,8 @@ public:
 
         try
         {
-            perfLog_.debug()
-                << tag() << "ws received request from work queue : " << request;
+            log_.info() << tag()
+                        << "ws received request from work queue : " << request;
 
             auto range = backend_->fetchLedgerRange();
             if (!range)
