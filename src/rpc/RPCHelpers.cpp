@@ -744,15 +744,13 @@ traverseOwnedNodes(
                 }
             }
 
-            // the next page
-            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
-
             if (limit == 0)
             {
                 cursor = AccountCursor({keys.back(), currentPage});
                 break;
             }
-
+            // the next page
+            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
             if (uNodeNext == 0)
                 break;
 
@@ -781,14 +779,13 @@ traverseOwnedNodes(
                     break;
             }
 
-            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
-
             if (limit == 0)
             {
                 cursor = AccountCursor({keys.back(), currentPage});
                 break;
             }
 
+            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
             if (uNodeNext == 0)
                 break;
 
