@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -37,21 +37,20 @@ constexpr static auto INDEX2 =
 constexpr static auto TXNID =
     "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-class RPCHelpersTest : public MockBackendTest
+class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest
 {
     void
     SetUp() override
     {
         MockBackendTest::SetUp();
+        SyncAsioContextTest::SetUp();
     }
     void
     TearDown() override
     {
         MockBackendTest::TearDown();
+        SyncAsioContextTest::TearDown();
     }
-
-protected:
-    boost::asio::io_context ctx;
 };
 
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNotAccount)
@@ -66,7 +65,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNotAccount)
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto account = GetAccountIDWithString(ACCOUNT);
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, 10, "", yield, [](auto sle) {
+            *mockBackendPtr, account, 9, 10, "", yield, [](auto) {
 
             });
         auto status = std::get_if<Status>(&ret);
@@ -76,7 +75,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNotAccount)
     ctx.run();
 }
 
-TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalid)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -88,7 +87,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalid)
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto account = GetAccountIDWithString(ACCOUNT);
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, 10, "nothex,10", yield, [](auto sle) {
+            *mockBackendPtr, account, 9, 10, "nothex,10", yield, [](auto) {
 
             });
         auto status = std::get_if<Status>(&ret);
@@ -99,7 +98,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalid)
     ctx.run();
 }
 
-TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalid2)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -111,7 +110,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalid2)
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto account = GetAccountIDWithString(ACCOUNT);
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, 10, "nothex,abc", yield, [](auto sle) {
+            *mockBackendPtr, account, 9, 10, "nothex,abc", yield, [](auto) {
 
             });
         auto status = std::get_if<Status>(&ret);
@@ -123,7 +122,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalid2)
 }
 
 // limit = 10, return 2 objects
-TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -156,7 +155,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker)
 
     boost::asio::spawn(ctx, [this, &account](boost::asio::yield_context yield) {
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, 10, {}, yield, [](auto sle) {
+            *mockBackendPtr, account, 9, 10, {}, yield, [](auto) {
 
             });
         auto cursor = std::get_if<AccountCursor>(&ret);
@@ -170,7 +169,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker)
 }
 
 // limit = 10, return 10 objects and marker
-TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker2)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -211,9 +210,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker2)
     boost::asio::spawn(ctx, [this, &account](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, 10, {}, yield, [&](auto sle) {
-                count++;
-            });
+            *mockBackendPtr, account, 9, 10, {}, yield, [&](auto) { count++; });
         auto cursor = std::get_if<AccountCursor>(&ret);
         EXPECT_TRUE(cursor != nullptr);
         EXPECT_EQ(count, 10);
@@ -223,7 +220,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker2)
 }
 
 // 10 objects per page, limit is 15, return the second page as marker
-TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker3)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -282,7 +279,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker3)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, {}, yield, [&](auto sle) {
+            *mockBackendPtr, account, 9, limit, {}, yield, [&](auto) {
                 count++;
             });
         auto cursor = std::get_if<AccountCursor>(&ret);
@@ -294,7 +291,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoMarker3)
 }
 
 // Send a valid marker
-TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarker)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -351,7 +348,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarker)
             limit,
             fmt::format("{},{}", INDEX1, pageNum),
             yield,
-            [&](auto sle) { count++; });
+            [&](auto) { count++; });
         auto cursor = std::get_if<AccountCursor>(&ret);
         EXPECT_TRUE(cursor != nullptr);
         EXPECT_EQ(count, limit);
@@ -362,7 +359,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarker)
 
 // Send a valid marker, but marker contain an unexisting index
 // return empty
-TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarker2)
+TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -407,7 +404,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarker2)
             limit,
             fmt::format("{},{}", INDEX2, pageNum),
             yield,
-            [&](auto sle) { count++; });
+            [&](auto) { count++; });
         auto cursor = std::get_if<AccountCursor>(&ret);
         EXPECT_TRUE(cursor != nullptr);
         EXPECT_EQ(count, 0);

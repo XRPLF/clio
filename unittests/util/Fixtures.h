@@ -32,7 +32,7 @@
 /**
  * @brief Fixture with LogService support.
  */
-class LoggerFixture : public ::testing::Test
+class LoggerFixture : virtual public ::testing::Test
 {
     /**
      * @brief A simple string buffer that can be used to mock std::cout for
@@ -101,7 +101,7 @@ protected:
  *
  * This is meant to be used as a base for other fixtures.
  */
-class NoLoggerFixture : public LoggerFixture
+class NoLoggerFixture : virtual public LoggerFixture
 {
 protected:
     void
@@ -117,7 +117,7 @@ protected:
  *
  * This is meant to be used as a base for other fixtures.
  */
-struct AsyncAsioContextTest : public NoLoggerFixture
+struct AsyncAsioContextTest : virtual public NoLoggerFixture
 {
     AsyncAsioContextTest()
     {
@@ -146,7 +146,7 @@ private:
  * Use `run_for(duration)` etc. directly on `ctx`.
  * This is meant to be used as a base for other fixtures.
  */
-struct SyncAsioContextTest : public NoLoggerFixture
+struct SyncAsioContextTest : virtual public NoLoggerFixture
 {
     SyncAsioContextTest()
     {
@@ -159,7 +159,7 @@ protected:
 /**
  * @brief Fixture with an mock backend
  */
-struct MockBackendTest : public NoLoggerFixture
+struct MockBackendTest : virtual public NoLoggerFixture
 {
     void
     SetUp() override
