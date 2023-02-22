@@ -127,7 +127,6 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 * [cindyyan317](https://github.com/cindyyan317) (Ripple)
 * [godexsoft](https://github.com/godexsoft) (Ripple)
 * [legleux](https://github.com/legleux) (Ripple)
-* [officialfrancismendoza](https://github.com/officialfrancismendoza) (Ripple)
 
 ## Honorable ex-Maintainers
 
