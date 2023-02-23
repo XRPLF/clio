@@ -613,7 +613,7 @@ getLedgerInfoFromHashOrSeq(
 
         return *lgrInfo;
     }
-    const auto ledgerSequence = ledgerIndex.value_or(maxSeq);
+    auto const ledgerSequence = ledgerIndex.value_or(maxSeq);
     // return without check db
     if (ledgerSequence > maxSeq)
         return err;
