@@ -124,7 +124,7 @@ tag_invoke(
     boost::json::value_to_tag<AccountChannelsHandler::Input>,
     boost::json::value const& jv)
 {
-    auto jsonObject = jv.as_object();
+    auto const& jsonObject = jv.as_object();
     AccountChannelsHandler::Input input;
     input.account = jv.at("account").as_string().c_str();
     if (jsonObject.contains("limit"))
@@ -146,11 +146,11 @@ tag_invoke(
     }
     if (jsonObject.contains("ledger_index"))
     {
-        if (!jsonObject["ledger_index"].is_string())
+        if (!jsonObject.at("ledger_index").is_string())
         {
             input.ledgerIndex = jv.at("ledger_index").as_int64();
         }
-        else if (jsonObject["ledger_index"].as_string() != "validated")
+        else if (jsonObject.at("ledger_index").as_string() != "validated")
         {
             input.ledgerIndex =
                 std::stoi(jv.at("ledger_index").as_string().c_str());
