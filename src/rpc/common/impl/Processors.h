@@ -31,8 +31,10 @@ template <Handler HandlerType>
 struct DefaultProcessor final
 {
     [[nodiscard]] ReturnType
-    operator()(HandlerType const& handler, boost::json::value const& value)
-        const
+    operator()(
+        HandlerType const& handler,
+        boost::json::value const& value,
+        boost::asio::yield_context* ptrYield = nullptr) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
@@ -44,12 +46,24 @@ struct DefaultProcessor final
                 return Error{ret.error()};  // forward Status
 
             auto const inData = value_to<typename HandlerType::Input>(value);
-
-            // real handler is given expected Input, not json
-            if (auto const ret = handler.process(inData); not ret)
-                return Error{ret.error()};  // forward Status
+            if constexpr (NonCoroutineProcess<HandlerType>)
+            {
+                auto const ret = handler.process(inData);
+                // real handler is given expected Input, not json
+                if (!ret)
+                    return Error{ret.error()};  // forward Status
+                else
+                    return value_from(ret.value());
+            }
             else
-                return value_from(ret.value());
+            {
+                auto const ret = handler.process(inData, ptrYield);
+                // real handler is given expected Input, not json
+                if (!ret)
+                    return Error{ret.error()};  // forward Status
+                else
+                    return value_from(ret.value());
+            }
         }
         else if constexpr (HandlerWithoutInput<HandlerType>)
         {
