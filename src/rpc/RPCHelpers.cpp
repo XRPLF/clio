@@ -703,9 +703,9 @@ ngTraverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
-    auto maybeCursor = parseAccountCursor(jsonCursor);
+    auto const maybeCursor = parseAccountCursor(jsonCursor);
     // the format is checked in RPC framework level
-    auto [hexCursor, startHint] = *maybeCursor;
+    auto const [hexCursor, startHint] = *maybeCursor;
 
     return traverseOwnedNodes(
         backend,
