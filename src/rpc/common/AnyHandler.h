@@ -69,10 +69,7 @@ public:
     operator=(AnyHandler&&) = default;
 
     /**
-     * @brief Process incoming JSON by the stored handler,if ptrYield is
-     * provided, will try to call the handler process with yield_context. If
-     * handler fails to provide the process coroutine interface, it will raise
-     * compile error
+     * @brief Process incoming JSON by the stored handler
      *
      * @param value The JSON to process
      * @return JSON result or @ref RPC::Status on error
@@ -83,6 +80,13 @@ public:
         return pimpl_->process(value);
     }
 
+    /**
+     * @brief Process incoming JSON by the stored handler in a provided
+     * coroutine
+     *
+     * @param value The JSON to process
+     * @return JSON result or @ref RPC::Status on error
+     */
     [[nodiscard]] ReturnType
     process(
         boost::json::value const& value,
