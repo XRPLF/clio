@@ -59,8 +59,7 @@ class RPCAccountHandlerTest : public SyncAsioContextTest, public MockBackendTest
 TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -68,7 +67,7 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
                 "ledger_hash": "xxx"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -81,8 +80,7 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
 TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{
                 "account": "{}", 
@@ -90,7 +88,7 @@ TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
                 "ledger_hash": 123
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -103,8 +101,7 @@ TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
 TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -112,7 +109,7 @@ TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
                 "ledger_index": "notvalidated"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -125,15 +122,14 @@ TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
 TEST_F(RPCAccountHandlerTest, MarkerNotString)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
                 "marker":9
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -149,15 +145,14 @@ TEST_F(RPCAccountHandlerTest, MarkerNotString)
 TEST_F(RPCAccountHandlerTest, InvalidMarker)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}",
                 "marker": "123invalid"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -165,15 +160,14 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor");
     });
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
                 "marker":401
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -186,30 +180,28 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
 TEST_F(RPCAccountHandlerTest, IncorrectLimit)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
                 "limit":9
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
                 "limit":401
             }})",
             ACCOUNT));
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -221,12 +213,11 @@ TEST_F(RPCAccountHandlerTest, IncorrectLimit)
 TEST_F(RPCAccountHandlerTest, AccountInvalidFormat)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(R"({ 
         "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
         })");
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -239,12 +230,11 @@ TEST_F(RPCAccountHandlerTest, AccountInvalidFormat)
 TEST_F(RPCAccountHandlerTest, AccountNotString)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const input = json::parse(R"({ 
         "account": 12
         })");
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -272,9 +262,8 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
         ACCOUNT,
         LEDGERHASH));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -302,9 +291,8 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex)
         }})",
         ACCOUNT));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -334,9 +322,8 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
         ACCOUNT,
         LEDGERHASH));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -362,9 +349,8 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex2)
         }})",
         ACCOUNT));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -396,9 +382,8 @@ TEST_F(RPCAccountHandlerTest, NonExistAccount)
         ACCOUNT,
         LEDGERHASH));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountChannelsHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -481,9 +466,8 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
         }})",
         ACCOUNT));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correntOutput), *output);
     });
@@ -540,9 +524,8 @@ TEST_F(RPCAccountHandlerTest, UseLimit)
         }})",
         ACCOUNT));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
@@ -616,9 +599,8 @@ TEST_F(RPCAccountHandlerTest, UseDestination)
         ACCOUNT,
         ACCOUNT3));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
     });
@@ -659,9 +641,8 @@ TEST_F(RPCAccountHandlerTest, EmptyChannel)
         }})",
         ACCOUNT));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 0);
     });
@@ -753,9 +734,8 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
         }})",
         ACCOUNT));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correntOutput), *output);
     });
@@ -832,9 +812,8 @@ TEST_F(RPCAccountHandlerTest, MarkerOutput)
         ACCOUNT,
         limit));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(
             (*output).as_object().at("marker").as_string().c_str(),
@@ -901,9 +880,8 @@ TEST_F(RPCAccountHandlerTest, MarkerInput)
         INDEX1,
         nextPage));
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler =
-            AnyHandler{AccountChannelsHandler{yield, this->mockBackendPtr}};
-        auto const output = handler.process(input);
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1

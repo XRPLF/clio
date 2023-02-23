@@ -25,7 +25,6 @@
 
 #include <boost/asio/spawn.hpp>
 
-#include <functional>
 #include <vector>
 
 namespace RPCng {
@@ -73,10 +72,8 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountChannelsHandler(
-        boost::asio::yield_context& yieldCtx,
-        std::shared_ptr<BackendInterface>& sharedPtrBackend)
-        : yieldCtx_(yieldCtx), sharedPtrBackend_(sharedPtrBackend)
+    AccountChannelsHandler(std::shared_ptr<BackendInterface>& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -98,11 +95,10 @@ public:
     }
 
     Result
-    process(Input input) const;
+    process(Input input, boost::asio::yield_context& yield) const;
 
 private:
     // dependencies
-    const std::reference_wrapper<boost::asio::yield_context> yieldCtx_;
     const std::shared_ptr<BackendInterface> sharedPtrBackend_;
     void
     addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line)

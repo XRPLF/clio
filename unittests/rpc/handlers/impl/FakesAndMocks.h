@@ -122,7 +122,7 @@ public:
     }
 
     Result
-    process(Input input, boost::asio::yield_context* ptrYield) const
+    process(Input input, boost::asio::yield_context& ptrYield) const
     {
         return Output{
             input.hello + '_' + std::to_string(input.limit.value_or(0))};
