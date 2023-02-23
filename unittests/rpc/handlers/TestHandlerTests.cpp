@@ -50,6 +50,24 @@ TEST_F(RPCTestHandlerTest, HandlerSuccess)
     EXPECT_EQ(val.as_object().at("computed").as_string(), "world_10");
 }
 
+TEST_F(RPCTestHandlerTest, CoroutineHandlerSuccess)
+{
+    auto const handler = AnyHandler{CoroutineHandlerFake{}};
+    auto const input = json::parse(R"({ 
+        "hello": "world", 
+        "limit": 10
+    })");
+    boost::asio::io_context ctx;
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, &yield);
+        ASSERT_TRUE(output);
+
+        auto const val = output.value();
+        EXPECT_EQ(val.as_object().at("computed").as_string(), "world_10");
+    });
+    ctx.run();
+}
+
 TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
 {
     auto const handler = AnyHandler{NoInputHandlerFake{}};

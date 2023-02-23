@@ -69,15 +69,20 @@ public:
     operator=(AnyHandler&&) = default;
 
     /**
-     * @brief Process incoming JSON by the stored handler
+     * @brief Process incoming JSON by the stored handler,if ptrYield is
+     * provided, will try to call the handler process with yield_context. If
+     * handler fails to provide the process coroutine interface, it will raise
+     * compile error
      *
      * @param value The JSON to process
      * @return JSON result or @ref RPC::Status on error
      */
     [[nodiscard]] ReturnType
-    process(boost::json::value const& value) const
+    process(
+        boost::json::value const& value,
+        boost::asio::yield_context* ptrYield = nullptr) const
     {
-        return pimpl_->process(value);
+        return pimpl_->process(value, ptrYield);
     }
 
 private:
@@ -86,7 +91,9 @@ private:
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual ReturnType
-        process(boost::json::value const& value) const = 0;
+        process(
+            boost::json::value const& value,
+            boost::asio::yield_context* ptrYield = nullptr) const = 0;
 
         [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
@@ -103,9 +110,11 @@ private:
         }
 
         [[nodiscard]] ReturnType
-        process(boost::json::value const& value) const override
+        process(
+            boost::json::value const& value,
+            boost::asio::yield_context* ptrYield = nullptr) const override
         {
-            return processor(handler, value);
+            return processor(handler, value, ptrYield);
         }
 
         [[nodiscard]] std::unique_ptr<Concept>
