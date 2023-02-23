@@ -78,11 +78,17 @@ public:
      * @return JSON result or @ref RPC::Status on error
      */
     [[nodiscard]] ReturnType
+    process(boost::json::value const& value) const
+    {
+        return pimpl_->process(value);
+    }
+
+    [[nodiscard]] ReturnType
     process(
         boost::json::value const& value,
-        boost::asio::yield_context* ptrYield = nullptr) const
+        boost::asio::yield_context& ptrYield) const
     {
-        return pimpl_->process(value, ptrYield);
+        return pimpl_->process(value, &ptrYield);
     }
 
 private:

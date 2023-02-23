@@ -59,7 +59,7 @@ TEST_F(RPCTestHandlerTest, CoroutineHandlerSuccess)
     })");
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, &yield);
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
 
         auto const val = output.value();
