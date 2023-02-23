@@ -51,28 +51,28 @@ concept Requirement = requires(T a) {
 // clang-format off
 template <typename T>
 concept CoroutineProcess = requires(T a, typename T::Input in, typename T::Output out, boost::asio::yield_context* y) {
-    { a.process(in,y) } -> std::same_as<HandlerReturnType<decltype(out)>>;};
+    { a.process(in, y) } -> std::same_as<HandlerReturnType<decltype(out)>>; };
 
 template <typename T>
 concept NonCoroutineProcess = requires(T a, typename T::Input in, typename T::Output out) {
-    { a.process(in) } -> std::same_as<HandlerReturnType<decltype(out)>>;};
+    { a.process(in) } -> std::same_as<HandlerReturnType<decltype(out)>>; };
 
 template <typename T>
 concept HandlerWithInput = requires(T a, typename T::Input in, typename T::Output out) {
-    { a.spec() } -> std::same_as<RpcSpecConstRef>;}
-    &&(CoroutineProcess<T>||NonCoroutineProcess<T>)
-    && boost::json::has_value_to<typename T::Input>::value;
+    { a.spec() } -> std::same_as<RpcSpecConstRef>; }
+    and (CoroutineProcess<T> or NonCoroutineProcess<T>)
+    and boost::json::has_value_to<typename T::Input>::value;
 
 template <typename T>
 concept HandlerWithoutInput = requires(T a, typename T::Output out) {
-    { a.process() } -> std::same_as<HandlerReturnType<decltype(out)>>;};
+    { a.process() } -> std::same_as<HandlerReturnType<decltype(out)>>; };
 
 template <typename T>
 concept Handler = 
 (HandlerWithInput<T>
-||
+or
 HandlerWithoutInput<T>)
-&& boost::json::has_value_from<typename T::Output>::value;
+and boost::json::has_value_from<typename T::Output>::value;
 // clang-format on
 
 }  // namespace RPCng
