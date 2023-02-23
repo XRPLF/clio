@@ -30,6 +30,9 @@
 namespace RPCng {
 class AccountChannelsHandler
 {
+    // dependencies
+    std::shared_ptr<BackendInterface> const sharedPtrBackend_;
+
 public:
     // type align with SField.h
     struct ChannelResponse
@@ -98,8 +101,6 @@ public:
     process(Input input, boost::asio::yield_context& yield) const;
 
 private:
-    // dependencies
-    const std::shared_ptr<BackendInterface> sharedPtrBackend_;
     void
     addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line)
         const;
