@@ -40,20 +40,8 @@ constexpr static auto INDEX2 =
 constexpr static auto TXNID =
     "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountHandlerTest : public SyncAsioContextTest, public MockBackendTest
+class RPCAccountHandlerTest : public HandlerBaseTest
 {
-    void
-    SetUp() override
-    {
-        SyncAsioContextTest::SetUp();
-        MockBackendTest::SetUp();
-    }
-    void
-    TearDown() override
-    {
-        MockBackendTest::TearDown();
-        SyncAsioContextTest::TearDown();
-    }
 };
 
 TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)

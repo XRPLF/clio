@@ -40,21 +40,8 @@ constexpr static auto INDEX2 =
 constexpr static auto TXNID =
     "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
 
-class RPCAccountCurrenciesHandlerTest : public MockBackendTest,
-                                        public SyncAsioContextTest
+class RPCAccountCurrenciesHandlerTest : public HandlerBaseTest
 {
-    void
-    SetUp() override
-    {
-        MockBackendTest::SetUp();
-        SyncAsioContextTest::SetUp();
-    }
-    void
-    TearDown() override
-    {
-        SyncAsioContextTest::TearDown();
-        MockBackendTest::TearDown();
-    }
 };
 
 TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)

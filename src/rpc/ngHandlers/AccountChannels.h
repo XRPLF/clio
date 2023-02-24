@@ -75,7 +75,8 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountChannelsHandler(std::shared_ptr<BackendInterface>& sharedPtrBackend)
+    AccountChannelsHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }

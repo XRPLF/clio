@@ -55,7 +55,7 @@ public:
     using Result = RPCng::HandlerReturnType<Output>;
 
     AccountCurrenciesHandler(
-        std::shared_ptr<BackendInterface>& sharedPtrBackend)
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }

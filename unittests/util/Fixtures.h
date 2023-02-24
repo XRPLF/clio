@@ -177,3 +177,23 @@ struct MockBackendTest : virtual public NoLoggerFixture
 protected:
     std::shared_ptr<BackendInterface> mockBackendPtr;
 };
+
+/**
+ * @brief Fixture with an mock backend and an embedded boost::asio context
+ * Handler unittest base class
+ */
+class HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest
+{
+    void
+    SetUp() override
+    {
+        MockBackendTest::SetUp();
+        SyncAsioContextTest::SetUp();
+    }
+    void
+    TearDown() override
+    {
+        SyncAsioContextTest::TearDown();
+        MockBackendTest::TearDown();
+    }
+};
