@@ -153,6 +153,12 @@ CreateCreateOfferTransactionObject(
 ripple::Issue
 GetIssue(std::string_view currency, std::string_view issuerId)
 {
+    // standard currency
+    if (currency.size() == 3)
+        return ripple::Issue(
+            ripple::to_currency(std::string(currency)),
+            ripple::parseBase58<ripple::AccountID>(std::string(issuerId))
+                .value());
     return ripple::Issue(
         ripple::Currency{currency},
         ripple::parseBase58<ripple::AccountID>(std::string(issuerId)).value());
@@ -284,4 +290,34 @@ CreatePaymentChannelLedgerObject(
     ripple::Slice slice(key, 33);
     channel.setFieldVL(ripple::sfPublicKey, slice);
     return channel;
+}
+
+[[nodiscard]] ripple::STObject
+CreateRippleStateLedgerObject(
+    std::string_view accountId,
+    std::string_view currency,
+    std::string_view issuerId,
+    int balance,
+    std::string_view lowNodeAccountId,
+    int lowLimit,
+    std::string_view highNodeAccountId,
+    int highLimit,
+    std::string_view previousTxnId,
+    uint32_t previousTxnSeq)
+{
+    auto line = ripple::STObject(ripple::sfLedgerEntry);
+    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
+    line.setFieldU32(ripple::sfFlags, 0);
+    line.setFieldAmount(
+        ripple::sfBalance,
+        ripple::STAmount(GetIssue(currency, issuerId), balance));
+    line.setFieldAmount(
+        ripple::sfHighLimit,
+        ripple::STAmount(GetIssue(currency, highNodeAccountId), highLimit));
+    line.setFieldAmount(
+        ripple::sfLowLimit,
+        ripple::STAmount(GetIssue(currency, lowNodeAccountId), lowLimit));
+    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
+    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
+    return line;
 }
