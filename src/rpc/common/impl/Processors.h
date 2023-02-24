@@ -57,7 +57,7 @@ struct DefaultProcessor final
             }
             else
             {
-                auto const ret = handler.process(inData, ptrYield);
+                auto const ret = handler.process(inData, *ptrYield);
                 // real handler is given expected Input, not json
                 if (!ret)
                     return Error{ret.error()};  // forward Status

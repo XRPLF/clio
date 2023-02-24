@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <ripple/basics/base_uint.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Validators.h>
 
 #include <boost/json/value.hpp>
@@ -122,6 +123,44 @@ CustomValidator LedgerIndexValidator = CustomValidator{
             !checkIsU32Numeric(value.as_string().c_str()))
         {
             return err;
+        }
+        return MaybeError{};
+    }};
+
+CustomValidator AccountValidator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "NotString"}};
+        }
+        // TODO: we are using accountFromStringStrict from RPCHelpers, after we
+        // remove all old handler, this function can be moved to here
+        if (!RPC::accountFromStringStrict(value.as_string().c_str()))
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "Malformed"}};
+        }
+        return MaybeError{};
+    }};
+
+CustomValidator MarkerValidator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "NotString"}};
+        }
+        // TODO: we are using parseAccountCursor from RPCHelpers, after we
+        // remove all old handler, this function can be moved to here
+        if (!RPC::parseAccountCursor(value.as_string().c_str()))
+        {
+            // align with the current error message
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS, "Malformed cursor"}};
         }
         return MaybeError{};
     }};

@@ -50,11 +50,7 @@ std::uint64_t
 getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID);
 
 std::optional<AccountCursor>
-parseAccountCursor(
-    BackendInterface const& backend,
-    std::uint32_t seq,
-    std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield);
+parseAccountCursor(std::optional<std::string> jsonCursor);
 
 // TODO this function should probably be in a different file and namespace
 std::pair<
@@ -106,6 +102,14 @@ generatePubLedgerMessage(
 std::variant<Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(Context const& ctx);
 
+std::variant<Status, ripple::LedgerInfo>
+getLedgerInfoFromHashOrSeq(
+    BackendInterface const& backend,
+    boost::asio::yield_context& yield,
+    std::optional<std::string> ledgerHash,
+    std::optional<uint32_t> ledgerIndex,
+    uint32_t maxSeq);
+
 std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
@@ -122,6 +126,18 @@ traverseOwnedNodes(
     ripple::Keylet const& owner,
     ripple::uint256 const& hexMarker,
     std::uint32_t const startHint,
+    std::uint32_t sequence,
+    std::uint32_t limit,
+    std::optional<std::string> jsonCursor,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE&&)> atOwnedNode);
+
+// Remove the account check from traverseOwnedNodes
+// Account check has been done by framework,remove it from internal function
+std::variant<Status, AccountCursor>
+ngTraverseOwnedNodes(
+    BackendInterface const& backend,
+    ripple::AccountID const& accountID,
     std::uint32_t sequence,
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,

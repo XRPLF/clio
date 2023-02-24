@@ -56,6 +56,8 @@ target_sources(clio PRIVATE
   ## NextGen RPC
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
+  ## NextGen RPC handler
+  src/rpc/ngHandlers/AccountChannels.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -115,7 +117,8 @@ if(BUILD_TESTS)
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
-    unittests/rpc/handlers/PingTest.cpp)
+    unittests/rpc/handlers/PingTest.cpp
+    unittests/rpc/handlers/AccountChannelsTest.cpp)
   include(CMake/deps/gtest.cmake)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
