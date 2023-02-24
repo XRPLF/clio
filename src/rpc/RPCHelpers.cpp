@@ -606,8 +606,10 @@ getLedgerInfoFromHashOrSeq(
         RPC::Status{RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash)
     {
-        lgrInfo =
-            backend.fetchLedgerByHash(ripple::uint256{*ledgerHash}, yield);
+        // invoke uint256's constructor to parse the hex string , instead of
+        // copying buffer
+        ripple::uint256 ledgerHash256{std::string_view(*ledgerHash)};
+        lgrInfo = backend.fetchLedgerByHash(ledgerHash256, yield);
         if (!lgrInfo || lgrInfo->seq > maxSeq)
             return err;
 

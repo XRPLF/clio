@@ -250,7 +250,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
     // mock fetchLedgerByHash return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash)
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
 
@@ -311,7 +311,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash)
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
@@ -367,7 +367,7 @@ TEST_F(RPCAccountHandlerTest, NonExistAccount)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash)
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     // fetch account object return emtpy

@@ -59,11 +59,10 @@ class RPCAccountCurrenciesHandlerTest : public MockBackendTest,
 
 TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
 {
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
@@ -90,8 +89,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
 {
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -117,8 +115,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 {
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -159,27 +156,26 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
             "USD"
         ]
     })";
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // return valid ledgerinfo
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _))
         .WillByDefault(Return(ledgerinfo));
     // return valid account
-    auto accountKk =
+    auto const accountKk =
         ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto ownerDir = CreateOwnerDirLedgerObject(
+    auto const ownerDir = CreateOwnerDirLedgerObject(
         {ripple::uint256{INDEX1},
          ripple::uint256{INDEX2},
          ripple::uint256{INDEX2}},
         INDEX1);
-    auto ownerDirKk =
+    auto const ownerDirKk =
         ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -187,15 +183,15 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
     // ACCOUNT can receive USD 10 from ACCOUNT2 and send USD 20 to ACCOUNT2, now
     // the balance is 100, ACCOUNT can only send USD to ACCOUNT2
-    auto line1 = CreateRippleStateLedgerObject(
+    auto const line1 = CreateRippleStateLedgerObject(
         ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
     // ACCOUNT2 can receive JPY 10 from ACCOUNT and send JPY 20 to ACCOUNT, now
     // the balance is 100, ACCOUNT2 can only send JPY to ACCOUNT
-    auto line2 = CreateRippleStateLedgerObject(
+    auto const line2 = CreateRippleStateLedgerObject(
         ACCOUNT, "JPY", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123);
     // ACCOUNT can receive EUR 10 from ACCOUNT and send EUR 20 to ACCOUNT2, now
     // the balance is 8, ACCOUNT can receive/send EUR to/from ACCOUNT2
-    auto line3 = CreateRippleStateLedgerObject(
+    auto const line3 = CreateRippleStateLedgerObject(
         ACCOUNT, "EUR", ISSUER, 8, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -214,6 +210,99 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUTPUT));
+    });
+    ctx.run();
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+        .WillByDefault(Return(ledgerinfo));
+    // return valid account
+    auto const accountKk =
+        ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk =
+        ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    std::vector<Blob> bbs;
+    auto const line1 = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "ledger_hash":"{}"
+        }})",
+        ACCOUNT,
+        LEDGERHASH));
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
+        ASSERT_TRUE(output);
+    });
+    ctx.run();
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto const ledgerSeq = 29;
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(ledgerSeq, _))
+        .WillByDefault(Return(ledgerinfo));
+    // return valid account
+    auto const accountKk =
+        ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk =
+        ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    std::vector<Blob> bbs;
+    auto const line1 = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "ledger_index":{}
+        }})",
+        ACCOUNT,
+        ledgerSeq));
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
+        ASSERT_TRUE(output);
+        EXPECT_EQ(
+            (*output).as_object().at("ledger_index").as_uint64(), ledgerSeq);
     });
     ctx.run();
 }

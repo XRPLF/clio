@@ -26,22 +26,22 @@ AccountCurrenciesHandler::process(
     AccountCurrenciesHandler::Input input,
     boost::asio::yield_context& yield) const
 {
-    auto range = sharedPtrBackend_->fetchLedgerRange();
-    auto lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
         yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
 
-    if (auto status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
+    if (auto const status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
 
-    auto accountID = RPC::accountFromStringStrict(input.account);
+    auto const accountID = RPC::accountFromStringStrict(input.account);
 
-    auto accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         ripple::keylet::account(*accountID).key, lgrInfo.seq, yield);
     if (!accountLedgerObject)
         return Error{RPC::Status{
@@ -52,11 +52,11 @@ AccountCurrenciesHandler::process(
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
-            auto lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
-            auto highLimit = sle.getFieldAmount(ripple::sfHighLimit);
-            bool viewLowest = (lowLimit.getIssuer() == accountID);
-            auto lineLimit = viewLowest ? lowLimit : highLimit;
-            auto lineLimitPeer = !viewLowest ? lowLimit : highLimit;
+            auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
+            auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
+            bool const viewLowest = (lowLimit.getIssuer() == accountID);
+            auto const lineLimit = viewLowest ? lowLimit : highLimit;
+            auto const lineLimitPeer = !viewLowest ? lowLimit : highLimit;
             if (!viewLowest)
                 balance.negate();
             if (balance < lineLimit)
@@ -69,6 +69,7 @@ AccountCurrenciesHandler::process(
         return true;
     };
 
+    // traverse all owned nodes, limit->max, marker->empty
     RPC::ngTraverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
@@ -116,7 +117,7 @@ tag_invoke(
     {
         if (!jsonObject.at("ledger_index").is_string())
         {
-            input.ledgerIndex = jv.at("ledger_index").as_uint64();
+            input.ledgerIndex = jv.at("ledger_index").as_int64();
         }
         else if (jsonObject.at("ledger_index").as_string() != "validated")
         {
