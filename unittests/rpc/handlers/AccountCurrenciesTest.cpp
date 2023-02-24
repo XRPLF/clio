@@ -31,7 +31,6 @@ using namespace testing;
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto ISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
-
 constexpr static auto LEDGERHASH =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto INDEX1 =
@@ -78,10 +77,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
             "account":"{}"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountCurrenciesHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -106,10 +104,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
             "account":"{}"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountCurrenciesHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -136,9 +133,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountCurrenciesHandler{yield, mockBackendPtr}};
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         auto const output = handler.process(input);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -187,7 +183,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
         ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     // ACCOUNT can receive USD 10 from ACCOUNT2 and send USD 20 to ACCOUNT2, now
     // the balance is 100, ACCOUNT can only send USD to ACCOUNT2
@@ -213,10 +209,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
             "account":"{}"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler =
-            AnyHandler{AccountCurrenciesHandler{yield, mockBackendPtr}};
-        auto const output = handler.process(input);
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUTPUT));
     });

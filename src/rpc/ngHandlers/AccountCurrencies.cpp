@@ -22,12 +22,14 @@
 
 namespace RPCng {
 AccountCurrenciesHandler::Result
-AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input) const
+AccountCurrenciesHandler::process(
+    AccountCurrenciesHandler::Input input,
+    boost::asio::yield_context& yield) const
 {
     auto range = sharedPtrBackend_->fetchLedgerRange();
     auto lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yieldCtx_,
+        yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -40,12 +42,12 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input) const
     auto accountID = RPC::accountFromStringStrict(input.account);
 
     auto accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, yieldCtx_);
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, yield);
     if (!accountLedgerObject)
         return Error{RPC::Status{
             RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    Output out;
+    Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
@@ -58,27 +60,27 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input) const
             if (!viewLowest)
                 balance.negate();
             if (balance < lineLimit)
-                out.receiveCurrencies.insert(
+                response.receiveCurrencies.insert(
                     ripple::to_string(balance.getCurrency()));
             if ((-balance) < lineLimitPeer)
-                out.sendCurrencies.insert(
+                response.sendCurrencies.insert(
                     ripple::to_string(balance.getCurrency()));
         }
         return true;
     };
 
-    RPC::traverseOwnedNodes(
+    RPC::ngTraverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
-        yieldCtx_,
+        yield,
         addToResponse);
 
-    out.ledgerHash = ripple::strHex(lgrInfo.hash);
-    out.ledgerIndex = lgrInfo.seq;
-    return out;
+    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerIndex = lgrInfo.seq;
+    return response;
 }
 
 void
@@ -95,7 +97,7 @@ tag_invoke(
         {"receive_currencies",
          boost::json::value_from(output.receiveCurrencies)},
         {"send_currencies", boost::json::value_from(output.sendCurrencies)}};
-    jv.emplace_object() = obj;
+    jv = obj;
 }
 
 AccountCurrenciesHandler::Input
@@ -103,7 +105,7 @@ tag_invoke(
     boost::json::value_to_tag<AccountCurrenciesHandler::Input>,
     boost::json::value const& jv)
 {
-    auto jsonObject = jv.as_object();
+    auto const& jsonObject = jv.as_object();
     AccountCurrenciesHandler::Input input;
     input.account = jv.at("account").as_string().c_str();
     if (jsonObject.contains("ledger_hash"))
@@ -112,17 +114,16 @@ tag_invoke(
     }
     if (jsonObject.contains("ledger_index"))
     {
-        if (!jsonObject["ledger_index"].is_string())
+        if (!jsonObject.at("ledger_index").is_string())
         {
             input.ledgerIndex = jv.at("ledger_index").as_uint64();
         }
-        else if (jsonObject["ledger_index"].as_string() != "validated")
+        else if (jsonObject.at("ledger_index").as_string() != "validated")
         {
             input.ledgerIndex =
                 std::stoi(jv.at("ledger_index").as_string().c_str());
         }
     }
-
     return input;
 }
 

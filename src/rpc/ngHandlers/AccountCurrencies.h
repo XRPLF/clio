@@ -25,14 +25,16 @@
 
 #include <boost/asio/spawn.hpp>
 
-#include <functional>
 #include <set>
 
 namespace RPCng {
 class AccountCurrenciesHandler
 {
+    // dependencies
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
+
 public:
-    struct HandlerOutput
+    struct Output
     {
         std::string ledgerHash;
         uint32_t ledgerIndex;
@@ -42,22 +44,19 @@ public:
         bool validated = true;
     };
 
-    // we did not implement the "strict" field
-    struct HandlerInput
+    // TODO:we did not implement the "strict" field
+    struct Input
     {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };
 
-    using Input = HandlerInput;
-    using Output = HandlerOutput;
     using Result = RPCng::HandlerReturnType<Output>;
 
     AccountCurrenciesHandler(
-        boost::asio::yield_context& yieldCtx,
         std::shared_ptr<BackendInterface>& sharedPtrBackend)
-        : yieldCtx_(yieldCtx), sharedPtrBackend_(sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -65,19 +64,14 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"account", validation::Required{}},
+            {"account", validation::Required{}, validation::AccountValidator},
             {"ledger_hash", validation::LedgerHashValidator},
             {"ledger_index", validation::LedgerIndexValidator}};
         return rpcSpec;
     }
 
     Result
-    process(Input input) const;
-
-private:
-    // dependencies
-    std::reference_wrapper<boost::asio::yield_context> yieldCtx_;
-    std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    process(Input input, boost::asio::yield_context& yield) const;
 };
 
 void
