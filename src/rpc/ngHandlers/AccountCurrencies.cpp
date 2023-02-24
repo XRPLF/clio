@@ -90,15 +90,13 @@ tag_invoke(
     boost::json::value& jv,
     AccountCurrenciesHandler::Output output)
 {
-    boost::json::object obj;
-    obj = {
+    jv = {
         {"ledger_hash", output.ledgerHash},
         {"ledger_index", output.ledgerIndex},
         {"validated", output.validated},
         {"receive_currencies",
          boost::json::value_from(output.receiveCurrencies)},
         {"send_currencies", boost::json::value_from(output.sendCurrencies)}};
-    jv = obj;
 }
 
 AccountCurrenciesHandler::Input
