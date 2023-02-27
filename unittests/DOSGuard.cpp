@@ -54,6 +54,22 @@ constexpr static auto JSONData2 = R"JSON(
     }
 )JSON";
 
+// Note: Can have a mixed bag whitelist like the below
+// Whitelist contains raw IP not in any subnet, raw IP in a subnet, a subnet
+// viable with no raw IPs in whitelist, a subnet viable with a raw IP in a
+// whitelist
+constexpr static auto JSONData3 = R"JSON(
+    {
+        "dos_guard": {
+            "max_fetches": 100,
+            "sweep_interval": 1,
+            "max_connections": 2,
+            "max_requests": 3,
+            "whitelist": ["198.54.8.17", "127.0.0.1/24", "10.3.255.254/14", "21DA:00D4:0000:2F4C:02BC:00FF:FE18:4C5A", "2001:0:eab:DEAD:0:A0:ABCD:4E/64"]
+        }
+    }
+)JSON";
+
 constexpr static auto IP = "127.0.0.2";
 
 class FakeSweepHandler
@@ -81,14 +97,99 @@ class DOSGuardTest : public NoLoggerFixture
 {
 protected:
     Config cfg{json::parse(JSONData)};
+    Config cfg_static_list{json::parse(JSONData3)};
     FakeSweepHandler sweepHandler;
+    FakeSweepHandler sweepHandler_static_list_ipv4;
     BasicDOSGuard<FakeSweepHandler> guard{cfg, sweepHandler};
+    BasicDOSGuard<FakeSweepHandler> guard_mixed{
+        cfg_static_list,
+        sweepHandler_static_list_ipv4};
 };
 
 TEST_F(DOSGuardTest, Whitelisting)
 {
+    // Test cases for individual IPv4 address
     EXPECT_TRUE(guard.isWhiteListed("127.0.0.1"));
     EXPECT_FALSE(guard.isWhiteListed(IP));
+
+    // Test cases for list of IPv4 addresses
+    // Checks if addresses not explicitly listed aren't there
+    EXPECT_TRUE(guard_mixed.isWhiteListed("198.54.8.17"));
+    EXPECT_TRUE(
+        guard_mixed.isWhiteListed("21DA:00D4:0000:2F4C:02BC:00FF:FE18:4C5A"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("127.0.1.0"));
+    EXPECT_FALSE(
+        guard_mixed.isWhiteListed("DEAD:00D4:0000:2F4C:02BC:00FF:FE18:4C5A"));
+
+    // Test to see if whitelist checks against subnets (in vs out of subnet)
+    EXPECT_TRUE(guard_mixed.isWhiteListed("127.0.0.1"));
+    EXPECT_TRUE(guard_mixed.isWhiteListed("127.0.0.2"));
+    EXPECT_TRUE(guard_mixed.isWhiteListed("10.3.255.254"));
+    EXPECT_TRUE(
+        guard_mixed.isWhiteListed("2001:0000:0EAB:DEAD:0000:00A0:ABCD:AAAA"));
+    EXPECT_TRUE(
+        guard_mixed.isWhiteListed("2001:0000:0EAB:DEAD:0000:00A0:ABCD:004E"));
+    EXPECT_TRUE(
+        guard_mixed.isWhiteListed("2001:0000:0EAB:DEAD:FFFF:FFFF:FFFF:FFFF"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("10.4.0.0"));
+    EXPECT_FALSE(
+        guard_mixed.isWhiteListed("2001:0000:DEAD:DEAD:FFFF:FFFF:FFFF:FFFF"));
+
+    // Check against reserved IP addresses within subnets
+    EXPECT_FALSE(guard_mixed.isWhiteListed("127.0.0.0"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("127.0.0.255"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("10.0.0.0"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("10.3.255.255"));
+    EXPECT_FALSE(
+        guard_mixed.isWhiteListed("0000:0000:0EAB:DEAD:FFFF:FFFF:FFFF:FFFF"));
+
+    // Check that CIDR notation is not allowed
+    EXPECT_FALSE(guard_mixed.isWhiteListed("10.3.255.254/14"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("10.3.255.254/16"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("127.0.0.1/24"));
+    EXPECT_FALSE(guard_mixed.isWhiteListed("2001:0:eab:DEAD:0:A0:ABCD:4E/64"));
+}
+
+TEST_F(DOSGuardTest, checkIfIPNotMalformed)
+{
+    // IPv4 test cases
+    EXPECT_TRUE(guard_mixed.checkValidityOfWhitelist("10.3.255.254"));
+    EXPECT_TRUE(guard_mixed.checkValidityOfWhitelist("10.3.255.254/14"));
+    EXPECT_FALSE(guard_mixed.checkValidityOfWhitelist("10.3.255.-1"));
+    EXPECT_FALSE(guard_mixed.checkValidityOfWhitelist("10.3.255.-1/14"));
+
+    // IPv6 test cases
+    EXPECT_TRUE(
+        guard_mixed.checkValidityOfWhitelist("2001:0:eab:DEAD:0:A0:ABCD:4E"));
+    EXPECT_TRUE(
+        guard_mixed.checkValidityOfWhitelist("2001:0:0eab:dead::a0:abcd:4e"));
+    EXPECT_TRUE(guard_mixed.checkValidityOfWhitelist(
+        "21DA:00D4:0000:2F4C:02BC:00FF:FE18:4C5A/64"));
+    EXPECT_TRUE(guard_mixed.checkValidityOfWhitelist(
+        "21DA:00D4::2F4C:02BC:00FF:FE18:4C5A/64"));
+    EXPECT_FALSE(
+        guard_mixed.checkValidityOfWhitelist("2001::eab:dead::a0:abcd:-1"));
+    EXPECT_FALSE(guard_mixed.checkValidityOfWhitelist(
+        "21DA:00D4:0000:2F4C:02BC:00FF:FE18:-1/64"));
+}
+
+TEST_F(DOSGuardTest, checkIfInSubnet)
+{
+    // IPv4 Test Cases
+    EXPECT_TRUE(
+        guard_mixed.isIPv4AddressInSubnet("10.3.255.254", "10.0.0.0/14"));
+    EXPECT_FALSE(guard_mixed.isIPv4AddressInSubnet("10.4.0.0", "10.0.0.0/14"));
+
+    EXPECT_TRUE(
+        guard_mixed.isIPv4AddressInSubnet("192.168.0.1", "192.168.0.0/16"));
+    EXPECT_FALSE(
+        guard_mixed.isIPv4AddressInSubnet("192.169.0.1", "192.168.0.0/16"));
+
+    // IPv6 Test Cases
+    EXPECT_TRUE(guard_mixed.isIPv6AddressInSubnet(
+        "21DA:00D4:0000:2F4C:02BC:00FF:FE18:4C5A", "21DA:00D4:0000:2F4C::/64"));
+    EXPECT_FALSE(guard_mixed.isIPv6AddressInSubnet(
+        "21DA:00D4:0000:2F4D:02BC:00FF:FE18:4C5A", "21DA:00D4:0000:2F4C::/64"));
 }
 
 TEST_F(DOSGuardTest, ConnectionCount)
