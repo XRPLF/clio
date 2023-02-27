@@ -326,8 +326,8 @@ TEST_F(RPCBaseTest, MarkerValidator)
 
 TEST_F(RPCBaseTest, TxHashValidator)
 {
-    auto spec = RpcSpec{{"transaction", TxHashValidator}};
-    auto passingInput = json::parse(
+    auto const spec = RpcSpec{{"transaction", TxHashValidator}};
+    auto const passingInput = json::parse(
         R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})");
     ASSERT_TRUE(spec.validate(passingInput));
 
