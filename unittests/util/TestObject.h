@@ -169,3 +169,25 @@ CreateRippleStateLedgerObject(
     int highLimit,
     std::string_view previousTxnId,
     uint32_t previousTxnSeq);
+
+ripple::STObject
+CreateOfferLedgerObject(
+    std::string_view account,
+    int takerGets,
+    int takerPays,
+    std::string_view currency,
+    std::string_view issueId);
+
+ripple::STObject
+CreateTicketLedgerObject(std::string_view rootIndex, uint32_t sequence);
+
+ripple::STObject
+CreateEscrowLedgerObject(std::string_view account, std::string_view dest);
+
+ripple::STObject
+CreateCheckLedgerObject(std::string_view account, std::string_view dest);
+
+ripple::STObject
+CreateDepositPreauthLedgerObject(
+    std::string_view account,
+    std::string_view auth);

@@ -36,6 +36,9 @@ Section::verify(boost::json::value const& value, std::string_view key) const
                     // instead
 
     auto const& res = value.at(key.data());
+    // if it is not a json object, let other validators fail
+    if (!res.is_object())
+        return {};
     for (auto const& spec : specs)
     {
         if (auto const ret = spec.validate(res); not ret)
@@ -97,17 +100,19 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
-CustomValidator LedgerHashValidator = CustomValidator{
+CustomValidator Uint256HexStringValidator = CustomValidator{
     [](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
             return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashNotString"}};
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "NotString"}};
         }
         ripple::uint256 ledgerHash;
         if (!ledgerHash.parseHex(value.as_string().c_str()))
             return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"}};
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "Malformed"}};
         return MaybeError{};
     }};
 
@@ -146,6 +151,21 @@ CustomValidator AccountValidator = CustomValidator{
         return MaybeError{};
     }};
 
+CustomValidator AccountBase58Validator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "NotString"}};
+        }
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(value.as_string().c_str());
+        if (!account || account->isZero())
+            return Error{RPC::Status{RPC::ClioError::rpcMALFORMED_ADDRESS}};
+        return MaybeError{};
+    }};
+
 CustomValidator MarkerValidator = CustomValidator{
     [](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
@@ -165,7 +185,7 @@ CustomValidator MarkerValidator = CustomValidator{
         return MaybeError{};
     }};
 
-CustomValidator TxHashValidator = CustomValidator{
+CustomValidator CurrencyValidator = CustomValidator{
     [](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
@@ -173,12 +193,10 @@ CustomValidator TxHashValidator = CustomValidator{
                 RPC::RippledError::rpcINVALID_PARAMS,
                 std::string(key) + "NotString"}};
         }
-        ripple::uint256 txHash;
-        if (!txHash.parseHex(value.as_string().c_str()))
-        {
+        ripple::Currency currency;
+        if (!ripple::to_currency(currency, value.as_string().c_str()))
             return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS, "malformedTransaction"}};
-        }
+                RPC::ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
         return MaybeError{};
     }};
 

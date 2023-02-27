@@ -321,3 +321,94 @@ CreateRippleStateLedgerObject(
     line.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
     return line;
 }
+
+ripple::STObject
+CreateOfferLedgerObject(
+    std::string_view account,
+    int takerGets,
+    int takerPays,
+    std::string_view currency,
+    std::string_view issueId)
+{
+    ripple::STObject offer(ripple::sfLedgerEntry);
+    offer.setFieldU16(ripple::sfLedgerEntryType, ripple::ltOFFER);
+    offer.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
+    offer.setFieldU32(ripple::sfSequence, 0);
+    offer.setFieldU32(ripple::sfFlags, 0);
+    ripple::Issue issue1 = GetIssue(currency, issueId);
+    offer.setFieldAmount(
+        ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
+    offer.setFieldAmount(
+        ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+    offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{});
+    offer.setFieldU64(ripple::sfBookNode, 0);
+    offer.setFieldU64(ripple::sfOwnerNode, 0);
+    offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    return offer;
+}
+
+ripple::STObject
+CreateTicketLedgerObject(std::string_view account, uint32_t sequence)
+{
+    ripple::STObject ticket(ripple::sfLedgerEntry);
+    ticket.setFieldU16(ripple::sfLedgerEntryType, ripple::ltTICKET);
+    ticket.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
+    ticket.setFieldU32(ripple::sfFlags, 0);
+    ticket.setFieldU64(ripple::sfOwnerNode, 0);
+    ticket.setFieldU32(ripple::sfTicketSequence, sequence);
+    ticket.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    ticket.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    return ticket;
+}
+
+ripple::STObject
+CreateEscrowLedgerObject(std::string_view account, std::string_view dest)
+{
+    ripple::STObject escrow(ripple::sfLedgerEntry);
+    escrow.setFieldU16(ripple::sfLedgerEntryType, ripple::ltESCROW);
+    escrow.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
+    escrow.setAccountID(ripple::sfDestination, GetAccountIDWithString(dest));
+    escrow.setFieldAmount(ripple::sfAmount, ripple::STAmount(0, false));
+    escrow.setFieldU64(ripple::sfOwnerNode, 0);
+    escrow.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    escrow.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    escrow.setFieldU32(ripple::sfFlags, 0);
+    return escrow;
+}
+
+ripple::STObject
+CreateCheckLedgerObject(std::string_view account, std::string_view dest)
+{
+    ripple::STObject check(ripple::sfLedgerEntry);
+    check.setFieldU16(ripple::sfLedgerEntryType, ripple::ltCHECK);
+    check.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
+    check.setAccountID(ripple::sfDestination, GetAccountIDWithString(dest));
+    check.setFieldU32(ripple::sfFlags, 0);
+    check.setFieldU64(ripple::sfOwnerNode, 0);
+    check.setFieldU64(ripple::sfDestinationNode, 0);
+    check.setFieldAmount(ripple::sfSendMax, ripple::STAmount(0, false));
+    check.setFieldU32(ripple::sfSequence, 0);
+    check.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    check.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    return check;
+}
+
+ripple::STObject
+CreateDepositPreauthLedgerObject(
+    std::string_view account,
+    std::string_view auth)
+{
+    ripple::STObject depositPreauth(ripple::sfLedgerEntry);
+    depositPreauth.setFieldU16(
+        ripple::sfLedgerEntryType, ripple::ltDEPOSIT_PREAUTH);
+    depositPreauth.setAccountID(
+        ripple::sfAccount, GetAccountIDWithString(account));
+    depositPreauth.setAccountID(
+        ripple::sfAuthorize, GetAccountIDWithString(auth));
+    depositPreauth.setFieldU32(ripple::sfFlags, 0);
+    depositPreauth.setFieldU64(ripple::sfOwnerNode, 0);
+    depositPreauth.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    depositPreauth.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    return depositPreauth;
+}

@@ -60,7 +60,7 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledgerHashMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
     ctx.run();
 }
@@ -81,7 +81,7 @@ TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledgerHashNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
     ctx.run();
 }

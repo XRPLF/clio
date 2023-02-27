@@ -416,24 +416,24 @@ public:
 checkIsU32Numeric(std::string_view sv);
 
 /**
- * @brief Provide a common used validator for ledger hash
- * LedgerHash must be a string and hex
- */
-extern CustomValidator LedgerIndexValidator;
-
-/**
  * @brief Provide a common used validator for ledger index
  * LedgerIndex must be a string or int
  * If the specified LedgerIndex is a string, it's value must be either
  * "validated" or a valid integer value represented as a string.
  */
-extern CustomValidator LedgerHashValidator;
+extern CustomValidator LedgerIndexValidator;
 
 /**
  * @brief Provide a common used validator for account
  * Account must be a string and the converted public key is valid
  */
 extern CustomValidator AccountValidator;
+
+/**
+ * @brief Provide a common used validator for account
+ * Account must be a string and can convert to base58
+ */
+extern CustomValidator AccountBase58Validator;
 
 /**
  * @brief Provide a common used validator for marker
@@ -443,9 +443,16 @@ extern CustomValidator AccountValidator;
 extern CustomValidator MarkerValidator;
 
 /**
- * @brief Provide a common used validator for transaction hash
+ * @brief Provide a common used validator for uint256 hex string
  * It must be a string and hex
+ * Transaction index, ledger hash all use this validator
  */
-extern CustomValidator TxHashValidator;
+extern CustomValidator Uint256HexStringValidator;
+
+/**
+ * @brief Provide a common used validator for currency
+ * including standard currency code and token code
+ */
+extern CustomValidator CurrencyValidator;
 
 }  // namespace RPCng::validation
