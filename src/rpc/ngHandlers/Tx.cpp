@@ -32,6 +32,7 @@ TxHandler::process(Input input, boost::asio::yield_context& yield) const
     {
         if (*input.minLedger > *input.maxLedger)
             return Error{RPC::Status{RPC::RippledError::rpcINVALID_LGR_RANGE}};
+
         if (*input.maxLedger - *input.minLedger > maxLedgerRange)
             return Error{
                 RPC::Status{RPC::RippledError::rpcEXCESSIVE_LGR_RANGE}};
