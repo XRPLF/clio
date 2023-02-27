@@ -78,7 +78,7 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountCurrenciesHandler::Output output);
+    AccountCurrenciesHandler::Output const& output);
 
 AccountCurrenciesHandler::Input
 tag_invoke(

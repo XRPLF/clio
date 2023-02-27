@@ -62,7 +62,7 @@ inline void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    TestOutput output)
+    TestOutput const& output)
 {
     jv = {{"computed", output.computed}};
 }
@@ -194,7 +194,7 @@ inline void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    InOutFake output)
+    InOutFake const& output)
 {
     jv = {{"something", output.something}};
 }

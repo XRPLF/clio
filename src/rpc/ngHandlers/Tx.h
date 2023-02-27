@@ -82,7 +82,7 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    TxHandler::Output output);
+    TxHandler::Output const& output);
 
 TxHandler::Input
 tag_invoke(

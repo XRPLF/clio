@@ -25,13 +25,14 @@ namespace RPCng {
 TxHandler::Result
 TxHandler::process(Input input, boost::asio::yield_context& yield) const
 {
+    constexpr static auto maxLedgerRange = 1000;
     auto const rangeSupplied = input.minLedger && input.maxLedger;
 
     if (rangeSupplied)
     {
         if (*input.minLedger > *input.maxLedger)
             return Error{RPC::Status{RPC::RippledError::rpcINVALID_LGR_RANGE}};
-        if (*input.maxLedger - *input.minLedger > 1000)
+        if (*input.maxLedger - *input.minLedger > maxLedgerRange)
             return Error{
                 RPC::Status{RPC::RippledError::rpcEXCESSIVE_LGR_RANGE}};
     }
@@ -76,7 +77,7 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    TxHandler::Output output)
+    TxHandler::Output const& output)
 {
     auto obj = boost::json::object{};
     if (output.tx)
