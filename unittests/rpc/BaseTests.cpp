@@ -337,7 +337,7 @@ TEST_F(RPCBaseTest, TxHashValidator)
     ASSERT_EQ(err.error().message, "transactionNotString");
 
     failingInput = json::parse(
-        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC", "ledgerIndexMax": "wrongformat" })");
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC"})");
     err = spec.validate(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "malformedTransaction");

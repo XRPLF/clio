@@ -34,31 +34,12 @@ constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 
-class RPCTxTest : public SyncAsioContextTest, public MockBackendTest
+class RPCTxTest : public HandlerBaseTest
 {
-    void
-    SetUp() override
-    {
-        SyncAsioContextTest::SetUp();
-        MockBackendTest::SetUp();
-    }
-    void
-    TearDown() override
-    {
-        MockBackendTest::TearDown();
-        SyncAsioContextTest::TearDown();
-    }
 };
 
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
-    auto const req = json::parse(R"({
-        "command": "tx",
-        "transaction": "DEADBEEF",
-        "min_ledger": 1,
-        "max_ledger":1002
-        })");
-
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
@@ -80,7 +61,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     ctx.run();
 }
 
-TEST_F(RPCTxTest, invalidLgrRange)
+TEST_F(RPCTxTest, InvalidLgrRange)
 {
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
@@ -245,6 +226,45 @@ TEST_F(RPCTxTest, DefaultParameter)
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
+                }})",
+            TXNID));
+        auto const output = handler.process(req, yield);
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(OUT));
+    });
+    ctx.run();
+}
+
+TEST_F(RPCTxTest, ReturnBinary)
+{
+    auto constexpr static OUT = R"({
+        "meta":"201C00000064F8E311006FE864D50AA87BEE5380000158415500000000C1F76FF6ECB0BAC6000000004B4E9C06F24296074F7BC48F92A97916C6DC5EA96540000000000000C8E1E1F1031000",
+        "tx":"120007240000006464400000000000012C65D5071AFD498D00000158415500000000C1F76FF6ECB0BAC600000000D31252CF902EF8DD8451243869B38667CBD89DF368400000000000000273047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
+        "hash":"05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "date":123456,
+        "ledger_index":100
+    })";
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300)
+                      .getSerializer()
+                      .peekData();
+    tx.transaction = CreateCreateOfferTransactionObject(
+                         ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300)
+                         .getSerializer()
+                         .peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+        .WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "binary": true
                 }})",
             TXNID));
         auto const output = handler.process(req, yield);
