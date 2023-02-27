@@ -25,7 +25,7 @@ namespace RPCng {
 TxHandler::Result
 TxHandler::process(Input input, boost::asio::yield_context& yield) const
 {
-    constexpr static auto maxLedgerRange = 1000;
+    constexpr static auto maxLedgerRange = 1000u;
     auto const rangeSupplied = input.minLedger && input.maxLedger;
 
     if (rangeSupplied)
