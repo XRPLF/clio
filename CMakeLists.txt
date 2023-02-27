@@ -58,6 +58,7 @@ target_sources(clio PRIVATE
   src/rpc/common/Validators.cpp
   ## NextGen RPC handler
   src/rpc/ngHandlers/AccountChannels.cpp
+  src/rpc/ngHandlers/AccountCurrencies.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -116,6 +117,7 @@ if(BUILD_TESTS)
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
+    unittests/rpc/handlers/AccountCurrenciesTest.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp)

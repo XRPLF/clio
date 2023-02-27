@@ -40,20 +40,8 @@ constexpr static auto INDEX2 =
 constexpr static auto TXNID =
     "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountHandlerTest : public SyncAsioContextTest, public MockBackendTest
+class RPCAccountHandlerTest : public HandlerBaseTest
 {
-    void
-    SetUp() override
-    {
-        SyncAsioContextTest::SetUp();
-        MockBackendTest::SetUp();
-    }
-    void
-    TearDown() override
-    {
-        MockBackendTest::TearDown();
-        SyncAsioContextTest::TearDown();
-    }
 };
 
 TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
@@ -250,7 +238,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
     // mock fetchLedgerByHash return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash)
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
 
@@ -311,7 +299,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash)
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
@@ -367,7 +355,7 @@ TEST_F(RPCAccountHandlerTest, NonExistAccount)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash)
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     // fetch account object return emtpy

@@ -156,3 +156,16 @@ CreatePaymentChannelLedgerObject(
     uint32_t settleDelay,
     std::string_view previousTxnId,
     uint32_t previousTxnSeq);
+
+[[nodiscard]] ripple::STObject
+CreateRippleStateLedgerObject(
+    std::string_view accountId,
+    std::string_view currency,
+    std::string_view issuerId,
+    int balance,
+    std::string_view lowNodeAccountId,
+    int lowLimit,
+    std::string_view highNodeAccountId,
+    int highLimit,
+    std::string_view previousTxnId,
+    uint32_t previousTxnSeq);
