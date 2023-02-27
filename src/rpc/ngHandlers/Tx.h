@@ -54,7 +54,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    TxHandler(std::shared_ptr<BackendInterface>& sharedPtrBackend)
+    TxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }

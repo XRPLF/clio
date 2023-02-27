@@ -128,6 +128,66 @@ TEST_F(RPCTxTest, TxnNotFound)
     ctx.run();
 }
 
+TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+        .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "min_ledger": 1,
+                "max_ledger":1000
+                }})",
+            TXNID));
+        auto const output = handler.process(req, yield);
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
+        EXPECT_EQ(
+            err.at("error_message").as_string(), "Transaction not found.");
+        EXPECT_EQ(err.at("searched_all").as_bool(), false);
+    });
+    ctx.run();
+}
+
+TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(1);     // min
+    mockBackendPtr->updateRange(1000);  // max
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+        .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "min_ledger": 1,
+                "max_ledger":1000
+                }})",
+            TXNID));
+        auto const output = handler.process(req, yield);
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
+        EXPECT_EQ(
+            err.at("error_message").as_string(), "Transaction not found.");
+        EXPECT_EQ(err.at("searched_all").as_bool(), true);
+    });
+    ctx.run();
+}
+
 TEST_F(RPCTxTest, DefaultParameter)
 {
     auto constexpr static OUT = R"({

@@ -53,6 +53,7 @@ TxHandler::process(Input input, boost::asio::yield_context& yield) const
         return Error{RPC::Status{RPC::RippledError::rpcTXN_NOT_FOUND}};
     }
 
+    // clio does not implement 'inLedger' which is a deprecated field
     if (!input.binary)
     {
         auto const [txn, meta] = RPC::toExpandedJson(*dbResponse);
