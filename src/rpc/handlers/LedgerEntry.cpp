@@ -340,6 +340,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(ticket)))
     {
+        // ticket object : account, ticket_seq
         if (!request.at(JS(ticket)).is_object())
         {
             if (!request.at(JS(ticket)).is_string())
@@ -351,8 +352,8 @@ doLedgerEntry(Context const& context)
                     ClioError::rpcMALFORMED_REQUEST, "malformedTicket"};
         }
         else if (
-            !request.at(JS(ticket)).as_object().contains(JS(owner)) ||
-            !request.at(JS(ticket)).as_object().at(JS(owner)).is_string())
+            !request.at(JS(ticket)).as_object().contains(JS(account)) ||
+            !request.at(JS(ticket)).as_object().at(JS(account)).is_string())
         {
             return Status{ClioError::rpcMALFORMED_REQUEST};
         }
@@ -368,7 +369,7 @@ doLedgerEntry(Context const& context)
             auto const id =
                 ripple::parseBase58<ripple::AccountID>(request.at(JS(ticket))
                                                            .as_object()
-                                                           .at(JS(owner))
+                                                           .at(JS(account))
                                                            .as_string()
                                                            .c_str());
 
@@ -376,7 +377,7 @@ doLedgerEntry(Context const& context)
                 return Status{ClioError::rpcMALFORMED_OWNER};
             else
             {
-                std::uint32_t seq = request.at(JS(offer))
+                std::uint32_t seq = request.at(JS(ticket))
                                         .as_object()
                                         .at(JS(ticket_seq))
                                         .as_int64();
