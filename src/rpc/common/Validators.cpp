@@ -165,4 +165,21 @@ CustomValidator MarkerValidator = CustomValidator{
         return MaybeError{};
     }};
 
+CustomValidator TxHashValidator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "NotString"}};
+        }
+        ripple::uint256 txHash;
+        if (!txHash.parseHex(value.as_string().c_str()))
+        {
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS, "malformedTransaction"}};
+        }
+        return MaybeError{};
+    }};
+
 }  // namespace RPCng::validation

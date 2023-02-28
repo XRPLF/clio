@@ -323,3 +323,22 @@ TEST_F(RPCBaseTest, MarkerValidator)
     auto passingInput = json::parse(R"({ "account": "ABAB1234:123" })");
     ASSERT_TRUE(spec.validate(passingInput));
 }
+
+TEST_F(RPCBaseTest, TxHashValidator)
+{
+    auto const spec = RpcSpec{{"transaction", TxHashValidator}};
+    auto const passingInput = json::parse(
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "transaction": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "transactionNotString");
+
+    failingInput = json::parse(
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC"})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "malformedTransaction");
+}

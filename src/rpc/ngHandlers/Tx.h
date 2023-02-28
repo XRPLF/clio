@@ -25,37 +25,36 @@
 
 #include <boost/asio/spawn.hpp>
 
-#include <set>
-
 namespace RPCng {
-class AccountCurrenciesHandler
+class TxHandler
 {
-    // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
     struct Output
     {
-        std::string ledgerHash;
+        uint32_t date;
+        std::string hash;
         uint32_t ledgerIndex;
-        std::set<std::string> receiveCurrencies;
-        std::set<std::string> sendCurrencies;
-        // validated should be sent via framework
+        std::optional<boost::json::object> meta;
+        std::optional<boost::json::object> tx;
+        std::optional<std::string> metaStr;
+        std::optional<std::string> txStr;
         bool validated = true;
     };
 
-    // TODO:we did not implement the "strict" field
+    // TODO: we did not implement the "strict" field
     struct Input
     {
-        std::string account;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
+        std::string transaction;
+        bool binary = false;
+        std::optional<uint32_t> minLedger;
+        std::optional<uint32_t> maxLedger;
     };
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountCurrenciesHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    TxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -64,9 +63,14 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"account", validation::Required{}, validation::AccountValidator},
-            {"ledger_hash", validation::LedgerHashValidator},
-            {"ledger_index", validation::LedgerIndexValidator}};
+            {"transaction",
+             validation::Required{},
+             validation::TxHashValidator},
+            {"binary", validation::Type<bool>{}},
+            {"min_ledger", validation::Type<uint32_t>{}},
+            {"max_ledger", validation::Type<uint32_t>{}},
+        };
+
         return rpcSpec;
     }
 
@@ -78,10 +82,10 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountCurrenciesHandler::Output const& output);
+    TxHandler::Output const& output);
 
-AccountCurrenciesHandler::Input
+TxHandler::Input
 tag_invoke(
-    boost::json::value_to_tag<AccountCurrenciesHandler::Input>,
+    boost::json::value_to_tag<TxHandler::Input>,
     boost::json::value const& jv);
 }  // namespace RPCng

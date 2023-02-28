@@ -373,4 +373,10 @@ extern CustomValidator AccountValidator;
  */
 extern CustomValidator MarkerValidator;
 
+/**
+ * @brief Provide a common used validator for transaction hash
+ * It must be a string and hex
+ */
+extern CustomValidator TxHashValidator;
+
 }  // namespace RPCng::validation

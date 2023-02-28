@@ -164,7 +164,7 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountChannelsHandler::Output output)
+    AccountChannelsHandler::Output const& output)
 {
     boost::json::object obj;
     obj = {
@@ -173,7 +173,7 @@ tag_invoke(
         {"ledger_index", output.ledgerIndex},
         {"validated", output.validated},
         {"limit", output.limit},
-        {"channels", boost::json::value_from(output.channels)}};
+        {"channels", output.channels}};
     if (output.marker)
         obj["marker"] = output.marker.value();
     jv = obj;
@@ -183,7 +183,7 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountChannelsHandler::ChannelResponse channel)
+    AccountChannelsHandler::ChannelResponse const& channel)
 {
     boost::json::object obj;
     obj = {

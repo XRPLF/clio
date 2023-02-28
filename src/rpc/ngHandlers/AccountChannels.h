@@ -116,11 +116,11 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountChannelsHandler::Output output);
+    AccountChannelsHandler::Output const& output);
 
 void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountChannelsHandler::ChannelResponse channel);
+    AccountChannelsHandler::ChannelResponse const& channel);
 }  // namespace RPCng
