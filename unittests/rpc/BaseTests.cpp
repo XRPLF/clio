@@ -220,6 +220,44 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
+TEST_F(RPCBaseTest, IfTypeValidator)
+{
+    // clang-format off
+    auto spec = RpcSpec{
+        {"mix", Required{}, 
+                Type<std::string,json::object>{},
+                IfType<json::object>{
+                        Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+                        Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
+                        },
+                IfType<std::string>{LedgerHashValidator,}
+        }};
+    // clang-format on
+    // if json object pass
+    auto passingInput =
+        json::parse(R"({ "mix": {"limit": 42, "limit2": 22} })");
+    ASSERT_TRUE(spec.validate(passingInput));
+    // if string pass
+    passingInput = json::parse(
+        R"({ "mix": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC" })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    // if json object fail at first requirement
+    auto failingInput = json::parse(R"({ "mix": {"limit": "not int"} })");
+    ASSERT_FALSE(spec.validate(failingInput));
+    // if json object fail at second requirement
+    failingInput = json::parse(R"({ "mix": {"limit": 22, "limit2": "y"} })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    // if string fail
+    failingInput = json::parse(R"({ "mix": "not hash" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    // type check fail
+    failingInput = json::parse(R"({ "mix": 1213 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+}
+
 TEST_F(RPCBaseTest, CustomValidator)
 {
     // clang-format off

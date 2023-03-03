@@ -52,16 +52,21 @@ template <typename Expected>
         if (not value.is_double())
             hasError = true;
     }
+    else if constexpr (std::is_same_v<Expected, boost::json::array>)
+    {
+        if (not value.is_array())
+            hasError = true;
+    }
+    else if constexpr (std::is_same_v<Expected, boost::json::object>)
+    {
+        if (not value.is_object())
+            hasError = true;
+    }
     else if constexpr (
         std::is_convertible_v<Expected, uint64_t> or
         std::is_convertible_v<Expected, int64_t>)
     {
         if (not value.is_int64() && not value.is_uint64())
-            hasError = true;
-    }
-    else if constexpr (std::is_same_v<Expected, boost::json::array>)
-    {
-        if (not value.is_array())
             hasError = true;
     }
 
@@ -306,6 +311,70 @@ public:
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
+};
+
+/**
+ * @brief A meta-validator that specifies a list of requirements to run against
+ * when the type matches the template parameter
+ */
+template <typename Type>
+class IfType final
+{
+public:
+    /**
+     * @brief Constructs a validator that validates the specs if the type
+     * matches
+     * @param requirements The requirements to validate against
+     */
+    template <Requirement... Requirements>
+    IfType(Requirements&&... requirements)
+    {
+        validator_ = [... r = std::forward<Requirements>(requirements)](
+                         boost::json::value const& j,
+                         std::string_view key) -> MaybeError {
+            // clang-format off
+            std::optional<RPC::Status> firstFailure = std::nullopt;
+
+            // the check logic is the same as fieldspec
+            ([&j, &key, &firstFailure, req = &r]() {
+                if (firstFailure)
+                    return;
+
+                if (auto const res = req->verify(j, key); not res)
+                    firstFailure = res.error();
+            }(), ...);
+            // clang-format on
+
+            if (firstFailure)
+                return Error{firstFailure.value()};
+
+            return {};
+        };
+    }
+
+    /**
+     * @brief Verify that the element is valid
+     * according the stored requirements when type matches
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the element from the outer object
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail
+                        // instead
+
+        if (not checkType<Type>(value.as_object().at(key.data())))
+            return {};  // ignore if type does not match
+
+        return validator_(value, key);
+    }
+
+private:
+    std::function<MaybeError(boost::json::value const&, std::string_view)>
+        validator_;
 };
 
 /**
