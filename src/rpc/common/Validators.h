@@ -315,7 +315,7 @@ public:
 
 /**
  * @brief A meta-validator that specifies a list of requirements to run against
- * when the type much the template parameter
+ * when the type matches the template parameter
  */
 template <typename Type>
 class IfType final

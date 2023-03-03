@@ -227,8 +227,8 @@ TEST_F(RPCBaseTest, IfTypeValidator)
         {"mix", Required{}, 
                 Type<std::string,json::object>{},
                 IfType<json::object>{
-                        Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}, },
-                        Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}, },
+                        Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+                        Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
                         },
                 IfType<std::string>{LedgerHashValidator,}
         }};
