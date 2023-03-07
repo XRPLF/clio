@@ -5,6 +5,7 @@ on:
   pull_request:
     branches: [master, release/*, develop, develop-next]
   workflow_dispatch:
+  
 
 jobs:
   lint:
@@ -114,7 +115,7 @@ jobs:
 
   test_clio:
     name: Test Clio
-    runs-on: [self-hosted, Linux]
+    runs-on: [self-hosted, heavy]
     needs: build_clio
     strategy:
       fail-fast: false

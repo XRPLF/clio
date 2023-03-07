@@ -1,0 +1,12 @@
+name: Run commands on different operating systems
+on: ["push"]
+
+jobs:
+  test:
+    name: test
+    runs-on: windows-runner-vc2019
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install PSScriptAnalyzer module
+        run: |
+          choco install conan
