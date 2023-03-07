@@ -48,6 +48,8 @@ doLedgerEntry(Context const& context)
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     ripple::uint256 key;
+    // the expected type of the entry object
+    auto expectedType = ripple::ltANY;
 
     // Note: according to docs, only 1 of the below should be specified at any
     // time. see https://xrpl.org/ledger_entry.html#ledger_entry
@@ -67,6 +69,7 @@ doLedgerEntry(Context const& context)
 
         auto const account = ripple::parseBase58<ripple::AccountID>(
             request.at(JS(account_root)).as_string().c_str());
+        expectedType = ripple::ltACCOUNT_ROOT;
         if (!account || account->isZero())
             return Status{ClioError::rpcMALFORMED_ADDRESS};
         else
@@ -77,6 +80,7 @@ doLedgerEntry(Context const& context)
         if (!request.at(JS(check)).is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "checkNotString"};
 
+        expectedType = ripple::ltCHECK;
         if (!key.parseHex(request.at(JS(check)).as_string().c_str()))
         {
             return Status{RippledError::rpcINVALID_PARAMS, "checkMalformed"};
@@ -84,6 +88,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(deposit_preauth)))
     {
+        expectedType = ripple::ltDEPOSIT_PREAUTH;
         if (!request.at(JS(deposit_preauth)).is_object())
         {
             if (!request.at(JS(deposit_preauth)).is_string() ||
@@ -139,6 +144,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(directory)))
     {
+        expectedType = ripple::ltDIR_NODE;
         if (!request.at(JS(directory)).is_object())
         {
             if (!request.at(JS(directory)).is_string())
@@ -212,6 +218,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(escrow)))
     {
+        expectedType = ripple::ltESCROW;
         if (!request.at(JS(escrow)).is_object())
         {
             if (!key.parseHex(request.at(JS(escrow)).as_string().c_str()))
@@ -251,6 +258,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(offer)))
     {
+        expectedType = ripple::ltOFFER;
         if (!request.at(JS(offer)).is_object())
         {
             if (!key.parseHex(request.at(JS(offer)).as_string().c_str()))
@@ -287,6 +295,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(payment_channel)))
     {
+        expectedType = ripple::ltPAYCHAN;
         if (!request.at(JS(payment_channel)).is_string())
             return Status{
                 RippledError::rpcINVALID_PARAMS, "paymentChannelNotString"};
@@ -301,6 +310,7 @@ doLedgerEntry(Context const& context)
             return Status{
                 RippledError::rpcINVALID_PARAMS, "rippleStateNotObject"};
 
+        expectedType = ripple::ltRIPPLE_STATE;
         ripple::Currency currency;
         boost::json::object const& state =
             request.at(JS(ripple_state)).as_object();
@@ -340,6 +350,7 @@ doLedgerEntry(Context const& context)
     }
     else if (request.contains(JS(ticket)))
     {
+        expectedType = ripple::ltTICKET;
         // ticket object : account, ticket_seq
         if (!request.at(JS(ticket)).is_object())
         {
@@ -397,6 +408,12 @@ doLedgerEntry(Context const& context)
     if (!dbResponse or dbResponse->size() == 0)
         return Status{"entryNotFound"};
 
+    // check expected type matches actual type
+    ripple::STLedgerEntry sle{
+        ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
+    if (expectedType != ripple::ltANY && sle.getType() != expectedType)
+        return Status{"unexpectedLedgerType"};
+
     response[JS(index)] = ripple::strHex(key);
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
@@ -407,8 +424,6 @@ doLedgerEntry(Context const& context)
     }
     else
     {
-        ripple::STLedgerEntry sle{
-            ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key};
         response[JS(node)] = toJson(sle);
     }
 
