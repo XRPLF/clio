@@ -1,4 +1,4 @@
-# Clio 
+# Clio   
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
 historical ledger and transaction data are stored in a more space-efficient format,
 using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
