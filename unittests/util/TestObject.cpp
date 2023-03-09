@@ -101,7 +101,8 @@ CreateAccountRootObject(
     int balance,
     uint32_t ownerCount,
     std::string_view previousTxnID,
-    uint32_t previousTxnSeq)
+    uint32_t previousTxnSeq,
+    uint32_t transferRate)
 {
     ripple::STObject accountRoot(ripple::sfAccount);
     accountRoot.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
@@ -115,6 +116,7 @@ CreateAccountRootObject(
     accountRoot.setFieldH256(
         ripple::sfPreviousTxnID, ripple::uint256{previousTxnID});
     accountRoot.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
+    accountRoot.setFieldU32(ripple::sfTransferRate, transferRate);
     return accountRoot;
 }
 
@@ -303,11 +305,12 @@ CreateRippleStateLedgerObject(
     std::string_view highNodeAccountId,
     int highLimit,
     std::string_view previousTxnId,
-    uint32_t previousTxnSeq)
+    uint32_t previousTxnSeq,
+    uint32_t flag)
 {
     auto line = ripple::STObject(ripple::sfLedgerEntry);
     line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldU32(ripple::sfFlags, 0);
+    line.setFieldU32(ripple::sfFlags, flag);
     line.setFieldAmount(
         ripple::sfBalance,
         ripple::STAmount(GetIssue(currency, issuerId), balance));
@@ -327,22 +330,27 @@ CreateOfferLedgerObject(
     std::string_view account,
     int takerGets,
     int takerPays,
-    std::string_view currency,
-    std::string_view issueId)
+    std::string_view getsCurrency,
+    std::string_view paysCurrency,
+    std::string_view getsIssueId,
+    std::string_view paysIssueId,
+    std::string_view dirId)
 {
     ripple::STObject offer(ripple::sfLedgerEntry);
     offer.setFieldU16(ripple::sfLedgerEntryType, ripple::ltOFFER);
     offer.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
     offer.setFieldU32(ripple::sfSequence, 0);
     offer.setFieldU32(ripple::sfFlags, 0);
-    ripple::Issue issue1 = GetIssue(currency, issueId);
+    ripple::Issue issue1 = GetIssue(getsCurrency, getsIssueId);
     offer.setFieldAmount(
         ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
+    ripple::Issue issue2 = GetIssue(paysCurrency, paysIssueId);
     offer.setFieldAmount(
-        ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+        ripple::sfTakerPays, ripple::STAmount(issue2, takerPays));
     offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{});
     offer.setFieldU64(ripple::sfBookNode, 0);
     offer.setFieldU64(ripple::sfOwnerNode, 0);
+    offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{dirId});
     offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
     offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
     return offer;

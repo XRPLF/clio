@@ -171,15 +171,15 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     // ACCOUNT can receive USD 10 from ACCOUNT2 and send USD 20 to ACCOUNT2, now
     // the balance is 100, ACCOUNT can only send USD to ACCOUNT2
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
+        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     // ACCOUNT2 can receive JPY 10 from ACCOUNT and send JPY 20 to ACCOUNT, now
     // the balance is 100, ACCOUNT2 can only send JPY to ACCOUNT
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "JPY", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123);
+        ACCOUNT, "JPY", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
     // ACCOUNT can receive EUR 10 from ACCOUNT and send EUR 20 to ACCOUNT2, now
     // the balance is 8, ACCOUNT can receive/send EUR to/from ACCOUNT2
     auto const line3 = CreateRippleStateLedgerObject(
-        ACCOUNT, "EUR", ISSUER, 8, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
+        ACCOUNT, "EUR", ISSUER, 8, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
@@ -226,7 +226,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
+        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -272,7 +272,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
+        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));

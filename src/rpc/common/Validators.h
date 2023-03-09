@@ -485,4 +485,10 @@ extern CustomValidator Uint256HexStringValidator;
  */
 extern CustomValidator CurrencyValidator;
 
+/**
+ * @brief Provide a common used validator for issuer type
+ * It must be a hex string or base58 string
+ */
+extern CustomValidator IssuerValidator;
+
 }  // namespace RPCng::validation
