@@ -68,7 +68,7 @@ struct ParameterTest : public RPCGatewayBalancesHandlerTest,
     };
 };
 
-TEST_P(ParameterTest, ParameterTestPattern)
+TEST_P(ParameterTest, CheckError)
 {
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
@@ -331,7 +331,7 @@ struct NormalPathTest : public RPCGatewayBalancesHandlerTest,
     };
 };
 
-TEST_P(NormalPathTest, NormalPathTestPattern)
+TEST_P(NormalPathTest, CheckOutput)
 {
     auto const& bundle = GetParam();
     auto const seq = 300;
@@ -414,7 +414,7 @@ generateNormalPathTestBundles()
                                               ACCOUNT,
                                               "USD",
                                               ISSUER,
-                                              10,
+                                              -10,
                                               ACCOUNT,
                                               100,
                                               ACCOUNT2,
@@ -426,7 +426,7 @@ generateNormalPathTestBundles()
                                               ACCOUNT,
                                               "CNY",
                                               ISSUER,
-                                              20,
+                                              -20,
                                               ACCOUNT,
                                               100,
                                               ACCOUNT2,
@@ -481,11 +481,11 @@ generateNormalPathTestBundles()
                         "{}":[
                             {{
                                 "currency":"USD",
-                                "value":"-10"
+                                "value":"10"
                             }},
                             {{
                                 "currency":"CNY",
-                                "value":"-20"
+                                "value":"20"
                             }}
                         ]
                     }},
@@ -659,7 +659,7 @@ generateNormalPathTestBundles()
                     ACCOUNT,
                     "USD",
                     ISSUER,
-                    10,
+                    -10,
                     ACCOUNT,
                     100,
                     ACCOUNT2,
@@ -670,7 +670,7 @@ generateNormalPathTestBundles()
                     ACCOUNT,
                     "CNY",
                     ISSUER,
-                    20,
+                    -20,
                     ACCOUNT,
                     100,
                     ACCOUNT2,
@@ -681,7 +681,7 @@ generateNormalPathTestBundles()
                     ACCOUNT,
                     "EUR",
                     ISSUER,
-                    30,
+                    -30,
                     ACCOUNT,
                     100,
                     ACCOUNT3,
@@ -696,17 +696,17 @@ generateNormalPathTestBundles()
                         "{}":[
                             {{
                                 "currency":"EUR",
-                                "value":"-30"
+                                "value":"30"
                             }}
                         ],
                         "{}":[
                             {{
                                 "currency":"USD",
-                                "value":"-10"
+                                "value":"10"
                             }},
                             {{
                                 "currency":"CNY",
-                                "value":"-20"
+                                "value":"20"
                             }}
                         ]
                     }},

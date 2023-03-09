@@ -53,12 +53,11 @@ GatewayBalancesHandler::process(
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
-
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
             auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
             auto const lowID = lowLimit.getIssuer();
             auto const highID = highLimit.getIssuer();
-            bool const viewLowest = (lowLimit.getIssuer() == accountID);
+            auto const viewLowest = (lowLimit.getIssuer() == accountID);
             auto const flags = sle.getFieldU32(ripple::sfFlags);
             auto const freeze = flags &
                 (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
@@ -150,12 +149,12 @@ tag_invoke(
     boost::json::object obj;
     if (!output.sums.empty())
     {
-        boost::json::object obligation;
+        boost::json::object obligations;
         for (auto const& [k, v] : output.sums)
         {
-            obligation[ripple::to_string(k)] = v.getText();
+            obligations[ripple::to_string(k)] = v.getText();
         }
-        obj["obligations"] = std::move(obligation);
+        obj["obligations"] = std::move(obligations);
     }
 
     auto const toJson =
