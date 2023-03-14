@@ -112,9 +112,9 @@ generateParameterTestBundles()
             "LedgerIndexInvalid",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "ledger_index": "meh"
-            }})",
+                    "account": "{}",
+                    "ledger_index": "meh"
+                }})",
                 ACCOUNT),
             "invalidParams",
             "ledgerIndexMalformed"},
@@ -122,9 +122,9 @@ generateParameterTestBundles()
             "LedgerHashInvalid",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "ledger_hash": "meh"
-            }})",
+                    "account": "{}",
+                    "ledger_hash": "meh"
+                }})",
                 ACCOUNT),
             "invalidParams",
             "ledgerHashMalformed"},
@@ -132,9 +132,9 @@ generateParameterTestBundles()
             "LedgerHashNotString",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "ledger_hash": 12
-            }})",
+                    "account": "{}",
+                    "ledger_hash": 12
+                }})",
                 ACCOUNT),
             "invalidParams",
             "ledgerHashNotString"},
@@ -142,9 +142,9 @@ generateParameterTestBundles()
             "WalletsNotStringOrArray",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "hotwallet": 12
-            }})",
+                    "account": "{}",
+                    "hotwallet": 12
+                }})",
                 ACCOUNT),
             "invalidParams",
             "hotwalletNotStringOrArray"},
@@ -152,9 +152,9 @@ generateParameterTestBundles()
             "WalletsNotStringAccount",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "hotwallet": [12]
-            }})",
+                    "account": "{}",
+                    "hotwallet": [12]
+                }})",
                 ACCOUNT),
             "invalidParams",
             "hotwalletMalformed"},
@@ -162,9 +162,9 @@ generateParameterTestBundles()
             "WalletsInvalidAccount",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "hotwallet": ["12"]
-            }})",
+                    "account": "{}",
+                    "hotwallet": ["12"]
+                }})",
                 ACCOUNT),
             "invalidParams",
             "hotwalletMalformed"},
@@ -172,9 +172,9 @@ generateParameterTestBundles()
             "WalletInvalidAccount",
             fmt::format(
                 R"({{
-                "account": "{}",
-                "hotwallet": "12"
-            }})",
+                    "account": "{}",
+                    "hotwallet": "12"
+                }})",
                 ACCOUNT),
             "invalidParams",
             "hotwalletMalformed"},
@@ -203,9 +203,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFound)
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
-                "account": "{}",
-                "ledger_index": "{}"
-            }})",
+                    "account": "{}",
+                    "ledger_index": "{}"
+                }})",
                 ACCOUNT,
                 seq)),
             yield);
@@ -241,7 +241,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
-                "account": "{}"
+                    "account": "{}"
                 }})",
                 ACCOUNT)),
             yield);
@@ -293,8 +293,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
-                "account": "{}",
-                "hotwallet": "{}"
+                    "account": "{}",
+                    "hotwallet": "{}"
                 }})",
                 ACCOUNT,
                 ACCOUNT2)),
@@ -373,8 +373,8 @@ TEST_P(NormalPathTest, CheckOutput)
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
-                "account": "{}",
-                {}
+                    "account": "{}",
+                    {}
                 }})",
                 ACCOUNT,
                 bundle.hotwallet)),
@@ -409,67 +409,67 @@ generateNormalPathTestBundles()
                  ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2}},
                 INDEX1),
-            std::vector<ripple::STObject>{// hotwallet
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "USD",
-                                              ISSUER,
-                                              -10,
-                                              ACCOUNT,
-                                              100,
-                                              ACCOUNT2,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          // hotwallet
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "CNY",
-                                              ISSUER,
-                                              -20,
-                                              ACCOUNT,
-                                              100,
-                                              ACCOUNT2,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          // positive balance -> asset
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "EUR",
-                                              ISSUER,
-                                              30,
-                                              ACCOUNT,
-                                              100,
-                                              ACCOUNT3,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          // positive balance -> asset
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "JPY",
-                                              ISSUER,
-                                              40,
-                                              ACCOUNT,
-                                              100,
-                                              ACCOUNT3,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          // obligation
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "JPY",
-                                              ISSUER,
-                                              -50,
-                                              ACCOUNT,
-                                              10,
-                                              ACCOUNT3,
-                                              20,
-                                              TXNID,
-                                              123),
-                                          frozenState
+            std::vector{// hotwallet
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "USD",
+                            ISSUER,
+                            -10,
+                            ACCOUNT,
+                            100,
+                            ACCOUNT2,
+                            200,
+                            TXNID,
+                            123),
+                        // hotwallet
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "CNY",
+                            ISSUER,
+                            -20,
+                            ACCOUNT,
+                            100,
+                            ACCOUNT2,
+                            200,
+                            TXNID,
+                            123),
+                        // positive balance -> asset
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "EUR",
+                            ISSUER,
+                            30,
+                            ACCOUNT,
+                            100,
+                            ACCOUNT3,
+                            200,
+                            TXNID,
+                            123),
+                        // positive balance -> asset
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "JPY",
+                            ISSUER,
+                            40,
+                            ACCOUNT,
+                            100,
+                            ACCOUNT3,
+                            200,
+                            TXNID,
+                            123),
+                        // obligation
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "JPY",
+                            ISSUER,
+                            -50,
+                            ACCOUNT,
+                            10,
+                            ACCOUNT3,
+                            20,
+                            TXNID,
+                            123),
+                        frozenState
 
             },
             fmt::format(
@@ -568,52 +568,52 @@ generateNormalPathTestBundles()
                  ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2}},
                 INDEX1),
-            std::vector<ripple::STObject>{// hotwallet
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "USD",
-                                              ISSUER,
-                                              10,
-                                              ACCOUNT2,
-                                              100,
-                                              ACCOUNT,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          // hotwallet
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "CNY",
-                                              ISSUER,
-                                              20,
-                                              ACCOUNT2,
-                                              100,
-                                              ACCOUNT,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "EUR",
-                                              ISSUER,
-                                              30,
-                                              ACCOUNT3,
-                                              100,
-                                              ACCOUNT,
-                                              200,
-                                              TXNID,
-                                              123),
-                                          CreateRippleStateLedgerObject(
-                                              ACCOUNT,
-                                              "JPY",
-                                              ISSUER,
-                                              -50,
-                                              ACCOUNT3,
-                                              10,
-                                              ACCOUNT,
-                                              20,
-                                              TXNID,
-                                              123)},
+            std::vector{// hotwallet
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "USD",
+                            ISSUER,
+                            10,
+                            ACCOUNT2,
+                            100,
+                            ACCOUNT,
+                            200,
+                            TXNID,
+                            123),
+                        // hotwallet
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "CNY",
+                            ISSUER,
+                            20,
+                            ACCOUNT2,
+                            100,
+                            ACCOUNT,
+                            200,
+                            TXNID,
+                            123),
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "EUR",
+                            ISSUER,
+                            30,
+                            ACCOUNT3,
+                            100,
+                            ACCOUNT,
+                            200,
+                            TXNID,
+                            123),
+                        CreateRippleStateLedgerObject(
+                            ACCOUNT,
+                            "JPY",
+                            ISSUER,
+                            -50,
+                            ACCOUNT3,
+                            10,
+                            ACCOUNT,
+                            20,
+                            TXNID,
+                            123)},
             fmt::format(
                 R"({{
                     "obligations":{{
@@ -654,7 +654,7 @@ generateNormalPathTestBundles()
                  ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2}},
                 INDEX1),
-            std::vector<ripple::STObject>{
+            std::vector{
                 CreateRippleStateLedgerObject(
                     ACCOUNT,
                     "USD",
