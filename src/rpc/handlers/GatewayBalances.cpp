@@ -151,7 +151,17 @@ doGatewayBalances(Context const& context)
                     bal = -balance;
                 }
                 else
-                    bal -= balance;
+                {  // when overflow happens, insert a flag to indicate
+                   // https://github.com/XRPLF/rippled/pull/4355
+                    try
+                    {
+                        bal -= balance;
+                    }
+                    catch (std::runtime_error& e)
+                    {
+                        response["overflow"] = true;
+                    }
+                }
             }
         }
         return true;

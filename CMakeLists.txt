@@ -60,6 +60,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/AccountChannels.cpp
   src/rpc/ngHandlers/AccountCurrencies.cpp
   src/rpc/ngHandlers/Tx.cpp
+  src/rpc/ngHandlers/GatewayBalances.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -122,7 +123,8 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp
-    unittests/rpc/handlers/TxTest.cpp)
+    unittests/rpc/handlers/TxTest.cpp
+    unittests/rpc/handlers/GatewayBalancesTest.cpp)
   include(CMake/deps/gtest.cmake)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
