@@ -55,6 +55,7 @@ public:
         ripple::LedgerEntryType expectedType = ripple::ltANY;
         // account id to address account root object
         std::optional<std::string> accountRoot;
+        // TODO: extract into custom objects, remove json from Input
         std::optional<boost::json::object> directory;
         std::optional<boost::json::object> offer;
         std::optional<boost::json::object> rippleStateAccount;

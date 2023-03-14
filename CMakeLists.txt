@@ -60,11 +60,8 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/AccountChannels.cpp
   src/rpc/ngHandlers/AccountCurrencies.cpp
   src/rpc/ngHandlers/Tx.cpp
-<<<<<<< HEAD
   src/rpc/ngHandlers/GatewayBalances.cpp
-=======
   src/rpc/ngHandlers/LedgerEntry.cpp
->>>>>>> 1fab5ce (Init)
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp

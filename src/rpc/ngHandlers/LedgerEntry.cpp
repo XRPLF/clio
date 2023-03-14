@@ -120,7 +120,7 @@ LedgerEntryHandler::process(
     if (!ledgerObject || ledgerObject->size() == 0)
         return Error{RPC::Status{"entryNotFound"}};
 
-    const ripple::STLedgerEntry sle{
+    ripple::STLedgerEntry const sle{
         ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
     if (input.expectedType != ripple::ltANY &&
         sle.getType() != input.expectedType)
@@ -245,41 +245,34 @@ tag_invoke(
     {
         input.index = jv.at(indexFieldType->first).as_string().c_str();
         input.expectedType = indexFieldType->second;
-        return input;
     }
     // check if request for account root
-    if (jsonObject.contains("account_root"))
+    else if (jsonObject.contains("account_root"))
     {
         input.accountRoot = jv.at("account_root").as_string().c_str();
-        return input;
     }
     // no need to check if_object again, validator only allows string or object
-    if (jsonObject.contains("directory"))
+    else if (jsonObject.contains("directory"))
     {
         input.directory = jv.at("directory").as_object();
-        return input;
     }
-    if (jsonObject.contains("offer"))
+    else if (jsonObject.contains("offer"))
     {
         input.offer = jv.at("offer").as_object();
-        return input;
     }
-    if (jsonObject.contains("ripple_state"))
+    else if (jsonObject.contains("ripple_state"))
     {
         input.rippleStateAccount = jv.at("ripple_state").as_object();
-        return input;
     }
-    if (jsonObject.contains("escrow"))
+    else if (jsonObject.contains("escrow"))
     {
         input.escrow = jv.at("escrow").as_object();
-        return input;
     }
-    if (jsonObject.contains("deposit_preauth"))
+    else if (jsonObject.contains("deposit_preauth"))
     {
         input.depositPreauth = jv.at("deposit_preauth").as_object();
-        return input;
     }
-    if (jsonObject.contains("ticket"))
+    else if (jsonObject.contains("ticket"))
     {
         input.ticket = jv.at("ticket").as_object();
     }
