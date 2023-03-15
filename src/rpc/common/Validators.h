@@ -392,8 +392,8 @@ public:
      * @brief Constructs a validator that calls the given validator "req" and
      * return customized error "err"
      */
-    WithCustomError(Requirement const& req, RPC::Status const& err)
-        : requirement{req}, error{err}
+    WithCustomError(Requirement req, RPC::Status err)
+        : requirement{std::move(req)}, error{err}
     {
     }
 
