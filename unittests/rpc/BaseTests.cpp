@@ -230,7 +230,7 @@ TEST_F(RPCBaseTest, IfTypeValidator)
                         Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
                         Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
                         },
-                IfType<std::string>{LedgerHashValidator,}
+                IfType<std::string>{Uint256HexStringValidator,}
         }};
     // clang-format on
     // if json object pass
@@ -279,24 +279,6 @@ TEST_F(RPCBaseTest, CustomValidator)
 
     auto failingInput = json::parse(R"({ "taker": "wrongformat" })");
     ASSERT_FALSE(spec.validate(failingInput));
-}
-
-TEST_F(RPCBaseTest, LedgerHashValidator)
-{
-    auto spec = RpcSpec{
-        {"ledgerHash", LedgerHashValidator},
-    };
-    auto passingInput = json::parse(
-        R"({ "ledgerHash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC" })");
-    ASSERT_TRUE(spec.validate(passingInput));
-
-    auto failingInput = json::parse(R"({ "ledgerHash": "wrongformat" })");
-    ASSERT_FALSE(spec.validate(failingInput));
-
-    failingInput = json::parse(R"({ "ledgerHash": 256 })");
-    auto err = spec.validate(failingInput);
-    ASSERT_FALSE(err);
-    ASSERT_EQ(err.error().message, "ledgerHashNotString");
 }
 
 TEST_F(RPCBaseTest, LedgerIndexValidator)
@@ -362,9 +344,9 @@ TEST_F(RPCBaseTest, MarkerValidator)
     ASSERT_TRUE(spec.validate(passingInput));
 }
 
-TEST_F(RPCBaseTest, TxHashValidator)
+TEST_F(RPCBaseTest, Uint256HexStringValidator)
 {
-    auto const spec = RpcSpec{{"transaction", TxHashValidator}};
+    auto const spec = RpcSpec{{"transaction", Uint256HexStringValidator}};
     auto const passingInput = json::parse(
         R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})");
     ASSERT_TRUE(spec.validate(passingInput));
@@ -378,5 +360,26 @@ TEST_F(RPCBaseTest, TxHashValidator)
         R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC"})");
     err = spec.validate(failingInput);
     ASSERT_FALSE(err);
-    ASSERT_EQ(err.error().message, "malformedTransaction");
+    ASSERT_EQ(err.error().message, "transactionMalformed");
+}
+
+TEST_F(RPCBaseTest, CurrencyValidator)
+{
+    auto const spec = RpcSpec{{"currency", CurrencyValidator}};
+    auto passingInput = json::parse(R"({ "currency": "GBP"})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    passingInput = json::parse(
+        R"({ "currency": "0158415500000000C1F76FF6ECB0BAC600000000"})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "currency": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "currencyNotString");
+
+    failingInput = json::parse(R"({ "currency": "12314"})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "malformedCurrency");
 }

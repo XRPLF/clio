@@ -105,7 +105,7 @@ public:
 
         static const RpcSpec rpcSpec = {
             {"account", validation::Required{}, validation::AccountValidator},
-            {"ledger_hash", validation::LedgerHashValidator},
+            {"ledger_hash", validation::Uint256HexStringValidator},
             {"ledger_index", validation::LedgerIndexValidator},
             {"hotwallet", hotWalletValidator}};
         return rpcSpec;
