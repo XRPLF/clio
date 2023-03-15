@@ -88,7 +88,7 @@ public:
         static const RpcSpec rpcSpec = {
             {"account", validation::Required{}, validation::AccountValidator},
             {"destination_account", validation::Type<std::string>{},validation::AccountValidator},
-            {"ledger_hash", validation::LedgerHashValidator},
+            {"ledger_hash", validation::Uint256HexStringValidator},
             {"limit", validation::Type<uint32_t>{},validation::Between{10,400}},
             {"ledger_index", validation::LedgerIndexValidator},
             {"marker", validation::MarkerValidator}

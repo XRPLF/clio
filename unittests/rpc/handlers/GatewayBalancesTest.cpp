@@ -127,7 +127,7 @@ generateParameterTestBundles()
                 }})",
                 ACCOUNT),
             "invalidParams",
-            "ledgerHashMalformed"},
+            "ledger_hashMalformed"},
         ParameterTestBundle{
             "LedgerHashNotString",
             fmt::format(
@@ -137,7 +137,7 @@ generateParameterTestBundles()
                 }})",
                 ACCOUNT),
             "invalidParams",
-            "ledgerHashNotString"},
+            "ledger_hashNotString"},
         ParameterTestBundle{
             "WalletsNotStringOrArray",
             fmt::format(

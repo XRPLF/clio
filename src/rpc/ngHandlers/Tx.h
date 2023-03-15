@@ -65,7 +65,7 @@ public:
         static const RpcSpec rpcSpec = {
             {"transaction",
              validation::Required{},
-             validation::TxHashValidator},
+             validation::Uint256HexStringValidator},
             {"binary", validation::Type<bool>{}},
             {"min_ledger", validation::Type<uint32_t>{}},
             {"max_ledger", validation::Type<uint32_t>{}},
