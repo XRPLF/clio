@@ -378,6 +378,36 @@ private:
 };
 
 /**
+ * @brief A meta-validator that wrapp other validator to send the customized
+ * error
+ */
+template <typename Requirement>
+class WithCustomError final
+{
+    Requirement requirement;
+    RPC::Status error;
+
+public:
+    /**
+     * @brief Constructs a validator that calls the given validator "req" and
+     * return customized error "err"
+     */
+    WithCustomError(Requirement const& req, RPC::Status const& err)
+        : requirement{req}, error{err}
+    {
+    }
+
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        if (auto const res = requirement.verify(value, key); not res)
+            return Error{error};
+
+        return {};
+    }
+};
+
+/**
  * @brief A meta-validator that allows to specify a custom validation function
  */
 class CustomValidator final
