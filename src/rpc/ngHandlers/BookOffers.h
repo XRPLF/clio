@@ -72,16 +72,26 @@ public:
              validation::Section{
                  {"currency",
                   validation::Required{},
-                  validation::CurrencyValidator},
-                 {"issuer", validation::IssuerValidator}}},
+                  validation::WithCustomError{
+                      validation::CurrencyValidator,
+                      RPC::Status(RPC::RippledError::rpcDST_AMT_MALFORMED)}},
+                 {"issuer",
+                  validation::WithCustomError{
+                      validation::IssuerValidator,
+                      RPC::Status(RPC::RippledError::rpcDST_ISR_MALFORMED)}}}},
             {"taker_pays",
              validation::Required{},
              validation::Type<boost::json::object>{},
              validation::Section{
                  {"currency",
                   validation::Required{},
-                  validation::CurrencyValidator},
-                 {"issuer", validation::IssuerValidator}}},
+                  validation::WithCustomError{
+                      validation::CurrencyValidator,
+                      RPC::Status(RPC::RippledError::rpcSRC_CUR_MALFORMED)}},
+                 {"issuer",
+                  validation::WithCustomError{
+                      validation::IssuerValidator,
+                      RPC::Status(RPC::RippledError::rpcSRC_ISR_MALFORMED)}}}},
             {"taker", validation::AccountValidator},
             {"limit",
              validation::Type<uint32_t>{},

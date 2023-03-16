@@ -165,8 +165,8 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                     }
             })",
-            "malformedCurrency",
-            "malformedCurrency"},
+            "dstAmtMalformed",
+            "Destination amount/currency/issuer is malformed."},
         ParameterTestBundle{
             "TakerPaysWrongCurrency",
             R"({
@@ -178,8 +178,8 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                     }
             })",
-            "malformedCurrency",
-            "malformedCurrency"},
+            "srcCurMalformed",
+            "Source currency is malformed."},
         ParameterTestBundle{
             "TakerGetsCurrencyNotString",
             R"({
@@ -191,8 +191,8 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                     }
             })",
-            "invalidParams",
-            "currencyNotString"},
+            "dstAmtMalformed",
+            "Destination amount/currency/issuer is malformed."},
         ParameterTestBundle{
             "TakerPaysCurrencyNotString",
             R"({
@@ -204,8 +204,8 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                     }
             })",
-            "invalidParams",
-            "currencyNotString"},
+            "srcCurMalformed",
+            "Source currency is malformed."},
         ParameterTestBundle{
             "TakerGetsWrongIssuer",
             R"({
@@ -217,8 +217,8 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                     }
             })",
-            "invalidParams",
-            "Invalid field 'issuer', bad issuer."},
+            "dstIsrMalformed",
+            "Destination issuer is malformed."},
         ParameterTestBundle{
             "TakerPaysWrongIssuer",
             R"({
@@ -230,8 +230,8 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                     }
             })",
-            "invalidParams",
-            "Invalid field 'issuer', bad issuer."},
+            "srcIsrMalformed",
+            "Source issuer is malformed."},
         ParameterTestBundle{
             "InvalidTaker",
             R"({

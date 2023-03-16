@@ -27,7 +27,7 @@ BookOffersHandler::process(Input input, boost::asio::yield_context& yield) const
 {
     auto bookMaybe = RPC::parseBook(
         input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
-    if (auto status = std::get_if<RPC::Status>(&bookMaybe))
+    if (auto const status = std::get_if<RPC::Status>(&bookMaybe))
         return Error{*status};
 
     // check ledger
@@ -41,15 +41,16 @@ BookOffersHandler::process(Input input, boost::asio::yield_context& yield) const
 
     if (auto const status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
 
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const book = std::get<ripple::Book>(bookMaybe);
     auto const bookKey = getBookBase(book);
-    BookOffersHandler::Output output;
+
     // TODO: Add perfomance metrics if needed in future
     auto [offers, _] = sharedPtrBackend_->fetchBookOffers(
         bookKey, lgrInfo.seq, input.limit, yield);
 
+    BookOffersHandler::Output output;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
     output.offers = RPC::postProcessOrderBook(
