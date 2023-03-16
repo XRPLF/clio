@@ -258,6 +258,36 @@ TEST_F(RPCBaseTest, IfTypeValidator)
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
+TEST_F(RPCBaseTest, WithCustomError)
+{
+    auto const spec = RpcSpec{
+        {"transaction",
+         WithCustomError{
+             Uint256HexStringValidator,
+             RPC::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}}},
+        {"other",
+         WithCustomError{
+             Type<std::string>{},
+             RPC::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}};
+
+    auto const passingInput = json::parse(
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B"})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "MyCustomError");
+    ASSERT_EQ(err.error(), ripple::rpcBAD_FEATURE);
+
+    failingInput = json::parse(R"({ "other": 1})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "MyCustomError2");
+    ASSERT_EQ(err.error(), ripple::rpcALREADY_MULTISIG);
+}
+
 TEST_F(RPCBaseTest, CustomValidator)
 {
     // clang-format off
