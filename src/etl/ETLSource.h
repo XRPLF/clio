@@ -34,6 +34,7 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#include <fmt/core.h>
 
 class ETLLoadBalancer;
 class ETLSource;
@@ -143,8 +144,17 @@ public:
         std::string const& clientIp,
         boost::asio::yield_context& yield) const = 0;
 
+    virtual std::string
+    token() const = 0;
+
     virtual ~ETLSource()
     {
+    }
+
+    bool
+    operator==(ETLSource const& other) const
+    {
+        return token() == other.token();
     }
 
 protected:
@@ -225,6 +235,8 @@ protected:
 
     std::string ip_;
 
+    std::string tokenStr_;
+
     size_t numFailures_ = 0;
 
     boost::asio::io_context& ioc_;
@@ -261,6 +273,12 @@ public:
     isConnected() const override
     {
         return connected_;
+    }
+
+    std::string
+    token() const override
+    {
+        return tokenStr_;
     }
 
     std::chrono::system_clock::time_point
@@ -323,6 +341,7 @@ public:
                              << " . Remote = " << toString();
             }
         }
+        tokenStr_ = fmt::format("{}:{}:{}", ip_, wsPort_, grpcPort_);
     }
 
     /// @param sequence ledger sequence to check for
@@ -676,10 +695,7 @@ public:
             // We pick the first ETLSource encountered that is connected
             if (src->isConnected())
             {
-                if (src.get() == in)
-                    return true;
-                else
-                    return false;
+                return *src == *in;
             }
         }
 

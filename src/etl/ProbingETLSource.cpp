@@ -112,6 +112,14 @@ ProbingETLSource::toString() const
     return currentSrc_->toString();
 }
 
+std::string
+ProbingETLSource::token() const
+{
+    if (!currentSrc_)
+        return "";
+    return currentSrc_->token();
+}
+
 bool
 ProbingETLSource::loadInitialLedger(
     std::uint32_t ledgerSequence,
