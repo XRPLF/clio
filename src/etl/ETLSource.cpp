@@ -27,6 +27,7 @@
 
 #include <backend/DBHelpers.h>
 #include <etl/ETLSource.h>
+#include <etl/NFTHelpers.h>
 #include <etl/ProbingETLSource.h>
 #include <etl/ReportingETL.h>
 #include <log/Logger.h>
@@ -680,6 +681,8 @@ public:
                         request_.ledger().sequence(),
                         std::string{obj.key()});
                 lastKey_ = obj.key();
+                backend.writeNFTs(getNFTDataFromObj(
+                    request_.ledger().sequence(), obj.key(), obj.data()));
                 backend.writeLedgerObject(
                     std::move(*obj.mutable_key()),
                     request_.ledger().sequence(),
