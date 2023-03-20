@@ -97,20 +97,22 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "MissingTakerGets",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "USD",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    }
+                }
             })",
             "invalidParams",
             "Required field 'taker_gets' missing"},
         ParameterTestBundle{
             "MissingTakerPays",
             R"({
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "USD",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    }
+                }
             })",
             "invalidParams",
             "Required field 'taker_pays' missing"},
@@ -118,9 +120,10 @@ generateParameterBookOffersTestBundles()
             "WrongTypeTakerPays",
             R"({
                 "taker_pays" : "wrong",
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "invalidParams",
             "Invalid parameters."},
@@ -128,9 +131,10 @@ generateParameterBookOffersTestBundles()
             "WrongTypeTakerGets",
             R"({
                 "taker_gets" : "wrong",
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "invalidParams",
             "Invalid parameters."},
@@ -138,9 +142,10 @@ generateParameterBookOffersTestBundles()
             "TakerPaysMissingCurrency",
             R"({
                 "taker_pays" : {},
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "invalidParams",
             "Required field 'currency' missing"},
@@ -148,100 +153,115 @@ generateParameterBookOffersTestBundles()
             "TakerGetsMissingCurrency",
             R"({
                 "taker_gets" : {},
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "invalidParams",
             "Required field 'currency' missing"},
         ParameterTestBundle{
             "TakerGetsWrongCurrency",
             R"({
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "CNYY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "dstAmtMalformed",
             "Destination amount/currency/issuer is malformed."},
         ParameterTestBundle{
             "TakerPaysWrongCurrency",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNYY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "srcCurMalformed",
             "Source currency is malformed."},
         ParameterTestBundle{
             "TakerGetsCurrencyNotString",
             R"({
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : 123,
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "dstAmtMalformed",
             "Destination amount/currency/issuer is malformed."},
         ParameterTestBundle{
             "TakerPaysCurrencyNotString",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : 123,
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "srcCurMalformed",
             "Source currency is malformed."},
         ParameterTestBundle{
             "TakerGetsWrongIssuer",
             R"({
-                "taker_gets" : {
+                "taker_gets" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
-                    },
-                "taker_pays" : {
+                },
+                "taker_pays" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "dstIsrMalformed",
             "Destination issuer is malformed."},
         ParameterTestBundle{
             "TakerPaysWrongIssuer",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    }
+                }
             })",
             "srcIsrMalformed",
             "Source issuer is malformed."},
         ParameterTestBundle{
             "InvalidTaker",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "taker": "123"
             })",
             "invalidParams",
@@ -249,13 +269,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "TakerNotString",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "taker": 123
             })",
             "invalidParams",
@@ -263,13 +285,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "LimitNotInt",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "limit": "123"
             })",
             "invalidParams",
@@ -277,13 +301,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "LimitLargerThanMax",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "limit": 101
             })",
             "invalidParams",
@@ -291,13 +317,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "LimitSmallerThanMin",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "limit": 0
             })",
             "invalidParams",
@@ -305,13 +333,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "LedgerIndexInvalid",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "ledger_index": "xxx"
             })",
             "invalidParams",
@@ -319,13 +349,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "LedgerHashInvalid",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "ledger_hash": "xxx"
             })",
             "invalidParams",
@@ -333,13 +365,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "LedgerHashNotString",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP"
-                    },
+                },
                 "ledger_hash": 123
             })",
             "invalidParams",
@@ -347,14 +381,16 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "GetsPaysXRPWithIssuer",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "XRP",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
-                    }
+                }
             })",
             "srcIsrMalformed",
             "Unneeded field 'taker_pays.issuer' for XRP currency "
@@ -362,38 +398,45 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "PaysCurrencyWithXRPIssuer",
             R"({
-                "taker_pays" : {
-                    "currency" : "JPY"                    },
-                "taker_gets" : {
+                "taker_pays" : 
+                {
+                    "currency" : "JPY"                    
+                },
+                "taker_gets" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
-                    }
+                }
             })",
             "srcIsrMalformed",
             "Invalid field 'taker_pays.issuer', expected non-XRP issuer."},
         ParameterTestBundle{
             "GetsCurrencyWithXRPIssuer",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "XRP"                    
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "CNY"                    
-                    }            
+                }            
             })",
             "dstIsrMalformed",
             "Invalid field 'taker_gets.issuer', expected non-XRP issuer."},
         ParameterTestBundle{
             "GetsXRPWithIssuer",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"                    
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "XRP",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"                    
-                    }            
+                }            
             })",
             "dstIsrMalformed",
             "Unneeded field 'taker_gets.issuer' for XRP currency "
@@ -401,14 +444,16 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             "BadMarket",
             R"({
-                "taker_pays" : {
+                "taker_pays" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"                    
-                    },
-                "taker_gets" : {
+                },
+                "taker_gets" : 
+                {
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"                   
-                    }            
+                }            
             })",
             "badMarket",
             "badMarket"}};
@@ -560,10 +605,12 @@ generateNormalPathBookOffersTestBundles()
 
     auto const getsXRPPaysUSDInputJson = fmt::format(
         R"({{
-            "taker_gets": {{
+            "taker_gets": 
+            {{
                 "currency": "XRP"
             }},
-            "taker_pays": {{
+            "taker_pays": 
+            {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -572,10 +619,12 @@ generateNormalPathBookOffersTestBundles()
 
     auto const paysXRPGetsUSDInputJson = fmt::format(
         R"({{
-            "taker_pays": {{
+            "taker_pays": 
+            {{
                 "currency": "XRP"
             }},
-            "taker_gets": {{
+            "taker_gets": 
+            {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -708,7 +757,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
@@ -768,7 +818,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
@@ -835,7 +886,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"{}",
@@ -902,7 +954,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"{}",
@@ -975,7 +1028,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"{}",
@@ -1059,7 +1113,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"{}",
@@ -1120,7 +1175,8 @@ generateNormalPathBookOffersTestBundles()
                 R"({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
-                    "offers":[
+                    "offers":
+                    [
                         {{
                             "Account":"{}",
                             "BookDirectory":"{}",
@@ -1177,10 +1233,12 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     auto const static input = boost::json::parse(fmt::format(
         R"({{
             "ledger_index": 30,
-            "taker_gets": {{
+            "taker_gets": 
+            {{
                 "currency": "XRP"
             }},
-            "taker_pays": {{
+            "taker_pays": 
+            {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -1209,10 +1267,12 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     auto const static input = boost::json::parse(fmt::format(
         R"({{
             "ledger_hash": "{}",
-            "taker_gets": {{
+            "taker_gets": 
+            {{
                 "currency": "XRP"
             }},
-            "taker_pays": {{
+            "taker_pays": 
+            {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -1305,10 +1365,12 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "taker_gets": {{
+            "taker_gets": 
+            {{
                 "currency": "XRP"
             }},
-            "taker_pays": {{
+            "taker_pays": 
+            {{
                 "currency": "USD",
                 "issuer": "{}"
             }},
