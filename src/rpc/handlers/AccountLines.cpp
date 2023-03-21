@@ -70,7 +70,6 @@ addLine(
         flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
     bool lineNoRipple =
         flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineDefaultRipple = flags & ripple::lsfDefaultRipple;
     bool lineNoRipplePeer = flags &
         (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
     bool lineFreeze =
@@ -94,14 +93,12 @@ addLine(
         jPeer[JS(authorized)] = true;
     if (lineAuthPeer)
         jPeer[JS(peer_authorized)] = true;
-    if (lineNoRipple || !lineDefaultRipple)
-        jPeer[JS(no_ripple)] = lineNoRipple;
-    if (lineNoRipple || !lineDefaultRipple)
-        jPeer[JS(no_ripple_peer)] = lineNoRipplePeer;
     if (lineFreeze)
         jPeer[JS(freeze)] = true;
     if (lineFreezePeer)
         jPeer[JS(freeze_peer)] = true;
+    jPeer[JS(no_ripple)] = lineNoRipple;
+    jPeer[JS(no_ripple_peer)] = lineNoRipplePeer;
 
     jsonLines.push_back(jPeer);
 }
