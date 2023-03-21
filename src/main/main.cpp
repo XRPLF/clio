@@ -1,8 +1,8 @@
-#include <main/Build.h>
 #include <backend/BackendFactory.h>
 #include <backend/CassandraBackend.h>
 #include <config/Config.h>
 #include <etl/NFTHelpers.h>
+#include <main/Build.h>
 
 #include <boost/asio.hpp>
 #include <cassandra.h>
@@ -166,49 +166,47 @@ doMigration(
         throw std::runtime_error(ss.str());
     }
 
-    std::cout << "Completed migration from "
-        << ledgerRange->minSequence
-        << " to "
-        << ledgerRange->maxSequence
-        << std::endl;
+    std::cout << "Completed migration from " << ledgerRange->minSequence
+              << " to " << ledgerRange->maxSequence << std::endl;
 }
 
 int
 main(int argc, char* argv[])
 {
-  if (argc < 2)
-  {
-    std::cerr << "Didn't provide config path!" << std::endl;
-    return EXIT_FAILURE;
-  }
+    if (argc < 2)
+    {
+        std::cerr << "Didn't provide config path!" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  std::string const configPath = argv[1];
-  auto const config = clio::ConfigReader::open(configPath);
-  if (!config)
-  {
-    std::cerr << "Couldn't parse config '" << configPath << "'" << std::endl;
-    return EXIT_FAILURE;
-  }
+    std::string const configPath = argv[1];
+    auto const config = clio::ConfigReader::open(configPath);
+    if (!config)
+    {
+        std::cerr << "Couldn't parse config '" << configPath << "'"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  auto type = config.value<std::string>("database.type");
-  if (!boost::iequals(type, "cassandra"))
-  {
-      std::cerr << "Migration only for cassandra dbs" << std::endl;
-      return EXIT_FAILURE;
-  }
+    auto type = config.value<std::string>("database.type");
+    if (!boost::iequals(type, "cassandra"))
+    {
+        std::cerr << "Migration only for cassandra dbs" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  boost::asio::io_context ioc;
-  auto backend = Backend::make_Backend(ioc, config);
+    boost::asio::io_context ioc;
+    auto backend = Backend::make_Backend(ioc, config);
 
-  auto work = boost::asio::make_work_guard(ioc);
-  boost::asio::spawn(
-      ioc, [&backend, &work](boost::asio::yield_context yield) {
+    auto work = boost::asio::make_work_guard(ioc);
+    boost::asio::spawn(
+        ioc, [&backend, &work](boost::asio::yield_context yield) {
             doMigration(*backend, yield);
             backend->sync();
             work.reset();
         });
 
-  ioc.run();
-  std::cout << "Success!" << std::endl;
-  return EXIT_SUCCESS;
+    ioc.run();
+    std::cout << "Success!" << std::endl;
+    return EXIT_SUCCESS;
 }
