@@ -129,6 +129,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/TxTest.cpp
     unittests/rpc/handlers/GatewayBalancesTest.cpp
     unittests/rpc/handlers/LedgerEntryTest.cpp
+    unittests/rpc/handlers/LedgerRangeTest.cpp
     unittests/rpc/handlers/BookOffersTest.cpp)
   include(CMake/deps/gtest.cmake)
 

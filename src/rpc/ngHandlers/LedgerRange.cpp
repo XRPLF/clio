@@ -30,7 +30,7 @@ LedgerRangeHandler::process() const
     if (auto const maybeRange = sharedPtrBackend_->fetchLedgerRange();
         maybeRange)
     {
-        return *maybeRange;
+        return Output{*maybeRange};
     }
     else
     {
@@ -45,10 +45,10 @@ tag_invoke(
     boost::json::value& jv,
     LedgerRangeHandler::Output const& output)
 {
-    auto object = boost::json::object{};
-    object[JS(ledger_index_min)] = output.minSequence;
-    object[JS(ledger_index_max)] = output.maxSequence;
-    jv = std::move(object);
+    jv = boost::json::object{
+        {JS(ledger_index_min), output.range.minSequence},
+        {JS(ledger_index_max), output.range.maxSequence},
+    };
 }
 
 }  // namespace RPCng

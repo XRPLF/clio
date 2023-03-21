@@ -33,7 +33,11 @@ class LedgerRangeHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    using Output = Backend::LedgerRange;
+    struct Output
+    {
+        Backend::LedgerRange range;
+    };
+
     using Result = HandlerReturnType<Output>;
 
     LedgerRangeHandler(
