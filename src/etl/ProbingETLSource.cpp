@@ -112,10 +112,12 @@ ProbingETLSource::toString() const
     return currentSrc_->toString();
 }
 
-ETLSource const*
+boost::uuids::uuid
 ProbingETLSource::token() const
 {
-    return currentSrc_.get();
+    if (!currentSrc_)
+        return boost::uuids::nil_uuid();
+    return currentSrc_->token();
 }
 
 bool

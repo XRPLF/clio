@@ -34,6 +34,8 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <fmt/core.h>
 
 class ETLLoadBalancer;
@@ -144,7 +146,7 @@ public:
         std::string const& clientIp,
         boost::asio::yield_context& yield) const = 0;
 
-    virtual ETLSource const*
+    virtual boost::uuids::uuid
     token() const = 0;
 
     virtual ~ETLSource()
@@ -219,6 +221,7 @@ class ETLSourceImpl : public ETLSource
     ETLLoadBalancer& balancer_;
 
     ForwardCache forwardCache_;
+    boost::uuids::uuid uuid_;
 
     std::optional<boost::json::object>
     requestFromRippled(
@@ -234,8 +237,6 @@ protected:
     }
 
     std::string ip_;
-
-    std::string tokenStr_;
 
     size_t numFailures_ = 0;
 
@@ -275,10 +276,10 @@ public:
         return connected_;
     }
 
-    ETLSource const*
+    boost::uuids::uuid
     token() const override
     {
-        return this;
+        return uuid_;
     }
 
     std::chrono::system_clock::time_point
@@ -312,6 +313,7 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , forwardCache_(config, ioContext, *this)
+        , uuid_(boost::uuids::random_generator()())
         , ioc_(ioContext)
         , timer_(ioContext)
         , hooks_(hooks)
@@ -341,7 +343,6 @@ public:
                              << " . Remote = " << toString();
             }
         }
-        tokenStr_ = fmt::format("{}:{}:{}", ip_, wsPort_, grpcPort_);
     }
 
     /// @param sequence ledger sequence to check for
