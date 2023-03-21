@@ -1275,6 +1275,18 @@ public:
         cass_future_free(fut);
         return {res};
     }
+
+    CassSession*
+    cautionGetSession() const
+    {
+        return session_.get();
+    }
+
+    std::string
+    tablePrefix() const
+    {
+        return config_.valueOr<std::string>("table_prefix", "");
+    }
 };
 
 }  // namespace Backend

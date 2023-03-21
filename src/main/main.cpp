@@ -1,245 +1,214 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
-#include <grpc/impl/codegen/port_platform.h>
-#ifdef GRPC_TSAN_ENABLED
-#undef GRPC_TSAN_ENABLED
-#endif
-#ifdef GRPC_ASAN_ENABLED
-#undef GRPC_ASAN_ENABLED
-#endif
-
-#include <backend/BackendFactory.h>
-#include <config/Config.h>
-#include <etl/ReportingETL.h>
-#include <log/Logger.h>
-#include <webserver/Listener.h>
-
-#include <boost/asio/dispatch.hpp>
-#include <boost/asio/strand.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/json.hpp>
-#include <boost/program_options.hpp>
-
-#include <algorithm>
-#include <cstdlib>
-#include <fstream>
-#include <functional>
-#include <iostream>
 #include <main/Build.h>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <vector>
+#include <backend/BackendFactory.h>
+#include <backend/CassandraBackend.h>
+#include <config/Config.h>
+#include <etl/NFTHelpers.h>
 
-using namespace clio;
-namespace po = boost::program_options;
+#include <boost/asio.hpp>
+#include <cassandra.h>
 
-/**
- * @brief Parse command line and return path to configuration file
- *
- * @param argc
- * @param argv
- * @return std::string Path to configuration file
- */
-std::string
-parseCli(int argc, char* argv[])
-{
-    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
+#include <iostream>
 
-    // clang-format off
-    po::options_description description("Options");
-    description.add_options()
-        ("help,h", "print help message and exit")
-        ("version,v", "print version and exit")
-        ("conf,c", po::value<std::string>()->default_value(defaultConfigPath), "configuration file")
-    ;
-    // clang-format on
-    po::positional_options_description positional;
-    positional.add("conf", 1);
-
-    po::variables_map parsed;
-    po::store(
-        po::command_line_parser(argc, argv)
-            .options(description)
-            .positional(positional)
-            .run(),
-        parsed);
-    po::notify(parsed);
-
-    if (parsed.count("version"))
-    {
-        std::cout << Build::getClioFullVersionString() << '\n';
-        std::exit(EXIT_SUCCESS);
-    }
-
-    if (parsed.count("help"))
-    {
-        std::cout << "Clio server " << Build::getClioFullVersionString()
-                  << "\n\n"
-                  << description;
-        std::exit(EXIT_SUCCESS);
-    }
-
-    return parsed["conf"].as<std::string>();
-}
-
-/**
- * @brief Parse certificates from configuration file
- *
- * @param config The configuration
- * @return std::optional<ssl::context> SSL context if certificates were parsed
- */
-std::optional<ssl::context>
-parseCerts(Config const& config)
-{
-    if (!config.contains("ssl_cert_file") || !config.contains("ssl_key_file"))
-        return {};
-
-    auto certFilename = config.value<std::string>("ssl_cert_file");
-    auto keyFilename = config.value<std::string>("ssl_key_file");
-
-    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
-    if (!readCert)
-        return {};
-
-    std::stringstream contents;
-    contents << readCert.rdbuf();
-    std::string cert = contents.str();
-
-    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
-    if (!readKey)
-        return {};
-
-    contents.str("");
-    contents << readKey.rdbuf();
-    readKey.close();
-    std::string key = contents.str();
-
-    ssl::context ctx{ssl::context::tlsv12};
-
-    ctx.set_options(
-        boost::asio::ssl::context::default_workarounds |
-        boost::asio::ssl::context::no_sslv2);
-
-    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
-
-    ctx.use_private_key(
-        boost::asio::buffer(key.data(), key.size()),
-        boost::asio::ssl::context::file_format::pem);
-
-    return ctx;
-}
-
-/**
- * @brief Start context threads
- *
- * @param ioc Context
- * @param numThreads Number of worker threads to start
- */
 void
-start(boost::asio::io_context& ioc, std::uint32_t numThreads)
+doMigration(
+    Backend::CassandraBackend& backend,
+    boost::asio::yield_context yield)
 {
-    std::vector<std::thread> v;
-    v.reserve(numThreads - 1);
-    for (auto i = numThreads - 1; i > 0; --i)
-        v.emplace_back([&ioc] { ioc.run(); });
+    std::cout << "Beginning migration" << std::endl;
+    /*
+     * Step 0 - If we haven't downloaded the initial ledger yet, just short
+     * circuit.
+     */
+    auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
+    if (!ledgerRange)
+    {
+        std::cout << "There is no data to migrate" << std::endl;
+        return;
+    }
 
-    ioc.run();
+    /*
+     * Step 1 - Look at all NFT transactions, recording in
+     * `nf_token_transactions` and reload any NFTokenMint transactions. These
+     * will contain the URI of any tokens that were minted after our start
+     * sequence. We look at transactions for this step instead of directly at
+     * the tokens in `nf_tokens` because we also want to cover the extreme
+     * edge case of a token that is re-minted with a different URI.
+     */
+    std::stringstream query;
+    query << "SELECT hash FROM " << backend.tablePrefix()
+          << "nf_token_transactions";
+    CassStatement* nftTxQuery = cass_statement_new(query.str().c_str(), 0);
+    cass_statement_set_paging_size(nftTxQuery, 1000);
+    cass_bool_t morePages = cass_true;
+
+    // For all NFT txs, paginated in groups of 1000...
+    while (morePages)
+    {
+        std::vector<NFTsData> toWrite;
+        CassFuture* fut =
+            cass_session_execute(backend.cautionGetSession(), nftTxQuery);
+        CassResult const* result = cass_future_get_result(fut);
+        if (result == nullptr)
+        {
+            cass_future_free(fut);
+            cass_result_free(result);
+            cass_statement_free(nftTxQuery);
+            throw std::runtime_error(
+                "Unexpected empty result from nf_token_transactions");
+        }
+
+        // For each tx in page...
+        CassIterator* txPageIterator = cass_iterator_from_result(result);
+        while (cass_iterator_next(txPageIterator))
+        {
+            cass_byte_t const* buf;
+            std::size_t bufSize;
+
+            CassError rc = cass_value_get_bytes(
+                cass_row_get_column(cass_iterator_get_row(txPageIterator), 0),
+                &buf,
+                &bufSize);
+            if (rc != CASS_OK)
+            {
+                cass_future_free(fut);
+                cass_result_free(result);
+                cass_statement_free(nftTxQuery);
+                cass_iterator_free(txPageIterator);
+                throw std::runtime_error(
+                    "Could not retrieve hash from nf_token_transactions");
+            }
+
+            auto const txHash = ripple::uint256::fromVoid(buf);
+            auto const tx = backend.fetchTransaction(txHash, yield);
+            if (!tx)
+            {
+                cass_future_free(fut);
+                cass_result_free(result);
+                cass_statement_free(nftTxQuery);
+                cass_iterator_free(txPageIterator);
+                std::stringstream ss;
+                ss << "Could not fetch tx with hash "
+                   << ripple::to_string(txHash);
+                throw std::runtime_error(ss.str());
+            }
+            if (tx->ledgerSequence > ledgerRange->maxSequence)
+                continue;
+
+            ripple::STTx const sttx{ripple::SerialIter{
+                tx->transaction.data(), tx->transaction.size()}};
+            if (sttx.getTxnType() != ripple::TxType::ttNFTOKEN_MINT)
+                continue;
+
+            ripple::TxMeta const txMeta{
+                sttx.getTransactionID(), tx->ledgerSequence, tx->metadata};
+            toWrite.push_back(
+                std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
+        }
+
+        // write what we have
+        backend.writeNFTs(std::move(toWrite));
+
+        morePages = cass_result_has_more_pages(result);
+        if (morePages)
+            cass_statement_set_paging_state(nftTxQuery, result);
+        cass_future_free(fut);
+        cass_result_free(result);
+        cass_iterator_free(txPageIterator);
+    }
+
+    cass_statement_free(nftTxQuery);
+
+    /*
+     * Step 2 - Pull every object from our initial ledger and load all NFTs
+     * found in any NFTokenPage object. Prior to this migration, we were not
+     * pulling out NFTs from the initial ledger, so all these NFTs would be
+     * missed. This will also record the URI of any NFTs minted prior to the
+     * start sequence.
+     */
+    std::optional<ripple::uint256> cursor;
+
+    do
+    {
+        auto const page = backend.fetchLedgerPage(
+            cursor, ledgerRange->minSequence, 2000, false, yield);
+        for (auto const& object : page.objects)
+        {
+            std::string blobStr(object.blob.begin(), object.blob.end());
+            backend.writeNFTs(getNFTDataFromObj(
+                ledgerRange->minSequence,
+                ripple::to_string(object.key),
+                blobStr));
+        }
+        cursor = page.cursor;
+    } while (cursor.has_value());
+
+    /*
+     * Step 3 - Drop the old `issuer_nf_tokens` table, which is replaced by
+     * `issuer_nf_tokens_v2`. Normally, we should probably not drop old tables
+     * in migrations, but here it is safe since the old table wasn't yet being
+     * used to serve any data anyway.
+     */
+    query.str("");
+    query << "DROP TABLE " << backend.tablePrefix() << "issuer_nf_tokens";
+    CassStatement* issuerDropTableQuery =
+        cass_statement_new(query.str().c_str(), 0);
+    CassFuture* fut =
+        cass_session_execute(backend.cautionGetSession(), issuerDropTableQuery);
+    CassError rc = cass_future_error_code(fut);
+    cass_statement_free(issuerDropTableQuery);
+    cass_future_free(fut);
+    if (rc != CASS_OK)
+    {
+        std::stringstream ss;
+        ss << "Unable to drop old table issuer_nf_tokens. Check data for "
+              "consistency, drop issuer_nf_tokens yourself, and write the "
+              "migration receipt if necessary";
+        throw std::runtime_error(ss.str());
+    }
+
+    std::cout << "Completed migration from "
+        << ledgerRange->minSequence
+        << " to "
+        << ledgerRange->maxSequence
+        << std::endl;
 }
 
 int
 main(int argc, char* argv[])
-try
 {
-    auto const configPath = parseCli(argc, argv);
-    auto const config = ConfigReader::open(configPath);
-    if (!config)
-    {
-        std::cerr << "Couldnt parse config '" << configPath << "'."
-                  << std::endl;
-        return EXIT_FAILURE;
-    }
+  if (argc < 2)
+  {
+    std::cerr << "Didn't provide config path!" << std::endl;
+    return EXIT_FAILURE;
+  }
 
-    LogService::init(config);
-    LogService::info() << "Clio version: " << Build::getClioFullVersionString();
+  std::string const configPath = argv[1];
+  auto const config = clio::ConfigReader::open(configPath);
+  if (!config)
+  {
+    std::cerr << "Couldn't parse config '" << configPath << "'" << std::endl;
+    return EXIT_FAILURE;
+  }
 
-    auto ctx = parseCerts(config);
-    auto ctxRef = ctx
-        ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
-        : std::nullopt;
+  auto type = config.value<std::string>("database.type");
+  if (!boost::iequals(type, "cassandra"))
+  {
+      std::cerr << "Migration only for cassandra dbs" << std::endl;
+      return EXIT_FAILURE;
+  }
 
-    auto const threads = config.valueOr("io_threads", 2);
-    if (threads <= 0)
-    {
-        LogService::fatal() << "io_threads is less than 0";
-        return EXIT_FAILURE;
-    }
-    LogService::info() << "Number of io threads = " << threads;
+  boost::asio::io_context ioc;
+  auto backend = Backend::make_Backend(ioc, config);
 
-    // IO context to handle all incoming requests, as well as other things
-    // This is not the only io context in the application
-    boost::asio::io_context ioc{threads};
+  auto work = boost::asio::make_work_guard(ioc);
+  boost::asio::spawn(
+      ioc, [&backend, &work](boost::asio::yield_context yield) {
+            doMigration(*backend, yield);
+            backend->sync();
+            work.reset();
+        });
 
-    // Rate limiter, to prevent abuse
-    auto sweepHandler = IntervalSweepHandler{config, ioc};
-    auto dosGuard = DOSGuard{config, sweepHandler};
-
-    // Interface to the database
-    auto backend = Backend::make_Backend(ioc, config);
-
-    // Manages clients subscribed to streams
-    auto subscriptions =
-        SubscriptionManager::make_SubscriptionManager(config, backend);
-
-    // Tracks which ledgers have been validated by the
-    // network
-    auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
-
-    // Handles the connection to one or more rippled nodes.
-    // ETL uses the balancer to extract data.
-    // The server uses the balancer to forward RPCs to a rippled node.
-    // The balancer itself publishes to streams (transactions_proposed and
-    // accounts_proposed)
-    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        config, ioc, backend, subscriptions, ledgers);
-
-    // ETL is responsible for writing and publishing to streams. In read-only
-    // mode, ETL only publishes
-    auto etl = ReportingETL::make_ReportingETL(
-        config, ioc, backend, subscriptions, balancer, ledgers);
-
-    // The server handles incoming RPCs
-    auto httpServer = Server::make_HttpServer(
-        config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
-
-    // Blocks until stopped.
-    // When stopped, shared_ptrs fall out of scope
-    // Calls destructors on all resources, and destructs in order
-    start(ioc, threads);
-
-    return EXIT_SUCCESS;
-}
-catch (std::exception const& e)
-{
-    LogService::fatal() << "Exit on exception: " << e.what();
+  ioc.run();
+  std::cout << "Success!" << std::endl;
+  return EXIT_SUCCESS;
 }

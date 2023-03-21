@@ -27,7 +27,7 @@
 #include <boost/algorithm/string.hpp>
 
 namespace Backend {
-std::shared_ptr<BackendInterface>
+std::shared_ptr<CassandraBackend>
 make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
 {
     static clio::Logger log{"Backend"};
@@ -35,7 +35,7 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
 
     auto readOnly = config.valueOr("read_only", false);
     auto type = config.value<std::string>("database.type");
-    std::shared_ptr<BackendInterface> backend = nullptr;
+    std::shared_ptr<CassandraBackend> backend = nullptr;
 
     if (boost::iequals(type, "cassandra"))
     {
@@ -43,21 +43,16 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
         auto ttl = config.valueOr<uint32_t>("online_delete", 0) * 4;
         backend = std::make_shared<CassandraBackend>(ioc, cfg, ttl);
     }
-
-    if (!backend)
+    else
         throw std::runtime_error("Invalid database type");
 
     backend->open(readOnly);
-<<<<<<< HEAD
-    backend->checkFlagLedgers();
-=======
     auto rng = backend->hardFetchLedgerRangeNoThrow();
     if (rng)
     {
         backend->updateRange(rng->minSequence);
         backend->updateRange(rng->maxSequence);
     }
->>>>>>> c7e31af... Add state data cache and successor table. Remove keys table
 
     log.info() << "Constructed BackendInterface Successfully";
 
