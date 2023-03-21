@@ -263,8 +263,8 @@ validateAndGetBooks(
                                     auto book,
                                     boost::asio::yield_context& yield) {
                 auto bookBase = getBookBase(book);
-                auto [offers, retMarker] = backend->fetchBookOffers(
-                    bookBase, rng->maxSequence, 200, {}, yield);
+                auto [offers, _] = backend->fetchBookOffers(
+                    bookBase, rng->maxSequence, 200, yield);
 
                 auto orderBook = postProcessOrderBook(
                     offers, book, takerID, *backend, rng->maxSequence, yield);

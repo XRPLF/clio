@@ -22,6 +22,7 @@
 #include <rpc/common/Validators.h>
 
 #include <boost/json/value.hpp>
+#include <fmt/core.h>
 
 #include <charconv>
 #include <string_view>
@@ -197,6 +198,29 @@ CustomValidator CurrencyValidator = CustomValidator{
         if (!ripple::to_currency(currency, value.as_string().c_str()))
             return Error{RPC::Status{
                 RPC::ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
+        return MaybeError{};
+    }};
+
+CustomValidator IssuerValidator = CustomValidator{
+    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                std::string(key) + "NotString"}};
+        ripple::AccountID issuer;
+        if (!ripple::to_issuer(issuer, value.as_string().c_str()))
+            return Error{RPC::Status{
+                // TODO: need to align with the error
+                RPC::RippledError::rpcINVALID_PARAMS,
+                fmt::format("Invalid field '{}', bad issuer.", key)}};
+
+        if (issuer == ripple::noAccount())
+            return Error{RPC::Status{
+                RPC::RippledError::rpcINVALID_PARAMS,
+                fmt::format(
+                    "Invalid field '{}', bad issuer account "
+                    "one.",
+                    key)}};
         return MaybeError{};
     }};
 

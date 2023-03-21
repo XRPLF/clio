@@ -152,6 +152,21 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture
     {
     }
 
+    template <typename F>
+    void
+    runSpawn(F&& f)
+    {
+        auto called = false;
+        auto work = std::optional<boost::asio::io_context::work>{ctx};
+        boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+            f(yield);
+            called = true;
+            work.reset();
+        });
+        ctx.run();
+        ASSERT_TRUE(called);
+    }
+
 protected:
     boost::asio::io_context ctx;
 };

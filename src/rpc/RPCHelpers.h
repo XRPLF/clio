@@ -217,6 +217,13 @@ postProcessOrderBook(
     boost::asio::yield_context& yield);
 
 std::variant<Status, ripple::Book>
+parseBook(
+    ripple::Currency pays,
+    ripple::AccountID payIssuer,
+    ripple::Currency gets,
+    ripple::AccountID getIssuer);
+
+std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request);
 
 std::variant<Status, ripple::AccountID>
