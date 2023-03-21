@@ -746,7 +746,15 @@ generateTestValuesForNormalPathTest()
                 }})",
                 INDEX1),
             ripple::uint256{INDEX1},
-            CreateOfferLedgerObject(ACCOUNT, 100, 200, "USD", ACCOUNT2)},
+            CreateOfferLedgerObject(
+                ACCOUNT,
+                100,
+                200,
+                "USD",
+                "XRP",
+                ACCOUNT2,
+                ripple::toBase58(ripple::xrpAccount()),
+                INDEX1)},
         NormalPathTestBundle{
             "EscrowIndex",
             fmt::format(
@@ -879,7 +887,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT2,
                 20,
                 INDEX1,
-                123)},
+                123,
+                0)},
         NormalPathTestBundle{
             "Ticket",
             fmt::format(
@@ -905,7 +914,15 @@ generateTestValuesForNormalPathTest()
                 }})",
                 ACCOUNT),
             ripple::keylet::offer(account1, 2).key,
-            CreateOfferLedgerObject(ACCOUNT, 100, 200, "USD", ACCOUNT2)}};
+            CreateOfferLedgerObject(
+                ACCOUNT,
+                100,
+                200,
+                "USD",
+                "XRP",
+                ACCOUNT2,
+                ripple::toBase58(ripple::xrpAccount()),
+                INDEX1)}};
 }
 
 INSTANTIATE_TEST_CASE_P(

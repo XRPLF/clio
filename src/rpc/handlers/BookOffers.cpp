@@ -83,13 +83,9 @@ doBookOffers(Context const& context)
     if (auto const status = getTaker(request, takerID); status)
         return status;
 
-    ripple::uint256 marker = beast::zero;
-    if (auto const status = getHexMarker(request, marker); status)
-        return status;
-
     auto start = std::chrono::system_clock::now();
-    auto [offers, retMarker] = context.backend->fetchBookOffers(
-        bookBase, lgrInfo.seq, limit, marker, context.yield);
+    auto [offers, _] = context.backend->fetchBookOffers(
+        bookBase, lgrInfo.seq, limit, context.yield);
     auto end = std::chrono::system_clock::now();
 
     gLog.warn() << "Time loading books: "
@@ -111,10 +107,6 @@ doBookOffers(Context const& context)
                        end2 - end)
                        .count()
                 << " milliseconds - request = " << request;
-
-    if (retMarker)
-        response["marker"] = ripple::strHex(*retMarker);
-
     return response;
 }
 

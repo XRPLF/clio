@@ -479,7 +479,6 @@ public:
         ripple::uint256 const& book,
         std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
-        std::optional<ripple::uint256> const& cursor,
         boost::asio::yield_context& yield) const;
 
     /**

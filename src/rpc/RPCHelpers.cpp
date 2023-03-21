@@ -1269,7 +1269,7 @@ postProcessOrderBook(
 
     bool globalFreeze =
         isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
-        isGlobalFrozen(backend, ledgerSequence, book.out.account, yield);
+        isGlobalFrozen(backend, ledgerSequence, book.in.account, yield);
 
     auto rate = transferRate(backend, ledgerSequence, book.out.account, yield);
 
@@ -1312,14 +1312,13 @@ postProcessOrderBook(
                 }
                 else
                 {
-                    bool zeroIfFrozen = true;
                     saOwnerFunds = accountHolds(
                         backend,
                         ledgerSequence,
                         uOfferOwnerID,
                         book.out.currency,
                         book.out.account,
-                        zeroIfFrozen,
+                        true,
                         yield);
 
                     if (saOwnerFunds < beast::zero)
@@ -1386,6 +1385,43 @@ postProcessOrderBook(
         }
     }
     return jsonOffers;
+}
+
+// get book via currency type
+std::variant<Status, ripple::Book>
+parseBook(
+    ripple::Currency pays,
+    ripple::AccountID payIssuer,
+    ripple::Currency gets,
+    ripple::AccountID getIssuer)
+{
+    if (isXRP(pays) && !isXRP(payIssuer))
+        return Status{
+            RippledError::rpcSRC_ISR_MALFORMED,
+            "Unneeded field 'taker_pays.issuer' for XRP currency "
+            "specification."};
+
+    if (!isXRP(pays) && isXRP(payIssuer))
+        return Status{
+            RippledError::rpcSRC_ISR_MALFORMED,
+            "Invalid field 'taker_pays.issuer', expected non-XRP "
+            "issuer."};
+
+    if (ripple::isXRP(gets) && !ripple::isXRP(getIssuer))
+        return Status{
+            RippledError::rpcDST_ISR_MALFORMED,
+            "Unneeded field 'taker_gets.issuer' for XRP currency "
+            "specification."};
+
+    if (!ripple::isXRP(gets) && ripple::isXRP(getIssuer))
+        return Status{
+            RippledError::rpcDST_ISR_MALFORMED,
+            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+
+    if (pays == gets && payIssuer == getIssuer)
+        return Status{RippledError::rpcBAD_MARKET, "badMarket"};
+
+    return ripple::Book{{pays, payIssuer}, {gets, getIssuer}};
 }
 
 std::variant<Status, ripple::Book>

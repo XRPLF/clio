@@ -79,7 +79,8 @@ CreateAccountRootObject(
     int balance,
     uint32_t ownerCount,
     std::string_view previousTxnID,
-    uint32_t previousTxnSeq);
+    uint32_t previousTxnSeq,
+    uint32_t transferRate = 0);
 
 /*
  * Create a createoffer treansaction
@@ -168,15 +169,19 @@ CreateRippleStateLedgerObject(
     std::string_view highNodeAccountId,
     int highLimit,
     std::string_view previousTxnId,
-    uint32_t previousTxnSeq);
+    uint32_t previousTxnSeq,
+    uint32_t flag = 0);
 
 ripple::STObject
 CreateOfferLedgerObject(
     std::string_view account,
     int takerGets,
     int takerPays,
-    std::string_view currency,
-    std::string_view issueId);
+    std::string_view getsCurrency,
+    std::string_view payssCurrency,
+    std::string_view getsIssueId,
+    std::string_view paysIssueId,
+    std::string_view bookDirId);
 
 ripple::STObject
 CreateTicketLedgerObject(std::string_view rootIndex, uint32_t sequence);
