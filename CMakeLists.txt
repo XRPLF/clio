@@ -62,6 +62,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/Tx.cpp
   src/rpc/ngHandlers/GatewayBalances.cpp
   src/rpc/ngHandlers/LedgerEntry.cpp
+  src/rpc/ngHandlers/LedgerRange.cpp
   src/rpc/ngHandlers/BookOffers.cpp
   ## RPC Methods
   # Account
