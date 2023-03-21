@@ -144,7 +144,7 @@ public:
         std::string const& clientIp,
         boost::asio::yield_context& yield) const = 0;
 
-    virtual std::string
+    virtual ETLSource const*
     token() const = 0;
 
     virtual ~ETLSource()
@@ -275,10 +275,10 @@ public:
         return connected_;
     }
 
-    std::string
+    ETLSource const*
     token() const override
     {
-        return tokenStr_;
+        return this;
     }
 
     std::chrono::system_clock::time_point

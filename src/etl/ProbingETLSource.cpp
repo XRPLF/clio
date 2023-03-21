@@ -112,12 +112,10 @@ ProbingETLSource::toString() const
     return currentSrc_->toString();
 }
 
-std::string
+ETLSource const*
 ProbingETLSource::token() const
 {
-    if (!currentSrc_)
-        return "";
-    return currentSrc_->token();
+    return currentSrc_.get();
 }
 
 bool

@@ -97,7 +97,7 @@ public:
         std::string const& clientIp,
         boost::asio::yield_context& yield) const override;
 
-    std::string
+    ETLSource const*
     token() const override;
 
 private:
