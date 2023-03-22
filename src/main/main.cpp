@@ -20,6 +20,7 @@ maybeWaitAfterWrite(
     if (written > 10000)
     {
         BOOST_LOG_TRIVIAL(info) << "Waiting on throttling...";
+        timer.expires_after(std::chrono::seconds(60));
         timer.wait();
         BOOST_LOG_TRIVIAL(info) << "...done waiting";
         written = 0;
@@ -237,7 +238,7 @@ main(int argc, char* argv[])
     boost::asio::io_context ioc;
     auto backend = Backend::make_Backend(ioc, config);
 
-    boost::asio::steady_timer timer(ioc, boost::asio::chrono::minutes(1));
+    boost::asio::steady_timer timer(ioc);
 
     auto work = boost::asio::make_work_guard(ioc);
     boost::asio::spawn(
