@@ -5,7 +5,6 @@
 #include <main/Build.h>
 
 #include <boost/asio.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/log/trivial.hpp>
 #include <cassandra.h>
 
@@ -15,7 +14,7 @@ int
 maybeWaitAfterWrite(
     int justWrote,
     int written,
-    boost::asio::deadline_timer& timer)
+    boost::asio::steady_timer & timer)
 {
     written = written + justWrote;
     if (written > 10000)
@@ -32,7 +31,7 @@ void
 doMigration(
     Backend::CassandraBackend& backend,
     boost::asio::yield_context yield,
-    boost::asio::deadline_timer& timer)
+    boost::asio::steady_timer & timer)
 {
     BOOST_LOG_TRIVIAL(info) << "Beginning migration";
     /*
@@ -238,7 +237,7 @@ main(int argc, char* argv[])
     boost::asio::io_context ioc;
     auto backend = Backend::make_Backend(ioc, config);
 
-    boost::asio::deadline_timer timer(ioc, boost::posix_time::minutes(1));
+    boost::asio::steady_timer timer(ioc, boost::asio::chrono::minutes(1));
 
     auto work = boost::asio::make_work_guard(ioc);
     boost::asio::spawn(
