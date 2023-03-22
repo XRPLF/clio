@@ -106,7 +106,11 @@ doMigration(
         }
 
         // write what we have
-        backend.writeNFTs(std::move(toWrite));
+        if (toWrite.size() > 0)
+        {
+            backend.writeNFTs(std::move(toWrite));
+            backend.sync();
+        }
 
         morePages = cass_result_has_more_pages(result);
         if (morePages)
@@ -134,10 +138,15 @@ doMigration(
         for (auto const& object : page.objects)
         {
             std::string blobStr(object.blob.begin(), object.blob.end());
-            backend.writeNFTs(getNFTDataFromObj(
-                ledgerRange->minSequence,
-                ripple::to_string(object.key),
-                blobStr));
+            std::vector<NFTsData> toWrite = getNFTDataFromObj(
+                    ledgerRange->minSequence,
+                    ripple::to_string(object.key),
+                    blobStr);
+            if (toWrite.size() > 0)
+            {
+                backend.writeNFTs(std::move(toWrite));
+                backend.sync();
+            }
         }
         cursor = page.cursor;
     } while (cursor.has_value());
@@ -165,6 +174,8 @@ doMigration(
               "migration receipt if necessary";
         throw std::runtime_error(ss.str());
     }
+
+    backend.sync();
 
     std::cout << "Completed migration from " << ledgerRange->minSequence
               << " to " << ledgerRange->maxSequence << std::endl;
@@ -202,7 +213,6 @@ main(int argc, char* argv[])
     boost::asio::spawn(
         ioc, [&backend, &work](boost::asio::yield_context yield) {
             doMigration(*backend, yield);
-            backend->sync();
             work.reset();
         });
 

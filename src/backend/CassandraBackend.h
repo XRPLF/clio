@@ -95,7 +95,7 @@ public:
 
     ~CassandraPreparedStatement()
     {
-        log_.trace() << "called";
+        // log_.trace() << "called";
         if (prepared_)
         {
             cass_prepared_free(prepared_);
