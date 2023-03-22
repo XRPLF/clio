@@ -36,7 +36,6 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-#include <fmt/core.h>
 
 class ETLLoadBalancer;
 class ETLSource;
