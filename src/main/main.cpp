@@ -20,7 +20,9 @@ maybeWaitAfterWrite(
     written = written + justWrote;
     if (written > 10000)
     {
+        BOOST_LOG_TRIVIAL(info) << "Waiting on throttling...";
         timer.wait();
+        BOOST_LOG_TRIVIAL(info) << "...done waiting";
         written = 0;
     }
     return written;
