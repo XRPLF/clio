@@ -110,6 +110,8 @@ doMigration(
         {
             backend.writeNFTs(std::move(toWrite));
             backend.sync();
+            std::cout << "TXS: Wrote " << toWrite.size() << " records"
+                      << std::endl;
         }
 
         morePages = cass_result_has_more_pages(result);
@@ -139,13 +141,15 @@ doMigration(
         {
             std::string blobStr(object.blob.begin(), object.blob.end());
             std::vector<NFTsData> toWrite = getNFTDataFromObj(
-                    ledgerRange->minSequence,
-                    ripple::to_string(object.key),
-                    blobStr);
+                ledgerRange->minSequence,
+                ripple::to_string(object.key),
+                blobStr);
             if (toWrite.size() > 0)
             {
                 backend.writeNFTs(std::move(toWrite));
                 backend.sync();
+                std::cout << "OBJS: Wrote " << toWrite.size() << " records"
+                          << std::endl;
             }
         }
         cursor = page.cursor;

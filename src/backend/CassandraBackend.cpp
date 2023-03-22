@@ -67,7 +67,7 @@ processAsyncWriteResponse(T& requestParams, CassFuture* fut, F func)
     }
     else
     {
-        log.trace() << "Succesfully inserted a record";
+        // log.trace() << "Succesfully inserted a record";
         requestParams.finish();
     }
 }

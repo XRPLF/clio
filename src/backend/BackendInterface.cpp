@@ -54,7 +54,7 @@ std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow(
     boost::asio::yield_context& yield) const
 {
-    gLog.trace() << "called";
+    // gLog.trace() << "called";
     while (true)
     {
         try
@@ -71,7 +71,7 @@ BackendInterface::hardFetchLedgerRangeNoThrow(
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    gLog.trace() << "called";
+    // gLog.trace() << "called";
     return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
 }
 

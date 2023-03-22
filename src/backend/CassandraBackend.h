@@ -848,7 +848,7 @@ public:
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
     {
-        log_.trace() << "called";
+        // log_.trace() << "called";
         CassandraStatement statement{selectLatestLedger_};
         CassandraResult result = executeAsyncRead(statement, yield);
         if (!result.hasResult())
@@ -865,7 +865,7 @@ public:
         std::uint32_t const sequence,
         boost::asio::yield_context& yield) const override
     {
-        log_.trace() << "called";
+        // log_.trace() << "called";
         CassandraStatement statement{selectLedgerBySeq_};
         statement.bindNextInt(sequence);
         CassandraResult result = executeAsyncRead(statement, yield);
@@ -961,7 +961,7 @@ public:
         ripple::uint256 const& hash,
         boost::asio::yield_context& yield) const override
     {
-        log_.trace() << "called";
+        // log_.trace() << "called";
         CassandraStatement statement{selectTransaction_};
         statement.bindNextBytes(hash);
         CassandraResult result = executeAsyncRead(statement, yield);
