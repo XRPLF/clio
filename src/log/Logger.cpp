@@ -105,7 +105,7 @@ LogService::init(Config const& config)
             config.valueOr<uint64_t>("log_directory_max_size", 50u * 1024u) *
             1024u * 1024u;
         auto fileSink = boost::log::add_file_log(
-            keywords::file_name = dirPath / "clio.log",
+            keywords::file_name = dirPath / "clio_migrator.log",
             keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
             keywords::auto_flush = true,
             keywords::format = format,
