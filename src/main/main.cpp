@@ -5,16 +5,34 @@
 #include <main/Build.h>
 
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/log/trivial.hpp>
 #include <cassandra.h>
 
 #include <iostream>
 
+int
+maybeWaitAfterWrite(
+    int justWrote,
+    int written,
+    boost::asio::deadline_timer& timer)
+{
+    written = written + justWrote;
+    if (written > 10000)
+    {
+        timer.wait();
+        written = 0;
+    }
+    return written;
+}
+
 void
 doMigration(
     Backend::CassandraBackend& backend,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield,
+    boost::asio::deadline_timer& timer)
 {
-    std::cout << "Beginning migration" << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "Beginning migration";
     /*
      * Step 0 - If we haven't downloaded the initial ledger yet, just short
      * circuit.
@@ -22,9 +40,11 @@ doMigration(
     auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
     if (!ledgerRange)
     {
-        std::cout << "There is no data to migrate" << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
         return;
     }
+
+    int written = 0;
 
     /*
      * Step 1 - Look at all NFT transactions, recording in
@@ -110,8 +130,9 @@ doMigration(
         {
             backend.writeNFTs(std::move(toWrite));
             backend.sync();
-            std::cout << "TXS: Wrote " << toWrite.size() << " records"
-                      << std::endl;
+            BOOST_LOG_TRIVIAL(info)
+                << "TXS: Wrote " << toWrite.size() << " records";
+            written = maybeWaitAfterWrite(toWrite.size(), written, timer);
         }
 
         morePages = cass_result_has_more_pages(result);
@@ -148,8 +169,9 @@ doMigration(
             {
                 backend.writeNFTs(std::move(toWrite));
                 backend.sync();
-                std::cout << "OBJS: Wrote " << toWrite.size() << " records"
-                          << std::endl;
+                BOOST_LOG_TRIVIAL(info)
+                    << "OBJS: Wrote " << toWrite.size() << " records";
+                written = maybeWaitAfterWrite(toWrite.size(), written, timer);
             }
         }
         cursor = page.cursor;
@@ -181,8 +203,9 @@ doMigration(
 
     backend.sync();
 
-    std::cout << "Completed migration from " << ledgerRange->minSequence
-              << " to " << ledgerRange->maxSequence << std::endl;
+    BOOST_LOG_TRIVIAL(info)
+        << "Completed migration from " << ledgerRange->minSequence << " to "
+        << ledgerRange->maxSequence;
 }
 
 int
@@ -203,7 +226,7 @@ main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    auto type = config.value<std::string>("database.type");
+    auto const type = config.value<std::string>("database.type");
     if (!boost::iequals(type, "cassandra"))
     {
         std::cerr << "Migration only for cassandra dbs" << std::endl;
@@ -213,14 +236,16 @@ main(int argc, char* argv[])
     boost::asio::io_context ioc;
     auto backend = Backend::make_Backend(ioc, config);
 
+    boost::asio::deadline_timer timer(ioc, boost::posix_time::minutes(1));
+
     auto work = boost::asio::make_work_guard(ioc);
     boost::asio::spawn(
-        ioc, [&backend, &work](boost::asio::yield_context yield) {
-            doMigration(*backend, yield);
+        ioc, [&backend, &work, &timer](boost::asio::yield_context yield) {
+            doMigration(*backend, yield, timer);
             work.reset();
         });
 
     ioc.run();
-    std::cout << "Success!" << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "SUCCESS!";
     return EXIT_SUCCESS;
 }
