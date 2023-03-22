@@ -117,8 +117,8 @@ BackendInterface::fetchLedgerObjects(
         else
             misses.push_back(keys[i]);
     }
-    gLog.trace() << "Cache hits = " << keys.size() - misses.size()
-                 << " - cache misses = " << misses.size();
+    // gLog.trace() << "Cache hits = " << keys.size() - misses.size()
+    //              << " - cache misses = " << misses.size();
 
     if (misses.size())
     {

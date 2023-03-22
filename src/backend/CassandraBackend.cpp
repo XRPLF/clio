@@ -883,7 +883,7 @@ CassandraBackend::doFetchLedgerObjects(
     result_type result(handler);
 
     std::size_t const numKeys = keys.size();
-    log_.trace() << "Fetching " << numKeys << " records from Cassandra";
+    // log_.trace() << "Fetching " << numKeys << " records from Cassandra";
     std::atomic_int numOutstanding = numKeys;
     std::vector<Blob> results{numKeys};
     std::vector<std::shared_ptr<ReadCallbackData<result_type>>> cbs;
@@ -912,7 +912,7 @@ CassandraBackend::doFetchLedgerObjects(
             throw DatabaseTimeout();
     }
 
-    log_.trace() << "Fetched " << numKeys << " records from Cassandra";
+    // log_.trace() << "Fetched " << numKeys << " records from Cassandra";
     return results;
 }
 
