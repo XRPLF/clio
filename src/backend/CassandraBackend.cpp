@@ -447,7 +447,7 @@ CassandraBackend::writeNFTs(std::vector<NFTsData>&& data)
 std::optional<LedgerRange>
 CassandraBackend::hardFetchLedgerRange(boost::asio::yield_context& yield) const
 {
-    log_.trace() << "Fetching from cassandra";
+    // log_.trace() << "Fetching from cassandra";
     CassandraStatement statement{selectLedgerRange_};
     CassandraResult result = executeAsyncRead(statement, yield);
 
@@ -826,7 +826,7 @@ CassandraBackend::doFetchSuccessorKey(
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context& yield) const
 {
-    log_.trace() << "Fetching from cassandra";
+    // log_.trace() << "Fetching from cassandra";
     CassandraStatement statement{selectSuccessor_};
     statement.bindNextBytes(key);
     statement.bindNextInt(ledgerSequence);
@@ -850,7 +850,7 @@ CassandraBackend::doFetchLedgerObject(
     std::uint32_t const sequence,
     boost::asio::yield_context& yield) const
 {
-    log_.trace() << "Fetching from cassandra";
+    // log_.trace() << "Fetching from cassandra";
     CassandraStatement statement{selectObject_};
     statement.bindNextBytes(key);
     statement.bindNextInt(sequence);

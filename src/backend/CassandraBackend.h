@@ -938,7 +938,7 @@ public:
     std::optional<int64_t>
     getToken(void const* key, boost::asio::yield_context& yield) const
     {
-        log_.trace() << "Fetching from cassandra";
+        // log_.trace() << "Fetching from cassandra";
         CassandraStatement statement{getToken_};
         statement.bindNextBytes(key, 32);
 

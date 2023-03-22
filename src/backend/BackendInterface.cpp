@@ -90,7 +90,7 @@ BackendInterface::fetchLedgerObject(
     }
     else
     {
-        gLog.trace() << "Cache miss - " << ripple::strHex(key);
+        // gLog.trace() << "Cache miss - " << ripple::strHex(key);
         auto dbObj = doFetchLedgerObject(key, sequence, yield);
         if (!dbObj)
             gLog.trace() << "Missed cache and missed in db";
@@ -145,8 +145,8 @@ BackendInterface::fetchSuccessorKey(
     auto succ = cache_.getSuccessor(key, ledgerSequence);
     if (succ)
         gLog.trace() << "Cache hit - " << ripple::strHex(key);
-    else
-        gLog.trace() << "Cache miss - " << ripple::strHex(key);
+    // else
+    // gLog.trace() << "Cache miss - " << ripple::strHex(key);
     return succ ? succ->key : doFetchSuccessorKey(key, ledgerSequence, yield);
 }
 

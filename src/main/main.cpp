@@ -14,7 +14,7 @@ int
 maybeWaitAfterWrite(
     int justWrote,
     int written,
-    boost::asio::steady_timer & timer)
+    boost::asio::steady_timer& timer)
 {
     written = written + justWrote;
     if (written > 10000)
@@ -31,7 +31,7 @@ void
 doMigration(
     Backend::CassandraBackend& backend,
     boost::asio::yield_context yield,
-    boost::asio::steady_timer & timer)
+    boost::asio::steady_timer& timer)
 {
     BOOST_LOG_TRIVIAL(info) << "Beginning migration";
     /*
