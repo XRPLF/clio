@@ -34,6 +34,8 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 class ETLLoadBalancer;
 class ETLSource;
@@ -143,8 +145,17 @@ public:
         std::string const& clientIp,
         boost::asio::yield_context& yield) const = 0;
 
+    virtual boost::uuids::uuid
+    token() const = 0;
+
     virtual ~ETLSource()
     {
+    }
+
+    bool
+    operator==(ETLSource const& other) const
+    {
+        return token() == other.token();
     }
 
 protected:
@@ -209,6 +220,7 @@ class ETLSourceImpl : public ETLSource
     ETLLoadBalancer& balancer_;
 
     ForwardCache forwardCache_;
+    boost::uuids::uuid uuid_;
 
     std::optional<boost::json::object>
     requestFromRippled(
@@ -263,6 +275,12 @@ public:
         return connected_;
     }
 
+    boost::uuids::uuid
+    token() const override
+    {
+        return uuid_;
+    }
+
     std::chrono::system_clock::time_point
     getLastMsgTime() const
     {
@@ -298,6 +316,9 @@ public:
         , timer_(ioContext)
         , hooks_(hooks)
     {
+        static boost::uuids::random_generator uuidGenerator;
+        uuid_ = uuidGenerator();
+
         ip_ = config.valueOr<std::string>("ip", {});
         wsPort_ = config.valueOr<std::string>("ws_port", {});
 
@@ -676,10 +697,7 @@ public:
             // We pick the first ETLSource encountered that is connected
             if (src->isConnected())
             {
-                if (src.get() == in)
-                    return true;
-                else
-                    return false;
+                return *src == *in;
             }
         }
 
