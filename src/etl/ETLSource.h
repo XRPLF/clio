@@ -312,11 +312,13 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , forwardCache_(config, ioContext, *this)
-        , uuid_(boost::uuids::random_generator()())
         , ioc_(ioContext)
         , timer_(ioContext)
         , hooks_(hooks)
     {
+        static boost::uuids::random_generator uuidGenerator;
+        uuid_ = uuidGenerator();
+
         ip_ = config.valueOr<std::string>("ip", {});
         wsPort_ = config.valueOr<std::string>("ws_port", {});
 
