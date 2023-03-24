@@ -85,13 +85,14 @@ tag_invoke(
         {JS(owner), output.owner},
         {"is_burned", output.isBurned},
         {JS(flags), output.flags},
-        {"transfer_rate", output.transferFee},
+        {"transfer_fee", output.transferFee},
         {JS(issuer), output.issuer},
         {"nft_taxon", output.taxon},
         {JS(nft_serial), output.serial},
+        {JS(validated), output.validated},
     };
 
-    if (output.uri)
+    if (output.uri && output.uri->size() != 0)
         object[JS(uri)] = *(output.uri);
     else if (not output.isBurned)
         object[JS(uri)] = nullptr;

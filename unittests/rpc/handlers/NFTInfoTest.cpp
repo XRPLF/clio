@@ -33,6 +33,8 @@ constexpr static auto LEDGERHASH =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto NFTID =
     "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr static auto NFTID2 =
+    "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022";
 
 class RPCNFTInfoHandlerTest : public HandlerBaseTest
 {
@@ -280,11 +282,12 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "is_burned": false,
         "flags": 1,
-        "transfer_rate": 0,
+        "transfer_fee": 0,
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
         "nft_serial": 4,
-        "uri": "757269"
+        "uri": "757269",
+        "validated": true
     })";
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -323,10 +326,55 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "is_burned": true,
         "flags": 1,
-        "transfer_rate": 0,
+        "transfer_fee": 0,
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
-        "nft_serial": 4
+        "nft_serial": 4,
+        "validated": true
+    })";
+    MockBackend* rawBackendPtr =
+        static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
+        .WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // fetch nft return something
+    auto const nft = std::make_optional<NFT>(CreateNFT(
+        NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{'u', 'r', 'i'}, true));
+    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
+    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_id": "{}"
+        }})",
+        NFTID));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correntOutput), *output);
+    });
+}
+
+// nft is not burned and uri is not available -> should specify null
+TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
+{
+    constexpr static auto correntOutput = R"({
+        "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+        "ledger_index": 30,
+        "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "is_burned": false,
+        "flags": 1,
+        "transfer_fee": 0,
+        "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
+        "nft_taxon": 0,
+        "nft_serial": 4,
+        "uri": null,
+        "validated": true
     })";
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -339,7 +387,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
 
     // fetch nft return something
     auto const nft = std::make_optional<NFT>(
-        CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, true));
+        CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{}));
     ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
     EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
 
@@ -348,6 +396,50 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
             "nft_id": "{}"
         }})",
         NFTID));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, yield);
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correntOutput), *output);
+    });
+}
+
+// check taxon field, transfer fee and serial
+TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
+{
+    constexpr static auto correntOutput = R"({
+        "nft_id": "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022",
+        "ledger_index": 30,
+        "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "is_burned": false,
+        "flags": 8,
+        "transfer_fee": 5000,
+        "issuer": "rnX4gsB86NNrGV8xHcJ5hbR2aKtSetbuwg",
+        "nft_taxon": 7826,
+        "nft_serial": 34,
+        "uri": "757269",
+        "validated": true
+    })";
+    MockBackend* rawBackendPtr =
+        static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
+        .WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // fetch nft return something
+    auto const nft =
+        std::make_optional<NFT>(CreateNFT(NFTID2, ACCOUNT, ledgerInfo.seq));
+    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
+    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_id": "{}"
+        }})",
+        NFTID2));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);

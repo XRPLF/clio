@@ -204,4 +204,5 @@ CreateNFT(
     std::string_view tokenID,
     std::string_view account,
     ripple::LedgerIndex seq = 1234u,
+    ripple::Blob uri = ripple::Blob{'u', 'r', 'i'},
     bool isBurned = false);
