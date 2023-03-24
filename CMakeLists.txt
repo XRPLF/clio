@@ -59,6 +59,7 @@ target_sources(clio PRIVATE
   ## NextGen RPC handler
   src/rpc/ngHandlers/AccountChannels.cpp
   src/rpc/ngHandlers/AccountCurrencies.cpp
+  src/rpc/ngHandlers/AccountLines.cpp
   src/rpc/ngHandlers/Tx.cpp
   src/rpc/ngHandlers/GatewayBalances.cpp
   src/rpc/ngHandlers/LedgerEntry.cpp
@@ -123,6 +124,7 @@ if(BUILD_TESTS)
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
     unittests/rpc/handlers/AccountCurrenciesTest.cpp
+    unittests/rpc/handlers/AccountLinesTest.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp
