@@ -420,3 +420,18 @@ CreateDepositPreauthLedgerObject(
     depositPreauth.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
     return depositPreauth;
 }
+
+Backend::NFT
+CreateNFT(
+    std::string_view tokenID,
+    std::string_view account,
+    ripple::LedgerIndex seq,
+    bool isBurned)
+{
+    return Backend::NFT{
+        ripple::uint256(tokenID),
+        seq,
+        GetAccountIDWithString(account),
+        ripple::Blob{'u', 'r', 'i'},
+        isBurned};
+}

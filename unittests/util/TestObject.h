@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <backend/Types.h>
+
 #include <ripple/ledger/ReadView.h>
 
 #include <string_view>
@@ -196,3 +198,10 @@ ripple::STObject
 CreateDepositPreauthLedgerObject(
     std::string_view account,
     std::string_view auth);
+
+[[nodiscard]] Backend::NFT
+CreateNFT(
+    std::string_view tokenID,
+    std::string_view account,
+    ripple::LedgerIndex seq = 1234u,
+    bool isBurned = false);
