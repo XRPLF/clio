@@ -165,6 +165,7 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture
         });
         ctx.run();
         ASSERT_TRUE(called);
+        ctx.reset();
     }
 
 protected:

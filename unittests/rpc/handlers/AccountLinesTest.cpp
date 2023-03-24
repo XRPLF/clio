@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/AccountChannels.h>
+#include <rpc/ngHandlers/AccountLines.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
@@ -40,14 +40,19 @@ constexpr static auto INDEX2 =
 constexpr static auto TXNID =
     "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountHandlerTest : public HandlerBaseTest
+class RPCAccountLinesHandlerTest : public HandlerBaseTest
 {
 };
 
-TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
+// TODO: a lot of the tests are copy-pasted from AccountChannelsTest
+// because the logic is mostly the same but currently implemented in
+// a separate handler class. We should eventually use some sort of
+// base class or common component to these `account_*` rpcs.
+
+TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -62,13 +67,12 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
-    ctx.run();
 }
 
-TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
+TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{
                 "account": "{}", 
@@ -83,13 +87,12 @@ TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
-    ctx.run();
 }
 
-TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
+TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -104,17 +107,16 @@ TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
-    ctx.run();
 }
 
-TEST_F(RPCAccountHandlerTest, MarkerNotString)
+TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
-                "marker":9
+                "marker": 9
             }})",
             ACCOUNT));
         auto const output = handler.process(input, yield);
@@ -124,16 +126,15 @@ TEST_F(RPCAccountHandlerTest, MarkerNotString)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
     });
-    ctx.run();
 }
 
 // error case : invalid marker
 // marker format is composed of a comma separated index and start hint. The
 // former will be read as hex, and the latter using boost lexical cast.
-TEST_F(RPCAccountHandlerTest, InvalidMarker)
+TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}",
@@ -147,12 +148,12 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor");
     });
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
-                "marker":401
+                "marker": 401
             }})",
             ACCOUNT));
         auto const output = handler.process(input, yield);
@@ -161,18 +162,17 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
-    ctx.run();
 }
 
 // the limit is between 10 400
-TEST_F(RPCAccountHandlerTest, IncorrectLimit)
+TEST_F(RPCAccountLinesHandlerTest, IncorrectLimit)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
-                "limit":9
+                "limit": 9
             }})",
             ACCOUNT));
         auto const output = handler.process(input, yield);
@@ -181,12 +181,12 @@ TEST_F(RPCAccountHandlerTest, IncorrectLimit)
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
-                "limit":401
+                "limit": 401
             }})",
             ACCOUNT));
         auto const output = handler.process(input, yield);
@@ -198,30 +198,31 @@ TEST_F(RPCAccountHandlerTest, IncorrectLimit)
 }
 
 // error case: account invalid format, length is incorrect
-TEST_F(RPCAccountHandlerTest, AccountInvalidFormat)
+TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const input = json::parse(R"({ 
-        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
-        })");
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
+            })");
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "accountMalformed");
     });
-    ctx.run();
 }
 
 // error case: account invalid format
-TEST_F(RPCAccountHandlerTest, AccountNotString)
+TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const input = json::parse(R"({ 
-        "account": 12
-        })");
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": 12
+            })");
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
@@ -229,11 +230,10 @@ TEST_F(RPCAccountHandlerTest, AccountNotString)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotString");
     });
-    ctx.run();
 }
 
 // error case ledger non exist via hash
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
+TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -244,13 +244,13 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
 
     auto const input = json::parse(fmt::format(
         R"({{
-                "account": "{}",
-                "ledger_hash": "{}"
+            "account": "{}",
+            "ledger_hash": "{}"
         }})",
         ACCOUNT,
         LEDGERHASH));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
 
@@ -258,11 +258,10 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 // error case ledger non exist via index
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex)
+TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -274,24 +273,23 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-                "account": "{}",
-                "ledger_index": "4"
+            "account": "{}",
+            "ledger_index": "4"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 // error case ledger > max seq via hash
 // idk why this case will happen in reality
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
+TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -309,25 +307,24 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 // error case ledger > max seq via index
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex2)
+TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
-    // no need to check from db,call fetchLedgerBySequence 0 time
+    // no need to check from db, call fetchLedgerBySequence 0 time
     // differ from previous logic
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
@@ -336,19 +333,18 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex2)
             "ledger_index": "31"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 // error case account not exist
-TEST_F(RPCAccountHandlerTest, NonExistAccount)
+TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -369,49 +365,19 @@ TEST_F(RPCAccountHandlerTest, NonExistAccount)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
-    ctx.run();
 }
 
 // normal case when only provide account
-TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
+TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 {
-    constexpr static auto correctOutput = R"({
-        "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "limit":50,
-        "channels":[
-            {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000"
-            },
-            {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000"
-            }
-        ]
-    })";
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -439,31 +405,64 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    // return two payment channel objects
+    // return two trust lines
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(
-        ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
-    bbs.push_back(channel1.getSerializer().peekData());
-    bbs.push_back(channel1.getSerializer().peekData());
+    auto const line1 = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 = CreateRippleStateLedgerObject(
+        ACCOUNT2, "USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    bbs.push_back(line1.getSerializer().peekData());
+    bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "account": "{}"
-        }})",
-        ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([this](auto& yield) {
+        auto const input = json::parse(fmt::format(
+            R"({{
+                "account": "{}"
+            }})",
+            ACCOUNT));
+        auto const correctOutput =
+            R"({
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": 50,
+                "lines": [
+                    {
+                        "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "balance": "10",
+                        "currency": "USD",
+                        "limit": "100",
+                        "limit_peer": "200",
+                        "quality_in": 0,
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
+                    },
+                    {
+                        "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "balance": "-10",
+                        "currency": "USD",
+                        "limit": "200",
+                        "limit_peer": "100",
+                        "quality_in": 0,
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
+                    }
+                ]
+            })";
+
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
-    ctx.run();
 }
 
 // normal case : limit is used
-TEST_F(RPCAccountHandlerTest, UseLimit)
+TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -491,9 +490,18 @@ TEST_F(RPCAccountHandlerTest, UseLimit)
     while (repetitions--)
     {
         indexes.push_back(ripple::uint256{INDEX1});
-        ripple::STObject channel = CreatePaymentChannelLedgerObject(
-            ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
-        bbs.push_back(channel.getSerializer().peekData());
+        auto const line = CreateRippleStateLedgerObject(
+            ACCOUNT,
+            "USD",
+            ACCOUNT2,
+            10,
+            ACCOUNT,
+            100,
+            ACCOUNT2,
+            200,
+            TXNID,
+            123);
+        bbs.push_back(line.getSerializer().peekData());
     }
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     // it should not appear in return marker,marker is the current page
@@ -511,21 +519,20 @@ TEST_F(RPCAccountHandlerTest, UseLimit)
             "limit": 20
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
 
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
+        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
         EXPECT_THAT(
             (*output).as_object().at("marker").as_string().c_str(),
             EndsWith(",0"));
     });
-    ctx.run();
 }
 
 // normal case : destination is used
-TEST_F(RPCAccountHandlerTest, UseDestination)
+TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -549,24 +556,42 @@ TEST_F(RPCAccountHandlerTest, UseDestination)
     std::vector<ripple::uint256> indexes;
     std::vector<Blob> bbs;
 
-    // 10 pay channel to ACCOUNT2
+    // 10 lines to ACCOUNT2
     auto repetitions = 10;
     while (repetitions--)
     {
         indexes.push_back(ripple::uint256{INDEX1});
-        ripple::STObject channel = CreatePaymentChannelLedgerObject(
-            ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
-        bbs.push_back(channel.getSerializer().peekData());
+        auto const line = CreateRippleStateLedgerObject(
+            ACCOUNT,
+            "USD",
+            ACCOUNT2,
+            10,
+            ACCOUNT,
+            100,
+            ACCOUNT2,
+            200,
+            TXNID,
+            123);
+        bbs.push_back(line.getSerializer().peekData());
     }
 
-    // 20 pay channel to ACCOUNT3
+    // 20 lines to ACCOUNT3
     repetitions = 20;
     while (repetitions--)
     {
         indexes.push_back(ripple::uint256{INDEX1});
-        ripple::STObject channel = CreatePaymentChannelLedgerObject(
-            ACCOUNT, ACCOUNT3, 100, 10, 32, TXNID, 28);
-        bbs.push_back(channel.getSerializer().peekData());
+        auto const line = CreateRippleStateLedgerObject(
+            ACCOUNT,
+            "USD",
+            ACCOUNT3,
+            10,
+            ACCOUNT,
+            100,
+            ACCOUNT3,
+            200,
+            TXNID,
+            123);
+        bbs.push_back(line.getSerializer().peekData());
     }
 
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
@@ -582,21 +607,20 @@ TEST_F(RPCAccountHandlerTest, UseDestination)
         R"({{
             "account": "{}",
             "limit": 30,       
-            "destination_account":"{}"
+            "peer": "{}"
         }})",
         ACCOUNT,
         ACCOUNT3));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
+        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
     });
-    ctx.run();
 }
 
 // normal case : but the lines is emtpy
-TEST_F(RPCAccountHandlerTest, EmptyChannel)
+TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -628,52 +652,47 @@ TEST_F(RPCAccountHandlerTest, EmptyChannel)
             "account": "{}"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 0);
+        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 0);
     });
-    ctx.run();
 }
 
-// Return expiration cancel_offer source_tag destination_tag when available
-TEST_F(RPCAccountHandlerTest, OptionalResponseField)
+TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
 {
     constexpr static auto correctOutput = R"({
-        "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "limit":50,
-        "channels":[
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "limit": 50,
+        "lines": [
             {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000",
-                "expiration": 100,
-                "cancel_after": 200,
-                "source_tag": 300,
-                "destination_tag": 400
+                "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "balance": "10",
+                "currency": "USD",
+                "limit": "100",
+                "limit_peer": "200",
+                "quality_in": 0,
+                "quality_out": 0,
+                "no_ripple": false,
+                "no_ripple_peer": true,
+                "peer_authorized": true,
+                "freeze_peer": true
             },
             {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000",
-                "expiration": 100,
-                "cancel_after": 200,
-                "source_tag": 300,
-                "destination_tag": 400
+                "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "balance": "20",
+                "currency": "USD",
+                "limit": "200",
+                "limit_peer": "400",
+                "quality_in": 0,
+                "quality_out": 0,
+                "no_ripple": true,
+                "no_ripple_peer": false,
+                "authorized": true,
+                "freeze": true
             }
         ]
     })";
@@ -690,6 +709,7 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
+
     // return a non empty account
     ON_CALL(
         *rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_))
@@ -704,16 +724,22 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    // return two payment channel objects
+    // return few trust lines
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(
-        ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
-    channel1.setFieldU32(ripple::sfExpiration, 100);
-    channel1.setFieldU32(ripple::sfCancelAfter, 200);
-    channel1.setFieldU32(ripple::sfSourceTag, 300);
-    channel1.setFieldU32(ripple::sfDestinationTag, 400);
-    bbs.push_back(channel1.getSerializer().peekData());
-    bbs.push_back(channel1.getSerializer().peekData());
+    auto line1 = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
+    line1.setFlag(ripple::lsfHighAuth);
+    line1.setFlag(ripple::lsfHighNoRipple);
+    line1.setFlag(ripple::lsfHighFreeze);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    auto line2 = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ACCOUNT2, 20, ACCOUNT, 200, ACCOUNT2, 400, TXNID, 0);
+    line2.setFlag(ripple::lsfLowAuth);
+    line2.setFlag(ripple::lsfLowNoRipple);
+    line2.setFlag(ripple::lsfLowFreeze);
+    bbs.push_back(line2.getSerializer().peekData());
+
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
     auto const input = json::parse(fmt::format(
@@ -721,17 +747,16 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
             "account": "{}"
         }})",
         ACCOUNT));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
-    ctx.run();
 }
 
 // normal case : test marker output correct
-TEST_F(RPCAccountHandlerTest, MarkerOutput)
+TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -756,8 +781,9 @@ TEST_F(RPCAccountHandlerTest, MarkerOutput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(
-        ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    auto line = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
+
     // owner dir contains 10 indexes
     int objectsCount = 10;
     std::vector<ripple::uint256> indexes;
@@ -771,13 +797,13 @@ TEST_F(RPCAccountHandlerTest, MarkerOutput)
     objectsCount = 15;
     while (objectsCount != 0)
     {
-        bbs.push_back(channel1.getSerializer().peekData());
+        bbs.push_back(line.getSerializer().peekData());
         objectsCount--;
     }
 
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     ownerDir.setFieldU64(ripple::sfIndexNext, nextPage);
-    // first page 's next page is 99
+    // first page's next page is 99
     ON_CALL(
         *rawBackendPtr, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -799,20 +825,19 @@ TEST_F(RPCAccountHandlerTest, MarkerOutput)
         }})",
         ACCOUNT,
         limit));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(
             (*output).as_object().at("marker").as_string().c_str(),
             fmt::format("{},{}", INDEX1, nextPage));
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 15);
+        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 15);
     });
-    ctx.run();
 }
 
 // normal case : handler marker correctly
-TEST_F(RPCAccountHandlerTest, MarkerInput)
+TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -836,15 +861,15 @@ TEST_F(RPCAccountHandlerTest, MarkerInput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(
-        ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    auto const line = CreateRippleStateLedgerObject(
+        ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
     int objectsCount = limit;
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
         indexes.push_back(ripple::uint256{INDEX1});
-        bbs.push_back(channel1.getSerializer().peekData());
+        bbs.push_back(line.getSerializer().peekData());
         objectsCount--;
     }
 
@@ -867,15 +892,14 @@ TEST_F(RPCAccountHandlerTest, MarkerInput)
         limit,
         INDEX1,
         nextPage));
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
         // items
         EXPECT_EQ(
-            (*output).as_object().at("channels").as_array().size(), limit - 1);
+            (*output).as_object().at("lines").as_array().size(), limit - 1);
     });
-    ctx.run();
 }

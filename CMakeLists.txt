@@ -59,11 +59,13 @@ target_sources(clio PRIVATE
   ## NextGen RPC handler
   src/rpc/ngHandlers/AccountChannels.cpp
   src/rpc/ngHandlers/AccountCurrencies.cpp
+  src/rpc/ngHandlers/AccountLines.cpp
   src/rpc/ngHandlers/Tx.cpp
   src/rpc/ngHandlers/GatewayBalances.cpp
   src/rpc/ngHandlers/LedgerEntry.cpp
   src/rpc/ngHandlers/LedgerRange.cpp
   src/rpc/ngHandlers/BookOffers.cpp
+  src/rpc/ngHandlers/TransactionEntry.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -123,6 +125,7 @@ if(BUILD_TESTS)
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
     unittests/rpc/handlers/AccountCurrenciesTest.cpp
+    unittests/rpc/handlers/AccountLinesTest.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp
@@ -130,7 +133,8 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/GatewayBalancesTest.cpp
     unittests/rpc/handlers/LedgerEntryTest.cpp
     unittests/rpc/handlers/LedgerRangeTest.cpp
-    unittests/rpc/handlers/BookOffersTest.cpp)
+    unittests/rpc/handlers/BookOffersTest.cpp
+    unittests/rpc/handlers/TransactionEntryTest.cpp)
   include(CMake/deps/gtest.cmake)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
