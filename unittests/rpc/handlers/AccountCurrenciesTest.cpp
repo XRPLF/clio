@@ -64,14 +64,13 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
-    ctx.run();
 }
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
@@ -90,14 +89,13 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(input, yield);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
@@ -118,14 +116,13 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
         ACCOUNT,
         LEDGERHASH));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(input);
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
@@ -193,12 +190,11 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUTPUT));
     });
-    ctx.run();
 }
 
 TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
@@ -239,11 +235,10 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
         ACCOUNT,
         LEDGERHASH));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
     });
-    ctx.run();
 }
 
 TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
@@ -285,11 +280,10 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
         ACCOUNT,
         ledgerSeq));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(input, yield);
         ASSERT_TRUE(output);
         EXPECT_EQ(
             (*output).as_object().at("ledger_index").as_uint64(), ledgerSeq);
     });
-    ctx.run();
 }
