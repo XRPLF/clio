@@ -33,9 +33,7 @@ NFTInfoHandler::process(
     NFTInfoHandler::Input input,
     boost::asio::yield_context& yield) const
 {
-    ripple::uint256 tokenID;
-    [[maybe_unused]] auto const _ = tokenID.parseHex(input.nftID);
-
+    auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
@@ -85,17 +83,15 @@ tag_invoke(
         {JS(owner), output.owner},
         {"is_burned", output.isBurned},
         {JS(flags), output.flags},
-        {"transfer_fee", output.transferFee},
+        {"transfer_rate", output.transferFee},
         {JS(issuer), output.issuer},
         {"nft_taxon", output.taxon},
         {JS(nft_serial), output.serial},
         {JS(validated), output.validated},
     };
 
-    if (output.uri && output.uri->size() != 0)
+    if (output.uri)
         object[JS(uri)] = *(output.uri);
-    else if (not output.isBurned)
-        object[JS(uri)] = nullptr;
 
     jv = std::move(object);
 }

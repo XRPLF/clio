@@ -39,13 +39,18 @@ public:
         std::string owner;
         bool isBurned;
         uint32_t flags;
-        uint32_t transferFee;
+        uint32_t
+            transferFee;  // TODO: documented as 'transfer_fee' atm. but should
+                          // be 'transfer_rate' now.
+                          // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
         std::string issuer;
         uint32_t taxon;
         uint32_t
             serial;  // TODO: documented as 'nft_sequence' atm.
                      // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
-        std::optional<std::string> uri;
+        std::optional<std::string>
+            uri;  // TODO: documented can be null vs. empty string
+                  // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
 
         // validated should be sent via framework
         bool validated = true;
