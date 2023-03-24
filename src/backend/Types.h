@@ -70,6 +70,12 @@ struct TransactionsCursor
 {
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
+    bool
+    operator==(const TransactionsCursor& other) const
+    {
+        return ledgerSequence == other.ledgerSequence &&
+            transactionIndex == other.transactionIndex;
+    }
 };
 
 struct TransactionsAndCursor

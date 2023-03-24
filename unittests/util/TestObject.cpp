@@ -94,6 +94,41 @@ CreatePaymentTransactionObject(
 }
 
 ripple::STObject
+CreatePaymentTransactionMetaObject(
+    std::string_view accountId1,
+    std::string_view accountId2,
+    int finalBalance1,
+    int finalBalance2)
+{
+    ripple::STObject finalFields(ripple::sfFinalFields);
+    finalFields.setAccountID(
+        ripple::sfAccount, GetAccountIDWithString(accountId1));
+    finalFields.setFieldAmount(
+        ripple::sfBalance, ripple::STAmount(finalBalance1));
+
+    ripple::STObject finalFields2(ripple::sfFinalFields);
+    finalFields2.setAccountID(
+        ripple::sfAccount, GetAccountIDWithString(accountId2));
+    finalFields2.setFieldAmount(
+        ripple::sfBalance, ripple::STAmount(finalBalance2));
+
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{2};
+    ripple::STObject node(ripple::sfModifiedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
+    node.emplace_back(std::move(finalFields));
+    metaArray.push_back(node);
+    ripple::STObject node2(ripple::sfModifiedNode);
+    node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
+    node2.emplace_back(std::move(finalFields2));
+    metaArray.push_back(node2);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    return metaObj;
+}
+
+ripple::STObject
 CreateAccountRootObject(
     std::string_view accountId,
     uint32_t flag,
