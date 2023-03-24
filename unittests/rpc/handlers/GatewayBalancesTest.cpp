@@ -72,7 +72,7 @@ TEST_P(ParameterTest, CheckError)
 {
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output =
             handler.process(json::parse(bundle.testJson), yield);
         ASSERT_FALSE(output);
@@ -81,7 +81,6 @@ TEST_P(ParameterTest, CheckError)
         EXPECT_EQ(
             err.at("error_message").as_string(), bundle.expectedErrorMessage);
     });
-    ctx.run();
 }
 
 auto
@@ -199,7 +198,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFound)
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -214,7 +213,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFound)
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
-    ctx.run();
 }
 
 TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
@@ -237,7 +235,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -250,7 +248,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
-    ctx.run();
 }
 
 TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
@@ -289,7 +286,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -304,7 +301,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "invalidHotWallet");
     });
-    ctx.run();
 }
 
 struct NormalTestBundle
@@ -369,7 +365,7 @@ TEST_P(NormalPathTest, CheckOutput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+    runSpawn([&](auto& yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -382,7 +378,6 @@ TEST_P(NormalPathTest, CheckOutput)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
     });
-    ctx.run();
 }
 
 auto

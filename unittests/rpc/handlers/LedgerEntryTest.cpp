@@ -549,7 +549,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(LedgerEntryParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, yield);
@@ -563,7 +563,6 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
             err.at("error_message").as_string(),
             testBundle.expectedErrorMessage);
     });
-    ctx.run();
 }
 
 // parameterized test cases for index
@@ -591,7 +590,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(IndexTest, InvalidIndexUint256)
 {
     auto const index = GetParam();
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -605,13 +604,12 @@ TEST_P(IndexTest, InvalidIndexUint256)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), index + "Malformed");
     });
-    ctx.run();
 }
 
 TEST_P(IndexTest, InvalidIndexNotString)
 {
     auto const index = GetParam();
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -625,7 +623,6 @@ TEST_P(IndexTest, InvalidIndexNotString)
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), index + "NotString");
     });
-    ctx.run();
 }
 
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
@@ -646,7 +643,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(key, RANGEMAX, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -658,7 +655,6 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
     });
-    ctx.run();
 }
 
 struct NormalPathTestBundle
@@ -952,7 +948,7 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         .WillByDefault(
             Return(testBundle.mockedEntity.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, yield);
@@ -966,7 +962,6 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
             ripple::uint256(output.value().at("index").as_string().c_str()),
             testBundle.expectedIndex);
     });
-    ctx.run();
 }
 
 // this testcase will test the deserialization of ledger entry
@@ -1010,7 +1005,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -1021,7 +1016,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
-    ctx.run();
 }
 
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
@@ -1044,7 +1038,7 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
         doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
+    runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -1054,5 +1048,4 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
         auto const output = handler.process(req, yield);
         ASSERT_FALSE(output);
     });
-    ctx.run();
 }

@@ -40,7 +40,7 @@ class RPCTxTest : public HandlerBaseTest
 
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -58,12 +58,11 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
         EXPECT_EQ(
             err.at("error_message").as_string(), "Ledger range exceeds 1000.");
     });
-    ctx.run();
 }
 
 TEST_F(RPCTxTest, InvalidLgrRange)
 {
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -81,7 +80,6 @@ TEST_F(RPCTxTest, InvalidLgrRange)
         EXPECT_EQ(
             err.at("error_message").as_string(), "Ledger range is invalid.");
     });
-    ctx.run();
 }
 
 TEST_F(RPCTxTest, TxnNotFound)
@@ -90,7 +88,7 @@ TEST_F(RPCTxTest, TxnNotFound)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -106,7 +104,6 @@ TEST_F(RPCTxTest, TxnNotFound)
         EXPECT_EQ(
             err.at("error_message").as_string(), "Transaction not found.");
     });
-    ctx.run();
 }
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
@@ -117,7 +114,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -136,7 +133,6 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
             err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), false);
     });
-    ctx.run();
 }
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
@@ -147,7 +143,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -166,7 +162,6 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
             err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), true);
     });
-    ctx.run();
 }
 
 TEST_F(RPCTxTest, DefaultParameter)
@@ -220,7 +215,7 @@ TEST_F(RPCTxTest, DefaultParameter)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -232,7 +227,6 @@ TEST_F(RPCTxTest, DefaultParameter)
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
-    ctx.run();
 }
 
 TEST_F(RPCTxTest, ReturnBinary)
@@ -258,7 +252,7 @@ TEST_F(RPCTxTest, ReturnBinary)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -271,5 +265,4 @@ TEST_F(RPCTxTest, ReturnBinary)
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
-    ctx.run();
 }
