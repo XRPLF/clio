@@ -192,12 +192,12 @@ jobs:
           cp code-coverage-results.md ./UnitTestCoverage/out.md
           cat code-coverage-results.md > $GITHUB_STEP_SUMMARY
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: UnitTestCoverage
           path: UnitTestCoverage/
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: code_coverage_report
           path: clio/build/clio_tests-gcc-cov/out.xml
