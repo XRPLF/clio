@@ -10,29 +10,28 @@
 
 #include <iostream>
 
-int
-maybeWaitAfterWrite(
-    int justWrote,
-    int written,
-    boost::asio::steady_timer& timer)
+void
+doNFTWrite(
+    std::vector<NFTsData>& nfts,
+    Backend::CassandraBackend& backend,
+    std::string const tag)
 {
-    written = written + justWrote;
-    if (written > 10000)
+    if (nfts.size() > 0)
     {
-        BOOST_LOG_TRIVIAL(info) << "Waiting on throttling...";
-        timer.expires_after(std::chrono::seconds(60));
-        timer.wait();
-        BOOST_LOG_TRIVIAL(info) << "...done waiting";
-        written = 0;
+        BOOST_LOG_TRIVIAL(info)
+            << tag << ": About to write " << nfts.size() << " records...";
+        backend.writeNFTs(std::move(nfts));
+        backend.sync();
+        BOOST_LOG_TRIVIAL(info) << tag << ": Done";
     }
-    return written;
+    else
+        BOOST_LOG_TRIVIAL(info) << tag << ": No records to write";
 }
 
 void
 doMigration(
     Backend::CassandraBackend& backend,
-    boost::asio::yield_context yield,
-    boost::asio::steady_timer& timer)
+    boost::asio::yield_context yield)
 {
     BOOST_LOG_TRIVIAL(info) << "Beginning migration";
     /*
@@ -45,8 +44,6 @@ doMigration(
         BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
         return;
     }
-
-    int written = 0;
 
     /*
      * Step 1 - Look at all NFT transactions, recording in
@@ -128,14 +125,7 @@ doMigration(
         }
 
         // write what we have
-        if (toWrite.size() > 0)
-        {
-            backend.writeNFTs(std::move(toWrite));
-            backend.sync();
-            BOOST_LOG_TRIVIAL(info)
-                << "TXS: Wrote " << toWrite.size() << " records";
-            written = maybeWaitAfterWrite(toWrite.size(), written, timer);
-        }
+        doNFTWrite(toWrite, backend, "TX");
 
         morePages = cass_result_has_more_pages(result);
         if (morePages)
@@ -167,14 +157,7 @@ doMigration(
                 ledgerRange->minSequence,
                 ripple::to_string(object.key),
                 blobStr);
-            if (toWrite.size() > 0)
-            {
-                backend.writeNFTs(std::move(toWrite));
-                backend.sync();
-                BOOST_LOG_TRIVIAL(info)
-                    << "OBJS: Wrote " << toWrite.size() << " records";
-                written = maybeWaitAfterWrite(toWrite.size(), written, timer);
-            }
+            doNFTWrite(toWrite, backend, "OBJ");
         }
         cursor = page.cursor;
     } while (cursor.has_value());
@@ -238,12 +221,10 @@ main(int argc, char* argv[])
     boost::asio::io_context ioc;
     auto backend = Backend::make_Backend(ioc, config);
 
-    boost::asio::steady_timer timer(ioc);
-
     auto work = boost::asio::make_work_guard(ioc);
     boost::asio::spawn(
-        ioc, [&backend, &work, &timer](boost::asio::yield_context yield) {
-            doMigration(*backend, yield, timer);
+        ioc, [&backend, &work](boost::asio::yield_context yield) {
+            doMigration(*backend, yield);
             work.reset();
         });
 
