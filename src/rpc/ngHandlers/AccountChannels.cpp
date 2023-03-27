@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include <rpc/RPC.h>
-#include <rpc/RPCHelpers.h>
 #include <rpc/ngHandlers/AccountChannels.h>
 
 namespace RPCng {
@@ -126,34 +125,34 @@ tag_invoke(
 {
     auto const& jsonObject = jv.as_object();
     AccountChannelsHandler::Input input;
-    input.account = jv.at("account").as_string().c_str();
-    if (jsonObject.contains("limit"))
+    input.account = jv.at(JS(account)).as_string().c_str();
+    if (jsonObject.contains(JS(limit)))
     {
-        input.limit = jv.at("limit").as_int64();
+        input.limit = jv.at(JS(limit)).as_int64();
     }
-    if (jsonObject.contains("marker"))
+    if (jsonObject.contains(JS(marker)))
     {
-        input.marker = jv.at("marker").as_string().c_str();
+        input.marker = jv.at(JS(marker)).as_string().c_str();
     }
-    if (jsonObject.contains("ledger_hash"))
+    if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jv.at("ledger_hash").as_string().c_str();
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
     }
-    if (jsonObject.contains("destination_account"))
+    if (jsonObject.contains(JS(destination_account)))
     {
         input.destinationAccount =
-            jv.at("destination_account").as_string().c_str();
+            jv.at(JS(destination_account)).as_string().c_str();
     }
-    if (jsonObject.contains("ledger_index"))
+    if (jsonObject.contains(JS(ledger_index)))
     {
-        if (!jsonObject.at("ledger_index").is_string())
+        if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jv.at("ledger_index").as_int64();
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         }
-        else if (jsonObject.at("ledger_index").as_string() != "validated")
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jv.at("ledger_index").as_string().c_str());
+                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
 
@@ -168,14 +167,14 @@ tag_invoke(
 {
     boost::json::object obj;
     obj = {
-        {"account", output.account},
-        {"ledger_hash", output.ledgerHash},
-        {"ledger_index", output.ledgerIndex},
-        {"validated", output.validated},
-        {"limit", output.limit},
-        {"channels", output.channels}};
+        {JS(account), output.account},
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(limit), output.limit},
+        {JS(channels), output.channels}};
     if (output.marker)
-        obj["marker"] = output.marker.value();
+        obj[JS(marker)] = output.marker.value();
     jv = obj;
 }
 
@@ -187,24 +186,24 @@ tag_invoke(
 {
     boost::json::object obj;
     obj = {
-        {"channel_id", channel.channelID},
-        {"account", channel.account},
-        {"account_destination", channel.accountDestination},
-        {"amount", channel.amount},
-        {"balance", channel.balance},
-        {"settle_delay", channel.settleDelay}};
+        {JS(channel_id), channel.channelID},
+        {JS(account), channel.account},
+        {JS(destination_account), channel.accountDestination},
+        {JS(amount), channel.amount},
+        {JS(balance), channel.balance},
+        {JS(settle_delay), channel.settleDelay}};
     if (channel.publicKey)
-        obj["public_key"] = *(channel.publicKey);
+        obj[JS(public_key)] = *(channel.publicKey);
     if (channel.publicKeyHex)
-        obj["public_key_hex"] = *(channel.publicKeyHex);
+        obj[JS(public_key_hex)] = *(channel.publicKeyHex);
     if (channel.expiration)
-        obj["expiration"] = *(channel.expiration);
+        obj[JS(expiration)] = *(channel.expiration);
     if (channel.cancelAfter)
-        obj["cancel_after"] = *(channel.cancelAfter);
+        obj[JS(cancel_after)] = *(channel.cancelAfter);
     if (channel.sourceTag)
-        obj["source_tag"] = *(channel.sourceTag);
+        obj[JS(source_tag)] = *(channel.sourceTag);
     if (channel.destinationTag)
-        obj["destination_tag"] = *(channel.destinationTag);
+        obj[JS(destination_tag)] = *(channel.destinationTag);
     jv = obj;
 }
 }  // namespace RPCng

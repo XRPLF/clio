@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
 #include <rpc/ngHandlers/AccountCurrencies.h>
 
 namespace RPCng {
@@ -91,11 +90,11 @@ tag_invoke(
     AccountCurrenciesHandler::Output const& output)
 {
     jv = {
-        {"ledger_hash", output.ledgerHash},
-        {"ledger_index", output.ledgerIndex},
-        {"validated", output.validated},
-        {"receive_currencies", output.receiveCurrencies},
-        {"send_currencies", output.sendCurrencies}};
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(receive_currencies), output.receiveCurrencies},
+        {JS(send_currencies), output.sendCurrencies}};
 }
 
 AccountCurrenciesHandler::Input
@@ -105,21 +104,21 @@ tag_invoke(
 {
     auto const& jsonObject = jv.as_object();
     AccountCurrenciesHandler::Input input;
-    input.account = jv.at("account").as_string().c_str();
-    if (jsonObject.contains("ledger_hash"))
+    input.account = jv.at(JS(account)).as_string().c_str();
+    if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jv.at("ledger_hash").as_string().c_str();
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
     }
-    if (jsonObject.contains("ledger_index"))
+    if (jsonObject.contains(JS(ledger_index)))
     {
-        if (!jsonObject.at("ledger_index").is_string())
+        if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jv.at("ledger_index").as_int64();
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         }
-        else if (jsonObject.at("ledger_index").as_string() != "validated")
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jv.at("ledger_index").as_string().c_str());
+                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
     return input;

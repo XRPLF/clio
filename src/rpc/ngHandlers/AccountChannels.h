@@ -20,6 +20,7 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -86,12 +87,12 @@ public:
     {
         // clang-format off
         static const RpcSpec rpcSpec = {
-            {"account", validation::Required{}, validation::AccountValidator},
-            {"destination_account", validation::Type<std::string>{},validation::AccountValidator},
-            {"ledger_hash", validation::Uint256HexStringValidator},
-            {"limit", validation::Type<uint32_t>{},validation::Between{10,400}},
-            {"ledger_index", validation::LedgerIndexValidator},
-            {"marker", validation::MarkerValidator}
+            {JS(account), validation::Required{}, validation::AccountValidator},
+            {JS(destination_account), validation::Type<std::string>{},validation::AccountValidator},
+            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(limit), validation::Type<uint32_t>{},validation::Between{10,400}},
+            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(marker), validation::MarkerValidator}
         };
         // clang-format on
 
