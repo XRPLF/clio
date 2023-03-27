@@ -17,7 +17,7 @@ jobs:
 
   build_clio:
     name: Build Clio
-    runs-on: [self-hosted, Linux, heavy]
+    runs-on: [self-hosted, heavy]
     needs: lint
     strategy:
       fail-fast: false
@@ -190,7 +190,20 @@ jobs:
           echo ${{ github.event.number }} > ./UnitTestCoverage/NR
           cp clio/build/clio_tests-gcc-cov/report.html ./UnitTestCoverage/report.html
           cp code-coverage-results.md ./UnitTestCoverage/out.md
-      - uses: actions/upload-artifact@v2
+          cat code-coverage-results.md > $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: clio/build/clio_tests-gcc-cov/out.xml
+
+      - uses: actions/upload-artifact@v3
         with:
           name: UnitTestCoverage
           path: UnitTestCoverage/
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: code_coverage_report
+          path: clio/build/clio_tests-gcc-cov/out.xml
+
