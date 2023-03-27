@@ -39,6 +39,7 @@ public:
         std::string ledgerHash;
         uint32_t ledgerIndex;
         std::vector<std::string> problems;
+        // TODO: use better type than json
         std::optional<boost::json::array> transactions;
         bool validated = true;
     };

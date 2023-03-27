@@ -74,7 +74,7 @@ NoRippleCheckHandler::process(
         return tx;
     };
 
-    if (bDefaultRipple & !input.roleGateway)
+    if (bDefaultRipple && !input.roleGateway)
     {
         output.problems.push_back(
             "You appear to have set your default ripple flag even though "
@@ -82,7 +82,7 @@ NoRippleCheckHandler::process(
             "are not a gateway. This is not recommended unless you are "
             "experimenting");
     }
-    else if (input.roleGateway & !bDefaultRipple)
+    else if (input.roleGateway && !bDefaultRipple)
     {
         output.problems.push_back(
             "You should immediately set your default ripple flag");
@@ -114,12 +114,12 @@ NoRippleCheckHandler::process(
 
                 std::string problem;
                 bool needFix = false;
-                if (bNoRipple & input.roleGateway)
+                if (bNoRipple && input.roleGateway)
                 {
                     problem = "You should clear the no ripple flag on your ";
                     needFix = true;
                 }
-                else if (!bNoRipple & !input.roleGateway)
+                else if (!bNoRipple && !input.roleGateway)
                 {
                     problem =
                         "You should probably set the no ripple flag on "
@@ -171,30 +171,30 @@ tag_invoke(
 {
     auto const& jsonObject = jv.as_object();
     NoRippleCheckHandler::Input input;
-    input.account = jv.at(JS(account)).as_string().c_str();
-    input.roleGateway = jv.at(JS(role)).as_string() == "gateway";
+    input.account = jsonObject.at(JS(account)).as_string().c_str();
+    input.roleGateway = jsonObject.at(JS(role)).as_string() == "gateway";
     if (jsonObject.contains(JS(limit)))
     {
-        input.limit = jv.at(JS(limit)).as_int64();
+        input.limit = jsonObject.at(JS(limit)).as_int64();
     }
     if (jsonObject.contains(JS(transactions)))
     {
-        input.transactions = jv.at(JS(transactions)).as_bool();
+        input.transactions = jsonObject.at(JS(transactions)).as_bool();
     }
     if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
     }
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
 
