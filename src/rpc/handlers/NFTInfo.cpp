@@ -54,8 +54,7 @@ doNFTInfo(Context const& context)
     response[JS(uri)] = ripple::strHex(dbResponse->uri);
 
     response[JS(flags)] = ripple::nft::getFlags(dbResponse->tokenID);
-    response["transfer_rate"] =
-        ripple::nft::getTransferFee(dbResponse->tokenID);
+    response["transfer_fee"] = ripple::nft::getTransferFee(dbResponse->tokenID);
     response[JS(issuer)] =
         ripple::toBase58(ripple::nft::getIssuer(dbResponse->tokenID));
     response["nft_taxon"] =
