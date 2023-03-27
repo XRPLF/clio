@@ -39,10 +39,7 @@ public:
         std::string owner;
         bool isBurned;
         uint32_t flags;
-        uint32_t
-            transferFee;  // TODO: documented as 'transfer_fee' atm. but should
-                          // be 'transfer_rate' now.
-                          // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
+        uint32_t transferFee;
         std::string issuer;
         uint32_t taxon;
         uint32_t

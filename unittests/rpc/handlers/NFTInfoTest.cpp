@@ -255,7 +255,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
     // fetch nft return emtpy
     ON_CALL(*rawBackendPtr, fetchNFT)
         .WillByDefault(Return(std::optional<NFT>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _))
+        .Times(1);
     auto const input = json::parse(fmt::format(
         R"({{
             "nft_id": "{}",
@@ -282,7 +283,7 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "is_burned": false,
         "flags": 1,
-        "transfer_rate": 0,
+        "transfer_fee": 0,
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
         "nft_serial": 4,
@@ -302,7 +303,8 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
     auto const nft =
         std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq));
     ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -326,7 +328,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "is_burned": true,
         "flags": 1,
-        "transfer_rate": 0,
+        "transfer_fee": 0,
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
         "nft_serial": 4,
@@ -345,7 +347,8 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
     auto const nft = std::make_optional<NFT>(CreateNFT(
         NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{'u', 'r', 'i'}, true));
     ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -369,7 +372,7 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "is_burned": false,
         "flags": 1,
-        "transfer_rate": 0,
+        "transfer_fee": 0,
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
         "nft_serial": 4,
@@ -389,7 +392,8 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
     auto const nft = std::make_optional<NFT>(
         CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{}));
     ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -413,7 +417,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "is_burned": false,
         "flags": 8,
-        "transfer_rate": 5000,
+        "transfer_fee": 5000,
         "issuer": "rnX4gsB86NNrGV8xHcJ5hbR2aKtSetbuwg",
         "nft_taxon": 7826,
         "nft_serial": 34,
@@ -433,7 +437,8 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
     auto const nft =
         std::make_optional<NFT>(CreateNFT(NFTID2, ACCOUNT, ledgerInfo.seq));
     ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID2}, 30, _))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
