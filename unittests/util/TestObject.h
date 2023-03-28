@@ -70,6 +70,13 @@ CreatePaymentTransactionObject(
     int fee,
     uint32_t seq);
 
+[[nodiscard]] ripple::STObject
+CreatePaymentTransactionMetaObject(
+    std::string_view accountId1,
+    std::string_view accountId2,
+    int finalBalance1,
+    int finalBalance2);
+
 /*
  * Create an account root ledger object
  */

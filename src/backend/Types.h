@@ -70,6 +70,8 @@ struct TransactionsCursor
 {
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
+    bool
+    operator==(TransactionsCursor const& other) const = default;
 };
 
 struct TransactionsAndCursor
