@@ -25,6 +25,7 @@
 #include <rpc/common/Validators.h>
 
 #include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -412,4 +413,22 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     err = spec.validate(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "malformedCurrency");
+}
+
+TEST_F(RPCBaseTest, IssuerValidator)
+{
+    auto const spec = RpcSpec{{"issuer", IssuerValidator}};
+    auto passingInput =
+        json::parse(R"({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "issuer": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "issuerNotString");
+
+    failingInput = json::parse(
+        fmt::format(R"({{ "issuer": "{}"}})", toBase58(ripple::noAccount())));
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
 }
