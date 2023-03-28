@@ -138,8 +138,7 @@ AccountTxHandler::process(
         response.transactions.push_back(obj);
     }
 
-    if (input.limit)
-        response.limit = *input.limit;
+    response.limit = input.limit;
     response.account = input.account;
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
