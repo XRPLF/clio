@@ -71,9 +71,9 @@ tag_invoke(
     BookOffersHandler::Output const& output)
 {
     jv = boost::json::object{
-        {"ledger_hash", output.ledgerHash},
-        {"ledger_index", output.ledgerIndex},
-        {"offers", output.offers},
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(offers), output.offers},
     };
 }
 
@@ -86,46 +86,54 @@ tag_invoke(
     auto const& jsonObject = jv.as_object();
     ripple::to_currency(
         input.getsCurrency,
-        jv.at("taker_gets").as_object().at("currency").as_string().c_str());
+        jv.at(JS(taker_gets)).as_object().at(JS(currency)).as_string().c_str());
     ripple::to_currency(
         input.paysCurrency,
-        jv.at("taker_pays").as_object().at("currency").as_string().c_str());
-    if (jv.at("taker_gets").as_object().contains("issuer"))
+        jv.at(JS(taker_pays)).as_object().at(JS(currency)).as_string().c_str());
+    if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer)))
     {
         ripple::to_issuer(
             input.getsID,
-            jv.at("taker_gets").as_object().at("issuer").as_string().c_str());
+            jv.at(JS(taker_gets))
+                .as_object()
+                .at(JS(issuer))
+                .as_string()
+                .c_str());
     }
-    if (jv.at("taker_pays").as_object().contains("issuer"))
+    if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer)))
     {
         ripple::to_issuer(
             input.paysID,
-            jv.at("taker_pays").as_object().at("issuer").as_string().c_str());
+            jv.at(JS(taker_pays))
+                .as_object()
+                .at(JS(issuer))
+                .as_string()
+                .c_str());
     }
-    if (jsonObject.contains("ledger_hash"))
+    if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jv.at("ledger_hash").as_string().c_str();
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
     }
-    if (jsonObject.contains("ledger_index"))
+    if (jsonObject.contains(JS(ledger_index)))
     {
-        if (!jsonObject.at("ledger_index").is_string())
+        if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jv.at("ledger_index").as_int64();
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         }
-        else if (jsonObject.at("ledger_index").as_string() != "validated")
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jv.at("ledger_index").as_string().c_str());
+                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
-    if (jsonObject.contains("taker"))
+    if (jsonObject.contains(JS(taker)))
     {
         input.taker =
-            RPC::accountFromStringStrict(jv.at("taker").as_string().c_str());
+            RPC::accountFromStringStrict(jv.at(JS(taker)).as_string().c_str());
     }
-    if (jsonObject.contains("limit"))
+    if (jsonObject.contains(JS(limit)))
     {
-        input.limit = jv.at("limit").as_int64();
+        input.limit = jv.at(JS(limit)).as_int64();
     }
 
     return input;

@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
 #include <rpc/ngHandlers/GatewayBalances.h>
 
 namespace RPCng {
@@ -154,7 +153,7 @@ tag_invoke(
         {
             obligations[ripple::to_string(k)] = v.getText();
         }
-        obj["obligations"] = std::move(obligations);
+        obj[JS(obligations)] = std::move(obligations);
     }
 
     auto const toJson =
@@ -181,17 +180,17 @@ tag_invoke(
         };
 
     if (auto balances = toJson(output.hotBalances); balances.size())
-        obj["balances"] = balances;
+        obj[JS(balances)] = balances;
 
     // we don't have frozen_balances field in the
     // document:https://xrpl.org/gateway_balances.html#gateway_balances
     if (auto balances = toJson(output.frozenBalances); balances.size())
-        obj["frozen_balances"] = balances;
+        obj[JS(frozen_balances)] = balances;
     if (auto balances = toJson(output.assets); balances.size())
-        obj["assets"] = balances;
-    obj["account"] = output.accountID;
-    obj["ledger_index"] = output.ledgerIndex;
-    obj["ledger_hash"] = output.ledgerHash;
+        obj[JS(assets)] = balances;
+    obj[JS(account)] = output.accountID;
+    obj[JS(ledger_index)] = output.ledgerIndex;
+    obj[JS(ledger_hash)] = output.ledgerHash;
     if (output.overflow)
         obj["overflow"] = true;
     jv = std::move(obj);
@@ -204,33 +203,33 @@ tag_invoke(
 {
     auto const& jsonObject = jv.as_object();
     GatewayBalancesHandler::Input input;
-    input.account = jv.at("account").as_string().c_str();
-    if (jsonObject.contains("ledger_hash"))
+    input.account = jv.at(JS(account)).as_string().c_str();
+    if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jv.at("ledger_hash").as_string().c_str();
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
     }
-    if (jsonObject.contains("ledger_index"))
+    if (jsonObject.contains(JS(ledger_index)))
     {
-        if (!jsonObject.at("ledger_index").is_string())
+        if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jv.at("ledger_index").as_int64();
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         }
-        else if (jsonObject.at("ledger_index").as_string() != "validated")
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jv.at("ledger_index").as_string().c_str());
+                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
-    if (jsonObject.contains("hotwallet"))
+    if (jsonObject.contains(JS(hotwallet)))
     {
-        if (jsonObject.at("hotwallet").is_string())
+        if (jsonObject.at(JS(hotwallet)).is_string())
         {
             input.hotWallets.insert(*RPC::accountFromStringStrict(
-                jv.at("hotwallet").as_string().c_str()));
+                jv.at(JS(hotwallet)).as_string().c_str()));
         }
         else
         {
-            auto const& hotWallets = jv.at("hotwallet").as_array();
+            auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
             std::transform(
                 hotWallets.begin(),
                 hotWallets.end(),
