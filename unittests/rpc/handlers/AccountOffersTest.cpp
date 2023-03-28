@@ -160,7 +160,7 @@ TEST_P(AccountOfferParameterTest, InvalidParams)
     });
 }
 
-TEST_F(RPCAccountOffersHandlerTest, LedgerNotFound)
+TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -177,6 +177,62 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFound)
         }})",
         ACCOUNT,
         LEDGERHASH));
+    auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
+{
+    auto constexpr seq = 12;
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // return empty ledgerinfo
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "ledger_index":"{}"
+        }})",
+        ACCOUNT,
+        seq));
+    auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
+{
+    auto constexpr seq = 12;
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // return empty ledgerinfo
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "ledger_index":{}
+        }})",
+        ACCOUNT,
+        seq));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
         auto const output = handler.process(input);
@@ -410,5 +466,48 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 19);
         EXPECT_FALSE(output->as_object().contains("marker"));
+    });
+}
+
+TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
+{
+    auto constexpr ledgerSeq = 30;
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);         // min
+    mockBackendPtr->updateRange(ledgerSeq);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
+        .WillByDefault(Return(ledgerinfo));
+    auto const accountKk =
+        ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const startPage = 2;
+    auto const ownerDirKk =
+        ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    auto const hintIndex = ripple::keylet::page(ownerDirKk, startPage).key;
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(hintIndex, ledgerSeq, _))
+        .WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "marker":"{},{}"
+        }})",
+        ACCOUNT,
+        INDEX1,
+        startPage));
+    auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker");
     });
 }

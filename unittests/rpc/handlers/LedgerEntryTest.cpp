@@ -1047,5 +1047,89 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
             INDEX1));
         auto const output = handler.process(req, yield);
         ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "unexpectedLedgerType");
+        std::cout << err << std::endl;
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);  // min
+    mockBackendPtr->updateRange(RANGEMAX);  // max
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(std::nullopt));
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "check": "{}",
+                "ledger_index": {}
+            }})",
+            INDEX1,
+            RANGEMAX));
+        auto const output = handler.process(req, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);  // min
+    mockBackendPtr->updateRange(RANGEMAX);  // max
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(std::nullopt));
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "check": "{}",
+                "ledger_index": "{}"
+            }})",
+            INDEX1,
+            RANGEMAX));
+        auto const output = handler.process(req, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);  // min
+    mockBackendPtr->updateRange(RANGEMAX);  // max
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+        .WillByDefault(Return(std::nullopt));
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "check": "{}",
+                "ledger_hash": "{}"
+            }})",
+            INDEX1,
+            LEDGERHASH));
+        auto const output = handler.process(req, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
 }

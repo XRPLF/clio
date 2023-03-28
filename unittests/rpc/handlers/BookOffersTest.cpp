@@ -1220,7 +1220,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersNormalPathTest::NameGenerator());
 
 // ledger not exist
-TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
+TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -1233,6 +1233,40 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     auto const static input = boost::json::parse(fmt::format(
         R"({{
             "ledger_index": 30,
+            "taker_gets": 
+            {{
+                "currency": "XRP"
+            }},
+            "taker_pays": 
+            {{
+                "currency": "USD",
+                "issuer": "{}"
+            }}
+        }})",
+        ACCOUNT));
+    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const output = handler.process(input, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // return empty ledgerinfo
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "ledger_index": "30",
             "taker_gets": 
             {{
                 "currency": "XRP"
