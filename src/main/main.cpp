@@ -69,7 +69,6 @@ doMigration(
         CassResult const* result = cass_future_get_result(fut);
         if (result == nullptr)
         {
-            cass_result_free(result);
             cass_future_free(fut);
             cass_statement_free(nftTxQuery);
             throw std::runtime_error(
