@@ -20,6 +20,7 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -102,81 +103,83 @@ public:
                 }};
 
         static const RpcSpec rpcSpec = {
-            {"binary", validation::Type<bool>{}},
-            {"ledger_hash", validation::Uint256HexStringValidator},
-            {"ledger_index", validation::LedgerIndexValidator},
-            {"index", validation::Uint256HexStringValidator},
-            {"account_root", validation::AccountBase58Validator},
-            {"check", validation::Uint256HexStringValidator},
-            {"deposit_preauth",
+            {JS(binary), validation::Type<bool>{}},
+            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(index), validation::Uint256HexStringValidator},
+            {JS(account_root), validation::AccountBase58Validator},
+            {JS(check), validation::Uint256HexStringValidator},
+            {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
              validation::IfType<std::string>{
                  validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {"owner",
+                     {JS(owner),
                       validation::Required{},
                       validation::AccountBase58Validator},
-                     {"authorized",
+                     {JS(authorized),
                       validation::Required{},
                       validation::AccountBase58Validator},
                  },
              }},
-            {"directory",
+            {JS(directory),
              validation::Type<std::string, boost::json::object>{},
              validation::IfType<std::string>{
                  validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{validation::Section{
-                 {"owner", validation::AccountBase58Validator},
-                 {"dir_root", validation::Uint256HexStringValidator},
-                 {"sub_index", validation::Type<uint32_t>{}}}}},
-            {"escrow",
+                 {JS(owner), validation::AccountBase58Validator},
+                 {JS(dir_root), validation::Uint256HexStringValidator},
+                 {JS(sub_index), validation::Type<uint32_t>{}}}}},
+            {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
              validation::IfType<std::string>{
                  validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {"owner",
+                     {JS(owner),
                       validation::Required{},
                       validation::AccountBase58Validator},
-                     {"seq",
+                     {JS(seq),
                       validation::Required{},
                       validation::Type<uint32_t>{}},
                  },
              }},
-            {"offer",
+            {JS(offer),
              validation::Type<std::string, boost::json::object>{},
              validation::IfType<std::string>{
                  validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {"account",
+                     {JS(account),
                       validation::Required{},
                       validation::AccountBase58Validator},
-                     {"seq",
+                     {JS(seq),
                       validation::Required{},
                       validation::Type<uint32_t>{}},
                  },
              }},
-            {"payment_channel", validation::Uint256HexStringValidator},
-            {"ripple_state",
+            {JS(payment_channel), validation::Uint256HexStringValidator},
+            {JS(ripple_state),
              validation::Type<boost::json::object>{},
              validation::Section{
-                 {"accounts", validation::Required{}, rippleStateAccountsCheck},
-                 {"currency",
+                 {JS(accounts),
+                  validation::Required{},
+                  rippleStateAccountsCheck},
+                 {JS(currency),
                   validation::Required{},
                   validation::CurrencyValidator},
              }},
-            {"ticket",
+            {JS(ticket),
              validation::Type<std::string, boost::json::object>{},
              validation::IfType<std::string>{
                  validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {"account",
+                     {JS(account),
                       validation::Required{},
                       validation::AccountBase58Validator},
-                     {"ticket_seq",
+                     {JS(ticket_seq),
                       validation::Required{},
                       validation::Type<uint32_t>{}},
                  },

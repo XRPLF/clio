@@ -20,6 +20,7 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -61,11 +62,11 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"tx_hash",
+            {JS(tx_hash),
              validation::Required{},
              validation::Uint256HexStringValidator},
-            {"ledger_hash", validation::Uint256HexStringValidator},
-            {"ledger_index", validation::LedgerIndexValidator}};
+            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(ledger_index), validation::LedgerIndexValidator}};
         return rpcSpec;
     }
 

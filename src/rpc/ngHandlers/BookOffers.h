@@ -66,38 +66,38 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"taker_gets",
+            {JS(taker_gets),
              validation::Required{},
              validation::Type<boost::json::object>{},
              validation::Section{
-                 {"currency",
+                 {JS(currency),
                   validation::Required{},
                   validation::WithCustomError{
                       validation::CurrencyValidator,
                       RPC::Status(RPC::RippledError::rpcDST_AMT_MALFORMED)}},
-                 {"issuer",
+                 {JS(issuer),
                   validation::WithCustomError{
                       validation::IssuerValidator,
                       RPC::Status(RPC::RippledError::rpcDST_ISR_MALFORMED)}}}},
-            {"taker_pays",
+            {JS(taker_pays),
              validation::Required{},
              validation::Type<boost::json::object>{},
              validation::Section{
-                 {"currency",
+                 {JS(currency),
                   validation::Required{},
                   validation::WithCustomError{
                       validation::CurrencyValidator,
                       RPC::Status(RPC::RippledError::rpcSRC_CUR_MALFORMED)}},
-                 {"issuer",
+                 {JS(issuer),
                   validation::WithCustomError{
                       validation::IssuerValidator,
                       RPC::Status(RPC::RippledError::rpcSRC_ISR_MALFORMED)}}}},
-            {"taker", validation::AccountValidator},
-            {"limit",
+            {JS(taker), validation::AccountValidator},
+            {JS(limit),
              validation::Type<uint32_t>{},
              validation::Between{1, 100}},
-            {"ledger_hash", validation::Uint256HexStringValidator},
-            {"ledger_index", validation::LedgerIndexValidator}};
+            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(ledger_index), validation::LedgerIndexValidator}};
         return rpcSpec;
     }
 

@@ -381,7 +381,7 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
             {
                 "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "amount":"100",
                 "balance":"10",
                 "settle_delay":32,
@@ -391,7 +391,7 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
             {
                 "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "amount":"100",
                 "balance":"10",
                 "settle_delay":32,
@@ -634,7 +634,7 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
             {
                 "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "amount":"100",
                 "balance":"10",
                 "settle_delay":32,
@@ -648,7 +648,7 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
             {
                 "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "account_destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "amount":"100",
                 "balance":"10",
                 "settle_delay":32,
