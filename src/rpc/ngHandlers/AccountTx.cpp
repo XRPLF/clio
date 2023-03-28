@@ -91,7 +91,7 @@ AccountTxHandler::process(
             cursor = {maxIndex, INT32_MAX};
     }
     auto constexpr limitDefault = 50;
-    auto const limit = input.limit ? *input.limit : limitDefault;
+    auto const limit = input.limit.value_or(limitDefault);
     auto const accountID = RPC::accountFromStringStrict(input.account);
     auto const [blobs, retCursor] = sharedPtrBackend_->fetchAccountTransactions(
         *accountID, limit, input.forward, cursor, yield);
@@ -120,8 +120,8 @@ AccountTxHandler::process(
         if (!input.binary)
         {
             auto [txn, meta] = RPC::toExpandedJson(txnPlusMeta);
-            obj[JS(meta)] = meta;
-            obj[JS(tx)] = txn;
+            obj[JS(meta)] = std::move(meta);
+            obj[JS(tx)] = std::move(txn);
             obj[JS(tx)].as_object()[JS(ledger_index)] =
                 txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
@@ -159,10 +159,18 @@ tag_invoke(
         {JS(transactions), output.transactions},
         {JS(validated), output.validated}};
     if (output.marker)
-        jv.as_object()[JS(marker)] = {
-            {JS(ledger), output.marker->ledger}, {JS(seq), output.marker->seq}};
+        jv.as_object()[JS(marker)] = boost::json::value_from(*(output.marker));
     if (output.limit)
         jv.as_object()[JS(limit)] = *(output.limit);
+}
+
+void
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountTxHandler::Marker const& marker)
+{
+    jv = {{JS(ledger), marker.ledger}, {JS(seq), marker.seq}};
 }
 
 AccountTxHandler::Input
@@ -172,50 +180,50 @@ tag_invoke(
 {
     auto const& jsonObject = jv.as_object();
     AccountTxHandler::Input input;
-    input.account = jv.at(JS(account)).as_string().c_str();
+    input.account = jsonObject.at(JS(account)).as_string().c_str();
     if (jsonObject.contains(JS(ledger_index_min)) &&
-        jv.at(JS(ledger_index_min)).as_int64() != -1)
+        jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
     {
-        input.ledgerIndexMin = jv.at(JS(ledger_index_min)).as_int64();
+        input.ledgerIndexMin = jsonObject.at(JS(ledger_index_min)).as_int64();
     }
     if (jsonObject.contains(JS(ledger_index_max)) &&
-        jv.at(JS(ledger_index_max)).as_int64() != -1)
+        jsonObject.at(JS(ledger_index_max)).as_int64() != -1)
     {
-        input.ledgerIndexMax = jv.at(JS(ledger_index_max)).as_int64();
+        input.ledgerIndexMax = jsonObject.at(JS(ledger_index_max)).as_int64();
     }
     if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
     }
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
     if (jsonObject.contains(JS(binary)))
     {
-        input.binary = jv.at(JS(binary)).as_bool();
+        input.binary = jsonObject.at(JS(binary)).as_bool();
     }
     if (jsonObject.contains(JS(forward)))
     {
-        input.forward = jv.at(JS(forward)).as_bool();
+        input.forward = jsonObject.at(JS(forward)).as_bool();
     }
     if (jsonObject.contains(JS(limit)))
     {
-        input.limit = jv.at(JS(limit)).as_int64();
+        input.limit = jsonObject.at(JS(limit)).as_int64();
     }
     if (jsonObject.contains(JS(marker)))
     {
         input.marker = AccountTxHandler::Marker{
-            jv.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jv.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+            jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
+            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
     }
     return input;
 }

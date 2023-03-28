@@ -155,11 +155,11 @@ generateTestValuesForParametersTest()
             "MarkerSeqNotInt",
             R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                 "marker": 
-                    {
-                        "ledger": "string",
-                        "seq": 1
-                    }
+                "marker": 
+                {
+                    "ledger": "string",
+                    "seq": 1
+                }
             })",
             "invalidParams",
             "Invalid parameters."},

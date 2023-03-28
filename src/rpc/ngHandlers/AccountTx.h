@@ -114,6 +114,12 @@ tag_invoke(
     boost::json::value& jv,
     AccountTxHandler::Output const& output);
 
+void
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountTxHandler::Marker const& marker);
+
 AccountTxHandler::Input
 tag_invoke(
     boost::json::value_to_tag<AccountTxHandler::Input>,
