@@ -31,6 +31,7 @@ doNFTWrite(
 void
 doMigration(
     Backend::CassandraBackend& backend,
+    boost::asio::steady_timer& timer,
     boost::asio::yield_context yield)
 {
     BOOST_LOG_TRIVIAL(info) << "Beginning migration";
@@ -60,6 +61,8 @@ doMigration(
     cass_statement_set_paging_size(nftTxQuery, 1000);
     cass_bool_t morePages = cass_true;
 
+    std::uint32_t retries = 0;
+
     // For all NFT txs, paginated in groups of 1000...
     while (morePages)
     {
@@ -70,10 +73,25 @@ doMigration(
         if (result == nullptr)
         {
             cass_future_free(fut);
-            cass_statement_free(nftTxQuery);
-            throw std::runtime_error(
-                "Unexpected empty result from nf_token_transactions");
+
+            if (retries > 5)
+            {
+                cass_statement_free(nftTxQuery);
+                throw std::runtime_error(
+                    "Already retried 5 times on same page. Aborting");
+            }
+
+            BOOST_LOG_TRIVIAL(info)
+                << "Unexepcted empty result from nf_token_transactions, "
+                   "waiting for a minute and trying again";
+            timer.expires_after(std::chrono::seconds(60));
+            timer.wait();
+            BOOST_LOG_TRIVIAL(info) << "Done waiting";
+            retries++;
+            continue;
         }
+
+        retries = 0;
 
         // For each tx in page...
         CassIterator* txPageIterator = cass_iterator_from_result(result);
@@ -216,10 +234,11 @@ main(int argc, char* argv[])
     boost::asio::io_context ioc;
     auto backend = Backend::make_Backend(ioc, config);
 
+    boost::asio::steady_timer timer(ioc);
     auto work = boost::asio::make_work_guard(ioc);
     boost::asio::spawn(
-        ioc, [&backend, &work](boost::asio::yield_context yield) {
-            doMigration(*backend, yield);
+        ioc, [&backend, &work, &timer](boost::asio::yield_context yield) {
+            doMigration(*backend, timer, yield);
             work.reset();
         });
 
