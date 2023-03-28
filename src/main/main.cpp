@@ -69,8 +69,8 @@ doMigration(
         CassResult const* result = cass_future_get_result(fut);
         if (result == nullptr)
         {
-            cass_future_free(fut);
             cass_result_free(result);
+            cass_future_free(fut);
             cass_statement_free(nftTxQuery);
             throw std::runtime_error(
                 "Unexpected empty result from nf_token_transactions");
@@ -89,10 +89,10 @@ doMigration(
                 &bufSize);
             if (rc != CASS_OK)
             {
-                cass_future_free(fut);
-                cass_result_free(result);
-                cass_statement_free(nftTxQuery);
                 cass_iterator_free(txPageIterator);
+                cass_result_free(result);
+                cass_future_free(fut);
+                cass_statement_free(nftTxQuery);
                 throw std::runtime_error(
                     "Could not retrieve hash from nf_token_transactions");
             }
@@ -101,10 +101,10 @@ doMigration(
             auto const tx = backend.fetchTransaction(txHash, yield);
             if (!tx)
             {
-                cass_future_free(fut);
-                cass_result_free(result);
-                cass_statement_free(nftTxQuery);
                 cass_iterator_free(txPageIterator);
+                cass_result_free(result);
+                cass_future_free(fut);
+                cass_statement_free(nftTxQuery);
                 std::stringstream ss;
                 ss << "Could not fetch tx with hash "
                    << ripple::to_string(txHash);
@@ -130,9 +130,9 @@ doMigration(
         morePages = cass_result_has_more_pages(result);
         if (morePages)
             cass_statement_set_paging_state(nftTxQuery, result);
-        cass_future_free(fut);
-        cass_result_free(result);
         cass_iterator_free(txPageIterator);
+        cass_result_free(result);
+        cass_future_free(fut);
     }
 
     cass_statement_free(nftTxQuery);
@@ -175,16 +175,12 @@ doMigration(
     CassFuture* fut =
         cass_session_execute(backend.cautionGetSession(), issuerDropTableQuery);
     CassError rc = cass_future_error_code(fut);
-    cass_statement_free(issuerDropTableQuery);
     cass_future_free(fut);
+    cass_statement_free(issuerDropTableQuery);
     if (rc != CASS_OK)
-    {
-        std::stringstream ss;
-        ss << "Unable to drop old table issuer_nf_tokens. Check data for "
-              "consistency, drop issuer_nf_tokens yourself, and write the "
-              "migration receipt if necessary";
-        throw std::runtime_error(ss.str());
-    }
+        BOOST_LOG_TRIVIAL(warning)
+            << "Could not drop old issuer_nf_tokens table. If it still exists, "
+               "you should drop it yourself";
 
     backend.sync();
 
