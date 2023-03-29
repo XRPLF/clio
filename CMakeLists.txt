@@ -40,6 +40,15 @@ target_sources(clio PRIVATE
   src/backend/BackendInterface.cpp
   src/backend/CassandraBackend.cpp
   src/backend/SimpleCache.cpp
+  ## NextGen Backend
+  src/backend/cassandra/impl/Future.cpp
+  src/backend/cassandra/impl/Cluster.cpp
+  src/backend/cassandra/impl/Batch.cpp
+  src/backend/cassandra/impl/Result.cpp
+  src/backend/cassandra/impl/Tuple.cpp
+  src/backend/cassandra/impl/SslContext.cpp
+  src/backend/cassandra/Handle.cpp
+  src/backend/cassandra/SettingsProvider.cpp
   ## ETL
   src/etl/ETLSource.cpp
   src/etl/ProbingETLSource.cpp
@@ -126,6 +135,7 @@ if(BUILD_TESTS)
     unittests/SubscriptionTest.cpp
     unittests/SubscriptionManagerTest.cpp
     unittests/util/TestObject.cpp
+    # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTest.cpp
@@ -146,8 +156,19 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/AccountTxTest.cpp
     unittests/rpc/handlers/AccountOffersTest.cpp
     unittests/rpc/handlers/TransactionEntryTest.cpp
-    unittests/rpc/handlers/NFTBuyOffersTest.cpp)
+    unittests/rpc/handlers/NFTBuyOffersTest.cpp
+    unittests/rpc/handlers/NFTInfoTest.cpp
+    # Backend
+    unittests/backend/cassandra/BaseTests.cpp
+    unittests/backend/cassandra/BackendTests.cpp
+    unittests/backend/cassandra/RetryPolicyTests.cpp
+    unittests/backend/cassandra/SettingsProviderTests.cpp
+    unittests/backend/cassandra/ExecutionStrategyTests.cpp
+    unittests/backend/cassandra/AsyncExecutorTests.cpp)
   include(CMake/deps/gtest.cmake)
+
+  # test for dwarf5 bug on ci 
+  target_compile_options(clio PUBLIC -gdwarf-4)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
   if(CODE_COVERAGE)

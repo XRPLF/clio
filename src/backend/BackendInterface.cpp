@@ -33,9 +33,12 @@ namespace Backend {
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
+    gLog.debug() << "Want finish writes for " << ledgerSequence;
     auto commitRes = doFinishWrites();
     if (commitRes)
     {
+        gLog.debug() << "Successfully commited. Updating range now to "
+                     << ledgerSequence;
         updateRange(ledgerSequence);
     }
     return commitRes;

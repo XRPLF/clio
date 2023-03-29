@@ -182,12 +182,8 @@ protected:
      */
 
 public:
-    BackendInterface(clio::Config const& config)
-    {
-    }
-    virtual ~BackendInterface()
-    {
-    }
+    BackendInterface() = default;
+    virtual ~BackendInterface() = default;
 
     /*! @brief LEDGER METHODS */
 public:

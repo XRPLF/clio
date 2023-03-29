@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
+#include <backend/CassandraBackendNew.h>
 #include <config/Config.h>
 #include <log/Logger.h>
 
@@ -42,6 +43,13 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
         auto cfg = config.section("database." + type);
         auto ttl = config.valueOr<uint32_t>("online_delete", 0) * 4;
         backend = std::make_shared<CassandraBackend>(ioc, cfg, ttl);
+    }
+    else if (boost::iequals(type, "cassandra-new"))
+    {
+        auto cfg = config.section("database." + type);
+        auto ttl = config.valueOr<uint16_t>("online_delete", 0) * 4;
+        backend = std::make_shared<Backend::Cassandra::CassandraBackend>(
+            Backend::Cassandra::SettingsProvider{cfg, ttl});
     }
 
     if (!backend)

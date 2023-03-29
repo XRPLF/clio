@@ -138,8 +138,7 @@ Unexpected(E (&)[N]) -> Unexpected<E const*>;
 
 // Definition of Expected.  All of the machinery comes from boost::result.
 template <class T, class E>
-class [[nodiscard]] Expected
-    : private boost::outcome_v2::result<T, E, detail::throw_policy>
+class Expected : private boost::outcome_v2::result<T, E, detail::throw_policy>
 {
     using Base = boost::outcome_v2::result<T, E, detail::throw_policy>;
 

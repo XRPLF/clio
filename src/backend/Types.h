@@ -58,6 +58,29 @@ struct TransactionAndMetadata
     Blob metadata;
     std::uint32_t ledgerSequence;
     std::uint32_t date;
+
+    TransactionAndMetadata() = default;
+    TransactionAndMetadata(
+        Blob const& transaction,
+        Blob const& metadata,
+        std::uint32_t ledgerSequence,
+        std::uint32_t date)
+        : transaction{transaction}
+        , metadata{metadata}
+        , ledgerSequence{ledgerSequence}
+        , date{date}
+    {
+    }
+
+    TransactionAndMetadata(
+        std::tuple<Blob, Blob, std::uint32_t, std::uint32_t> data)
+        : transaction{std::get<0>(data)}
+        , metadata{std::get<1>(data)}
+        , ledgerSequence{std::get<2>(data)}
+        , date{std::get<3>(data)}
+    {
+    }
+
     bool
     operator==(const TransactionAndMetadata& other) const
     {
@@ -70,8 +93,31 @@ struct TransactionsCursor
 {
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
+
+    TransactionsCursor() = default;
+    TransactionsCursor(
+        std::uint32_t ledgerSequence,
+        std::uint32_t transactionIndex)
+        : ledgerSequence{ledgerSequence}, transactionIndex{transactionIndex}
+    {
+    }
+
+    TransactionsCursor(std::tuple<std::uint32_t, std::uint32_t> data)
+        : ledgerSequence{std::get<0>(data)}, transactionIndex{std::get<1>(data)}
+    {
+    }
+
+    TransactionsCursor&
+    operator=(TransactionsCursor const&) = default;
+
     bool
     operator==(TransactionsCursor const& other) const = default;
+
+    [[nodiscard]] std::tuple<std::uint32_t, std::uint32_t>
+    asTuple() const
+    {
+        return std::make_tuple(ledgerSequence, transactionIndex);
+    }
 };
 
 struct TransactionsAndCursor
@@ -87,6 +133,28 @@ struct NFT
     ripple::AccountID owner;
     Blob uri;
     bool isBurned;
+
+    NFT() = default;
+    NFT(ripple::uint256 const& tokenID,
+        std::uint32_t ledgerSequence,
+        ripple::AccountID const& owner,
+        Blob const& uri,
+        bool isBurned)
+        : tokenID{tokenID}
+        , ledgerSequence{ledgerSequence}
+        , owner{owner}
+        , uri{uri}
+        , isBurned{isBurned}
+    {
+    }
+
+    NFT(ripple::uint256 const& tokenID,
+        std::uint32_t ledgerSequence,
+        ripple::AccountID const& owner,
+        bool isBurned)
+        : NFT(tokenID, ledgerSequence, owner, {}, isBurned)
+    {
+    }
 
     // clearly two tokens are the same if they have the same ID, but this
     // struct stores the state of a given token at a given ledger sequence, so
