@@ -17,27 +17,24 @@
 */
 //==============================================================================
 
-#pragma once
-
-#include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
-#include <rpc/ngHandlers/NFTOffersCommon.h>
+#include <rpc/ngHandlers/NFTSellOffers.h>
 
-#include <boost/asio/spawn.hpp>
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
+#include <ripple/protocol/Indexes.h>
+
+using namespace ripple;
 
 namespace RPCng {
-class NFTBuyOffersHandler : public NFTOffersHandlerBase
-{
-public:
-    NFTBuyOffersHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : NFTOffersHandlerBase(sharedPtrBackend)
-    {
-    }
 
-    Result
-    process(Input input, boost::asio::yield_context& yield) const;
-};
+NFTSellOffersHandler::Result
+NFTSellOffersHandler::process(
+    NFTSellOffersHandler::Input input,
+    boost::asio::yield_context& yield) const
+{
+    auto const tokenID = uint256{input.nftID.c_str()};
+    auto const directory = keylet::nft_sells(tokenID);
+    return commonProcess(input, tokenID, directory, yield);
+}
+
 }  // namespace RPCng

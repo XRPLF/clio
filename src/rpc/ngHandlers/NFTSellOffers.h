@@ -28,10 +28,10 @@
 #include <boost/asio/spawn.hpp>
 
 namespace RPCng {
-class NFTBuyOffersHandler : public NFTOffersHandlerBase
+class NFTSellOffersHandler : public NFTOffersHandlerBase
 {
 public:
-    NFTBuyOffersHandler(
+    NFTSellOffersHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : NFTOffersHandlerBase(sharedPtrBackend)
     {

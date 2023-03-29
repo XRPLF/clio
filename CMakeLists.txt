@@ -78,9 +78,11 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/TransactionEntry.cpp
   src/rpc/ngHandlers/NoRippleCheck.cpp
   src/rpc/ngHandlers/NFTInfo.cpp
+  src/rpc/ngHandlers/NFTOffersCommon.cpp
+  src/rpc/ngHandlers/NFTBuyOffers.cpp
+  src/rpc/ngHandlers/NFTSellOffers.cpp
   src/rpc/ngHandlers/AccountTx.cpp
   src/rpc/ngHandlers/AccountOffers.cpp
-  src/rpc/ngHandlers/NFTBuyOffers.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -156,8 +158,9 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/AccountTxTest.cpp
     unittests/rpc/handlers/AccountOffersTest.cpp
     unittests/rpc/handlers/TransactionEntryTest.cpp
-    unittests/rpc/handlers/NFTBuyOffersTest.cpp
     unittests/rpc/handlers/NFTInfoTest.cpp
+    unittests/rpc/handlers/NFTBuyOffersTest.cpp
+    unittests/rpc/handlers/NFTSellOffersTest.cpp
     # Backend
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp
