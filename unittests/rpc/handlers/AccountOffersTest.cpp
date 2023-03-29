@@ -276,27 +276,27 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
 {
     auto const expectedOutput = fmt::format(
         R"({{
-                                        "ledger_hash":"{}",
-                                        "ledger_index":30,
-                                        "validated":true,
-                                        "account":"{}",
-                                        "offers":
-                                        [
-                                            {{
-                                                "seq":0,
-                                                "flags":0,
-                                                "quality":"0.000000024999999374023",
-                                                "taker_pays":"20",
-                                                "taker_gets":
-                                                {{
-                                                    "currency":"USD",
-                                                    "issuer":"{}",
-                                                    "value":"10"
-                                                }},
-                                                "expiration":123
-                                            }}
-                                        ]
-                                    }})",
+            "ledger_hash":"{}",
+            "ledger_index":30,
+            "validated":true,
+            "account":"{}",
+            "offers":
+            [
+                {{
+                    "seq":0,
+                    "flags":0,
+                    "quality":"0.000000024999999374023",
+                    "taker_pays":"20",
+                    "taker_gets":
+                    {{
+                        "currency":"USD",
+                        "issuer":"{}",
+                        "value":"10"
+                    }},
+                    "expiration":123
+                }}
+            ]
+        }})",
         LEDGERHASH,
         ACCOUNT,
         ACCOUNT2);

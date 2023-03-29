@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
 #include <rpc/ngHandlers/AccountOffers.h>
 
 namespace RPCng {
@@ -109,13 +108,13 @@ tag_invoke(
     AccountOffersHandler::Output const& output)
 {
     jv = {
-        {"ledger_hash", output.ledgerHash},
-        {"ledger_index", output.ledgerIndex},
-        {"validated", output.validated},
-        {"account", output.account},
-        {"offers", boost::json::value_from(output.offers)}};
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(account), output.account},
+        {JS(offers), boost::json::value_from(output.offers)}};
     if (output.marker)
-        jv.as_object()["marker"] = *output.marker;
+        jv.as_object()[JS(marker)] = *output.marker;
 }
 
 void
@@ -125,10 +124,12 @@ tag_invoke(
     AccountOffersHandler::Offer const& offer)
 {
     jv = {
-        {"seq", offer.seq}, {"flags", offer.flags}, {"quality", offer.quality}};
+        {JS(seq), offer.seq},
+        {JS(flags), offer.flags},
+        {JS(quality), offer.quality}};
     auto& jsonObject = jv.as_object();
     if (offer.expiration)
-        jsonObject["expiration"] = *offer.expiration;
+        jsonObject[JS(expiration)] = *offer.expiration;
 
     auto const convertAmount = [&](const char* field,
                                    ripple::STAmount const& amount) {
@@ -139,13 +140,13 @@ tag_invoke(
         else
         {
             jsonObject[field] = {
-                {"currency", ripple::to_string(amount.getCurrency())},
-                {"issuer", ripple::to_string(amount.getIssuer())},
-                {"value", amount.getText()}};
+                {JS(currency), ripple::to_string(amount.getCurrency())},
+                {JS(issuer), ripple::to_string(amount.getIssuer())},
+                {JS(value), amount.getText()}};
         }
     };
-    convertAmount("taker_pays", offer.takerPays);
-    convertAmount("taker_gets", offer.takerGets);
+    convertAmount(JS(taker_pays), offer.takerPays);
+    convertAmount(JS(taker_gets), offer.takerGets);
 }
 
 AccountOffersHandler::Input
@@ -155,28 +156,27 @@ tag_invoke(
 {
     auto const& jsonObject = jv.as_object();
     AccountOffersHandler::Input input;
-    input.account = jsonObject.at("account").as_string().c_str();
-    if (jsonObject.contains("ledger_hash"))
+    input.account = jsonObject.at(JS(account)).as_string().c_str();
+    if (jsonObject.contains(JS(ledger_hash)))
     {
-        input.ledgerHash = jsonObject.at("ledger_hash").as_string().c_str();
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
     }
-    if (jsonObject.contains("ledger_index"))
+    if (jsonObject.contains(JS(ledger_index)))
     {
-        if (!jsonObject.at("ledger_index").is_string())
+        if (!jsonObject.at(JS(ledger_index)).is_string())
         {
-            input.ledgerIndex = jsonObject.at("ledger_index").as_int64();
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         }
-        else if (jsonObject.at("ledger_index").as_string() != "validated")
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
             input.ledgerIndex =
-                std::stoi(jsonObject.at("ledger_index").as_string().c_str());
+                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
-    if (jsonObject.contains("limit"))
-        input.limit = jsonObject.at("limit").as_int64();
-    if (jsonObject.contains("marker"))
-        input.marker = jsonObject.at("marker").as_string().c_str();
-
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jsonObject.at(JS(limit)).as_int64();
+    if (jsonObject.contains(JS(marker)))
+        input.marker = jsonObject.at(JS(marker)).as_string().c_str();
     return input;
 }
 

@@ -242,7 +242,10 @@ TEST_F(RPCBaseTest, IfTypeValidator)
                         Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
                         },
                 IfType<std::string>{Uint256HexStringValidator,}
-        },{"mix2",Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},Type<std::string,json::object>{}}};
+        },
+        {"mix2",Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+                Type<std::string,json::object>{}}
+    };
     // clang-format on
     // if json object pass
     auto passingInput =
@@ -376,10 +379,10 @@ TEST_F(RPCBaseTest, AccountValidator)
     ASSERT_TRUE(spec.validate(passingInput));
 }
 
-TEST_F(RPCBaseTest, MarkerValidator)
+TEST_F(RPCBaseTest, AccountMarkerValidator)
 {
     auto spec = RpcSpec{
-        {"marker", MarkerValidator},
+        {"marker", AccountMarkerValidator},
     };
     auto failingInput = json::parse(R"({ "marker": 256 })");
     ASSERT_FALSE(spec.validate(failingInput));

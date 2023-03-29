@@ -20,12 +20,11 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
 #include <boost/asio/spawn.hpp>
-
-#include <set>
 
 namespace RPCng {
 class AccountOffersHandler
@@ -76,11 +75,11 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"account", validation::Required{}, validation::AccountValidator},
-            {"ledger_hash", validation::Uint256HexStringValidator},
-            {"ledger_index", validation::LedgerIndexValidator},
-            {"marker", validation::MarkerValidator},
-            {"limit",
+            {JS(account), validation::Required{}, validation::AccountValidator},
+            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(marker), validation::AccountMarkerValidator},
+            {JS(limit),
              validation::Type<uint32_t>{},
              validation::Between{10, 400}}};
         return rpcSpec;

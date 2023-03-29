@@ -167,7 +167,7 @@ CustomValidator AccountBase58Validator = CustomValidator{
         return MaybeError{};
     }};
 
-CustomValidator MarkerValidator = CustomValidator{
+CustomValidator AccountMarkerValidator = CustomValidator{
     [](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {

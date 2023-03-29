@@ -96,7 +96,7 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(marker), validation::MarkerValidator},
+            {JS(marker), validation::AccountMarkerValidator},
         };
         // clang-format on
 
