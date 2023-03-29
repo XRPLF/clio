@@ -471,3 +471,19 @@ CreateNFT(
         uri,
         isBurned};
 }
+
+ripple::STObject
+CreateNFTBuyOffer(std::string_view tokenID, std::string_view account)
+{
+    ripple::STObject offer(ripple::sfLedgerEntry);
+    offer.setFieldH256(ripple::sfNFTokenID, ripple::uint256{tokenID});
+    offer.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
+    offer.setFieldU32(ripple::sfFlags, 0u);
+    offer.setFieldAmount(ripple::sfAmount, ripple::STAmount{123});
+    offer.setFieldU64(ripple::sfOwnerNode, 0ul);
+    offer.setAccountID(ripple::sfOwner, GetAccountIDWithString(account));
+    offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0u);
+    offer.setFieldU64(ripple::sfNFTokenOfferNode, 0ul);
+    return offer;
+}

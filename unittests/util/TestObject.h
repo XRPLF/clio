@@ -181,7 +181,7 @@ CreateRippleStateLedgerObject(
     uint32_t previousTxnSeq,
     uint32_t flag = 0);
 
-ripple::STObject
+[[nodiscard]] ripple::STObject
 CreateOfferLedgerObject(
     std::string_view account,
     int takerGets,
@@ -192,16 +192,16 @@ CreateOfferLedgerObject(
     std::string_view paysIssueId,
     std::string_view bookDirId);
 
-ripple::STObject
+[[nodiscard]] ripple::STObject
 CreateTicketLedgerObject(std::string_view rootIndex, uint32_t sequence);
 
-ripple::STObject
+[[nodiscard]] ripple::STObject
 CreateEscrowLedgerObject(std::string_view account, std::string_view dest);
 
-ripple::STObject
+[[nodiscard]] ripple::STObject
 CreateCheckLedgerObject(std::string_view account, std::string_view dest);
 
-ripple::STObject
+[[nodiscard]] ripple::STObject
 CreateDepositPreauthLedgerObject(
     std::string_view account,
     std::string_view auth);
@@ -213,3 +213,6 @@ CreateNFT(
     ripple::LedgerIndex seq = 1234u,
     ripple::Blob uri = ripple::Blob{'u', 'r', 'i'},
     bool isBurned = false);
+
+[[nodiscard]] ripple::STObject
+CreateNFTBuyOffer(std::string_view tokenID, std::string_view account);

@@ -33,7 +33,7 @@ namespace json = boost::json;
 
 namespace ripple {
 
-void
+inline void
 tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
 {
     auto amount = ::RPC::toBoostJson(

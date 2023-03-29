@@ -60,6 +60,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/AccountChannels.cpp
   src/rpc/ngHandlers/AccountCurrencies.cpp
   src/rpc/ngHandlers/AccountLines.cpp
+  src/rpc/ngHandlers/AccountTx.cpp
   src/rpc/ngHandlers/Tx.cpp
   src/rpc/ngHandlers/GatewayBalances.cpp
   src/rpc/ngHandlers/LedgerEntry.cpp
@@ -68,7 +69,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/TransactionEntry.cpp
   src/rpc/ngHandlers/NoRippleCheck.cpp
   src/rpc/ngHandlers/NFTInfo.cpp
-  src/rpc/ngHandlers/AccountTx.cpp
+  src/rpc/ngHandlers/NFTBuyOffers.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -129,6 +130,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/TestHandlerTests.cpp
     unittests/rpc/handlers/AccountCurrenciesTest.cpp
     unittests/rpc/handlers/AccountLinesTest.cpp
+    unittests/rpc/handlers/AccountTxTest.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp
@@ -140,7 +142,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/TransactionEntryTest.cpp
     unittests/rpc/handlers/NoRippleCheckTest.cpp
     unittests/rpc/handlers/NFTInfoTest.cpp
-    unittests/rpc/handlers/AccountTxTest.cpp)
+    unittests/rpc/handlers/NFTBuyOffersTest.cpp)
   include(CMake/deps/gtest.cmake)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
