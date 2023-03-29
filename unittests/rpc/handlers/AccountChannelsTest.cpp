@@ -254,7 +254,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
 }
 
 // error case ledger non exist via index
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex)
+TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -268,6 +268,32 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex)
         R"({{ 
             "account": "{}",
             "ledger_index": "4"
+        }})",
+        ACCOUNT));
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIntIndex)
+{
+    MockBackend* rawBackendPtr =
+        static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    // mock fetchLedgerBySequence return empty
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    auto const input = json::parse(fmt::format(
+        R"({{ 
+                "account": "{}",
+                "ledger_index": 4
         }})",
         ACCOUNT));
     runSpawn([&, this](auto& yield) {

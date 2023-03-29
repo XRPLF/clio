@@ -26,57 +26,46 @@
 
 #include <boost/asio/spawn.hpp>
 
-#include <vector>
-
 namespace RPCng {
-class AccountChannelsHandler
+class AccountOffersHandler
 {
-    // dependencies
-    std::shared_ptr<BackendInterface> const sharedPtrBackend_;
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    // type align with SField.h
-    struct ChannelResponse
+    struct Offer
     {
-        std::string channelID;
-        std::string account;
-        std::string accountDestination;
-        std::string amount;
-        std::string balance;
-        std::optional<std::string> publicKey;
-        std::optional<std::string> publicKeyHex;
-        uint32_t settleDelay;
+        uint32_t flags;
+        uint32_t seq;
+        ripple::STAmount takerGets;
+        ripple::STAmount takerPays;
+        std::string quality;
         std::optional<uint32_t> expiration;
-        std::optional<uint32_t> cancelAfter;
-        std::optional<uint32_t> sourceTag;
-        std::optional<uint32_t> destinationTag;
     };
 
     struct Output
     {
-        std::vector<ChannelResponse> channels;
         std::string account;
         std::string ledgerHash;
         uint32_t ledgerIndex;
+        std::vector<Offer> offers;
+        std::optional<std::string> marker;
         // validated should be sent via framework
         bool validated = true;
-        uint32_t limit;
-        std::optional<std::string> marker;
     };
 
+    // TODO:we did not implement the "strict" field
     struct Input
     {
         std::string account;
-        std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 50;
+        uint32_t limit = 200;
         std::optional<std::string> marker;
     };
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountChannelsHandler(
+    AccountOffersHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
@@ -85,17 +74,14 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        // clang-format off
         static const RpcSpec rpcSpec = {
             {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(destination_account), validation::Type<std::string>{},validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{},validation::Between{10,400}},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(marker), validation::AccountMarkerValidator}
-        };
-        // clang-format on
-
+            {JS(marker), validation::AccountMarkerValidator},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Between{10, 400}}};
         return rpcSpec;
     }
 
@@ -104,24 +90,23 @@ public:
 
 private:
     void
-    addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line)
-        const;
+    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const;
 };
 
-AccountChannelsHandler::Input
+void
 tag_invoke(
-    boost::json::value_to_tag<AccountChannelsHandler::Input>,
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountOffersHandler::Output const& output);
+
+void
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountOffersHandler::Offer const& offer);
+
+AccountOffersHandler::Input
+tag_invoke(
+    boost::json::value_to_tag<AccountOffersHandler::Input>,
     boost::json::value const& jv);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountChannelsHandler::Output const& output);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountChannelsHandler::ChannelResponse const& channel);
 }  // namespace RPCng

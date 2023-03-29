@@ -25,6 +25,7 @@
 #include <rpc/common/Validators.h>
 
 #include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -210,6 +211,9 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
         {"arr", Required{}, Type<json::array>{}, ValidateArrayAt{0, {
             {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
         }}},
+        {"arr2", ValidateArrayAt{0, {
+            {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
+        }}},
     };
     // clang-format on
 
@@ -217,6 +221,13 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
     ASSERT_TRUE(spec.validate(passingInput));
 
     auto failingInput = json::parse(R"({ "arr": [{"limit": "not int"}] })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput =
+        json::parse(R"({ "arr": [{"limit": 42}] ,"arr2": "not array type" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(R"({ "arr": [] })");
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
@@ -231,7 +242,10 @@ TEST_F(RPCBaseTest, IfTypeValidator)
                         Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
                         },
                 IfType<std::string>{Uint256HexStringValidator,}
-        }};
+        },
+        {"mix2",Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+                Type<std::string,json::object>{}}
+    };
     // clang-format on
     // if json object pass
     auto passingInput =
@@ -255,6 +269,10 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 
     // type check fail
     failingInput = json::parse(R"({ "mix": 1213 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput =
+        json::parse(R"({ "mix": {"limit": 42, "limit2": 22} , "mix2": 1213 })");
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
@@ -329,6 +347,11 @@ TEST_F(RPCBaseTest, LedgerIndexValidator)
     auto err = spec.validate(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
+
+    failingInput = json::parse(R"({ "ledgerIndex": true })");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
 }
 
 TEST_F(RPCBaseTest, AccountValidator)
@@ -356,10 +379,10 @@ TEST_F(RPCBaseTest, AccountValidator)
     ASSERT_TRUE(spec.validate(passingInput));
 }
 
-TEST_F(RPCBaseTest, MarkerValidator)
+TEST_F(RPCBaseTest, AccountMarkerValidator)
 {
     auto spec = RpcSpec{
-        {"marker", MarkerValidator},
+        {"marker", AccountMarkerValidator},
     };
     auto failingInput = json::parse(R"({ "marker": 256 })");
     ASSERT_FALSE(spec.validate(failingInput));
@@ -412,4 +435,22 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     err = spec.validate(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "malformedCurrency");
+}
+
+TEST_F(RPCBaseTest, IssuerValidator)
+{
+    auto const spec = RpcSpec{{"issuer", IssuerValidator}};
+    auto passingInput =
+        json::parse(R"({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "issuer": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "issuerNotString");
+
+    failingInput = json::parse(
+        fmt::format(R"({{ "issuer": "{}"}})", toBase58(ripple::noAccount())));
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
 }

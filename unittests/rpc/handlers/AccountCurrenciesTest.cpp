@@ -73,7 +73,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
     });
 }
 
-TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
+TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -88,6 +88,34 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaSequence)
             "account":"{}"
         }})",
         ACCOUNT));
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
+{
+    auto constexpr seq = 12;
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // return empty ledgerinfo
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(12, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "ledger_index":"{}"
+        }})",
+        ACCOUNT,
+        seq));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
         auto const output = handler.process(input, yield);

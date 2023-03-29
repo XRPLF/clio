@@ -609,7 +609,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     });
 }
 
-TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIndex)
+TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
@@ -626,6 +626,34 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIndex)
             R"({{
                 "account":"{}",
                 "ledger_index":{}
+            }})",
+            ACCOUNT,
+            MAXSEQ - 1));
+        auto const output = handler.process(input, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr =
+        static_cast<MockBackend*>(mockBackendPtr.get());
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _))
+        .WillByDefault(Return(std::nullopt));
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const static input = boost::json::parse(fmt::format(
+            R"({{
+                "account":"{}",
+                "ledger_index":"{}"
             }})",
             ACCOUNT,
             MAXSEQ - 1));

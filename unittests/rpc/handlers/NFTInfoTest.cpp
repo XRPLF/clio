@@ -159,7 +159,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 }
 
 // error case ledger non exist via index
-TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex)
+TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     MockBackend* rawBackendPtr =
         static_cast<MockBackend*>(mockBackendPtr.get());
@@ -173,6 +173,32 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex)
         R"({{ 
             "nft_id": "{}",
             "ledger_index": "4"
+        }})",
+        NFTID));
+    runSpawn([&, this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const output = handler.process(input, yield);
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
+{
+    MockBackend* rawBackendPtr =
+        static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    // mock fetchLedgerBySequence return empty
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    auto const input = json::parse(fmt::format(
+        R"({{ 
+            "nft_id": "{}",
+            "ledger_index": 4
         }})",
         NFTID));
     runSpawn([&, this](boost::asio::yield_context yield) {

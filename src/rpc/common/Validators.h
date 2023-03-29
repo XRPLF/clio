@@ -470,7 +470,7 @@ extern CustomValidator AccountBase58Validator;
  *  Marker is composed of a comma separated index and start hint. The
  *   former will be read as hex, and the latter can cast to uint64.
  */
-extern CustomValidator MarkerValidator;
+extern CustomValidator AccountMarkerValidator;
 
 /**
  * @brief Provide a common used validator for uint256 hex string

@@ -36,7 +36,7 @@ LedgerRangeHandler::process() const
     {
         return Error{
             RPC::Status{RPC::RippledError::rpcNOT_READY, "rangeNotFound"}};
-    };
+    }
 }
 
 void
