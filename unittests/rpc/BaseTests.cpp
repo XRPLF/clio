@@ -211,6 +211,9 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
         {"arr", Required{}, Type<json::array>{}, ValidateArrayAt{0, {
             {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
         }}},
+        {"arr2", ValidateArrayAt{0, {
+            {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
+        }}},
     };
     // clang-format on
 
@@ -218,6 +221,13 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
     ASSERT_TRUE(spec.validate(passingInput));
 
     auto failingInput = json::parse(R"({ "arr": [{"limit": "not int"}] })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput =
+        json::parse(R"({ "arr": [{"limit": 42}] ,"arr2": "not array type" })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(R"({ "arr": [] })");
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
@@ -232,7 +242,7 @@ TEST_F(RPCBaseTest, IfTypeValidator)
                         Section{{ "limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
                         },
                 IfType<std::string>{Uint256HexStringValidator,}
-        }};
+        },{"mix2",Section{{ "limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},Type<std::string,json::object>{}}};
     // clang-format on
     // if json object pass
     auto passingInput =
@@ -256,6 +266,10 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 
     // type check fail
     failingInput = json::parse(R"({ "mix": 1213 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput =
+        json::parse(R"({ "mix": {"limit": 42, "limit2": 22} , "mix2": 1213 })");
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
@@ -328,6 +342,11 @@ TEST_F(RPCBaseTest, LedgerIndexValidator)
 
     auto failingInput = json::parse(R"({ "ledgerIndex": "wrongformat" })");
     auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
+
+    failingInput = json::parse(R"({ "ledgerIndex": true })");
+    err = spec.validate(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
 }
