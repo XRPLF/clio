@@ -40,7 +40,7 @@ function(add_converage module)
       COMMAND
         ${LLVM_COV_PATH}/llvm-cov report $<TARGET_FILE:${module}>
         -instr-profile=${module}.profdata
-        -ignore-filename-regex=".*_makefiles|.*unittests"
+        -ignore-filename-regex=".*_makefiles|.*unittests|.*_deps"
         -show-region-summary=false
       DEPENDS ${module}-ccov-preprocessing)
 
@@ -51,7 +51,7 @@ function(add_converage module)
         ${LLVM_COV_PATH}/llvm-cov show $<TARGET_FILE:${module}>
         -instr-profile=${module}.profdata -show-line-counts-or-regions
         -output-dir=${module}-llvm-cov -format="html"
-        -ignore-filename-regex=".*_makefiles|.*unittests" > /dev/null 2>&1
+        -ignore-filename-regex=".*_makefiles|.*unittests|.*_deps" > /dev/null 2>&1
       DEPENDS ${module}-ccov-preprocessing)
 
     add_custom_command(

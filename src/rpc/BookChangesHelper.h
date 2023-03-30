@@ -18,12 +18,22 @@
 //==============================================================================
 
 #pragma once
+<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
+========
+
+#include <ripple/app/ledger/Ledger.h>
+#include <ripple/basics/ToString.h>
+>>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
 
 #include <rpc/RPCHelpers.h>
 
 #include <set>
 
+<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
 namespace RPCng {
+========
+namespace RPC {
+>>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -41,9 +51,8 @@ struct BookChange
 /**
  * @brief Encapsulates the book_changes computations and transformations.
  */
-class BookChanges final
+struct BookChanges final
 {
-public:
     BookChanges() = delete;  // only accessed via static handle function
 
     /**
@@ -85,6 +94,8 @@ private:
         void
         handleAffectedNode(ripple::STObject const& node)
         {
+            using namespace ripple;
+
             auto const& metaType = node.getFName();
             auto const nodeType = node.getFieldU16(ripple::sfLedgerEntryType);
 
@@ -126,6 +137,8 @@ private:
         void
         transformAndStore(ripple::STAmount const& deltaGets, ripple::STAmount const& deltaPays)
         {
+            using namespace ripple;
+
             auto const g = to_string(deltaGets.issue());
             auto const p = to_string(deltaPays.issue());
 
@@ -179,8 +192,15 @@ private:
         void
         handleBookChange(Backend::TransactionAndMetadata const& blob)
         {
+<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
             auto const [tx, meta] = RPC::deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
+========
+            using namespace ripple;
+
+            auto const [tx, meta] = deserializeTxPlusMeta(blob);
+            if (!tx || !meta || !tx->isFieldPresent(sfTransactionType))
+>>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
                 return;
 
             offerCancel_ = shouldCancelOffer(tx);
@@ -191,7 +211,13 @@ private:
         std::optional<uint32_t>
         shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx) const
         {
+<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
             switch (tx->getFieldU16(ripple::sfTransactionType))
+========
+            using namespace ripple;
+
+            switch (tx->getFieldU16(sfTransactionType))
+>>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
             {
                 // in future if any other ways emerge to cancel an offer
                 // this switch makes them easy to add
@@ -206,6 +232,7 @@ private:
     };
 };
 
+<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change)
 {
@@ -230,3 +257,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
 }
 
 }  // namespace RPCng
+========
+[[nodiscard]] boost::json::object const
+computeBookChanges(
+    ripple::LedgerInfo const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions);
+
+}  // namespace RPC
+>>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h

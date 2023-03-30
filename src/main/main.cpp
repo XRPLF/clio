@@ -211,6 +211,9 @@ try
     // mode, ETL only publishes
     auto etl = ReportingETL::make_ReportingETL(config, ioc, backend, subscriptions, balancer, ledgers);
 
+    auto const rpcEngine = RPC::RPCEngine::make_RPCEngine(
+        config, backend, subscriptions, balancer, dosGuard);
+
     // The server handles incoming RPCs
     auto httpServer = Server::make_HttpServer(config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 

@@ -65,6 +65,7 @@ target_sources(clio PRIVATE
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
+  src/rpc/BookChanges.cpp
   ## NextGen RPC
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
@@ -87,47 +88,9 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/NFTOffersCommon.cpp
   src/rpc/ngHandlers/NFTBuyOffers.cpp
   src/rpc/ngHandlers/NFTSellOffers.cpp
-  src/rpc/ngHandlers/NFTHistory.cpp
-  src/rpc/ngHandlers/LedgerData.cpp
-  src/rpc/ngHandlers/AccountNFTs.cpp
-  src/rpc/ngHandlers/AccountObjects.cpp
-  src/rpc/ngHandlers/BookChanges.cpp
-  src/rpc/ngHandlers/Ledger.cpp
-  ## RPC Methods
-  # Account
-  src/rpc/handlers/AccountChannels.cpp
-  src/rpc/handlers/AccountCurrencies.cpp
-  src/rpc/handlers/AccountInfo.cpp
-  src/rpc/handlers/AccountLines.cpp
-  src/rpc/handlers/AccountOffers.cpp
-  src/rpc/handlers/AccountObjects.cpp
-  src/rpc/handlers/GatewayBalances.cpp
-  src/rpc/handlers/NoRippleCheck.cpp
-  # NFT
-  src/rpc/handlers/NFTHistory.cpp
-  src/rpc/handlers/NFTInfo.cpp
-  src/rpc/handlers/NFTOffers.cpp
-  # Ledger
-  src/rpc/handlers/Ledger.cpp
-  src/rpc/handlers/LedgerData.cpp
-  src/rpc/handlers/LedgerEntry.cpp
-  src/rpc/handlers/LedgerRange.cpp
-  # Transaction
-  src/rpc/handlers/Tx.cpp
-  src/rpc/handlers/TransactionEntry.cpp
-  src/rpc/handlers/AccountTx.cpp
-  # Dex
+  ## tmp
   src/rpc/handlers/BookChanges.cpp
-  src/rpc/handlers/BookOffers.cpp
-  # Payment Channel
-  src/rpc/handlers/ChannelAuthorize.cpp
-  src/rpc/handlers/ChannelVerify.cpp
-  # Subscribe
-  src/rpc/handlers/Subscribe.cpp
-  # Server
-  src/rpc/handlers/ServerInfo.cpp
-  # Utilities
-  src/rpc/handlers/Random.cpp
+  ## Util
   src/config/Config.cpp
   src/log/Logger.cpp
   src/util/Taggable.cpp)

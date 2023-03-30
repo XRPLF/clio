@@ -40,8 +40,8 @@ Counters::initializeCounter(std::string const& method)
 void
 Counters::rpcErrored(std::string const& method)
 {
-    if (!validHandler(method))
-        return;
+    // if (!validHandler(method))
+    //     return;
 
     initializeCounter(method);
 
@@ -54,8 +54,8 @@ Counters::rpcErrored(std::string const& method)
 void
 Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
-    if (!validHandler(method))
-        return;
+    // if (!validHandler(method))
+    //     return;
 
     initializeCounter(method);
 
@@ -69,8 +69,8 @@ Counters::rpcComplete(std::string const& method, std::chrono::microseconds const
 void
 Counters::rpcForwarded(std::string const& method)
 {
-    if (!validHandler(method))
-        return;
+    // if (!validHandler(method))
+    //     return;
 
     initializeCounter(method);
 
