@@ -17,23 +17,24 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
-#include <rpc/ngHandlers/NFTBuyOffers.h>
+#pragma once
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
-#include <ripple/protocol/Indexes.h>
+#include <backend/BackendInterface.h>
+#include <rpc/ngHandlers/NFTOffersCommon.h>
 
-using namespace ripple;
+#include <boost/asio/spawn.hpp>
 
 namespace RPCng {
-
-NFTBuyOffersHandler::Result
-NFTBuyOffersHandler::process(
-    NFTBuyOffersHandler::Input input,
-    boost::asio::yield_context& yield) const
+class NFTSellOffersHandler : public NFTOffersHandlerBase
 {
-    auto const tokenID = uint256{input.nftID.c_str()};
-    auto const directory = keylet::nft_buys(tokenID);
-    return iterateOfferDirectory(input, tokenID, directory, yield);
-}
+public:
+    NFTSellOffersHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : NFTOffersHandlerBase(sharedPtrBackend)
+    {
+    }
+
+    Result
+    process(Input input, boost::asio::yield_context& yield) const;
+};
 }  // namespace RPCng

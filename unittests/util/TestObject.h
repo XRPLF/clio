@@ -216,3 +216,6 @@ CreateNFT(
 
 [[nodiscard]] ripple::STObject
 CreateNFTBuyOffer(std::string_view tokenID, std::string_view account);
+
+[[nodiscard]] ripple::STObject
+CreateNFTSellOffer(std::string_view tokenID, std::string_view account);

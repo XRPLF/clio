@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/RPCHelpers.h>
-#include <rpc/ngHandlers/NFTBuyOffers.h>
+#include <rpc/ngHandlers/NFTSellOffers.h>
 
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
@@ -27,13 +27,14 @@ using namespace ripple;
 
 namespace RPCng {
 
-NFTBuyOffersHandler::Result
-NFTBuyOffersHandler::process(
-    NFTBuyOffersHandler::Input input,
+NFTSellOffersHandler::Result
+NFTSellOffersHandler::process(
+    NFTSellOffersHandler::Input input,
     boost::asio::yield_context& yield) const
 {
     auto const tokenID = uint256{input.nftID.c_str()};
-    auto const directory = keylet::nft_buys(tokenID);
+    auto const directory = keylet::nft_sells(tokenID);
     return iterateOfferDirectory(input, tokenID, directory, yield);
 }
+
 }  // namespace RPCng
