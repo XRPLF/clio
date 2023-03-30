@@ -34,7 +34,7 @@ NFTSellOffersHandler::process(
 {
     auto const tokenID = uint256{input.nftID.c_str()};
     auto const directory = keylet::nft_sells(tokenID);
-    return commonProcess(input, tokenID, directory, yield);
+    return iterateOfferDirectory(input, tokenID, directory, yield);
 }
 
 }  // namespace RPCng

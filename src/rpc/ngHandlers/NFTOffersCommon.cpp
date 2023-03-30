@@ -60,7 +60,7 @@ tag_invoke(
 namespace RPCng {
 
 NFTOffersHandlerBase::Result
-NFTOffersHandlerBase::commonProcess(
+NFTOffersHandlerBase::iterateOfferDirectory(
     Input input,
     ripple::uint256 const& tokenID,
     ripple::Keylet const& directory,

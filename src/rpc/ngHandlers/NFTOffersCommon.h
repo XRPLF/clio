@@ -80,7 +80,7 @@ public:
 
 protected:
     Result
-    commonProcess(
+    iterateOfferDirectory(
         Input input,
         ripple::uint256 const& tokenID,
         ripple::Keylet const& directory,
