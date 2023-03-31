@@ -503,3 +503,29 @@ CreateNFTSellOffer(std::string_view tokenID, std::string_view account)
     offer.setFieldU64(ripple::sfNFTokenOfferNode, 0ul);
     return offer;
 }
+
+ripple::STObject
+CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers)
+{
+    auto signerlists = ripple::STObject(ripple::sfLedgerEntry);
+    signerlists.setFieldU16(ripple::sfLedgerEntryType, ripple::ltSIGNER_LIST);
+    signerlists.setFieldU32(ripple::sfFlags, 0);
+    signerlists.setFieldU64(ripple::sfOwnerNode, 0);
+    signerlists.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256());
+    signerlists.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    signerlists.setFieldU32(ripple::sfSignerListID, 0);
+    uint32_t quorum = 0;
+    ripple::STArray list;
+    for (auto const& signer : signers)
+    {
+        auto entry = ripple::STObject(ripple::sfSignerEntry);
+        entry.setAccountID(
+            ripple::sfAccount, GetAccountIDWithString(signer.first));
+        entry.setFieldU16(ripple::sfSignerWeight, signer.second);
+        quorum += signer.second;
+        list.push_back(entry);
+    }
+    signerlists.setFieldU32(ripple::sfSignerQuorum, quorum);
+    signerlists.setFieldArray(ripple::sfSignerEntries, list);
+    return signerlists;
+}
