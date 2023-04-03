@@ -86,7 +86,7 @@ public:
     spec() const
     {
         // clang-format off
-        static const RpcSpec rpcSpec = {
+        static auto const  rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(destination_account), validation::Type<std::string>{},validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},

@@ -65,7 +65,7 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        static const RpcSpec rpcSpec = {
+        static auto const rpcSpec = RpcSpec{
             {JS(taker_gets),
              validation::Required{},
              validation::Type<boost::json::object>{},
