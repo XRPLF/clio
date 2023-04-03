@@ -25,7 +25,6 @@ AccountInfoHandler::process(
     AccountInfoHandler::Input input,
     boost::asio::yield_context& yield) const
 {
-    // TODO: set account as required after we remove ident
     if (!input.account && !input.ident)
         return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED}};
 
