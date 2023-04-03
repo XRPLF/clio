@@ -17,21 +17,32 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Ping.h>
-#include <util/Fixtures.h>
+#include <rpc/RPCHelpers.h>
+#include <rpc/ngHandlers/Random.h>
 
-using namespace RPCng;
+#include <ripple/beast/utility/rngfill.h>
+#include <ripple/crypto/csprng.h>
 
-class RPCPingHandlerTest : public NoLoggerFixture
+namespace RPCng {
+
+RandomHandler::Result
+RandomHandler::process() const
 {
-};
+    ripple::uint256 rand;
+    beast::rngfill(rand.begin(), rand.size(), ripple::crypto_prng());
 
-// example handler tests
-TEST_F(RPCPingHandlerTest, Default)
-{
-    auto const handler = AnyHandler{PingHandler{}};
-    auto const output = handler.process(boost::json::parse(R"({})"));
-    ASSERT_TRUE(output);
-    EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
+    return Output{ripple::strHex(rand)};
 }
+
+void
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    RandomHandler::Output const& output)
+{
+    jv = {
+        {JS(random), output.random},
+    };
+}
+
+}  // namespace RPCng
