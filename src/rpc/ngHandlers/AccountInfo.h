@@ -65,7 +65,7 @@ public:
     };
 
     // "queue" is not available in Reporting mode
-    // TODO: ident is not in document
+    // "ident" is deprecated, keep it for now, in line with rippled
     struct Input
     {
         std::optional<std::string> account;
@@ -86,7 +86,7 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        static const RpcSpec rpcSpec = {
+        static auto const rpcSpec = RpcSpec{
             {JS(account), validation::AccountValidator},
             {JS(ident), validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},

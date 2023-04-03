@@ -61,7 +61,7 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        static const RpcSpec rpcSpec = {
+        static auto const rpcSpec = RpcSpec{
             {JS(tx_hash),
              validation::Required{},
              validation::Uint256HexStringValidator},
