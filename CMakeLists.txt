@@ -73,6 +73,9 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/AccountCurrencies.cpp
   src/rpc/ngHandlers/AccountLines.cpp
   src/rpc/ngHandlers/AccountTx.cpp
+  src/rpc/ngHandlers/AccountTx.cpp
+  src/rpc/ngHandlers/AccountOffers.cpp
+  src/rpc/ngHandlers/AccountInfo.cpp
   src/rpc/ngHandlers/Tx.cpp
   src/rpc/ngHandlers/GatewayBalances.cpp
   src/rpc/ngHandlers/LedgerEntry.cpp
@@ -84,9 +87,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/NFTOffersCommon.cpp
   src/rpc/ngHandlers/NFTBuyOffers.cpp
   src/rpc/ngHandlers/NFTSellOffers.cpp
-  src/rpc/ngHandlers/AccountTx.cpp
-  src/rpc/ngHandlers/AccountOffers.cpp
-  src/rpc/ngHandlers/AccountInfo.cpp
+  src/rpc/ngHandlers/Random.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -145,27 +146,29 @@ if(BUILD_TESTS)
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTest.cpp
+    ## RPC handlers
     unittests/rpc/handlers/TestHandlerTests.cpp
     unittests/rpc/handlers/AccountCurrenciesTest.cpp
     unittests/rpc/handlers/AccountLinesTest.cpp
     unittests/rpc/handlers/AccountTxTest.cpp
+    unittests/rpc/handlers/AccountTxTest.cpp
+    unittests/rpc/handlers/AccountOffersTest.cpp
+    unittests/rpc/handlers/AccountInfoTest.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp
     unittests/rpc/handlers/TxTest.cpp
+    unittests/rpc/handlers/TransactionEntryTest.cpp
     unittests/rpc/handlers/GatewayBalancesTest.cpp
     unittests/rpc/handlers/LedgerEntryTest.cpp
     unittests/rpc/handlers/LedgerRangeTest.cpp
     unittests/rpc/handlers/BookOffersTest.cpp
     unittests/rpc/handlers/NoRippleCheckTest.cpp
     unittests/rpc/handlers/NFTInfoTest.cpp
-    unittests/rpc/handlers/AccountTxTest.cpp
-    unittests/rpc/handlers/AccountOffersTest.cpp
-    unittests/rpc/handlers/TransactionEntryTest.cpp
     unittests/rpc/handlers/NFTInfoTest.cpp
     unittests/rpc/handlers/NFTBuyOffersTest.cpp
     unittests/rpc/handlers/NFTSellOffersTest.cpp
-    unittests/rpc/handlers/AccountInfoTest.cpp
+    unittests/rpc/handlers/RandomTest.cpp
     # Backend
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp

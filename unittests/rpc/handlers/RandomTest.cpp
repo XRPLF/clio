@@ -17,21 +17,22 @@
 */
 //==============================================================================
 
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Ping.h>
+#include <rpc/ngHandlers/Random.h>
 #include <util/Fixtures.h>
 
 using namespace RPCng;
 
-class RPCPingHandlerTest : public NoLoggerFixture
+class RPCRandomHandlerTest : public NoLoggerFixture
 {
 };
 
-// example handler tests
-TEST_F(RPCPingHandlerTest, Default)
+TEST_F(RPCRandomHandlerTest, Default)
 {
-    auto const handler = AnyHandler{PingHandler{}};
+    auto const handler = AnyHandler{RandomHandler{}};
     auto const output = handler.process(boost::json::parse(R"({})"));
     ASSERT_TRUE(output);
-    EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
+    EXPECT_TRUE(output->as_object().contains(JS(random)));
+    EXPECT_EQ(output->as_object().at(JS(random)).as_string().size(), 64u);
 }

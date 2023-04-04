@@ -17,21 +17,34 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Ping.h>
-#include <util/Fixtures.h>
+#pragma once
 
-using namespace RPCng;
+#include <rpc/common/Types.h>
 
-class RPCPingHandlerTest : public NoLoggerFixture
+#include <boost/json/value.hpp>
+
+#include <string>
+
+namespace RPCng {
+
+class RandomHandler
 {
+public:
+    struct Output
+    {
+        std::string random;
+    };
+
+    using Result = HandlerReturnType<Output>;
+
+    Result
+    process() const;
+
+private:
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
 };
-
-// example handler tests
-TEST_F(RPCPingHandlerTest, Default)
-{
-    auto const handler = AnyHandler{PingHandler{}};
-    auto const output = handler.process(boost::json::parse(R"({})"));
-    ASSERT_TRUE(output);
-    EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
-}
+}  // namespace RPCng
