@@ -299,3 +299,21 @@ protected:
         MockBackendTest::TearDown();
     }
 };
+
+struct MockSubscriptionManagerTest : virtual public NoLoggerFixture
+{
+    void
+    SetUp() override
+    {
+        NoLoggerFixture::SetUp();
+        mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
+    }
+    void
+    TearDown() override
+    {
+        mockSubscriptionManagerPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<MockSubscriptionManager> mockSubscriptionManagerPtr;
+};

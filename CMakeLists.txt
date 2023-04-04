@@ -170,6 +170,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/NFTSellOffersTest.cpp
     unittests/rpc/handlers/NFTHistoryTest.cpp
     unittests/rpc/handlers/SubscribeTest.cpp
+    unittests/rpc/handlers/UnsubscribeTest.cpp
     # Backend
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp
