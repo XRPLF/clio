@@ -88,11 +88,15 @@ public:
      * @return JSON result or @ref RPC::Status on error
      */
     [[nodiscard]] ReturnType
-    process(
-        boost::json::value const& value,
-        boost::asio::yield_context& ptrYield) const
+    process(boost::json::value const& value, Context& ctx) const
     {
-        return pimpl_->process(value, &ptrYield);
+        return pimpl_->process(value, ctx);
+    }
+
+    [[nodiscard]] ReturnType
+    process(boost::json::value const& value, Context&& ctx) const
+    {
+        return pimpl_->process(value, std::move(ctx));
     }
 
 private:
@@ -101,9 +105,8 @@ private:
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual ReturnType
-        process(
-            boost::json::value const& value,
-            boost::asio::yield_context* ptrYield = nullptr) const = 0;
+        process(boost::json::value const& value, Context ctx = Context())
+            const = 0;
 
         [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
@@ -120,11 +123,10 @@ private:
         }
 
         [[nodiscard]] ReturnType
-        process(
-            boost::json::value const& value,
-            boost::asio::yield_context* ptrYield = nullptr) const override
+        process(boost::json::value const& value, Context ctx = Context())
+            const override
         {
-            return processor(handler, value, ptrYield);
+            return processor(handler, value, ctx);
         }
 
         [[nodiscard]] std::unique_ptr<Concept>

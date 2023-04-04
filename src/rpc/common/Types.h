@@ -21,7 +21,9 @@
 
 #include <rpc/Errors.h>
 #include <util/Expected.h>
+#include <webserver/WsBase.h>
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
 
 namespace RPCng {
@@ -55,6 +57,12 @@ using RpcSpecConstRef = RpcSpec const&;
 
 struct VoidOutput
 {
+};
+
+struct Context
+{
+    boost::asio::yield_context* pYield = nullptr;
+    WsBase* pWs = nullptr;
 };
 
 inline void

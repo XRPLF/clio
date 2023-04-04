@@ -34,7 +34,7 @@ struct DefaultProcessor final
     operator()(
         HandlerType const& handler,
         boost::json::value const& value,
-        boost::asio::yield_context* ptrYield = nullptr) const
+        Context ctx = Context()) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
@@ -55,12 +55,21 @@ struct DefaultProcessor final
                 else
                     return value_from(ret.value());
             }
-            else
+            else if constexpr (CoroutineProcess<HandlerType>)
             {
-                auto const ret = handler.process(inData, *ptrYield);
+                auto const ret = handler.process(inData, *(ctx.pYield));
                 // real handler is given expected Input, not json
                 if (!ret)
                     return Error{ret.error()};  // forward Status
+                else
+                    return value_from(ret.value());
+            }
+            else if constexpr (CoroutineWithWebSocketProcess<HandlerType>)
+            {
+                auto const ret =
+                    handler.process(inData, *(ctx.pYield), *(ctx.pWs));
+                if (!ret)
+                    return Error{ret.error()};
                 else
                     return value_from(ret.value());
             }

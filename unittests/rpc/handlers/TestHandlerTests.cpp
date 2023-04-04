@@ -20,6 +20,7 @@
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/impl/FakesAndMocks.h>
 #include <util/Fixtures.h>
+#include <util/MockWsBase.h>
 
 #include <boost/json/parse.hpp>
 
@@ -59,7 +60,30 @@ TEST_F(RPCTestHandlerTest, CoroutineHandlerSuccess)
     })");
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
+        ASSERT_TRUE(output);
+
+        auto const val = output.value();
+        EXPECT_EQ(val.as_object().at("computed").as_string(), "world_10");
+    });
+    ctx.run();
+}
+
+TEST_F(RPCTestHandlerTest, CoroutineHandlerWithWsSuccess)
+{
+    auto const handler = AnyHandler{CoroutineWithWsHandlerFake{}};
+    auto const input = json::parse(R"({ 
+        "hello": "world", 
+        "limit": 10
+    })");
+    boost::asio::io_context ctx;
+    clio::Config cfg;
+    util::TagDecoratorFactory tagDecoratorFactory{cfg};
+    std::shared_ptr<WsBase> session =
+        std::make_shared<MockSession>(tagDecoratorFactory);
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const output =
+            handler.process(input, Context{&yield, session.get()});
         ASSERT_TRUE(output);
 
         auto const val = output.value();
