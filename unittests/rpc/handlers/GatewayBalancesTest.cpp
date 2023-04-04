@@ -98,7 +98,7 @@ generateParameterTestBundles()
             R"({
                 "account": "1213"
             })",
-            "invalidParams",
+            "actMalformed",
             "accountMalformed"},
         ParameterTestBundle{
             "LedgerIndexInvalid",

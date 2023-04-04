@@ -26,6 +26,7 @@
 #include <boost/json/value.hpp>
 
 class WsBase;
+class SubscriptionManager;
 namespace RPCng {
 
 /**

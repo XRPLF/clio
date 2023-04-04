@@ -88,7 +88,7 @@ generateTestValuesForParametersTest()
                 "account": "123",
                 "role": "gateway"
              })",
-            "invalidParams",
+            "actMalformed",
             "accountMalformed"},
         NoRippleParamTestCaseBundle{
             "InvalidRole",

@@ -68,9 +68,9 @@ generateTestValuesForParametersTest()
     return std::vector<AccountInfoParamTestCaseBundle>{
         AccountInfoParamTestCaseBundle{"MissingAccountAndIdent", R"({})", "actMalformed", "Account malformed."},
         AccountInfoParamTestCaseBundle{"AccountNotString", R"({"account":1})", "invalidParams", "accountNotString"},
-        AccountInfoParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "invalidParams", "accountMalformed"},
+        AccountInfoParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "actMalformed", "accountMalformed"},
         AccountInfoParamTestCaseBundle{"IdentNotString", R"({"ident":1})", "invalidParams", "identNotString"},
-        AccountInfoParamTestCaseBundle{"IdentInvalid", R"({"ident":"xxx"})", "invalidParams", "identMalformed"},
+        AccountInfoParamTestCaseBundle{"IdentInvalid", R"({"ident":"xxx"})", "actMalformed", "identMalformed"},
         AccountInfoParamTestCaseBundle{
             "SignerListsInvalid",
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})",

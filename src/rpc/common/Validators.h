@@ -482,4 +482,22 @@ extern CustomValidator CurrencyValidator;
  */
 extern CustomValidator IssuerValidator;
 
+/**
+ * @brief Provide a validator for validating valid streams used in
+ * subscribe/unsubscribe
+ */
+extern CustomValidator SubscribeStreamValidator;
+
+/**
+ * @brief Provide a validator for validating valid accounts used in
+ * subscribe/unsubscribe
+ */
+extern CustomValidator SubscribeAccountsValidator;
+
+/**
+ * @brief Provide a validator for validating valid books used in
+ * subscribe/unsubscribe
+ */
+extern CustomValidator SubscribeBooksValidator;
+
 }  // namespace RPCng::validation

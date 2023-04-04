@@ -285,6 +285,7 @@ protected:
  */
 struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest
 {
+protected:
     void
     SetUp() override
     {

@@ -255,7 +255,7 @@ generateParameterBookOffersTestBundles()
                 },
                 "taker": "123"
             })",
-            "invalidParams",
+            "actMalformed",
             "takerMalformed"},
         ParameterTestBundle{
             "TakerNotString",
