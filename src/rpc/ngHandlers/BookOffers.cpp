@@ -23,7 +23,7 @@
 namespace RPCng {
 
 BookOffersHandler::Result
-BookOffersHandler::process(Input input, boost::asio::yield_context& yield) const
+BookOffersHandler::process(Input input, Context ctx) const
 {
     auto bookMaybe = RPC::parseBook(
         input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
@@ -34,7 +34,7 @@ BookOffersHandler::process(Input input, boost::asio::yield_context& yield) const
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -48,7 +48,7 @@ BookOffersHandler::process(Input input, boost::asio::yield_context& yield) const
 
     // TODO: Add perfomance metrics if needed in future
     auto [offers, _] = sharedPtrBackend_->fetchBookOffers(
-        bookKey, lgrInfo.seq, input.limit, yield);
+        bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
     BookOffersHandler::Output output;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -59,7 +59,7 @@ BookOffersHandler::process(Input input, boost::asio::yield_context& yield) const
         input.taker ? *(input.taker) : beast::zero,
         *sharedPtrBackend_,
         lgrInfo.seq,
-        yield);
+        ctx.yield);
 
     return output;
 }

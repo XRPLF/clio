@@ -23,7 +23,7 @@
 namespace RPCng {
 
 TxHandler::Result
-TxHandler::process(Input input, boost::asio::yield_context& yield) const
+TxHandler::process(Input input, Context ctx) const
 {
     constexpr static auto maxLedgerRange = 1000u;
     auto const rangeSupplied = input.minLedger && input.maxLedger;
@@ -39,7 +39,7 @@ TxHandler::process(Input input, boost::asio::yield_context& yield) const
     }
     TxHandler::Output output;
     auto const dbResponse = sharedPtrBackend_->fetchTransaction(
-        ripple::uint256{std::string_view(input.transaction)}, yield);
+        ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
     if (!dbResponse)
     {
         if (rangeSupplied)

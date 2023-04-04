@@ -99,8 +99,10 @@ private:
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual ReturnType
-        process(boost::json::value const& value, Context ctx = Context())
-            const = 0;
+        process(boost::json::value const& value, Context ctx) const = 0;
+
+        [[nodiscard]] virtual ReturnType
+        process(boost::json::value const& value) const = 0;
 
         [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
@@ -117,10 +119,15 @@ private:
         }
 
         [[nodiscard]] ReturnType
-        process(boost::json::value const& value, Context ctx = Context())
-            const override
+        process(boost::json::value const& value, Context ctx) const override
         {
             return processor(handler, value, ctx);
+        }
+
+        [[nodiscard]] ReturnType
+        process(boost::json::value const& value) const override
+        {
+            return processor(handler, value);
         }
 
         [[nodiscard]] std::unique_ptr<Concept>

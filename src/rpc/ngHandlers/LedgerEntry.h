@@ -189,7 +189,7 @@ public:
     }
 
     Result
-    process(Input input, boost::asio::yield_context& yield) const;
+    process(Input input, Context ctx) const;
 
 private:
     // dir_root and owner can not be both empty or filled at the same time

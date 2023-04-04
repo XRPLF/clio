@@ -20,9 +20,7 @@
 #pragma once
 
 #include <rpc/common/Types.h>
-#include <webserver/HttpBase.h>
 
-#include <boost/asio/spawn.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 
@@ -51,21 +49,17 @@ concept Requirement = requires(T a) {
  */
 // clang-format off
 template <typename T>
-concept CoroutineProcess = requires(T a, typename T::Input in, typename T::Output out, boost::asio::yield_context& y) {
+concept ContextProcess = requires(T a, typename T::Input in, typename T::Output out, Context& y) {
     { a.process(in, y) } -> std::same_as<HandlerReturnType<decltype(out)>>; };
 
 template <typename T>
-concept CoroutineWithWebSocketProcess = requires(T a, typename T::Input in, typename T::Output out, boost::asio::yield_context& y, WsBase& s) {
-    { a.process(in, y, s) } -> std::same_as<HandlerReturnType<decltype(out)>>; };
-
-template <typename T>
-concept NonCoroutineProcess = requires(T a, typename T::Input in, typename T::Output out) {
+concept NonContextProcess = requires(T a, typename T::Input in, typename T::Output out) {
     { a.process(in) } -> std::same_as<HandlerReturnType<decltype(out)>>; };
 
 template <typename T>
 concept HandlerWithInput = requires(T a, typename T::Input in, typename T::Output out) {
     { a.spec() } -> std::same_as<RpcSpecConstRef>; }
-    and (CoroutineProcess<T> or NonCoroutineProcess<T> or CoroutineWithWebSocketProcess<T>)
+    and (ContextProcess<T> or NonContextProcess<T>)
     and boost::json::has_value_to<typename T::Input>::value;
 
 template <typename T>

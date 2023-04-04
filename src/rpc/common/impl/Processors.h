@@ -31,10 +31,8 @@ template <Handler HandlerType>
 struct DefaultProcessor final
 {
     [[nodiscard]] ReturnType
-    operator()(
-        HandlerType const& handler,
-        boost::json::value const& value,
-        Context ctx = Context()) const
+    operator()(HandlerType const& handler, boost::json::value const& value)
+        const
     {
         using boost::json::value_from;
         using boost::json::value_to;
@@ -46,7 +44,7 @@ struct DefaultProcessor final
                 return Error{ret.error()};  // forward Status
 
             auto const inData = value_to<typename HandlerType::Input>(value);
-            if constexpr (NonCoroutineProcess<HandlerType>)
+            if constexpr (NonContextProcess<HandlerType>)
             {
                 auto const ret = handler.process(inData);
                 // real handler is given expected Input, not json
@@ -55,21 +53,53 @@ struct DefaultProcessor final
                 else
                     return value_from(ret.value());
             }
-            else if constexpr (CoroutineProcess<HandlerType>)
+            else
             {
-                auto const ret = handler.process(inData, *(ctx.pYield));
+                return Error{RPC::Status{"wrong handler type"}};
+            }
+        }
+        else if constexpr (HandlerWithoutInput<HandlerType>)
+        {
+            // no input to pass, ignore the value
+            if (auto const ret = handler.process(); not ret)
+                return Error{ret.error()};  // forward Status
+            else
+                return value_from(ret.value());
+        }
+        else
+        {
+            // when concept HandlerWithInput and HandlerWithoutInput not cover
+            // all Handler case
+            static_assert(unsupported_handler_v<HandlerType>);
+        }
+    }
+
+    [[nodiscard]] ReturnType
+    operator()(
+        HandlerType const& handler,
+        boost::json::value const& value,
+        Context ctx) const
+    {
+        using boost::json::value_from;
+        using boost::json::value_to;
+        if constexpr (HandlerWithInput<HandlerType>)
+        {
+            // first we run validation
+            auto const spec = handler.spec();
+            if (auto const ret = spec.validate(value); not ret)
+                return Error{ret.error()};  // forward Status
+
+            auto const inData = value_to<typename HandlerType::Input>(value);
+            if constexpr (NonContextProcess<HandlerType>)
+            {
+                return Error{RPC::Status{"wrong handler type"}};
+            }
+            else
+            {
+                auto const ret = handler.process(inData, ctx);
                 // real handler is given expected Input, not json
                 if (!ret)
                     return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
-            else if constexpr (CoroutineWithWebSocketProcess<HandlerType>)
-            {
-                auto const ret =
-                    handler.process(inData, *(ctx.pYield), *(ctx.pWs));
-                if (!ret)
-                    return Error{ret.error()};
                 else
                     return value_from(ret.value());
             }

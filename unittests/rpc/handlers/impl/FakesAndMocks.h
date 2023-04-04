@@ -122,37 +122,7 @@ public:
     }
 
     Result
-    process(Input input, boost::asio::yield_context& yield) const
-    {
-        return Output{
-            input.hello + '_' + std::to_string(input.limit.value_or(0))};
-    }
-};
-
-class CoroutineWithWsHandlerFake
-{
-public:
-    using Input = TestInput;
-    using Output = TestOutput;
-    using Result = RPCng::HandlerReturnType<Output>;
-
-    RPCng::RpcSpecConstRef
-    spec() const
-    {
-        using namespace RPCng::validation;
-
-        // clang-format off
-        static const RPCng::RpcSpec rpcSpec = {
-            {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
-            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}} // optional field
-        };
-        // clang-format on
-
-        return rpcSpec;
-    }
-
-    Result
-    process(Input input, boost::asio::yield_context& yield, WsBase& ws) const
+    process(Input input, RPCng::Context ctx) const
     {
         return Output{
             input.hello + '_' + std::to_string(input.limit.value_or(0))};

@@ -25,9 +25,7 @@ clio::Logger gLog{"RPC-AccountTxHandler"};
 
 namespace RPCng {
 AccountTxHandler::Result
-AccountTxHandler::process(
-    AccountTxHandler::Input input,
-    boost::asio::yield_context& yield) const
+AccountTxHandler::process(AccountTxHandler::Input input, Context ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
@@ -67,7 +65,7 @@ AccountTxHandler::process(
 
         auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
             *sharedPtrBackend_,
-            yield,
+            ctx.yield,
             input.ledgerHash,
             input.ledgerIndex,
             range->maxSequence);
@@ -94,7 +92,7 @@ AccountTxHandler::process(
     auto const limit = input.limit.value_or(limitDefault);
     auto const accountID = RPC::accountFromStringStrict(input.account);
     auto const [blobs, retCursor] = sharedPtrBackend_->fetchAccountTransactions(
-        *accountID, limit, input.forward, cursor, yield);
+        *accountID, limit, input.forward, cursor, ctx.yield);
 
     Output response;
     if (retCursor)

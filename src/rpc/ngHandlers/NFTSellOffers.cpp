@@ -28,13 +28,12 @@ using namespace ripple;
 namespace RPCng {
 
 NFTSellOffersHandler::Result
-NFTSellOffersHandler::process(
-    NFTSellOffersHandler::Input input,
-    boost::asio::yield_context& yield) const
+NFTSellOffersHandler::process(NFTSellOffersHandler::Input input, Context ctx)
+    const
 {
     auto const tokenID = uint256{input.nftID.c_str()};
     auto const directory = keylet::nft_sells(tokenID);
-    return iterateOfferDirectory(input, tokenID, directory, yield);
+    return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
 }
 
 }  // namespace RPCng
