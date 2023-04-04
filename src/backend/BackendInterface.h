@@ -111,7 +111,7 @@ synchronous(F&& f)
      * R is the currently executing coroutine that is about to get passed.
      * If corountine types do not match, the current one's type is stored.
      */
-    using R = typename std::result_of<F(boost::asio::yield_context&)>::type;
+    using R = typename boost::result_of<F(boost::asio::yield_context&)>::type;
     if constexpr (!std::is_same<R, void>::value)
     {
         /**

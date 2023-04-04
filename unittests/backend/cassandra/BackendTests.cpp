@@ -893,7 +893,6 @@ TEST_F(BackendCassandraTest, Basic)
 
                     Backend::LedgerPage page;
                     std::vector<Backend::LedgerObject> retObjs;
-                    size_t numLoops = 0;
                     do
                     {
                         uint32_t limit = 10;
@@ -903,7 +902,6 @@ TEST_F(BackendCassandraTest, Basic)
                             retObjs.end(),
                             page.objects.begin(),
                             page.objects.end());
-                        ++numLoops;
                     } while (page.cursor);
 
                     for (auto obj : objs)
@@ -1544,7 +1542,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 }
                 Backend::LedgerPage page;
                 std::vector<Backend::LedgerObject> retObjs;
-                size_t numLoops = 0;
                 do
                 {
                     uint32_t limit = 10;
@@ -1554,7 +1551,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                         retObjs.end(),
                         page.objects.begin(),
                         page.objects.end());
-                    ++numLoops;
                 } while (page.cursor);
                 for (auto obj : objs)
                 {

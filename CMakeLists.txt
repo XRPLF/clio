@@ -19,6 +19,11 @@ if(PACKAGING)
   add_definitions(-DPKG=1)
 endif()
 
+#clang14.0.3 removed std::result_of but boost 1.75 is still using it.
+if("${CMAKE_C_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang")
+  add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
+endif()
+
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
