@@ -34,7 +34,7 @@ struct DefaultProcessor final
     operator()(
         HandlerType const& handler,
         boost::json::value const& value,
-        Context const& ctx) const
+        Context const& ctx = Context()) const
     {
         using boost::json::value_from;
         using boost::json::value_to;

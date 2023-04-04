@@ -55,7 +55,7 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
                 "ledger_hash": "xxx"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -75,7 +75,7 @@ TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
                 "ledger_hash": 123
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -95,7 +95,7 @@ TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
                 "ledger_index": "notvalidated"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -114,7 +114,7 @@ TEST_F(RPCAccountHandlerTest, MarkerNotString)
                 "marker": 9
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -136,7 +136,7 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
                 "marker": "123invalid"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -151,7 +151,7 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
                 "marker": 401
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -170,7 +170,7 @@ TEST_F(RPCAccountHandlerTest, IncorrectLimit)
                 "limit": 9
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -184,7 +184,7 @@ TEST_F(RPCAccountHandlerTest, IncorrectLimit)
                 "limit": 401
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -200,7 +200,7 @@ TEST_F(RPCAccountHandlerTest, AccountInvalidFormat)
         auto const input = json::parse(R"({ 
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
         })");
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -216,7 +216,7 @@ TEST_F(RPCAccountHandlerTest, AccountNotString)
         auto const input = json::parse(R"({ 
             "account": 12
         })");
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -244,7 +244,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
         LEDGERHASH));
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -272,7 +272,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerStringIndex)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -298,7 +298,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIntIndex)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -328,7 +328,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
         LEDGERHASH));
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -354,7 +354,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex2)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -386,7 +386,7 @@ TEST_F(RPCAccountHandlerTest, NonExistAccount)
         LEDGERHASH));
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -469,7 +469,7 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
@@ -526,7 +526,7 @@ TEST_F(RPCAccountHandlerTest, UseLimit)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
@@ -600,7 +600,7 @@ TEST_F(RPCAccountHandlerTest, UseDestination)
         ACCOUNT3));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
     });
@@ -641,7 +641,7 @@ TEST_F(RPCAccountHandlerTest, EmptyChannel)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 0);
     });
@@ -733,7 +733,7 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
@@ -810,7 +810,7 @@ TEST_F(RPCAccountHandlerTest, MarkerOutput)
         limit));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             (*output).as_object().at("marker").as_string().c_str(),
@@ -877,7 +877,7 @@ TEST_F(RPCAccountHandlerTest, MarkerInput)
         nextPage));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{&yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1

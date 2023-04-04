@@ -147,6 +147,25 @@ if(BUILD_TESTS)
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
     unittests/rpc/handlers/AccountCurrenciesTest.cpp
+    unittests/rpc/handlers/AccountLinesTest.cpp
+    unittests/rpc/handlers/AccountTxTest.cpp
+    unittests/rpc/handlers/DefaultProcessorTests.cpp
+    unittests/rpc/handlers/PingTest.cpp
+    unittests/rpc/handlers/AccountChannelsTest.cpp
+    unittests/rpc/handlers/TxTest.cpp
+    unittests/rpc/handlers/GatewayBalancesTest.cpp
+    unittests/rpc/handlers/LedgerEntryTest.cpp
+    unittests/rpc/handlers/LedgerRangeTest.cpp
+    unittests/rpc/handlers/BookOffersTest.cpp
+    unittests/rpc/handlers/NoRippleCheckTest.cpp
+    unittests/rpc/handlers/NFTInfoTest.cpp
+    unittests/rpc/handlers/AccountTxTest.cpp
+    unittests/rpc/handlers/AccountOffersTest.cpp
+    unittests/rpc/handlers/TransactionEntryTest.cpp
+    unittests/rpc/handlers/NFTInfoTest.cpp
+    unittests/rpc/handlers/NFTBuyOffersTest.cpp
+    unittests/rpc/handlers/NFTSellOffersTest.cpp
+    unittests/rpc/handlers/AccountInfoTest.cpp
     # Backend
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp
