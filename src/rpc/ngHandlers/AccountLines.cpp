@@ -96,10 +96,11 @@ AccountLinesHandler::Result
 AccountLinesHandler::process(AccountLinesHandler::Input input, Context ctx)
     const
 {
+    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        ctx.yield,
+        yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -110,7 +111,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context ctx)
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const accountID = RPC::accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, yield);
 
     if (not accountLedgerObject)
         return Error{RPC::Status{
@@ -155,7 +156,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context ctx)
         lgrInfo.seq,
         input.limit,
         input.marker,
-        ctx.yield,
+        yield,
         addToResponse);
 
     response.account = input.account;

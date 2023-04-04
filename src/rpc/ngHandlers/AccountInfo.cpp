@@ -26,10 +26,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context ctx) const
     if (!input.account && !input.ident)
         return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED}};
 
+    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        ctx.yield,
+        yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -43,7 +44,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context ctx) const
     auto const accountID = RPC::accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        accountKeylet.key, lgrInfo.seq, ctx.yield);
+        accountKeylet.key, lgrInfo.seq, yield);
     if (!accountLedgerObject)
         return Error{RPC::Status{
             RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -63,7 +64,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context ctx) const
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(
-            signersKey.key, lgrInfo.seq, ctx.yield);
+            signersKey.key, lgrInfo.seq, yield);
         std::vector<ripple::STLedgerEntry> signerList;
         if (signers)
         {

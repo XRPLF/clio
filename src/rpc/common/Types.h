@@ -61,7 +61,7 @@ struct VoidOutput
 
 struct Context
 {
-    std::reference_wrapper<boost::asio::yield_context> yield;
+    boost::asio::yield_context* pYield = nullptr;
     std::shared_ptr<WsBase> pWs;
 };
 

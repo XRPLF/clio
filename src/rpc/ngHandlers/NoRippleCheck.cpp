@@ -29,10 +29,11 @@ NoRippleCheckHandler::Result
 NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context ctx)
     const
 {
+    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        ctx.yield,
+        yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -44,7 +45,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context ctx)
     auto const accountID = RPC::accountFromStringStrict(input.account);
     auto const keylet = ripple::keylet::account(*accountID).key;
     auto const accountObj =
-        sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, yield);
     if (!accountObj)
         return Error{RPC::Status{
             RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -57,7 +58,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context ctx)
         sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
 
     auto const fees = input.transactions
-        ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield)
+        ? sharedPtrBackend_->fetchFees(lgrInfo.seq, yield)
         : std::nullopt;
 
     auto output = NoRippleCheckHandler::Output();
@@ -100,7 +101,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context ctx)
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
-        ctx.yield,
+        yield,
         [&](ripple::SLE&& ownedItem) {
             // don't push to result if limit is reached
             if (limit != 0 && ownedItem.getType() == ripple::ltRIPPLE_STATE)

@@ -59,10 +59,11 @@ AccountChannelsHandler::process(
     AccountChannelsHandler::Input input,
     Context ctx) const
 {
+    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        ctx.yield,
+        yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -76,7 +77,7 @@ AccountChannelsHandler::process(
     auto const accountID = RPC::accountFromStringStrict(input.account);
 
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, yield);
     if (!accountLedgerObject)
         return Error{RPC::Status{
             RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -103,7 +104,7 @@ AccountChannelsHandler::process(
         lgrInfo.seq,
         input.limit,
         input.marker,
-        ctx.yield,
+        yield,
         addToResponse);
 
     response.account = input.account;

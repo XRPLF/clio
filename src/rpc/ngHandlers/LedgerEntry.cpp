@@ -101,10 +101,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context ctx) const
     }
 
     // check ledger exists
+    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        ctx.yield,
+        yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -114,7 +115,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context ctx) const
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const ledgerObject =
-        sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield);
     if (!ledgerObject || ledgerObject->size() == 0)
         return Error{RPC::Status{"entryNotFound"}};
 
