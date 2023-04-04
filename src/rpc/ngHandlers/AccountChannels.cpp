@@ -57,7 +57,7 @@ AccountChannelsHandler::addChannel(
 AccountChannelsHandler::Result
 AccountChannelsHandler::process(
     AccountChannelsHandler::Input input,
-    Context ctx) const
+    Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();

@@ -71,7 +71,7 @@ public:
     }
 
     Result
-    process(Input input, Context ctx) const;
+    process(Input input, Context const& ctx) const;
 };
 
 void

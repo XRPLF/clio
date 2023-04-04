@@ -23,7 +23,7 @@
 namespace RPCng {
 
 TxHandler::Result
-TxHandler::process(Input input, Context ctx) const
+TxHandler::process(Input input, Context const& ctx) const
 {
     constexpr static auto maxLedgerRange = 1000u;
     auto const rangeSupplied = input.minLedger && input.maxLedger;

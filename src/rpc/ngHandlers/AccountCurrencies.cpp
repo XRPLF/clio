@@ -23,7 +23,7 @@ namespace RPCng {
 AccountCurrenciesHandler::Result
 AccountCurrenciesHandler::process(
     AccountCurrenciesHandler::Input input,
-    Context ctx) const
+    Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();

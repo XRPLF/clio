@@ -21,7 +21,8 @@
 
 namespace RPCng {
 AccountInfoHandler::Result
-AccountInfoHandler::process(AccountInfoHandler::Input input, Context ctx) const
+AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
+    const
 {
     if (!input.account && !input.ident)
         return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED}};

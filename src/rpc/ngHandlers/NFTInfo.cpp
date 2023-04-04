@@ -29,7 +29,7 @@ using namespace ::RPC;
 namespace RPCng {
 
 NFTInfoHandler::Result
-NFTInfoHandler::process(NFTInfoHandler::Input input, Context ctx) const
+NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};

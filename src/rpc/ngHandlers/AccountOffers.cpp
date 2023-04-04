@@ -42,8 +42,9 @@ AccountOffersHandler::addOffer(
 };
 
 AccountOffersHandler::Result
-AccountOffersHandler::process(AccountOffersHandler::Input input, Context ctx)
-    const
+AccountOffersHandler::process(
+    AccountOffersHandler::Input input,
+    Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();

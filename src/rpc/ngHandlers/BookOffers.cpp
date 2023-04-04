@@ -23,7 +23,7 @@
 namespace RPCng {
 
 BookOffersHandler::Result
-BookOffersHandler::process(Input input, Context ctx) const
+BookOffersHandler::process(Input input, Context const& ctx) const
 {
     auto bookMaybe = RPC::parseBook(
         input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);

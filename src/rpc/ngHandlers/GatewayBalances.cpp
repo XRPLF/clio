@@ -24,7 +24,7 @@ namespace RPCng {
 GatewayBalancesHandler::Result
 GatewayBalancesHandler::process(
     GatewayBalancesHandler::Input input,
-    Context ctx) const
+    Context const& ctx) const
 {
     // check ledger
     auto& yield = *(ctx.pYield);

@@ -26,8 +26,9 @@
 namespace RPCng {
 
 NoRippleCheckHandler::Result
-NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context ctx)
-    const
+NoRippleCheckHandler::process(
+    NoRippleCheckHandler::Input input,
+    Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();

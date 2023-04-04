@@ -24,7 +24,7 @@ namespace RPCng {
 TransactionEntryHandler::Result
 TransactionEntryHandler::process(
     TransactionEntryHandler::Input input,
-    Context ctx) const
+    Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();

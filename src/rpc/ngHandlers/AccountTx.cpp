@@ -25,7 +25,8 @@ clio::Logger gLog{"RPC-AccountTxHandler"};
 
 namespace RPCng {
 AccountTxHandler::Result
-AccountTxHandler::process(AccountTxHandler::Input input, Context ctx) const
+AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
+    const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();

@@ -93,8 +93,9 @@ AccountLinesHandler::addLine(
 }
 
 AccountLinesHandler::Result
-AccountLinesHandler::process(AccountLinesHandler::Input input, Context ctx)
-    const
+AccountLinesHandler::process(
+    AccountLinesHandler::Input input,
+    Context const& ctx) const
 {
     auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
