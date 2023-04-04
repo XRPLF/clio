@@ -988,7 +988,6 @@ TEST_F(BackendTest, Basic)
 
                     Backend::LedgerPage page;
                     std::vector<Backend::LedgerObject> retObjs;
-                    size_t numLoops = 0;
                     do
                     {
                         uint32_t limit = 10;
@@ -1000,7 +999,6 @@ TEST_F(BackendTest, Basic)
                             retObjs.end(),
                             page.objects.begin(),
                             page.objects.end());
-                        ++numLoops;
                     } while (page.cursor);
 
                     for (auto obj : objs)
@@ -2343,7 +2341,6 @@ TEST_F(BackendTest, cacheIntegration)
                     }
                     Backend::LedgerPage page;
                     std::vector<Backend::LedgerObject> retObjs;
-                    size_t numLoops = 0;
                     do
                     {
                         uint32_t limit = 10;
@@ -2355,7 +2352,6 @@ TEST_F(BackendTest, cacheIntegration)
                             retObjs.end(),
                             page.objects.begin(),
                             page.objects.end());
-                        ++numLoops;
                     } while (page.cursor);
                     for (auto obj : objs)
                     {
