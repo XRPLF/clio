@@ -88,15 +88,9 @@ public:
      * @return JSON result or @ref RPC::Status on error
      */
     [[nodiscard]] ReturnType
-    process(boost::json::value const& value, Context& ctx) const
+    process(boost::json::value const& value, Context const& ctx) const
     {
         return pimpl_->process(value, ctx);
-    }
-
-    [[nodiscard]] ReturnType
-    process(boost::json::value const& value, Context&& ctx) const
-    {
-        return pimpl_->process(value, std::move(ctx));
     }
 
 private:
