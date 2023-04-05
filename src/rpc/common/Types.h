@@ -22,8 +22,10 @@
 #include <rpc/Errors.h>
 #include <util/Expected.h>
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
 
+class WsBase;
 namespace RPCng {
 
 /**
@@ -55,6 +57,14 @@ using RpcSpecConstRef = RpcSpec const&;
 
 struct VoidOutput
 {
+};
+
+struct Context
+{
+    // TODO: we shall change yield_context to const yield_context after we
+    // update backend interfaces to use const& yield
+    const std::reference_wrapper<boost::asio::yield_context> yield;
+    const std::shared_ptr<WsBase> session;
 };
 
 inline void

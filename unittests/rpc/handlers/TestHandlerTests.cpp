@@ -20,6 +20,7 @@
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/impl/FakesAndMocks.h>
 #include <util/Fixtures.h>
+#include <util/MockWsBase.h>
 
 #include <boost/json/parse.hpp>
 
@@ -59,7 +60,7 @@ TEST_F(RPCTestHandlerTest, CoroutineHandlerSuccess)
     })");
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
 
         auto const val = output.value();

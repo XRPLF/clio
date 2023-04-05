@@ -86,7 +86,7 @@ public:
     }
 
     Result
-    process(Input input, boost::asio::yield_context& yield) const;
+    process(Input input, Context const& ctx) const;
 
 private:
     void

@@ -65,7 +65,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
         ACCOUNT));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -90,7 +90,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
         ACCOUNT));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -118,7 +118,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
         seq));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -145,7 +145,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
         LEDGERHASH));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -219,7 +219,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
         ACCOUNT));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUTPUT));
     });
@@ -264,7 +264,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
         LEDGERHASH));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
     });
 }
@@ -309,7 +309,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
         ledgerSeq));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             (*output).as_object().at("ledger_index").as_uint64(), ledgerSeq);

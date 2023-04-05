@@ -34,7 +34,7 @@ struct DefaultProcessor final
     operator()(
         HandlerType const& handler,
         boost::json::value const& value,
-        boost::asio::yield_context* ptrYield = nullptr) const
+        Context const* ctx = nullptr) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
@@ -46,7 +46,7 @@ struct DefaultProcessor final
                 return Error{ret.error()};  // forward Status
 
             auto const inData = value_to<typename HandlerType::Input>(value);
-            if constexpr (NonCoroutineProcess<HandlerType>)
+            if constexpr (NonContextProcess<HandlerType>)
             {
                 auto const ret = handler.process(inData);
                 // real handler is given expected Input, not json
@@ -57,7 +57,7 @@ struct DefaultProcessor final
             }
             else
             {
-                auto const ret = handler.process(inData, *ptrYield);
+                auto const ret = handler.process(inData, *ctx);
                 // real handler is given expected Input, not json
                 if (!ret)
                     return Error{ret.error()};  // forward Status

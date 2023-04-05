@@ -552,13 +552,11 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        std::cout << err.at("error").as_string() << std::endl;
-        std::cout << err.at("error_message").as_string() << std::endl;
         EXPECT_EQ(
             err.at("error_message").as_string(),
             testBundle.expectedErrorMessage);
@@ -597,7 +595,7 @@ TEST_P(IndexTest, InvalidIndexUint256)
                 "{}": "invalid"
             }})",
             index));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -616,7 +614,7 @@ TEST_P(IndexTest, InvalidIndexNotString)
                 "{}": 123
             }})",
             index));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -650,7 +648,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
             "account_root": "{}"
             }})",
             ACCOUNT));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
@@ -951,7 +949,7 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().at("ledger_hash").as_string(), LEDGERHASH);
         EXPECT_EQ(output.value().at("ledger_index").as_uint64(), RANGEMAX);
@@ -1012,7 +1010,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
                 "payment_channel": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
@@ -1045,11 +1043,10 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
                 "check": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "unexpectedLedgerType");
-        std::cout << err << std::endl;
     });
 }
 
@@ -1072,7 +1069,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
             }})",
             INDEX1,
             RANGEMAX));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1099,7 +1096,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
             }})",
             INDEX1,
             RANGEMAX));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1126,7 +1123,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
             }})",
             INDEX1,
             LEDGERHASH));
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");

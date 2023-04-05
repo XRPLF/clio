@@ -80,8 +80,8 @@ TEST_P(RPCBookOffersParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output =
-            handler.process(json::parse(bundle.testJson), yield);
+        auto const output = handler.process(
+            json::parse(bundle.testJson), Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -534,8 +534,8 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output =
-            handler.process(json::parse(bundle.inputJson), yield);
+        auto const output = handler.process(
+            json::parse(bundle.inputJson), Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
     });
@@ -1246,7 +1246,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1280,7 +1280,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1315,7 +1315,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1413,9 +1413,8 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value().as_object().at("offers").as_array().size(), 5);
     });
 }

@@ -23,9 +23,8 @@
 
 namespace RPCng {
 LedgerEntryHandler::Result
-LedgerEntryHandler::process(
-    LedgerEntryHandler::Input input,
-    boost::asio::yield_context& yield) const
+LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
+    const
 {
     ripple::uint256 key;
     if (input.index)
@@ -106,7 +105,7 @@ LedgerEntryHandler::process(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -116,7 +115,7 @@ LedgerEntryHandler::process(
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const ledgerObject =
-        sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield);
+        sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
     if (!ledgerObject || ledgerObject->size() == 0)
         return Error{RPC::Status{"entryNotFound"}};
 

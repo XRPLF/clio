@@ -24,12 +24,12 @@ namespace RPCng {
 TransactionEntryHandler::Result
 TransactionEntryHandler::process(
     TransactionEntryHandler::Input input,
-    boost::asio::yield_context& yield) const
+    Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -39,7 +39,7 @@ TransactionEntryHandler::process(
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const dbRet = sharedPtrBackend_->fetchTransaction(
-        ripple::uint256{input.txHash.c_str()}, yield);
+        ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite

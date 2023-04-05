@@ -21,9 +21,8 @@
 
 namespace RPCng {
 AccountInfoHandler::Result
-AccountInfoHandler::process(
-    AccountInfoHandler::Input input,
-    boost::asio::yield_context& yield) const
+AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
+    const
 {
     if (!input.account && !input.ident)
         return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED}};
@@ -31,7 +30,7 @@ AccountInfoHandler::process(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -45,7 +44,7 @@ AccountInfoHandler::process(
     auto const accountID = RPC::accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        accountKeylet.key, lgrInfo.seq, yield);
+        accountKeylet.key, lgrInfo.seq, ctx.yield);
     if (!accountLedgerObject)
         return Error{RPC::Status{
             RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -65,7 +64,7 @@ AccountInfoHandler::process(
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(
-            signersKey.key, lgrInfo.seq, yield);
+            signersKey.key, lgrInfo.seq, ctx.yield);
         std::vector<ripple::STLedgerEntry> signerList;
         if (signers)
         {
