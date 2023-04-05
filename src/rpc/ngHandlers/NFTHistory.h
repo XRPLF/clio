@@ -28,12 +28,13 @@
 #include <boost/asio/spawn.hpp>
 
 namespace RPCng {
-class AccountTxHandler
+class NFTHistoryHandler
 {
     clio::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    // TODO: this marker is same as account_tx, reuse in future
     struct Marker
     {
         uint32_t ledger;
@@ -42,7 +43,7 @@ public:
 
     struct Output
     {
-        std::string account;
+        std::string nftID;
         uint32_t ledgerIndexMin;
         uint32_t ledgerIndexMax;
         std::optional<uint32_t> limit;
@@ -53,10 +54,10 @@ public:
         bool validated = true;
     };
 
-    // TODO:we did not implement the "strict" field
+    // TODO: we did not implement the "strict" field
     struct Input
     {
-        std::string account;
+        std::string nftID;
         // You must use at least one of the following fields in your request:
         // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
         std::optional<std::string> ledgerHash;
@@ -71,7 +72,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountTxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    NFTHistoryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -80,7 +81,9 @@ public:
     spec() const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
+            {JS(nft_id),
+             validation::Required{},
+             validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
@@ -107,23 +110,23 @@ public:
     }
 
     Result
-    process(Input input, Context const& ctx) const;
+    process(Input input, boost::asio::yield_context& yield) const;
 };
 
 void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountTxHandler::Output const& output);
+    NFTHistoryHandler::Output const& output);
 
 void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountTxHandler::Marker const& marker);
+    NFTHistoryHandler::Marker const& marker);
 
-AccountTxHandler::Input
+NFTHistoryHandler::Input
 tag_invoke(
-    boost::json::value_to_tag<AccountTxHandler::Input>,
+    boost::json::value_to_tag<NFTHistoryHandler::Input>,
     boost::json::value const& jv);
 }  // namespace RPCng
