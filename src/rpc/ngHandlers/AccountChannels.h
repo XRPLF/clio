@@ -104,22 +104,20 @@ private:
     void
     addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line)
         const;
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        ChannelResponse const& channel);
 };
-
-AccountChannelsHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountChannelsHandler::Input>,
-    boost::json::value const& jv);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountChannelsHandler::Output const& output);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountChannelsHandler::ChannelResponse const& channel);
 }  // namespace RPCng

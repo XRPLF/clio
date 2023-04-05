@@ -48,12 +48,12 @@ public:
 
     Result
     process() const;
+
+private:
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
 };
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    LedgerRangeHandler::Output const& output);
-
 }  // namespace RPCng

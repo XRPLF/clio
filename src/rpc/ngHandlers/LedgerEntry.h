@@ -195,16 +195,14 @@ private:
     std::variant<ripple::uint256, RPC::Status>
     composeKeyFromDirectory(
         boost::json::object const& directory) const noexcept;
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    LedgerEntryHandler::Output const& output);
-
-LedgerEntryHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<LedgerEntryHandler::Input>,
-    boost::json::value const& jv);
 }  // namespace RPCng

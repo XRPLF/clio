@@ -109,22 +109,21 @@ public:
 
     Result
     process(Input input, Context const& ctx) const;
+
+private:
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Marker const& marker);
 };
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    NFTHistoryHandler::Output const& output);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    NFTHistoryHandler::Marker const& marker);
-
-NFTHistoryHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<NFTHistoryHandler::Input>,
-    boost::json::value const& jv);
 }  // namespace RPCng

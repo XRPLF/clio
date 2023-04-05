@@ -89,22 +89,20 @@ public:
 private:
     void
     addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const;
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Offer const& offer);
 };
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountOffersHandler::Output const& output);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountOffersHandler::Offer const& offer);
-
-AccountOffersHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountOffersHandler::Input>,
-    boost::json::value const& jv);
 }  // namespace RPCng
