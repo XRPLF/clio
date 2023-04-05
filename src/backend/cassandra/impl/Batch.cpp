@@ -26,9 +26,7 @@
 #include <vector>
 
 namespace {
-static constexpr auto batchDeleter = [](CassBatch* ptr) {
-    cass_batch_free(ptr);
-};
+static constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };
 };
 
 namespace Backend::Cassandra::detail {
@@ -42,15 +40,13 @@ Batch::Batch(std::vector<Statement> const& statements)
 
     for (auto const& statement : statements)
         if (auto const res = add(statement); not res)
-            throw std::runtime_error(
-                "Failed to add statement to batch: " + res.error());
+            throw std::runtime_error("Failed to add statement to batch: " + res.error());
 }
 
 MaybeError
 Batch::add(Statement const& statement)
 {
-    if (auto const rc = cass_batch_add_statement(*this, statement);
-        rc != CASS_OK)
+    if (auto const rc = cass_batch_add_statement(*this, statement); rc != CASS_OK)
     {
         return Error{CassandraError{cass_error_desc(rc), rc}};
     }

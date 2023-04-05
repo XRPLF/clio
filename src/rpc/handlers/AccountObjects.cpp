@@ -66,8 +66,8 @@ doAccountNFTs(Context const& context)
     if (!accountID)
         return Status{RippledError::rpcINVALID_PARAMS, "malformedAccount"};
 
-    auto rawAcct = context.backend->fetchLedgerObject(
-        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto rawAcct =
+        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
         return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
@@ -90,15 +90,12 @@ doAccountNFTs(Context const& context)
 
     // if a marker was passed, start at the page specified in marker. Else,
     // start at the max page
-    auto const pageKey =
-        marker.isZero() ? ripple::keylet::nftpage_max(accountID).key : marker;
+    auto const pageKey = marker.isZero() ? ripple::keylet::nftpage_max(accountID).key : marker;
 
-    auto const blob =
-        context.backend->fetchLedgerObject(pageKey, lgrInfo.seq, context.yield);
+    auto const blob = context.backend->fetchLedgerObject(pageKey, lgrInfo.seq, context.yield);
     if (!blob)
         return response;
-    std::optional<ripple::SLE const> page{
-        ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
+    std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
 
     // Continue iteration from the current page
     while (page)
@@ -110,20 +107,16 @@ doAccountNFTs(Context const& context)
             ripple::uint256 const nftokenID = o[ripple::sfNFTokenID];
 
             {
-                nfts.push_back(
-                    toBoostJson(o.getJson(ripple::JsonOptions::none)));
+                nfts.push_back(toBoostJson(o.getJson(ripple::JsonOptions::none)));
                 auto& obj = nfts.back().as_object();
 
                 // Pull out the components of the nft ID.
                 obj[SFS(sfFlags)] = ripple::nft::getFlags(nftokenID);
-                obj[SFS(sfIssuer)] =
-                    to_string(ripple::nft::getIssuer(nftokenID));
-                obj[SFS(sfNFTokenTaxon)] =
-                    ripple::nft::toUInt32(ripple::nft::getTaxon(nftokenID));
+                obj[SFS(sfIssuer)] = to_string(ripple::nft::getIssuer(nftokenID));
+                obj[SFS(sfNFTokenTaxon)] = ripple::nft::toUInt32(ripple::nft::getTaxon(nftokenID));
                 obj[JS(nft_serial)] = ripple::nft::getSerial(nftokenID);
 
-                if (std::uint16_t xferFee = {
-                        ripple::nft::getTransferFee(nftokenID)})
+                if (std::uint16_t xferFee = {ripple::nft::getTransferFee(nftokenID)})
                     obj[SFS(sfTransferFee)] = xferFee;
             }
         }
@@ -138,12 +131,9 @@ doAccountNFTs(Context const& context)
                 response[JS(limit)] = numPages;
                 return response;
             }
-            auto const nextBlob = context.backend->fetchLedgerObject(
-                nextKey.key, lgrInfo.seq, context.yield);
+            auto const nextBlob = context.backend->fetchLedgerObject(nextKey.key, lgrInfo.seq, context.yield);
 
-            page.emplace(ripple::SLE{
-                ripple::SerialIter{nextBlob->data(), nextBlob->size()},
-                nextKey.key});
+            page.emplace(ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key});
         }
         else
             page.reset();
@@ -196,8 +186,7 @@ doAccountObjects(Context const& context)
 
     response[JS(account)] = ripple::to_string(accountID);
     response[JS(account_objects)] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonObjects =
-        response.at(JS(account_objects)).as_array();
+    boost::json::array& jsonObjects = response.at(JS(account_objects)).as_array();
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (!objectType || objectType == sle.getType())
@@ -206,14 +195,8 @@ doAccountObjects(Context const& context)
         }
     };
 
-    auto next = traverseOwnedNodes(
-        *context.backend,
-        accountID,
-        lgrInfo.seq,
-        limit,
-        marker,
-        context.yield,
-        addToResponse);
+    auto next =
+        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;

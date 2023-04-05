@@ -42,16 +42,12 @@ timed(F&& func)
     if constexpr (std::is_same_v<decltype(func()), void>)
     {
         func();
-        return std::chrono::duration_cast<U>(
-                   std::chrono::system_clock::now() - start)
-            .count();
+        return std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
     }
     else
     {
         auto ret = func();
-        auto elapsed = std::chrono::duration_cast<U>(
-                           std::chrono::system_clock::now() - start)
-                           .count();
+        auto elapsed = std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
         return std::make_pair(ret, elapsed);
     }
 }

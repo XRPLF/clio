@@ -53,18 +53,12 @@ std::optional<AccountCursor>
 parseAccountCursor(std::optional<std::string> jsonCursor);
 
 // TODO this function should probably be in a different file and namespace
-std::pair<
-    std::shared_ptr<ripple::STTx const>,
-    std::shared_ptr<ripple::STObject const>>
+std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs);
 
 // TODO this function should probably be in a different file and namespace
-std::pair<
-    std::shared_ptr<ripple::STTx const>,
-    std::shared_ptr<ripple::TxMeta const>>
-deserializeTxPlusMeta(
-    Backend::TransactionAndMetadata const& blobs,
-    std::uint32_t seq);
+std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta const>>
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
 toExpandedJson(Backend::TransactionAndMetadata const& blobs);
@@ -145,10 +139,7 @@ ngTraverseOwnedNodes(
     std::function<void(ripple::SLE&&)> atOwnedNode);
 
 std::shared_ptr<ripple::SLE const>
-read(
-    ripple::Keylet const& keylet,
-    ripple::LedgerInfo const& lgrInfo,
-    Context const& context);
+read(ripple::Keylet const& keylet, ripple::LedgerInfo const& lgrInfo, Context const& context);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -217,11 +208,7 @@ postProcessOrderBook(
     boost::asio::yield_context& yield);
 
 std::variant<Status, ripple::Book>
-parseBook(
-    ripple::Currency pays,
-    ripple::AccountID payIssuer,
-    ripple::Currency gets,
-    ripple::AccountID getIssuer);
+parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency gets, ripple::AccountID getIssuer);
 
 std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request);
@@ -233,10 +220,7 @@ std::optional<std::uint32_t>
 getUInt(boost::json::object const& request, std::string const& field);
 
 std::uint32_t
-getUInt(
-    boost::json::object const& request,
-    std::string const& field,
-    std::uint32_t dfault);
+getUInt(boost::json::object const& request, std::string const& field, std::uint32_t dfault);
 
 std::uint32_t
 getRequiredUInt(boost::json::object const& request, std::string const& field);
@@ -245,10 +229,7 @@ std::optional<bool>
 getBool(boost::json::object const& request, std::string const& field);
 
 bool
-getBool(
-    boost::json::object const& request,
-    std::string const& field,
-    bool dfault);
+getBool(boost::json::object const& request, std::string const& field, bool dfault);
 
 bool
 getRequiredBool(boost::json::object const& request, std::string const& field);
@@ -260,10 +241,7 @@ std::string
 getRequiredString(boost::json::object const& request, std::string const& field);
 
 std::string
-getString(
-    boost::json::object const& request,
-    std::string const& field,
-    std::string dfault);
+getString(boost::json::object const& request, std::string const& field, std::string dfault);
 
 Status
 getHexMarker(boost::json::object const& request, ripple::uint256& marker);
@@ -272,10 +250,7 @@ Status
 getAccount(boost::json::object const& request, ripple::AccountID& accountId);
 
 Status
-getAccount(
-    boost::json::object const& request,
-    ripple::AccountID& destAccount,
-    boost::string_view const& field);
+getAccount(boost::json::object const& request, ripple::AccountID& destAccount, boost::string_view const& field);
 
 Status
 getOptionalAccount(
@@ -308,8 +283,6 @@ traverseTransactions(
         boost::asio::yield_context& yield)> transactionFetcher);
 
 [[nodiscard]] boost::json::object const
-computeBookChanges(
-    ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions);
+computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
 
 }  // namespace RPC

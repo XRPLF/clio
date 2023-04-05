@@ -36,11 +36,9 @@
 class SubscriptionManager;
 
 template <class PlainSession, class SslSession>
-class Detector
-    : public std::enable_shared_from_this<Detector<PlainSession, SslSession>>
+class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslSession>>
 {
-    using std::enable_shared_from_this<
-        Detector<PlainSession, SslSession>>::shared_from_this;
+    using std::enable_shared_from_this<Detector<PlainSession, SslSession>>::shared_from_this;
 
     clio::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
@@ -97,14 +95,9 @@ public:
     run()
     {
         // Set the timeout.
-        boost::beast::get_lowest_layer(stream_).expires_after(
-            std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
         // Detect a TLS handshake
-        async_detect_ssl(
-            stream_,
-            buffer_,
-            boost::beast::bind_front_handler(
-                &Detector::on_detect, shared_from_this()));
+        async_detect_ssl(stream_, buffer_, boost::beast::bind_front_handler(&Detector::on_detect, shared_from_this()));
     }
 
     void
@@ -219,11 +212,9 @@ make_websocket_session(
 }
 
 template <class PlainSession, class SslSession>
-class Listener
-    : public std::enable_shared_from_this<Listener<PlainSession, SslSession>>
+class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslSession>>
 {
-    using std::enable_shared_from_this<
-        Listener<PlainSession, SslSession>>::shared_from_this;
+    using std::enable_shared_from_this<Listener<PlainSession, SslSession>>::shared_from_this;
 
     clio::Logger log_{"WebServer"};
     boost::asio::io_context& ioc_;
@@ -279,8 +270,7 @@ public:
         acceptor_.bind(endpoint, ec);
         if (ec)
         {
-            log_.error() << "Failed to bind to endpoint: " << endpoint
-                         << ". message: " << ec.message();
+            log_.error() << "Failed to bind to endpoint: " << endpoint << ". message: " << ec.message();
             throw std::runtime_error("Failed to bind to specified endpoint");
         }
 
@@ -288,8 +278,7 @@ public:
         acceptor_.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
         {
-            log_.error() << "Failed to listen at endpoint: " << endpoint
-                         << ". message: " << ec.message();
+            log_.error() << "Failed to listen at endpoint: " << endpoint << ". message: " << ec.message();
             throw std::runtime_error("Failed to listen at specified endpoint");
         }
     }
@@ -307,9 +296,7 @@ private:
     {
         // The new connection gets its own strand
         acceptor_.async_accept(
-            net::make_strand(ioc_),
-            boost::beast::bind_front_handler(
-                &Listener::on_accept, shared_from_this()));
+            net::make_strand(ioc_), boost::beast::bind_front_handler(&Listener::on_accept, shared_from_this()));
     }
 
     void
@@ -317,10 +304,7 @@ private:
     {
         if (!ec)
         {
-            auto ctxRef = ctx_
-                ? std::optional<
-                      std::reference_wrapper<ssl::context>>{ctx_.value()}
-                : std::nullopt;
+            auto ctxRef = ctx_ ? std::optional<std::reference_wrapper<ssl::context>>{ctx_.value()} : std::nullopt;
             // Create the detector session and run it
             std::make_shared<Detector<PlainSession, SslSession>>(
                 ioc_,
@@ -363,16 +347,12 @@ make_HttpServer(
         return nullptr;
 
     auto const serverConfig = config.section("server");
-    auto const address =
-        boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
+    auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
     auto const port = serverConfig.value<unsigned short>("port");
-    auto const numThreads = config.valueOr<uint32_t>(
-        "workers", std::thread::hardware_concurrency());
-    auto const maxQueueSize =
-        serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
+    auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
+    auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
 
-    log.info() << "Number of workers = " << numThreads
-               << ". Max queue size = " << maxQueueSize;
+    log.info() << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
 
     auto server = std::make_shared<HttpServer>(
         ioc,

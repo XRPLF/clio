@@ -22,29 +22,22 @@
 namespace RPCng {
 
 GatewayBalancesHandler::Result
-GatewayBalancesHandler::process(
-    GatewayBalancesHandler::Input input,
-    Context const& ctx) const
+GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context const& ctx) const
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
     if (auto const status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     // check account
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const accountID = RPC::accountFromStringStrict(input.account);
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
     if (!accountLedgerObject)
-        return Error{RPC::Status{
-            RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{RPC::Status{RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
     GatewayBalancesHandler::Output output;
 
@@ -58,8 +51,7 @@ GatewayBalancesHandler::process(
             auto const highID = highLimit.getIssuer();
             auto const viewLowest = (lowLimit.getIssuer() == accountID);
             auto const flags = sle.getFieldU32(ripple::sfFlags);
-            auto const freeze = flags &
-                (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+            auto const freeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
             if (!viewLowest)
                 balance.negate();
 
@@ -126,12 +118,10 @@ GatewayBalancesHandler::process(
     if (auto status = std::get_if<RPC::Status>(&ret))
         return Error{*status};
 
-    if (not std::all_of(
-            input.hotWallets.begin(),
-            input.hotWallets.end(),
-            [&](auto const& hw) { return output.hotBalances.contains(hw); }))
-        return Error{RPC::Status{
-            RPC::RippledError::rpcINVALID_PARAMS, "invalidHotWallet"}};
+    if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), [&](auto const& hw) {
+            return output.hotBalances.contains(hw);
+        }))
+        return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "invalidHotWallet"}};
 
     output.accountID = input.account;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -140,10 +130,7 @@ GatewayBalancesHandler::process(
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    GatewayBalancesHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesHandler::Output const& output)
 {
     boost::json::object obj;
     if (!output.sums.empty())
@@ -156,28 +143,25 @@ tag_invoke(
         obj[JS(obligations)] = std::move(obligations);
     }
 
-    auto const toJson =
-        [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const&
-               balances) {
-            boost::json::object balancesObj;
-            if (!balances.empty())
+    auto const toJson = [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const& balances) {
+        boost::json::object balancesObj;
+        if (!balances.empty())
+        {
+            for (auto const& [accId, accBalances] : balances)
             {
-                for (auto const& [accId, accBalances] : balances)
+                boost::json::array arr;
+                for (auto const& balance : accBalances)
                 {
-                    boost::json::array arr;
-                    for (auto const& balance : accBalances)
-                    {
-                        boost::json::object entry;
-                        entry[JS(currency)] =
-                            ripple::to_string(balance.issue().currency);
-                        entry[JS(value)] = balance.getText();
-                        arr.push_back(std::move(entry));
-                    }
-                    balancesObj[ripple::to_string(accId)] = std::move(arr);
+                    boost::json::object entry;
+                    entry[JS(currency)] = ripple::to_string(balance.issue().currency);
+                    entry[JS(value)] = balance.getText();
+                    arr.push_back(std::move(entry));
                 }
+                balancesObj[ripple::to_string(accId)] = std::move(arr);
             }
-            return balancesObj;
-        };
+        }
+        return balancesObj;
+    };
 
     if (auto balances = toJson(output.hotBalances); balances.size())
         obj[JS(balances)] = balances;
@@ -197,9 +181,7 @@ tag_invoke(
 }
 
 GatewayBalancesHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<GatewayBalancesHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     GatewayBalancesHandler::Input input;
@@ -216,16 +198,14 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
     if (jsonObject.contains(JS(hotwallet)))
     {
         if (jsonObject.at(JS(hotwallet)).is_string())
         {
-            input.hotWallets.insert(*RPC::accountFromStringStrict(
-                jv.at(JS(hotwallet)).as_string().c_str()));
+            input.hotWallets.insert(*RPC::accountFromStringStrict(jv.at(JS(hotwallet)).as_string().c_str()));
         }
         else
         {
@@ -234,10 +214,7 @@ tag_invoke(
                 hotWallets.begin(),
                 hotWallets.end(),
                 std::inserter(input.hotWallets, input.hotWallets.begin()),
-                [](auto const& hotWallet) {
-                    return *RPC::accountFromStringStrict(
-                        hotWallet.as_string().c_str());
-                });
+                [](auto const& hotWallet) { return *RPC::accountFromStringStrict(hotWallet.as_string().c_str()); });
         }
     }
     return input;

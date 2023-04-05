@@ -49,10 +49,8 @@ class SubscriptionMapTest : public SubscriptionTest
 TEST_F(SubscriptionTest, SubscriptionCount)
 {
     Subscription sub(ctx);
-    std::shared_ptr<WsBase> session1 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<WsBase> session2 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     sub.subscribe(session1);
     sub.subscribe(session2);
     ctx.run();
@@ -81,10 +79,8 @@ TEST_F(SubscriptionTest, SubscriptionCount)
 TEST_F(SubscriptionTest, SubscriptionPublish)
 {
     Subscription sub(ctx);
-    std::shared_ptr<WsBase> session1 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<WsBase> session2 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     sub.subscribe(session1);
     sub.subscribe(session2);
     ctx.run();
@@ -127,12 +123,9 @@ TEST_F(SubscriptionTest, SubscriptionDeadRemoveSubscriber)
 
 TEST_F(SubscriptionMapTest, SubscriptionMapCount)
 {
-    std::shared_ptr<WsBase> session1 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<WsBase> session2 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<WsBase> session3 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session3 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionMap<std::string> subMap(ctx);
     subMap.subscribe(session1, "topic1");
     subMap.subscribe(session2, "topic1");
@@ -162,10 +155,8 @@ TEST_F(SubscriptionMapTest, SubscriptionMapCount)
 
 TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
 {
-    std::shared_ptr<WsBase> session1 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<WsBase> session2 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionMap<std::string> subMap(ctx);
     const std::string topic1 = "topic1";
     const std::string topic2 = "topic2";
@@ -176,9 +167,8 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
     ctx.run();
     EXPECT_EQ(subMap.count(), 2);
     auto message1 = std::make_shared<Message>(topic1Message.data());
-    subMap.publish(message1, topic1);  // lvalue
-    subMap.publish(
-        std::make_shared<Message>(topic2Message.data()), topic2);  // rvalue
+    subMap.publish(message1, topic1);                                         // lvalue
+    subMap.publish(std::make_shared<Message>(topic2Message.data()), topic2);  // rvalue
     ctx.restart();
     ctx.run();
     MockSession* p1 = (MockSession*)(session1.get());
@@ -190,8 +180,7 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
 TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
 {
     std::shared_ptr<WsBase> session1(new MockDeadSession(tagDecoratorFactory));
-    std::shared_ptr<WsBase> session2 =
-        std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionMap<std::string> subMap(ctx);
     const std::string topic1 = "topic1";
     const std::string topic2 = "topic2";
@@ -202,9 +191,8 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
     ctx.run();
     EXPECT_EQ(subMap.count(), 2);
     auto message1 = std::make_shared<Message>(topic1Message.data());
-    subMap.publish(message1, topic1);  // lvalue
-    subMap.publish(
-        std::make_shared<Message>(topic2Message.data()), topic2);  // rvalue
+    subMap.publish(message1, topic1);                                         // lvalue
+    subMap.publish(std::make_shared<Message>(topic2Message.data()), topic2);  // rvalue
     ctx.restart();
     ctx.run();
     MockDeadSession* p1 = (MockDeadSession*)(session1.get());

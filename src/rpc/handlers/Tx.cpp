@@ -71,8 +71,7 @@ doTx(Context const& context)
     {
         if (rangeSupplied)
         {
-            bool searchedAll = range->maxSequence >= *maxLedger &&
-                range->minSequence <= *minLedger;
+            bool searchedAll = range->maxSequence >= *maxLedger && range->minSequence <= *minLedger;
             boost::json::object extra;
             extra["searched_all"] = searchedAll;
             return Status{RippledError::rpcTXN_NOT_FOUND, std::move(extra)};

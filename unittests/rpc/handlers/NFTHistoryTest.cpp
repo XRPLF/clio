@@ -32,10 +32,8 @@ constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto LEDGERHASH =
-    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto NFTID =
-    "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
 
 class RPCNFTHistoryHandlerTest : public HandlerBaseTest
 {
@@ -50,9 +48,8 @@ struct NFTHistoryParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct NFTHistoryParameterTest
-    : public RPCNFTHistoryHandlerTest,
-      public WithParamInterface<NFTHistoryParamTestCaseBundle>
+struct NFTHistoryParameterTest : public RPCNFTHistoryHandlerTest,
+                                 public WithParamInterface<NFTHistoryParamTestCaseBundle>
 {
     struct NameGenerator
     {
@@ -60,8 +57,7 @@ struct NFTHistoryParameterTest
         std::string
         operator()(const testing::TestParamInfo<ParamType>& info) const
         {
-            auto bundle =
-                static_cast<NFTHistoryParamTestCaseBundle>(info.param);
+            auto bundle = static_cast<NFTHistoryParamTestCaseBundle>(info.param);
             return bundle.testName;
         }
     };
@@ -71,11 +67,7 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<NFTHistoryParamTestCaseBundle>{
-        NFTHistoryParamTestCaseBundle{
-            "MissingNFTID",
-            R"({})",
-            "invalidParams",
-            "Required field 'nft_id' missing"},
+        NFTHistoryParamTestCaseBundle{"MissingNFTID", R"({})", "invalidParams", "Required field 'nft_id' missing"},
         NFTHistoryParamTestCaseBundle{
             "BinaryNotBool",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "binary": 1})",
@@ -223,9 +215,7 @@ TEST_P(NFTHistoryParameterTest, InvalidParams)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        EXPECT_EQ(
-            err.at("error_message").as_string(),
-            testBundle.expectedErrorMessage);
+        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
 }
 
@@ -234,23 +224,19 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj =
-        CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    ripple::STObject metaObj =
-        CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
+    ripple::STObject metaObj = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
 
     auto trans2 = TransactionAndMetadata();
-    ripple::STObject obj2 =
-        CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    ripple::STObject obj2 = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    ripple::STObject metaObj2 =
-        CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
+    ripple::STObject metaObj2 = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -261,13 +247,10 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
@@ -295,9 +278,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -307,21 +288,17 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
             testing::_))
         .Times(1);
 
@@ -342,9 +319,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalse)
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -354,21 +329,14 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
-            testing::_,
-            testing::_,
-            true,
-            testing::Optional(testing::Eq(TransactionsCursor{MINSEQ, 0})),
-            testing::_))
+            testing::_, testing::_, true, testing::Optional(testing::Eq(TransactionsCursor{MINSEQ, 0})), testing::_))
         .Times(1);
 
     runSpawn([&, this](auto& yield) {
@@ -388,9 +356,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -400,21 +366,17 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
             testing::_))
         .Times(1);
 
@@ -435,9 +397,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -447,21 +407,17 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
             testing::_))
         .Times(1);
 
@@ -482,35 +438,19 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrue)
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
-            output->at("transactions")
-                .as_array()[0]
-                .as_object()
-                .at("meta")
-                .as_string(),
+            output->at("transactions").as_array()[0].as_object().at("meta").as_string(),
             "201C00000000F8E5110061E762400000000000001681144B4E9C06F24296074F7B"
             "C48F92A97916C6DC5EA9E1E1E5110061E76240000000000000178114D31252CF90"
             "2EF8DD8451243869B38667CBD89DF3E1E1F1031000");
         EXPECT_EQ(
-            output->at("transactions")
-                .as_array()[0]
-                .as_object()
-                .at("tx_blob")
-                .as_string(),
+            output->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
             "120000240000002061400000000000000168400000000000000173047465737481"
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3");
-        EXPECT_EQ(
-            output->at("transactions")
-                .as_array()[0]
-                .as_object()
-                .at("date")
-                .as_uint64(),
-            1);
+        EXPECT_EQ(output->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
 
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -520,21 +460,14 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
-            testing::_))
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
         .Times(1);
 
     runSpawn([&, this](auto& yield) {
@@ -557,9 +490,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
         EXPECT_EQ(output->at("limit").as_uint64(), 2);
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
     });
 }
@@ -568,29 +499,24 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
             testing::_))
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _))
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
@@ -616,12 +542,10 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
@@ -644,12 +568,10 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
@@ -672,29 +594,24 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
             testing::_))
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
@@ -720,21 +637,17 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
             testing::_))
         .Times(1);
 
@@ -765,21 +678,17 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr =
-        static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor =
-        TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions)
-        .WillByDefault(Return(transCursor));
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTTransactions(
             testing::_,
             testing::_,
             false,
-            testing::Optional(
-                testing::Eq(TransactionsCursor{MAXSEQ - 2, INT32_MAX})),
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 2, INT32_MAX})),
             testing::_))
         .Times(1);
 
@@ -802,8 +711,6 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 2);
         EXPECT_EQ(output->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_EQ(
-            output->at("marker").as_object(),
-            json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
     });
 }

@@ -47,8 +47,8 @@ doAccountCurrencies(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto rawAcct = context.backend->fetchLedgerObject(
-        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto rawAcct =
+        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
         return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
@@ -88,10 +88,8 @@ doAccountCurrencies(Context const& context)
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
 
-    response[JS(receive_currencies)] =
-        boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonReceive =
-        response.at(JS(receive_currencies)).as_array();
+    response[JS(receive_currencies)] = boost::json::value(boost::json::array_kind);
+    boost::json::array& jsonReceive = response.at(JS(receive_currencies)).as_array();
 
     for (auto const& currency : receive)
         jsonReceive.push_back(currency.c_str());

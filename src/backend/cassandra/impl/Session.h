@@ -27,9 +27,7 @@ namespace Backend::Cassandra::detail {
 
 class Session : public ManagedObject<CassSession>
 {
-    static constexpr auto deleter = [](CassSession* ptr) {
-        cass_session_free(ptr);
-    };
+    static constexpr auto deleter = [](CassSession* ptr) { cass_session_free(ptr); };
 
 public:
     Session() : ManagedObject{cass_session_new(), deleter}

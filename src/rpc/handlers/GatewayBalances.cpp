@@ -46,19 +46,17 @@ doGatewayBalances(Context const& context)
 
     if (request.contains(JS(hotwallet)))
     {
-        auto getAccountID =
-            [](auto const& j) -> std::optional<ripple::AccountID> {
+        auto getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
             if (j.is_string())
             {
-                auto const pk = ripple::parseBase58<ripple::PublicKey>(
-                    ripple::TokenType::AccountPublic, j.as_string().c_str());
+                auto const pk =
+                    ripple::parseBase58<ripple::PublicKey>(ripple::TokenType::AccountPublic, j.as_string().c_str());
                 if (pk)
                 {
                     return ripple::calcAccountID(*pk);
                 }
 
-                return ripple::parseBase58<ripple::AccountID>(
-                    j.as_string().c_str());
+                return ripple::parseBase58<ripple::AccountID>(j.as_string().c_str());
             }
             return {};
         };
@@ -111,8 +109,7 @@ doGatewayBalances(Context const& context)
             auto lineLimit = viewLowest ? lowLimit : highLimit;
             auto lineLimitPeer = !viewLowest ? lowLimit : highLimit;
             auto flags = sle.getFieldU32(ripple::sfFlags);
-            auto freeze = flags &
-                (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+            auto freeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
             if (!viewLowest)
                 balance.negate();
 
@@ -188,34 +185,28 @@ doGatewayBalances(Context const& context)
         response[JS(obligations)] = std::move(obj);
     }
 
-    auto toJson =
-        [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const&
-               balances) {
-            boost::json::object obj;
-            if (!balances.empty())
+    auto toJson = [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const& balances) {
+        boost::json::object obj;
+        if (!balances.empty())
+        {
+            for (auto const& [accId, accBalances] : balances)
             {
-                for (auto const& [accId, accBalances] : balances)
+                boost::json::array arr;
+                for (auto const& balance : accBalances)
                 {
-                    boost::json::array arr;
-                    for (auto const& balance : accBalances)
-                    {
-                        boost::json::object entry;
-                        entry[JS(currency)] =
-                            ripple::to_string(balance.issue().currency);
-                        entry[JS(value)] = balance.getText();
-                        arr.push_back(std::move(entry));
-                    }
-                    obj[ripple::to_string(accId)] = std::move(arr);
+                    boost::json::object entry;
+                    entry[JS(currency)] = ripple::to_string(balance.issue().currency);
+                    entry[JS(value)] = balance.getText();
+                    arr.push_back(std::move(entry));
                 }
+                obj[ripple::to_string(accId)] = std::move(arr);
             }
-            return obj;
-        };
-
-    auto containsHotWallet = [&](auto const& hw) {
-        return hotBalances.contains(hw);
+        }
+        return obj;
     };
-    if (not std::all_of(
-            hotWallets.begin(), hotWallets.end(), containsHotWallet))
+
+    auto containsHotWallet = [&](auto const& hw) { return hotBalances.contains(hw); };
+    if (not std::all_of(hotWallets.begin(), hotWallets.end(), containsHotWallet))
         return Status{RippledError::rpcINVALID_PARAMS, "invalidHotWallet"};
 
     if (auto balances = toJson(hotBalances); balances.size())

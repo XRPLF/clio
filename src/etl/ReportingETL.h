@@ -265,9 +265,7 @@ private:
     /// (mostly transaction hashes, corresponding nodestore hashes and affected
     /// accounts)
     FormattedTransactionsData
-    insertTransactions(
-        ripple::LedgerInfo const& ledger,
-        org::xrpl::rpc::v1::GetLedgerResponse& data);
+    insertTransactions(ripple::LedgerInfo const& ledger, org::xrpl::rpc::v1::GetLedgerResponse& data);
 
     // TODO update this documentation
     /// Build the next ledger using the previous ledger and the extracted data.
@@ -341,8 +339,7 @@ public:
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<NetworkValidatedLedgers> ledgers)
     {
-        auto etl = std::make_shared<ReportingETL>(
-            config, ioc, backend, subscriptions, balancer, ledgers);
+        auto etl = std::make_shared<ReportingETL>(config, ioc, backend, subscriptions, balancer, ledgers);
 
         etl->run();
 
@@ -373,8 +370,7 @@ public:
         result["read_only"] = readOnly_;
         auto last = getLastPublish();
         if (last.time_since_epoch().count() != 0)
-            result["last_publish_age_seconds"] =
-                std::to_string(lastPublishAgeSeconds());
+            result["last_publish_age_seconds"] = std::to_string(lastPublishAgeSeconds());
         return result;
     }
 
@@ -388,8 +384,7 @@ public:
     std::uint32_t
     lastPublishAgeSeconds() const
     {
-        return std::chrono::duration_cast<std::chrono::seconds>(
-                   std::chrono::system_clock::now() - getLastPublish())
+        return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - getLastPublish())
             .count();
     }
 
@@ -397,8 +392,7 @@ public:
     lastCloseAgeSeconds() const
     {
         std::shared_lock lck(closeTimeMtx_);
-        auto now = std::chrono::duration_cast<std::chrono::seconds>(
-                       std::chrono::system_clock::now().time_since_epoch())
+        auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
                        .count();
         auto closeTime = lastCloseTime_.time_since_epoch().count();
         if (now < (rippleEpochStart + closeTime))

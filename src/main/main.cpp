@@ -78,12 +78,7 @@ parseCli(int argc, char* argv[])
     positional.add("conf", 1);
 
     po::variables_map parsed;
-    po::store(
-        po::command_line_parser(argc, argv)
-            .options(description)
-            .positional(positional)
-            .run(),
-        parsed);
+    po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
     po::notify(parsed);
 
     if (parsed.count("version"))
@@ -94,9 +89,7 @@ parseCli(int argc, char* argv[])
 
     if (parsed.count("help"))
     {
-        std::cout << "Clio server " << Build::getClioFullVersionString()
-                  << "\n\n"
-                  << description;
+        std::cout << "Clio server " << Build::getClioFullVersionString() << "\n\n" << description;
         std::exit(EXIT_SUCCESS);
     }
 
@@ -137,15 +130,11 @@ parseCerts(Config const& config)
 
     ssl::context ctx{ssl::context::tlsv12};
 
-    ctx.set_options(
-        boost::asio::ssl::context::default_workarounds |
-        boost::asio::ssl::context::no_sslv2);
+    ctx.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2);
 
     ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
 
-    ctx.use_private_key(
-        boost::asio::buffer(key.data(), key.size()),
-        boost::asio::ssl::context::file_format::pem);
+    ctx.use_private_key(boost::asio::buffer(key.data(), key.size()), boost::asio::ssl::context::file_format::pem);
 
     return ctx;
 }
@@ -175,8 +164,7 @@ try
     auto const config = ConfigReader::open(configPath);
     if (!config)
     {
-        std::cerr << "Couldnt parse config '" << configPath << "'."
-                  << std::endl;
+        std::cerr << "Couldnt parse config '" << configPath << "'." << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -184,9 +172,7 @@ try
     LogService::info() << "Clio version: " << Build::getClioFullVersionString();
 
     auto ctx = parseCerts(config);
-    auto ctxRef = ctx
-        ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()}
-        : std::nullopt;
+    auto ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
 
     auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
@@ -208,8 +194,7 @@ try
     auto backend = Backend::make_Backend(ioc, config);
 
     // Manages clients subscribed to streams
-    auto subscriptions =
-        SubscriptionManager::make_SubscriptionManager(config, backend);
+    auto subscriptions = SubscriptionManager::make_SubscriptionManager(config, backend);
 
     // Tracks which ledgers have been validated by the
     // network
@@ -220,17 +205,14 @@ try
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and
     // accounts_proposed)
-    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(
-        config, ioc, backend, subscriptions, ledgers);
+    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only
     // mode, ETL only publishes
-    auto etl = ReportingETL::make_ReportingETL(
-        config, ioc, backend, subscriptions, balancer, ledgers);
+    auto etl = ReportingETL::make_ReportingETL(config, ioc, backend, subscriptions, balancer, ledgers);
 
     // The server handles incoming RPCs
-    auto httpServer = Server::make_HttpServer(
-        config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
+    auto httpServer = Server::make_HttpServer(config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

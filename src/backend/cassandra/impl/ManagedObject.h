@@ -31,12 +31,10 @@ protected:
 
 public:
     template <typename deleterCallable>
-    ManagedObject(Managed* rawPtr, deleterCallable deleter)
-        : ptr_{rawPtr, deleter}
+    ManagedObject(Managed* rawPtr, deleterCallable deleter) : ptr_{rawPtr, deleter}
     {
         if (rawPtr == nullptr)
-            throw std::runtime_error(
-                "Could not create DB object - got nullptr");
+            throw std::runtime_error("Could not create DB object - got nullptr");
     }
     ManagedObject(ManagedObject&&) = default;
 

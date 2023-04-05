@@ -59,9 +59,8 @@ public:
     shouldRetry([[maybe_unused]] CassandraError err)
     {
         auto const delay = calculateDelay(attempt_);
-        log_.error() << "Cassandra write error: " << err << ", current retries "
-                     << attempt_ << ", retrying in " << delay.count()
-                     << " milliseconds";
+        log_.error() << "Cassandra write error: " << err << ", current retries " << attempt_ << ", retrying in "
+                     << delay.count() << " milliseconds";
 
         return true;  // keep retrying forever
     }
@@ -76,11 +75,10 @@ public:
     retry(Fn&& fn)
     {
         timer_.expires_after(calculateDelay(attempt_++));
-        timer_.async_wait(
-            [fn = std::move(fn)]([[maybe_unused]] const auto& err) {
-                // todo: deal with cancellation (thru err)
-                fn();
-            });
+        timer_.async_wait([fn = std::move(fn)]([[maybe_unused]] const auto& err) {
+            // todo: deal with cancellation (thru err)
+            fn();
+        });
     }
 
     /**
@@ -89,8 +87,7 @@ public:
     std::chrono::milliseconds
     calculateDelay(uint32_t attempt)
     {
-        return std::chrono::milliseconds{
-            lround(std::pow(2, std::min(10u, attempt)))};
+        return std::chrono::milliseconds{lround(std::pow(2, std::min(10u, attempt)))};
     }
 };
 

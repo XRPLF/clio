@@ -54,8 +54,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    NoRippleCheckHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    NoRippleCheckHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -69,15 +68,13 @@ public:
              validation::Required{},
              validation::WithCustomError{
                  validation::OneOf{"gateway", "user"},
-                 RPC::Status{
-                     RPC::RippledError::rpcINVALID_PARAMS,
-                     "role field is invalid"}}},
+                 RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "role field is invalid"}}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit),
-             validation::Type<uint32_t>(),
-             validation::Between{1, 500}},
-            {JS(transactions), validation::Type<bool>()}};
+            {JS(limit), validation::Type<uint32_t>(), validation::Between{1, 500}},
+            {JS(transactions), validation::Type<bool>()},
+        };
+
         return rpcSpec;
     }
 
@@ -86,10 +83,7 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

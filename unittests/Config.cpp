@@ -94,18 +94,14 @@ TEST_F(ConfigTest, Access)
     ASSERT_EQ(cfg.value<int64_t>("section.test.int"), 9042);
     ASSERT_EQ(cfg.value<bool>("section.test.bool"), true);
 
-    ASSERT_ANY_THROW((void)cfg.value<uint64_t>(
-        "section.test.bool"));  // wrong type requested
+    ASSERT_ANY_THROW((void)cfg.value<uint64_t>("section.test.bool"));  // wrong type requested
     ASSERT_ANY_THROW((void)cfg.value<bool>("section.doesnotexist"));
 
     ASSERT_EQ(cfg.valueOr<string>("section.test.str", "fallback"), "hello");
-    ASSERT_EQ(
-        cfg.valueOr<string>("section.test.nonexistent", "fallback"),
-        "fallback");
+    ASSERT_EQ(cfg.valueOr<string>("section.test.nonexistent", "fallback"), "fallback");
     ASSERT_EQ(cfg.valueOr("section.test.bool", false), true);
 
-    ASSERT_ANY_THROW(
-        (void)cfg.valueOr("section.test.bool", 1234));  // wrong type requested
+    ASSERT_ANY_THROW((void)cfg.valueOr("section.test.bool", 1234));  // wrong type requested
 }
 
 TEST_F(ConfigTest, ErrorHandling)
@@ -126,7 +122,7 @@ TEST_F(ConfigTest, ErrorHandling)
     try
     {
         (void)arr[3].array()[1].valueOrThrow<int>("msg");  // wrong type
-        ASSERT_FALSE(true);  // should not get here
+        ASSERT_FALSE(true);                                // should not get here
     }
     catch (std::runtime_error const& e)
     {
@@ -195,10 +191,7 @@ struct Custom
     {
         assert(value.is_object());
         auto const& obj = value.as_object();
-        return {
-            obj.at("str").as_string().c_str(),
-            obj.at("int").as_int64(),
-            obj.at("bool").as_bool()};
+        return {obj.at("str").as_string().c_str(), obj.at("int").as_int64(), obj.at("bool").as_bool()};
     }
 };
 
@@ -217,8 +210,7 @@ TEST_F(ConfigTest, Extend)
 class TmpFile
 {
 public:
-    TmpFile(std::string const& data)
-        : tmpPath_{boost::filesystem::unique_path().string()}
+    TmpFile(std::string const& data) : tmpPath_{boost::filesystem::unique_path().string()}
     {
         std::ofstream of;
         of.open(tmpPath_);

@@ -67,26 +67,20 @@ class ForwardCache
     clear();
 
 public:
-    ForwardCache(
-        clio::Config const& config,
-        boost::asio::io_context& ioc,
-        ETLSource const& source)
+    ForwardCache(clio::Config const& config, boost::asio::io_context& ioc, ETLSource const& source)
         : strand_(ioc), timer_(strand_), source_(source)
     {
         if (config.contains("cache"))
         {
-            auto commands =
-                config.arrayOrThrow("cache", "ETLSource cache must be array");
+            auto commands = config.arrayOrThrow("cache", "ETLSource cache must be array");
 
             if (config.contains("cache_duration"))
-                duration_ = config.valueOrThrow<uint32_t>(
-                    "cache_duration",
-                    "ETLSource cache_duration must be a number");
+                duration_ =
+                    config.valueOrThrow<uint32_t>("cache_duration", "ETLSource cache_duration must be a number");
 
             for (auto const& command : commands)
             {
-                auto key = command.valueOrThrow<std::string>(
-                    "ETLSource forward command must be array of strings");
+                auto key = command.valueOrThrow<std::string>("ETLSource forward command must be array of strings");
                 latestForwarded_[key] = {};
             }
         }
@@ -128,22 +122,14 @@ public:
     hasLedger(uint32_t sequence) const = 0;
 
     virtual std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(
-        uint32_t ledgerSequence,
-        bool getObjects = true,
-        bool getObjectNeighbors = false) = 0;
+    fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) = 0;
 
     virtual bool
-    loadInitialLedger(
-        uint32_t sequence,
-        std::uint32_t numMarkers,
-        bool cacheOnly = false) = 0;
+    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false) = 0;
 
     virtual std::optional<boost::json::object>
-    forwardToRippled(
-        boost::json::object const& request,
-        std::string const& clientIp,
-        boost::asio::yield_context& yield) const = 0;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+        const = 0;
 
     virtual boost::uuids::uuid
     token() const = 0;
@@ -258,9 +244,7 @@ protected:
         auto const host = ip_;
         auto const port = wsPort_;
 
-        resolver_.async_resolve(host, port, [this](auto ec, auto results) {
-            onResolve(ec, results);
-        });
+        resolver_.async_resolve(host, port, [this](auto ec, auto results) { onResolve(ec, results); });
     }
 
 public:
@@ -327,21 +311,18 @@ public:
             grpcPort_ = *value;
             try
             {
-                boost::asio::ip::tcp::endpoint endpoint{
-                    boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
+                boost::asio::ip::tcp::endpoint endpoint{boost::asio::ip::make_address(ip_), std::stoi(grpcPort_)};
                 std::stringstream ss;
                 ss << endpoint;
                 grpc::ChannelArguments chArgs;
                 chArgs.SetMaxReceiveMessageSize(-1);
                 stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                    grpc::CreateCustomChannel(
-                        ss.str(), grpc::InsecureChannelCredentials(), chArgs));
+                    grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs));
                 log_.debug() << "Made stub for remote = " << toString();
             }
             catch (std::exception const& e)
             {
-                log_.debug() << "Exception while creating stub = " << e.what()
-                             << " . Remote = " << toString();
+                log_.debug() << "Exception while creating stub = " << e.what() << " . Remote = " << toString();
             }
         }
     }
@@ -397,9 +378,7 @@ public:
                 pairs.push_back(std::make_pair(min, max));
             }
         }
-        std::sort(pairs.begin(), pairs.end(), [](auto left, auto right) {
-            return left.first < right.first;
-        });
+        std::sort(pairs.begin(), pairs.end(), [](auto left, auto right) { return left.first < right.first; });
 
         // we only hold the lock here, to avoid blocking while string processing
         std::lock_guard lck(mtx_);
@@ -422,16 +401,13 @@ public:
     /// and the prior one
     /// @return the extracted data and the result status
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(
-        uint32_t ledgerSequence,
-        bool getObjects = true,
-        bool getObjectNeighbors = false) override;
+    fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) override;
 
     std::string
     toString() const override
     {
-        return "{validated_ledger: " + getValidatedRange() + ", ip: " + ip_ +
-            ", web socket port: " + wsPort_ + ", grpc port: " + grpcPort_ + "}";
+        return "{validated_ledger: " + getValidatedRange() + ", ip: " + ip_ + ", web socket port: " + wsPort_ +
+            ", grpc port: " + grpcPort_ + "}";
     }
 
     boost::json::object
@@ -446,8 +422,7 @@ public:
         auto last = getLastMsgTime();
         if (last.time_since_epoch().count() != 0)
             res["last_msg_age_seconds"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::seconds>(
-                    std::chrono::system_clock::now() - getLastMsgTime())
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - getLastMsgTime())
                     .count());
         return res;
     }
@@ -457,10 +432,7 @@ public:
     /// @param writeQueue queue to push downloaded ledger objects
     /// @return true if the download was successful
     bool
-    loadInitialLedger(
-        std::uint32_t ledgerSequence,
-        std::uint32_t numMarkers,
-        bool cacheOnly = false) override;
+    loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly = false) override;
 
     /// Attempt to reconnect to the ETL source
     void
@@ -484,16 +456,11 @@ public:
 
     /// Callback
     void
-    onResolve(
-        boost::beast::error_code ec,
-        boost::asio::ip::tcp::resolver::results_type results);
+    onResolve(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type results);
 
     /// Callback
     virtual void
-    onConnect(
-        boost::beast::error_code ec,
-        boost::asio::ip::tcp::resolver::results_type::endpoint_type
-            endpoint) = 0;
+    onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint) = 0;
 
     /// Callback
     void
@@ -513,16 +480,13 @@ public:
     handleMessage();
 
     std::optional<boost::json::object>
-    forwardToRippled(
-        boost::json::object const& request,
-        std::string const& clientIp,
-        boost::asio::yield_context& yield) const override;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+        const override;
 };
 
 class PlainETLSource : public ETLSourceImpl<PlainETLSource>
 {
-    std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>>
-        ws_;
+    std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>> ws_;
 
 public:
     PlainETLSource(
@@ -533,24 +497,14 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
-        : ETLSourceImpl(
-              config,
-              ioc,
-              backend,
-              subscriptions,
-              nwvl,
-              balancer,
-              std::move(hooks))
-        , ws_(std::make_unique<
-              boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+        : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer, std::move(hooks))
+        , ws_(std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(
               boost::asio::make_strand(ioc)))
     {
     }
 
     void
-    onConnect(
-        boost::beast::error_code ec,
-        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+    onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
         override;
 
     /// Close the websocket
@@ -569,9 +523,7 @@ class SslETLSource : public ETLSourceImpl<SslETLSource>
 {
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx_;
 
-    std::unique_ptr<boost::beast::websocket::stream<
-        boost::beast::ssl_stream<boost::beast::tcp_stream>>>
-        ws_;
+    std::unique_ptr<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>> ws_;
 
 public:
     SslETLSource(
@@ -583,40 +535,27 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
         ETLSourceHooks hooks)
-        : ETLSourceImpl(
-              config,
-              ioc,
-              backend,
-              subscriptions,
-              nwvl,
-              balancer,
-              std::move(hooks))
+        : ETLSourceImpl(config, ioc, backend, subscriptions, nwvl, balancer, std::move(hooks))
         , sslCtx_(sslCtx)
-        , ws_(std::make_unique<boost::beast::websocket::stream<
-                  boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
+        , ws_(std::make_unique<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
               boost::asio::make_strand(ioc_),
               *sslCtx_))
     {
     }
 
     void
-    onConnect(
-        boost::beast::error_code ec,
-        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+    onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
         override;
 
     void
-    onSslHandshake(
-        boost::beast::error_code ec,
-        boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint);
+    onSslHandshake(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint);
 
     /// Close the websocket
     /// @param startAgain whether to reconnect
     void
     close(bool startAgain);
 
-    boost::beast::websocket::stream<
-        boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
     ws()
     {
         return *ws_;
@@ -652,8 +591,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
     {
-        return std::make_shared<ETLLoadBalancer>(
-            config, ioc, backend, subscriptions, validatedLedgers);
+        return std::make_shared<ETLLoadBalancer>(config, ioc, backend, subscriptions, validatedLedgers);
     }
 
     ~ETLLoadBalancer()
@@ -676,10 +614,7 @@ public:
     /// was found in the database or the server is shutting down, the optional
     /// will be empty
     std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(
-        uint32_t ledgerSequence,
-        bool getObjects,
-        bool getObjectNeighbors);
+    fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
 
     /// Determine whether messages received on the transactions_proposed stream
     /// should be forwarded to subscribing clients. The server subscribes to
@@ -720,10 +655,8 @@ public:
     /// @param request JSON-RPC request
     /// @return response received from rippled node
     std::optional<boost::json::object>
-    forwardToRippled(
-        boost::json::object const& request,
-        std::string const& clientIp,
-        boost::asio::yield_context& yield) const;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+        const;
 
 private:
     /// f is a function that takes an ETLSource as an argument and returns a

@@ -31,10 +31,7 @@ template <Handler HandlerType>
 struct DefaultProcessor final
 {
     [[nodiscard]] ReturnType
-    operator()(
-        HandlerType const& handler,
-        boost::json::value const& value,
-        Context const* ctx = nullptr) const
+    operator()(HandlerType const& handler, boost::json::value const& value, Context const* ctx = nullptr) const
     {
         using boost::json::value_from;
         using boost::json::value_to;

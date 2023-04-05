@@ -27,23 +27,18 @@ namespace RPCng {
 LedgerRangeHandler::Result
 LedgerRangeHandler::process() const
 {
-    if (auto const maybeRange = sharedPtrBackend_->fetchLedgerRange();
-        maybeRange)
+    if (auto const maybeRange = sharedPtrBackend_->fetchLedgerRange(); maybeRange)
     {
         return Output{*maybeRange};
     }
     else
     {
-        return Error{
-            RPC::Status{RPC::RippledError::rpcNOT_READY, "rangeNotFound"}};
+        return Error{RPC::Status{RPC::RippledError::rpcNOT_READY, "rangeNotFound"}};
     }
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    LedgerRangeHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerRangeHandler::Output const& output)
 {
     jv = boost::json::object{
         {JS(ledger_index_min), output.range.minSequence},

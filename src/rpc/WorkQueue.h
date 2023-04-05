@@ -50,31 +50,24 @@ public:
     {
         if (curSize_ >= maxSize_ && !isWhiteListed)
         {
-            log_.warn() << "Queue is full. rejecting job. current size = "
-                        << curSize_ << " max size = " << maxSize_;
+            log_.warn() << "Queue is full. rejecting job. current size = " << curSize_ << " max size = " << maxSize_;
             return false;
         }
         ++curSize_;
         auto start = std::chrono::system_clock::now();
         // Each time we enqueue a job, we want to post a symmetrical job that
         // will dequeue and run the job at the front of the job queue.
-        boost::asio::spawn(
-            ioc_,
-            [this, f = std::move(f), start](boost::asio::yield_context yield) {
-                auto run = std::chrono::system_clock::now();
-                auto wait =
-                    std::chrono::duration_cast<std::chrono::microseconds>(
-                        run - start)
-                        .count();
-                // increment queued_ here, in the same place we implement
-                // durationUs_
-                ++queued_;
-                durationUs_ += wait;
-                log_.info() << "WorkQueue wait time = " << wait
-                            << " queue size = " << curSize_;
-                f(yield);
-                --curSize_;
-            });
+        boost::asio::spawn(ioc_, [this, f = std::move(f), start](boost::asio::yield_context yield) {
+            auto run = std::chrono::system_clock::now();
+            auto wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
+            // increment queued_ here, in the same place we implement
+            // durationUs_
+            ++queued_;
+            durationUs_ += wait;
+            log_.info() << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
+            f(yield);
+            --curSize_;
+        });
         return true;
     }
 

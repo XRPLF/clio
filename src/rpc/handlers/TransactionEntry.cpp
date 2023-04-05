@@ -46,10 +46,7 @@ doTransactionEntry(Context const& context)
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
     if (!dbResponse || dbResponse->ledgerSequence != lgrInfo.seq)
-        return Status{
-            RippledError::rpcTXN_NOT_FOUND,
-            "transactionNotFound",
-            "Transaction not found."};
+        return Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."};
 
     auto [txn, meta] = toExpandedJson(*dbResponse);
     response[JS(tx_json)] = std::move(txn);

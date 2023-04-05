@@ -50,8 +50,7 @@ getWarningInfo(WarningCode code)
         {warnRPC_RATE_LIMIT, "You are about to be rate limited"}};
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
-    if (auto it = find_if(begin(infos), end(infos), matchByCode);
-        it != end(infos))
+    if (auto it = find_if(begin(infos), end(infos), matchByCode); it != end(infos))
         return *it;
 
     throw(out_of_range("Invalid WarningCode"));
@@ -71,31 +70,21 @@ ClioErrorInfo const&
 getErrorInfo(ClioError code)
 {
     constexpr static ClioErrorInfo infos[]{
-        {ClioError::rpcMALFORMED_CURRENCY,
-         "malformedCurrency",
-         "Malformed currency."},
-        {ClioError::rpcMALFORMED_REQUEST,
-         "malformedRequest",
-         "Malformed request."},
+        {ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency", "Malformed currency."},
+        {ClioError::rpcMALFORMED_REQUEST, "malformedRequest", "Malformed request."},
         {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
-        {ClioError::rpcMALFORMED_ADDRESS,
-         "malformedAddress",
-         "Malformed address."},
+        {ClioError::rpcMALFORMED_ADDRESS, "malformedAddress", "Malformed address."},
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
-    if (auto it = find_if(begin(infos), end(infos), matchByCode);
-        it != end(infos))
+    if (auto it = find_if(begin(infos), end(infos), matchByCode); it != end(infos))
         return *it;
 
     throw(out_of_range("Invalid error code"));
 }
 
 boost::json::object
-makeError(
-    RippledError err,
-    optional<string_view> customError,
-    optional<string_view> customMessage)
+makeError(RippledError err, optional<string_view> customError, optional<string_view> customMessage)
 {
     boost::json::object json;
     auto const& info = ripple::RPC::get_error_info(err);
@@ -109,10 +98,7 @@ makeError(
 }
 
 boost::json::object
-makeError(
-    ClioError err,
-    optional<string_view> customError,
-    optional<string_view> customMessage)
+makeError(ClioError err, optional<string_view> customError, optional<string_view> customMessage)
 {
     boost::json::object json;
     auto const& info = getErrorInfo(err);
@@ -128,31 +114,20 @@ makeError(
 boost::json::object
 makeError(Status const& status)
 {
-    auto wrapOptional = [](string_view const& str) {
-        return str.empty() ? nullopt : make_optional(str);
-    };
+    auto wrapOptional = [](string_view const& str) { return str.empty() ? nullopt : make_optional(str); };
 
     auto res = visit(
         overloadSet{
             [&status, &wrapOptional](RippledError err) {
                 if (err == ripple::rpcUNKNOWN)
                 {
-                    return boost::json::object{
-                        {"error", status.message},
-                        {"type", "response"},
-                        {"status", "error"}};
+                    return boost::json::object{{"error", status.message}, {"type", "response"}, {"status", "error"}};
                 }
 
-                return makeError(
-                    err,
-                    wrapOptional(status.error),
-                    wrapOptional(status.message));
+                return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },
             [&status, &wrapOptional](ClioError err) {
-                return makeError(
-                    err,
-                    wrapOptional(status.error),
-                    wrapOptional(status.message));
+                return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },
         },
         status.code);

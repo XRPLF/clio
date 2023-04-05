@@ -20,12 +20,8 @@
 #include <backend/cassandra/impl/Tuple.h>
 
 namespace {
-static constexpr auto tupleDeleter = [](CassTuple* ptr) {
-    cass_tuple_free(ptr);
-};
-static constexpr auto tupleIteratorDeleter = [](CassIterator* ptr) {
-    cass_iterator_free(ptr);
-};
+static constexpr auto tupleDeleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
+static constexpr auto tupleIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
 }  // namespace
 
 namespace Backend::Cassandra::detail {
@@ -34,8 +30,7 @@ namespace Backend::Cassandra::detail {
 {
 }
 
-/* implicit */ TupleIterator::TupleIterator(CassIterator* ptr)
-    : ManagedObject{ptr, tupleIteratorDeleter}
+/* implicit */ TupleIterator::TupleIterator(CassIterator* ptr) : ManagedObject{ptr, tupleIteratorDeleter}
 {
 }
 

@@ -59,10 +59,7 @@ tag_invoke(boost::json::value_to_tag<TestInput>, boost::json::value const& jv)
 
 // must be implemented as per rpc/common/Concepts.h
 inline void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    TestOutput const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TestOutput const& output)
 {
     jv = {{"computed", output.computed}};
 }
@@ -80,12 +77,10 @@ public:
     {
         using namespace RPCng::validation;
 
-        // clang-format off
-        static const RPCng::RpcSpec rpcSpec = {
+        static const auto rpcSpec = RPCng::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
-            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}} // optional field
+            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
-        // clang-format on
 
         return rpcSpec;
     }
@@ -93,8 +88,7 @@ public:
     Result
     process(Input input) const
     {
-        return Output{
-            input.hello + '_' + std::to_string(input.limit.value_or(0))};
+        return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
     }
 };
 
@@ -111,12 +105,10 @@ public:
     {
         using namespace RPCng::validation;
 
-        // clang-format off
-        static const RPCng::RpcSpec rpcSpec = {
+        static const auto rpcSpec = RPCng::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
-            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}} // optional field
+            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
-        // clang-format on
 
         return rpcSpec;
     }
@@ -124,8 +116,7 @@ public:
     Result
     process(Input input, RPCng::Context const& ctx) const
     {
-        return Output{
-            input.hello + '_' + std::to_string(input.limit.value_or(0))};
+        return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
     }
 };
 
@@ -155,12 +146,10 @@ public:
     {
         using namespace RPCng::validation;
 
-        // clang-format off
-        static const RPCng::RpcSpec rpcSpec = {
+        static const auto rpcSpec = RPCng::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
-            {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}} // optional field
+            {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };
-        // clang-format on
 
         return rpcSpec;
     }
@@ -191,10 +180,7 @@ tag_invoke(boost::json::value_to_tag<InOutFake>, boost::json::value const& jv)
 
 // must be implemented as per rpc/common/Concepts.h
 inline void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    InOutFake const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InOutFake const& output)
 {
     jv = {{"something", output.something}};
 }

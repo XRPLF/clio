@@ -59,9 +59,7 @@ public:
     rpcErrored(std::string const& method);
 
     void
-    rpcComplete(
-        std::string const& method,
-        std::chrono::microseconds const& rpcDuration);
+    rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration);
 
     void
     rpcForwarded(std::string const& method);

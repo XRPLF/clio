@@ -56,10 +56,7 @@ public:
     // Update the cache with new ledger objects
     // set isBackground to true when writing old data from a background thread
     void
-    update(
-        std::vector<LedgerObject> const& blobs,
-        uint32_t seq,
-        bool isBackground = false);
+    update(std::vector<LedgerObject> const& blobs, uint32_t seq, bool isBackground = false);
 
     std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const;

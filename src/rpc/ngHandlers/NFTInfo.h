@@ -40,12 +40,10 @@ public:
         uint32_t transferFee;
         std::string issuer;
         uint32_t taxon;
-        uint32_t
-            serial;  // TODO: documented as 'nft_sequence' atm.
-                     // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
-        std::optional<std::string>
-            uri;  // TODO: documented can be null vs. empty string
-                  // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
+        uint32_t serial;                 // TODO: documented as 'nft_sequence' atm.
+                                         // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
+        std::optional<std::string> uri;  // TODO: documented can be null vs. empty string
+                                         // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
 
         // validated should be sent via framework
         bool validated = true;
@@ -60,8 +58,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    NFTInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    NFTInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -69,12 +66,11 @@ public:
     spec() const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(nft_id),
-             validation::Required{},
-             validation::Uint256HexStringValidator},
+            {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
         };
+
         return rpcSpec;
     }
 
@@ -83,10 +79,7 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

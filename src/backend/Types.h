@@ -65,15 +65,11 @@ struct TransactionAndMetadata
         Blob const& metadata,
         std::uint32_t ledgerSequence,
         std::uint32_t date)
-        : transaction{transaction}
-        , metadata{metadata}
-        , ledgerSequence{ledgerSequence}
-        , date{date}
+        : transaction{transaction}, metadata{metadata}, ledgerSequence{ledgerSequence}, date{date}
     {
     }
 
-    TransactionAndMetadata(
-        std::tuple<Blob, Blob, std::uint32_t, std::uint32_t> data)
+    TransactionAndMetadata(std::tuple<Blob, Blob, std::uint32_t, std::uint32_t> data)
         : transaction{std::get<0>(data)}
         , metadata{std::get<1>(data)}
         , ledgerSequence{std::get<2>(data)}
@@ -95,9 +91,7 @@ struct TransactionsCursor
     std::uint32_t transactionIndex;
 
     TransactionsCursor() = default;
-    TransactionsCursor(
-        std::uint32_t ledgerSequence,
-        std::uint32_t transactionIndex)
+    TransactionsCursor(std::uint32_t ledgerSequence, std::uint32_t transactionIndex)
         : ledgerSequence{ledgerSequence}, transactionIndex{transactionIndex}
     {
     }
@@ -140,18 +134,11 @@ struct NFT
         ripple::AccountID const& owner,
         Blob const& uri,
         bool isBurned)
-        : tokenID{tokenID}
-        , ledgerSequence{ledgerSequence}
-        , owner{owner}
-        , uri{uri}
-        , isBurned{isBurned}
+        : tokenID{tokenID}, ledgerSequence{ledgerSequence}, owner{owner}, uri{uri}, isBurned{isBurned}
     {
     }
 
-    NFT(ripple::uint256 const& tokenID,
-        std::uint32_t ledgerSequence,
-        ripple::AccountID const& owner,
-        bool isBurned)
+    NFT(ripple::uint256 const& tokenID, std::uint32_t ledgerSequence, ripple::AccountID const& owner, bool isBurned)
         : NFT(tokenID, ledgerSequence, owner, {}, isBurned)
     {
     }
@@ -162,8 +149,7 @@ struct NFT
     bool
     operator==(NFT const& other) const
     {
-        return tokenID == other.tokenID &&
-            ledgerSequence == other.ledgerSequence;
+        return tokenID == other.tokenID && ledgerSequence == other.ledgerSequence;
     }
 };
 
@@ -172,10 +158,7 @@ struct LedgerRange
     std::uint32_t minSequence;
     std::uint32_t maxSequence;
 };
-constexpr ripple::uint256 firstKey{
-    "0000000000000000000000000000000000000000000000000000000000000000"};
-constexpr ripple::uint256 lastKey{
-    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
-constexpr ripple::uint256 hi192{
-    "0000000000000000000000000000000000000000000000001111111111111111"};
+constexpr ripple::uint256 firstKey{"0000000000000000000000000000000000000000000000000000000000000000"};
+constexpr ripple::uint256 lastKey{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
+constexpr ripple::uint256 hi192{"0000000000000000000000000000000000000000000000001111111111111111"};
 }  // namespace Backend

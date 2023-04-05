@@ -106,10 +106,7 @@ public:
 
 template <class T>
 inline void
-sendToSubscribers(
-    std::shared_ptr<Message> const& message,
-    T& subscribers,
-    std::atomic_uint64_t& counter)
+sendToSubscribers(std::shared_ptr<Message> const& message, T& subscribers, std::atomic_uint64_t& counter)
 {
     for (auto it = subscribers.begin(); it != subscribers.end();)
     {
@@ -129,10 +126,7 @@ sendToSubscribers(
 
 template <class T>
 inline void
-addSession(
-    std::shared_ptr<WsBase> session,
-    T& subscribers,
-    std::atomic_uint64_t& counter)
+addSession(std::shared_ptr<WsBase> session, T& subscribers, std::atomic_uint64_t& counter)
 {
     if (!subscribers.contains(session))
     {
@@ -143,10 +137,7 @@ addSession(
 
 template <class T>
 inline void
-removeSession(
-    std::shared_ptr<WsBase> session,
-    T& subscribers,
-    std::atomic_uint64_t& counter)
+removeSession(std::shared_ptr<WsBase> session, T& subscribers, std::atomic_uint64_t& counter)
 {
     if (subscribers.contains(session))
     {
@@ -157,20 +148,14 @@ removeSession(
 
 template <class Key>
 void
-SubscriptionMap<Key>::subscribe(
-    std::shared_ptr<WsBase> const& session,
-    Key const& account)
+SubscriptionMap<Key>::subscribe(std::shared_ptr<WsBase> const& session, Key const& account)
 {
-    boost::asio::post(strand_, [this, session, account]() {
-        addSession(session, subscribers_[account], subCount_);
-    });
+    boost::asio::post(strand_, [this, session, account]() { addSession(session, subscribers_[account], subCount_); });
 }
 
 template <class Key>
 void
-SubscriptionMap<Key>::unsubscribe(
-    std::shared_ptr<WsBase> const& session,
-    Key const& account)
+SubscriptionMap<Key>::unsubscribe(std::shared_ptr<WsBase> const& session, Key const& account)
 {
     boost::asio::post(strand_, [this, account, session]() {
         if (!subscribers_.contains(account))
@@ -192,9 +177,7 @@ SubscriptionMap<Key>::unsubscribe(
 
 template <class Key>
 void
-SubscriptionMap<Key>::publish(
-    std::shared_ptr<Message> const& message,
-    Key const& account)
+SubscriptionMap<Key>::publish(std::shared_ptr<Message> const& message, Key const& account)
 {
     boost::asio::post(strand_, [this, account, message]() {
         if (!subscribers_.contains(account))
@@ -228,17 +211,13 @@ class SubscriptionManager
 
 public:
     static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(
-        clio::Config const& config,
-        std::shared_ptr<Backend::BackendInterface const> const& b)
+    make_SubscriptionManager(clio::Config const& config, std::shared_ptr<Backend::BackendInterface const> const& b)
     {
         auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
         return std::make_shared<SubscriptionManager>(numThreads, b);
     }
 
-    SubscriptionManager(
-        std::uint64_t numThreads,
-        std::shared_ptr<Backend::BackendInterface const> const& b)
+    SubscriptionManager(std::uint64_t numThreads, std::shared_ptr<Backend::BackendInterface const> const& b)
         : ledgerSubscribers_(ioc_)
         , txSubscribers_(ioc_)
         , txProposedSubscribers_(ioc_)
@@ -255,8 +234,7 @@ public:
         // We will eventually want to clamp this to be the number of strands,
         // since adding more threads than we have strands won't see any
         // performance benefits
-        log_.info() << "Starting subscription manager with " << numThreads
-                    << " workers";
+        log_.info() << "Starting subscription manager with " << numThreads << " workers";
 
         workers_.reserve(numThreads);
         for (auto i = numThreads; i > 0; --i)
@@ -283,9 +261,7 @@ public:
         std::uint32_t txnCount);
 
     void
-    pubBookChanges(
-        ripple::LedgerInfo const& lgrInfo,
-        std::vector<Backend::TransactionAndMetadata> const& transactions);
+    pubBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
 
     void
     unsubLedger(session_ptr session);
@@ -297,9 +273,7 @@ public:
     unsubTransactions(session_ptr session);
 
     void
-    pubTransaction(
-        Backend::TransactionAndMetadata const& blobs,
-        ripple::LedgerInfo const& lgrInfo);
+    pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerInfo const& lgrInfo);
 
     void
     subAccount(ripple::AccountID const& account, session_ptr& session);
@@ -380,18 +354,11 @@ private:
     using CleanupFunction = std::function<void(session_ptr)>;
 
     void
-    subscribeHelper(
-        std::shared_ptr<WsBase>& session,
-        Subscription& subs,
-        CleanupFunction&& func);
+    subscribeHelper(std::shared_ptr<WsBase>& session, Subscription& subs, CleanupFunction&& func);
 
     template <typename Key>
     void
-    subscribeHelper(
-        std::shared_ptr<WsBase>& session,
-        Key const& k,
-        SubscriptionMap<Key>& subs,
-        CleanupFunction&& func);
+    subscribeHelper(std::shared_ptr<WsBase>& session, Key const& k, SubscriptionMap<Key>& subs, CleanupFunction&& func);
 
     /**
      * This is how we chose to cleanup subscriptions that have been closed.
@@ -400,6 +367,5 @@ private:
      * closed.
      */
     std::mutex cleanupMtx_;
-    std::unordered_map<session_ptr, std::vector<CleanupFunction>>
-        cleanupFuncs_ = {};
+    std::unordered_map<session_ptr, std::vector<CleanupFunction>> cleanupFuncs_ = {};
 };

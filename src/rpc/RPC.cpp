@@ -95,19 +95,7 @@ make_WsContext(
     string command = commandValue.as_string().c_str();
 
     return make_optional<Context>(
-        yc,
-        command,
-        1,
-        request,
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        session,
-        tagFactory,
-        range,
-        counters,
-        clientIp);
+        yc, command, 1, request, backend, subscriptions, balancer, etl, session, tagFactory, range, counters, clientIp);
 }
 
 optional<Context>
@@ -267,8 +255,7 @@ isClioOnly(string const& method)
 bool
 shouldSuppressValidatedFlag(RPC::Context const& context)
 {
-    return boost::iequals(context.method, "subscribe") ||
-        boost::iequals(context.method, "unsubscribe");
+    return boost::iequals(context.method, "subscribe") || boost::iequals(context.method, "unsubscribe");
 }
 
 Status
@@ -278,8 +265,7 @@ getLimit(RPC::Context const& context, uint32_t& limit)
         return Status{RippledError::rpcUNKNOWN_COMMAND};
 
     if (!handlerTable.getLimitRange(context.method))
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "rpcDoesNotRequireLimit"};
+        return Status{RippledError::rpcINVALID_PARAMS, "rpcDoesNotRequireLimit"};
 
     auto [lo, def, hi] = *handlerTable.getLimitRange(context.method);
 
@@ -317,8 +303,7 @@ shouldForwardToRippled(Context const& ctx)
     if (specifiesCurrentOrClosedLedger(request))
         return true;
 
-    if (ctx.method == "account_info" && request.contains("queue") &&
-        request.at("queue").as_bool())
+    if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").as_bool())
         return true;
 
     return false;
@@ -332,8 +317,7 @@ buildResponse(Context const& ctx)
         boost::json::object toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res =
-            ctx.balancer->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        auto res = ctx.balancer->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
 
         ctx.counters.rpcForwarded(ctx.method);
 
@@ -359,14 +343,11 @@ buildResponse(Context const& ctx)
 
     try
     {
-        gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method
-                         << '`';
+        gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
         auto v = (*method)(ctx);
-        gPerfLog.debug() << ctx.tag() << " finish executing rpc `" << ctx.method
-                         << '`';
+        gPerfLog.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
-        if (auto object = get_if<boost::json::object>(&v);
-            object && not shouldSuppressValidatedFlag(ctx))
+        if (auto object = get_if<boost::json::object>(&v); object && not shouldSuppressValidatedFlag(ctx))
         {
             (*object)[JS(validated)] = true;
         }

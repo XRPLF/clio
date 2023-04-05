@@ -46,12 +46,9 @@ struct Settings
     };
 
     bool enableLog = false;
-    std::chrono::milliseconds connectionTimeout =
-        std::chrono::milliseconds{1000};
-    std::chrono::milliseconds requestTimeout =
-        std::chrono::milliseconds{0};  // no timeout at all
-    std::variant<ContactPoints, SecureConnectionBundle> connectionInfo =
-        ContactPoints{};
+    std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{1000};
+    std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
+    std::variant<ContactPoints, SecureConnectionBundle> connectionInfo = ContactPoints{};
     uint32_t threads = std::thread::hardware_concurrency();
     uint32_t maxWriteRequestsOutstanding = 10'000;
     uint32_t maxReadRequestsOutstanding = 100'000;

@@ -53,8 +53,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    NFTOffersHandlerBase(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    NFTOffersHandlerBase(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -63,16 +62,13 @@ public:
     spec() const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(nft_id),
-             validation::Required{},
-             validation::Uint256HexStringValidator},
+            {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Between{50, 500}},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{50, 500}},
             {JS(marker), validation::Uint256HexStringValidator},
         };
+
         return rpcSpec;
     }
 
@@ -86,10 +82,7 @@ protected:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

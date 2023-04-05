@@ -39,9 +39,7 @@ class ReportingETL;
 
 class SslWsSession : public WsSession<SslWsSession>
 {
-    boost::beast::websocket::stream<
-        boost::beast::ssl_stream<boost::beast::tcp_stream>>
-        ws_;
+    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>> ws_;
 
 public:
     // Take ownership of the socket
@@ -58,23 +56,11 @@ public:
         RPC::Counters& counters,
         WorkQueue& queue,
         boost::beast::flat_buffer&& b)
-        : WsSession(
-              ioc,
-              ip,
-              backend,
-              subscriptions,
-              balancer,
-              etl,
-              tagFactory,
-              dosGuard,
-              counters,
-              queue,
-              std::move(b))
+        : WsSession(ioc, ip, backend, subscriptions, balancer, etl, tagFactory, dosGuard, counters, queue, std::move(b))
         , ws_(std::move(stream))
     {
     }
-    boost::beast::websocket::stream<
-        boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
     ws()
     {
         return ws_;
@@ -169,13 +155,10 @@ public:
     run()
     {
         // Set the timeout.
-        boost::beast::get_lowest_layer(https_).expires_after(
-            std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
 
         net::dispatch(
-            https_.get_executor(),
-            boost::beast::bind_front_handler(
-                &SslWsUpgrader::do_upgrade, shared_from_this()));
+            https_.get_executor(), boost::beast::bind_front_handler(&SslWsUpgrader::do_upgrade, shared_from_this()));
     }
 
 private:
@@ -201,8 +184,7 @@ private:
         parser_->body_limit(10000);
 
         // Set the timeout.
-        boost::beast::get_lowest_layer(https_).expires_after(
-            std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
 
         on_upgrade();
     }

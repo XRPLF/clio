@@ -73,8 +73,7 @@ protected:
     boost::system::error_code ec_;
 
 public:
-    explicit WsBase(util::TagDecoratorFactory const& tagFactory)
-        : Taggable{tagFactory}
+    explicit WsBase(util::TagDecoratorFactory const& tagFactory) : Taggable{tagFactory}
     {
     }
 
@@ -106,8 +105,7 @@ class ETLLoadBalancer;
 
 // Echoes back all received WebSocket messages
 template <typename Derived>
-class WsSession : public WsBase,
-                  public std::enable_shared_from_this<WsSession<Derived>>
+class WsSession : public WsBase, public std::enable_shared_from_this<WsSession<Derived>>
 {
     using std::enable_shared_from_this<WsSession<Derived>>::shared_from_this;
 
@@ -197,8 +195,7 @@ public:
         sending_ = true;
         derived().ws().async_write(
             net::buffer(messages_.front()->data(), messages_.front()->size()),
-            boost::beast::bind_front_handler(
-                &WsSession::on_write, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&WsSession::on_write, derived().shared_from_this()));
     }
 
     void
@@ -229,10 +226,7 @@ public:
     send(std::shared_ptr<Message> msg) override
     {
         net::dispatch(
-            derived().ws().get_executor(),
-            [this,
-             self = derived().shared_from_this(),
-             msg = std::move(msg)]() {
+            derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
                 messages_.push(std::move(msg));
                 maybe_send_next();
             });
@@ -249,22 +243,15 @@ public:
     run(http::request<http::string_body> req)
     {
         // Set suggested timeout settings for the websocket
-        derived().ws().set_option(websocket::stream_base::timeout::suggested(
-            boost::beast::role_type::server));
+        derived().ws().set_option(websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
 
         // Set a decorator to change the Server of the handshake
-        derived().ws().set_option(websocket::stream_base::decorator(
-            [](websocket::response_type& res) {
-                res.set(
-                    http::field::server,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-server-async");
-            }));
+        derived().ws().set_option(websocket::stream_base::decorator([](websocket::response_type& res) {
+            res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async");
+        }));
 
         derived().ws().async_accept(
-            req,
-            boost::beast::bind_front_handler(
-                &WsSession::on_accept, this->shared_from_this()));
+            req, boost::beast::bind_front_handler(&WsSession::on_accept, this->shared_from_this()));
     }
 
     void
@@ -290,16 +277,11 @@ public:
         buffer_.consume(buffer_.size());
         // Read a message into our buffer
         derived().ws().async_read(
-            buffer_,
-            boost::beast::bind_front_handler(
-                &WsSession::on_read, this->shared_from_this()));
+            buffer_, boost::beast::bind_front_handler(&WsSession::on_read, this->shared_from_this()));
     }
 
     void
-    handle_request(
-        boost::json::object const&& request,
-        boost::json::value const& id,
-        boost::asio::yield_context& yield)
+    handle_request(boost::json::object const&& request, boost::json::value const& id, boost::asio::yield_context& yield)
     {
         auto ip = derived().ip();
         if (!ip)
@@ -316,8 +298,7 @@ public:
 
         try
         {
-            log_.info() << tag()
-                        << "ws received request from work queue : " << request;
+            log_.info() << tag() << "ws received request from work queue : " << request;
 
             auto range = backend_->fetchLedgerRange();
             if (!range)
@@ -344,8 +325,7 @@ public:
 
             response = getDefaultWsResponse(id);
 
-            auto [v, timeDiff] =
-                util::timed([&]() { return RPC::buildResponse(*context); });
+            auto [v, timeDiff] = util::timed([&]() { return RPC::buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
             logDuration(*context, us);
@@ -367,8 +347,7 @@ public:
                 counters_.rpcComplete(context->method, us);
 
                 auto const& result = std::get<boost::json::object>(v);
-                auto const isForwarded = result.contains("forwarded") &&
-                    result.at("forwarded").is_bool() &&
+                auto const isForwarded = result.contains("forwarded") && result.at("forwarded").is_bool() &&
                     result.at("forwarded").as_bool();
 
                 // if the result is forwarded - just use it as is
@@ -415,8 +394,7 @@ public:
         if (ec)
             return wsFail(ec, "read");
 
-        std::string msg{
-            static_cast<char const*>(buffer_.data().data()), buffer_.size()};
+        std::string msg{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
         auto ip = derived().ip();
 
         if (!ip)
@@ -424,10 +402,7 @@ public:
 
         perfLog_.info() << tag() << "Received request from ip = " << *ip;
 
-        auto sendError = [this, ip](
-                             auto error,
-                             boost::json::value const& id,
-                             boost::json::object const& request) {
+        auto sendError = [this, ip](auto error, boost::json::value const& id, boost::json::object const& request) {
             auto e = RPC::makeError(error);
 
             if (!id.is_null())
@@ -471,9 +446,7 @@ public:
             perfLog_.debug() << tag() << "Adding to work queue";
 
             if (!queue_.postCoro(
-                    [shared_this = shared_from_this(),
-                     r = std::move(request),
-                     id](boost::asio::yield_context yield) {
+                    [shared_this = shared_from_this(), r = std::move(request), id](boost::asio::yield_context yield) {
                         shared_this->handle_request(std::move(r), id, yield);
                     },
                     dosGuard_.isWhiteListed(*ip)))

@@ -72,8 +72,7 @@ retryOnTimeout(F func, size_t waitMs = 500)
         }
         catch (DatabaseTimeout& t)
         {
-            log.error()
-                << "Database request timed out. Sleeping and retrying ... ";
+            log.error() << "Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
         }
     }
@@ -122,11 +121,10 @@ synchronous(F&& f)
          * executing coroutine, yield. The different type is returned.
          */
         R res;
-        boost::asio::spawn(
-            strand, [&f, &work, &res](boost::asio::yield_context yield) {
-                res = f(yield);
-                work.reset();
-            });
+        boost::asio::spawn(strand, [&f, &work, &res](boost::asio::yield_context yield) {
+            res = f(yield);
+            work.reset();
+        });
 
         ctx.run();
         return res;
@@ -134,11 +132,10 @@ synchronous(F&& f)
     else
     {
         /*! @brief When the corutine type is different, run as normal. */
-        boost::asio::spawn(
-            strand, [&f, &work](boost::asio::yield_context yield) {
-                f(yield);
-                work.reset();
-            });
+        boost::asio::spawn(strand, [&f, &work](boost::asio::yield_context yield) {
+            f(yield);
+            work.reset();
+        });
 
         ctx.run();
     }
@@ -209,15 +206,11 @@ public:
 
     /*! @brief Fetches a specific ledger by sequence number. */
     virtual std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(
-        std::uint32_t const sequence,
-        boost::asio::yield_context& yield) const = 0;
+    fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context& yield) const = 0;
 
     /*! @brief Fetches a specific ledger by hash. */
     virtual std::optional<ripple::LedgerInfo>
-    fetchLedgerByHash(
-        ripple::uint256 const& hash,
-        boost::asio::yield_context& yield) const = 0;
+    fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context& yield) const = 0;
 
     /*! @brief Fetches the latest ledger sequence. */
     virtual std::optional<std::uint32_t>
@@ -269,9 +262,7 @@ public:
      * @return std::optional<TransactionAndMetadata>
      */
     virtual std::optional<TransactionAndMetadata>
-    fetchTransaction(
-        ripple::uint256 const& hash,
-        boost::asio::yield_context& yield) const = 0;
+    fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context& yield) const = 0;
 
     /**
      * @brief Fetches multiple transactions.
@@ -281,9 +272,7 @@ public:
      * @return std::vector<TransactionAndMetadata>
      */
     virtual std::vector<TransactionAndMetadata>
-    fetchTransactions(
-        std::vector<ripple::uint256> const& hashes,
-        boost::asio::yield_context& yield) const = 0;
+    fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context& yield) const = 0;
 
     /**
      * @brief Fetches all transactions for a specific account
@@ -314,9 +303,7 @@ public:
      * @return std::vector<TransactionAndMetadata>
      */
     virtual std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const = 0;
+    fetchAllTransactionsInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const = 0;
 
     /**
      * @brief Fetches all transaction hashes from a specific ledger.
@@ -326,9 +313,7 @@ public:
      * @return std::vector<ripple::uint256>
      */
     virtual std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const = 0;
+    fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const = 0;
 
     /*! @brief NFT methods */
     /**
@@ -340,10 +325,8 @@ public:
      * @return std::optional<NFT>
      */
     virtual std::optional<NFT>
-    fetchNFT(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const = 0;
+    fetchNFT(ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+        const = 0;
 
     /**
      * @brief Fetches all transactions for a specific NFT.
@@ -373,10 +356,8 @@ public:
      * @return std::optional<Blob>
      */
     std::optional<Blob>
-    fetchLedgerObject(
-        ripple::uint256 const& key,
-        std::uint32_t const sequence,
-        boost::asio::yield_context& yield) const;
+    fetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context& yield)
+        const;
 
     /**
      * @brief Fetches all ledger objects: a vector of vectors of unsigned chars.
@@ -394,10 +375,8 @@ public:
 
     /*! @brief Virtual function version of fetchLedgerObject */
     virtual std::optional<Blob>
-    doFetchLedgerObject(
-        ripple::uint256 const& key,
-        std::uint32_t const sequence,
-        boost::asio::yield_context& yield) const = 0;
+    doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context& yield)
+        const = 0;
 
     /*! @brief Virtual function version of fetchLedgerObjects */
     virtual std::vector<Blob>
@@ -417,9 +396,7 @@ public:
      * @return std::vector<LedgerObject>
      */
     virtual std::vector<LedgerObject>
-    fetchLedgerDiff(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const = 0;
+    fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const = 0;
 
     /**
      * @brief Fetches a page of ledger objects, ordered by key/index.
@@ -441,24 +418,17 @@ public:
 
     /*! @brief Fetches successor object from key/index. */
     std::optional<LedgerObject>
-    fetchSuccessorObject(
-        ripple::uint256 key,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const;
+    fetchSuccessorObject(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+        const;
 
     /*! @brief Fetches successor key from key/index. */
     std::optional<ripple::uint256>
-    fetchSuccessorKey(
-        ripple::uint256 key,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const;
+    fetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const;
 
     /*! @brief Virtual function version of fetchSuccessorKey. */
     virtual std::optional<ripple::uint256>
-    doFetchSuccessorKey(
-        ripple::uint256 key,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const = 0;
+    doFetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+        const = 0;
 
     /**
      * @brief Fetches book offers.
@@ -490,9 +460,7 @@ public:
     std::optional<LedgerRange>
     hardFetchLedgerRange() const
     {
-        return synchronous([&](boost::asio::yield_context yield) {
-            return hardFetchLedgerRange(yield);
-        });
+        return synchronous([&](boost::asio::yield_context yield) { return hardFetchLedgerRange(yield); });
     }
 
     /*! @brief Virtual function equivalent of hardFetchLedgerRange. */
@@ -513,9 +481,7 @@ public:
      * @param ledgerHeader r-value string representing ledger header.
      */
     virtual void
-    writeLedger(
-        ripple::LedgerInfo const& ledgerInfo,
-        std::string&& ledgerHeader) = 0;
+    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& ledgerHeader) = 0;
 
     /**
      * @brief Writes a new ledger object.
@@ -527,10 +493,7 @@ public:
      * @param blob r-value vector of unsigned characters (blob).
      */
     virtual void
-    writeLedgerObject(
-        std::string&& key,
-        std::uint32_t const seq,
-        std::string&& blob);
+    writeLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob);
 
     /**
      * @brief Writes a new transaction.
@@ -581,10 +544,7 @@ public:
      * @param successor Passed in as an r-value reference.
      */
     virtual void
-    writeSuccessor(
-        std::string&& key,
-        std::uint32_t const seq,
-        std::string&& successor) = 0;
+    writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) = 0;
 
     /*! @brief Tells database we will write data for a specific ledger. */
     virtual void
@@ -613,9 +573,7 @@ public:
      * @return false
      */
     virtual bool
-    doOnlineDelete(
-        std::uint32_t numLedgersToKeep,
-        boost::asio::yield_context& yield) const = 0;
+    doOnlineDelete(std::uint32_t numLedgersToKeep, boost::asio::yield_context& yield) const = 0;
 
     /**
      * @brief Opens the database
@@ -645,10 +603,7 @@ private:
      * @param blob r-value vector of unsigned chars.
      */
     virtual void
-    doWriteLedgerObject(
-        std::string&& key,
-        std::uint32_t const seq,
-        std::string&& blob) = 0;
+    doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) = 0;
 
     virtual bool
     doFinishWrites() = 0;

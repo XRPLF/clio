@@ -68,10 +68,7 @@ struct Context
 };
 
 inline void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    VoidOutput const&)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput const&)
 {
     jv = boost::json::object{};
 }

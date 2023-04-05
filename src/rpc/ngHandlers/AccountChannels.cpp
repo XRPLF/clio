@@ -23,16 +23,12 @@
 namespace RPCng {
 
 void
-AccountChannelsHandler::addChannel(
-    std::vector<ChannelResponse>& jsonChannels,
-    ripple::SLE const& channelSle) const
+AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle) const
 {
     ChannelResponse channel;
     channel.channelID = ripple::to_string(channelSle.key());
-    channel.account =
-        ripple::to_string(channelSle.getAccountID(ripple::sfAccount));
-    channel.accountDestination =
-        ripple::to_string(channelSle.getAccountID(ripple::sfDestination));
+    channel.account = ripple::to_string(channelSle.getAccountID(ripple::sfAccount));
+    channel.accountDestination = ripple::to_string(channelSle.getAccountID(ripple::sfDestination));
     channel.amount = channelSle[ripple::sfAmount].getText();
     channel.balance = channelSle[ripple::sfBalance].getText();
     if (publicKeyType(channelSle[ripple::sfPublicKey]))
@@ -55,17 +51,11 @@ AccountChannelsHandler::addChannel(
 }
 
 AccountChannelsHandler::Result
-AccountChannelsHandler::process(
-    AccountChannelsHandler::Input input,
-    Context const& ctx) const
+AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
     if (auto status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -75,22 +65,18 @@ AccountChannelsHandler::process(
     // no need to check the return value, validator check for us
     auto const accountID = RPC::accountFromStringStrict(input.account);
 
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
     if (!accountLedgerObject)
-        return Error{RPC::Status{
-            RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{RPC::Status{RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto const destAccountID = input.destinationAccount
-        ? RPC::accountFromStringStrict(input.destinationAccount.value())
-        : std::optional<ripple::AccountID>{};
+    auto const destAccountID = input.destinationAccount ? RPC::accountFromStringStrict(input.destinationAccount.value())
+                                                        : std::optional<ripple::AccountID>{};
 
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (sle.getType() == ripple::ltPAYCHAN &&
-            sle.getAccountID(ripple::sfAccount) == accountID &&
-            (!destAccountID ||
-             *destAccountID == sle.getAccountID(ripple::sfDestination)))
+        if (sle.getType() == ripple::ltPAYCHAN && sle.getAccountID(ripple::sfAccount) == accountID &&
+            (!destAccountID || *destAccountID == sle.getAccountID(ripple::sfDestination)))
         {
             addChannel(response.channels, sle);
         }
@@ -98,13 +84,7 @@ AccountChannelsHandler::process(
     };
 
     auto const next = RPC::ngTraverseOwnedNodes(
-        *sharedPtrBackend_,
-        *accountID,
-        lgrInfo.seq,
-        input.limit,
-        input.marker,
-        ctx.yield,
-        addToResponse);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
     response.account = input.account;
     response.limit = input.limit;
@@ -119,9 +99,7 @@ AccountChannelsHandler::process(
 }
 
 AccountChannelsHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountChannelsHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     AccountChannelsHandler::Input input;
@@ -140,8 +118,7 @@ tag_invoke(
     }
     if (jsonObject.contains(JS(destination_account)))
     {
-        input.destinationAccount =
-            jv.at(JS(destination_account)).as_string().c_str();
+        input.destinationAccount = jv.at(JS(destination_account)).as_string().c_str();
     }
     if (jsonObject.contains(JS(ledger_index)))
     {
@@ -151,8 +128,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
 
@@ -160,10 +136,7 @@ tag_invoke(
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountChannelsHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsHandler::Output const& output)
 {
     boost::json::object obj;
     obj = {
@@ -179,10 +152,7 @@ tag_invoke(
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountChannelsHandler::ChannelResponse const& channel)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsHandler::ChannelResponse const& channel)
 {
     boost::json::object obj;
     obj = {

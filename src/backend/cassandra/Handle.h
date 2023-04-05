@@ -212,8 +212,7 @@ public:
     [[maybe_unused]] ResultOrErrorType
     execute(PreparedStatementType const& statement, Args&&... args) const
     {
-        return asyncExecute<Args...>(statement, std::forward<Args>(args)...)
-            .get();
+        return asyncExecute<Args...>(statement, std::forward<Args>(args)...).get();
     }
 
     /**
@@ -231,9 +230,7 @@ public:
      * @return A future that holds onto the callback provided
      */
     [[nodiscard]] FutureWithCallbackType
-    asyncExecute(
-        StatementType const& statement,
-        std::function<void(ResultOrErrorType)>&& cb) const;
+    asyncExecute(StatementType const& statement, std::function<void(ResultOrErrorType)>&& cb) const;
 
     /**
      * @brief Synchonous version of the above
@@ -268,9 +265,7 @@ public:
      * @return A future that holds onto the callback provided
      */
     [[nodiscard]] FutureWithCallbackType
-    asyncExecute(
-        std::vector<StatementType> const& statements,
-        std::function<void(ResultOrErrorType)>&& cb) const;
+    asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const;
 
     /**
      * @brief Prepare a statement

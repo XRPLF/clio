@@ -78,8 +78,7 @@ public:
 
     using CompletionTokenType = boost::asio::yield_context;
     using FunctionType = void(boost::system::error_code);
-    using AsyncResultType =
-        boost::asio::async_result<CompletionTokenType, FunctionType>;
+    using AsyncResultType = boost::asio::async_result<CompletionTokenType, FunctionType>;
     using HandlerType = typename AsyncResultType::completion_handler_type;
 
     DefaultExecutionStrategy(Settings settings, HandleType const& handle)
@@ -89,10 +88,8 @@ public:
         , handle_{std::cref(handle)}
         , thread_{[this]() { ioc_.run(); }}
     {
-        log_.info() << "Max write requests outstanding is "
-                    << maxWriteRequestsOutstanding_
-                    << "; Max read requests outstanding is "
-                    << maxReadRequestsOutstanding_;
+        log_.info() << "Max write requests outstanding is " << maxWriteRequestsOutstanding_
+                    << "; Max read requests outstanding is " << maxReadRequestsOutstanding_;
     }
 
     ~DefaultExecutionStrategy()
@@ -136,8 +133,7 @@ public:
             }
             else
             {
-                log_.warn()
-                    << "Cassandra sync write error, retrying: " << res.error();
+                log_.warn() << "Cassandra sync write error, retrying: " << res.error();
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         }
@@ -173,9 +169,7 @@ public:
 
         // Note: lifetime is controlled by std::shared_from_this internally
         AsyncExecutor<decltype(statement), HandleType>::run(
-            ioc_, handle_.get(), std::move(statement), [this](auto const&) {
-                decrementOutstandingRequestCount();
-            });
+            ioc_, handle_.get(), std::move(statement), [this](auto const&) { decrementOutstandingRequestCount(); });
     }
 
     /**
@@ -193,9 +187,7 @@ public:
 
         // Note: lifetime is controlled by std::shared_from_this internally
         AsyncExecutor<decltype(statements), HandleType>::run(
-            ioc_, handle_.get(), statements, [this](auto const&) {
-                decrementOutstandingRequestCount();
-            });
+            ioc_, handle_.get(), statements, [this](auto const&) { decrementOutstandingRequestCount(); });
     }
 
     /**
@@ -211,10 +203,7 @@ public:
      */
     template <typename... Args>
     [[maybe_unused]] ResultOrErrorType
-    read(
-        CompletionTokenType token,
-        PreparedStatementType const& preparedStatement,
-        Args&&... args)
+    read(CompletionTokenType token, PreparedStatementType const& preparedStatement, Args&&... args)
     {
         return read(token, preparedStatement.bind(std::forward<Args>(args)...));
     }
@@ -230,9 +219,7 @@ public:
      * @return ResultType or error wrapped in Expected
      */
     [[maybe_unused]] ResultOrErrorType
-    read(
-        CompletionTokenType token,
-        std::vector<StatementType> const& statements)
+    read(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
         auto handler = HandlerType{token};
         auto result = AsyncResultType{handler};
@@ -242,14 +229,11 @@ public:
         {
             numReadRequestsOutstanding_ += statements.size();
 
-            auto const future = handle_.get().asyncExecute(
-                statements, [handler](auto&&) mutable {
-                    boost::asio::post(
-                        boost::asio::get_associated_executor(handler),
-                        [handler]() mutable {
-                            handler(boost::system::error_code{});
-                        });
+            auto const future = handle_.get().asyncExecute(statements, [handler](auto&&) mutable {
+                boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
+                    handler(boost::system::error_code{});
                 });
+            });
 
             // suspend coroutine until completion handler is called
             result.get();
@@ -264,8 +248,7 @@ public:
             }
             else
             {
-                log_.error()
-                    << "Failed batch read in coroutine: " << res.error();
+                log_.error() << "Failed batch read in coroutine: " << res.error();
                 throwErrorIfNeeded(res.error());
             }
         }
@@ -292,14 +275,11 @@ public:
         {
             ++numReadRequestsOutstanding_;
 
-            auto const future = handle_.get().asyncExecute(
-                statement, [handler](auto const&) mutable {
-                    boost::asio::post(
-                        boost::asio::get_associated_executor(handler),
-                        [handler]() mutable {
-                            handler(boost::system::error_code{});
-                        });
+            auto const future = handle_.get().asyncExecute(statement, [handler](auto const&) mutable {
+                boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
+                    handler(boost::system::error_code{});
                 });
+            });
 
             // suspend coroutine until completion handler is called
             result.get();
@@ -332,9 +312,7 @@ public:
      * @return Vector of results
      */
     std::vector<ResultType>
-    readEach(
-        CompletionTokenType token,
-        std::vector<StatementType> const& statements)
+    readEach(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
         auto handler = HandlerType{token};
         auto result = AsyncResultType{handler};
@@ -347,19 +325,16 @@ public:
         futures.reserve(numOutstanding);
 
         // used as the handler for each async statement individually
-        auto executionHandler =
-            [handler, &hadError, &numOutstanding](auto const& res) mutable {
-                if (not res)
-                    hadError = true;
+        auto executionHandler = [handler, &hadError, &numOutstanding](auto const& res) mutable {
+            if (not res)
+                hadError = true;
 
-                // when all async operations complete unblock the result
-                if (--numOutstanding == 0)
-                    boost::asio::post(
-                        boost::asio::get_associated_executor(handler),
-                        [handler]() mutable {
-                            handler(boost::system::error_code{});
-                        });
-            };
+            // when all async operations complete unblock the result
+            if (--numOutstanding == 0)
+                boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
+                    handler(boost::system::error_code{});
+                });
+        };
 
         std::transform(
             std::cbegin(statements),
@@ -407,8 +382,7 @@ private:
             {
                 log_.trace() << "Max outstanding requests reached. "
                              << "Waiting for other requests to finish";
-                throttleCv_.wait(
-                    lck, [this]() { return canAddWriteRequest(); });
+                throttleCv_.wait(lck, [this]() { return canAddWriteRequest(); });
             }
         }
         ++numWriteRequestsOutstanding_;

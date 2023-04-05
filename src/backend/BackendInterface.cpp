@@ -37,25 +37,20 @@ BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
     auto commitRes = doFinishWrites();
     if (commitRes)
     {
-        gLog.debug() << "Successfully commited. Updating range now to "
-                     << ledgerSequence;
+        gLog.debug() << "Successfully commited. Updating range now to " << ledgerSequence;
         updateRange(ledgerSequence);
     }
     return commitRes;
 }
 void
-BackendInterface::writeLedgerObject(
-    std::string&& key,
-    std::uint32_t const seq,
-    std::string&& blob)
+BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob)
 {
     assert(key.size() == sizeof(ripple::uint256));
     doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
 
 std::optional<LedgerRange>
-BackendInterface::hardFetchLedgerRangeNoThrow(
-    boost::asio::yield_context& yield) const
+BackendInterface::hardFetchLedgerRangeNoThrow(boost::asio::yield_context& yield) const
 {
     gLog.trace() << "called";
     while (true)
@@ -120,8 +115,7 @@ BackendInterface::fetchLedgerObjects(
         else
             misses.push_back(keys[i]);
     }
-    gLog.trace() << "Cache hits = " << keys.size() - misses.size()
-                 << " - cache misses = " << misses.size();
+    gLog.trace() << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
 
     if (misses.size())
     {
@@ -184,10 +178,7 @@ BackendInterface::fetchBookOffers(
     const ripple::uint256 bookEnd = ripple::getQualityNext(book);
     ripple::uint256 uTipIndex = book;
     std::vector<ripple::uint256> keys;
-    auto getMillis = [](auto diff) {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(diff)
-            .count();
-    };
+    auto getMillis = [](auto diff) { return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count(); };
     auto begin = std::chrono::system_clock::now();
     std::uint32_t numSucc = 0;
     std::uint32_t numPages = 0;
@@ -202,18 +193,14 @@ BackendInterface::fetchBookOffers(
         succMillis += getMillis(mid2 - mid1);
         if (!offerDir || offerDir->key >= bookEnd)
         {
-            gLog.trace() << "offerDir.has_value() " << offerDir.has_value()
-                         << " breaking";
+            gLog.trace() << "offerDir.has_value() " << offerDir.has_value() << " breaking";
             break;
         }
         uTipIndex = offerDir->key;
         while (keys.size() < limit)
         {
             ++numPages;
-            ripple::STLedgerEntry sle{
-                ripple::SerialIter{
-                    offerDir->blob.data(), offerDir->blob.size()},
-                offerDir->key};
+            ripple::STLedgerEntry sle{ripple::SerialIter{offerDir->blob.data(), offerDir->blob.size()}, offerDir->key};
             auto indexes = sle.getFieldV256(ripple::sfIndexes);
             keys.insert(keys.end(), indexes.begin(), indexes.end());
             auto next = sle.getFieldU64(ripple::sfIndexNext);
@@ -223,8 +210,7 @@ BackendInterface::fetchBookOffers(
                 break;
             }
             auto nextKey = ripple::keylet::page(uTipIndex, next);
-            auto nextDir =
-                fetchLedgerObject(nextKey.key, ledgerSequence, yield);
+            auto nextDir = fetchLedgerObject(nextKey.key, ledgerSequence, yield);
             assert(nextDir);
             offerDir->blob = *nextDir;
             offerDir->key = nextKey.key;
@@ -236,26 +222,20 @@ BackendInterface::fetchBookOffers(
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i)
     {
-        gLog.trace() << "Key = " << ripple::strHex(keys[i])
-                     << " blob = " << ripple::strHex(objs[i])
+        gLog.trace() << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
                      << " ledgerSequence = " << ledgerSequence;
         assert(objs[i].size());
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
-    gLog.debug() << "Fetching " << std::to_string(keys.size())
-                 << " offers took " << std::to_string(getMillis(mid - begin))
-                 << " milliseconds. Fetching next dir took "
-                 << std::to_string(succMillis)
-                 << " milliseonds. Fetched next dir " << std::to_string(numSucc)
+    gLog.debug() << "Fetching " << std::to_string(keys.size()) << " offers took "
+                 << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
+                 << std::to_string(succMillis) << " milliseonds. Fetched next dir " << std::to_string(numSucc)
                  << " times"
-                 << " Fetching next page of dir took "
-                 << std::to_string(pageMillis) << " milliseconds"
-                 << ". num pages = " << std::to_string(numPages)
-                 << ". Fetching all objects took "
+                 << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
+                 << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "
                  << std::to_string(getMillis(end - mid))
-                 << " milliseconds. total time = "
-                 << std::to_string(getMillis(end - begin)) << " milliseconds"
+                 << " milliseconds. total time = " << std::to_string(getMillis(end - begin)) << " milliseconds"
                  << " book = " << ripple::strHex(book);
 
     return page;
@@ -275,11 +255,8 @@ BackendInterface::fetchLedgerPage(
     bool reachedEnd = false;
     while (keys.size() < limit && !reachedEnd)
     {
-        ripple::uint256 const& curCursor = keys.size() ? keys.back()
-            : cursor                                   ? *cursor
-                                                       : firstKey;
-        std::uint32_t const seq =
-            outOfOrder ? range->maxSequence : ledgerSequence;
+        ripple::uint256 const& curCursor = keys.size() ? keys.back() : cursor ? *cursor : firstKey;
+        std::uint32_t const seq = outOfOrder ? range->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
         if (!succ)
             reachedEnd = true;
@@ -294,9 +271,8 @@ BackendInterface::fetchLedgerPage(
             page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
         else if (!outOfOrder)
         {
-            gLog.error()
-                << "Deleted or non-existent object in successor table. key = "
-                << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
+            gLog.error() << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
+                         << " - seq = " << ledgerSequence;
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j)
             {
@@ -312,9 +288,7 @@ BackendInterface::fetchLedgerPage(
 }
 
 std::optional<ripple::Fees>
-BackendInterface::fetchFees(
-    std::uint32_t const seq,
-    boost::asio::yield_context& yield) const
+BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context& yield) const
 {
     ripple::Fees fees;
 

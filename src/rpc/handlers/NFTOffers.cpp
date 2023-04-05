@@ -36,8 +36,7 @@ namespace ripple {
 inline void
 tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
 {
-    auto amount = ::RPC::toBoostJson(
-        offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
+    auto amount = ::RPC::toBoostJson(offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
 
     json::object obj = {
         {JS(nft_offer_index), to_string(offer.key())},
@@ -47,8 +46,7 @@ tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
     };
 
     if (offer.isFieldPresent(sfDestination))
-        obj.insert_or_assign(
-            JS(destination), toBase58(offer.getAccountID(sfDestination)));
+        obj.insert_or_assign(JS(destination), toBase58(offer.getAccountID(sfDestination)));
 
     if (offer.isFieldPresent(sfExpiration))
         obj.insert_or_assign(JS(expiration), offer.getFieldU32(sfExpiration));
@@ -61,10 +59,7 @@ tag_invoke(json::value_from_tag, json::value& jv, SLE const& offer)
 namespace RPC {
 
 Result
-enumerateNFTOffers(
-    Context const& context,
-    ripple::uint256 const& tokenid,
-    ripple::Keylet const& directory)
+enumerateNFTOffers(Context const& context, ripple::uint256 const& tokenid, ripple::Keylet const& directory)
 {
     auto const& request = context.params;
 
@@ -75,8 +70,7 @@ enumerateNFTOffers(
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
 
     // TODO: just check for existence without pulling
-    if (!context.backend->fetchLedgerObject(
-            directory.key, lgrInfo.seq, context.yield))
+    if (!context.backend->fetchLedgerObject(directory.key, lgrInfo.seq, context.yield))
         return Status{RippledError::rpcOBJECT_NOT_FOUND, "notFound"};
 
     std::uint32_t limit;
@@ -104,12 +98,9 @@ enumerateNFTOffers(
         if (!cursor.parseHex(marker.as_string().c_str()))
             return Status{RippledError::rpcINVALID_PARAMS, "malformedCursor"};
 
-        auto const sle =
-            read(ripple::keylet::nftoffer(cursor), lgrInfo, context);
+        auto const sle = read(ripple::keylet::nftoffer(cursor), lgrInfo, context);
 
-        if (!sle ||
-            sle->getFieldU16(ripple::sfLedgerEntryType) !=
-                ripple::ltNFTOKEN_OFFER ||
+        if (!sle || sle->getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_OFFER ||
             tokenid != sle->getFieldH256(ripple::sfNFTokenID))
             return Status{RippledError::rpcINVALID_PARAMS};
 
@@ -152,14 +143,10 @@ enumerateNFTOffers(
         offers.pop_back();
     }
 
-    std::transform(
-        std::cbegin(offers),
-        std::cend(offers),
-        std::back_inserter(jsonOffers),
-        [](auto const& offer) {
-            // uses tag_invoke at the top of this file
-            return json::value_from(offer);
-        });
+    std::transform(std::cbegin(offers), std::cend(offers), std::back_inserter(jsonOffers), [](auto const& offer) {
+        // uses tag_invoke at the top of this file
+        return json::value_from(offer);
+    });
 
     response.insert_or_assign(JS(offers), std::move(jsonOffers));
     return response;
@@ -179,8 +166,7 @@ doNFTOffers(Context const& context, bool sells)
         return ripple::keylet::nft_buys(std::get<ripple::uint256>(v));
     };
 
-    return enumerateNFTOffers(
-        context, std::get<ripple::uint256>(v), getKeylet());
+    return enumerateNFTOffers(context, std::get<ripple::uint256>(v), getKeylet());
 }
 
 Result

@@ -65,9 +65,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    LedgerEntryHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    LedgerEntryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -78,27 +76,17 @@ public:
         // The accounts array must have two different elements
         // Each element must be a valid address
         static auto const rippleStateAccountsCheck =
-            validation::CustomValidator{
-                [](boost::json::value const& value,
-                   std::string_view key) -> MaybeError {
-                    if (!value.is_array() || value.as_array().size() != 2 ||
-                        !value.as_array()[0].is_string() ||
-                        !value.as_array()[1].is_string() ||
-                        value.as_array()[0].as_string() ==
-                            value.as_array()[1].as_string())
-                        return Error{RPC::Status{
-                            RPC::RippledError::rpcINVALID_PARAMS,
-                            "malformedAccounts"}};
-                    auto const id1 = ripple::parseBase58<ripple::AccountID>(
-                        value.as_array()[0].as_string().c_str());
-                    auto const id2 = ripple::parseBase58<ripple::AccountID>(
-                        value.as_array()[1].as_string().c_str());
-                    if (!id1 || !id2)
-                        return Error{RPC::Status{
-                            RPC::ClioError::rpcMALFORMED_ADDRESS,
-                            "malformedAddresses"}};
-                    return MaybeError{};
-                }};
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+                if (!value.is_array() || value.as_array().size() != 2 || !value.as_array()[0].is_string() ||
+                    !value.as_array()[1].is_string() ||
+                    value.as_array()[0].as_string() == value.as_array()[1].as_string())
+                    return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "malformedAccounts"}};
+                auto const id1 = ripple::parseBase58<ripple::AccountID>(value.as_array()[0].as_string().c_str());
+                auto const id2 = ripple::parseBase58<ripple::AccountID>(value.as_array()[1].as_string().c_str());
+                if (!id1 || !id2)
+                    return Error{RPC::Status{RPC::ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"}};
+                return MaybeError{};
+            }};
 
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
@@ -109,80 +97,56 @@ public:
             {JS(check), validation::Uint256HexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{
-                 validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(owner),
-                      validation::Required{},
-                      validation::AccountBase58Validator},
-                     {JS(authorized),
-                      validation::Required{},
-                      validation::AccountBase58Validator},
+                     {JS(owner), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(authorized), validation::Required{}, validation::AccountBase58Validator},
                  },
              }},
             {JS(directory),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{
-                 validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{validation::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
                  {JS(sub_index), validation::Type<uint32_t>{}}}}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{
-                 validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(owner),
-                      validation::Required{},
-                      validation::AccountBase58Validator},
-                     {JS(seq),
-                      validation::Required{},
-                      validation::Type<uint32_t>{}},
+                     {JS(owner), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
             {JS(offer),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{
-                 validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(account),
-                      validation::Required{},
-                      validation::AccountBase58Validator},
-                     {JS(seq),
-                      validation::Required{},
-                      validation::Type<uint32_t>{}},
+                     {JS(account), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
             {JS(payment_channel), validation::Uint256HexStringValidator},
             {JS(ripple_state),
              validation::Type<boost::json::object>{},
              validation::Section{
-                 {JS(accounts),
-                  validation::Required{},
-                  rippleStateAccountsCheck},
-                 {JS(currency),
-                  validation::Required{},
-                  validation::CurrencyValidator},
+                 {JS(accounts), validation::Required{}, rippleStateAccountsCheck},
+                 {JS(currency), validation::Required{}, validation::CurrencyValidator},
              }},
             {JS(ticket),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{
-                 validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(account),
-                      validation::Required{},
-                      validation::AccountBase58Validator},
-                     {JS(ticket_seq),
-                      validation::Required{},
-                      validation::Type<uint32_t>{}},
+                     {JS(account), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(ticket_seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
         };
+
         return rpcSpec;
     }
 
@@ -193,14 +157,10 @@ private:
     // dir_root and owner can not be both empty or filled at the same time
     // This function will return an error if this is the case
     std::variant<ripple::uint256, RPC::Status>
-    composeKeyFromDirectory(
-        boost::json::object const& directory) const noexcept;
+    composeKeyFromDirectory(boost::json::object const& directory) const noexcept;
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

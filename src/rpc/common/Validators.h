@@ -46,8 +46,7 @@ template <typename Expected>
         if (not value.is_string())
             hasError = true;
     }
-    else if constexpr (
-        std::is_same_v<Expected, double> or std::is_same_v<Expected, float>)
+    else if constexpr (std::is_same_v<Expected, double> or std::is_same_v<Expected, float>)
     {
         if (not value.is_double())
             hasError = true;
@@ -62,9 +61,7 @@ template <typename Expected>
         if (not value.is_object())
             hasError = true;
     }
-    else if constexpr (
-        std::is_convertible_v<Expected, uint64_t> or
-        std::is_convertible_v<Expected, int64_t>)
+    else if constexpr (std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>)
     {
         if (not value.is_int64() && not value.is_uint64())
             hasError = true;
@@ -266,8 +263,7 @@ public:
 
         using boost::json::value_to;
         auto const res = value_to<Type>(value.as_object().at(key.data()));
-        if (std::find(std::begin(options_), std::end(options_), res) ==
-            std::end(options_))
+        if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
             return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS}};
 
         return {};
@@ -297,8 +293,7 @@ public:
      * @param idx The index inside the array to validate
      * @param specs The specifications to validate against
      */
-    ValidateArrayAt(std::size_t idx, std::initializer_list<FieldSpec> specs)
-        : idx_{idx}, specs_{specs}
+    ValidateArrayAt(std::size_t idx, std::initializer_list<FieldSpec> specs) : idx_{idx}, specs_{specs}
     {
     }
 
@@ -330,12 +325,11 @@ public:
     IfType(Requirements&&... requirements)
     {
         validator_ = [... r = std::forward<Requirements>(requirements)](
-                         boost::json::value const& j,
-                         std::string_view key) -> MaybeError {
-            // clang-format off
+                         boost::json::value const& j, std::string_view key) -> MaybeError {
             std::optional<RPC::Status> firstFailure = std::nullopt;
 
             // the check logic is the same as fieldspec
+            // clang-format off
             ([&j, &key, &firstFailure, req = &r]() {
                 if (firstFailure)
                     return;
@@ -373,8 +367,7 @@ public:
     }
 
 private:
-    std::function<MaybeError(boost::json::value const&, std::string_view)>
-        validator_;
+    std::function<MaybeError(boost::json::value const&, std::string_view)> validator_;
 };
 
 /**
@@ -392,8 +385,7 @@ public:
      * @brief Constructs a validator that calls the given validator "req" and
      * return customized error "err"
      */
-    WithCustomError(Requirement req, RPC::Status err)
-        : requirement{std::move(req)}, error{err}
+    WithCustomError(Requirement req, RPC::Status err) : requirement{std::move(req)}, error{err}
     {
     }
 
@@ -412,8 +404,7 @@ public:
  */
 class CustomValidator final
 {
-    std::function<MaybeError(boost::json::value const&, std::string_view)>
-        validator_;
+    std::function<MaybeError(boost::json::value const&, std::string_view)> validator_;
 
 public:
     /**

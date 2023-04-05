@@ -150,11 +150,10 @@ logDuration(Context const& ctx, T const& dur)
 {
     static clio::Logger log{"RPC"};
     std::stringstream ss;
-    ss << ctx.tag() << "Request processing duration = "
-       << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
+    ss << ctx.tag()
+       << "Request processing duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
        << " milliseconds. request = " << ctx.params;
-    auto seconds =
-        std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     if (seconds > 10)
         log.error() << ss.str();
     else if (seconds > 1)

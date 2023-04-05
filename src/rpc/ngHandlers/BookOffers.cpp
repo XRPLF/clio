@@ -25,19 +25,14 @@ namespace RPCng {
 BookOffersHandler::Result
 BookOffersHandler::process(Input input, Context const& ctx) const
 {
-    auto bookMaybe = RPC::parseBook(
-        input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
+    auto bookMaybe = RPC::parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
     if (auto const status = std::get_if<RPC::Status>(&bookMaybe))
         return Error{*status};
 
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
     if (auto const status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -47,28 +42,19 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     auto const bookKey = getBookBase(book);
 
     // TODO: Add perfomance metrics if needed in future
-    auto [offers, _] = sharedPtrBackend_->fetchBookOffers(
-        bookKey, lgrInfo.seq, input.limit, ctx.yield);
+    auto [offers, _] = sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
     BookOffersHandler::Output output;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
     output.offers = RPC::postProcessOrderBook(
-        offers,
-        book,
-        input.taker ? *(input.taker) : beast::zero,
-        *sharedPtrBackend_,
-        lgrInfo.seq,
-        ctx.yield);
+        offers, book, input.taker ? *(input.taker) : beast::zero, *sharedPtrBackend_, lgrInfo.seq, ctx.yield);
 
     return output;
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    BookOffersHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookOffersHandler::Output const& output)
 {
     jv = boost::json::object{
         {JS(ledger_hash), output.ledgerHash},
@@ -78,37 +64,19 @@ tag_invoke(
 }
 
 BookOffersHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<BookOffersHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::value const& jv)
 {
     BookOffersHandler::Input input;
     auto const& jsonObject = jv.as_object();
-    ripple::to_currency(
-        input.getsCurrency,
-        jv.at(JS(taker_gets)).as_object().at(JS(currency)).as_string().c_str());
-    ripple::to_currency(
-        input.paysCurrency,
-        jv.at(JS(taker_pays)).as_object().at(JS(currency)).as_string().c_str());
+    ripple::to_currency(input.getsCurrency, jv.at(JS(taker_gets)).as_object().at(JS(currency)).as_string().c_str());
+    ripple::to_currency(input.paysCurrency, jv.at(JS(taker_pays)).as_object().at(JS(currency)).as_string().c_str());
     if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer)))
     {
-        ripple::to_issuer(
-            input.getsID,
-            jv.at(JS(taker_gets))
-                .as_object()
-                .at(JS(issuer))
-                .as_string()
-                .c_str());
+        ripple::to_issuer(input.getsID, jv.at(JS(taker_gets)).as_object().at(JS(issuer)).as_string().c_str());
     }
     if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer)))
     {
-        ripple::to_issuer(
-            input.paysID,
-            jv.at(JS(taker_pays))
-                .as_object()
-                .at(JS(issuer))
-                .as_string()
-                .c_str());
+        ripple::to_issuer(input.paysID, jv.at(JS(taker_pays)).as_object().at(JS(issuer)).as_string().c_str());
     }
     if (jsonObject.contains(JS(ledger_hash)))
     {
@@ -122,14 +90,12 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
     if (jsonObject.contains(JS(taker)))
     {
-        input.taker =
-            RPC::accountFromStringStrict(jv.at(JS(taker)).as_string().c_str());
+        input.taker = RPC::accountFromStringStrict(jv.at(JS(taker)).as_string().c_str());
     }
     if (jsonObject.contains(JS(limit)))
     {

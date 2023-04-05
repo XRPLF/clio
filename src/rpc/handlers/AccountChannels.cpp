@@ -38,8 +38,7 @@ addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
     boost::json::object jDst;
     jDst[JS(channel_id)] = ripple::to_string(line.key());
     jDst[JS(account)] = ripple::to_string(line.getAccountID(ripple::sfAccount));
-    jDst[JS(destination_account)] =
-        ripple::to_string(line.getAccountID(ripple::sfDestination));
+    jDst[JS(destination_account)] = ripple::to_string(line.getAccountID(ripple::sfDestination));
     jDst[JS(amount)] = line[ripple::sfAmount].getText();
     jDst[JS(balance)] = line[ripple::sfBalance].getText();
     if (publicKeyType(line[ripple::sfPublicKey]))
@@ -77,16 +76,14 @@ doAccountChannels(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto rawAcct = context.backend->fetchLedgerObject(
-        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto rawAcct =
+        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
         return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     ripple::AccountID destAccount;
-    if (auto const status =
-            getAccount(request, destAccount, JS(destination_account));
-        status)
+    if (auto const status = getAccount(request, destAccount, JS(destination_account)); status)
         return status;
 
     std::uint32_t limit;
@@ -108,10 +105,8 @@ doAccountChannels(Context const& context)
     boost::json::array& jsonChannels = response.at(JS(channels)).as_array();
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (sle.getType() == ripple::ltPAYCHAN &&
-            sle.getAccountID(ripple::sfAccount) == accountID &&
-            (!destAccount ||
-             destAccount == sle.getAccountID(ripple::sfDestination)))
+        if (sle.getType() == ripple::ltPAYCHAN && sle.getAccountID(ripple::sfAccount) == accountID &&
+            (!destAccount || destAccount == sle.getAccountID(ripple::sfDestination)))
         {
             addChannel(jsonChannels, sle);
         }
@@ -119,14 +114,8 @@ doAccountChannels(Context const& context)
         return true;
     };
 
-    auto next = traverseOwnedNodes(
-        *context.backend,
-        accountID,
-        lgrInfo.seq,
-        limit,
-        marker,
-        context.yield,
-        addToResponse);
+    auto next =
+        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;

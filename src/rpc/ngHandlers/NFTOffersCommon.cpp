@@ -30,13 +30,9 @@ namespace ripple {
 
 // TODO: move to some common serialization impl place
 inline void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    SLE const& offer)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, SLE const& offer)
 {
-    auto amount = ::RPC::toBoostJson(
-        offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
+    auto amount = ::RPC::toBoostJson(offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
 
     boost::json::object obj = {
         {JS(nft_offer_index), to_string(offer.key())},
@@ -46,8 +42,7 @@ tag_invoke(
     };
 
     if (offer.isFieldPresent(sfDestination))
-        obj.insert_or_assign(
-            JS(destination), toBase58(offer.getAccountID(sfDestination)));
+        obj.insert_or_assign(JS(destination), toBase58(offer.getAccountID(sfDestination)));
 
     if (offer.isFieldPresent(sfExpiration))
         obj.insert_or_assign(JS(expiration), offer.getFieldU32(sfExpiration));
@@ -67,20 +62,15 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     boost::asio::yield_context& yield) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+    auto const lgrInfoOrStatus =
+        getLedgerInfoFromHashOrSeq(*sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
 
     // TODO: just check for existence without pulling
-    if (not sharedPtrBackend_->fetchLedgerObject(
-            directory.key, lgrInfo.seq, yield))
+    if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "notFound"}};
 
     auto output = Output{input.nftID};
@@ -95,22 +85,16 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
         // We have a start point. Use limit - 1 from the result and use the
         // very last one for the resume.
-        auto const sle =
-            [this, &cursor, &lgrInfo, &yield]() -> std::shared_ptr<SLE const> {
+        auto const sle = [this, &cursor, &lgrInfo, &yield]() -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftoffer(cursor).key;
-            if (auto const blob = sharedPtrBackend_->fetchLedgerObject(
-                    key, lgrInfo.seq, yield);
-                blob)
+            if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield); blob)
             {
-                return std::make_shared<SLE const>(
-                    SerialIter{blob->data(), blob->size()}, key);
+                return std::make_shared<SLE const>(SerialIter{blob->data(), blob->size()}, key);
             }
             return nullptr;
         }();
 
-        if (!sle ||
-            sle->getFieldU16(ripple::sfLedgerEntryType) !=
-                ripple::ltNFTOKEN_OFFER ||
+        if (!sle || sle->getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_OFFER ||
             tokenID != sle->getFieldH256(ripple::sfNFTokenID))
         {
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -156,19 +140,13 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         offers.pop_back();
     }
 
-    std::move(
-        std::begin(offers),
-        std::end(offers),
-        std::back_inserter(output.offers));
+    std::move(std::begin(offers), std::end(offers), std::back_inserter(output.offers));
 
     return std::move(output);
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    NFTOffersHandlerBase::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandlerBase::Output const& output)
 {
     auto object = boost::json::object{
         {JS(nft_id), output.nftID},
@@ -185,9 +163,7 @@ tag_invoke(
 }
 
 NFTOffersHandlerBase::Input
-tag_invoke(
-    boost::json::value_to_tag<NFTOffersHandlerBase::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     NFTOffersHandlerBase::Input input;
@@ -207,8 +183,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
 

@@ -39,10 +39,7 @@ struct AccountTransactionsData
     std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
-    AccountTransactionsData(
-        ripple::TxMeta& meta,
-        ripple::uint256 const& txHash,
-        beast::Journal& j)
+    AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash, beast::Journal& j)
         : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
@@ -62,14 +59,8 @@ struct NFTTransactionsData
     std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
-    NFTTransactionsData(
-        ripple::uint256 const& tokenID,
-        ripple::TxMeta const& meta,
-        ripple::uint256 const& txHash)
-        : tokenID(tokenID)
-        , ledgerSequence(meta.getLgrSeq())
-        , transactionIndex(meta.getIndex())
-        , txHash(txHash)
+    NFTTransactionsData(ripple::uint256 const& tokenID, ripple::TxMeta const& meta, ripple::uint256 const& txHash)
+        : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), txHash(txHash)
     {
     }
 };
@@ -110,21 +101,13 @@ struct NFTsData
         ripple::AccountID const& owner,
         ripple::Blob const& uri,
         ripple::TxMeta const& meta)
-        : tokenID(tokenID)
-        , ledgerSequence(meta.getLgrSeq())
-        , transactionIndex(meta.getIndex())
-        , owner(owner)
-        , uri(uri)
+        : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), owner(owner), uri(uri)
     {
     }
 
     // This constructor is used when parsing an NFTokenBurn or
     // NFTokenAcceptOffer tx
-    NFTsData(
-        ripple::uint256 const& tokenID,
-        ripple::AccountID const& owner,
-        ripple::TxMeta const& meta,
-        bool isBurned)
+    NFTsData(ripple::uint256 const& tokenID, ripple::AccountID const& owner, ripple::TxMeta const& meta, bool isBurned)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
@@ -144,10 +127,7 @@ struct NFTsData
         std::uint32_t const ledgerSequence,
         ripple::AccountID const& owner,
         ripple::Blob const& uri)
-        : tokenID(tokenID)
-        , ledgerSequence(ledgerSequence)
-        , owner(owner)
-        , uri(uri)
+        : tokenID(tokenID), ledgerSequence(ledgerSequence), owner(owner), uri(uri)
     {
     }
 };
@@ -188,8 +168,7 @@ isBookDir(T const& key, R const& object)
     if (!isDirNode(object))
         return false;
 
-    ripple::STLedgerEntry const sle{
-        ripple::SerialIter{object.data(), object.size()}, key};
+    ripple::STLedgerEntry const sle{ripple::SerialIter{object.data(), object.size()}, key};
     return !sle[~ripple::sfOwner].has_value();
 }
 
@@ -228,10 +207,8 @@ deserializeHeader(ripple::Slice data)
     info.parentHash = sit.get256();
     info.txHash = sit.get256();
     info.accountHash = sit.get256();
-    info.parentCloseTime =
-        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
-    info.closeTime =
-        ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
+    info.parentCloseTime = ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
+    info.closeTime = ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
     info.closeTimeResolution = ripple::NetClock::duration{sit.get8()};
     info.closeFlags = sit.get8();
 

@@ -46,16 +46,12 @@ doNFTHistory(Context const& context)
             std::uint32_t const limit,
             bool const forward,
             std::optional<Backend::TransactionsCursor> const& cursorIn,
-            boost::asio::yield_context& yield)
-            -> Backend::TransactionsAndCursor {
-            auto const [txnsAndCursor, timeDiff] =
-                util::timed([&, &tokenID = tokenID]() {
-                    return backend->fetchNFTTransactions(
-                        tokenID, limit, forward, cursorIn, yield);
-                });
+            boost::asio::yield_context& yield) -> Backend::TransactionsAndCursor {
+            auto const [txnsAndCursor, timeDiff] = util::timed([&, &tokenID = tokenID]() {
+                return backend->fetchNFTTransactions(tokenID, limit, forward, cursorIn, yield);
+            });
             gLog.info() << outerFuncName << " db fetch took " << timeDiff
-                        << " milliseconds - num blobs = "
-                        << txnsAndCursor.txns.size();
+                        << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
             return txnsAndCursor;
         });
 

@@ -48,8 +48,8 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
     {
         auto cfg = config.section("database." + type);
         auto ttl = config.valueOr<uint16_t>("online_delete", 0) * 4;
-        backend = std::make_shared<Backend::Cassandra::CassandraBackend>(
-            Backend::Cassandra::SettingsProvider{cfg, ttl});
+        backend =
+            std::make_shared<Backend::Cassandra::CassandraBackend>(Backend::Cassandra::SettingsProvider{cfg, ttl});
     }
 
     if (!backend)

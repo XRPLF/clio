@@ -42,9 +42,7 @@ namespace Backend::Cassandra {
  * Eventually we should change the interface so that it does not have to know
  * about yield_context.
  */
-template <
-    SomeSettingsProvider SettingsProviderType,
-    SomeExecutionStrategy ExecutionStrategy>
+template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategy>
 class BasicCassandraBackend : public BackendInterface
 {
     clio::Logger log_{"Backend"};
@@ -71,11 +69,9 @@ public:
         , executor_{settingsProvider_.getSettings(), handle_}
     {
         if (auto const res = handle_.connect(); not res)
-            throw std::runtime_error(
-                "Could not connect to Cassandra: " + res.error());
+            throw std::runtime_error("Could not connect to Cassandra: " + res.error());
         if (auto const res = handle_.execute(schema_.createKeyspace); not res)
-            throw std::runtime_error(
-                "Could not create keyspace: " + res.error());
+            throw std::runtime_error("Could not create keyspace: " + res.error());
         if (auto const res = handle_.executeEach(schema_.createSchema); not res)
             throw std::runtime_error("Could not create schema: " + res.error());
 
@@ -118,19 +114,16 @@ public:
         if (cursor)
         {
             statement.bindAt(1, cursor->asTuple());
-            log_.debug() << "account = " << ripple::strHex(account)
-                         << " tuple = " << cursor->ledgerSequence
+            log_.debug() << "account = " << ripple::strHex(account) << " tuple = " << cursor->ledgerSequence
                          << cursor->transactionIndex;
         }
         else
         {
             auto const seq = forward ? rng->minSequence : rng->maxSequence;
-            auto const placeHolder =
-                forward ? 0u : std::numeric_limits<std::uint32_t>::max();
+            auto const placeHolder = forward ? 0u : std::numeric_limits<std::uint32_t>::max();
 
             statement.bindAt(1, std::make_tuple(placeHolder, placeHolder));
-            log_.debug() << "account = " << ripple::strHex(account)
-                         << " idx = " << seq << " tuple = " << placeHolder;
+            log_.debug() << "account = " << ripple::strHex(account) << " idx = " << seq << " tuple = " << placeHolder;
         }
 
         // FIXME: Limit is a hack to support uint32_t properly for the time
@@ -149,8 +142,7 @@ public:
         auto numRows = results.numRows();
         log_.info() << "num_rows = " << numRows;
 
-        for (auto [hash, data] :
-             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results))
+        for (auto [hash, data] : extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results))
         {
             hashes.push_back(hash);
             if (--numRows == 0)
@@ -185,15 +177,10 @@ public:
 
         if (!range)
         {
-            executor_.writeSync(
-                schema_->updateLedgerRange,
-                ledgerSequence_,
-                false,
-                ledgerSequence_);
+            executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
         }
 
-        if (not executeSyncUpdate(schema_->updateLedgerRange.bind(
-                ledgerSequence_, true, ledgerSequence_ - 1)))
+        if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1)))
         {
             log_.warn() << "Update failed for ledger " << ledgerSequence_;
             return false;
@@ -204,14 +191,11 @@ public:
     }
 
     void
-    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header)
-        override
+    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header) override
     {
-        executor_.write(
-            schema_->insertLedgerHeader, ledgerInfo.seq, std::move(header));
+        executor_.write(schema_->insertLedgerHeader, ledgerInfo.seq, std::move(header));
 
-        executor_.write(
-            schema_->insertLedgerHash, ledgerInfo.hash, ledgerInfo.seq);
+        executor_.write(schema_->insertLedgerHash, ledgerInfo.hash, ledgerInfo.seq);
 
         ledgerSequence_ = ledgerInfo.seq;
     }
@@ -219,13 +203,11 @@ public:
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
     {
-        if (auto const res = executor_.read(yield, schema_->selectLatestLedger);
-            res)
+        if (auto const res = executor_.read(yield, schema_->selectLatestLedger); res)
         {
             if (auto const& result = res.value(); result)
             {
-                if (auto const maybeValue = result.template get<uint32_t>();
-                    maybeValue)
+                if (auto const maybeValue = result.template get<uint32_t>(); maybeValue)
                     return maybeValue;
 
                 log_.error() << "Could not fetch latest ledger - no rows";
@@ -243,21 +225,16 @@ public:
     }
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerBySequence(
-        std::uint32_t const sequence,
-        boost::asio::yield_context& yield) const override
+    fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call for seq " << sequence;
 
-        auto const res =
-            executor_.read(yield, schema_->selectLedgerBySeq, sequence);
+        auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res)
         {
             if (auto const& result = res.value(); result)
             {
-                if (auto const maybeValue =
-                        result.template get<std::vector<unsigned char>>();
-                    maybeValue)
+                if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue)
                 {
                     return deserializeHeader(ripple::makeSlice(*maybeValue));
                 }
@@ -270,28 +247,22 @@ public:
         }
         else
         {
-            log_.error() << "Could not fetch ledger by sequence: "
-                         << res.error();
+            log_.error() << "Could not fetch ledger by sequence: " << res.error();
         }
 
         return std::nullopt;
     }
 
     std::optional<ripple::LedgerInfo>
-    fetchLedgerByHash(
-        ripple::uint256 const& hash,
-        boost::asio::yield_context& yield) const override
+    fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";
 
-        if (auto const res =
-                executor_.read(yield, schema_->selectLedgerByHash, hash);
-            res)
+        if (auto const res = executor_.read(yield, schema_->selectLedgerByHash, hash); res)
         {
             if (auto const& result = res.value(); result)
             {
-                if (auto const maybeValue = result.template get<uint32_t>();
-                    maybeValue)
+                if (auto const maybeValue = result.template get<uint32_t>(); maybeValue)
                     return fetchLedgerBySequence(*maybeValue, yield);
 
                 log_.error() << "Could not fetch ledger by hash - no rows";
@@ -313,8 +284,7 @@ public:
     {
         log_.trace() << __func__ << " call";
 
-        if (auto const res = executor_.read(yield, schema_->selectLedgerRange);
-            res)
+        if (auto const res = executor_.read(yield, schema_->selectLedgerRange); res)
         {
             auto const& results = res.value();
             if (not results.hasRows())
@@ -341,8 +311,7 @@ public:
             if (range.minSequence > range.maxSequence)
                 std::swap(range.minSequence, range.maxSequence);
 
-            log_.debug() << "After hardFetchLedgerRange range is "
-                         << range.minSequence << ":" << range.maxSequence;
+            log_.debug() << "After hardFetchLedgerRange range is " << range.minSequence << ":" << range.maxSequence;
             return range;
         }
         else
@@ -354,9 +323,7 @@ public:
     }
 
     std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override
+    fetchAllTransactionsInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";
         auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
@@ -364,28 +331,24 @@ public:
     }
 
     std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override
+    fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+        const override
     {
         log_.trace() << __func__ << " call";
         auto start = std::chrono::system_clock::now();
-        auto const res = executor_.read(
-            yield, schema_->selectAllTransactionHashesInLedger, ledgerSequence);
+        auto const res = executor_.read(yield, schema_->selectAllTransactionHashesInLedger, ledgerSequence);
 
         if (not res)
         {
-            log_.error() << "Could not fetch all transaction hashes: "
-                         << res.error();
+            log_.error() << "Could not fetch all transaction hashes: " << res.error();
             return {};
         }
 
         auto const& result = res.value();
         if (not result.hasRows())
         {
-            log_.error()
-                << "Could not fetch all transaction hashes - no rows; ledger = "
-                << std::to_string(ledgerSequence);
+            log_.error() << "Could not fetch all transaction hashes - no rows; ledger = "
+                         << std::to_string(ledgerSequence);
             return {};
         }
 
@@ -394,36 +357,26 @@ public:
             hashes.push_back(std::move(hash));
 
         auto end = std::chrono::system_clock::now();
-        log_.debug() << "Fetched " << hashes.size()
-                     << " transaction hashes from Cassandra in "
-                     << std::chrono::duration_cast<std::chrono::milliseconds>(
-                            end - start)
-                            .count()
-                     << " milliseconds";
+        log_.debug() << "Fetched " << hashes.size() << " transaction hashes from Cassandra in "
+                     << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
 
         return hashes;
     }
 
     std::optional<NFT>
-    fetchNFT(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override
+    fetchNFT(ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+        const override
     {
         log_.trace() << __func__ << " call";
 
-        auto const res =
-            executor_.read(yield, schema_->selectNFT, tokenID, ledgerSequence);
+        auto const res = executor_.read(yield, schema_->selectNFT, tokenID, ledgerSequence);
         if (not res)
             return std::nullopt;
 
-        if (auto const maybeRow =
-                res->template get<uint32_t, ripple::AccountID, bool>();
-            maybeRow)
+        if (auto const maybeRow = res->template get<uint32_t, ripple::AccountID, bool>(); maybeRow)
         {
             auto [seq, owner, isBurned] = *maybeRow;
-            auto result =
-                std::make_optional<NFT>(tokenID, seq, owner, isBurned);
+            auto result = std::make_optional<NFT>(tokenID, seq, owner, isBurned);
 
             // now fetch URI. Usually we will have the URI even for burned NFTs,
             // but if the first ledger on this clio included NFTokenBurn
@@ -436,12 +389,10 @@ public:
             // a URI because it was burned in the first ledger) to indicate that
             // even though we are returning a blank URI, the NFT might have had
             // one.
-            auto uriRes = executor_.read(
-                yield, schema_->selectNFTURI, tokenID, ledgerSequence);
+            auto uriRes = executor_.read(yield, schema_->selectNFTURI, tokenID, ledgerSequence);
             if (uriRes)
             {
-                if (auto const maybeUri = uriRes->template get<ripple::Blob>();
-                    maybeUri)
+                if (auto const maybeUri = uriRes->template get<ripple::Blob>(); maybeUri)
                     result->uri = *maybeUri;
             }
 
@@ -477,19 +428,16 @@ public:
         if (cursor)
         {
             statement.bindAt(1, cursor->asTuple());
-            log_.debug() << "token_id = " << ripple::strHex(tokenID)
-                         << " tuple = " << cursor->ledgerSequence
+            log_.debug() << "token_id = " << ripple::strHex(tokenID) << " tuple = " << cursor->ledgerSequence
                          << cursor->transactionIndex;
         }
         else
         {
             auto const seq = forward ? rng->minSequence : rng->maxSequence;
-            auto const placeHolder =
-                forward ? 0 : std::numeric_limits<std::uint32_t>::max();
+            auto const placeHolder = forward ? 0 : std::numeric_limits<std::uint32_t>::max();
 
             statement.bindAt(1, std::make_tuple(placeHolder, placeHolder));
-            log_.debug() << "token_id = " << ripple::strHex(tokenID)
-                         << " idx = " << seq << " tuple = " << placeHolder;
+            log_.debug() << "token_id = " << ripple::strHex(tokenID) << " idx = " << seq << " tuple = " << placeHolder;
         }
 
         statement.bindAt(2, Limit{limit});
@@ -506,8 +454,7 @@ public:
         auto numRows = results.numRows();
         log_.info() << "num_rows = " << numRows;
 
-        for (auto [hash, data] :
-             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results))
+        for (auto [hash, data] : extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results))
         {
             hashes.push_back(hash);
             if (--numRows == 0)
@@ -535,16 +482,11 @@ public:
     }
 
     std::optional<Blob>
-    doFetchLedgerObject(
-        ripple::uint256 const& key,
-        std::uint32_t const sequence,
-        boost::asio::yield_context& yield) const override
+    doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context& yield)
+        const override
     {
-        log_.debug() << "Fetching ledger object for seq " << sequence
-                     << ", key = " << ripple::to_string(key);
-        if (auto const res =
-                executor_.read(yield, schema_->selectObject, key, sequence);
-            res)
+        log_.debug() << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
+        if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res)
         {
             if (auto const result = res->template get<Blob>(); result)
             {
@@ -565,23 +507,16 @@ public:
     }
 
     std::optional<TransactionAndMetadata>
-    fetchTransaction(
-        ripple::uint256 const& hash,
-        boost::asio::yield_context& yield) const override
+    fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";
 
-        if (auto const res =
-                executor_.read(yield, schema_->selectTransaction, hash);
-            res)
+        if (auto const res = executor_.read(yield, schema_->selectTransaction, hash); res)
         {
-            if (auto const maybeValue =
-                    res->template get<Blob, Blob, uint32_t, uint32_t>();
-                maybeValue)
+            if (auto const maybeValue = res->template get<Blob, Blob, uint32_t, uint32_t>(); maybeValue)
             {
                 auto [transaction, meta, seq, date] = *maybeValue;
-                return std::make_optional<TransactionAndMetadata>(
-                    transaction, meta, seq, date);
+                return std::make_optional<TransactionAndMetadata>(transaction, meta, seq, date);
             }
             else
             {
@@ -597,19 +532,14 @@ public:
     }
 
     std::optional<ripple::uint256>
-    doFetchSuccessorKey(
-        ripple::uint256 key,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override
+    doFetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+        const override
     {
         log_.trace() << __func__ << " call";
 
-        if (auto const res = executor_.read(
-                yield, schema_->selectSuccessor, key, ledgerSequence);
-            res)
+        if (auto const res = executor_.read(yield, schema_->selectSuccessor, key, ledgerSequence); res)
         {
-            if (auto const result = res->template get<ripple::uint256>();
-                result)
+            if (auto const result = res->template get<ripple::uint256>(); result)
             {
                 if (*result == lastKey)
                     return std::nullopt;
@@ -629,9 +559,7 @@ public:
     }
 
     std::vector<TransactionAndMetadata>
-    fetchTransactions(
-        std::vector<ripple::uint256> const& hashes,
-        boost::asio::yield_context& yield) const override
+    fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";
 
@@ -645,17 +573,10 @@ public:
         std::vector<Statement> statements;
         statements.reserve(numHashes);
 
-        auto const timeDiff = util::timed([this,
-                                           &yield,
-                                           &results,
-                                           &hashes,
-                                           &statements]() {
+        auto const timeDiff = util::timed([this, &yield, &results, &hashes, &statements]() {
             // TODO: seems like a job for "hash IN (list of hashes)" instead?
             std::transform(
-                std::cbegin(hashes),
-                std::cend(hashes),
-                std::back_inserter(statements),
-                [this](auto const& hash) {
+                std::cbegin(hashes), std::cend(hashes), std::back_inserter(statements), [this](auto const& hash) {
                     return schema_->selectTransaction.bind(hash);
                 });
 
@@ -665,9 +586,7 @@ public:
                 std::cend(entries),
                 std::back_inserter(results),
                 [](auto const& res) -> TransactionAndMetadata {
-                    if (auto const maybeRow =
-                            res.template get<Blob, Blob, uint32_t, uint32_t>();
-                        maybeRow)
+                    if (auto const maybeRow = res.template get<Blob, Blob, uint32_t, uint32_t>(); maybeRow)
                         return *maybeRow;
                     else
                         return {};
@@ -675,9 +594,7 @@ public:
         });
 
         assert(numHashes == results.size());
-        log_.debug() << "Fetched " << numHashes
-                     << " transactions from Cassandra in " << timeDiff
-                     << " milliseconds";
+        log_.debug() << "Fetched " << numHashes << " transactions from Cassandra in " << timeDiff << " milliseconds";
         return results;
     }
 
@@ -703,21 +620,14 @@ public:
 
         // TODO: seems like a job for "key IN (list of keys)" instead?
         std::transform(
-            std::cbegin(keys),
-            std::cend(keys),
-            std::back_inserter(statements),
-            [this, &sequence](auto const& key) {
+            std::cbegin(keys), std::cend(keys), std::back_inserter(statements), [this, &sequence](auto const& key) {
                 return schema_->selectObject.bind(key, sequence);
             });
 
         auto const entries = executor_.readEach(yield, statements);
         std::transform(
-            std::cbegin(entries),
-            std::cend(entries),
-            std::back_inserter(results),
-            [](auto const& res) -> Blob {
-                if (auto const maybeValue = res.template get<Blob>();
-                    maybeValue)
+            std::cbegin(entries), std::cend(entries), std::back_inserter(results), [](auto const& res) -> Blob {
+                if (auto const maybeValue = res.template get<Blob>(); maybeValue)
                     return *maybeValue;
                 else
                     return {};
@@ -728,47 +638,37 @@ public:
     }
 
     std::vector<LedgerObject>
-    fetchLedgerDiff(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context& yield) const override
+    fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";
 
-        auto const [keys, timeDiff] = util::timed(
-            [this, &ledgerSequence, &yield]() -> std::vector<ripple::uint256> {
-                auto const res =
-                    executor_.read(yield, schema_->selectDiff, ledgerSequence);
-                if (not res)
-                {
-                    log_.error()
-                        << "Could not fetch ledger diff: " << res.error()
-                        << "; ledger = " << ledgerSequence;
-                    return {};
-                }
+        auto const [keys, timeDiff] = util::timed([this, &ledgerSequence, &yield]() -> std::vector<ripple::uint256> {
+            auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
+            if (not res)
+            {
+                log_.error() << "Could not fetch ledger diff: " << res.error() << "; ledger = " << ledgerSequence;
+                return {};
+            }
 
-                auto const& results = res.value();
-                if (not results)
-                {
-                    log_.error()
-                        << "Could not fetch ledger diff - no rows; ledger = "
-                        << ledgerSequence;
-                    return {};
-                }
+            auto const& results = res.value();
+            if (not results)
+            {
+                log_.error() << "Could not fetch ledger diff - no rows; ledger = " << ledgerSequence;
+                return {};
+            }
 
-                std::vector<ripple::uint256> keys;
-                for (auto [key] : extract<ripple::uint256>(results))
-                    keys.push_back(key);
+            std::vector<ripple::uint256> keys;
+            for (auto [key] : extract<ripple::uint256>(results))
+                keys.push_back(key);
 
-                return keys;
-            });
+            return keys;
+        });
 
         // one of the above errors must have happened
         if (keys.empty())
             return {};
 
-        log_.debug() << "Fetched " << keys.size()
-                     << " diff hashes from Cassandra in " << timeDiff
-                     << " milliseconds";
+        log_.debug() << "Fetched " << keys.size() << " diff hashes from Cassandra in " << timeDiff << " milliseconds";
 
         auto const objs = fetchLedgerObjects(keys, ledgerSequence, yield);
         std::vector<LedgerObject> results;
@@ -787,43 +687,29 @@ public:
     }
 
     void
-    doWriteLedgerObject(
-        std::string&& key,
-        std::uint32_t const seq,
-        std::string&& blob) override
+    doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
     {
-        log_.trace() << " Writing ledger object " << key.size() << ":" << seq
-                     << " [" << blob.size() << " bytes]";
+        log_.trace() << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
 
         if (range)
             executor_.write(schema_->insertDiff, seq, key);
 
-        executor_.write(
-            schema_->insertObject, std::move(key), seq, std::move(blob));
+        executor_.write(schema_->insertObject, std::move(key), seq, std::move(blob));
     }
 
     void
-    writeSuccessor(
-        std::string&& key,
-        std::uint32_t const seq,
-        std::string&& successor) override
+    writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) override
     {
         log_.trace() << "Writing successor. key = " << key.size() << " bytes. "
-                     << " seq = " << std::to_string(seq)
-                     << " successor = " << successor.size() << " bytes.";
+                     << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
         assert(key.size() != 0);
         assert(successor.size() != 0);
 
-        executor_.write(
-            schema_->insertSuccessor,
-            std::move(key),
-            seq,
-            std::move(successor));
+        executor_.write(schema_->insertSuccessor, std::move(key), seq, std::move(successor));
     }
 
     void
-    writeAccountTransactions(
-        std::vector<AccountTransactionsData>&& data) override
+    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) override
     {
         std::vector<Statement> statements;
         statements.reserve(data.size() * 10);  // assume 10 transactions avg
@@ -837,8 +723,7 @@ public:
                 [this, &record](auto&& account) {
                     return schema_->insertAccountTx.bind(
                         std::move(account),
-                        std::make_tuple(
-                            record.ledgerSequence, record.transactionIndex),
+                        std::make_tuple(record.ledgerSequence, record.transactionIndex),
                         record.txHash);
                 });
         }
@@ -852,17 +737,10 @@ public:
         std::vector<Statement> statements;
         statements.reserve(data.size());
 
-        std::transform(
-            std::cbegin(data),
-            std::cend(data),
-            std::back_inserter(statements),
-            [this](auto const& record) {
-                return schema_->insertNFTTx.bind(
-                    record.tokenID,
-                    std::make_tuple(
-                        record.ledgerSequence, record.transactionIndex),
-                    record.txHash);
-            });
+        std::transform(std::cbegin(data), std::cend(data), std::back_inserter(statements), [this](auto const& record) {
+            return schema_->insertNFTTx.bind(
+                record.tokenID, std::make_tuple(record.ledgerSequence, record.transactionIndex), record.txHash);
+        });
 
         executor_.write(statements);
     }
@@ -879,12 +757,7 @@ public:
 
         executor_.write(schema_->insertLedgerTransaction, seq, hash);
         executor_.write(
-            schema_->insertTransaction,
-            std::move(hash),
-            seq,
-            date,
-            std::move(transaction),
-            std::move(metadata));
+            schema_->insertTransaction, std::move(hash), seq, date, std::move(transaction), std::move(metadata));
     }
 
     void
@@ -895,11 +768,8 @@ public:
 
         for (NFTsData const& record : data)
         {
-            statements.push_back(schema_->insertNFT.bind(
-                record.tokenID,
-                record.ledgerSequence,
-                record.owner,
-                record.isBurned));
+            statements.push_back(
+                schema_->insertNFT.bind(record.tokenID, record.ledgerSequence, record.owner, record.isBurned));
 
             // If `uri` is set (and it can be set to an empty uri), we know this
             // is a net-new NFT. That is, this NFT has not been seen before by
@@ -910,11 +780,10 @@ public:
             {
                 statements.push_back(schema_->insertIssuerNFT.bind(
                     ripple::nft::getIssuer(record.tokenID),
-                    static_cast<uint32_t>(
-                        ripple::nft::getTaxon(record.tokenID)),
+                    static_cast<uint32_t>(ripple::nft::getTaxon(record.tokenID)),
                     record.tokenID));
-                statements.push_back(schema_->insertNFTURI.bind(
-                    record.tokenID, record.ledgerSequence, record.uri.value()));
+                statements.push_back(
+                    schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value()));
             }
         }
 
@@ -930,9 +799,7 @@ public:
 
     /*! Unused in this implementation */
     bool
-    doOnlineDelete(
-        std::uint32_t const numLedgersToKeep,
-        boost::asio::yield_context& yield) const override
+    doOnlineDelete(std::uint32_t const numLedgersToKeep, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";
         return true;
@@ -958,8 +825,7 @@ private:
 
         if (not maybeSuccess.value())
         {
-            log_.warn()
-                << "Update failed. Checking if DB state is what we expect";
+            log_.warn() << "Update failed. Checking if DB state is what we expect";
 
             // error may indicate that another writer wrote something.
             // in this case let's just compare the current state of things
@@ -973,7 +839,6 @@ private:
     }
 };
 
-using CassandraBackend =
-    BasicCassandraBackend<SettingsProvider, detail::DefaultExecutionStrategy<>>;
+using CassandraBackend = BasicCassandraBackend<SettingsProvider, detail::DefaultExecutionStrategy<>>;
 
 }  // namespace Backend::Cassandra

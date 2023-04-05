@@ -55,8 +55,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    BookOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    BookOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -71,12 +70,10 @@ public:
                  {JS(currency),
                   validation::Required{},
                   validation::WithCustomError{
-                      validation::CurrencyValidator,
-                      RPC::Status(RPC::RippledError::rpcDST_AMT_MALFORMED)}},
+                      validation::CurrencyValidator, RPC::Status(RPC::RippledError::rpcDST_AMT_MALFORMED)}},
                  {JS(issuer),
                   validation::WithCustomError{
-                      validation::IssuerValidator,
-                      RPC::Status(RPC::RippledError::rpcDST_ISR_MALFORMED)}}}},
+                      validation::IssuerValidator, RPC::Status(RPC::RippledError::rpcDST_ISR_MALFORMED)}}}},
             {JS(taker_pays),
              validation::Required{},
              validation::Type<boost::json::object>{},
@@ -84,18 +81,16 @@ public:
                  {JS(currency),
                   validation::Required{},
                   validation::WithCustomError{
-                      validation::CurrencyValidator,
-                      RPC::Status(RPC::RippledError::rpcSRC_CUR_MALFORMED)}},
+                      validation::CurrencyValidator, RPC::Status(RPC::RippledError::rpcSRC_CUR_MALFORMED)}},
                  {JS(issuer),
                   validation::WithCustomError{
-                      validation::IssuerValidator,
-                      RPC::Status(RPC::RippledError::rpcSRC_ISR_MALFORMED)}}}},
+                      validation::IssuerValidator, RPC::Status(RPC::RippledError::rpcSRC_ISR_MALFORMED)}}}},
             {JS(taker), validation::AccountValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Between{1, 100}},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator}};
+            {JS(ledger_index), validation::LedgerIndexValidator},
+        };
+
         return rpcSpec;
     }
 
@@ -104,10 +99,7 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

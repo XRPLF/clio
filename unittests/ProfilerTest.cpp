@@ -35,8 +35,7 @@ TEST(TimedTest, HasReturnValue)
 
 TEST(TimedTest, ReturnVoid)
 {
-    auto time = timed(
-        []() { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
+    auto time = timed([]() { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
 
     ASSERT_NE(time, 0);
 }
@@ -85,9 +84,7 @@ TEST(TimedTest, NestedLambda)
     double timeNested;
     auto f = [&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        timeNested = timed([]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        });
+        timeNested = timed([]() { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
         return 8;
     };
     auto [ret, time] = timed<std::chrono::nanoseconds>(std::move(f));

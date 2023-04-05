@@ -75,24 +75,20 @@ struct Status
 
     Status() = default;
     /* implicit */ Status(CombinedError code) : code(code){};
-    Status(CombinedError code, boost::json::object&& extraInfo)
-        : code(code), extraInfo(std::move(extraInfo)){};
+    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)){};
 
     // HACK. Some rippled handlers explicitly specify errors.
     // This means that we have to be able to duplicate this
     // functionality.
-    explicit Status(std::string const& message)
-        : code(ripple::rpcUNKNOWN), message(message)
+    explicit Status(std::string const& message) : code(ripple::rpcUNKNOWN), message(message)
     {
     }
 
-    Status(CombinedError code, std::string message)
-        : code(code), message(message)
+    Status(CombinedError code, std::string message) : code(code), message(message)
     {
     }
 
-    Status(CombinedError code, std::string error, std::string message)
-        : code(code), error(error), message(message)
+    Status(CombinedError code, std::string error, std::string message) : code(code), error(error), message(message)
     {
     }
 
@@ -138,12 +134,7 @@ struct Status
 /**
  * @brief Warning codes that can be returned by clio.
  */
-enum WarningCode {
-    warnUNKNOWN = -1,
-    warnRPC_CLIO = 2001,
-    warnRPC_OUTDATED = 2002,
-    warnRPC_RATE_LIMIT = 2003
-};
+enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 2002, warnRPC_RATE_LIMIT = 2003 };
 
 /**
  * @brief Holds information about a clio warning.
@@ -151,8 +142,7 @@ enum WarningCode {
 struct WarningInfo
 {
     constexpr WarningInfo() = default;
-    constexpr WarningInfo(WarningCode code, char const* message)
-        : code(code), message(message)
+    constexpr WarningInfo(WarningCode code, char const* message) : code(code), message(message)
     {
     }
 

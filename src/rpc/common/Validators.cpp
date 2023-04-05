@@ -52,16 +52,14 @@ Section::verify(boost::json::value const& value, std::string_view key) const
 Required::verify(boost::json::value const& value, std::string_view key) const
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
-        return Error{RPC::Status{
-            RPC::RippledError::rpcINVALID_PARAMS,
-            "Required field '" + std::string{key} + "' missing"}};
+        return Error{
+            RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
 
     return {};
 }
 
 [[nodiscard]] MaybeError
-ValidateArrayAt::verify(boost::json::value const& value, std::string_view key)
-    const
+ValidateArrayAt::verify(boost::json::value const& value, std::string_view key) const
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
         return {};  // ignore. field does not exist, let 'required' fail
@@ -83,8 +81,7 @@ ValidateArrayAt::verify(boost::json::value const& value, std::string_view key)
 }
 
 [[nodiscard]] MaybeError
-CustomValidator::verify(boost::json::value const& value, std::string_view key)
-    const
+CustomValidator::verify(boost::json::value const& value, std::string_view key) const
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
         return {};  // ignore. field does not exist, let 'required' fail
@@ -101,118 +98,96 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
-CustomValidator Uint256HexStringValidator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+CustomValidator Uint256HexStringValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "NotString"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
         }
         ripple::uint256 ledgerHash;
         if (!ledgerHash.parseHex(value.as_string().c_str()))
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "Malformed"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
         return MaybeError{};
     }};
 
-CustomValidator LedgerIndexValidator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
-        auto err = Error{RPC::Status{
-            RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
+CustomValidator LedgerIndexValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        auto err = Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
         if (!value.is_string() && !(value.is_uint64() || value.is_int64()))
         {
             return err;
         }
-        if (value.is_string() && value.as_string() != "validated" &&
-            !checkIsU32Numeric(value.as_string().c_str()))
+        if (value.is_string() && value.as_string() != "validated" && !checkIsU32Numeric(value.as_string().c_str()))
         {
             return err;
         }
         return MaybeError{};
     }};
 
-CustomValidator AccountValidator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+CustomValidator AccountValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "NotString"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
         }
         // TODO: we are using accountFromStringStrict from RPCHelpers, after we
         // remove all old handler, this function can be moved to here
         if (!RPC::accountFromStringStrict(value.as_string().c_str()))
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "Malformed"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
         }
         return MaybeError{};
     }};
 
-CustomValidator AccountBase58Validator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+CustomValidator AccountBase58Validator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "NotString"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
         }
-        auto const account =
-            ripple::parseBase58<ripple::AccountID>(value.as_string().c_str());
+        auto const account = ripple::parseBase58<ripple::AccountID>(value.as_string().c_str());
         if (!account || account->isZero())
             return Error{RPC::Status{RPC::ClioError::rpcMALFORMED_ADDRESS}};
         return MaybeError{};
     }};
 
-CustomValidator AccountMarkerValidator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+CustomValidator AccountMarkerValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "NotString"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
         }
         // TODO: we are using parseAccountCursor from RPCHelpers, after we
         // remove all old handler, this function can be moved to here
         if (!RPC::parseAccountCursor(value.as_string().c_str()))
         {
             // align with the current error message
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS, "Malformed cursor"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "Malformed cursor"}};
         }
         return MaybeError{};
     }};
 
-CustomValidator CurrencyValidator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+CustomValidator CurrencyValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "NotString"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
         }
         ripple::Currency currency;
         if (!ripple::to_currency(currency, value.as_string().c_str()))
-            return Error{RPC::Status{
-                RPC::ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
+            return Error{RPC::Status{RPC::ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
         return MaybeError{};
     }};
 
-CustomValidator IssuerValidator = CustomValidator{
-    [](boost::json::value const& value, std::string_view key) -> MaybeError {
+CustomValidator IssuerValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                std::string(key) + "NotString"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
         ripple::AccountID issuer;
         if (!ripple::to_issuer(issuer, value.as_string().c_str()))
-            return Error{RPC::Status{
-                // TODO: need to align with the error
-                RPC::RippledError::rpcINVALID_PARAMS,
-                fmt::format("Invalid field '{}', bad issuer.", key)}};
+            return Error{RPC::Status{// TODO: need to align with the error
+                                     RPC::RippledError::rpcINVALID_PARAMS,
+                                     fmt::format("Invalid field '{}', bad issuer.", key)}};
 
         if (issuer == ripple::noAccount())
             return Error{RPC::Status{

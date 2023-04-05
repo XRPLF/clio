@@ -44,12 +44,9 @@ public:
      * @param handler The handler to wrap. Required to fulfil the @ref Handler
      * concept.
      */
-    template <
-        Handler HandlerType,
-        typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
+    template <Handler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
-        : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(
-              std::forward<HandlerType>(handler))}
+        : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(std::forward<HandlerType>(handler))}
     {
     }
 
@@ -125,8 +122,7 @@ private:
         }
 
         [[nodiscard]] ReturnType
-        process(boost::json::value const& value, Context const& ctx)
-            const override
+        process(boost::json::value const& value, Context const& ctx) const override
         {
             return processor(handler, value, &ctx);
         }

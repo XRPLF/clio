@@ -27,11 +27,7 @@ using namespace std;
 
 namespace {
 void
-check(
-    boost::json::object const& j,
-    std::string_view error,
-    uint32_t errorCode,
-    std::string_view errorMessage)
+check(boost::json::object const& j, std::string_view error, uint32_t errorCode, std::string_view errorMessage)
 {
     EXPECT_TRUE(j.contains("error"));
     EXPECT_TRUE(j.contains("error_code"));
@@ -50,8 +46,7 @@ check(
 
     EXPECT_STREQ(j.at("error").as_string().c_str(), error.data());
     EXPECT_EQ(j.at("error_code").as_uint64(), errorCode);
-    EXPECT_STREQ(
-        j.at("error_message").as_string().c_str(), errorMessage.data());
+    EXPECT_STREQ(j.at("error_message").as_string().c_str(), errorMessage.data());
 }
 }  // namespace
 
@@ -101,8 +96,7 @@ TEST(RPCErrorsTest, RippledErrorToJSONCustomMessage)
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomStrCodeAndMessage)
 {
-    auto const status =
-        Status{RippledError::rpcINVALID_PARAMS, "customCode", "customMessage"};
+    auto const status = Status{RippledError::rpcINVALID_PARAMS, "customCode", "customMessage"};
     check(makeError(status), "customCode", 31, "customMessage");
 }
 
@@ -120,8 +114,7 @@ TEST(RPCErrorsTest, ClioErrorToJSONCustomMessage)
 
 TEST(RPCErrorsTest, ClioErrorToJSONCustomStrCodeAndMessage)
 {
-    auto const status =
-        Status{ClioError::rpcMALFORMED_CURRENCY, "customCode", "customMessage"};
+    auto const status = Status{ClioError::rpcMALFORMED_CURRENCY, "customCode", "customMessage"};
     check(makeError(status), "customCode", 5000, "customMessage");
 }
 
@@ -139,11 +132,8 @@ TEST(RPCErrorsTest, WarningToJSON)
     EXPECT_TRUE(j.at("id").is_int64());
     EXPECT_TRUE(j.at("message").is_string());
 
-    EXPECT_EQ(
-        j.at("id").as_int64(),
-        static_cast<uint32_t>(WarningCode::warnRPC_OUTDATED));
-    EXPECT_STREQ(
-        j.at("message").as_string().c_str(), "This server may be out of date");
+    EXPECT_EQ(j.at("id").as_int64(), static_cast<uint32_t>(WarningCode::warnRPC_OUTDATED));
+    EXPECT_STREQ(j.at("message").as_string().c_str(), "This server may be out of date");
 }
 
 TEST(RPCErrorsTest, InvalidWarningToJSON)

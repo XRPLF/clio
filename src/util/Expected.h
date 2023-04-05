@@ -143,16 +143,12 @@ class Expected : private boost::outcome_v2::result<T, E, detail::throw_policy>
     using Base = boost::outcome_v2::result<T, E, detail::throw_policy>;
 
 public:
-    template <
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U, T>>>
+    template <typename U, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
     constexpr Expected(U r) : Base(T(std::forward<U>(r)))
     {
     }
 
-    template <
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U, E>>>
+    template <typename U, typename = std::enable_if_t<std::is_convertible_v<U, E>>>
     constexpr Expected(Unexpected<U> e) : Base(E(std::forward<U>(e.value())))
     {
     }
@@ -223,8 +219,7 @@ public:
 // Specialization of Expected<void, E>.  Allows returning either success
 // (without a value) or the reason for the failure.
 template <class E>
-class [[nodiscard]] Expected<void, E>
-    : private boost::outcome_v2::result<void, E, detail::throw_policy>
+class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, E, detail::throw_policy>
 {
     using Base = boost::outcome_v2::result<void, E, detail::throw_policy>;
 
@@ -235,9 +230,7 @@ public:
     {
     }
 
-    template <
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U, E>>>
+    template <typename U, typename = std::enable_if_t<std::is_convertible_v<U, E>>>
     constexpr Expected(Unexpected<U> e) : Base(E(std::forward<U>(e.value())))
     {
     }

@@ -34,23 +34,20 @@ TxHandler::process(Input input, Context const& ctx) const
             return Error{RPC::Status{RPC::RippledError::rpcINVALID_LGR_RANGE}};
 
         if (*input.maxLedger - *input.minLedger > maxLedgerRange)
-            return Error{
-                RPC::Status{RPC::RippledError::rpcEXCESSIVE_LGR_RANGE}};
+            return Error{RPC::Status{RPC::RippledError::rpcEXCESSIVE_LGR_RANGE}};
     }
     TxHandler::Output output;
-    auto const dbResponse = sharedPtrBackend_->fetchTransaction(
-        ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
+    auto const dbResponse =
+        sharedPtrBackend_->fetchTransaction(ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
     if (!dbResponse)
     {
         if (rangeSupplied)
         {
             auto const range = sharedPtrBackend_->fetchLedgerRange();
-            auto const searchedAll = range->maxSequence >= *input.maxLedger &&
-                range->minSequence <= *input.minLedger;
+            auto const searchedAll = range->maxSequence >= *input.maxLedger && range->minSequence <= *input.minLedger;
             boost::json::object extra;
             extra["searched_all"] = searchedAll;
-            return Error{RPC::Status{
-                RPC::RippledError::rpcTXN_NOT_FOUND, std::move(extra)}};
+            return Error{RPC::Status{RPC::RippledError::rpcTXN_NOT_FOUND, std::move(extra)}};
         }
         return Error{RPC::Status{RPC::RippledError::rpcTXN_NOT_FOUND}};
     }
@@ -75,10 +72,7 @@ TxHandler::process(Input input, Context const& ctx) const
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    TxHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Output const& output)
 {
     auto obj = boost::json::object{};
     if (output.tx)
@@ -98,9 +92,7 @@ tag_invoke(
 }
 
 TxHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<TxHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<TxHandler::Input>, boost::json::value const& jv)
 {
     TxHandler::Input input;
     auto const& jsonObject = jv.as_object();

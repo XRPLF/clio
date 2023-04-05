@@ -57,8 +57,7 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
         return Severity::DBG;
     else if (boost::iequals(logLevel, "info"))
         return Severity::NFO;
-    else if (
-        boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
+    else if (boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
         return Severity::WRN;
     else if (boost::iequals(logLevel, "error"))
         return Severity::ERR;
@@ -82,8 +81,7 @@ LogService::init(Config const& config)
     auto const defaultFormat =
         "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% "
         "%Message%";
-    std::string format =
-        config.valueOr<std::string>("log_format", defaultFormat);
+    std::string format = config.valueOr<std::string>("log_format", defaultFormat);
 
     if (config.valueOr("log_to_console", false))
     {
@@ -96,14 +94,9 @@ LogService::init(Config const& config)
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
-        auto const rotationSize =
-            config.valueOr<uint64_t>("log_rotation_size", 2048u) * 1024u *
-            1024u;
-        auto const rotationPeriod =
-            config.valueOr<uint32_t>("log_rotation_hour_interval", 12u);
-        auto const dirSize =
-            config.valueOr<uint64_t>("log_directory_max_size", 50u * 1024u) *
-            1024u * 1024u;
+        auto const rotationSize = config.valueOr<uint64_t>("log_rotation_size", 2048u) * 1024u * 1024u;
+        auto const rotationPeriod = config.valueOr<uint32_t>("log_rotation_hour_interval", 12u);
+        auto const dirSize = config.valueOr<uint64_t>("log_directory_max_size", 50u * 1024u) * 1024u * 1024u;
         auto fileSink = boost::log::add_file_log(
             keywords::file_name = dirPath / "clio.log",
             keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
@@ -112,11 +105,9 @@ LogService::init(Config const& config)
             keywords::open_mode = std::ios_base::app,
             keywords::rotation_size = rotationSize,
             keywords::time_based_rotation =
-                sinks::file::rotation_at_time_interval(
-                    boost::posix_time::hours(rotationPeriod)));
+                sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod)));
         fileSink->locked_backend()->set_file_collector(
-            sinks::file::make_collector(
-                keywords::target = dirPath, keywords::max_size = dirSize));
+            sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize));
         fileSink->locked_backend()->scan_for_files();
     }
 
@@ -134,26 +125,19 @@ LogService::init(Config const& config)
     };
 
     auto core = boost::log::core::get();
-    auto min_severity = boost::log::expressions::channel_severity_filter(
-        log_channel, log_severity);
+    auto min_severity = boost::log::expressions::channel_severity_filter(log_channel, log_severity);
 
     for (auto const& channel : channels)
         min_severity[channel] = defaultSeverity;
-    min_severity["Alert"] =
-        Severity::WRN;  // Channel for alerts, always warning severity
+    min_severity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
 
-    for (auto const overrides = config.arrayOr("log_channels", {});
-         auto const& cfg : overrides)
+    for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides)
     {
-        auto name = cfg.valueOrThrow<std::string>(
-            "channel", "Channel name is required");
+        auto name = cfg.valueOrThrow<std::string>("channel", "Channel name is required");
         if (not std::count(std::begin(channels), std::end(channels), name))
-            throw std::runtime_error(
-                "Can't override settings for log channel " + name +
-                ": invalid channel");
+            throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
 
-        min_severity[name] =
-            cfg.valueOr<Severity>("log_level", defaultSeverity);
+        min_severity[name] = cfg.valueOr<Severity>("log_level", defaultSeverity);
     }
 
     core->set_filter(min_severity);
@@ -202,8 +186,7 @@ Logger::Pump::pretty_path(source_location_t const& loc, size_t max_depth) const
         if (idx == std::string::npos || idx == 0)
             break;
     }
-    return file_path.substr(idx == std::string::npos ? 0 : idx + 1) + ':' +
-        std::to_string(loc.line());
+    return file_path.substr(idx == std::string::npos ? 0 : idx + 1) + ':' + std::to_string(loc.line());
 }
 
 }  // namespace clio

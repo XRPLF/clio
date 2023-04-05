@@ -82,14 +82,11 @@ doLedgerData(Context const& context)
             if (outOfOrder)
             {
                 if (!request.at(JS(marker)).is_int64())
-                    return Status{
-                        RippledError::rpcINVALID_PARAMS,
-                        "markerNotStringOrInt"};
+                    return Status{RippledError::rpcINVALID_PARAMS, "markerNotStringOrInt"};
                 diffMarker = value_to<uint32_t>(request.at(JS(marker)));
             }
             else
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "markerNotString"};
+                return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
         }
         else
         {
@@ -97,8 +94,7 @@ doLedgerData(Context const& context)
 
             marker = ripple::uint256{};
             if (!marker->parseHex(request.at(JS(marker)).as_string().c_str()))
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "markerMalformed"};
+                return Status{RippledError::rpcINVALID_PARAMS, "markerMalformed"};
         }
     }
 
@@ -121,16 +117,13 @@ doLedgerData(Context const& context)
             header[JS(accepted)] = true;
             header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
             header[JS(close_flags)] = lgrInfo.closeFlags;
-            header[JS(close_time)] =
-                lgrInfo.closeTime.time_since_epoch().count();
+            header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
             header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
-            header[JS(close_time_resolution)] =
-                lgrInfo.closeTimeResolution.count();
+            header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
             header[JS(hash)] = ripple::strHex(lgrInfo.hash);
             header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
             header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
-            header[JS(parent_close_time)] =
-                lgrInfo.parentCloseTime.time_since_epoch().count();
+            header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
             header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
             header[JS(seqNum)] = std::to_string(lgrInfo.seq);
             header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
@@ -143,11 +136,8 @@ doLedgerData(Context const& context)
     }
     else
     {
-        if (!outOfOrder &&
-            !context.backend->fetchLedgerObject(
-                *marker, lgrInfo.seq, context.yield))
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"};
+        if (!outOfOrder && !context.backend->fetchLedgerObject(*marker, lgrInfo.seq, context.yield))
+            return Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"};
     }
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
@@ -158,8 +148,7 @@ doLedgerData(Context const& context)
     if (diffMarker)
     {
         assert(outOfOrder);
-        auto diff =
-            context.backend->fetchLedgerDiff(*diffMarker, context.yield);
+        auto diff = context.backend->fetchLedgerDiff(*diffMarker, context.yield);
         std::vector<ripple::uint256> keys;
         for (auto&& [key, object] : diff)
         {
@@ -168,8 +157,7 @@ doLedgerData(Context const& context)
                 keys.push_back(std::move(key));
             }
         }
-        auto objs = context.backend->fetchLedgerObjects(
-            keys, lgrInfo.seq, context.yield);
+        auto objs = context.backend->fetchLedgerObjects(keys, lgrInfo.seq, context.yield);
         for (size_t i = 0; i < objs.size(); ++i)
         {
             auto&& obj = objs[i];
@@ -181,29 +169,23 @@ doLedgerData(Context const& context)
     }
     else
     {
-        auto page = context.backend->fetchLedgerPage(
-            marker, lgrInfo.seq, limit, outOfOrder, context.yield);
+        auto page = context.backend->fetchLedgerPage(marker, lgrInfo.seq, limit, outOfOrder, context.yield);
         results = std::move(page.objects);
         if (page.cursor)
             response["marker"] = ripple::strHex(*(page.cursor));
         else if (outOfOrder)
-            response["marker"] =
-                context.backend->fetchLedgerRange()->maxSequence;
+            response["marker"] = context.backend->fetchLedgerRange()->maxSequence;
     }
     auto end = std::chrono::system_clock::now();
 
-    auto time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
-    gLog.debug() << "Number of results = " << results.size() << " fetched in "
-                 << time << " microseconds";
+    gLog.debug() << "Number of results = " << results.size() << " fetched in " << time << " microseconds";
     boost::json::array objects;
     objects.reserve(results.size());
     for (auto const& [key, object] : results)
     {
-        ripple::STLedgerEntry sle{
-            ripple::SerialIter{object.data(), object.size()}, key};
+        ripple::STLedgerEntry sle{ripple::SerialIter{object.data(), object.size()}, key};
         if (binary)
         {
             boost::json::object entry;
@@ -219,10 +201,8 @@ doLedgerData(Context const& context)
         response["cache_full"] = context.backend->cache().isFull();
     auto end2 = std::chrono::system_clock::now();
 
-    time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end)
-               .count();
-    gLog.debug() << "Number of results = " << results.size()
-                 << " serialized in " << time << " microseconds";
+    time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count();
+    gLog.debug() << "Number of results = " << results.size() << " serialized in " << time << " microseconds";
 
     return response;
 }

@@ -89,8 +89,7 @@ class HttpBase : public util::Taggable
             // The lifetime of the message has to extend
             // for the duration of the async operation so
             // we use a shared_ptr to manage it.
-            auto sp = std::make_shared<http::message<isRequest, Body, Fields>>(
-                std::move(msg));
+            auto sp = std::make_shared<http::message<isRequest, Body, Fields>>(std::move(msg));
 
             // Store a type-erased version of the shared
             // pointer in the class to keep it alive.
@@ -101,9 +100,7 @@ class HttpBase : public util::Taggable
                 self_.derived().stream(),
                 *sp,
                 boost::beast::bind_front_handler(
-                    &HttpBase::on_write,
-                    self_.derived().shared_from_this(),
-                    sp->need_eof()));
+                    &HttpBase::on_write, self_.derived().shared_from_this(), sp->need_eof()));
         }
     };
 
@@ -160,9 +157,7 @@ protected:
         {
             ec_ = ec;
             perfLog_.info() << tag() << ": " << what << ": " << ec.message();
-            boost::beast::get_lowest_layer(derived().stream())
-                .socket()
-                .close(ec);
+            boost::beast::get_lowest_layer(derived().stream()).socket().close(ec);
         }
     }
 
@@ -215,16 +210,14 @@ public:
         req_ = {};
 
         // Set the timeout.
-        boost::beast::get_lowest_layer(derived().stream())
-            .expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
 
         // Read a request
         http::async_read(
             derived().stream(),
             buffer_,
             req_,
-            boost::beast::bind_front_handler(
-                &HttpBase::on_read, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&HttpBase::on_read, derived().shared_from_this()));
     }
 
     void
@@ -246,13 +239,9 @@ public:
             return;
         }
 
-        auto const httpResponse = [&](http::status status,
-                                      std::string content_type,
-                                      std::string message) {
+        auto const httpResponse = [&](http::status status, std::string content_type, std::string message) {
             http::response<http::string_body> res{status, req_.version()};
-            res.set(
-                http::field::server,
-                "clio-server-" + Build::getClioVersionString());
+            res.set(http::field::server, "clio-server-" + Build::getClioVersionString());
             res.set(http::field::content_type, content_type);
             res.keep_alive(req_.keep_alive());
             res.body() = std::string(message);
@@ -287,14 +276,10 @@ public:
         // connection limit
         if (!dosGuard_.request(ip.value()))
         {
-            return lambda_(httpResponse(
-                http::status::service_unavailable,
-                "text/plain",
-                "Server is overloaded"));
+            return lambda_(httpResponse(http::status::service_unavailable, "text/plain", "Server is overloaded"));
         }
 
-        log_.info() << tag() << "Received request from ip = " << *ip
-                    << " - posting to WorkQueue";
+        log_.info() << tag() << "Received request from ip = " << *ip << " - posting to WorkQueue";
 
         auto session = derived().shared_from_this();
 
@@ -324,16 +309,12 @@ public:
             lambda_(httpResponse(
                 http::status::ok,
                 "application/json",
-                boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcTOO_BUSY))));
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY))));
         }
     }
 
     void
-    on_write(
-        bool close,
-        boost::beast::error_code ec,
-        std::size_t bytes_transferred)
+    on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
@@ -363,8 +344,7 @@ template <class Body, class Allocator, class Send, class Session>
 void
 handle_request(
     boost::asio::yield_context& yc,
-    boost::beast::http::
-        request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
+    boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
@@ -377,14 +357,9 @@ handle_request(
     std::shared_ptr<Session> http,
     clio::Logger& perfLog)
 {
-    auto const httpResponse = [&req](
-                                  http::status status,
-                                  std::string content_type,
-                                  std::string message) {
+    auto const httpResponse = [&req](http::status status, std::string content_type, std::string message) {
         http::response<http::string_body> res{status, req.version()};
-        res.set(
-            http::field::server,
-            "clio-server-" + Build::getClioVersionString());
+        res.set(http::field::server, "clio-server-" + Build::getClioVersionString());
         res.set(http::field::content_type, content_type);
         res.keep_alive(req.keep_alive());
         res.body() = std::string(message);
@@ -399,14 +374,11 @@ handle_request(
     }
 
     if (req.method() != http::verb::post)
-        return send(httpResponse(
-            http::status::bad_request, "text/html", "Expected a POST request"));
+        return send(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
 
     try
     {
-        perfLog.debug() << http->tag()
-                        << "http received request from work queue: "
-                        << req.body();
+        perfLog.debug() << http->tag() << "http received request from work queue: " << req.body();
 
         boost::json::object request;
         std::string responseStr = "";
@@ -422,8 +394,7 @@ handle_request(
             return send(httpResponse(
                 http::status::ok,
                 "application/json",
-                boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
         }
 
         auto range = backend->fetchLedgerRange();
@@ -431,8 +402,7 @@ handle_request(
             return send(httpResponse(
                 http::status::ok,
                 "application/json",
-                boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcNOT_READY))));
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcNOT_READY))));
 
         std::optional<RPC::Context> context = RPC::make_HttpContext(
             yc,
@@ -450,12 +420,10 @@ handle_request(
             return send(httpResponse(
                 http::status::ok,
                 "application/json",
-                boost::json::serialize(
-                    RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
 
         boost::json::object response;
-        auto [v, timeDiff] =
-            util::timed([&]() { return RPC::buildResponse(*context); });
+        auto [v, timeDiff] = util::timed([&]() { return RPC::buildResponse(*context); });
 
         auto us = std::chrono::duration<int, std::milli>(timeDiff);
         RPC::logDuration(*context, us);
@@ -467,8 +435,7 @@ handle_request(
             error["request"] = request;
             response["result"] = error;
 
-            perfLog.debug()
-                << http->tag() << "Encountered error: " << responseStr;
+            perfLog.debug() << http->tag() << "Encountered error: " << responseStr;
         }
         else
         {
@@ -502,8 +469,7 @@ handle_request(
             // reserialize when we need to include this warning
             responseStr = boost::json::serialize(response);
         }
-        return send(
-            httpResponse(http::status::ok, "application/json", responseStr));
+        return send(httpResponse(http::status::ok, "application/json", responseStr));
     }
     catch (std::exception const& e)
     {
@@ -511,7 +477,6 @@ handle_request(
         return send(httpResponse(
             http::status::internal_server_error,
             "application/json",
-            boost::json::serialize(
-                RPC::makeError(RPC::RippledError::rpcINTERNAL))));
+            boost::json::serialize(RPC::makeError(RPC::RippledError::rpcINTERNAL))));
     }
 }

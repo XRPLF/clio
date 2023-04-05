@@ -52,12 +52,7 @@ CreateFeeSettingLedgerObject(
  * Create a FeeSetting ledger object and return its blob
  */
 [[nodiscard]] ripple::Blob
-CreateFeeSettingBlob(
-    uint64_t base,
-    uint32_t reserveInc,
-    uint32_t reserveBase,
-    uint32_t refFeeUnit,
-    uint32_t flag);
+CreateFeeSettingBlob(uint64_t base, uint32_t reserveInc, uint32_t reserveBase, uint32_t refFeeUnit, uint32_t flag);
 
 /*
  * Create a payment transaction object
@@ -150,9 +145,7 @@ CreateMetaDataForCancelOffer(
  * Create a owner dir ledger object
  */
 [[nodiscard]] ripple::STObject
-CreateOwnerDirLedgerObject(
-    std::vector<ripple::uint256> indexes,
-    std::string_view rootIndex);
+CreateOwnerDirLedgerObject(std::vector<ripple::uint256> indexes, std::string_view rootIndex);
 
 /*
  * Create a payment channel ledger object
@@ -202,9 +195,7 @@ CreateEscrowLedgerObject(std::string_view account, std::string_view dest);
 CreateCheckLedgerObject(std::string_view account, std::string_view dest);
 
 [[nodiscard]] ripple::STObject
-CreateDepositPreauthLedgerObject(
-    std::string_view account,
-    std::string_view auth);
+CreateDepositPreauthLedgerObject(std::string_view account, std::string_view auth);
 
 [[nodiscard]] Backend::NFT
 CreateNFT(

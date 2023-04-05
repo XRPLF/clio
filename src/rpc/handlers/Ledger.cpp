@@ -41,8 +41,7 @@ doLedger(Context const& context)
     if (params.contains(JS(transactions)))
     {
         if (!params.at(JS(transactions)).is_bool())
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "transactionsFlagNotBool"};
 
         transactions = params.at(JS(transactions)).as_bool();
     }
@@ -94,8 +93,7 @@ doLedger(Context const& context)
         header[JS(hash)] = ripple::strHex(lgrInfo.hash);
         header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
         header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
-        header[JS(parent_close_time)] =
-            lgrInfo.parentCloseTime.time_since_epoch().count();
+        header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
         header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
         header[JS(seqNum)] = std::to_string(lgrInfo.seq);
         header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
@@ -110,8 +108,7 @@ doLedger(Context const& context)
         boost::json::array& jsonTxs = header.at(JS(transactions)).as_array();
         if (expand)
         {
-            auto txns = context.backend->fetchAllTransactionsInLedger(
-                lgrInfo.seq, context.yield);
+            auto txns = context.backend->fetchAllTransactionsInLedger(lgrInfo.seq, context.yield);
 
             std::transform(
                 std::move_iterator(txns.begin()),
@@ -136,8 +133,7 @@ doLedger(Context const& context)
         }
         else
         {
-            auto hashes = context.backend->fetchAllTransactionHashesInLedger(
-                lgrInfo.seq, context.yield);
+            auto hashes = context.backend->fetchAllTransactionHashesInLedger(lgrInfo.seq, context.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
@@ -153,8 +149,7 @@ doLedger(Context const& context)
     {
         header["diff"] = boost::json::value(boost::json::array_kind);
         boost::json::array& jsonDiff = header.at("diff").as_array();
-        auto diff =
-            context.backend->fetchLedgerDiff(lgrInfo.seq, context.yield);
+        auto diff = context.backend->fetchLedgerDiff(lgrInfo.seq, context.yield);
         for (auto const& obj : diff)
         {
             boost::json::object entry;
@@ -163,9 +158,7 @@ doLedger(Context const& context)
                 entry["object"] = ripple::strHex(obj.blob);
             else if (obj.blob.size())
             {
-                ripple::STLedgerEntry sle{
-                    ripple::SerialIter{obj.blob.data(), obj.blob.size()},
-                    obj.key};
+                ripple::STLedgerEntry sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
                 entry["object"] = toJson(sle);
             }
             else

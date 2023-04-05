@@ -46,13 +46,10 @@ doAccountTx(Context const& context)
             bool const forward,
             std::optional<Backend::TransactionsCursor> const& cursorIn,
             boost::asio::yield_context& yield) {
-            auto [txnsAndCursor, timeDiff] = util::timed([&]() {
-                return backend->fetchAccountTransactions(
-                    accountID, limit, forward, cursorIn, yield);
-            });
+            auto [txnsAndCursor, timeDiff] = util::timed(
+                [&]() { return backend->fetchAccountTransactions(accountID, limit, forward, cursorIn, yield); });
             gLog.info() << outerFuncName << " db fetch took " << timeDiff
-                        << " milliseconds - num blobs = "
-                        << txnsAndCursor.txns.size();
+                        << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
             return txnsAndCursor;
         });
 

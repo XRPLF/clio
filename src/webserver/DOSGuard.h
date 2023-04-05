@@ -117,10 +117,8 @@ public:
                 auto [transferedByte, requests] = ipState_.at(ip);
                 if (transferedByte > maxFetches_ || requests > maxRequestCount_)
                 {
-                    log_.warn()
-                        << "Dosguard:Client surpassed the rate limit. ip = "
-                        << ip << " Transfered Byte:" << transferedByte
-                        << " Requests:" << requests;
+                    log_.warn() << "Dosguard:Client surpassed the rate limit. ip = " << ip
+                                << " Transfered Byte:" << transferedByte << " Requests:" << requests;
                     return false;
                 }
             }
@@ -129,9 +127,8 @@ public:
             {
                 if (it->second > maxConnCount_)
                 {
-                    log_.warn()
-                        << "Dosguard:Client surpassed the rate limit. ip = "
-                        << ip << " Concurrent connection:" << it->second;
+                    log_.warn() << "Dosguard:Client surpassed the rate limit. ip = " << ip
+                                << " Concurrent connection:" << it->second;
                     return false;
                 }
             }
@@ -238,9 +235,7 @@ private:
     {
         using T = std::unordered_set<std::string> const;
         auto whitelist = config.arrayOr("dos_guard.whitelist", {});
-        auto const transform = [](auto const& elem) {
-            return elem.template value<std::string>();
-        };
+        auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
         return T{
             boost::transform_iterator(std::begin(whitelist), transform),
             boost::transform_iterator(std::end(whitelist), transform)};
@@ -265,13 +260,8 @@ public:
      * @param config Clio config
      * @param ctx The boost::asio::io_context
      */
-    IntervalSweepHandler(
-        clio::Config const& config,
-        boost::asio::io_context& ctx)
-        : sweepInterval_{std::max(
-              1u,
-              static_cast<uint32_t>(
-                  config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
+    IntervalSweepHandler(clio::Config const& config, boost::asio::io_context& ctx)
+        : sweepInterval_{std::max(1u, static_cast<uint32_t>(config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
         , ctx_{std::ref(ctx)}
     {
     }
