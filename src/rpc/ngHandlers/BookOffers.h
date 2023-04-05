@@ -23,8 +23,6 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-#include <boost/asio/spawn.hpp>
-
 namespace RPCng {
 class BookOffersHandler
 {

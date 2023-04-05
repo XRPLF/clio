@@ -218,7 +218,7 @@ TEST_P(NFTHistoryParameterTest, InvalidParams)
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, yield);
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -290,7 +290,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
             NFTID,
             MINSEQ + 1,
             MAXSEQ - 1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
@@ -337,7 +337,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalse)
             NFTID,
             MINSEQ + 1,
             MAXSEQ - 1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
@@ -383,7 +383,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
             NFTID,
             -1,
             -1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -430,7 +430,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
             NFTID,
             -1,
             -1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -477,7 +477,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrue)
             NFTID,
             -1,
             -1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -551,7 +551,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
             NFTID,
             -1,
             -1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -601,7 +601,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
             }})",
             NFTID,
             MAXSEQ - 1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
@@ -632,7 +632,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
             }})",
             NFTID,
             MAXSEQ - 1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -660,7 +660,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
             }})",
             NFTID,
             MAXSEQ - 1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -705,7 +705,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
             }})",
             NFTID,
             LEDGERHASH));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
@@ -750,7 +750,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
             NFTID,
             MINSEQ + 2,
             MAXSEQ - 1));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 2);
@@ -795,7 +795,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
             NFTID,
             MINSEQ + 1,
             MAXSEQ - 2));
-        auto const output = handler.process(input, yield);
+        auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);

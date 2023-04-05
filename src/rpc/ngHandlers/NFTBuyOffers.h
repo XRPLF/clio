@@ -22,8 +22,6 @@
 #include <backend/BackendInterface.h>
 #include <rpc/ngHandlers/NFTOffersCommon.h>
 
-#include <boost/asio/spawn.hpp>
-
 namespace RPCng {
 class NFTBuyOffersHandler : public NFTOffersHandlerBase
 {

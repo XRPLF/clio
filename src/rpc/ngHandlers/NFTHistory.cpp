@@ -25,9 +25,8 @@ namespace RPCng {
 // TODO: this is currently very similar to account_tx but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
 NFTHistoryHandler::Result
-NFTHistoryHandler::process(
-    NFTHistoryHandler::Input input,
-    boost::asio::yield_context& yield) const
+NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx)
+    const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
@@ -67,7 +66,7 @@ NFTHistoryHandler::process(
 
         auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
             *sharedPtrBackend_,
-            yield,
+            ctx.yield,
             input.ledgerHash,
             input.ledgerIndex,
             range->maxSequence);
@@ -98,7 +97,7 @@ NFTHistoryHandler::process(
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchNFTTransactions(
-            tokenID, limit, input.forward, cursor, yield);
+            tokenID, limit, input.forward, cursor, ctx.yield);
     });
     log_.info() << "db fetch took " << timeDiff
                 << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
