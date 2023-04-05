@@ -20,62 +20,57 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-#include <vector>
-
 namespace RPCng {
-class AccountChannelsHandler
+class NFTHistoryHandler
 {
-    // dependencies
-    std::shared_ptr<BackendInterface> const sharedPtrBackend_;
+    clio::Logger log_{"RPC"};
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    // type align with SField.h
-    struct ChannelResponse
+    // TODO: this marker is same as account_tx, reuse in future
+    struct Marker
     {
-        std::string channelID;
-        std::string account;
-        std::string accountDestination;
-        std::string amount;
-        std::string balance;
-        std::optional<std::string> publicKey;
-        std::optional<std::string> publicKeyHex;
-        uint32_t settleDelay;
-        std::optional<uint32_t> expiration;
-        std::optional<uint32_t> cancelAfter;
-        std::optional<uint32_t> sourceTag;
-        std::optional<uint32_t> destinationTag;
+        uint32_t ledger;
+        uint32_t seq;
     };
 
     struct Output
     {
-        std::vector<ChannelResponse> channels;
-        std::string account;
-        std::string ledgerHash;
-        uint32_t ledgerIndex;
+        std::string nftID;
+        uint32_t ledgerIndexMin;
+        uint32_t ledgerIndexMax;
+        std::optional<uint32_t> limit;
+        std::optional<Marker> marker;
+        // TODO: use a better type than json
+        boost::json::array transactions;
         // validated should be sent via framework
         bool validated = true;
-        uint32_t limit;
-        std::optional<std::string> marker;
     };
 
+    // TODO: we did not implement the "strict" field
     struct Input
     {
-        std::string account;
-        std::optional<std::string> destinationAccount;
+        std::string nftID;
+        // You must use at least one of the following fields in your request:
+        // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 50;
-        std::optional<std::string> marker;
+        std::optional<int32_t> ledgerIndexMin;
+        std::optional<int32_t> ledgerIndexMax;
+        bool binary = false;
+        bool forward = false;
+        std::optional<uint32_t> limit;
+        std::optional<Marker> marker;
     };
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountChannelsHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    NFTHistoryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -83,17 +78,32 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        // clang-format off
-        static auto const  rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(destination_account), validation::Type<std::string>{},validation::AccountValidator},
+        static auto const rpcSpec = RpcSpec{
+            {JS(nft_id),
+             validation::Required{},
+             validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{},validation::Between{10,400}},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(marker), validation::AccountMarkerValidator}
-        };
-        // clang-format on
-
+            {JS(ledger_index_min), validation::Type<int32_t>{}},
+            {JS(ledger_index_max), validation::Type<int32_t>{}},
+            {JS(binary), validation::Type<bool>{}},
+            {JS(forward), validation::Type<bool>{}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Between{1, 100}},
+            {JS(marker),
+             validation::WithCustomError{
+                 validation::Type<boost::json::object>{},
+                 RPC::Status{
+                     RPC::RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
+             validation::Section{
+                 {JS(ledger),
+                  validation::Required{},
+                  validation::Type<uint32_t>{}},
+                 {JS(seq),
+                  validation::Required{},
+                  validation::Type<uint32_t>{}},
+             }}};
         return rpcSpec;
     }
 
@@ -101,10 +111,6 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
-    addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line)
-        const;
-
     friend void
     tag_invoke(
         boost::json::value_from_tag,
@@ -118,6 +124,6 @@ private:
     tag_invoke(
         boost::json::value_from_tag,
         boost::json::value& jv,
-        ChannelResponse const& channel);
+        Marker const& marker);
 };
 }  // namespace RPCng

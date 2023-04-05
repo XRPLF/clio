@@ -17,15 +17,15 @@
 */
 //==============================================================================
 
-#include <rpc/ngHandlers/AccountTx.h>
+#include <rpc/ngHandlers/NFTHistory.h>
 #include <util/Profiler.h>
 
 namespace RPCng {
 
-// TODO: this is currently very similar to nft_history but its own copy for time
+// TODO: this is currently very similar to account_tx but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
-AccountTxHandler::Result
-AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
+NFTHistoryHandler::Result
+NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx)
     const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
@@ -94,10 +94,10 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
 
     static auto constexpr limitDefault = 50;
     auto const limit = input.limit.value_or(limitDefault);
-    auto const accountID = RPC::accountFromStringStrict(input.account);
+    auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
-        return sharedPtrBackend_->fetchAccountTransactions(
-            *accountID, limit, input.forward, cursor, ctx.yield);
+        return sharedPtrBackend_->fetchNFTTransactions(
+            tokenID, limit, input.forward, cursor, ctx.yield);
     });
     log_.info() << "db fetch took " << timeDiff
                 << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
@@ -147,7 +147,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
     }
 
     response.limit = input.limit;
-    response.account = ripple::to_string(*accountID);
+    response.nftID = ripple::to_string(tokenID);
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
 
@@ -158,10 +158,10 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountTxHandler::Output const& output)
+    NFTHistoryHandler::Output const& output)
 {
     jv = {
-        {JS(account), output.account},
+        {JS(nft_id), output.nftID},
         {JS(ledger_index_min), output.ledgerIndexMin},
         {JS(ledger_index_max), output.ledgerIndexMax},
         {JS(transactions), output.transactions},
@@ -176,19 +176,19 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    AccountTxHandler::Marker const& marker)
+    NFTHistoryHandler::Marker const& marker)
 {
     jv = {{JS(ledger), marker.ledger}, {JS(seq), marker.seq}};
 }
 
-AccountTxHandler::Input
+NFTHistoryHandler::Input
 tag_invoke(
-    boost::json::value_to_tag<AccountTxHandler::Input>,
+    boost::json::value_to_tag<NFTHistoryHandler::Input>,
     boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
-    AccountTxHandler::Input input;
-    input.account = jsonObject.at(JS(account)).as_string().c_str();
+    NFTHistoryHandler::Input input;
+    input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
     if (jsonObject.contains(JS(ledger_index_min)) &&
         jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
     {
@@ -229,7 +229,7 @@ tag_invoke(
     }
     if (jsonObject.contains(JS(marker)))
     {
-        input.marker = AccountTxHandler::Marker{
+        input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
     }

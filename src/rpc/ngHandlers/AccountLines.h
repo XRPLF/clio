@@ -24,8 +24,6 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-#include <boost/asio/spawn.hpp>
-
 #include <vector>
 
 namespace RPCng {
@@ -113,23 +111,21 @@ private:
         ripple::SLE const& lineSle,
         ripple::AccountID const& account,
         std::optional<ripple::AccountID> const& peerAccount) const;
+
+private:
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        LineResponse const& line);
 };
-
-AccountLinesHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountLinesHandler::Input>,
-    boost::json::value const& jv);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountLinesHandler::Output const& output);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountLinesHandler::LineResponse const& line);
-
 }  // namespace RPCng

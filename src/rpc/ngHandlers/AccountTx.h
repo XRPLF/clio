@@ -20,15 +20,15 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-#include <boost/asio/spawn.hpp>
-
 namespace RPCng {
 class AccountTxHandler
 {
+    clio::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -106,22 +106,21 @@ public:
 
     Result
     process(Input input, Context const& ctx) const;
+
+private:
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
+
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Marker const& marker);
 };
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountTxHandler::Output const& output);
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountTxHandler::Marker const& marker);
-
-AccountTxHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountTxHandler::Input>,
-    boost::json::value const& jv);
 }  // namespace RPCng

@@ -24,8 +24,6 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-#include <boost/asio/spawn.hpp>
-
 namespace RPCng {
 class GatewayBalancesHandler
 {
@@ -114,16 +112,15 @@ public:
 
     Result
     process(Input input, Context const& ctx) const;
+
+private:
+    friend void
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        Output const& output);
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-
-void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    GatewayBalancesHandler::Output const& output);
-
-GatewayBalancesHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<GatewayBalancesHandler::Input>,
-    boost::json::value const& jv);
 }  // namespace RPCng
