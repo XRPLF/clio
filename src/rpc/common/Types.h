@@ -21,9 +21,8 @@
 
 #include <rpc/Errors.h>
 #include <util/Expected.h>
-#include <webserver/HttpBase.h>
 
-#include <boost/asio.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
 
 namespace RPCng {
@@ -59,6 +58,7 @@ struct VoidOutput
 {
 };
 
+class WsBase;
 struct Context
 {
     // TODO: we shall change yield_context to const yield_context after we
