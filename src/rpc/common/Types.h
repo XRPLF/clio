@@ -21,9 +21,9 @@
 
 #include <rpc/Errors.h>
 #include <util/Expected.h>
-#include <webserver/WsBase.h>
+#include <webserver/HttpBase.h>
 
-#include <boost/asio/spawn.hpp>
+#include <boost/asio.hpp>
 #include <boost/json/value.hpp>
 
 namespace RPCng {
@@ -61,8 +61,10 @@ struct VoidOutput
 
 struct Context
 {
-    boost::asio::yield_context* pYield = nullptr;
-    std::shared_ptr<WsBase> pWs;
+    // TODO: we shall change yield_context to const yield_context after we
+    // update backend interfaces to use const& yield
+    const std::reference_wrapper<boost::asio::yield_context> yield;
+    const std::shared_ptr<WsBase> session;
 };
 
 inline void

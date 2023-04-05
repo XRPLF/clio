@@ -25,11 +25,10 @@ AccountCurrenciesHandler::process(
     AccountCurrenciesHandler::Input input,
     Context const& ctx) const
 {
-    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -42,7 +41,7 @@ AccountCurrenciesHandler::process(
     auto const accountID = RPC::accountFromStringStrict(input.account);
 
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, yield);
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
     if (!accountLedgerObject)
         return Error{RPC::Status{
             RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -76,7 +75,7 @@ AccountCurrenciesHandler::process(
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
-        yield,
+        ctx.yield,
         addToResponse);
 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);

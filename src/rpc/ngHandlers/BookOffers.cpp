@@ -30,12 +30,11 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     if (auto const status = std::get_if<RPC::Status>(&bookMaybe))
         return Error{*status};
 
-    auto& yield = *(ctx.pYield);
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -49,7 +48,7 @@ BookOffersHandler::process(Input input, Context const& ctx) const
 
     // TODO: Add perfomance metrics if needed in future
     auto [offers, _] = sharedPtrBackend_->fetchBookOffers(
-        bookKey, lgrInfo.seq, input.limit, yield);
+        bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
     BookOffersHandler::Output output;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -60,7 +59,7 @@ BookOffersHandler::process(Input input, Context const& ctx) const
         input.taker ? *(input.taker) : beast::zero,
         *sharedPtrBackend_,
         lgrInfo.seq,
-        yield);
+        ctx.yield);
 
     return output;
 }

@@ -34,6 +34,6 @@ NFTBuyOffersHandler::process(
 {
     auto const tokenID = uint256{input.nftID.c_str()};
     auto const directory = keylet::nft_buys(tokenID);
-    return iterateOfferDirectory(input, tokenID, directory, *(ctx.pYield));
+    return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
 }
 }  // namespace RPCng

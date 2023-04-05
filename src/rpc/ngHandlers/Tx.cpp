@@ -39,7 +39,7 @@ TxHandler::process(Input input, Context const& ctx) const
     }
     TxHandler::Output output;
     auto const dbResponse = sharedPtrBackend_->fetchTransaction(
-        ripple::uint256{std::string_view(input.transaction)}, *(ctx.pYield));
+        ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
     if (!dbResponse)
     {
         if (rangeSupplied)

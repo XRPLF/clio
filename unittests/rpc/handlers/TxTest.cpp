@@ -50,7 +50,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
                 "max_ledger":1002
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -72,7 +72,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
                 "min_ledger": 10
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -96,7 +96,7 @@ TEST_F(RPCTxTest, TxnNotFound)
                 "transaction": "{}"
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -124,7 +124,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
                 "max_ledger":1000
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -153,7 +153,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
                 "max_ledger":1000
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -223,7 +223,7 @@ TEST_F(RPCTxTest, DefaultParameter)
                 "transaction": "{}"
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
@@ -261,7 +261,7 @@ TEST_F(RPCTxTest, ReturnBinary)
                 "binary": true
                 }})",
             TXNID));
-        auto const output = handler.process(req, Context{&yield});
+        auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });

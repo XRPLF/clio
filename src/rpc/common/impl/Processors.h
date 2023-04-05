@@ -34,7 +34,7 @@ struct DefaultProcessor final
     operator()(
         HandlerType const& handler,
         boost::json::value const& value,
-        Context const& ctx = Context()) const
+        Context const* ctx = nullptr) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
@@ -57,7 +57,7 @@ struct DefaultProcessor final
             }
             else
             {
-                auto const ret = handler.process(inData, ctx);
+                auto const ret = handler.process(inData, *ctx);
                 // real handler is given expected Input, not json
                 if (!ret)
                     return Error{ret.error()};  // forward Status

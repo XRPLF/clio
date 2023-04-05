@@ -49,7 +49,7 @@ concept Requirement = requires(T a) {
  */
 // clang-format off
 template <typename T>
-concept ContextProcess = requires(T a, typename T::Input in, typename T::Output out, Context& y) {
+concept ContextProcess = requires(T a, typename T::Input in, typename T::Output out, Context const& y) {
     { a.process(in, y) } -> std::same_as<HandlerReturnType<decltype(out)>>; };
 
 template <typename T>

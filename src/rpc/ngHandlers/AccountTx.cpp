@@ -28,7 +28,6 @@ AccountTxHandler::Result
 AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
     const
 {
-    auto& yield = *(ctx.pYield);
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
     if (input.ledgerIndexMin)
@@ -67,7 +66,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
 
         auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
             *sharedPtrBackend_,
-            yield,
+            ctx.yield,
             input.ledgerHash,
             input.ledgerIndex,
             range->maxSequence);
@@ -94,7 +93,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
     auto const limit = input.limit.value_or(limitDefault);
     auto const accountID = RPC::accountFromStringStrict(input.account);
     auto const [blobs, retCursor] = sharedPtrBackend_->fetchAccountTransactions(
-        *accountID, limit, input.forward, cursor, yield);
+        *accountID, limit, input.forward, cursor, ctx.yield);
 
     Output response;
     if (retCursor)

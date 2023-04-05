@@ -31,12 +31,11 @@ namespace RPCng {
 NFTInfoHandler::Result
 NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 {
-    auto& yield = *(ctx.pYield);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
-        yield,
+        ctx.yield,
         input.ledgerHash,
         input.ledgerIndex,
         range->maxSequence);
@@ -45,7 +44,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
     auto const maybeNft =
-        sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, yield);
+        sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
     if (not maybeNft.has_value())
         return Error{
             Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};

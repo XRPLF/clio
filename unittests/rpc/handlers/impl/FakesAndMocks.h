@@ -122,7 +122,7 @@ public:
     }
 
     Result
-    process(Input input, RPCng::Context ctx) const
+    process(Input input, RPCng::Context const& ctx) const
     {
         return Output{
             input.hello + '_' + std::to_string(input.limit.value_or(0))};
