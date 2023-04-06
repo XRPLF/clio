@@ -108,6 +108,7 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
     };
 
     {
+        log_.debug() << "Attempt connection using contact points: " << points.contactPoints;
         auto const rc = cass_cluster_set_contact_points(*this, points.contactPoints.data());
         throwErrorIfNeeded(rc, "contact_points", points.contactPoints);
     }
@@ -122,6 +123,7 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
 void
 Cluster::setupSecureBundle(Settings::SecureConnectionBundle const& bundle)
 {
+    log_.debug() << "Attempt connection using secure bundle";
     if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK)
     {
         throw std::runtime_error("Failed to connect using secure connection bundle" + bundle.bundle);
@@ -134,6 +136,7 @@ Cluster::setupCertificate(Settings const& settings)
     if (not settings.certificate)
         return;
 
+    log_.debug() << "Configure SSL context";
     SslContext context = SslContext(*settings.certificate);
     cass_cluster_set_ssl(*this, context);
 }
@@ -144,6 +147,7 @@ Cluster::setupCredentials(Settings const& settings)
     if (not settings.username || not settings.password)
         return;
 
+    log_.debug() << "Set credentials; username: " << settings.username.value();
     cass_cluster_set_credentials(*this, settings.username.value().c_str(), settings.password.value().c_str());
 }
 

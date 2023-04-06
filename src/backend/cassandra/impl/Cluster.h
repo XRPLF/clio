@@ -20,6 +20,7 @@
 #pragma once
 
 #include <backend/cassandra/impl/ManagedObject.h>
+#include <log/Logger.h>
 
 #include <cassandra.h>
 
@@ -46,7 +47,7 @@ struct Settings
     };
 
     bool enableLog = false;
-    std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{1000};
+    std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{10000};
     std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
     std::variant<ContactPoints, SecureConnectionBundle> connectionInfo = ContactPoints{};
     uint32_t threads = std::thread::hardware_concurrency();
@@ -73,6 +74,8 @@ struct Settings
 
 class Cluster : public ManagedObject<CassCluster>
 {
+    clio::Logger log_{"Backend"};
+
 public:
     Cluster(Settings const& settings);
 

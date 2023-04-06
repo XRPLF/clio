@@ -53,19 +53,19 @@ Future::await() const
 ResultOrError
 Future::get() const
 {
-    if (Result result = cass_future_get_result(*this); not result)
+    if (auto const rc = cass_future_error_code(*this); rc)
     {
-        auto [errMsg, code] = [this](std::string label) {
+        auto const errMsg = [this](std::string label) {
             char const* message;
             std::size_t len;
             cass_future_error_message(*this, &message, &len);
-            return std::make_pair(label + ": " + std::string{message, len}, cass_future_error_code(*this));
+            return label + ": " + std::string{message, len};
         }("future::get()");
-        return Error{CassandraError{errMsg, code}};
+        return Error{CassandraError{errMsg, rc}};
     }
     else
     {
-        return result;
+        return Result{cass_future_get_result(*this)};
     }
 }
 
@@ -74,19 +74,19 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
 {
     // Note: can't use Future{ptr}.get() because double free will occur :/
     auto* cb = static_cast<FutureWithCallback::fn_t*>(cbPtr);
-    if (Result result = cass_future_get_result(ptr); not result)
+    if (auto const rc = cass_future_error_code(ptr); rc)
     {
-        auto [errMsg, code] = [&ptr](std::string label) {
+        auto const errMsg = [&ptr](std::string label) {
             char const* message;
             std::size_t len;
             cass_future_error_message(ptr, &message, &len);
-            return std::make_pair(label + ": " + std::string{message, len}, cass_future_error_code(ptr));
+            return label + ": " + std::string{message, len};
         }("invokeHelper");
-        (*cb)(Error{CassandraError{errMsg, code}});
+        (*cb)(Error{CassandraError{errMsg, rc}});
     }
     else
     {
-        (*cb)(std::move(result));
+        (*cb)(Result{cass_future_get_result(ptr)});
     }
 }
 
