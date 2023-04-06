@@ -488,6 +488,50 @@ public:
         return {txns, {}};
     }
 
+    std::vector<ripple::uint256>
+    fetchNFTIDsByIssuer(
+        ripple::AccountID const& issuer,
+        std::optional<std::uint32_t> const& taxon,
+        std::uint32_t const limit,
+        std::optional<ripple::uint256> const& cursorIn,
+        boost::asio::yield_context& yield) const override
+    {
+        Statement statement = [&taxon, &issuer, &cursorIn, this]() {
+            if (taxon.has_value())
+            {
+                auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+                r.bindAt(1, *taxon);
+                return r;
+            }
+
+            auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
+            if (cursorIn.has_value())
+                r.bindAt(
+                    1, ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
+            else
+                r.bindAt(1, 0);
+            return r;
+        }();
+
+        if (cursorIn.has_value())
+            statement.bindAt(2, *cursorIn);
+        else
+            statement.bindAt(2, 0x00);
+
+        statement.bindAt(3, limit);
+
+        auto const res = executor_.read(yield, statement);
+        auto const& results = res.value();
+        std::vector<ripple::uint256> nftIDs;
+
+        for (auto const [nftID] : extract<ripple::uint256>(results))
+        {
+            nftIDs.push_back(nftID);
+        }
+
+        return nftIDs;
+    }
+
     std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context& yield)
         const override

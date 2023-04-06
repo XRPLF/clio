@@ -621,6 +621,8 @@ private:
     CassandraPreparedStatement insertNFTTx_;
     CassandraPreparedStatement selectNFTTx_;
     CassandraPreparedStatement selectNFTTxForward_;
+    CassandraPreparedStatement selectNFTIDsByIssuer_;
+    CassandraPreparedStatement selectNFTIDsByIssuerTaxon_;
     CassandraPreparedStatement insertLedgerHeader_;
     CassandraPreparedStatement insertLedgerHash_;
     CassandraPreparedStatement updateLedgerRange_;
@@ -866,6 +868,14 @@ public:
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context& yield) const override;
+
+    std::vector<ripple::uint256>
+    fetchNFTIDsByIssuer(
+        ripple::AccountID const& issuer,
+        std::optional<std::uint32_t> const& taxon,
+        std::uint32_t const limit,
+        std::optional<ripple::uint256> const& cursorIn,
         boost::asio::yield_context& yield) const override;
 
     // Synchronously fetch the object with key key, as of ledger with sequence

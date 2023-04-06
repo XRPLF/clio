@@ -81,6 +81,13 @@ target_sources(clio PRIVATE
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
   src/rpc/handlers/GatewayBalances.cpp
+  src/rpc/handlers/NoRippleCheck.cpp
+  # NFT
+  src/rpc/handlers/NFTsByIssuer.cpp
+  src/rpc/handlers/NFTHistory.cpp
+  src/rpc/handlers/NFTInfo.cpp
+  src/rpc/handlers/NFTOffers.cpp
+  # Ledger
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp
   src/rpc/handlers/LedgerEntry.cpp

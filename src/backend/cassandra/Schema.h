@@ -599,6 +599,36 @@ public:
                 qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
         }();
 
+        PreparedStatement selectNFTIDsByIssuer = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id
+                FROM {}    
+                WHERE issuer = ?
+                  AND taxon >= ?
+                  AND token_id > ?
+                ORDER BY taxon, token_id ASC
+                LIMIT ?
+                )",
+                qualifiedTableName(
+                    settingsProvider_.get(), "issuer_nf_tokens_v2")));
+        }();
+
+        PreparedStatement selectNFTIDsByIssuerTaxon = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id
+                FROM {}    
+                WHERE issuer = ?
+                  AND taxon = ?
+                  AND token_id > ?
+                ORDER BY taxon, token_id ASC
+                LIMIT ?
+                )",
+                qualifiedTableName(
+                    settingsProvider_.get(), "issuer_nf_tokens_v2")));
+        }();
+
         PreparedStatement selectLedgerByHash = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(

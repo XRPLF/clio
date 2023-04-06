@@ -661,6 +661,54 @@ CassandraBackend::fetchNFTTransactions(
     return {txns, {}};
 }
 
+std::vector<ripple::uint256>
+CassandraBackend::fetchNFTIDsByIssuer(
+    ripple::AccountID const& issuer,
+    std::optional<std::uint32_t> const& taxon,
+    std::uint32_t const limit,
+    std::optional<ripple::uint256> const& cursorIn,
+    boost::asio::yield_context& yield) const
+{
+    CassandraStatement statement = [&taxon, &issuer, &cursorIn, this]() {
+        if (taxon.has_value())
+        {
+            auto statement = CassandraStatement{selectNFTIDsByIssuerTaxon_};
+            statement.bindNextBytes(issuer);
+            statement.bindNextUInt(*taxon);
+            return statement;
+        }
+
+        auto statement = CassandraStatement{selectNFTIDsByIssuer_};
+        statement.bindNextBytes(issuer);
+
+        if (cursorIn.has_value())
+            statement.bindNextUInt(
+                ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
+        else
+            statement.bindNextUInt(0);
+        return statement;
+    }();
+
+    if (cursorIn.has_value())
+        statement.bindNextBytes(*cursorIn);
+    else
+        statement.bindNextBytes(0x00);
+
+    statement.bindNextUInt(limit);
+
+    auto result = executeAsyncRead(statement, yield);
+    std::vector<ripple::uint256> nftIDs;
+
+    if (!result.hasResult())
+        return nftIDs;
+
+    do
+        nftIDs.push_back(result.getUInt256());
+    while (result.nextRow());
+
+    return nftIDs;
+}
+
 TransactionsAndCursor
 CassandraBackend::fetchAccountTransactions(
     ripple::AccountID const& account,
@@ -1544,6 +1592,20 @@ CassandraBackend::open(bool readOnly)
               << " ORDER BY seq_idx ASC"
               << " LIMIT ?";
         if (!selectNFTTxForward_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT token_id FROM " << tablePrefix
+              << "issuer_nf_tokens_v2 WHERE issuer = ? AND taxon >= ? AND "
+                 "token_id > ? ORDER BY taxon, token_id ASC LIMIT ?";
+        if (!selectNFTIDsByIssuer_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT token_id FROM " << tablePrefix
+              << "issuer_nf_tokens_v2 WHERE issuer = ? AND taxon = ? AND "
+                 "token_id > ? ORDER BY taxon, token_id ASC LIMIT ?";
+        if (!selectNFTIDsByIssuerTaxon_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

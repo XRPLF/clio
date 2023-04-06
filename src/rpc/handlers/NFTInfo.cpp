@@ -25,6 +25,11 @@
 
 using namespace ripple;
 using namespace ::RPC;
+=======
+#include <boost/json.hpp>
+
+#include <rpc/RPCHelpers.h>
+>>>>>>> 9d229ef (rough draft of nfts_by_issuer)
 
 namespace RPC {
 
@@ -45,6 +50,11 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     if (not maybeNft.has_value())
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
 
+    // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
+    // for each element of the `nfts_by_issuer` API. We should factor this out
+    // so that the formats don't diverge. In the mean time, do not make any
+    // changes to this formatting without making the same changes to that
+    // formatting.
     auto const& nft = *maybeNft;
     auto output = NFTInfoHandler::Output{};
 
@@ -57,9 +67,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     output.issuer = toBase58(nft::getIssuer(nft.tokenID));
     output.taxon = nft::toUInt32(nft::getTaxon(nft.tokenID));
     output.serial = nft::getSerial(nft.tokenID);
-
-    if (not nft.isBurned)
-        output.uri = strHex(nft.uri);
+    output.uri = strHex(nft.uri);
 
     return output;
 }
