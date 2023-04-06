@@ -82,7 +82,6 @@ make_HttpContext(
     if (!array.at(0).is_object())
         return {};
 
-<<<<<<< HEAD
     return make_optional<Web::Context>(yc, command, 1, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
 }
 

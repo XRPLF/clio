@@ -18,42 +18,38 @@
 //==============================================================================
 
 #include <rpc/RPCHelpers.h>
-#include <rpc/handlers/NFTInfo.h>
+#include <rpc/ngHandlers/NFTInfo.h>
 
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
-#include <ripple/protocol/Indexes.h>
 
 using namespace ripple;
 using namespace ::RPC;
 
-#include <boost/json.hpp>
-
-#include <rpc/RPCHelpers.h>
-
-namespace RPC {
+namespace RPCng {
 
 NFTInfoHandler::Result
-NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
+NFTInfoHandler::process(
+    NFTInfoHandler::Input input,
+    boost::asio::yield_context& yield) const
 {
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
-
+        *sharedPtrBackend_,
+        yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence);
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
-    auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
-
+    auto const maybeNft =
+        sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, yield);
     if (not maybeNft.has_value())
-        return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
+        return Error{
+            Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
 
-    // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
-    // for each element of the `nfts_by_issuer` API. We should factor this out
-    // so that the formats don't diverge. In the mean time, do not make any
-    // changes to this formatting without making the same changes to that
-    // formatting.
     auto const& nft = *maybeNft;
     auto output = NFTInfoHandler::Output{};
 
@@ -66,15 +62,25 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     output.issuer = toBase58(nft::getIssuer(nft.tokenID));
     output.taxon = nft::toUInt32(nft::getTaxon(nft.tokenID));
     output.serial = nft::getSerial(nft.tokenID);
-    output.uri = strHex(nft.uri);
+
+    if (not nft.isBurned)
+        output.uri = strHex(nft.uri);
 
     return output;
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTInfoHandler::Output const& output)
 {
     // TODO: use JStrings when they become available
+    // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
+    // for each element of the `nfts_by_issuer` API. We should factor this out
+    // so that the formats don't diverge. In the mean time, do not make any
+    // changes to this formatting without making the same changes to that
+    // formatting.
     auto object = boost::json::object{
         {JS(nft_id), output.nftID},
         {JS(ledger_index), output.ledgerIndex},
@@ -95,25 +101,33 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::
 }
 
 NFTInfoHandler::Input
-tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value const& jv)
+tag_invoke(
+    boost::json::value_to_tag<NFTInfoHandler::Input>,
+    boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
-    auto input = NFTInfoHandler::Input{};
+    NFTInfoHandler::Input input;
 
     input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_hash)))
+    {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+    }
 
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        {
+            input.ledgerIndex =
+                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;
 }
-
-}  // namespace RPC
+}  // namespace RPCng
