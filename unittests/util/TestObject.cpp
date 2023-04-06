@@ -18,9 +18,12 @@
 //==============================================================================
 
 #include "TestObject.h"
+#include <backend/DBHelpers.h>
 
 #include <ripple/protocol/STArray.h>
 #include <ripple/protocol/TER.h>
+
+#include <chrono>
 
 ripple::AccountID
 GetAccountIDWithString(std::string_view id)
@@ -29,11 +32,21 @@ GetAccountIDWithString(std::string_view id)
 }
 
 ripple::LedgerInfo
-CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq)
+CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age)
 {
+    using namespace std::chrono;
+
     auto ledgerinfo = ripple::LedgerInfo();
     ledgerinfo.hash = ripple::uint256{ledgerHash};
     ledgerinfo.seq = seq;
+
+    if (age)
+    {
+        auto const now = duration_cast<seconds>(system_clock::now().time_since_epoch());
+        auto const closeTime = (now - seconds{age.value()}).count() - rippleEpochStart;
+        ledgerinfo.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+    }
+
     return ledgerinfo;
 }
 

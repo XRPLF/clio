@@ -80,7 +80,7 @@ Counters::rpcForwarded(std::string const& method)
 }
 
 boost::json::object
-Counters::report()
+Counters::report() const
 {
     std::shared_lock lk(mutex_);
     boost::json::object obj = {};

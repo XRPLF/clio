@@ -19,15 +19,19 @@
 
 #pragma once
 
+#include "MockBackend.h"
+#include "MockCounters.h"
+#include "MockETLLoadBalancer.h"
+#include "MockReportingETL.h"
+#include "MockSubscriptionManager.h"
+#include <log/Logger.h>
+
+#include <boost/asio.hpp>
+#include <gtest/gtest.h>
+
 #include <ios>
 #include <mutex>
 #include <thread>
-
-#include <boost/asio.hpp>
-
-#include "MockBackend.h"
-#include <gtest/gtest.h>
-#include <log/Logger.h>
 
 /**
  * @brief Fixture with LogService support.
@@ -170,7 +174,7 @@ protected:
 };
 
 /**
- * @brief Fixture with an mock backend
+ * @brief Fixture with a mock backend
  */
 struct MockBackendTest : virtual public NoLoggerFixture
 {
@@ -192,10 +196,94 @@ protected:
 };
 
 /**
+ * @brief Fixture with a mock subscription manager
+ */
+struct MockSubscriptionManagerTest : virtual public NoLoggerFixture
+{
+    void
+    SetUp() override
+    {
+        NoLoggerFixture::SetUp();
+        mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
+    }
+    void
+    TearDown() override
+    {
+        mockSubscriptionManagerPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<MockSubscriptionManager> mockSubscriptionManagerPtr;
+};
+
+/**
+ * @brief Fixture with a mock etl balancer
+ */
+struct MockETLLoadBalancerTest : virtual public NoLoggerFixture
+{
+    void
+    SetUp() override
+    {
+        NoLoggerFixture::SetUp();
+        mockLoadBalancerPtr = std::make_shared<MockETLLoadBalancer>();
+    }
+    void
+    TearDown() override
+    {
+        mockLoadBalancerPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<MockETLLoadBalancer> mockLoadBalancerPtr;
+};
+
+/**
+ * @brief Fixture with a mock subscription manager
+ */
+struct MockReportingETLTest : virtual public NoLoggerFixture
+{
+    void
+    SetUp() override
+    {
+        NoLoggerFixture::SetUp();
+        mockReportingETLPtr = std::make_shared<MockReportingETL>();
+    }
+    void
+    TearDown() override
+    {
+        mockReportingETLPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<MockReportingETL> mockReportingETLPtr;
+};
+
+/**
+ * @brief Fixture with mock counters
+ */
+struct MockCountersTest : virtual public NoLoggerFixture
+{
+    void
+    SetUp() override
+    {
+        NoLoggerFixture::SetUp();
+        mockCountersPtr = std::make_shared<MockCounters>();
+    }
+    void
+    TearDown() override
+    {
+        mockCountersPtr.reset();
+    }
+
+protected:
+    std::shared_ptr<MockCounters> mockCountersPtr;
+};
+
+/**
  * @brief Fixture with an mock backend and an embedded boost::asio context
  * Handler unittest base class
  */
-class HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest
+struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest
 {
     void
     SetUp() override
