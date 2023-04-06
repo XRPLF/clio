@@ -54,8 +54,7 @@ TEST_F(SettingsProviderTest, Defaults)
     EXPECT_EQ(settings.username, std::nullopt);
     EXPECT_EQ(settings.password, std::nullopt);
 
-    auto const* cp =
-        std::get_if<Settings::ContactPoints>(&settings.connectionInfo);
+    auto const* cp = std::get_if<Settings::ContactPoints>(&settings.connectionInfo);
     ASSERT_TRUE(cp != nullptr);
     EXPECT_EQ(cp->contactPoints, "127.0.0.1");
     EXPECT_FALSE(cp->port);
@@ -80,8 +79,7 @@ TEST_F(SettingsProviderTest, SimpleConfig)
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, 24);
 
-    auto const* cp =
-        std::get_if<Settings::ContactPoints>(&settings.connectionInfo);
+    auto const* cp = std::get_if<Settings::ContactPoints>(&settings.connectionInfo);
     ASSERT_TRUE(cp != nullptr);
     EXPECT_EQ(cp->contactPoints, "123.123.123.123");
     EXPECT_EQ(cp->port, 1234);
@@ -97,8 +95,7 @@ TEST_F(SettingsProviderTest, SecureBundleConfig)
     SettingsProvider provider{cfg};
 
     auto const settings = provider.getSettings();
-    auto const* sb =
-        std::get_if<Settings::SecureConnectionBundle>(&settings.connectionInfo);
+    auto const* sb = std::get_if<Settings::SecureConnectionBundle>(&settings.connectionInfo);
     ASSERT_TRUE(sb != nullptr);
     EXPECT_EQ(sb->bundle, "bundleData");
 }

@@ -28,8 +28,7 @@ using namespace RPCng;
 namespace json = boost::json;
 using namespace testing;
 
-constexpr static auto TXNID =
-    "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
@@ -55,8 +54,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "excessiveLgrRange");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Ledger range exceeds 1000.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Ledger range exceeds 1000.");
     });
 }
 
@@ -77,8 +75,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidLgrRange");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Ledger range is invalid.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Ledger range is invalid.");
     });
 }
 
@@ -101,8 +98,7 @@ TEST_F(RPCTxTest, TxnNotFound)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Transaction not found.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
     });
 }
 
@@ -129,8 +125,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Transaction not found.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), false);
     });
 }
@@ -158,8 +153,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Transaction not found.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), true);
     });
 }
@@ -203,17 +197,12 @@ TEST_F(RPCTxTest, DefaultParameter)
     })";
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300)
-                      .getSerializer()
-                      .peekData();
-    tx.transaction = CreateCreateOfferTransactionObject(
-                         ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300)
-                         .getSerializer()
-                         .peekData();
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
-        .WillByDefault(Return(tx));
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
@@ -240,17 +229,12 @@ TEST_F(RPCTxTest, ReturnBinary)
     })";
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300)
-                      .getSerializer()
-                      .peekData();
-    tx.transaction = CreateCreateOfferTransactionObject(
-                         ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300)
-                         .getSerializer()
-                         .peekData();
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
-        .WillByDefault(Return(tx));
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};

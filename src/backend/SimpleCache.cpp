@@ -28,10 +28,7 @@ SimpleCache::latestLedgerSequence() const
 }
 
 void
-SimpleCache::update(
-    std::vector<LedgerObject> const& objs,
-    uint32_t seq,
-    bool isBackground)
+SimpleCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground)
 {
     if (disabled_)
         return;

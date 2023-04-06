@@ -62,8 +62,7 @@ Config::lookup(key_type key) const
         if (not hasBrokenPath)
         {
             if (not cur.get().is_object())
-                throw detail::StoreException(
-                    "Not an object at '" + subkey + "'");
+                throw detail::StoreException("Not an object at '" + subkey + "'");
             if (not cur.get().as_object().contains(section))
                 hasBrokenPath = true;
             else
@@ -91,11 +90,9 @@ Config::maybeArray(key_type key) const
             array_type out;
             out.reserve(arr.size());
 
-            std::transform(
-                std::begin(arr),
-                std::end(arr),
-                std::back_inserter(out),
-                [](auto&& element) { return Config{std::move(element)}; });
+            std::transform(std::begin(arr), std::end(arr), std::back_inserter(out), [](auto&& element) {
+                return Config{std::move(element)};
+            });
             return std::make_optional<array_type>(std::move(out));
         }
     }
@@ -156,10 +153,7 @@ Config::array() const
     out.reserve(arr.size());
 
     std::transform(
-        std::cbegin(arr),
-        std::cend(arr),
-        std::back_inserter(out),
-        [](auto const& element) { return Config{element}; });
+        std::cbegin(arr), std::cend(arr), std::back_inserter(out), [](auto const& element) { return Config{element}; });
     return out;
 }
 
@@ -180,8 +174,7 @@ ConfigReader::open(std::filesystem::path path)
     }
     catch (std::exception const& e)
     {
-        LogService::error() << "Could not read configuration file from '"
-                            << path.string() << "': " << e.what();
+        LogService::error() << "Could not read configuration file from '" << path.string() << "': " << e.what();
     }
 
     return Config{};

@@ -50,8 +50,7 @@ addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
         boost::json::object& takerPaysJson = obj.at(JS(taker_pays)).as_object();
 
         takerPaysJson[JS(value)] = takerPays.getText();
-        takerPaysJson[JS(currency)] =
-            ripple::to_string(takerPays.getCurrency());
+        takerPaysJson[JS(currency)] = ripple::to_string(takerPays.getCurrency());
         takerPaysJson[JS(issuer)] = ripple::to_string(takerPays.getIssuer());
     }
     else
@@ -65,8 +64,7 @@ addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
         boost::json::object& takerGetsJson = obj.at(JS(taker_gets)).as_object();
 
         takerGetsJson[JS(value)] = takerGets.getText();
-        takerGetsJson[JS(currency)] =
-            ripple::to_string(takerGets.getCurrency());
+        takerGetsJson[JS(currency)] = ripple::to_string(takerGets.getCurrency());
         takerGetsJson[JS(issuer)] = ripple::to_string(takerGets.getIssuer());
     }
     else
@@ -99,8 +97,8 @@ doAccountOffers(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto rawAcct = context.backend->fetchLedgerObject(
-        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto rawAcct =
+        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
         return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
@@ -134,14 +132,8 @@ doAccountOffers(Context const& context)
         return true;
     };
 
-    auto next = traverseOwnedNodes(
-        *context.backend,
-        accountID,
-        lgrInfo.seq,
-        limit,
-        marker,
-        context.yield,
-        addToResponse);
+    auto next =
+        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
 
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;

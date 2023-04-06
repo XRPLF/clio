@@ -30,10 +30,7 @@
 namespace RPC {
 
 void
-serializePayChanAuthorization(
-    ripple::Serializer& msg,
-    ripple::uint256 const& key,
-    ripple::XRPAmount const& amt)
+serializePayChanAuthorization(ripple::Serializer& msg, ripple::uint256 const& key, ripple::XRPAmount const& amt)
 {
     msg.add32(ripple::HashPrefix::paymentChannelClaim);
     msg.addBitString(key);
@@ -53,32 +50,27 @@ doChannelAuthorize(Context const& context)
         return Status{RippledError::rpcINVALID_PARAMS, "amountNotString"};
 
     if (!request.contains(JS(key_type)) && !request.contains(JS(secret)))
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
+        return Status{RippledError::rpcINVALID_PARAMS, "missingKeyTypeOrSecret"};
 
     auto v = keypairFromRequst(request);
     if (auto status = std::get_if<Status>(&v))
         return *status;
 
-    auto const [pk, sk] =
-        std::get<std::pair<ripple::PublicKey, ripple::SecretKey>>(v);
+    auto const [pk, sk] = std::get<std::pair<ripple::PublicKey, ripple::SecretKey>>(v);
 
     ripple::uint256 channelId;
     if (auto const status = getChannelId(request, channelId); status)
         return status;
 
-    auto optDrops =
-        ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
+    auto optDrops = ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
 
     if (!optDrops)
-        return Status{
-            RippledError::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
+        return Status{RippledError::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
 
     std::uint64_t drops = *optDrops;
 
     ripple::Serializer msg;
-    ripple::serializePayChanAuthorization(
-        msg, channelId, ripple::XRPAmount(drops));
+    ripple::serializePayChanAuthorization(msg, channelId, ripple::XRPAmount(drops));
 
     try
     {

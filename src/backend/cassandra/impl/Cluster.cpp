@@ -26,9 +26,7 @@
 #include <vector>
 
 namespace {
-static constexpr auto clusterDeleter = [](CassCluster* ptr) {
-    cass_cluster_free(ptr);
-};
+static constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
 
 template <class... Ts>
 struct overloadSet : Ts...
@@ -43,28 +41,21 @@ overloadSet(Ts...) -> overloadSet<Ts...>;
 
 namespace Backend::Cassandra::detail {
 
-Cluster::Cluster(Settings const& settings)
-    : ManagedObject{cass_cluster_new(), clusterDeleter}
+Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), clusterDeleter}
 {
     using std::to_string;
 
     cass_cluster_set_token_aware_routing(*this, cass_true);
-    if (auto const rc =
-            cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4);
-        rc != CASS_OK)
+    if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK)
     {
-        throw std::runtime_error(
-            std::string{"Error setting cassandra protocol version to v4: "} +
-            cass_error_desc(rc));
+        throw std::runtime_error(std::string{"Error setting cassandra protocol version to v4: "} + cass_error_desc(rc));
     }
 
-    if (auto const rc =
-            cass_cluster_set_num_threads_io(*this, settings.threads);
-        rc != CASS_OK)
+    if (auto const rc = cass_cluster_set_num_threads_io(*this, settings.threads); rc != CASS_OK)
     {
         throw std::runtime_error(
-            std::string{"Error setting cassandra io threads to "} +
-            to_string(settings.threads) + ": " + cass_error_desc(rc));
+            std::string{"Error setting cassandra io threads to "} + to_string(settings.threads) + ": " +
+            cass_error_desc(rc));
     }
 
     cass_log_set_level(settings.enableLog ? CASS_LOG_TRACE : CASS_LOG_DISABLED);
@@ -75,28 +66,21 @@ Cluster::Cluster(Settings const& settings)
     // cass_cluster_set_max_concurrent_requests_threshold(*this, 10000);
     // cass_cluster_set_queue_size_event(*this, 100000);
     // cass_cluster_set_queue_size_io(*this, 100000);
-    // cass_cluster_set_write_bytes_high_water_mark(
-    //     *this, 16 * 1024 * 1024);  // 16mb
-    // cass_cluster_set_write_bytes_low_water_mark(
-    //     *this, 8 * 1024 * 1024);  // half of allowance
+    // cass_cluster_set_write_bytes_high_water_mark(*this, 16 * 1024 * 1024);  // 16mb
+    // cass_cluster_set_write_bytes_low_water_mark(*this, 8 * 1024 * 1024);  // half of allowance
     // cass_cluster_set_pending_requests_high_water_mark(*this, 5000);
     // cass_cluster_set_pending_requests_low_water_mark(*this, 2500);  // half
     // cass_cluster_set_max_requests_per_flush(*this, 1000);
     // cass_cluster_set_max_concurrent_creation(*this, 8);
     // cass_cluster_set_max_connections_per_host(*this, 6);
     // cass_cluster_set_core_connections_per_host(*this, 4);
-    // cass_cluster_set_constant_speculative_execution_policy(*this, 1000,
-    // 1024);
+    // cass_cluster_set_constant_speculative_execution_policy(*this, 1000, 1024);
 
     if (auto const rc = cass_cluster_set_queue_size_io(
-            *this,
-            settings.maxWriteRequestsOutstanding +
-                settings.maxReadRequestsOutstanding);
+            *this, settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding);
         rc != CASS_OK)
     {
-        throw std::runtime_error(
-            std::string{"Could not set queue size for IO per host: "} +
-            cass_error_desc(rc));
+        throw std::runtime_error(std::string{"Could not set queue size for IO per host: "} + cass_error_desc(rc));
     }
 
     setupConnection(settings);
@@ -109,12 +93,8 @@ Cluster::setupConnection(Settings const& settings)
 {
     std::visit(
         overloadSet{
-            [this](Settings::ContactPoints const& points) {
-                setupContactPoints(points);
-            },
-            [this](Settings::SecureConnectionBundle const& bundle) {
-                setupSecureBundle(bundle);
-            }},
+            [this](Settings::ContactPoints const& points) { setupContactPoints(points); },
+            [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }},
         settings.connectionInfo);
 }
 
@@ -122,17 +102,13 @@ void
 Cluster::setupContactPoints(Settings::ContactPoints const& points)
 {
     using std::to_string;
-    auto throwErrorIfNeeded =
-        [](CassError rc, std::string const label, std::string const value) {
-            if (rc != CASS_OK)
-                throw std::runtime_error(
-                    "Cassandra: Error setting " + label + " [" + value +
-                    "]: " + cass_error_desc(rc));
-        };
+    auto throwErrorIfNeeded = [](CassError rc, std::string const label, std::string const value) {
+        if (rc != CASS_OK)
+            throw std::runtime_error("Cassandra: Error setting " + label + " [" + value + "]: " + cass_error_desc(rc));
+    };
 
     {
-        auto const rc =
-            cass_cluster_set_contact_points(*this, points.contactPoints.data());
+        auto const rc = cass_cluster_set_contact_points(*this, points.contactPoints.data());
         throwErrorIfNeeded(rc, "contact_points", points.contactPoints);
     }
 
@@ -146,12 +122,9 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
 void
 Cluster::setupSecureBundle(Settings::SecureConnectionBundle const& bundle)
 {
-    if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(
-            *this, bundle.bundle.data());
-        rc != CASS_OK)
+    if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK)
     {
-        throw std::runtime_error(
-            "Failed to connect using secure connection bundle" + bundle.bundle);
+        throw std::runtime_error("Failed to connect using secure connection bundle" + bundle.bundle);
     }
 }
 
@@ -171,10 +144,7 @@ Cluster::setupCredentials(Settings const& settings)
     if (not settings.username || not settings.password)
         return;
 
-    cass_cluster_set_credentials(
-        *this,
-        settings.username.value().c_str(),
-        settings.password.value().c_str());
+    cass_cluster_set_credentials(*this, settings.username.value().c_str(), settings.password.value().c_str());
 }
 
 }  // namespace Backend::Cassandra::detail

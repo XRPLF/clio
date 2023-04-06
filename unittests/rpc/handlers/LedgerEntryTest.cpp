@@ -28,14 +28,12 @@ using namespace RPCng;
 namespace json = boost::json;
 using namespace testing;
 
-constexpr static auto INDEX1 =
-    "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr static auto INDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
-constexpr static auto LEDGERHASH =
-    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 
 class RPCLedgerEntryTest : public HandlerBaseTest
 {
@@ -50,8 +48,7 @@ struct ParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct LedgerEntryParameterTest : public RPCLedgerEntryTest,
-                                  public WithParamInterface<ParamTestCaseBundle>
+struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle>
 {
     struct NameGenerator
     {
@@ -557,15 +554,12 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        EXPECT_EQ(
-            err.at("error_message").as_string(),
-            testBundle.expectedErrorMessage);
+        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
 }
 
 // parameterized test cases for index
-struct IndexTest : public HandlerBaseTest,
-                   public WithParamInterface<std::string>
+struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string>
 {
     struct NameGenerator
     {
@@ -631,15 +625,12 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
     // return null for ledger entry
-    auto const key =
-        ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    auto const key = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(key, RANGEMAX, _))
-        .WillByDefault(Return(std::optional<Blob>{}));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(key, RANGEMAX, _)).WillByDefault(Return(std::optional<Blob>{}));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
@@ -663,9 +654,7 @@ struct NormalPathTestBundle
     ripple::STObject mockedEntity;
 };
 
-struct RPCLedgerEntryNormalPathTest
-    : public RPCLedgerEntryTest,
-      public WithParamInterface<NormalPathTestBundle>
+struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle>
 {
     struct NameGenerator
     {
@@ -697,8 +686,7 @@ generateTestValuesForNormalPathTest()
                 }})",
                 INDEX1),
             ripple::uint256{INDEX1},
-            CreateAccountRootObject(
-                ACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3)},
+            CreateAccountRootObject(ACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3)},
         NormalPathTestBundle{
             "Payment_channel",
             fmt::format(
@@ -708,8 +696,7 @@ generateTestValuesForNormalPathTest()
                 }})",
                 INDEX1),
             ripple::uint256{INDEX1},
-            CreatePaymentChannelLedgerObject(
-                ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)},
+            CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)},
         NormalPathTestBundle{
             "Check",
             fmt::format(
@@ -729,8 +716,7 @@ generateTestValuesForNormalPathTest()
                 }})",
                 INDEX1),
             ripple::uint256{INDEX1},
-            CreateOwnerDirLedgerObject(
-                std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
             "OfferIndex",
             fmt::format(
@@ -741,14 +727,7 @@ generateTestValuesForNormalPathTest()
                 INDEX1),
             ripple::uint256{INDEX1},
             CreateOfferLedgerObject(
-                ACCOUNT,
-                100,
-                200,
-                "USD",
-                "XRP",
-                ACCOUNT2,
-                ripple::toBase58(ripple::xrpAccount()),
-                INDEX1)},
+                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1)},
         NormalPathTestBundle{
             "EscrowIndex",
             fmt::format(
@@ -801,8 +780,7 @@ generateTestValuesForNormalPathTest()
                 }})",
                 INDEX1),
             ripple::keylet::page(ripple::uint256{INDEX1}, 2).key,
-            CreateOwnerDirLedgerObject(
-                std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
             "DirectoryViaOwner",
             fmt::format(
@@ -815,8 +793,7 @@ generateTestValuesForNormalPathTest()
                 }})",
                 ACCOUNT),
             ripple::keylet::page(ripple::keylet::ownerDir(account1), 2).key,
-            CreateOwnerDirLedgerObject(
-                std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
             "DirectoryViaDefaultSubIndex",
             fmt::format(
@@ -829,8 +806,7 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT),
             // default sub_index is 0
             ripple::keylet::page(ripple::keylet::ownerDir(account1), 0).key,
-            CreateOwnerDirLedgerObject(
-                std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
             "Escrow",
             fmt::format(
@@ -871,18 +847,7 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT,
                 ACCOUNT2),
             ripple::keylet::line(account1, account2, currency).key,
-            CreateRippleStateLedgerObject(
-                ACCOUNT,
-                "USD",
-                ACCOUNT2,
-                100,
-                ACCOUNT,
-                10,
-                ACCOUNT2,
-                20,
-                INDEX1,
-                123,
-                0)},
+            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)},
         NormalPathTestBundle{
             "Ticket",
             fmt::format(
@@ -909,14 +874,7 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT),
             ripple::keylet::offer(account1, 2).key,
             CreateOfferLedgerObject(
-                ACCOUNT,
-                100,
-                200,
-                "USD",
-                "XRP",
-                ACCOUNT2,
-                ripple::toBase58(ripple::xrpAccount()),
-                INDEX1)}};
+                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1)}};
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -936,15 +894,11 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(
-        *rawBackendPtr,
-        doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
-        .WillByDefault(
-            Return(testBundle.mockedEntity.getSerializer().peekData()));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
+        .WillByDefault(Return(testBundle.mockedEntity.getSerializer().peekData()));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
@@ -956,9 +910,7 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         EXPECT_EQ(
             output.value().at("node_binary").as_string(),
             ripple::strHex(testBundle.mockedEntity.getSerializer().peekData()));
-        EXPECT_EQ(
-            ripple::uint256(output.value().at("index").as_string().c_str()),
-            testBundle.expectedIndex);
+        EXPECT_EQ(ripple::uint256(output.value().at("index").as_string().c_str()), testBundle.expectedIndex);
     });
 }
 
@@ -991,16 +943,12 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreatePaymentChannelLedgerObject(
-        ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
+    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(
-        *rawBackendPtr,
-        doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto& yield) {
@@ -1024,16 +972,12 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreatePaymentChannelLedgerObject(
-        ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
+    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(
-        *rawBackendPtr,
-        doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto& yield) {
@@ -1057,8 +1001,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
@@ -1084,8 +1027,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
@@ -1111,8 +1053,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};

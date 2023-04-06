@@ -42,8 +42,7 @@ doNFTInfo(Context const& context)
         return *status;
     auto const lgrInfo = std::get<ripple::LedgerInfo>(maybeLedgerInfo);
 
-    auto const dbResponse =
-        context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
+    auto const dbResponse = context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
     if (!dbResponse)
         return Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"};
 
@@ -55,10 +54,8 @@ doNFTInfo(Context const& context)
 
     response[JS(flags)] = ripple::nft::getFlags(dbResponse->tokenID);
     response["transfer_fee"] = ripple::nft::getTransferFee(dbResponse->tokenID);
-    response[JS(issuer)] =
-        ripple::toBase58(ripple::nft::getIssuer(dbResponse->tokenID));
-    response["nft_taxon"] =
-        ripple::nft::toUInt32(ripple::nft::getTaxon(dbResponse->tokenID));
+    response[JS(issuer)] = ripple::toBase58(ripple::nft::getIssuer(dbResponse->tokenID));
+    response["nft_taxon"] = ripple::nft::toUInt32(ripple::nft::getTaxon(dbResponse->tokenID));
     response[JS(nft_serial)] = ripple::nft::getSerial(dbResponse->tokenID);
 
     return response;

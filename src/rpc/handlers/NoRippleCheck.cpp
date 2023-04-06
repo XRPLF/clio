@@ -23,10 +23,7 @@
 namespace RPC {
 
 boost::json::object
-getBaseTx(
-    ripple::AccountID const& accountID,
-    std::uint32_t accountSeq,
-    ripple::Fees const& fees)
+getBaseTx(ripple::AccountID const& accountID, std::uint32_t accountSeq, ripple::Fees const& fees)
 {
     boost::json::object tx;
     tx[JS(Sequence)] = accountSeq;
@@ -50,8 +47,7 @@ doNoRippleCheck(Context const& context)
         if (role == "gateway")
             roleGateway = true;
         else if (role != "user")
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "role field is invalid"};
+            return Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"};
     }
 
     std::uint32_t limit = 300;
@@ -65,15 +61,13 @@ doNoRippleCheck(Context const& context)
         return *status;
 
     auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-    std::optional<ripple::Fees> fees = includeTxs
-        ? context.backend->fetchFees(lgrInfo.seq, context.yield)
-        : std::nullopt;
+    std::optional<ripple::Fees> fees =
+        includeTxs ? context.backend->fetchFees(lgrInfo.seq, context.yield) : std::nullopt;
 
     boost::json::array transactions;
 
     auto keylet = ripple::keylet::account(accountID);
-    auto accountObj = context.backend->fetchLedgerObject(
-        keylet.key, lgrInfo.seq, context.yield);
+    auto accountObj = context.backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield);
     if (!accountObj)
         throw AccountNotFoundError(ripple::toBase58(accountID));
 
@@ -83,8 +77,7 @@ doNoRippleCheck(Context const& context)
     std::uint32_t accountSeq = sle.getFieldU32(ripple::sfSequence);
 
     boost::json::array problems;
-    bool bDefaultRipple =
-        sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
+    bool bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
     if (bDefaultRipple & !roleGateway)
     {
         problems.push_back(
@@ -95,8 +88,7 @@ doNoRippleCheck(Context const& context)
     }
     else if (roleGateway & !bDefaultRipple)
     {
-        problems.push_back(
-            "You should immediately set your default ripple flag");
+        problems.push_back("You should immediately set your default ripple flag");
         if (includeTxs)
         {
             auto tx = getBaseTx(accountID, accountSeq++, *fees);
@@ -113,21 +105,14 @@ doNoRippleCheck(Context const& context)
         std::numeric_limits<std::uint32_t>::max(),
         {},
         context.yield,
-        [roleGateway,
-         includeTxs,
-         &fees,
-         &transactions,
-         &accountSeq,
-         &limit,
-         &accountID,
-         &problems](ripple::SLE&& ownedItem) {
+        [roleGateway, includeTxs, &fees, &transactions, &accountSeq, &limit, &accountID, &problems](
+            ripple::SLE&& ownedItem) {
             if (ownedItem.getType() == ripple::ltRIPPLE_STATE)
             {
-                bool const bLow = accountID ==
-                    ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
+                bool const bLow = accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
 
-                bool const bNoRipple = ownedItem.getFieldU32(ripple::sfFlags) &
-                    (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+                bool const bNoRipple =
+                    ownedItem.getFieldU32(ripple::sfFlags) & (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
 
                 std::string problem;
                 bool needFix = false;
@@ -146,27 +131,22 @@ doNoRippleCheck(Context const& context)
                 if (needFix)
                 {
                     ripple::AccountID peer =
-                        ownedItem
-                            .getFieldAmount(
-                                bLow ? ripple::sfHighLimit : ripple::sfLowLimit)
-                            .getIssuer();
-                    ripple::STAmount peerLimit = ownedItem.getFieldAmount(
-                        bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
+                        ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit).getIssuer();
+                    ripple::STAmount peerLimit =
+                        ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
                     problem += to_string(peerLimit.getCurrency());
                     problem += " line to ";
                     problem += to_string(peerLimit.getIssuer());
                     problems.emplace_back(problem);
                     if (includeTxs)
                     {
-                        ripple::STAmount limitAmount(ownedItem.getFieldAmount(
-                            bLow ? ripple::sfLowLimit : ripple::sfHighLimit));
+                        ripple::STAmount limitAmount(
+                            ownedItem.getFieldAmount(bLow ? ripple::sfLowLimit : ripple::sfHighLimit));
                         limitAmount.setIssuer(peer);
                         auto tx = getBaseTx(accountID, accountSeq++, *fees);
                         tx[JS(TransactionType)] = JS(TrustSet);
-                        tx[JS(LimitAmount)] = RPC::toBoostJson(
-                            limitAmount.getJson(ripple::JsonOptions::none));
-                        tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple
-                                                  : ripple::tfSetNoRipple;
+                        tx[JS(LimitAmount)] = RPC::toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
+                        tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple : ripple::tfSetNoRipple;
                         transactions.push_back(tx);
                     }
 

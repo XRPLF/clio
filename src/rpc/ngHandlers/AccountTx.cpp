@@ -25,51 +25,37 @@ namespace RPCng {
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
 AccountTxHandler::Result
-AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
-    const
+AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
     if (input.ledgerIndexMin)
     {
-        if (range->maxSequence < input.ledgerIndexMin ||
-            range->minSequence > input.ledgerIndexMin)
+        if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
         {
-            return Error{RPC::Status{
-                RPC::RippledError::rpcLGR_IDX_MALFORMED,
-                "ledgerSeqMinOutOfRange"}};
+            return Error{RPC::Status{RPC::RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
         }
         minIndex = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax)
     {
-        if (range->maxSequence < input.ledgerIndexMax ||
-            range->minSequence > input.ledgerIndexMax)
-            return Error{RPC::Status{
-                RPC::RippledError::rpcLGR_IDX_MALFORMED,
-                "ledgerSeqMaxOutOfRange"}};
+        if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
+            return Error{RPC::Status{RPC::RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
         maxIndex = *input.ledgerIndexMax;
     }
 
     if (minIndex > maxIndex)
-        return Error{
-            RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "invalidIndex"}};
+        return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "invalidIndex"}};
 
     if (input.ledgerHash || input.ledgerIndex)
     {
         // rippled does not have this check
         if (input.ledgerIndexMax || input.ledgerIndexMin)
-            return Error{RPC::Status{
-                RPC::RippledError::rpcINVALID_PARAMS,
-                "containsLedgerSpecifierAndRange"}};
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
         auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-            *sharedPtrBackend_,
-            ctx.yield,
-            input.ledgerHash,
-            input.ledgerIndex,
-            range->maxSequence);
+            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
         if (auto status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
             return Error{*status};
@@ -96,17 +82,14 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
     auto const limit = input.limit.value_or(limitDefault);
     auto const accountID = RPC::accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
-        return sharedPtrBackend_->fetchAccountTransactions(
-            *accountID, limit, input.forward, cursor, ctx.yield);
+        return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);
     });
-    log_.info() << "db fetch took " << timeDiff
-                << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    log_.info() << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
     auto const [blobs, retCursor] = txnsAndCursor;
 
     Output response;
     if (retCursor)
-        response.marker = {
-            retCursor->ledgerSequence, retCursor->transactionIndex};
+        response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
 
     for (auto const& txnPlusMeta : blobs)
     {
@@ -129,8 +112,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
             auto [txn, meta] = RPC::toExpandedJson(txnPlusMeta);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
-            obj[JS(tx)].as_object()[JS(ledger_index)] =
-                txnPlusMeta.ledgerSequence;
+            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
         }
         else
@@ -155,10 +137,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx)
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountTxHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountTxHandler::Output const& output)
 {
     jv = {
         {JS(account), output.account},
@@ -173,29 +152,22 @@ tag_invoke(
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountTxHandler::Marker const& marker)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountTxHandler::Marker const& marker)
 {
     jv = {{JS(ledger), marker.ledger}, {JS(seq), marker.seq}};
 }
 
 AccountTxHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountTxHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     AccountTxHandler::Input input;
     input.account = jsonObject.at(JS(account)).as_string().c_str();
-    if (jsonObject.contains(JS(ledger_index_min)) &&
-        jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
+    if (jsonObject.contains(JS(ledger_index_min)) && jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
     {
         input.ledgerIndexMin = jsonObject.at(JS(ledger_index_min)).as_int64();
     }
-    if (jsonObject.contains(JS(ledger_index_max)) &&
-        jsonObject.at(JS(ledger_index_max)).as_int64() != -1)
+    if (jsonObject.contains(JS(ledger_index_max)) && jsonObject.at(JS(ledger_index_max)).as_int64() != -1)
     {
         input.ledgerIndexMax = jsonObject.at(JS(ledger_index_max)).as_int64();
     }
@@ -211,8 +183,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
     if (jsonObject.contains(JS(binary)))

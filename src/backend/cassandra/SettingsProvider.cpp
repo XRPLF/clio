@@ -31,9 +31,7 @@ namespace Backend::Cassandra {
 
 namespace detail {
 inline Settings::ContactPoints
-tag_invoke(
-    boost::json::value_to_tag<Settings::ContactPoints>,
-    boost::json::value const& value)
+tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::value const& value)
 {
     if (not value.is_object())
         throw std::runtime_error(
@@ -43,17 +41,14 @@ tag_invoke(
     clio::Config obj{value};
     Settings::ContactPoints out;
 
-    out.contactPoints = obj.valueOrThrow<std::string>(
-        "contact_points", "`contact_points` must be a string");
+    out.contactPoints = obj.valueOrThrow<std::string>("contact_points", "`contact_points` must be a string");
     out.port = obj.maybeValue<uint16_t>("port");
 
     return out;
 }
 
 inline Settings::SecureConnectionBundle
-tag_invoke(
-    boost::json::value_to_tag<Settings::SecureConnectionBundle>,
-    boost::json::value const& value)
+tag_invoke(boost::json::value_to_tag<Settings::SecureConnectionBundle>, boost::json::value const& value)
 {
     if (not value.is_string())
         throw std::runtime_error("`secure_connect_bundle` must be a string");
@@ -80,28 +75,19 @@ SettingsProvider::getSettings() const
 std::optional<std::string>
 SettingsProvider::parseOptionalCertificate() const
 {
-    if (auto const certPath = config_.maybeValue<std::string>("certfile");
-        certPath)
+    if (auto const certPath = config_.maybeValue<std::string>("certfile"); certPath)
     {
         auto const path = std::filesystem::path(*certPath);
         std::ifstream fileStream(path.string(), std::ios::in);
         if (!fileStream)
         {
-            throw std::system_error(
-                errno,
-                std::generic_category(),
-                "Opening certificate " + path.string());
+            throw std::system_error(errno, std::generic_category(), "Opening certificate " + path.string());
         }
 
-        std::string contents(
-            std::istreambuf_iterator<char>{fileStream},
-            std::istreambuf_iterator<char>{});
+        std::string contents(std::istreambuf_iterator<char>{fileStream}, std::istreambuf_iterator<char>{});
         if (fileStream.bad())
         {
-            throw std::system_error(
-                errno,
-                std::generic_category(),
-                "Reading certificate " + path.string());
+            throw std::system_error(errno, std::generic_category(), "Reading certificate " + path.string());
         }
 
         return contents;
@@ -114,24 +100,21 @@ Settings
 SettingsProvider::parseSettings() const
 {
     auto settings = Settings::defaultSettings();
-    if (auto const bundle =
-            config_.maybeValue<Settings::SecureConnectionBundle>(
-                "secure_connect_bundle");
-        bundle)
+    if (auto const bundle = config_.maybeValue<Settings::SecureConnectionBundle>("secure_connect_bundle"); bundle)
     {
         settings.connectionInfo = *bundle;
     }
     else
     {
-        settings.connectionInfo = config_.valueOrThrow<Settings::ContactPoints>(
-            "Missing contact_points in Cassandra config");
+        settings.connectionInfo =
+            config_.valueOrThrow<Settings::ContactPoints>("Missing contact_points in Cassandra config");
     }
 
     settings.threads = config_.valueOr<uint32_t>("threads", settings.threads);
-    settings.maxWriteRequestsOutstanding = config_.valueOr<uint32_t>(
-        "max_write_requests_outstanding", settings.maxWriteRequestsOutstanding);
-    settings.maxReadRequestsOutstanding = config_.valueOr<uint32_t>(
-        "max_read_requests_outstanding", settings.maxReadRequestsOutstanding);
+    settings.maxWriteRequestsOutstanding =
+        config_.valueOr<uint32_t>("max_write_requests_outstanding", settings.maxWriteRequestsOutstanding);
+    settings.maxReadRequestsOutstanding =
+        config_.valueOr<uint32_t>("max_read_requests_outstanding", settings.maxReadRequestsOutstanding);
     settings.certificate = parseOptionalCertificate();
     settings.username = config_.maybeValue<std::string>("username");
     settings.password = config_.maybeValue<std::string>("password");

@@ -63,8 +63,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountOffersHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    AccountOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -77,9 +76,9 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Between{10, 400}}};
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
+        };
+
         return rpcSpec;
     }
 
@@ -91,18 +90,12 @@ private:
     addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const;
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Offer const& offer);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Offer const& offer);
 };
 }  // namespace RPCng

@@ -21,19 +21,14 @@
 
 namespace RPCng {
 AccountInfoHandler::Result
-AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
-    const
+AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
     if (!input.account && !input.ident)
         return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
     if (auto const status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -43,16 +38,12 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     auto const accountStr = input.account.value_or(input.ident.value_or(""));
     auto const accountID = RPC::accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        accountKeylet.key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
     if (!accountLedgerObject)
-        return Error{RPC::Status{
-            RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{RPC::Status{RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{
-            accountLedgerObject->data(), accountLedgerObject->size()},
-        accountKeylet.key};
+        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key};
     if (!accountKeylet.check(sle))
         return Error{RPC::Status{RPC::RippledError::rpcDB_DESERIALIZATION}};
     // Return SignerList(s) if that is requested.
@@ -63,31 +54,24 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         auto const signersKey = ripple::keylet::signers(*accountID);
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const signers = sharedPtrBackend_->fetchLedgerObject(
-            signersKey.key, lgrInfo.seq, ctx.yield);
+        auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
         std::vector<ripple::STLedgerEntry> signerList;
         if (signers)
         {
             ripple::STLedgerEntry const sleSigners{
-                ripple::SerialIter{signers->data(), signers->size()},
-                signersKey.key};
+                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
             if (!signersKey.check(sleSigners))
-                return Error{
-                    RPC::Status{RPC::RippledError::rpcDB_DESERIALIZATION}};
+                return Error{RPC::Status{RPC::RippledError::rpcDB_DESERIALIZATION}};
 
             signerList.push_back(sleSigners);
         }
-        return Output(
-            lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, signerList);
+        return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, signerList);
     }
     return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle);
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountInfoHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandler::Output const& output)
 {
     jv = boost::json::object{
         {JS(account_data), RPC::toJson(output.accountData)},
@@ -97,15 +81,12 @@ tag_invoke(
     {
         jv.as_object()[JS(signer_lists)] = boost::json::array();
         for (auto const& signerList : output.signerLists.value())
-            jv.as_object()[JS(signer_lists)].as_array().push_back(
-                RPC::toJson(signerList));
+            jv.as_object()[JS(signer_lists)].as_array().push_back(RPC::toJson(signerList));
     }
 }
 
 AccountInfoHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountInfoHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     AccountInfoHandler::Input input;
@@ -129,8 +110,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
     if (jsonObject.contains(JS(signer_lists)))

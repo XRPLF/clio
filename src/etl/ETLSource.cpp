@@ -43,15 +43,12 @@ ForwardCache::freshen()
 {
     log_.trace() << "Freshening ForwardCache";
 
-    auto numOutstanding =
-        std::make_shared<std::atomic_uint>(latestForwarded_.size());
+    auto numOutstanding = std::make_shared<std::atomic_uint>(latestForwarded_.size());
 
     for (auto const& cacheEntry : latestForwarded_)
     {
         boost::asio::spawn(
-            strand_,
-            [this, numOutstanding, command = cacheEntry.first](
-                boost::asio::yield_context yield) {
+            strand_, [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
                 boost::json::object request = {{"command", command}};
                 auto resp = source_.requestFromRippled(request, {}, yield);
 
@@ -78,12 +75,9 @@ std::optional<boost::json::object>
 ForwardCache::get(boost::json::object const& request) const
 {
     std::optional<std::string> command = {};
-    if (request.contains("command") && !request.contains("method") &&
-        request.at("command").is_string())
+    if (request.contains("command") && !request.contains("method") && request.at("command").is_string())
         command = request.at("command").as_string().c_str();
-    else if (
-        request.contains("method") && !request.contains("command") &&
-        request.at("method").is_string())
+    else if (request.contains("method") && !request.contains("command") && request.at("method").is_string())
         command = request.at("method").as_string().c_str();
 
     if (!command)
@@ -116,8 +110,7 @@ make_TimeoutOption()
     }
     else
     {
-        return boost::beast::websocket::stream_base::timeout::suggested(
-            boost::beast::role_type::client);
+        return boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client);
     }
 }
 
@@ -138,8 +131,7 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     // if we cannot connect to the transaction processing process
     if (ec.category() == boost::asio::error::get_ssl_category())
     {
-        err = std::string(" (") +
-            boost::lexical_cast<std::string>(ERR_GET_LIB(ec.value())) + "," +
+        err = std::string(" (") + boost::lexical_cast<std::string>(ERR_GET_LIB(ec.value())) + "," +
             boost::lexical_cast<std::string>(ERR_GET_REASON(ec.value())) + ") ";
         // ERR_PACK /* crypto/err/err.h */
         char buf[128];
@@ -149,8 +141,7 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
         std::cout << err << std::endl;
     }
 
-    if (ec != boost::asio::error::operation_aborted &&
-        ec != boost::asio::error::connection_refused)
+    if (ec != boost::asio::error::operation_aborted && ec != boost::asio::error::connection_refused)
     {
         log_.error() << "error code = " << ec << " - " << toString();
     }
@@ -184,30 +175,25 @@ PlainETLSource::close(bool startAgain)
             // an assertion fails. Using closing_ makes sure async_close is only
             // called once
             closing_ = true;
-            derived().ws().async_close(
-                boost::beast::websocket::close_code::normal,
-                [this, startAgain](auto ec) {
-                    if (ec)
-                    {
-                        log_.error()
-                            << " async_close : "
-                            << "error code = " << ec << " - " << toString();
-                    }
-                    closing_ = false;
-                    if (startAgain)
-                    {
-                        ws_ = std::make_unique<boost::beast::websocket::stream<
-                            boost::beast::tcp_stream>>(
-                            boost::asio::make_strand(ioc_));
+            derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
+                if (ec)
+                {
+                    log_.error() << " async_close : "
+                                 << "error code = " << ec << " - " << toString();
+                }
+                closing_ = false;
+                if (startAgain)
+                {
+                    ws_ = std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+                        boost::asio::make_strand(ioc_));
 
-                        run();
-                    }
-                });
+                    run();
+                }
+            });
         }
         else if (startAgain)
         {
-            ws_ = std::make_unique<
-                boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+            ws_ = std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(
                 boost::asio::make_strand(ioc_));
 
             run();
@@ -229,31 +215,26 @@ SslETLSource::close(bool startAgain)
             // an assertion fails. Using closing_ makes sure async_close is only
             // called once
             closing_ = true;
-            derived().ws().async_close(
-                boost::beast::websocket::close_code::normal,
-                [this, startAgain](auto ec) {
-                    if (ec)
-                    {
-                        log_.error()
-                            << " async_close : "
-                            << "error code = " << ec << " - " << toString();
-                    }
-                    closing_ = false;
-                    if (startAgain)
-                    {
-                        ws_ = std::make_unique<boost::beast::websocket::stream<
-                            boost::beast::ssl_stream<
-                                boost::beast::tcp_stream>>>(
-                            boost::asio::make_strand(ioc_), *sslCtx_);
+            derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
+                if (ec)
+                {
+                    log_.error() << " async_close : "
+                                 << "error code = " << ec << " - " << toString();
+                }
+                closing_ = false;
+                if (startAgain)
+                {
+                    ws_ = std::make_unique<
+                        boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
+                        boost::asio::make_strand(ioc_), *sslCtx_);
 
-                        run();
-                    }
-                });
+                    run();
+                }
+            });
         }
         else if (startAgain)
         {
-            ws_ = std::make_unique<boost::beast::websocket::stream<
-                boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
+            ws_ = std::make_unique<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
                 boost::asio::make_strand(ioc_), *sslCtx_);
 
             run();
@@ -263,9 +244,7 @@ SslETLSource::close(bool startAgain)
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onResolve(
-    boost::beast::error_code ec,
-    boost::asio::ip::tcp::resolver::results_type results)
+ETLSourceImpl<Derived>::onResolve(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type results)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
@@ -275,12 +254,10 @@ ETLSourceImpl<Derived>::onResolve(
     }
     else
     {
-        boost::beast::get_lowest_layer(derived().ws())
-            .expires_after(std::chrono::seconds(30));
-        boost::beast::get_lowest_layer(derived().ws())
-            .async_connect(results, [this](auto ec, auto ep) {
-                derived().onConnect(ec, ep);
-            });
+        boost::beast::get_lowest_layer(derived().ws()).expires_after(std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(derived().ws()).async_connect(results, [this](auto ec, auto ep) {
+            derived().onConnect(ec, ep);
+        });
     }
 }
 
@@ -307,21 +284,18 @@ PlainETLSource::onConnect(
 
         // Set a decorator to change the User-Agent of the handshake
         derived().ws().set_option(
-            boost::beast::websocket::stream_base::decorator(
-                [](boost::beast::websocket::request_type& req) {
-                    req.set(
-                        boost::beast::http::field::user_agent, "clio-client");
+            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
+                req.set(boost::beast::http::field::user_agent, "clio-client");
 
-                    req.set("X-User", "clio-client");
-                }));
+                req.set("X-User", "clio-client");
+            }));
 
         // Update the host_ string. This will provide the value of the
         // Host HTTP header during the WebSocket handshake.
         // See https://tools.ietf.org/html/rfc7230#section-5.4
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         // Perform the websocket handshake
-        derived().ws().async_handshake(
-            host, "/", [this](auto ec) { onHandshake(ec); });
+        derived().ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
 }
 
@@ -348,13 +322,11 @@ SslETLSource::onConnect(
 
         // Set a decorator to change the User-Agent of the handshake
         derived().ws().set_option(
-            boost::beast::websocket::stream_base::decorator(
-                [](boost::beast::websocket::request_type& req) {
-                    req.set(
-                        boost::beast::http::field::user_agent, "clio-client");
+            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
+                req.set(boost::beast::http::field::user_agent, "clio-client");
 
-                    req.set("X-User", "clio-client");
-                }));
+                req.set("X-User", "clio-client");
+            }));
 
         // Update the host_ string. This will provide the value of the
         // Host HTTP header during the WebSocket handshake.
@@ -362,8 +334,7 @@ SslETLSource::onConnect(
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         // Perform the websocket handshake
         ws().next_layer().async_handshake(
-            boost::asio::ssl::stream_base::client,
-            [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
+            boost::asio::ssl::stream_base::client, [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
     }
 }
 
@@ -390,8 +361,7 @@ void
 ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
-    if (auto action = hooks_.onConnected(ec);
-        action == ETLSourceHooks::Action::STOP)
+    if (auto action = hooks_.onConnected(ec); action == ETLSourceHooks::Action::STOP)
         return;
 
     if (ec)
@@ -402,35 +372,26 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
     else
     {
         boost::json::object jv{
-            {"command", "subscribe"},
-            {"streams",
-             {"ledger", "manifests", "validations", "transactions_proposed"}}};
+            {"command", "subscribe"}, {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}}};
         std::string s = boost::json::serialize(jv);
         log_.trace() << "Sending subscribe stream message";
 
         derived().ws().set_option(
-            boost::beast::websocket::stream_base::decorator(
-                [](boost::beast::websocket::request_type& req) {
-                    req.set(
-                        boost::beast::http::field::user_agent,
-                        std::string(BOOST_BEAST_VERSION_STRING) +
-                            " clio-client");
+            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
+                req.set(
+                    boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " clio-client");
 
-                    req.set("X-User", "coro-client");
-                }));
+                req.set("X-User", "coro-client");
+            }));
 
         // Send the message
-        derived().ws().async_write(
-            boost::asio::buffer(s),
-            [this](auto ec, size_t size) { onWrite(ec, size); });
+        derived().ws().async_write(boost::asio::buffer(s), [this](auto ec, size_t size) { onWrite(ec, size); });
     }
 }
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onWrite(
-    boost::beast::error_code ec,
-    size_t bytesWritten)
+ETLSourceImpl<Derived>::onWrite(boost::beast::error_code ec, size_t bytesWritten)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
@@ -440,8 +401,7 @@ ETLSourceImpl<Derived>::onWrite(
     }
     else
     {
-        derived().ws().async_read(
-            readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
+        derived().ws().async_read(readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
     }
 }
 
@@ -462,8 +422,7 @@ ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
         swap(readBuffer_, buffer);
 
         log_.trace() << "calling async_read - " << toString();
-        derived().ws().async_read(
-            readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
+        derived().ws().async_read(readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
     }
 }
 
@@ -477,9 +436,7 @@ ETLSourceImpl<Derived>::handleMessage()
     connected_ = true;
     try
     {
-        std::string msg{
-            static_cast<char const*>(readBuffer_.data().data()),
-            readBuffer_.size()};
+        std::string msg{static_cast<char const*>(readBuffer_.data().data()), readBuffer_.size()};
         log_.trace() << msg;
         boost::json::value raw = boost::json::parse(msg);
         log_.trace() << "parsed";
@@ -495,32 +452,25 @@ ETLSourceImpl<Derived>::handleMessage()
             }
             if (result.contains("validated_ledgers"))
             {
-                boost::json::string const& validatedLedgers =
-                    result["validated_ledgers"].as_string();
+                boost::json::string const& validatedLedgers = result["validated_ledgers"].as_string();
 
-                setValidatedRange(
-                    {validatedLedgers.c_str(), validatedLedgers.size()});
+                setValidatedRange({validatedLedgers.c_str(), validatedLedgers.size()});
             }
             log_.info() << "Received a message on ledger "
-                        << " subscription stream. Message : " << response
-                        << " - " << toString();
+                        << " subscription stream. Message : " << response << " - " << toString();
         }
-        else if (
-            response.contains("type") && response["type"] == "ledgerClosed")
+        else if (response.contains("type") && response["type"] == "ledgerClosed")
         {
             log_.info() << "Received a message on ledger "
-                        << " subscription stream. Message : " << response
-                        << " - " << toString();
+                        << " subscription stream. Message : " << response << " - " << toString();
             if (response.contains("ledger_index"))
             {
                 ledgerIndex = response["ledger_index"].as_int64();
             }
             if (response.contains("validated_ledgers"))
             {
-                boost::json::string const& validatedLedgers =
-                    response["validated_ledgers"].as_string();
-                setValidatedRange(
-                    {validatedLedgers.c_str(), validatedLedgers.size()});
+                boost::json::string const& validatedLedgers = response["validated_ledgers"].as_string();
+                setValidatedRange({validatedLedgers.c_str(), validatedLedgers.size()});
             }
         }
         else
@@ -532,15 +482,11 @@ ETLSourceImpl<Derived>::handleMessage()
                     forwardCache_.freshen();
                     subscriptions_->forwardProposedTransaction(response);
                 }
-                else if (
-                    response.contains("type") &&
-                    response["type"] == "validationReceived")
+                else if (response.contains("type") && response["type"] == "validationReceived")
                 {
                     subscriptions_->forwardValidation(response);
                 }
-                else if (
-                    response.contains("type") &&
-                    response["type"] == "manifestReceived")
+                else if (response.contains("type") && response["type"] == "manifestReceived")
                 {
                     subscriptions_->forwardManifest(response);
                 }
@@ -549,8 +495,7 @@ ETLSourceImpl<Derived>::handleMessage()
 
         if (ledgerIndex != 0)
         {
-            log_.trace() << "Pushing ledger sequence = " << ledgerIndex << " - "
-                         << toString();
+            log_.trace() << "Pushing ledger sequence = " << ledgerIndex << " - " << toString();
             networkValidatedLedgers_->push(ledgerIndex);
         }
         return true;
@@ -578,10 +523,7 @@ class AsyncCallData
     std::string lastKey_;
 
 public:
-    AsyncCallData(
-        uint32_t seq,
-        ripple::uint256 const& marker,
-        std::optional<ripple::uint256> const& nextMarker)
+    AsyncCallData(uint32_t seq, ripple::uint256 const& marker, std::optional<ripple::uint256> const& nextMarker)
     {
         request_.mutable_ledger()->set_sequence(seq);
         if (marker.isNonZero())
@@ -595,11 +537,9 @@ public:
 
         unsigned char prefix = marker.data()[0];
 
-        log_.debug() << "Setting up AsyncCallData. marker = "
-                     << ripple::strHex(marker)
+        log_.debug() << "Setting up AsyncCallData. marker = " << ripple::strHex(marker)
                      << " . prefix = " << ripple::strHex(std::string(1, prefix))
-                     << " . nextPrefix_ = "
-                     << ripple::strHex(std::string(1, nextPrefix_));
+                     << " . nextPrefix_ = " << ripple::strHex(std::string(1, nextPrefix_));
 
         assert(nextPrefix_ > prefix || nextPrefix_ == 0x00);
 
@@ -629,8 +569,7 @@ public:
         if (!status_.ok())
         {
             log_.error() << "AsyncCallData status_ not ok: "
-                         << " code = " << status_.error_code()
-                         << " message = " << status_.error_message();
+                         << " code = " << status_.error_code() << " message = " << status_.error_message();
             return CallStatus::ERRORED;
         }
         if (!next_->is_unlimited())
@@ -679,37 +618,26 @@ public:
             if (!cacheOnly)
             {
                 if (lastKey_.size())
-                    backend.writeSuccessor(
-                        std::move(lastKey_),
-                        request_.ledger().sequence(),
-                        std::string{obj.key()});
+                    backend.writeSuccessor(std::move(lastKey_), request_.ledger().sequence(), std::string{obj.key()});
                 lastKey_ = obj.key();
-                backend.writeNFTs(getNFTDataFromObj(
-                    request_.ledger().sequence(), obj.key(), obj.data()));
+                backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
                 backend.writeLedgerObject(
-                    std::move(*obj.mutable_key()),
-                    request_.ledger().sequence(),
-                    std::move(*obj.mutable_data()));
+                    std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data()));
             }
         }
-        backend.cache().update(
-            cacheUpdates, request_.ledger().sequence(), cacheOnly);
-        log_.debug() << "Wrote " << numObjects
-                     << " objects. Got more: " << (more ? "YES" : "NO");
+        backend.cache().update(cacheUpdates, request_.ledger().sequence(), cacheOnly);
+        log_.debug() << "Wrote " << numObjects << " objects. Got more: " << (more ? "YES" : "NO");
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
 
     void
-    call(
-        std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
-        grpc::CompletionQueue& cq)
+    call(std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub, grpc::CompletionQueue& cq)
     {
         context_ = std::make_unique<grpc::ClientContext>();
 
-        std::unique_ptr<grpc::ClientAsyncResponseReader<
-            org::xrpl::rpc::v1::GetLedgerDataResponse>>
-            rpc(stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq));
+        std::unique_ptr<grpc::ClientAsyncResponseReader<org::xrpl::rpc::v1::GetLedgerDataResponse>> rpc(
+            stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq));
 
         rpc->StartCall();
 
@@ -734,10 +662,7 @@ public:
 
 template <class Derived>
 bool
-ETLSourceImpl<Derived>::loadInitialLedger(
-    uint32_t sequence,
-    uint32_t numMarkers,
-    bool cacheOnly)
+ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence, uint32_t numMarkers, bool cacheOnly)
 {
     if (!stub_)
         return false;
@@ -759,8 +684,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
         calls.emplace_back(sequence, markers[i], nextMarker);
     }
 
-    log_.debug() << "Starting data download for ledger " << sequence
-                 << ". Using source = " << toString();
+    log_.debug() << "Starting data download for ledger " << sequence << ". Using source = " << toString();
 
     for (auto& c : calls)
         c.call(stub_, cq);
@@ -801,14 +725,12 @@ ETLSourceImpl<Derived>::loadInitialLedger(
             }
             if (backend_->cache().size() > progress)
             {
-                log_.info() << "Downloaded " << backend_->cache().size()
-                            << " records from rippled";
+                log_.info() << "Downloaded " << backend_->cache().size() << " records from rippled";
                 progress += incr;
             }
         }
     }
-    log_.info() << "Finished loadInitialLedger. cache size = "
-                << backend_->cache().size();
+    log_.info() << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
     size_t numWrites = 0;
     if (!abort)
     {
@@ -818,27 +740,18 @@ ETLSourceImpl<Derived>::loadInitialLedger(
             auto seconds = util::timed<std::chrono::seconds>([&]() {
                 for (auto& key : edgeKeys)
                 {
-                    log_.debug()
-                        << "Writing edge key = " << ripple::strHex(key);
-                    auto succ = backend_->cache().getSuccessor(
-                        *ripple::uint256::fromVoidChecked(key), sequence);
+                    log_.debug() << "Writing edge key = " << ripple::strHex(key);
+                    auto succ = backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
                     if (succ)
-                        backend_->writeSuccessor(
-                            std::move(key),
-                            sequence,
-                            uint256ToString(succ->key));
+                        backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
                 }
                 ripple::uint256 prev = Backend::firstKey;
-                while (auto cur =
-                           backend_->cache().getSuccessor(prev, sequence))
+                while (auto cur = backend_->cache().getSuccessor(prev, sequence))
                 {
                     assert(cur);
                     if (prev == Backend::firstKey)
                     {
-                        backend_->writeSuccessor(
-                            uint256ToString(prev),
-                            sequence,
-                            uint256ToString(cur->key));
+                        backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
                     }
 
                     if (isBookDir(cur->key, cur->blob))
@@ -847,40 +760,29 @@ ETLSourceImpl<Derived>::loadInitialLedger(
                         // make sure the base is not an actual object
                         if (!backend_->cache().get(cur->key, sequence))
                         {
-                            auto succ =
-                                backend_->cache().getSuccessor(base, sequence);
+                            auto succ = backend_->cache().getSuccessor(base, sequence);
                             assert(succ);
                             if (succ->key == cur->key)
                             {
-                                log_.debug() << "Writing book successor = "
-                                             << ripple::strHex(base) << " - "
+                                log_.debug() << "Writing book successor = " << ripple::strHex(base) << " - "
                                              << ripple::strHex(cur->key);
 
-                                backend_->writeSuccessor(
-                                    uint256ToString(base),
-                                    sequence,
-                                    uint256ToString(cur->key));
+                                backend_->writeSuccessor(uint256ToString(base), sequence, uint256ToString(cur->key));
                             }
                         }
                         ++numWrites;
                     }
                     prev = std::move(cur->key);
                     if (numWrites % 100000 == 0 && numWrites != 0)
-                        log_.info()
-                            << "Wrote " << numWrites << " book successors";
+                        log_.info() << "Wrote " << numWrites << " book successors";
                 }
 
-                backend_->writeSuccessor(
-                    uint256ToString(prev),
-                    sequence,
-                    uint256ToString(Backend::lastKey));
+                backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(Backend::lastKey));
 
                 ++numWrites;
             });
-            log_.info()
-                << "Looping through cache and submitting all writes took "
-                << seconds
-                << " seconds. numWrites = " << std::to_string(numWrites);
+            log_.info() << "Looping through cache and submitting all writes took " << seconds
+                        << " seconds. numWrites = " << std::to_string(numWrites);
         }
     }
     return !abort;
@@ -888,10 +790,7 @@ ETLSourceImpl<Derived>::loadInitialLedger(
 
 template <class Derived>
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-ETLSourceImpl<Derived>::fetchLedger(
-    uint32_t ledgerSequence,
-    bool getObjects,
-    bool getObjectNeighbors)
+ETLSourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     org::xrpl::rpc::v1::GetLedgerResponse response;
     if (!stub_)
@@ -927,12 +826,7 @@ make_ETLSource(
     ETLLoadBalancer& balancer)
 {
     auto src = std::make_unique<ProbingETLSource>(
-        config,
-        ioContext,
-        backend,
-        subscriptions,
-        networkValidatedLedgers,
-        balancer);
+        config, ioContext, backend, subscriptions, networkValidatedLedgers, balancer);
 
     src->run();
 
@@ -953,8 +847,7 @@ ETLLoadBalancer::ETLLoadBalancer(
 
     for (auto const& entry : config.array("etl_sources"))
     {
-        std::unique_ptr<ETLSource> source = make_ETLSource(
-            entry, ioContext, backend, subscriptions, nwvl, *this);
+        std::unique_ptr<ETLSource> source = make_ETLSource(entry, ioContext, backend, subscriptions, nwvl, *this);
 
         sources_.push_back(std::move(source));
         log_.info() << "Added etl source - " << sources_.back()->toString();
@@ -966,13 +859,11 @@ ETLLoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
 {
     execute(
         [this, &sequence, cacheOnly](auto& source) {
-            bool res =
-                source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
+            bool res = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
             if (!res)
             {
                 log_.error() << "Failed to download initial ledger."
-                             << " Sequence = " << sequence
-                             << " source = " << source->toString();
+                             << " Sequence = " << sequence << " source = " << source->toString();
             }
             return res;
         },
@@ -980,17 +871,12 @@ ETLLoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
 }
 
 std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-ETLLoadBalancer::fetchLedger(
-    uint32_t ledgerSequence,
-    bool getObjects,
-    bool getObjectNeighbors)
+ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     org::xrpl::rpc::v1::GetLedgerResponse response;
     bool success = execute(
-        [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](
-            auto& source) {
-            auto [status, data] = source->fetchLedger(
-                ledgerSequence, getObjects, getObjectNeighbors);
+        [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
+            auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
             if (status.ok() && response.validated())
             {
@@ -1000,10 +886,8 @@ ETLLoadBalancer::fetchLedger(
             }
             else
             {
-                log.warn() << "Could not fetch ledger " << ledgerSequence
-                           << ", Reply: " << response.DebugString()
-                           << ", error_code: " << status.error_code()
-                           << ", error_msg: " << status.error_message()
+                log.warn() << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
+                           << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
                            << ", source = " << source->toString();
                 return false;
             }
@@ -1026,8 +910,7 @@ ETLLoadBalancer::forwardToRippled(
     auto numAttempts = 0;
     while (numAttempts < sources_.size())
     {
-        if (auto res =
-                sources_[sourceIdx]->forwardToRippled(request, clientIp, yield))
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield))
             return res;
 
         sourceIdx = (sourceIdx + 1) % sources_.size();
@@ -1100,14 +983,10 @@ ETLSourceImpl<Derived>::requestFromRippled(
         // resources. See "secure_gateway" in
         //
         // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
-        ws->set_option(websocket::stream_base::decorator(
-            [&clientIp](websocket::request_type& req) {
-                req.set(
-                    http::field::user_agent,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-client-coro");
-                req.set(http::field::forwarded, "for=" + clientIp);
-            }));
+        ws->set_option(websocket::stream_base::decorator([&clientIp](websocket::request_type& req) {
+            req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
+            req.set(http::field::forwarded, "for=" + clientIp);
+        }));
         log_.trace() << "client ip: " << clientIp;
 
         log_.trace() << "Performing websocket handshake";
@@ -1118,8 +997,7 @@ ETLSourceImpl<Derived>::requestFromRippled(
 
         log_.trace() << "Sending request";
         // Send the message
-        ws->async_write(
-            net::buffer(boost::json::serialize(request)), yield[ec]);
+        ws->async_write(net::buffer(boost::json::serialize(request)), yield[ec]);
         if (ec)
             return {};
 
@@ -1134,8 +1012,7 @@ ETLSourceImpl<Derived>::requestFromRippled(
 
         if (!parsed.is_object())
         {
-            log_.error() << "Error parsing response: "
-                         << std::string{begin, end};
+            log_.error() << "Error parsing response: " << std::string{begin, end};
             return {};
         }
         log_.trace() << "Successfully forward request";
@@ -1164,8 +1041,8 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
     {
         auto& source = sources_[sourceIdx];
 
-        log_.debug() << "Attempting to execute func. ledger sequence = "
-                     << ledgerSequence << " - source = " << source->toString();
+        log_.debug() << "Attempting to execute func. ledger sequence = " << ledgerSequence
+                     << " - source = " << source->toString();
         // Originally, it was (source->hasLedger(ledgerSequence) || true)
         /* Sometimes rippled has ledger but doesn't actually know. However,
         but this does NOT happen in the normal case and is safe to remove
@@ -1175,30 +1052,26 @@ ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
             bool res = f(source);
             if (res)
             {
-                log_.debug() << "Successfully executed func at source = "
-                             << source->toString()
+                log_.debug() << "Successfully executed func at source = " << source->toString()
                              << " - ledger sequence = " << ledgerSequence;
                 break;
             }
             else
             {
-                log_.warn() << "Failed to execute func at source = "
-                            << source->toString()
+                log_.warn() << "Failed to execute func at source = " << source->toString()
                             << " - ledger sequence = " << ledgerSequence;
             }
         }
         else
         {
-            log_.warn() << "Ledger not present at source = "
-                        << source->toString()
+            log_.warn() << "Ledger not present at source = " << source->toString()
                         << " - ledger sequence = " << ledgerSequence;
         }
         sourceIdx = (sourceIdx + 1) % sources_.size();
         numAttempts++;
         if (numAttempts % sources_.size() == 0)
         {
-            log_.info() << "Ledger sequence " << ledgerSequence
-                        << " is not yet available from any configured sources. "
+            log_.info() << "Ledger sequence " << ledgerSequence << " is not yet available from any configured sources. "
                         << "Sleeping and trying again";
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }

@@ -32,9 +32,7 @@ namespace Backend::Cassandra::detail {
 
 class Tuple : public ManagedObject<CassTuple>
 {
-    static constexpr auto deleter = [](CassTuple* ptr) {
-        cass_tuple_free(ptr);
-    };
+    static constexpr auto deleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
 
     template <typename>
     static constexpr bool unsupported_v = false;
@@ -44,12 +42,9 @@ public:
 
     template <typename... Types>
     explicit Tuple(std::tuple<Types...>&& value)
-        : ManagedObject{
-              cass_tuple_new(std::tuple_size<std::tuple<Types...>>{}),
-              deleter}
+        : ManagedObject{cass_tuple_new(std::tuple_size<std::tuple<Types...>>{}), deleter}
     {
-        std::apply(
-            std::bind_front(&Tuple::bind<Types...>, this), std::move(value));
+        std::apply(std::bind_front(&Tuple::bind<Types...>, this), std::move(value));
     }
 
     template <typename... Args>
@@ -69,9 +64,7 @@ public:
             if (rc != CASS_OK)
             {
                 auto const tag = '[' + std::string{label} + ']';
-                throw std::logic_error(
-                    tag + " at idx " + to_string(idx) + ": " +
-                    cass_error_desc(rc));
+                throw std::logic_error(tag + " at idx " + to_string(idx) + ": " + cass_error_desc(rc));
             }
         };
 
@@ -79,8 +72,7 @@ public:
 
         if constexpr (std::is_same_v<decayed_t, bool>)
         {
-            auto const rc =
-                cass_tuple_set_bool(*this, idx, value ? cass_true : cass_false);
+            auto const rc = cass_tuple_set_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
@@ -124,8 +116,7 @@ private:
         Type output;
 
         if (not cass_iterator_next(*this))
-            throw std::logic_error(
-                "Could not extract next value from tuple iterator");
+            throw std::logic_error("Could not extract next value from tuple iterator");
 
         auto throwErrorIfNeeded = [](CassError rc, std::string_view label) {
             if (rc != CASS_OK)
@@ -141,8 +132,7 @@ private:
         if constexpr (std::is_convertible_v<decayed_t, int64_t>)
         {
             int64_t out;
-            auto const rc =
-                cass_value_get_int64(cass_iterator_get_value(*this), &out);
+            auto const rc = cass_value_get_int64(cass_iterator_get_value(*this), &out);
             throwErrorIfNeeded(rc, "Extract int64 from tuple");
             output = static_cast<decayed_t>(out);
         }

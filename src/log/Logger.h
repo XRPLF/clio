@@ -68,8 +68,7 @@ class SourceLocation
     std::size_t line_;
 
 public:
-    SourceLocation(std::string_view file, std::size_t line)
-        : file_{file}, line_{line}
+    SourceLocation(std::string_view file, std::size_t line) : file_{file}, line_{line}
     {
     }
     std::string_view
@@ -84,8 +83,7 @@ public:
     }
 };
 using source_location_t = SourceLocation;
-#define CURRENT_SRC_LOCATION \
-    source_location_t(__builtin_FILE(), __builtin_LINE())
+#define CURRENT_SRC_LOCATION source_location_t(__builtin_FILE(), __builtin_LINE())
 #endif
 
 /**
@@ -121,9 +119,7 @@ operator<<(std::ostream& stream, Severity sev);
  * @throws std::runtime_error Thrown if severity is not in the right format
  */
 Severity
-tag_invoke(
-    boost::json::value_to_tag<Severity>,
-    boost::json::value const& value);
+tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value);
 
 /**
  * @brief A simple thread-safe logger for the channel specified
@@ -135,8 +131,7 @@ tag_invoke(
  */
 class Logger final
 {
-    using logger_t =
-        boost::log::sources::severity_channel_logger_mt<Severity, std::string>;
+    using logger_t = boost::log::sources::severity_channel_logger_mt<Severity, std::string>;
     mutable logger_t logger_;
 
     friend class LogService;  // to expose the Pump interface
@@ -146,8 +141,7 @@ class Logger final
      */
     class Pump final
     {
-        using pump_opt_t =
-            std::optional<boost::log::aux::record_pump<logger_t>>;
+        using pump_opt_t = std::optional<boost::log::aux::record_pump<logger_t>>;
 
         boost::log::record rec_;
         pump_opt_t pump_ = std::nullopt;
@@ -160,8 +154,7 @@ class Logger final
             if (rec_)
             {
                 pump_.emplace(boost::log::aux::make_record_pump(logger, rec_));
-                pump_->stream() << boost::log::add_value(
-                    "SourceLocation", pretty_path(loc));
+                pump_->stream() << boost::log::add_value("SourceLocation", pretty_path(loc));
             }
         }
 
@@ -205,8 +198,7 @@ public:
      *
      * @param channel The channel this logger will report into.
      */
-    Logger(std::string channel)
-        : logger_{boost::log::keywords::channel = channel}
+    Logger(std::string channel) : logger_{boost::log::keywords::channel = channel}
     {
     }
     Logger(Logger const&) = default;

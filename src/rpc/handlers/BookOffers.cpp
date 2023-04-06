@@ -84,28 +84,21 @@ doBookOffers(Context const& context)
         return status;
 
     auto start = std::chrono::system_clock::now();
-    auto [offers, _] = context.backend->fetchBookOffers(
-        bookBase, lgrInfo.seq, limit, context.yield);
+    auto [offers, _] = context.backend->fetchBookOffers(bookBase, lgrInfo.seq, limit, context.yield);
     auto end = std::chrono::system_clock::now();
 
-    gLog.warn() << "Time loading books: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(
-                       end - start)
-                       .count()
+    gLog.warn() << "Time loading books: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
                 << " milliseconds - request = " << request;
 
     response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
     response[JS(ledger_index)] = lgrInfo.seq;
 
-    response[JS(offers)] = postProcessOrderBook(
-        offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
+    response[JS(offers)] = postProcessOrderBook(offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
 
     auto end2 = std::chrono::system_clock::now();
 
     gLog.warn() << "Time transforming to json: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(
-                       end2 - end)
-                       .count()
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - end).count()
                 << " milliseconds - request = " << request;
     return response;
 }

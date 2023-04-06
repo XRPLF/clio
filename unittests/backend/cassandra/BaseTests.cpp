@@ -40,8 +40,7 @@ protected:
     {
         Handle handle{contactPoints};
         EXPECT_TRUE(handle.connect());
-        std::string query = "CREATE KEYSPACE IF NOT EXISTS " +
-            std::string{keyspace} +
+        std::string query = "CREATE KEYSPACE IF NOT EXISTS " + std::string{keyspace} +
             " WITH replication = {'class': "
             "'SimpleStrategy', 'replication_factor': '1'} AND "
             "durable_writes = "
@@ -85,8 +84,7 @@ protected:
         int64_t idx = 1000;
 
         for (auto const& entry : entries)
-            statements.push_back(
-                insert.bind(entry, static_cast<int64_t>(idx++)));
+            statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
 
         EXPECT_EQ(statements.size(), entries.size());
         EXPECT_TRUE(handle.execute(statements));
@@ -107,9 +105,7 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailFormat)
     auto f = handle.asyncConnect();
     auto res = f.await();
     ASSERT_FALSE(res);
-    EXPECT_EQ(
-        res.error(),
-        "No hosts available: Unable to connect to any contact points");
+    EXPECT_EQ(res.error(), "No hosts available: Unable to connect to any contact points");
     EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_NO_HOSTS_AVAILABLE);
 }
 
@@ -124,8 +120,7 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailTimeout)
     auto res = f.await();
     ASSERT_FALSE(res);
     // scylla and cassandra produce different text
-    EXPECT_TRUE(res.error().message().starts_with(
-        "No hosts available: Underlying connection error:"));
+    EXPECT_TRUE(res.error().message().starts_with("No hosts available: Underlying connection error:"));
     EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_NO_HOSTS_AVAILABLE);
 }
 
@@ -134,9 +129,7 @@ TEST_F(BackendCassandraBaseTest, FutureCallback)
     Handle handle{"127.0.0.1"};
     ASSERT_TRUE(handle.connect());
 
-    auto const statement =
-        handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces")
-            .bind();
+    auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
 
     bool complete = false;
     auto f = handle.asyncExecute(statement, [&complete](auto const res) {
@@ -157,24 +150,21 @@ TEST_F(BackendCassandraBaseTest, FutureCallbackSurviveMove)
     Handle handle{"127.0.0.1"};
     ASSERT_TRUE(handle.connect());
 
-    auto const statement =
-        handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces")
-            .bind();
+    auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
 
     bool complete = false;
     std::vector<FutureWithCallback> futures;
     std::binary_semaphore sem{0};
 
-    futures.push_back(
-        handle.asyncExecute(statement, [&complete, &sem](auto const res) {
-            complete = true;
-            EXPECT_TRUE(res.value().hasRows());
+    futures.push_back(handle.asyncExecute(statement, [&complete, &sem](auto const res) {
+        complete = true;
+        EXPECT_TRUE(res.value().hasRows());
 
-            for (auto [ks] : extract<std::string>(res.value()))
-                std::cout << "keyspace: " << ks << '\n';
+        for (auto [ks] : extract<std::string>(res.value()))
+            std::cout << "keyspace: " << ks << '\n';
 
-            sem.release();
-        }));
+        sem.release();
+    }));
 
     sem.acquire();
     for (auto const& f : futures)
@@ -252,8 +242,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         int64_t idx = 1000;
 
         for (auto const& entry : entries)
-            futures.push_back(handle.asyncExecute(
-                insert, entry, static_cast<int64_t>(idx++)));
+            futures.push_back(handle.asyncExecute(insert, entry, static_cast<int64_t>(idx++)));
 
         ASSERT_EQ(futures.size(), entries.size());
         for (auto const& f : futures)
@@ -324,8 +313,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
         int64_t idx = 1000;
 
         for (auto const& entry : entries)
-            statements.push_back(
-                insert.bind(entry, static_cast<int64_t>(idx++)));
+            statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
 
         ASSERT_EQ(statements.size(), entries.size());
         auto rc = handle.execute(statements);
@@ -385,8 +373,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
 
     // now migrate data; tmp column will just get the sequence number + 1 stored
     std::vector<Statement> migrationStatements;
-    auto const migrationInsert = handle.prepare(
-        "INSERT INTO strings_v2 (hash, sequence, tmp) VALUES (?, ?, ?)");
+    auto const migrationInsert = handle.prepare("INSERT INTO strings_v2 (hash, sequence, tmp) VALUES (?, ?, ?)");
 
     auto const res = handle.execute("SELECT hash, sequence FROM strings");
     ASSERT_TRUE(res);
@@ -396,8 +383,8 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     {
         static_assert(std::is_same_v<decltype(hash), std::string>);
         static_assert(std::is_same_v<decltype(seq), int64_t>);
-        migrationStatements.push_back(migrationInsert.bind(
-            hash, static_cast<int64_t>(seq), static_cast<int64_t>(seq + 1u)));
+        migrationStatements.push_back(
+            migrationInsert.bind(hash, static_cast<int64_t>(seq), static_cast<int64_t>(seq + 1u)));
     }
 
     EXPECT_TRUE(handle.execute(migrationStatements));

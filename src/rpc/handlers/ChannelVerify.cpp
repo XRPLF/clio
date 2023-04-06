@@ -55,23 +55,18 @@ doChannelVerify(Context const& context)
 
     std::optional<ripple::PublicKey> pk;
     {
-        std::string const strPk =
-            request.at(JS(public_key)).as_string().c_str();
-        pk = ripple::parseBase58<ripple::PublicKey>(
-            ripple::TokenType::AccountPublic, strPk);
+        std::string const strPk = request.at(JS(public_key)).as_string().c_str();
+        pk = ripple::parseBase58<ripple::PublicKey>(ripple::TokenType::AccountPublic, strPk);
 
         if (!pk)
         {
             auto pkHex = ripple::strUnHex(strPk);
             if (!pkHex)
-                return Status{
-                    RippledError::rpcPUBLIC_MALFORMED, "malformedPublicKey"};
+                return Status{RippledError::rpcPUBLIC_MALFORMED, "malformedPublicKey"};
 
-            auto const pkType =
-                ripple::publicKeyType(ripple::makeSlice(*pkHex));
+            auto const pkType = ripple::publicKeyType(ripple::makeSlice(*pkHex));
             if (!pkType)
-                return Status{
-                    RippledError::rpcPUBLIC_MALFORMED, "invalidKeyType"};
+                return Status{RippledError::rpcPUBLIC_MALFORMED, "invalidKeyType"};
 
             pk.emplace(ripple::makeSlice(*pkHex));
         }
@@ -81,12 +76,10 @@ doChannelVerify(Context const& context)
     if (auto const status = getChannelId(request, channelId); status)
         return status;
 
-    auto optDrops =
-        ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
+    auto optDrops = ripple::to_uint64(request.at(JS(amount)).as_string().c_str());
 
     if (!optDrops)
-        return Status{
-            RippledError::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
+        return Status{RippledError::rpcCHANNEL_AMT_MALFORMED, "couldNotParseAmount"};
 
     std::uint64_t drops = *optDrops;
 
@@ -96,11 +89,9 @@ doChannelVerify(Context const& context)
         return Status{RippledError::rpcINVALID_PARAMS, "invalidSignature"};
 
     ripple::Serializer msg;
-    ripple::serializePayChanAuthorization(
-        msg, channelId, ripple::XRPAmount(drops));
+    ripple::serializePayChanAuthorization(msg, channelId, ripple::XRPAmount(drops));
 
-    response[JS(signature_verified)] =
-        ripple::verify(*pk, msg.slice(), ripple::makeSlice(*sig), true);
+    response[JS(signature_verified)] = ripple::verify(*pk, msg.slice(), ripple::makeSlice(*sig), true);
 
     return response;
 }

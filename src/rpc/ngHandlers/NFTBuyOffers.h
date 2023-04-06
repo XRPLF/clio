@@ -26,8 +26,7 @@ namespace RPCng {
 class NFTBuyOffersHandler : public NFTOffersHandlerBase
 {
 public:
-    NFTBuyOffersHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    NFTBuyOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : NFTOffersHandlerBase(sharedPtrBackend)
     {
     }

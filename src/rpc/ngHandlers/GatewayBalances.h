@@ -39,8 +39,7 @@ public:
         std::map<ripple::Currency, ripple::STAmount> sums;
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances;
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> assets;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>>
-            frozenBalances;
+        std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
         // validated should be sent via framework
         bool validated = true;
     };
@@ -56,8 +55,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    GatewayBalancesHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    GatewayBalancesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -65,39 +63,30 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        static auto const hotWalletValidator = validation::CustomValidator{
-            [](boost::json::value const& value,
-               std::string_view key) -> MaybeError {
+        static auto const hotWalletValidator =
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
                 if (!value.is_string() && !value.is_array())
                 {
-                    return Error{RPC::Status{
-                        RPC::RippledError::rpcINVALID_PARAMS,
-                        std::string(key) + "NotStringOrArray"}};
+                    return Error{
+                        RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotStringOrArray"}};
                 }
                 // wallet needs to be an valid accountID or public key
-                auto const wallets = value.is_array()
-                    ? value.as_array()
-                    : boost::json::array{value};
-                auto const getAccountID =
-                    [](auto const& j) -> std::optional<ripple::AccountID> {
+                auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
+                auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
                     if (j.is_string())
                     {
                         auto const pk = ripple::parseBase58<ripple::PublicKey>(
-                            ripple::TokenType::AccountPublic,
-                            j.as_string().c_str());
+                            ripple::TokenType::AccountPublic, j.as_string().c_str());
                         if (pk)
                             return ripple::calcAccountID(*pk);
-                        return ripple::parseBase58<ripple::AccountID>(
-                            j.as_string().c_str());
+                        return ripple::parseBase58<ripple::AccountID>(j.as_string().c_str());
                     }
                     return {};
                 };
                 for (auto const& wallet : wallets)
                 {
                     if (!getAccountID(wallet))
-                        return Error{RPC::Status{
-                            RPC::RippledError::rpcINVALID_PARAMS,
-                            std::string(key) + "Malformed"}};
+                        return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
                 }
                 return MaybeError{};
             }};
@@ -106,7 +95,9 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(hotwallet), hotWalletValidator}};
+            {JS(hotwallet), hotWalletValidator},
+        };
+
         return rpcSpec;
     }
 
@@ -115,10 +106,7 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

@@ -43,9 +43,7 @@ class Config final
 public:
     using key_type = std::string;           /*! The type of key used */
     using array_type = std::vector<Config>; /*! The type of array used */
-    using write_cursor_type = std::pair<
-        std::optional<std::reference_wrapper<boost::json::value>>,
-        key_type>;
+    using write_cursor_type = std::pair<std::optional<std::reference_wrapper<boost::json::value>>, key_type>;
 
     /**
      * @brief Construct a new Config object.
@@ -101,8 +99,7 @@ public:
     {
         auto maybe_element = lookup(key);
         if (maybe_element)
-            return std::make_optional<Result>(
-                checkedAs<Result>(key, *maybe_element));
+            return std::make_optional<Result>(checkedAs<Result>(key, *maybe_element));
         return std::nullopt;
     }
 
@@ -367,9 +364,7 @@ private:
             if (not value.is_number())
                 has_error = true;
         }
-        else if constexpr (
-            std::is_convertible_v<Return, uint64_t> ||
-            std::is_convertible_v<Return, int64_t>)
+        else if constexpr (std::is_convertible_v<Return, uint64_t> || std::is_convertible_v<Return, int64_t>)
         {
             if (not value.is_int64() && not value.is_uint64())
                 has_error = true;
@@ -377,9 +372,8 @@ private:
 
         if (has_error)
             throw std::runtime_error(
-                "Type for key '" + key + "' is '" +
-                std::string{to_string(value.kind())} +
-                "' in JSON but requested '" + detail::typeName<Return>() + "'");
+                "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} + "' in JSON but requested '" +
+                detail::typeName<Return>() + "'");
 
         return value_to<Return>(value);
     }

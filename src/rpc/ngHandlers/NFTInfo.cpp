@@ -34,20 +34,14 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
-    auto const maybeNft =
-        sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
+    auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
     if (not maybeNft.has_value())
-        return Error{
-            Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
+        return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
 
     auto const& nft = *maybeNft;
     auto output = NFTInfoHandler::Output{};
@@ -69,10 +63,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    NFTInfoHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::Output const& output)
 {
     // TODO: use JStrings when they become available
     auto object = boost::json::object{
@@ -95,9 +86,7 @@ tag_invoke(
 }
 
 NFTInfoHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<NFTInfoHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     NFTInfoHandler::Input input;
@@ -117,8 +106,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
 

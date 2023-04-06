@@ -47,23 +47,19 @@ std::string
 toString(ripple::LedgerInfo const& info)
 {
     std::stringstream ss;
-    ss << "LedgerInfo { Sequence : " << info.seq
-       << " Hash : " << strHex(info.hash) << " TxHash : " << strHex(info.txHash)
-       << " AccountHash : " << strHex(info.accountHash)
+    ss << "LedgerInfo { Sequence : " << info.seq << " Hash : " << strHex(info.hash)
+       << " TxHash : " << strHex(info.txHash) << " AccountHash : " << strHex(info.accountHash)
        << " ParentHash : " << strHex(info.parentHash) << " }";
     return ss.str();
 }
 }  // namespace clio::detail
 
 FormattedTransactionsData
-ReportingETL::insertTransactions(
-    ripple::LedgerInfo const& ledger,
-    org::xrpl::rpc::v1::GetLedgerResponse& data)
+ReportingETL::insertTransactions(ripple::LedgerInfo const& ledger, org::xrpl::rpc::v1::GetLedgerResponse& data)
 {
     FormattedTransactionsData result;
 
-    for (auto& txn :
-         *(data.mutable_transactions_list()->mutable_transactions()))
+    for (auto& txn : *(data.mutable_transactions_list()->mutable_transactions()))
     {
         std::string* raw = txn.mutable_transaction_blob();
 
@@ -72,18 +68,15 @@ ReportingETL::insertTransactions(
 
         log_.trace() << "Inserting transaction = " << sttx.getTransactionID();
 
-        ripple::TxMeta txMeta{
-            sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
+        ripple::TxMeta txMeta{sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
 
         auto const [nftTxs, maybeNFT] = getNFTDataFromTx(txMeta, sttx);
-        result.nfTokenTxData.insert(
-            result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
+        result.nfTokenTxData.insert(result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
         if (maybeNFT)
             result.nfTokensData.push_back(*maybeNFT);
 
         auto journal = ripple::debugLog();
-        result.accountTxData.emplace_back(
-            txMeta, sttx.getTransactionID(), journal);
+        result.accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
         std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
         backend_->writeTransaction(
             std::move(keyStr),
@@ -96,18 +89,12 @@ ReportingETL::insertTransactions(
     // Remove all but the last NFTsData for each id. unique removes all
     // but the first of a group, so we want to reverse sort by transaction
     // index
-    std::sort(
-        result.nfTokensData.begin(),
-        result.nfTokensData.end(),
-        [](NFTsData const& a, NFTsData const& b) {
-            return a.tokenID > b.tokenID &&
-                a.transactionIndex > b.transactionIndex;
-        });
+    std::sort(result.nfTokensData.begin(), result.nfTokensData.end(), [](NFTsData const& a, NFTsData const& b) {
+        return a.tokenID > b.tokenID && a.transactionIndex > b.transactionIndex;
+    });
     // Now we can unique the NFTs by tokenID.
-    auto last = std::unique(
-        result.nfTokensData.begin(),
-        result.nfTokensData.end(),
-        [](NFTsData const& a, NFTsData const& b) {
+    auto last =
+        std::unique(result.nfTokensData.begin(), result.nfTokensData.end(), [](NFTsData const& a, NFTsData const& b) {
             return a.tokenID == b.tokenID;
         });
     result.nfTokensData.erase(last, result.nfTokensData.end());
@@ -130,13 +117,11 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
     // fetch the ledger from the network. This function will not return until
     // either the fetch is successful, or the server is being shutdown. This
     // only fetches the ledger header and the transactions+metadata
-    std::optional<org::xrpl::rpc::v1::GetLedgerResponse> ledgerData{
-        fetchLedgerData(startingSequence)};
+    std::optional<org::xrpl::rpc::v1::GetLedgerResponse> ledgerData{fetchLedgerData(startingSequence)};
     if (!ledgerData)
         return {};
 
-    ripple::LedgerInfo lgrInfo =
-        deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
+    ripple::LedgerInfo lgrInfo = deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
     log_.debug() << "Deserialized ledger header. " << detail::toString(lgrInfo);
 
@@ -145,12 +130,10 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
         log_.debug() << "Started writes";
 
-        backend_->writeLedger(
-            lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
+        backend_->writeLedger(lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
 
         log_.debug() << "Wrote ledger";
-        FormattedTransactionsData insertTxResult =
-            insertTransactions(lgrInfo, *ledgerData);
+        FormattedTransactionsData insertTxResult = insertTransactions(lgrInfo, *ledgerData);
         log_.debug() << "Inserted txns";
 
         // download the full account state map. This function downloads full
@@ -164,11 +147,9 @@ ReportingETL::loadInitialLedger(uint32_t startingSequence)
 
         if (!stopping_)
         {
-            backend_->writeAccountTransactions(
-                std::move(insertTxResult.accountTxData));
+            backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
             backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
-            backend_->writeNFTTransactions(
-                std::move(insertTxResult.nfTokenTxData));
+            backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
         }
         backend_->finishWrites(startingSequence);
     });
@@ -185,10 +166,8 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     {
         log_.info() << "Updating cache";
 
-        std::vector<Backend::LedgerObject> diff =
-            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
-            });
+        std::vector<Backend::LedgerObject> diff = Backend::synchronousAndRetryOnTimeout(
+            [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
 
         backend_->cache().update(diff, lgrInfo.seq);
         backend_->updateRange(lgrInfo.seq);
@@ -201,22 +180,16 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
     if (age < 600)
     {
         std::optional<ripple::Fees> fees =
-            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchFees(lgrInfo.seq, yield);
-            });
+            Backend::synchronousAndRetryOnTimeout([&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
 
-        std::vector<Backend::TransactionAndMetadata> transactions =
-            Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchAllTransactionsInLedger(
-                    lgrInfo.seq, yield);
-            });
+        std::vector<Backend::TransactionAndMetadata> transactions = Backend::synchronousAndRetryOnTimeout(
+            [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
 
         auto ledgerRange = backend_->fetchLedgerRange();
         assert(ledgerRange);
         assert(fees);
 
-        std::string range = std::to_string(ledgerRange->minSequence) + "-" +
-            std::to_string(ledgerRange->maxSequence);
+        std::string range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
         subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
@@ -228,15 +201,12 @@ ReportingETL::publishLedger(ripple::LedgerInfo const& lgrInfo)
         log_.info() << "Published ledger " << std::to_string(lgrInfo.seq);
     }
     else
-        log_.info() << "Skipping publishing ledger "
-                    << std::to_string(lgrInfo.seq);
+        log_.info() << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
     setLastPublish();
 }
 
 bool
-ReportingETL::publishLedger(
-    uint32_t ledgerSequence,
-    std::optional<uint32_t> maxAttempts)
+ReportingETL::publishLedger(uint32_t ledgerSequence, std::optional<uint32_t> maxAttempts)
 {
     log_.info() << "Attempting to publish ledger = " << ledgerSequence;
     size_t numAttempts = 0;
@@ -253,8 +223,7 @@ ReportingETL::publishLedger(
             // second in between each attempt.
             if (maxAttempts && numAttempts >= maxAttempts)
             {
-                log_.debug() << "Failed to publish ledger after " << numAttempts
-                             << " attempts.";
+                log_.debug() << "Failed to publish ledger after " << numAttempts << " attempts.";
                 return false;
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -263,9 +232,8 @@ ReportingETL::publishLedger(
         }
         else
         {
-            auto lgr = Backend::synchronousAndRetryOnTimeout([&](auto yield) {
-                return backend_->fetchLedgerBySequence(ledgerSequence, yield);
-            });
+            auto lgr = Backend::synchronousAndRetryOnTimeout(
+                [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
 
             assert(lgr);
             publishLedger(*lgr);
@@ -281,8 +249,7 @@ ReportingETL::fetchLedgerData(uint32_t seq)
 {
     log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
 
-    std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_->fetchLedger(seq, false, false);
+    std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response = loadBalancer_->fetchLedger(seq, false, false);
     if (response)
         log_.trace() << "GetLedger reply = " << response->DebugString();
     return response;
@@ -293,12 +260,8 @@ ReportingETL::fetchLedgerDataAndDiff(uint32_t seq)
 {
     log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
 
-    std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response =
-        loadBalancer_->fetchLedger(
-            seq,
-            true,
-            !backend_->cache().isFull() ||
-                backend_->cache().latestLedgerSequence() >= seq);
+    std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response = loadBalancer_->fetchLedger(
+        seq, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= seq);
     if (response)
         log_.trace() << "GetLedger reply = " << response->DebugString();
     return response;
@@ -308,8 +271,7 @@ std::pair<ripple::LedgerInfo, bool>
 ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
 {
     log_.debug() << "Beginning ledger update";
-    ripple::LedgerInfo lgrInfo =
-        deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
+    ripple::LedgerInfo lgrInfo = deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
     log_.debug() << "Deserialized ledger header. " << detail::toString(lgrInfo);
     backend_->startWrites();
@@ -327,14 +289,10 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             auto firstBook = std::move(*obj.mutable_first_book());
             if (!firstBook.size())
                 firstBook = uint256ToString(Backend::lastKey);
-            log_.debug() << "writing book successor "
-                         << ripple::strHex(obj.book_base()) << " - "
+            log_.debug() << "writing book successor " << ripple::strHex(obj.book_base()) << " - "
                          << ripple::strHex(firstBook);
 
-            backend_->writeSuccessor(
-                std::move(*obj.mutable_book_base()),
-                lgrInfo.seq,
-                std::move(firstBook));
+            backend_->writeSuccessor(std::move(*obj.mutable_book_base()), lgrInfo.seq, std::move(firstBook));
         }
         for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
         {
@@ -347,32 +305,20 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                 if (!succPtr->size())
                     *succPtr = uint256ToString(Backend::lastKey);
 
-                if (obj.mod_type() ==
-                    org::xrpl::rpc::v1::RawLedgerObject::DELETED)
+                if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::DELETED)
                 {
-                    log_.debug() << "Modifying successors for deleted object "
-                                 << ripple::strHex(obj.key()) << " - "
-                                 << ripple::strHex(*predPtr) << " - "
-                                 << ripple::strHex(*succPtr);
+                    log_.debug() << "Modifying successors for deleted object " << ripple::strHex(obj.key()) << " - "
+                                 << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
 
-                    backend_->writeSuccessor(
-                        std::move(*predPtr), lgrInfo.seq, std::move(*succPtr));
+                    backend_->writeSuccessor(std::move(*predPtr), lgrInfo.seq, std::move(*succPtr));
                 }
                 else
                 {
-                    log_.debug() << "adding successor for new object "
-                                 << ripple::strHex(obj.key()) << " - "
-                                 << ripple::strHex(*predPtr) << " - "
-                                 << ripple::strHex(*succPtr);
+                    log_.debug() << "adding successor for new object " << ripple::strHex(obj.key()) << " - "
+                                 << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
 
-                    backend_->writeSuccessor(
-                        std::move(*predPtr),
-                        lgrInfo.seq,
-                        std::string{obj.key()});
-                    backend_->writeSuccessor(
-                        std::string{obj.key()},
-                        lgrInfo.seq,
-                        std::move(*succPtr));
+                    backend_->writeSuccessor(std::move(*predPtr), lgrInfo.seq, std::string{obj.key()});
+                    backend_->writeSuccessor(std::string{obj.key()}, lgrInfo.seq, std::move(*succPtr));
                 }
             }
             else
@@ -388,17 +334,13 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     {
         auto key = ripple::uint256::fromVoidChecked(obj.key());
         assert(key);
-        cacheUpdates.push_back(
-            {*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
-        log_.debug() << "key = " << ripple::strHex(*key)
-                     << " - mod type = " << obj.mod_type();
+        cacheUpdates.push_back({*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
+        log_.debug() << "key = " << ripple::strHex(*key) << " - mod type = " << obj.mod_type();
 
-        if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED &&
-            !rawData.object_neighbors_included())
+        if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED && !rawData.object_neighbors_included())
         {
             log_.debug() << "object neighbors not included. using cache";
-            if (!backend_->cache().isFull() ||
-                backend_->cache().latestLedgerSequence() != lgrInfo.seq - 1)
+            if (!backend_->cache().isFull() || backend_->cache().latestLedgerSequence() != lgrInfo.seq - 1)
                 throw std::runtime_error(
                     "Cache is not full, but object neighbors were not "
                     "included");
@@ -417,20 +359,15 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             {
                 log_.debug() << "Is book dir. key = " << ripple::strHex(*key);
                 auto bookBase = getBookBase(*key);
-                auto oldFirstDir =
-                    backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
+                auto oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
                 assert(oldFirstDir);
                 // We deleted the first directory, or we added a directory prior
                 // to the old first directory
-                if ((isDeleted && key == oldFirstDir->key) ||
-                    (!isDeleted && key < oldFirstDir->key))
+                if ((isDeleted && key == oldFirstDir->key) || (!isDeleted && key < oldFirstDir->key))
                 {
-                    log_.debug()
-                        << "Need to recalculate book base successor. base = "
-                        << ripple::strHex(bookBase)
-                        << " - key = " << ripple::strHex(*key)
-                        << " - isDeleted = " << isDeleted
-                        << " - seq = " << lgrInfo.seq;
+                    log_.debug() << "Need to recalculate book base successor. base = " << ripple::strHex(bookBase)
+                                 << " - key = " << ripple::strHex(*key) << " - isDeleted = " << isDeleted
+                                 << " - seq = " << lgrInfo.seq;
                     bookSuccessorsToCalculate.insert(bookBase);
                 }
             }
@@ -438,18 +375,14 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
         if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
             modified.insert(*key);
 
-        backend_->writeLedgerObject(
-            std::move(*obj.mutable_key()),
-            lgrInfo.seq,
-            std::move(*obj.mutable_data()));
+        backend_->writeLedgerObject(std::move(*obj.mutable_key()), lgrInfo.seq, std::move(*obj.mutable_data()));
     }
     backend_->cache().update(cacheUpdates, lgrInfo.seq);
     // rippled didn't send successor information, so use our cache
     if (!rawData.object_neighbors_included())
     {
         log_.debug() << "object neighbors not included. using cache";
-        if (!backend_->cache().isFull() ||
-            backend_->cache().latestLedgerSequence() != lgrInfo.seq)
+        if (!backend_->cache().isFull() || backend_->cache().latestLedgerSequence() != lgrInfo.seq)
             throw std::runtime_error(
                 "Cache is not full, but object neighbors were not "
                 "included");
@@ -465,31 +398,18 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
                 ub = {Backend::lastKey, {}};
             if (obj.blob.size() == 0)
             {
-                log_.debug() << "writing successor for deleted object "
-                             << ripple::strHex(obj.key) << " - "
-                             << ripple::strHex(lb->key) << " - "
-                             << ripple::strHex(ub->key);
+                log_.debug() << "writing successor for deleted object " << ripple::strHex(obj.key) << " - "
+                             << ripple::strHex(lb->key) << " - " << ripple::strHex(ub->key);
 
-                backend_->writeSuccessor(
-                    uint256ToString(lb->key),
-                    lgrInfo.seq,
-                    uint256ToString(ub->key));
+                backend_->writeSuccessor(uint256ToString(lb->key), lgrInfo.seq, uint256ToString(ub->key));
             }
             else
             {
-                backend_->writeSuccessor(
-                    uint256ToString(lb->key),
-                    lgrInfo.seq,
-                    uint256ToString(obj.key));
-                backend_->writeSuccessor(
-                    uint256ToString(obj.key),
-                    lgrInfo.seq,
-                    uint256ToString(ub->key));
+                backend_->writeSuccessor(uint256ToString(lb->key), lgrInfo.seq, uint256ToString(obj.key));
+                backend_->writeSuccessor(uint256ToString(obj.key), lgrInfo.seq, uint256ToString(ub->key));
 
-                log_.debug() << "writing successor for new object "
-                             << ripple::strHex(lb->key) << " - "
-                             << ripple::strHex(obj.key) << " - "
-                             << ripple::strHex(ub->key);
+                log_.debug() << "writing successor for new object " << ripple::strHex(lb->key) << " - "
+                             << ripple::strHex(obj.key) << " - " << ripple::strHex(ub->key);
             }
         }
         for (auto const& base : bookSuccessorsToCalculate)
@@ -497,34 +417,24 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
             auto succ = backend_->cache().getSuccessor(base, lgrInfo.seq);
             if (succ)
             {
-                backend_->writeSuccessor(
-                    uint256ToString(base),
-                    lgrInfo.seq,
-                    uint256ToString(succ->key));
+                backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(succ->key));
 
-                log_.debug()
-                    << "Updating book successor " << ripple::strHex(base)
-                    << " - " << ripple::strHex(succ->key);
+                log_.debug() << "Updating book successor " << ripple::strHex(base) << " - "
+                             << ripple::strHex(succ->key);
             }
             else
             {
-                backend_->writeSuccessor(
-                    uint256ToString(base),
-                    lgrInfo.seq,
-                    uint256ToString(Backend::lastKey));
+                backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(Backend::lastKey));
 
-                log_.debug()
-                    << "Updating book successor " << ripple::strHex(base)
-                    << " - " << ripple::strHex(Backend::lastKey);
+                log_.debug() << "Updating book successor " << ripple::strHex(base) << " - "
+                             << ripple::strHex(Backend::lastKey);
             }
         }
     }
 
-    log_.debug()
-        << "Inserted/modified/deleted all objects. Number of objects = "
-        << rawData.ledger_objects().objects_size();
-    FormattedTransactionsData insertTxResult =
-        insertTransactions(lgrInfo, rawData);
+    log_.debug() << "Inserted/modified/deleted all objects. Number of objects = "
+                 << rawData.ledger_objects().objects_size();
+    FormattedTransactionsData insertTxResult = insertTransactions(lgrInfo, rawData);
     log_.debug() << "Inserted all transactions. Number of transactions  = "
                  << rawData.transactions_list().transactions_size();
     backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
@@ -532,8 +442,8 @@ ReportingETL::buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
     log_.debug() << "wrote account_tx";
 
-    auto [success, duration] = util::timed<std::chrono::duration<double>>(
-        [&]() { return backend_->finishWrites(lgrInfo.seq); });
+    auto [success, duration] =
+        util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
 
     log_.debug() << "Finished writes. took " << std::to_string(duration);
     log_.debug() << "Finished ledger update. " << detail::toString(lgrInfo);
@@ -585,12 +495,10 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     std::optional<uint32_t> lastPublishedSequence;
     uint32_t maxQueueSize = 1000 / numExtractors;
     auto begin = std::chrono::system_clock::now();
-    using QueueType =
-        ThreadSafeQueue<std::optional<org::xrpl::rpc::v1::GetLedgerResponse>>;
+    using QueueType = ThreadSafeQueue<std::optional<org::xrpl::rpc::v1::GetLedgerResponse>>;
     std::vector<std::shared_ptr<QueueType>> queues;
 
-    auto getNext = [&queues, &startSequence, &numExtractors](
-                       uint32_t sequence) -> std::shared_ptr<QueueType> {
+    auto getNext = [&queues, &startSequence, &numExtractors](uint32_t sequence) -> std::shared_ptr<QueueType> {
         return queues[(sequence - startSequence) % numExtractors];
     };
     std::vector<std::thread> extractors;
@@ -599,12 +507,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         auto transformQueue = std::make_shared<QueueType>(maxQueueSize);
         queues.push_back(transformQueue);
 
-        extractors.emplace_back([this,
-                                 &startSequence,
-                                 &writeConflict,
-                                 transformQueue,
-                                 i,
-                                 numExtractors]() {
+        extractors.emplace_back([this, &startSequence, &writeConflict, transformQueue, i, numExtractors]() {
             beast::setCurrentThreadName("rippled: ReportingETL extract");
             uint32_t currentSequence = startSequence + i;
 
@@ -616,14 +519,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             // the entire server is shutting down. This can be detected in a
             // variety of ways. See the comment at the top of the function
             while ((!finishSequence_ || currentSequence <= *finishSequence_) &&
-                   networkValidatedLedgers_->waitUntilValidatedByNetwork(
-                       currentSequence) &&
-                   !writeConflict && !isStopping())
+                   networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence) && !writeConflict &&
+                   !isStopping())
             {
-                auto [fetchResponse, time] =
-                    util::timed<std::chrono::duration<double>>([&]() {
-                        return fetchLedgerDataAndDiff(currentSequence);
-                    });
+                auto [fetchResponse, time] = util::timed<std::chrono::duration<double>>(
+                    [&]() { return fetchLedgerDataAndDiff(currentSequence); });
                 totalTime += time;
 
                 // if the fetch is unsuccessful, stop. fetchLedger only
@@ -637,16 +537,11 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
                 {
                     break;
                 }
-                auto tps =
-                    fetchResponse->transactions_list().transactions_size() /
-                    time;
+                auto tps = fetchResponse->transactions_list().transactions_size() / time;
 
-                log_.info() << "Extract phase time = " << time
-                            << " . Extract phase tps = " << tps
-                            << " . Avg extract time = "
-                            << totalTime / (currentSequence - startSequence + 1)
-                            << " . thread num = " << i
-                            << " . seq = " << currentSequence;
+                log_.info() << "Extract phase time = " << time << " . Extract phase tps = " << tps
+                            << " . Avg extract time = " << totalTime / (currentSequence - startSequence + 1)
+                            << " . thread num = " << i << " . seq = " << currentSequence;
 
                 transformQueue->push(std::move(fetchResponse));
                 currentSequence += numExtractors;
@@ -658,19 +553,13 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
         });
     }
 
-    std::thread transformer{[this,
-                             &minSequence,
-                             &writeConflict,
-                             &startSequence,
-                             &getNext,
-                             &lastPublishedSequence]() {
+    std::thread transformer{[this, &minSequence, &writeConflict, &startSequence, &getNext, &lastPublishedSequence]() {
         beast::setCurrentThreadName("rippled: ReportingETL transform");
         uint32_t currentSequence = startSequence;
 
         while (!writeConflict)
         {
-            std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{
-                getNext(currentSequence)->pop()};
+            std::optional<org::xrpl::rpc::v1::GetLedgerResponse> fetchResponse{getNext(currentSequence)->pop()};
             ++currentSequence;
             // if fetchResponse is an empty optional, the extracter thread
             // has stopped and the transformer should stop as well
@@ -681,8 +570,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
             if (isStopping())
                 continue;
 
-            auto numTxns =
-                fetchResponse->transactions_list().transactions_size();
+            auto numTxns = fetchResponse->transactions_list().transactions_size();
             auto numObjects = fetchResponse->ledger_objects().objects_size();
             auto start = std::chrono::system_clock::now();
             auto [lgrInfo, success] = buildNextLedger(*fetchResponse);
@@ -690,40 +578,31 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
 
             auto duration = ((end - start).count()) / 1000000000.0;
             if (success)
-                log_.info()
-                    << "Load phase of etl : "
-                    << "Successfully wrote ledger! Ledger info: "
-                    << detail::toString(lgrInfo) << ". txn count = " << numTxns
-                    << ". object count = " << numObjects
-                    << ". load time = " << duration
-                    << ". load txns per second = " << numTxns / duration
-                    << ". load objs per second = " << numObjects / duration;
+                log_.info() << "Load phase of etl : "
+                            << "Successfully wrote ledger! Ledger info: " << detail::toString(lgrInfo)
+                            << ". txn count = " << numTxns << ". object count = " << numObjects
+                            << ". load time = " << duration << ". load txns per second = " << numTxns / duration
+                            << ". load objs per second = " << numObjects / duration;
             else
-                log_.error()
-                    << "Error writing ledger. " << detail::toString(lgrInfo);
+                log_.error() << "Error writing ledger. " << detail::toString(lgrInfo);
             // success is false if the ledger was already written
             if (success)
             {
-                boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
-                    publishLedger(lgrInfo);
-                });
+                boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() { publishLedger(lgrInfo); });
 
                 lastPublishedSequence = lgrInfo.seq;
             }
             writeConflict = !success;
             // TODO move online delete logic to an admin RPC call
-            if (onlineDeleteInterval_ && !deleting_ &&
-                lgrInfo.seq - minSequence > *onlineDeleteInterval_)
+            if (onlineDeleteInterval_ && !deleting_ && lgrInfo.seq - minSequence > *onlineDeleteInterval_)
             {
                 deleting_ = true;
                 ioContext_.post([this, &minSequence]() {
                     log_.info() << "Running online delete";
 
-                    Backend::synchronous(
-                        [&](boost::asio::yield_context& yield) {
-                            backend_->doOnlineDelete(
-                                *onlineDeleteInterval_, yield);
-                        });
+                    Backend::synchronous([&](boost::asio::yield_context& yield) {
+                        backend_->doOnlineDelete(*onlineDeleteInterval_, yield);
+                    });
 
                     log_.info() << "Finished online delete";
                     auto rng = backend_->fetchLedgerRange();
@@ -744,8 +623,7 @@ ReportingETL::runETLPipeline(uint32_t startSequence, int numExtractors)
     for (auto& t : extractors)
         t.join();
     auto end = std::chrono::system_clock::now();
-    log_.debug() << "Extracted and wrote "
-                 << *lastPublishedSequence - startSequence << " in "
+    log_.debug() << "Extracted and wrote " << *lastPublishedSequence - startSequence << " in "
                  << ((end - begin).count()) / 1000000000.0;
     writing_ = false;
 
@@ -776,20 +654,16 @@ ReportingETL::monitor()
         if (startSequence_)
         {
             log_.info() << "ledger sequence specified in config. "
-                        << "Will begin ETL process starting with ledger "
-                        << *startSequence_;
+                        << "Will begin ETL process starting with ledger " << *startSequence_;
             ledger = loadInitialLedger(*startSequence_);
         }
         else
         {
-            log_.info()
-                << "Waiting for next ledger to be validated by network...";
-            std::optional<uint32_t> mostRecentValidated =
-                networkValidatedLedgers_->getMostRecent();
+            log_.info() << "Waiting for next ledger to be validated by network...";
+            std::optional<uint32_t> mostRecentValidated = networkValidatedLedgers_->getMostRecent();
             if (mostRecentValidated)
             {
-                log_.info() << "Ledger " << *mostRecentValidated
-                            << " has been validated. "
+                log_.info() << "Ledger " << *mostRecentValidated << " has been validated. "
                             << "Downloading...";
                 ledger = loadInitialLedger(*mostRecentValidated);
             }
@@ -805,8 +679,7 @@ ReportingETL::monitor()
             rng = backend_->hardFetchLedgerRangeNoThrow();
         else
         {
-            log_.error()
-                << "Failed to load initial ledger. Exiting monitor loop";
+            log_.error() << "Failed to load initial ledger. Exiting monitor loop";
             return;
         }
     }
@@ -814,11 +687,9 @@ ReportingETL::monitor()
     {
         if (startSequence_)
         {
-            log_.warn()
-                << "start sequence specified but db is already populated";
+            log_.warn() << "start sequence specified but db is already populated";
         }
-        log_.info()
-            << "Database already populated. Picking up from the tip of history";
+        log_.info() << "Database already populated. Picking up from the tip of history";
         loadCache(rng->maxSequence);
     }
     assert(rng);
@@ -828,17 +699,14 @@ ReportingETL::monitor()
                  << "Starting monitor loop. sequence = " << nextSequence;
     while (true)
     {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
-            rng && rng->maxSequence >= nextSequence)
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= nextSequence)
         {
             publishLedger(nextSequence, {});
             ++nextSequence;
         }
-        else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(
-                     nextSequence, 1000))
+        else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, 1000))
         {
-            log_.info() << "Ledger with sequence = " << nextSequence
-                        << " has been validated by the network. "
+            log_.info() << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
                         << "Attempting to find in database and publish";
             // Attempt to take over responsibility of ETL writer after 10 failed
             // attempts to publish the ledger. publishLedger() fails if the
@@ -850,12 +718,10 @@ ReportingETL::monitor()
             bool success = publishLedger(nextSequence, timeoutSeconds);
             if (!success)
             {
-                log_.warn() << "Failed to publish ledger with sequence = "
-                            << nextSequence << " . Beginning ETL";
+                log_.warn() << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
                 // doContinousETLPipelined returns the most recent sequence
                 // published empty optional if no sequence was published
-                std::optional<uint32_t> lastPublished =
-                    runETLPipeline(nextSequence, extractorThreads_);
+                std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
                 log_.info() << "Aborting ETL. Falling back to publishing";
                 // if no ledger was published, don't increment nextSequence
                 if (lastPublished)
@@ -873,8 +739,7 @@ ReportingETL::loadCacheFromClioPeer(
     std::string const& port,
     boost::asio::yield_context& yield)
 {
-    log_.info() << "Loading cache from peer. ip = " << ip
-                << " . port = " << port;
+    log_.info() << "Loading cache from peer. ip = " << ip << " . port = " << port;
     namespace beast = boost::beast;          // from <boost/beast.hpp>
     namespace http = beast::http;            // from <boost/beast/http.hpp>
     namespace websocket = beast::websocket;  // from
@@ -887,8 +752,7 @@ ReportingETL::loadCacheFromClioPeer(
         tcp::resolver resolver{ioContext_};
 
         log_.trace() << "Creating websocket";
-        auto ws =
-            std::make_unique<websocket::stream<beast::tcp_stream>>(ioContext_);
+        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioContext_);
 
         // Look up the domain name
         auto const results = resolver.async_resolve(ip, port, yield[ec]);
@@ -928,9 +792,7 @@ ReportingETL::loadCacheFromClioPeer(
         do
         {
             // Send the message
-            ws->async_write(
-                net::buffer(boost::json::serialize(getRequest(marker))),
-                yield[ec]);
+            ws->async_write(net::buffer(boost::json::serialize(getRequest(marker))), yield[ec]);
             if (ec)
             {
                 log_.error() << "error writing = " << ec.message();
@@ -955,8 +817,7 @@ ReportingETL::loadCacheFromClioPeer(
             }
             log_.trace() << "Successfully parsed response " << parsed;
 
-            if (auto const& response = parsed.as_object();
-                response.contains("error"))
+            if (auto const& response = parsed.as_object(); response.contains("error"))
             {
                 log_.error() << "Response contains error: " << response;
                 auto const& err = response.at("error");
@@ -965,15 +826,13 @@ ReportingETL::loadCacheFromClioPeer(
                     ++numAttempts;
                     if (numAttempts >= 5)
                     {
-                        log_.error()
-                            << " ledger not found at peer after 5 attempts. "
-                               "peer = "
-                            << ip << " ledger = " << ledgerIndex
-                            << ". Check your config and the health of the peer";
+                        log_.error() << " ledger not found at peer after 5 attempts. "
+                                        "peer = "
+                                     << ip << " ledger = " << ledgerIndex
+                                     << ". Check your config and the health of the peer";
                         return false;
                     }
-                    log_.warn() << "Ledger not found. ledger = " << ledgerIndex
-                                << ". Sleeping and trying again";
+                    log_.warn() << "Ledger not found. ledger = " << ledgerIndex << ". Sleeping and trying again";
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     continue;
                 }
@@ -982,8 +841,7 @@ ReportingETL::loadCacheFromClioPeer(
             started = true;
             auto const& response = parsed.as_object()["result"].as_object();
 
-            if (!response.contains("cache_full") ||
-                !response.at("cache_full").as_bool())
+            if (!response.contains("cache_full") || !response.at("cache_full").as_bool())
             {
                 log_.error() << "cache not full for clio node. ip = " << ip;
                 return false;
@@ -1003,15 +861,12 @@ ReportingETL::loadCacheFromClioPeer(
 
                 Backend::LedgerObject stateObject = {};
 
-                if (!stateObject.key.parseHex(
-                        obj.at("index").as_string().c_str()))
+                if (!stateObject.key.parseHex(obj.at("index").as_string().c_str()))
                 {
                     log_.error() << "failed to parse object id";
                     return false;
                 }
-                boost::algorithm::unhex(
-                    obj.at("data").as_string().c_str(),
-                    std::back_inserter(stateObject.blob));
+                boost::algorithm::unhex(obj.at("data").as_string().c_str(), std::back_inserter(stateObject.blob));
                 objects.push_back(std::move(stateObject));
             }
             backend_->cache().update(objects, ledgerIndex, true);
@@ -1020,16 +875,14 @@ ReportingETL::loadCacheFromClioPeer(
                 log_.debug() << "At marker " << *marker;
         } while (marker || !started);
 
-        log_.info() << "Finished downloading ledger from clio node. ip = "
-                    << ip;
+        log_.info() << "Finished downloading ledger from clio node. ip = " << ip;
 
         backend_->cache().setFull();
         return true;
     }
     catch (std::exception const& e)
     {
-        log_.error() << "Encountered exception : " << e.what()
-                     << " - ip = " << ip;
+        log_.error() << "Encountered exception : " << e.what() << " - ip = " << ip;
         return false;
     }
 }
@@ -1059,18 +912,16 @@ ReportingETL::loadCache(uint32_t seq)
 
     if (clioPeers.size() > 0)
     {
-        boost::asio::spawn(
-            ioContext_, [this, seq](boost::asio::yield_context yield) {
-                for (auto const& peer : clioPeers)
-                {
-                    // returns true on success
-                    if (loadCacheFromClioPeer(
-                            seq, peer.ip, std::to_string(peer.port), yield))
-                        return;
-                }
-                // if we couldn't successfully load from any peers, load from db
-                loadCacheFromDb(seq);
-            });
+        boost::asio::spawn(ioContext_, [this, seq](boost::asio::yield_context yield) {
+            for (auto const& peer : clioPeers)
+            {
+                // returns true on success
+                if (loadCacheFromClioPeer(seq, peer.ip, std::to_string(peer.port), yield))
+                    return;
+            }
+            // if we couldn't successfully load from any peers, load from db
+            loadCacheFromDb(seq);
+        });
         return;
     }
     else
@@ -1078,14 +929,11 @@ ReportingETL::loadCache(uint32_t seq)
         loadCacheFromDb(seq);
     }
     // If loading synchronously, poll cache until full
-    while (cacheLoadStyle_ == CacheLoadStyle::SYNC &&
-           !backend_->cache().isFull())
+    while (cacheLoadStyle_ == CacheLoadStyle::SYNC && !backend_->cache().isFull())
     {
-        log_.debug() << "Cache not full. Cache size = "
-                     << backend_->cache().size() << ". Sleeping ...";
+        log_.debug() << "Cache not full. Cache size = " << backend_->cache().size() << ". Sleeping ...";
         std::this_thread::sleep_for(std::chrono::seconds(10));
-        log_.info() << "Cache is full. Cache size = "
-                    << backend_->cache().size();
+        log_.info() << "Cache is full. Cache size = " << backend_->cache().size();
     }
 }
 
@@ -1101,9 +949,7 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
     }
     loading = true;
     std::vector<Backend::LedgerObject> diff;
-    auto append = [](auto&& a, auto&& b) {
-        a.insert(std::end(a), std::begin(b), std::end(b));
-    };
+    auto append = [](auto&& a, auto&& b) { a.insert(std::end(a), std::begin(b), std::end(b)); };
 
     for (size_t i = 0; i < numCacheDiffs_; ++i)
     {
@@ -1113,15 +959,9 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
     }
 
     std::sort(diff.begin(), diff.end(), [](auto a, auto b) {
-        return a.key < b.key ||
-            (a.key == b.key && a.blob.size() < b.blob.size());
+        return a.key < b.key || (a.key == b.key && a.blob.size() < b.blob.size());
     });
-    diff.erase(
-        std::unique(
-            diff.begin(),
-            diff.end(),
-            [](auto a, auto b) { return a.key == b.key; }),
-        diff.end());
+    diff.erase(std::unique(diff.begin(), diff.end(), [](auto a, auto b) { return a.key == b.key; }), diff.end());
     std::vector<std::optional<ripple::uint256>> cursors;
     cursors.push_back({});
     for (auto& obj : diff)
@@ -1142,8 +982,7 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
     cacheDownloader_ = std::thread{[this, seq, cursors]() {
         auto startTime = std::chrono::system_clock::now();
         auto markers = std::make_shared<std::atomic_int>(0);
-        auto numRemaining =
-            std::make_shared<std::atomic_int>(cursors.size() - 1);
+        auto numRemaining = std::make_shared<std::atomic_int>(cursors.size() - 1);
         for (size_t i = 0; i < cursors.size() - 1; ++i)
         {
             std::optional<ripple::uint256> start = cursors[i];
@@ -1152,33 +991,23 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
             ++(*markers);
             boost::asio::spawn(
                 ioContext_,
-                [this, seq, start, end, numRemaining, startTime, markers](
-                    boost::asio::yield_context yield) {
+                [this, seq, start, end, numRemaining, startTime, markers](boost::asio::yield_context yield) {
                     std::optional<ripple::uint256> cursor = start;
-                    std::string cursorStr = cursor.has_value()
-                        ? ripple::strHex(cursor.value())
-                        : ripple::strHex(Backend::firstKey);
-                    log_.debug() << "Starting a cursor: " << cursorStr
-                                 << " markers = " << *markers;
+                    std::string cursorStr =
+                        cursor.has_value() ? ripple::strHex(cursor.value()) : ripple::strHex(Backend::firstKey);
+                    log_.debug() << "Starting a cursor: " << cursorStr << " markers = " << *markers;
 
                     while (!stopping_)
                     {
-                        auto res = Backend::retryOnTimeout([this,
-                                                            seq,
-                                                            &cursor,
-                                                            &yield]() {
-                            return backend_->fetchLedgerPage(
-                                cursor, seq, cachePageFetchSize_, false, yield);
+                        auto res = Backend::retryOnTimeout([this, seq, &cursor, &yield]() {
+                            return backend_->fetchLedgerPage(cursor, seq, cachePageFetchSize_, false, yield);
                         });
                         backend_->cache().update(res.objects, seq, true);
                         if (!res.cursor || (end && *(res.cursor) > *end))
                             break;
-                        log_.trace()
-                            << "Loading cache. cache size = "
-                            << backend_->cache().size() << " - cursor = "
-                            << ripple::strHex(res.cursor.value())
-                            << " start = " << cursorStr
-                            << " markers = " << *markers;
+                        log_.trace() << "Loading cache. cache size = " << backend_->cache().size()
+                                     << " - cursor = " << ripple::strHex(res.cursor.value()) << " start = " << cursorStr
+                                     << " markers = " << *markers;
 
                         cursor = std::move(res.cursor);
                     }
@@ -1187,19 +1016,15 @@ ReportingETL::loadCacheFromDb(uint32_t seq)
                     if (--(*numRemaining) == 0)
                     {
                         auto endTime = std::chrono::system_clock::now();
-                        auto duration =
-                            std::chrono::duration_cast<std::chrono::seconds>(
-                                endTime - startTime);
-                        log_.info() << "Finished loading cache. cache size = "
-                                    << backend_->cache().size() << ". Took "
+                        auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
+                        log_.info() << "Finished loading cache. cache size = " << backend_->cache().size() << ". Took "
                                     << duration.count() << " seconds";
                         backend_->cache().setFull();
                     }
                     else
                     {
-                        log_.info() << "Finished a cursor. num remaining = "
-                                    << *numRemaining << " start = " << cursorStr
-                                    << " markers = " << *markers;
+                        log_.info() << "Finished a cursor. num remaining = " << *numRemaining
+                                    << " start = " << cursorStr << " markers = " << *markers;
                     }
                 });
         }
@@ -1223,8 +1048,7 @@ ReportingETL::monitorReadOnly()
     latestSequence++;
     while (true)
     {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow();
-            rng && rng->maxSequence >= latestSequence)
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= latestSequence)
         {
             publishLedger(latestSequence, {});
             latestSequence = latestSequence + 1;
@@ -1233,8 +1057,7 @@ ReportingETL::monitorReadOnly()
               // second passes, whichever occurs first. Even if we don't hear
               // from rippled, if ledgers are being written to the db, we
               // publish them
-            networkValidatedLedgers_->waitUntilValidatedByNetwork(
-                latestSequence, 1000);
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, 1000);
     }
 }
 
@@ -1274,16 +1097,14 @@ ReportingETL::ReportingETL(
         if (*interval > max)
         {
             std::stringstream msg;
-            msg << "online_delete cannot be greater than "
-                << std::to_string(max);
+            msg << "online_delete cannot be greater than " << std::to_string(max);
             throw std::runtime_error(msg.str());
         }
         if (*interval > 0)
             onlineDeleteInterval_ = *interval;
     }
 
-    extractorThreads_ =
-        config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
+    extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
     txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
     if (config.contains("cache"))
     {
@@ -1299,10 +1120,8 @@ ReportingETL::ReportingETL(
         }
 
         numCacheDiffs_ = cache.valueOr<size_t>("num_diffs", numCacheDiffs_);
-        numCacheMarkers_ =
-            cache.valueOr<size_t>("num_markers", numCacheMarkers_);
-        cachePageFetchSize_ =
-            cache.valueOr<size_t>("page_fetch_size", cachePageFetchSize_);
+        numCacheMarkers_ = cache.valueOr<size_t>("num_markers", numCacheMarkers_);
+        cachePageFetchSize_ = cache.valueOr<size_t>("page_fetch_size", cachePageFetchSize_);
 
         if (auto peers = cache.maybeArray("peers"); peers)
         {
@@ -1314,13 +1133,9 @@ ReportingETL::ReportingETL(
                 // todo: use emplace_back when clang is ready
                 clioPeers.push_back({ip, port});
             }
-            unsigned seed =
-                std::chrono::system_clock::now().time_since_epoch().count();
+            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-            std::shuffle(
-                clioPeers.begin(),
-                clioPeers.end(),
-                std::default_random_engine(seed));
+            std::shuffle(clioPeers.begin(), clioPeers.end(), std::default_random_engine(seed));
         }
     }
 }

@@ -72,8 +72,7 @@ private:
 
     public:
         [[nodiscard]] std::vector<BookChange>
-        operator()(
-            std::vector<Backend::TransactionAndMetadata> const& transactions)
+        operator()(std::vector<Backend::TransactionAndMetadata> const& transactions)
         {
             for (auto const& tx : transactions)
                 handleBookChange(tx);
@@ -103,47 +102,36 @@ private:
             // if either FF or PF are missing we can't compute
             // but generally these are cancelled rather than crossed
             // so skipping them is consistent
-            if (!node.isFieldPresent(sfFinalFields) ||
-                !node.isFieldPresent(sfPreviousFields))
+            if (!node.isFieldPresent(sfFinalFields) || !node.isFieldPresent(sfPreviousFields))
                 return;
 
-            auto const& finalFields =
-                node.peekAtField(sfFinalFields).downcast<STObject>();
-            auto const& previousFields =
-                node.peekAtField(sfPreviousFields).downcast<STObject>();
+            auto const& finalFields = node.peekAtField(sfFinalFields).downcast<STObject>();
+            auto const& previousFields = node.peekAtField(sfPreviousFields).downcast<STObject>();
 
             // defensive case that should never be hit
-            if (!finalFields.isFieldPresent(sfTakerGets) ||
-                !finalFields.isFieldPresent(sfTakerPays) ||
-                !previousFields.isFieldPresent(sfTakerGets) ||
-                !previousFields.isFieldPresent(sfTakerPays))
+            if (!finalFields.isFieldPresent(sfTakerGets) || !finalFields.isFieldPresent(sfTakerPays) ||
+                !previousFields.isFieldPresent(sfTakerGets) || !previousFields.isFieldPresent(sfTakerPays))
                 return;
 
             // filter out any offers deleted by explicit offer cancels
-            if (metaType == sfDeletedNode && offerCancel_ &&
-                finalFields.getFieldU32(sfSequence) == *offerCancel_)
+            if (metaType == sfDeletedNode && offerCancel_ && finalFields.getFieldU32(sfSequence) == *offerCancel_)
                 return;
 
             // compute the difference in gets and pays actually
             // affected onto the offer
-            auto const deltaGets = finalFields.getFieldAmount(sfTakerGets) -
-                previousFields.getFieldAmount(sfTakerGets);
-            auto const deltaPays = finalFields.getFieldAmount(sfTakerPays) -
-                previousFields.getFieldAmount(sfTakerPays);
+            auto const deltaGets = finalFields.getFieldAmount(sfTakerGets) - previousFields.getFieldAmount(sfTakerGets);
+            auto const deltaPays = finalFields.getFieldAmount(sfTakerPays) - previousFields.getFieldAmount(sfTakerPays);
 
             transformAndStore(deltaGets, deltaPays);
         }
 
         void
-        transformAndStore(
-            ripple::STAmount const& deltaGets,
-            ripple::STAmount const& deltaPays)
+        transformAndStore(ripple::STAmount const& deltaGets, ripple::STAmount const& deltaPays)
         {
             auto const g = to_string(deltaGets.issue());
             auto const p = to_string(deltaPays.issue());
 
-            auto const noswap =
-                isXRP(deltaGets) ? true : (isXRP(deltaPays) ? false : (g < p));
+            auto const noswap = isXRP(deltaGets) ? true : (isXRP(deltaPays) ? false : (g < p));
 
             auto first = noswap ? deltaGets : deltaPays;
             auto second = noswap ? deltaPays : deltaGets;
@@ -224,8 +212,7 @@ void
 tag_invoke(json::value_from_tag, json::value& jv, BookChange const& change)
 {
     auto amountStr = [](STAmount const& amount) -> std::string {
-        return isXRP(amount) ? to_string(amount.xrp())
-                             : to_string(amount.iou());
+        return isXRP(amount) ? to_string(amount.xrp()) : to_string(amount.iou());
     };
 
     auto currencyStr = [](STAmount const& amount) -> std::string {
@@ -245,9 +232,7 @@ tag_invoke(json::value_from_tag, json::value& jv, BookChange const& change)
 }
 
 json::object const
-computeBookChanges(
-    ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions)
+computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions)
 {
     return {
         {JS(type), "bookChanges"},
@@ -267,8 +252,7 @@ doBookChanges(Context const& context)
         return *status;
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(info);
-    auto const transactions = context.backend->fetchAllTransactionsInLedger(
-        lgrInfo.seq, context.yield);
+    auto const transactions = context.backend->fetchAllTransactionsInLedger(lgrInfo.seq, context.yield);
     return computeBookChanges(lgrInfo, transactions);
 }
 

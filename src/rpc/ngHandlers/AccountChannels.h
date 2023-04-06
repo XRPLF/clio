@@ -74,8 +74,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountChannelsHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    AccountChannelsHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -83,16 +82,14 @@ public:
     RpcSpecConstRef
     spec() const
     {
-        // clang-format off
-        static auto const  rpcSpec = RpcSpec{
+        static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(destination_account), validation::Type<std::string>{},validation::AccountValidator},
+            {JS(destination_account), validation::Type<std::string>{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{},validation::Between{10,400}},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(marker), validation::AccountMarkerValidator}
+            {JS(marker), validation::AccountMarkerValidator},
         };
-        // clang-format on
 
         return rpcSpec;
     }
@@ -102,22 +99,15 @@ public:
 
 private:
     void
-    addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line)
-        const;
+    addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line) const;
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        ChannelResponse const& channel);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ChannelResponse const& channel);
 };
 }  // namespace RPCng

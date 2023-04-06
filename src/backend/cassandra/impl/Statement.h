@@ -37,9 +37,7 @@ namespace Backend::Cassandra::detail {
 
 class Statement : public ManagedObject<CassStatement>
 {
-    static constexpr auto deleter = [](CassStatement* ptr) {
-        cass_statement_free(ptr);
-    };
+    static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
 
     template <typename>
     static constexpr bool unsupported_v = false;
@@ -53,9 +51,7 @@ public:
      */
     template <typename... Args>
     explicit Statement(std::string_view query, Args&&... args)
-        : ManagedObject{
-              cass_statement_new(query.data(), sizeof...(args)),
-              deleter}
+        : ManagedObject{cass_statement_new(query.data(), sizeof...(args)), deleter}
     {
         cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
@@ -85,13 +81,11 @@ public:
         using std::to_string;
         auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
             if (rc != CASS_OK)
-                throw std::logic_error(fmt::format(
-                    "[{}] at idx {}: {}", label, idx, cass_error_desc(rc)));
+                throw std::logic_error(fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc)));
         };
 
         auto bindBytes = [this, idx](auto const* data, size_t size) {
-            return cass_statement_bind_bytes(
-                *this, idx, static_cast<cass_byte_t const*>(data), size);
+            return cass_statement_bind_bytes(*this, idx, static_cast<cass_byte_t const*>(data), size);
         };
 
         using decayed_t = std::decay_t<Type>;
@@ -116,21 +110,17 @@ public:
         else if constexpr (std::is_convertible_v<decayed_t, std::string>)
         {
             // reinterpret_cast is needed here :'(
-            auto const rc = bindBytes(
-                reinterpret_cast<unsigned char const*>(value.data()),
-                value.size());
+            auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         }
         else if constexpr (std::is_same_v<decayed_t, uint_tuple_t>)
         {
-            auto const rc =
-                cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
+            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
         }
         else if constexpr (std::is_same_v<decayed_t, bool>)
         {
-            auto const rc = cass_statement_bind_bool(
-                *this, idx, value ? cass_true : cass_false);
+            auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
         }
         else if constexpr (std::is_same_v<decayed_t, Limit>)
@@ -154,13 +144,10 @@ public:
 
 class PreparedStatement : public ManagedObject<CassPrepared const>
 {
-    static constexpr auto deleter = [](CassPrepared const* ptr) {
-        cass_prepared_free(ptr);
-    };
+    static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
 
 public:
-    /* implicit */ PreparedStatement(CassPrepared const* ptr)
-        : ManagedObject{ptr, deleter}
+    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, deleter}
     {
     }
 

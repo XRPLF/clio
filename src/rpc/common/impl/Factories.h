@@ -32,14 +32,13 @@ template <Requirement... Requirements>
 [[nodiscard]] auto
 makeFieldValidator(std::string const& key, Requirements&&... requirements)
 {
-    return [key, ... r = std::forward<Requirements>(requirements)](
-               boost::json::value const& j) -> MaybeError {
-        // clang-format off
+    return [key, ... r = std::forward<Requirements>(requirements)](boost::json::value const& j) -> MaybeError {
         std::optional<RPC::Status> firstFailure = std::nullopt;
 
-        // This expands in order of Requirements and stops evaluating after 
-        // first failure which is stored in `firstFailure` and can be checked 
+        // This expands in order of Requirements and stops evaluating after
+        // first failure which is stored in `firstFailure` and can be checked
         // later on to see whether the verification failed as a whole or not.
+        // clang-format off
         ([&j, &key, &firstFailure, req = &r]() {
             if (firstFailure)
                 return; // already failed earlier - skip

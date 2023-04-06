@@ -35,10 +35,7 @@ RandomHandler::process() const
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    RandomHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, RandomHandler::Output const& output)
 {
     jv = {
         {JS(random), output.random},

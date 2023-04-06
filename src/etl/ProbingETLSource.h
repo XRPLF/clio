@@ -53,8 +53,7 @@ public:
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         ETLLoadBalancer& balancer,
-        boost::asio::ssl::context sslCtx = boost::asio::ssl::context{
-            boost::asio::ssl::context::tlsv12});
+        boost::asio::ssl::context sslCtx = boost::asio::ssl::context{boost::asio::ssl::context::tlsv12});
 
     ~ProbingETLSource() = default;
 
@@ -80,22 +79,14 @@ public:
     toString() const override;
 
     bool
-    loadInitialLedger(
-        std::uint32_t ledgerSequence,
-        std::uint32_t numMarkers,
-        bool cacheOnly = false) override;
+    loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly = false) override;
 
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(
-        uint32_t ledgerSequence,
-        bool getObjects = true,
-        bool getObjectNeighbors = false) override;
+    fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) override;
 
     std::optional<boost::json::object>
-    forwardToRippled(
-        boost::json::object const& request,
-        std::string const& clientIp,
-        boost::asio::yield_context& yield) const override;
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+        const override;
 
     boost::uuids::uuid
     token() const override;

@@ -53,18 +53,12 @@ AccountLinesHandler::addLine(
     if (not viewLowest)
         balance.negate();
 
-    bool const lineAuth =
-        flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool const lineAuthPeer =
-        flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool const lineNoRipple =
-        flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool const lineNoRipplePeer = flags &
-        (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool const lineFreeze =
-        flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool const lineFreezePeer =
-        flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool const lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool const lineAuthPeer = flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool const lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool const lineNoRipplePeer = flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool const lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool const lineFreezePeer = flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
 
     ripple::STAmount const& saBalance = balance;
     ripple::STAmount const& saLimit = lineLimit;
@@ -93,33 +87,25 @@ AccountLinesHandler::addLine(
 }
 
 AccountLinesHandler::Result
-AccountLinesHandler::process(
-    AccountLinesHandler::Input input,
-    Context const& ctx) const
+AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
     if (auto status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const accountID = RPC::accountFromStringStrict(input.account);
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (not accountLedgerObject)
-        return Error{RPC::Status{
-            RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{RPC::Status{RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto const peerAccountID = input.peer
-        ? RPC::accountFromStringStrict(*(input.peer))
-        : std::optional<ripple::AccountID>{};
+    auto const peerAccountID =
+        input.peer ? RPC::accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
 
     Output response;
     response.lines.reserve(input.limit);
@@ -130,18 +116,13 @@ AccountLinesHandler::process(
             auto ignore = false;
             if (input.ignoreDefault)
             {
-                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() ==
-                    accountID)
+                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
                 {
-                    ignore =
-                        !(sle.getFieldU32(ripple::sfFlags) &
-                          ripple::lsfLowReserve);
+                    ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve);
                 }
                 else
                 {
-                    ignore =
-                        !(sle.getFieldU32(ripple::sfFlags) &
-                          ripple::lsfHighReserve);
+                    ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve);
                 }
             }
 
@@ -151,18 +132,11 @@ AccountLinesHandler::process(
     };
 
     auto const next = RPC::ngTraverseOwnedNodes(
-        *sharedPtrBackend_,
-        *accountID,
-        lgrInfo.seq,
-        input.limit,
-        input.marker,
-        ctx.yield,
-        addToResponse);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
     response.account = input.account;
-    response.limit =
-        input.limit;  // not documented,
-                      // https://github.com/XRPLF/xrpl-dev-portal/issues/1838
+    response.limit = input.limit;  // not documented,
+                                   // https://github.com/XRPLF/xrpl-dev-portal/issues/1838
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
@@ -174,9 +148,7 @@ AccountLinesHandler::process(
 }
 
 AccountLinesHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountLinesHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
     AccountLinesHandler::Input input;
@@ -210,8 +182,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
 
@@ -219,10 +190,7 @@ tag_invoke(
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountLinesHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountLinesHandler::Output const& output)
 {
     auto obj = boost::json::object{
         {JS(ledger_hash), output.ledgerHash},

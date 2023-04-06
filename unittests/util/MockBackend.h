@@ -57,8 +57,7 @@ public:
     MOCK_METHOD(
         std::vector<TransactionAndMetadata>,
         fetchTransactions,
-        (std::vector<ripple::uint256> const& hashes,
-         boost::asio::yield_context& yield),
+        (std::vector<ripple::uint256> const& hashes, boost::asio::yield_context& yield),
         (const, override));
 
     MOCK_METHOD(
@@ -86,9 +85,7 @@ public:
     MOCK_METHOD(
         std::optional<NFT>,
         fetchNFT,
-        (ripple::uint256 const& tokenID,
-         std::uint32_t const ledgerSequence,
-         boost::asio::yield_context& yieldd),
+        (ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context& yieldd),
         (const, override));
 
     MOCK_METHOD(
@@ -104,17 +101,13 @@ public:
     MOCK_METHOD(
         std::vector<Blob>,
         doFetchLedgerObjects,
-        (std::vector<ripple::uint256> const& key,
-         std::uint32_t const sequence,
-         boost::asio::yield_context& yield),
+        (std::vector<ripple::uint256> const& key, std::uint32_t const sequence, boost::asio::yield_context& yield),
         (const, override));
 
     MOCK_METHOD(
         std::optional<Blob>,
         doFetchLedgerObject,
-        (ripple::uint256 const& key,
-         std::uint32_t const sequence,
-         boost::asio::yield_context& yield),
+        (ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context& yield),
         (const, override));
 
     MOCK_METHOD(
@@ -126,9 +119,7 @@ public:
     MOCK_METHOD(
         std::optional<ripple::uint256>,
         doFetchSuccessorKey,
-        (ripple::uint256 key,
-         std::uint32_t const ledgerSequence,
-         boost::asio::yield_context& yield),
+        (ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield),
         (const, override));
 
     MOCK_METHOD(
@@ -137,17 +128,9 @@ public:
         (boost::asio::yield_context & yield),
         (const, override));
 
-    MOCK_METHOD(
-        void,
-        writeLedger,
-        (ripple::LedgerInfo const& ledgerInfo, std::string&& ledgerHeader),
-        (override));
+    MOCK_METHOD(void, writeLedger, (ripple::LedgerInfo const& ledgerInfo, std::string&& ledgerHeader), (override));
 
-    MOCK_METHOD(
-        void,
-        writeLedgerObject,
-        (std::string && key, std::uint32_t const seq, std::string&& blob),
-        (override));
+    MOCK_METHOD(void, writeLedgerObject, (std::string && key, std::uint32_t const seq, std::string&& blob), (override));
 
     MOCK_METHOD(
         void,
@@ -161,17 +144,9 @@ public:
 
     MOCK_METHOD(void, writeNFTs, (std::vector<NFTsData> && blob), (override));
 
-    MOCK_METHOD(
-        void,
-        writeAccountTransactions,
-        (std::vector<AccountTransactionsData> && blob),
-        (override));
+    MOCK_METHOD(void, writeAccountTransactions, (std::vector<AccountTransactionsData> && blob), (override));
 
-    MOCK_METHOD(
-        void,
-        writeNFTTransactions,
-        (std::vector<NFTTransactionsData> && blob),
-        (override));
+    MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> && blob), (override));
 
     MOCK_METHOD(
         void,

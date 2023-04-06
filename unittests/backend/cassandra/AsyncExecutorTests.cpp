@@ -38,83 +38,60 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
     auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
-    ON_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this](auto const&, auto&& cb) {
             ctx.post([cb = std::move(cb)]() { cb({}); });
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
     auto called = std::atomic_bool{false};
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(
-        ctx, handle, statement, [&called, &work](auto&&) {
-            called = true;
-            work.reset();
-        });
+    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, statement, [&called, &work](auto&&) {
+        called = true;
+        work.reset();
+    });
 
     ctx.run();
     ASSERT_TRUE(called);
 }
 
-TEST_F(
-    BackendCassandraAsyncExecutorTest,
-    ExecutedMultipleTimesByRetryPolicyOnMainThread)
+TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMainThread)
 {
     auto callCount = std::atomic_int{0};
     auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
     // emulate successfull execution after some attempts
-    ON_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3)
                 cb({});
             else
-                cb({CassandraError{
-                    "timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
+                cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
 
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);
 
     auto called = std::atomic_bool{false};
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(
-        ctx, handle, statement, [&called, &work](auto&&) {
-            called = true;
-            work.reset();
-        });
+    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, statement, [&called, &work](auto&&) {
+        called = true;
+        work.reset();
+    });
 
     ctx.run();
     ASSERT_TRUE(callCount >= 3);
     ASSERT_TRUE(called);
 }
 
-TEST_F(
-    BackendCassandraAsyncExecutorTest,
-    ExecutedMultipleTimesByRetryPolicyOnOtherThread)
+TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOtherThread)
 {
     auto callCount = std::atomic_int{0};
     auto statement = FakeStatement{};
@@ -125,37 +102,27 @@ TEST_F(
     auto thread = std::thread{[&threadedCtx] { threadedCtx.run(); }};
 
     // emulate successfull execution after some attempts
-    ON_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3)
                 cb({});
             else
-                cb({CassandraError{
-                    "timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
+                cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
 
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);
 
     auto called = std::atomic_bool{false};
     auto work2 = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(
-        threadedCtx, handle, statement, [&called, &work, &work2](auto&&) {
-            called = true;
-            work.reset();
-            work2.reset();
-        });
+    AsyncExecutor<FakeStatement, MockHandle>::run(threadedCtx, handle, statement, [&called, &work, &work2](auto&&) {
+        called = true;
+        work.reset();
+        work2.reset();
+    });
 
     ctx.run();
     ASSERT_TRUE(callCount >= 3);
@@ -164,30 +131,19 @@ TEST_F(
     thread.join();
 }
 
-TEST_F(
-    BackendCassandraAsyncExecutorTest,
-    CompletionCalledOnFailureAfterRetryCountExceeded)
+TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCountExceeded)
 {
     auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
     // FakeRetryPolicy returns false for shouldRetry in which case we should
     // still call onComplete giving it whatever error we have raised internally.
-    ON_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([](auto const&, auto&& cb) {
-            cb({CassandraError{
-                "not a timeout", CASS_ERROR_LIB_INTERNAL_ERROR}});
+            cb({CassandraError{"not a timeout", CASS_ERROR_LIB_INTERNAL_ERROR}});
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            An<FakeStatement const&>(),
-            An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
     auto called = std::atomic_bool{false};

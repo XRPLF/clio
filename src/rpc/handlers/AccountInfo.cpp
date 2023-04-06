@@ -76,8 +76,7 @@ doAccountInfo(Context const& context)
     if (!dbResponse)
         return Status{RippledError::rpcACT_NOT_FOUND};
 
-    ripple::STLedgerEntry sle{
-        ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
+    ripple::STLedgerEntry sle{ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
 
     if (!key.check(sle))
         return Status{RippledError::rpcDB_DESERIALIZATION};
@@ -87,8 +86,7 @@ doAccountInfo(Context const& context)
     response[JS(ledger_index)] = lgrInfo.seq;
 
     // Return SignerList(s) if that is requested.
-    if (request.contains(JS(signer_lists)) &&
-        request.at(JS(signer_lists)).as_bool())
+    if (request.contains(JS(signer_lists)) && request.at(JS(signer_lists)).as_bool())
     {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
@@ -97,21 +95,17 @@ doAccountInfo(Context const& context)
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const signers = context.backend->fetchLedgerObject(
-            signersKey.key, lgrInfo.seq, context.yield);
+        auto const signers = context.backend->fetchLedgerObject(signersKey.key, lgrInfo.seq, context.yield);
         if (signers)
         {
-            ripple::STLedgerEntry sleSigners{
-                ripple::SerialIter{signers->data(), signers->size()},
-                signersKey.key};
+            ripple::STLedgerEntry sleSigners{ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
             if (!signersKey.check(sleSigners))
                 return Status{RippledError::rpcDB_DESERIALIZATION};
 
             signerList.push_back(toJson(sleSigners));
         }
 
-        response[JS(account_data)].as_object()[JS(signer_lists)] =
-            std::move(signerList);
+        response[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signerList);
     }
 
     return response;

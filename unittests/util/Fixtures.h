@@ -61,8 +61,7 @@ protected:
         static std::once_flag once_;
         std::call_once(once_, [] {
             boost::log::add_common_attributes();
-            boost::log::register_simple_formatter_factory<clio::Severity, char>(
-                "Severity");
+            boost::log::register_simple_formatter_factory<clio::Severity, char>("Severity");
         });
 
         namespace src = boost::log::sources;
@@ -72,10 +71,8 @@ protected:
         auto core = boost::log::core::get();
 
         core->remove_all_sinks();
-        boost::log::add_console_log(
-            stream_, keywords::format = "%Channel%:%Severity% %Message%");
-        auto min_severity = expr::channel_severity_filter(
-            clio::log_channel, clio::log_severity);
+        boost::log::add_console_log(stream_, keywords::format = "%Channel%:%Severity% %Message%");
+        auto min_severity = expr::channel_severity_filter(clio::log_channel, clio::log_severity);
         min_severity["General"] = clio::Severity::DBG;
         min_severity["Trace"] = clio::Severity::TRC;
         core->set_filter(min_severity);

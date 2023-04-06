@@ -175,9 +175,7 @@ public:
         // thread-safe by default.
 
         net::dispatch(
-            http_.get_executor(),
-            boost::beast::bind_front_handler(
-                &WsUpgrader::do_upgrade, shared_from_this()));
+            http_.get_executor(), boost::beast::bind_front_handler(&WsUpgrader::do_upgrade, shared_from_this()));
     }
 
 private:
@@ -191,8 +189,7 @@ private:
         parser_->body_limit(10000);
 
         // Set the timeout.
-        boost::beast::get_lowest_layer(http_).expires_after(
-            std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(http_).expires_after(std::chrono::seconds(30));
 
         on_upgrade();
     }

@@ -31,10 +31,8 @@ using namespace testing;
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT1 = "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto LEDGERHASH =
-    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto INDEX1 =
-    "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 
 class RPCAccountInfoHandlerTest : public HandlerBaseTest
 {
@@ -49,9 +47,8 @@ struct AccountInfoParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct AccountInfoParameterTest
-    : public RPCAccountInfoHandlerTest,
-      public WithParamInterface<AccountInfoParamTestCaseBundle>
+struct AccountInfoParameterTest : public RPCAccountInfoHandlerTest,
+                                  public WithParamInterface<AccountInfoParamTestCaseBundle>
 {
     struct NameGenerator
     {
@@ -59,8 +56,7 @@ struct AccountInfoParameterTest
         std::string
         operator()(const testing::TestParamInfo<ParamType>& info) const
         {
-            auto bundle =
-                static_cast<AccountInfoParamTestCaseBundle>(info.param);
+            auto bundle = static_cast<AccountInfoParamTestCaseBundle>(info.param);
             return bundle.testName;
         }
     };
@@ -70,31 +66,11 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<AccountInfoParamTestCaseBundle>{
-        AccountInfoParamTestCaseBundle{
-            "MissingAccountAndIdent",
-            R"({})",
-            "actMalformed",
-            "Account malformed."},
-        AccountInfoParamTestCaseBundle{
-            "AccountNotString",
-            R"({"account":1})",
-            "invalidParams",
-            "accountNotString"},
-        AccountInfoParamTestCaseBundle{
-            "AccountInvalid",
-            R"({"account":"xxx"})",
-            "invalidParams",
-            "accountMalformed"},
-        AccountInfoParamTestCaseBundle{
-            "IdentNotString",
-            R"({"ident":1})",
-            "invalidParams",
-            "identNotString"},
-        AccountInfoParamTestCaseBundle{
-            "IdentInvalid",
-            R"({"ident":"xxx"})",
-            "invalidParams",
-            "identMalformed"},
+        AccountInfoParamTestCaseBundle{"MissingAccountAndIdent", R"({})", "actMalformed", "Account malformed."},
+        AccountInfoParamTestCaseBundle{"AccountNotString", R"({"account":1})", "invalidParams", "accountNotString"},
+        AccountInfoParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "invalidParams", "accountMalformed"},
+        AccountInfoParamTestCaseBundle{"IdentNotString", R"({"ident":1})", "invalidParams", "identNotString"},
+        AccountInfoParamTestCaseBundle{"IdentInvalid", R"({"ident":"xxx"})", "invalidParams", "identMalformed"},
         AccountInfoParamTestCaseBundle{
             "SignerListsInvalid",
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})",
@@ -135,9 +111,7 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        EXPECT_EQ(
-            err.at("error_message").as_string(),
-            testBundle.expectedErrorMessage);
+        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
 }
 
@@ -148,8 +122,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
@@ -174,8 +147,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
@@ -228,10 +200,8 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExsit)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
-        .WillByDefault(Return(ledgerinfo));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject)
-        .WillByDefault(Return(std::optional<Blob>{}));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     auto const static input = boost::json::parse(fmt::format(
@@ -257,11 +227,9 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
     // return a valid ledger object but not account root
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject)
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     auto const static input = boost::json::parse(fmt::format(
@@ -275,9 +243,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "dbDeserialization");
-        EXPECT_EQ(
-            err.at("error_message").as_string(),
-            "Database deserialization error.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Database deserialization error.");
     });
 }
 
@@ -289,12 +255,10 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    auto const accountRoot =
-        CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     auto signersKey = ripple::keylet::signers(account).key;
@@ -314,9 +278,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "dbDeserialization");
-        EXPECT_EQ(
-            err.at("error_message").as_string(),
-            "Database deserialization error.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Database deserialization error.");
     });
 }
 
@@ -379,20 +341,16 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    auto const accountRoot =
-        CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     auto signersKey = ripple::keylet::signers(account).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(signersKey, 30, _))
-        .WillByDefault(Return(CreateSignerLists({{ACCOUNT1, 1}, {ACCOUNT2, 1}})
-                                  .getSerializer()
-                                  .peekData()));
+        .WillByDefault(Return(CreateSignerLists({{ACCOUNT1, 1}, {ACCOUNT2, 1}}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const static input = boost::json::parse(fmt::format(
@@ -416,13 +374,11 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence)
-        .WillByDefault(Return(ledgerinfo));
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    auto const accountRoot =
-        CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);

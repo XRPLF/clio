@@ -48,13 +48,10 @@ template <
     typename StatementType,
     typename HandleType = Handle,
     SomeRetryPolicy RetryPolicyType = ExponentialBackoffRetryPolicy>
-class AsyncExecutor
-    : public std::enable_shared_from_this<
-          AsyncExecutor<StatementType, HandleType, RetryPolicyType>>
+class AsyncExecutor : public std::enable_shared_from_this<AsyncExecutor<StatementType, HandleType, RetryPolicyType>>
 {
     using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
-    using CallbackType =
-        std::function<void(typename HandleType::ResultOrErrorType)>;
+    using CallbackType = std::function<void(typename HandleType::ResultOrErrorType)>;
 
     clio::Logger log_{"Backend"};
 
@@ -71,37 +68,24 @@ public:
      * @brief Create a new instance of the AsyncExecutor and execute it.
      */
     static void
-    run(boost::asio::io_context& ioc,
-        HandleType const& handle,
-        StatementType data,
-        CallbackType&& onComplete)
+    run(boost::asio::io_context& ioc, HandleType const& handle, StatementType data, CallbackType&& onComplete)
     {
         // this is a helper that allows us to use std::make_shared below
-        struct EnableMakeShared
-            : public AsyncExecutor<StatementType, HandleType, RetryPolicyType>
+        struct EnableMakeShared : public AsyncExecutor<StatementType, HandleType, RetryPolicyType>
         {
-            EnableMakeShared(
-                boost::asio::io_context& ioc,
-                StatementType&& data,
-                CallbackType&& onComplete)
+            EnableMakeShared(boost::asio::io_context& ioc, StatementType&& data, CallbackType&& onComplete)
                 : AsyncExecutor(ioc, std::move(data), std::move(onComplete))
             {
             }
         };
 
-        auto ptr = std::make_shared<EnableMakeShared>(
-            ioc, std::move(data), std::move(onComplete));
+        auto ptr = std::make_shared<EnableMakeShared>(ioc, std::move(data), std::move(onComplete));
         ptr->execute(handle);
     }
 
 private:
-    AsyncExecutor(
-        boost::asio::io_context& ioc,
-        StatementType&& data,
-        CallbackType&& onComplete)
-        : data_{std::move(data)}
-        , retryPolicy_{ioc}
-        , onComplete_{std::move(onComplete)}
+    AsyncExecutor(boost::asio::io_context& ioc, StatementType&& data, CallbackType&& onComplete)
+        : data_{std::move(data)}, retryPolicy_{ioc}, onComplete_{std::move(onComplete)}
     {
     }
 
@@ -119,8 +103,7 @@ private:
             else
             {
                 if (retryPolicy_.shouldRetry(res.error()))
-                    retryPolicy_.retry(
-                        [self, &handle]() { self->execute(handle); });
+                    retryPolicy_.retry([self, &handle]() { self->execute(handle); });
                 else
                     onComplete_(std::move(res));  // report error
             }

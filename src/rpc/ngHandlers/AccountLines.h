@@ -68,25 +68,21 @@ public:
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         std::optional<std::string> peer;
-        bool ignoreDefault =
-            false;  // TODO: document
-                    // https://github.com/XRPLF/xrpl-dev-portal/issues/1839
+        bool ignoreDefault = false;  // TODO: document
+                                     // https://github.com/XRPLF/xrpl-dev-portal/issues/1839
         uint32_t limit = 50;
         std::optional<std::string> marker;
     };
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountLinesHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    AccountLinesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
     RpcSpecConstRef
     spec() const
     {
-        // clang-format off
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(peer), validation::Type<std::string>{}, validation::AccountValidator},
@@ -96,7 +92,6 @@ public:
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
         };
-        // clang-format on
 
         return rpcSpec;
     }
@@ -114,18 +109,12 @@ private:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        LineResponse const& line);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LineResponse const& line);
 };
 }  // namespace RPCng

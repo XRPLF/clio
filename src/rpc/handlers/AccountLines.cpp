@@ -64,18 +64,12 @@ addLine(
     if (!viewLowest)
         balance.negate();
 
-    bool lineAuth =
-        flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineAuthPeer =
-        flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineNoRipple =
-        flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineNoRipplePeer = flags &
-        (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineFreeze =
-        flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool lineFreezePeer =
-        flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineAuthPeer = flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineNoRipplePeer = flags & (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool lineFreezePeer = flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
 
     ripple::STAmount const& saBalance(balance);
     ripple::STAmount const& saLimit(lineLimit);
@@ -119,15 +113,14 @@ doAccountLines(Context const& context)
     if (auto const status = getAccount(request, accountID); status)
         return status;
 
-    auto rawAcct = context.backend->fetchLedgerObject(
-        ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto rawAcct =
+        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
 
     if (!rawAcct)
         return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
 
     std::optional<ripple::AccountID> peerAccount;
-    if (auto const status = getOptionalAccount(request, peerAccount, JS(peer));
-        status)
+    if (auto const status = getOptionalAccount(request, peerAccount, JS(peer)); status)
         return status;
 
     std::uint32_t limit;
@@ -147,8 +140,7 @@ doAccountLines(Context const& context)
     if (request.contains(JS(ignore_default)))
     {
         if (not request.at(JS(ignore_default)).is_bool())
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
+            return Status{RippledError::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
 
         ignoreDefault = request.at(JS(ignore_default)).as_bool();
     }
@@ -166,15 +158,10 @@ doAccountLines(Context const& context)
             auto ignore = false;
             if (ignoreDefault)
             {
-                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() ==
-                    accountID)
-                    ignore =
-                        !(sle.getFieldU32(ripple::sfFlags) &
-                          ripple::lsfLowReserve);
+                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
+                    ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve);
                 else
-                    ignore =
-                        !(sle.getFieldU32(ripple::sfFlags) &
-                          ripple::lsfHighReserve);
+                    ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve);
             }
 
             if (!ignore)
@@ -182,14 +169,8 @@ doAccountLines(Context const& context)
         }
     };
 
-    auto next = traverseOwnedNodes(
-        *context.backend,
-        accountID,
-        lgrInfo.seq,
-        limit,
-        marker,
-        context.yield,
-        addToResponse);
+    auto next =
+        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
 
     if (auto status = std::get_if<RPC::Status>(&next))
         return *status;

@@ -31,23 +31,9 @@ ProbingETLSource::ProbingETLSource(
     ETLLoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)
     : sslCtx_{std::move(sslCtx)}
-    , sslSrc_{make_shared<SslETLSource>(
-          config,
-          ioc,
-          std::ref(sslCtx_),
-          backend,
-          subscriptions,
-          nwvl,
-          balancer,
-          make_SSLHooks())}
-    , plainSrc_{make_shared<PlainETLSource>(
-          config,
-          ioc,
-          backend,
-          subscriptions,
-          nwvl,
-          balancer,
-          make_PlainHooks())}
+    , sslSrc_{make_shared<
+          SslETLSource>(config, ioc, std::ref(sslCtx_), backend, subscriptions, nwvl, balancer, make_SSLHooks())}
+    , plainSrc_{make_shared<PlainETLSource>(config, ioc, backend, subscriptions, nwvl, balancer, make_PlainHooks())}
 {
 }
 
@@ -107,8 +93,7 @@ std::string
 ProbingETLSource::toString() const
 {
     if (!currentSrc_)
-        return "{probing... ws: " + plainSrc_->toString() +
-            ", wss: " + sslSrc_->toString() + "}";
+        return "{probing... ws: " + plainSrc_->toString() + ", wss: " + sslSrc_->toString() + "}";
     return currentSrc_->toString();
 }
 
@@ -121,27 +106,19 @@ ProbingETLSource::token() const
 }
 
 bool
-ProbingETLSource::loadInitialLedger(
-    std::uint32_t ledgerSequence,
-    std::uint32_t numMarkers,
-    bool cacheOnly)
+ProbingETLSource::loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly)
 {
     if (!currentSrc_)
         return false;
-    return currentSrc_->loadInitialLedger(
-        ledgerSequence, numMarkers, cacheOnly);
+    return currentSrc_->loadInitialLedger(ledgerSequence, numMarkers, cacheOnly);
 }
 
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-ProbingETLSource::fetchLedger(
-    uint32_t ledgerSequence,
-    bool getObjects,
-    bool getObjectNeighbors)
+ProbingETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     if (!currentSrc_)
         return {};
-    return currentSrc_->fetchLedger(
-        ledgerSequence, getObjects, getObjectNeighbors);
+    return currentSrc_->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
 }
 
 std::optional<boost::json::object>
@@ -179,8 +156,7 @@ ProbingETLSource::make_SSLHooks() noexcept
                 {
                     plainSrc_->pause();
                     currentSrc_ = sslSrc_;
-                    log_.info() << "Selected WSS as the main source: "
-                                << currentSrc_->toString();
+                    log_.info() << "Selected WSS as the main source: " << currentSrc_->toString();
                 }
                 return ETLSourceHooks::Action::PROCEED;
             },
@@ -209,8 +185,7 @@ ProbingETLSource::make_PlainHooks() noexcept
                 {
                     sslSrc_->pause();
                     currentSrc_ = plainSrc_;
-                    log_.info() << "Selected Plain WS as the main source: "
-                                << currentSrc_->toString();
+                    log_.info() << "Selected Plain WS as the main source: " << currentSrc_->toString();
                 }
                 return ETLSourceHooks::Action::PROCEED;
             },

@@ -52,9 +52,7 @@ Counters::rpcErrored(std::string const& method)
 }
 
 void
-Counters::rpcComplete(
-    std::string const& method,
-    std::chrono::microseconds const& rpcDuration)
+Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
     if (!validHandler(method))
         return;

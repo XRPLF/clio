@@ -59,8 +59,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     {
         cass_byte_t const* buf;
         std::size_t bufSize;
-        auto const rc =
-            cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
+        auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract ripple::uint256");
         output = ripple::uint256::fromVoid(buf);
     }
@@ -68,8 +67,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     {
         cass_byte_t const* buf;
         std::size_t bufSize;
-        auto const rc =
-            cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
+        auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract ripple::AccountID");
         output = ripple::AccountID::fromVoid(buf);
     }
@@ -77,8 +75,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     {
         cass_byte_t const* buf;
         std::size_t bufSize;
-        auto const rc =
-            cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
+        auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract vector<unsigned char>");
         output = uchar_vector_t{buf, buf + bufSize};
     }
@@ -91,16 +88,14 @@ extractColumn(CassRow const* row, std::size_t idx)
     {
         char const* value;
         std::size_t len;
-        auto const rc =
-            cass_value_get_string(cass_row_get_column(row, idx), &value, &len);
+        auto const rc = cass_value_get_string(cass_row_get_column(row, idx), &value, &len);
         throwErrorIfNeeded(rc, "Extract string");
         output = std::string{value, len};
     }
     else if constexpr (std::is_same_v<decayed_t, bool>)
     {
         cass_bool_t flag;
-        auto const rc =
-            cass_value_get_bool(cass_row_get_column(row, idx), &flag);
+        auto const rc = cass_value_get_bool(cass_row_get_column(row, idx), &flag);
         throwErrorIfNeeded(rc, "Extract bool");
         output = flag ? true : false;
     }
@@ -108,8 +103,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     else if constexpr (std::is_convertible_v<decayed_t, int64_t>)
     {
         int64_t out;
-        auto const rc =
-            cass_value_get_int64(cass_row_get_column(row, idx), &out);
+        auto const rc = cass_value_get_int64(cass_row_get_column(row, idx), &out);
         throwErrorIfNeeded(rc, "Extract int64");
         output = static_cast<decayed_t>(out);
     }
@@ -144,8 +138,7 @@ struct Result : public ManagedObject<CassResult const>
         std::size_t idx = 0;
         auto advanceId = [&idx]() { return idx++; };
 
-        return std::make_optional<std::tuple<RowTypes...>>(
-            {extractColumn<RowTypes>(row, advanceId())...});
+        return std::make_optional<std::tuple<RowTypes...>>({extractColumn<RowTypes>(row, advanceId())...});
     }
 
     template <typename RowType>
@@ -207,8 +200,7 @@ public:
         using difference_type = std::size_t;  // rows count
         using value_type = std::tuple<Types...>;
 
-        /* implicit */ Iterator(ResultIterator iterator)
-            : iterator_{std::move(iterator)}
+        /* implicit */ Iterator(ResultIterator iterator) : iterator_{std::move(iterator)}
         {
         }
 

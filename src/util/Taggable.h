@@ -103,8 +103,7 @@ public:
 template <typename Generator>
 class TagDecorator final : public BaseTagDecorator
 {
-    using parent_t =
-        std::optional<std::reference_wrapper<BaseTagDecorator const>>;
+    using parent_t = std::optional<std::reference_wrapper<BaseTagDecorator const>>;
     using tag_t = typename Generator::tag_t;
 
     parent_t parent_ = std::nullopt;
@@ -169,8 +168,7 @@ public:
  */
 class TagDecoratorFactory final
 {
-    using parent_t =
-        std::optional<std::reference_wrapper<BaseTagDecorator const>>;
+    using parent_t = std::optional<std::reference_wrapper<BaseTagDecorator const>>;
 
     /**
      * @brief Represents the type of tag decorator
@@ -181,7 +179,7 @@ class TagDecoratorFactory final
         UINT  /*! atomic_uint64_t tag, thread-safe, lock-free */
     };
 
-    Type type_; /*! The type of TagDecorator this factory produces */
+    Type type_;                      /*! The type of TagDecorator this factory produces */
     parent_t parent_ = std::nullopt; /*! The parent tag decorator to bind */
 
 public:
@@ -191,14 +189,12 @@ public:
      * @brief Instantiates a tag decorator factory from `clio` configuration.
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(clio::Config const& config)
-        : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
+    explicit TagDecoratorFactory(clio::Config const& config) : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
     {
     }
 
 private:
-    TagDecoratorFactory(Type type, parent_t parent) noexcept
-        : type_{type}, parent_{parent}
+    TagDecoratorFactory(Type type, parent_t parent) noexcept : type_{type}, parent_{parent}
     {
     }
 
@@ -257,8 +253,7 @@ protected:
      * @brief New Taggable from a specified factory
      * @param tagFactory The factory to use
      */
-    explicit Taggable(util::TagDecoratorFactory const& tagFactory)
-        : tagDecorator_{tagFactory.make()}
+    explicit Taggable(util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
     {
     }
 

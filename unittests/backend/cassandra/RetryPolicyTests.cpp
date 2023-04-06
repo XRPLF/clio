@@ -35,12 +35,9 @@ class BackendCassandraRetryPolicyTest : public SyncAsioContextTest
 TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 {
     auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
-    EXPECT_TRUE(retryPolicy.shouldRetry(
-        CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}));
-    EXPECT_TRUE(retryPolicy.shouldRetry(
-        CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}));
-    EXPECT_TRUE(retryPolicy.shouldRetry(
-        CassandraError{"invalid query", CASS_ERROR_SERVER_INVALID_QUERY}));
+    EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}));
+    EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}));
+    EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid query", CASS_ERROR_SERVER_INVALID_QUERY}));
 
     // this policy actually always returns true
     auto const err = CassandraError{"ok", CASS_OK};
@@ -64,9 +61,8 @@ TEST_F(BackendCassandraRetryPolicyTest, CheckComputedBackoffDelayIsCorrect)
     EXPECT_EQ(retryPolicy.calculateDelay(8).count(), 256);
     EXPECT_EQ(retryPolicy.calculateDelay(9).count(), 512);
     EXPECT_EQ(retryPolicy.calculateDelay(10).count(), 1024);
-    EXPECT_EQ(
-        retryPolicy.calculateDelay(11).count(),
-        1024);  // 10 is max, same after that
+    EXPECT_EQ(retryPolicy.calculateDelay(11).count(),
+              1024);  // 10 is max, same after that
 }
 
 TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)

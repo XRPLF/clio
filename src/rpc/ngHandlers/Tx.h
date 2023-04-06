@@ -52,8 +52,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    TxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    TxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -61,9 +60,7 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"transaction",
-             validation::Required{},
-             validation::Uint256HexStringValidator},
+            {"transaction", validation::Required{}, validation::Uint256HexStringValidator},
             {"binary", validation::Type<bool>{}},
             {"min_ledger", validation::Type<uint32_t>{}},
             {"max_ledger", validation::Type<uint32_t>{}},
@@ -77,10 +74,7 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

@@ -25,15 +25,12 @@
 #include <vector>
 
 namespace {
-static constexpr auto futureDeleter = [](CassFuture* ptr) {
-    cass_future_free(ptr);
-};
+static constexpr auto futureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };
 }  // namespace
 
 namespace Backend::Cassandra::detail {
 
-/* implicit */ Future::Future(CassFuture* ptr)
-    : ManagedObject{ptr, futureDeleter}
+/* implicit */ Future::Future(CassFuture* ptr) : ManagedObject{ptr, futureDeleter}
 {
 }
 
@@ -62,9 +59,7 @@ Future::get() const
             char const* message;
             std::size_t len;
             cass_future_error_message(*this, &message, &len);
-            return std::make_pair(
-                label + ": " + std::string{message, len},
-                cass_future_error_code(*this));
+            return std::make_pair(label + ": " + std::string{message, len}, cass_future_error_code(*this));
         }("future::get()");
         return Error{CassandraError{errMsg, code}};
     }
@@ -85,9 +80,7 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
             char const* message;
             std::size_t len;
             cass_future_error_message(ptr, &message, &len);
-            return std::make_pair(
-                label + ": " + std::string{message, len},
-                cass_future_error_code(ptr));
+            return std::make_pair(label + ": " + std::string{message, len}, cass_future_error_code(ptr));
         }("invokeHelper");
         (*cb)(Error{CassandraError{errMsg, code}});
     }
@@ -97,9 +90,7 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
     }
 }
 
-/* implicit */ FutureWithCallback::FutureWithCallback(
-    CassFuture* ptr,
-    fn_t&& cb)
+/* implicit */ FutureWithCallback::FutureWithCallback(CassFuture* ptr, fn_t&& cb)
     : Future{ptr}, cb_{std::make_unique<fn_t>(std::move(cb))}
 {
     // Instead of passing `this` as the userdata void*, we pass the address of

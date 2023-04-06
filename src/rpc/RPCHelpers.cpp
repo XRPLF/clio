@@ -47,10 +47,7 @@ getBool(boost::json::object const& request, std::string const& field)
 }
 
 bool
-getBool(
-    boost::json::object const& request,
-    std::string const& field,
-    bool dfault)
+getBool(boost::json::object const& request, std::string const& field, bool dfault)
 {
     if (auto res = getBool(request, field))
         return *res;
@@ -81,10 +78,7 @@ getUInt(boost::json::object const& request, std::string const& field)
 }
 
 std::uint32_t
-getUInt(
-    boost::json::object const& request,
-    std::string const& field,
-    std::uint32_t const dfault)
+getUInt(boost::json::object const& request, std::string const& field, std::uint32_t const dfault)
 {
     if (auto res = getUInt(request, field))
         return *res;
@@ -156,10 +150,7 @@ getRequiredString(boost::json::object const& request, std::string const& field)
 }
 
 std::string
-getString(
-    boost::json::object const& request,
-    std::string const& field,
-    std::string dfault)
+getString(boost::json::object const& request, std::string const& field, std::string dfault)
 {
     if (auto res = getString(request, field))
         return *res;
@@ -192,25 +183,21 @@ getAccount(
     if (!request.contains(field))
     {
         if (required)
-            return Status{
-                RippledError::rpcINVALID_PARAMS, field.to_string() + "Missing"};
+            return Status{RippledError::rpcINVALID_PARAMS, field.to_string() + "Missing"};
 
         return {};
     }
 
     if (!request.at(field).is_string())
-        return Status{
-            RippledError::rpcINVALID_PARAMS, field.to_string() + "NotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, field.to_string() + "NotString"};
 
-    if (auto a = accountFromStringStrict(request.at(field).as_string().c_str());
-        a)
+    if (auto a = accountFromStringStrict(request.at(field).as_string().c_str()); a)
     {
         account = a.value();
         return {};
     }
 
-    return Status{
-        RippledError::rpcACT_MALFORMED, field.to_string() + "Malformed"};
+    return Status{RippledError::rpcACT_MALFORMED, field.to_string() + "Malformed"};
 }
 
 Status
@@ -226,18 +213,15 @@ getOptionalAccount(
     }
 
     if (!request.at(field).is_string())
-        return Status{
-            RippledError::rpcINVALID_PARAMS, field.to_string() + "NotString"};
+        return Status{RippledError::rpcINVALID_PARAMS, field.to_string() + "NotString"};
 
-    if (auto a = accountFromStringStrict(request.at(field).as_string().c_str());
-        a)
+    if (auto a = accountFromStringStrict(request.at(field).as_string().c_str()); a)
     {
         account = a.value();
         return {};
     }
 
-    return Status{
-        RippledError::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
+    return Status{RippledError::rpcINVALID_PARAMS, field.to_string() + "Malformed"};
 }
 
 Status
@@ -247,10 +231,7 @@ getAccount(boost::json::object const& request, ripple::AccountID& accountId)
 }
 
 Status
-getAccount(
-    boost::json::object const& request,
-    ripple::AccountID& destAccount,
-    boost::string_view const& field)
+getAccount(boost::json::object const& request, ripple::AccountID& destAccount, boost::string_view const& field)
 {
     return getAccount(request, destAccount, field, false);
 }
@@ -320,8 +301,7 @@ canHaveDeliveredAmount(
     std::shared_ptr<ripple::TxMeta const> const& meta)
 {
     ripple::TxType const tt{txn->getTxnType()};
-    if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH &&
-        tt != ripple::ttACCOUNT_DELETE)
+    if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH && tt != ripple::ttACCOUNT_DELETE)
         return false;
 
     /*
@@ -343,13 +323,11 @@ accountFromStringStrict(std::string const& account)
     std::optional<ripple::PublicKey> publicKey = {};
     if (blob && ripple::publicKeyType(ripple::makeSlice(*blob)))
     {
-        publicKey =
-            ripple::PublicKey(ripple::Slice{blob->data(), blob->size()});
+        publicKey = ripple::PublicKey(ripple::Slice{blob->data(), blob->size()});
     }
     else
     {
-        publicKey = ripple::parseBase58<ripple::PublicKey>(
-            ripple::TokenType::AccountPublic, account);
+        publicKey = ripple::parseBase58<ripple::PublicKey>(ripple::TokenType::AccountPublic, account);
     }
 
     std::optional<ripple::AccountID> result;
@@ -363,26 +341,19 @@ accountFromStringStrict(std::string const& account)
     else
         return {};
 }
-std::pair<
-    std::shared_ptr<ripple::STTx const>,
-    std::shared_ptr<ripple::STObject const>>
+std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
 {
     try
     {
-        std::pair<
-            std::shared_ptr<ripple::STTx const>,
-            std::shared_ptr<ripple::STObject const>>
-            result;
+        std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>> result;
         {
-            ripple::SerialIter s{
-                blobs.transaction.data(), blobs.transaction.size()};
+            ripple::SerialIter s{blobs.transaction.data(), blobs.transaction.size()};
             result.first = std::make_shared<ripple::STTx const>(s);
         }
         {
             ripple::SerialIter s{blobs.metadata.data(), blobs.metadata.size()};
-            result.second =
-                std::make_shared<ripple::STObject const>(s, ripple::sfMetadata);
+            result.second = std::make_shared<ripple::STObject const>(s, ripple::sfMetadata);
         }
         return result;
     }
@@ -390,34 +361,21 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
     {
         std::stringstream txn;
         std::stringstream meta;
-        std::copy(
-            blobs.transaction.begin(),
-            blobs.transaction.end(),
-            std::ostream_iterator<unsigned char>(txn));
-        std::copy(
-            blobs.metadata.begin(),
-            blobs.metadata.end(),
-            std::ostream_iterator<unsigned char>(meta));
-        gLog.error() << "Failed to deserialize transaction. txn = " << txn.str()
-                     << " - meta = " << meta.str() << " txn length = "
-                     << std::to_string(blobs.transaction.size())
-                     << " meta length = "
-                     << std::to_string(blobs.metadata.size());
+        std::copy(blobs.transaction.begin(), blobs.transaction.end(), std::ostream_iterator<unsigned char>(txn));
+        std::copy(blobs.metadata.begin(), blobs.metadata.end(), std::ostream_iterator<unsigned char>(meta));
+        gLog.error() << "Failed to deserialize transaction. txn = " << txn.str() << " - meta = " << meta.str()
+                     << " txn length = " << std::to_string(blobs.transaction.size())
+                     << " meta length = " << std::to_string(blobs.metadata.size());
         throw e;
     }
 }
 
-std::pair<
-    std::shared_ptr<ripple::STTx const>,
-    std::shared_ptr<ripple::TxMeta const>>
-deserializeTxPlusMeta(
-    Backend::TransactionAndMetadata const& blobs,
-    std::uint32_t seq)
+std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta const>>
+deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
-    std::shared_ptr<ripple::TxMeta> m =
-        std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
+    std::shared_ptr<ripple::TxMeta> m = std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
 
     return {tx, m};
 }
@@ -425,8 +383,7 @@ deserializeTxPlusMeta(
 boost::json::object
 toJson(ripple::STBase const& obj)
 {
-    boost::json::value value = boost::json::parse(
-        obj.getJson(ripple::JsonOptions::none).toStyledString());
+    boost::json::value value = boost::json::parse(obj.getJson(ripple::JsonOptions::none).toStyledString());
 
     return value.as_object();
 }
@@ -451,8 +408,7 @@ insertDeliveredAmount(
     if (canHaveDeliveredAmount(txn, meta))
     {
         if (auto amt = getDeliveredAmount(txn, meta, meta->getLgrSeq(), date))
-            metaJson["delivered_amount"] =
-                toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
+            metaJson["delivered_amount"] = toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
         else
             metaJson["delivered_amount"] = "unavailable";
         return true;
@@ -463,8 +419,7 @@ insertDeliveredAmount(
 boost::json::object
 toJson(ripple::TxMeta const& meta)
 {
-    boost::json::value value = boost::json::parse(
-        meta.getJson(ripple::JsonOptions::none).toStyledString());
+    boost::json::value value = boost::json::parse(meta.getJson(ripple::JsonOptions::none).toStyledString());
 
     return value.as_object();
 }
@@ -480,8 +435,7 @@ toBoostJson(Json::Value const& value)
 boost::json::object
 toJson(ripple::SLE const& sle)
 {
-    boost::json::value value = boost::json::parse(
-        sle.getJson(ripple::JsonOptions::none).toStyledString());
+    boost::json::value value = boost::json::parse(sle.getJson(ripple::JsonOptions::none).toStyledString());
     if (sle.getType() == ripple::ltACCOUNT_ROOT)
     {
         if (sle.isFieldPresent(ripple::sfEmailHash))
@@ -489,8 +443,7 @@ toJson(ripple::SLE const& sle)
             auto const& hash = sle.getFieldH128(ripple::sfEmailHash);
             std::string md5 = strHex(hash);
             boost::algorithm::to_lower(md5);
-            value.as_object()["urlgravatar"] =
-                str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
+            value.as_object()["urlgravatar"] = str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
         }
     }
     return value.as_object();
@@ -509,8 +462,7 @@ toJson(ripple::LedgerInfo const& lgrInfo)
     header["close_flags"] = lgrInfo.closeFlags;
 
     // Always show fields that contribute to the ledger hash
-    header["parent_close_time"] =
-        lgrInfo.parentCloseTime.time_since_epoch().count();
+    header["parent_close_time"] = lgrInfo.parentCloseTime.time_since_epoch().count();
     header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
     header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
     return header;
@@ -534,20 +486,16 @@ parseStringAsUInt(std::string const& value)
 std::variant<Status, ripple::LedgerInfo>
 ledgerInfoFromRequest(Context const& ctx)
 {
-    auto hashValue = ctx.params.contains("ledger_hash")
-        ? ctx.params.at("ledger_hash")
-        : nullptr;
+    auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
     if (!hashValue.is_null())
     {
         if (!hashValue.is_string())
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "ledgerHashNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "ledgerHashNotString"};
 
         ripple::uint256 ledgerHash;
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"};
+            return Status{RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
         auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
 
@@ -557,9 +505,7 @@ ledgerInfoFromRequest(Context const& ctx)
         return *lgrInfo;
     }
 
-    auto indexValue = ctx.params.contains("ledger_index")
-        ? ctx.params.at("ledger_index")
-        : nullptr;
+    auto indexValue = ctx.params.contains("ledger_index") ? ctx.params.at("ledger_index") : nullptr;
 
     std::optional<std::uint32_t> ledgerSequence = {};
     if (!indexValue.is_null())
@@ -583,8 +529,7 @@ ledgerInfoFromRequest(Context const& ctx)
     if (!ledgerSequence)
         return Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
-    auto lgrInfo =
-        ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
+    auto lgrInfo = ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
         return Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -602,8 +547,7 @@ getLedgerInfoFromHashOrSeq(
     uint32_t maxSeq)
 {
     std::optional<ripple::LedgerInfo> lgrInfo;
-    auto const err =
-        RPC::Status{RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+    auto const err = RPC::Status{RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash)
     {
         // invoke uint256's constructor to parse the hex string , instead of
@@ -652,8 +596,7 @@ getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID)
     {
         if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
             return sle.getFieldU64(ripple::sfLowNode);
-        else if (
-            sle.getFieldAmount(ripple::sfHighLimit).getIssuer() == accountID)
+        else if (sle.getFieldAmount(ripple::sfHighLimit).getIssuer() == accountID)
             return sle.getFieldU64(ripple::sfHighNode);
     }
 
@@ -673,8 +616,7 @@ traverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
-    if (!backend.fetchLedgerObject(
-            ripple::keylet::account(accountID).key, sequence, yield))
+    if (!backend.fetchLedgerObject(ripple::keylet::account(accountID).key, sequence, yield))
         return Status{RippledError::rpcACT_NOT_FOUND};
 
     auto const maybeCursor = parseAccountCursor(jsonCursor);
@@ -752,8 +694,7 @@ traverseOwnedNodes(
     if (hexMarker.isNonZero())
     {
         auto const hintIndex = ripple::keylet::page(rootIndex, startHint);
-        auto hintDir =
-            backend.fetchLedgerObject(hintIndex.key, sequence, yield);
+        auto hintDir = backend.fetchLedgerObject(hintIndex.key, sequence, yield);
 
         if (!hintDir)
             return Status(ripple::rpcINVALID_PARAMS, "Invalid marker");
@@ -762,8 +703,7 @@ traverseOwnedNodes(
         ripple::SLE sle{it, hintIndex.key};
 
         if (auto const& indexes = sle.getFieldV256(ripple::sfIndexes);
-            std::find(std::begin(indexes), std::end(indexes), hexMarker) ==
-            std::end(indexes))
+            std::find(std::begin(indexes), std::end(indexes), hexMarker) == std::end(indexes))
         {
             // result in empty dataset
             return AccountCursor({beast::zero, 0});
@@ -773,12 +713,10 @@ traverseOwnedNodes(
         bool found = false;
         for (;;)
         {
-            auto const ownerDir =
-                backend.fetchLedgerObject(currentIndex.key, sequence, yield);
+            auto const ownerDir = backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
             if (!ownerDir)
-                return Status(
-                    ripple::rpcINVALID_PARAMS, "Owner directory not found");
+                return Status(ripple::rpcINVALID_PARAMS, "Owner directory not found");
 
             ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
             ripple::SLE sle{it, currentIndex.key};
@@ -819,8 +757,7 @@ traverseOwnedNodes(
     {
         for (;;)
         {
-            auto const ownerDir =
-                backend.fetchLedgerObject(currentIndex.key, sequence, yield);
+            auto const ownerDir = backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
             if (!ownerDir)
                 break;
@@ -853,16 +790,11 @@ traverseOwnedNodes(
     auto end = std::chrono::system_clock::now();
 
     gLog.debug() << "Time loading owned directories: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        end - start)
-                        .count()
-                 << " milliseconds";
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
 
-    auto [objects, timeDiff] = util::timed(
-        [&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
+    auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
-    gLog.debug() << "Time loading owned entries: " << timeDiff
-                 << " milliseconds";
+    gLog.debug() << "Time loading owned entries: " << timeDiff << " milliseconds";
 
     for (auto i = 0; i < objects.size(); ++i)
     {
@@ -877,17 +809,11 @@ traverseOwnedNodes(
 }
 
 std::shared_ptr<ripple::SLE const>
-read(
-    ripple::Keylet const& keylet,
-    ripple::LedgerInfo const& lgrInfo,
-    Context const& context)
+read(ripple::Keylet const& keylet, ripple::LedgerInfo const& lgrInfo, Context const& context)
 {
-    if (auto const blob = context.backend->fetchLedgerObject(
-            keylet.key, lgrInfo.seq, context.yield);
-        blob)
+    if (auto const blob = context.backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
     {
-        return std::make_shared<ripple::SLE const>(
-            ripple::SerialIter{blob->data(), blob->size()}, keylet.key);
+        return std::make_shared<ripple::SLE const>(ripple::SerialIter{blob->data(), blob->size()}, keylet.key);
     }
 
     return nullptr;
@@ -902,11 +828,9 @@ parseRippleLibSeed(boost::json::value const& value)
     if (!value.is_string())
         return {};
 
-    auto const result = ripple::decodeBase58Token(
-        value.as_string().c_str(), ripple::TokenType::None);
+    auto const result = ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
 
-    if (result.size() == 18 &&
-        static_cast<std::uint8_t>(result[0]) == std::uint8_t(0xE1) &&
+    if (result.size() == 18 && static_cast<std::uint8_t>(result[0]) == std::uint8_t(0xE1) &&
         static_cast<std::uint8_t>(result[1]) == std::uint8_t(0x4B))
         return ripple::Seed(ripple::makeSlice(result.substr(2)));
 
@@ -920,8 +844,7 @@ keypairFromRequst(boost::json::object const& request)
 
     // All of the secret types we allow, but only one at a time.
     // The array should be constexpr, but that makes Visual Studio unhappy.
-    static std::string const secretTypes[]{
-        "passphrase", "secret", "seed", "seed_hex"};
+    static std::string const secretTypes[]{"passphrase", "secret", "seed", "seed_hex"};
 
     // Identify which secret type is in use.
     std::string secretType = "";
@@ -958,13 +881,10 @@ keypairFromRequst(boost::json::object const& request)
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "invalidFieldKeyType"};
+            return Status{RippledError::rpcINVALID_PARAMS, "invalidFieldKeyType"};
 
         if (secretType == "secret")
-            return Status{
-                RippledError::rpcINVALID_PARAMS,
-                "The secret field is not allowed if key_type is used."};
+            return Status{RippledError::rpcINVALID_PARAMS, "The secret field is not allowed if key_type is used."};
     }
 
     // ripple-lib encodes seed used to generate an Ed25519 wallet in a
@@ -978,11 +898,8 @@ keypairFromRequst(boost::json::object const& request)
         {
             // If the user passed in an Ed25519 seed but *explicitly*
             // requested another key type, return an error.
-            if (keyType.value_or(ripple::KeyType::ed25519) !=
-                ripple::KeyType::ed25519)
-                return Status{
-                    RippledError::rpcINVALID_PARAMS,
-                    "Specified seed is for an Ed25519 wallet."};
+            if (keyType.value_or(ripple::KeyType::ed25519) != ripple::KeyType::ed25519)
+                return Status{RippledError::rpcINVALID_PARAMS, "Specified seed is for an Ed25519 wallet."};
 
             keyType = ripple::KeyType::ed25519;
         }
@@ -996,9 +913,7 @@ keypairFromRequst(boost::json::object const& request)
         if (has_key_type)
         {
             if (!request.at(secretType).is_string())
-                return Status{
-                    RippledError::rpcINVALID_PARAMS,
-                    "secret value must be string"};
+                return Status{RippledError::rpcINVALID_PARAMS, "secret value must be string"};
 
             std::string key = request.at(secretType).as_string().c_str();
 
@@ -1016,9 +931,7 @@ keypairFromRequst(boost::json::object const& request)
         else
         {
             if (!request.at("secret").is_string())
-                return Status{
-                    RippledError::rpcINVALID_PARAMS,
-                    "field secret should be a string"};
+                return Status{RippledError::rpcINVALID_PARAMS, "field secret should be a string"};
 
             std::string secret = request.at("secret").as_string().c_str();
             seed = ripple::parseGenericSeed(secret);
@@ -1026,15 +939,10 @@ keypairFromRequst(boost::json::object const& request)
     }
 
     if (!seed)
-        return Status{
-            RippledError::rpcBAD_SEED,
-            "Bad Seed: invalid field message secretType"};
+        return Status{RippledError::rpcBAD_SEED, "Bad Seed: invalid field message secretType"};
 
-    if (keyType != ripple::KeyType::secp256k1 &&
-        keyType != ripple::KeyType::ed25519)
-        return Status{
-            RippledError::rpcINVALID_PARAMS,
-            "keypairForSignature: invalid key type"};
+    if (keyType != ripple::KeyType::secp256k1 && keyType != ripple::KeyType::ed25519)
+        return Status{RippledError::rpcINVALID_PARAMS, "keypairForSignature: invalid key type"};
 
     return generateKeyPair(*keyType, *seed);
 }
@@ -1120,8 +1028,7 @@ isFrozen(
         ripple::SerialIter issuerIt{blob->data(), blob->size()};
         ripple::SLE issuerLine{issuerIt, key};
 
-        auto frozen =
-            (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
+        auto frozen = (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
 
         if (issuerLine.isFlag(frozen))
             return true;
@@ -1148,8 +1055,7 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
 
-    auto const reserve =
-        backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
+    auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
 
     auto const balance = sle.getFieldAmount(ripple::sfBalance);
 
@@ -1174,14 +1080,7 @@ accountFunds(
     }
     else
     {
-        return accountHolds(
-            backend,
-            sequence,
-            id,
-            amount.getCurrency(),
-            amount.getIssuer(),
-            true,
-            yield);
+        return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
     }
 }
 
@@ -1213,8 +1112,7 @@ accountHolds(
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE sle{it, key};
 
-    if (zeroIfFrozen &&
-        isFrozen(backend, sequence, account, currency, issuer, yield))
+    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield))
     {
         amount.clear(ripple::Issue(currency, issuer));
     }
@@ -1267,8 +1165,7 @@ postProcessOrderBook(
 
     std::map<ripple::AccountID, ripple::STAmount> umBalance;
 
-    bool globalFreeze =
-        isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
+    bool globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
         isGlobalFrozen(backend, ledgerSequence, book.in.account, yield);
 
     auto rate = transferRate(backend, ledgerSequence, book.out.account, yield);
@@ -1279,8 +1176,7 @@ postProcessOrderBook(
         {
             ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
             ripple::SLE offer{it, obj.key};
-            ripple::uint256 bookDir =
-                offer.getFieldH256(ripple::sfBookDirectory);
+            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
 
             auto const uOfferOwnerID = offer.getAccountID(ripple::sfAccount);
             auto const& saTakerGets = offer.getFieldAmount(ripple::sfTakerGets);
@@ -1313,13 +1209,7 @@ postProcessOrderBook(
                 else
                 {
                     saOwnerFunds = accountHolds(
-                        backend,
-                        ledgerSequence,
-                        uOfferOwnerID,
-                        book.out.currency,
-                        book.out.account,
-                        true,
-                        yield);
+                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield);
 
                     if (saOwnerFunds < beast::zero)
                         saOwnerFunds.clear();
@@ -1331,8 +1221,7 @@ postProcessOrderBook(
             ripple::STAmount saTakerGetsFunded;
             ripple::STAmount saOwnerFundsLimit = saOwnerFunds;
             ripple::Rate offerRate = ripple::parityRate;
-            ripple::STAmount dirRate =
-                ripple::amountFromQuality(getQuality(bookDir));
+            ripple::STAmount dirRate = ripple::amountFromQuality(getQuality(bookDir));
 
             if (rate != ripple::parityRate
                 // Have a tranfer fee.
@@ -1354,21 +1243,15 @@ postProcessOrderBook(
             else
             {
                 saTakerGetsFunded = saOwnerFundsLimit;
-                offerJson["taker_gets_funded"] = toBoostJson(
-                    saTakerGetsFunded.getJson(ripple::JsonOptions::none));
-                offerJson["taker_pays_funded"] = toBoostJson(
-                    std::min(
-                        saTakerPays,
-                        ripple::multiply(
-                            saTakerGetsFunded, dirRate, saTakerPays.issue()))
-                        .getJson(ripple::JsonOptions::none));
+                offerJson["taker_gets_funded"] = toBoostJson(saTakerGetsFunded.getJson(ripple::JsonOptions::none));
+                offerJson["taker_pays_funded"] =
+                    toBoostJson(std::min(saTakerPays, ripple::multiply(saTakerGetsFunded, dirRate, saTakerPays.issue()))
+                                    .getJson(ripple::JsonOptions::none));
             }
 
             ripple::STAmount saOwnerPays = (ripple::parityRate == offerRate)
                 ? saTakerGetsFunded
-                : std::min(
-                      saOwnerFunds,
-                      ripple::multiply(saTakerGetsFunded, offerRate));
+                : std::min(saOwnerFunds, ripple::multiply(saTakerGetsFunded, offerRate));
 
             umBalance[uOfferOwnerID] = saOwnerFunds - saOwnerPays;
 
@@ -1389,11 +1272,7 @@ postProcessOrderBook(
 
 // get book via currency type
 std::variant<Status, ripple::Book>
-parseBook(
-    ripple::Currency pays,
-    ripple::AccountID payIssuer,
-    ripple::Currency gets,
-    ripple::AccountID getIssuer)
+parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency gets, ripple::AccountID getIssuer)
 {
     if (isXRP(pays) && !isXRP(payIssuer))
         return Status{
@@ -1415,8 +1294,7 @@ parseBook(
 
     if (!ripple::isXRP(gets) && ripple::isXRP(getIssuer))
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED,
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
 
     if (pays == gets && payIssuer == getIssuer)
         return Status{RippledError::rpcBAD_MARKET, "badMarket"};
@@ -1428,22 +1306,16 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays"))
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "Missing field 'taker_pays'"};
+        return Status{RippledError::rpcINVALID_PARAMS, "Missing field 'taker_pays'"};
 
     if (!request.contains("taker_gets"))
-        return Status{
-            RippledError::rpcINVALID_PARAMS, "Missing field 'taker_gets'"};
+        return Status{RippledError::rpcINVALID_PARAMS, "Missing field 'taker_gets'"};
 
     if (!request.at("taker_pays").is_object())
-        return Status{
-            RippledError::rpcINVALID_PARAMS,
-            "Field 'taker_pays' is not an object"};
+        return Status{RippledError::rpcINVALID_PARAMS, "Field 'taker_pays' is not an object"};
 
     if (!request.at("taker_gets").is_object())
-        return Status{
-            RippledError::rpcINVALID_PARAMS,
-            "Field 'taker_gets' is not an object"};
+        return Status{RippledError::rpcINVALID_PARAMS, "Field 'taker_gets' is not an object"};
 
     auto taker_pays = request.at("taker_pays").as_object();
     if (!taker_pays.contains("currency"))
@@ -1462,24 +1334,20 @@ parseBook(boost::json::object const& request)
         };
 
     ripple::Currency pay_currency;
-    if (!ripple::to_currency(
-            pay_currency, taker_pays.at("currency").as_string().c_str()))
+    if (!ripple::to_currency(pay_currency, taker_pays.at("currency").as_string().c_str()))
         return Status{RippledError::rpcSRC_CUR_MALFORMED};
 
     ripple::Currency get_currency;
-    if (!ripple::to_currency(
-            get_currency, taker_gets["currency"].as_string().c_str()))
+    if (!ripple::to_currency(get_currency, taker_gets["currency"].as_string().c_str()))
         return Status{RippledError::rpcDST_AMT_MALFORMED};
 
     ripple::AccountID pay_issuer;
     if (taker_pays.contains("issuer"))
     {
         if (!taker_pays.at("issuer").is_string())
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
+            return Status{RippledError::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
 
-        if (!ripple::to_issuer(
-                pay_issuer, taker_pays.at("issuer").as_string().c_str()))
+        if (!ripple::to_issuer(pay_issuer, taker_pays.at("issuer").as_string().c_str()))
             return Status{RippledError::rpcSRC_ISR_MALFORMED};
 
         if (pay_issuer == ripple::noAccount())
@@ -1503,23 +1371,17 @@ parseBook(boost::json::object const& request)
             "issuer."};
 
     if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
-        return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."};
+        return Status{RippledError::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."};
 
     ripple::AccountID get_issuer;
 
     if (taker_gets.contains("issuer"))
     {
         if (!taker_gets["issuer"].is_string())
-            return Status{
-                RippledError::rpcINVALID_PARAMS,
-                "taker_gets.issuer should be string"};
+            return Status{RippledError::rpcINVALID_PARAMS, "taker_gets.issuer should be string"};
 
-        if (!ripple::to_issuer(
-                get_issuer, taker_gets.at("issuer").as_string().c_str()))
-            return Status{
-                RippledError::rpcDST_ISR_MALFORMED,
-                "Invalid field 'taker_gets.issuer', bad issuer."};
+        if (!ripple::to_issuer(get_issuer, taker_gets.at("issuer").as_string().c_str()))
+            return Status{RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer."};
 
         if (get_issuer == ripple::noAccount())
             return Status{
@@ -1540,8 +1402,7 @@ parseBook(boost::json::object const& request)
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED,
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
         return Status{RippledError::rpcBAD_MARKET, "badMarket"};
@@ -1623,27 +1484,22 @@ traverseTransactions(
         if (obj.contains(JS(seq)))
         {
             if (!obj.at(JS(seq)).is_int64())
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "transactionIndexNotInt"};
+                return Status{RippledError::rpcINVALID_PARAMS, "transactionIndexNotInt"};
 
-            transactionIndex =
-                boost::json::value_to<std::uint32_t>(obj.at(JS(seq)));
+            transactionIndex = boost::json::value_to<std::uint32_t>(obj.at(JS(seq)));
         }
 
         std::optional<std::uint32_t> ledgerIndex = {};
         if (obj.contains(JS(ledger)))
         {
             if (!obj.at(JS(ledger)).is_int64())
-                return Status{
-                    RippledError::rpcINVALID_PARAMS, "ledgerIndexNotInt"};
+                return Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexNotInt"};
 
-            ledgerIndex =
-                boost::json::value_to<std::uint32_t>(obj.at(JS(ledger)));
+            ledgerIndex = boost::json::value_to<std::uint32_t>(obj.at(JS(ledger)));
         }
 
         if (!transactionIndex || !ledgerIndex)
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "missingLedgerOrSeq"};
+            return Status{RippledError::rpcINVALID_PARAMS, "missingLedgerOrSeq"};
 
         cursor = {*ledgerIndex, *transactionIndex};
     }
@@ -1657,19 +1513,15 @@ traverseTransactions(
     {
         if (!request.at(JS(ledger_index_min)).is_int64())
         {
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
+            return Status{RippledError::rpcINVALID_PARAMS, "ledgerSeqMinNotNumber"};
         }
 
         min = request.at(JS(ledger_index_min)).as_int64();
 
         if (*min != -1)
         {
-            if (context.range.maxSequence < *min ||
-                context.range.minSequence > *min)
-                return Status{
-                    RippledError::rpcLGR_IDX_MALFORMED,
-                    "ledgerSeqMinOutOfRange"};
+            if (context.range.maxSequence < *min || context.range.minSequence > *min)
+                return Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"};
             else
                 minIndex = static_cast<uint32_t>(*min);
         }
@@ -1682,16 +1534,14 @@ traverseTransactions(
     {
         if (!request.at(JS(ledger_index_max)).is_int64())
         {
-            return Status{
-                RippledError::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
+            return Status{RippledError::rpcINVALID_PARAMS, "ledgerSeqMaxNotNumber"};
         }
 
         max = request.at(JS(ledger_index_max)).as_int64();
 
         if (*max != -1)
         {
-            if (context.range.maxSequence < *max ||
-                context.range.minSequence > *max)
+            if (context.range.maxSequence < *max || context.range.minSequence > *max)
                 return Status{RippledError::rpcLGR_IDXS_INVALID};
             else
                 maxIndex = static_cast<uint32_t>(*max);
@@ -1711,11 +1561,8 @@ traverseTransactions(
 
     if (request.contains(JS(ledger_index)) || request.contains(JS(ledger_hash)))
     {
-        if (request.contains(JS(ledger_index_max)) ||
-            request.contains(JS(ledger_index_min)))
-            return Status{
-                RippledError::rpcINVALID_PARAMS,
-                "containsLedgerSpecifierAndRange"};
+        if (request.contains(JS(ledger_index_max)) || request.contains(JS(ledger_index_min)))
+            return Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"};
 
         auto v = ledgerInfoFromRequest(context);
         if (auto status = std::get_if<Status>(&v); status)
@@ -1740,8 +1587,7 @@ traverseTransactions(
         response[JS(limit)] = limit;
 
     boost::json::array txns;
-    auto [blobs, retCursor] = transactionFetcher(
-        context.backend, limit, forward, cursor, context.yield);
+    auto [blobs, retCursor] = transactionFetcher(context.backend, limit, forward, cursor, context.yield);
     auto timeDiff = util::timed([&, &retCursor = retCursor, &blobs = blobs]() {
         if (retCursor)
         {
@@ -1761,8 +1607,7 @@ traverseTransactions(
             }
             else if (txnPlusMeta.ledgerSequence > maxIndex && !forward)
             {
-                gLog.debug()
-                    << "Skipping over transactions from incomplete ledger";
+                gLog.debug() << "Skipping over transactions from incomplete ledger";
                 continue;
             }
 
@@ -1773,8 +1618,7 @@ traverseTransactions(
                 auto [txn, meta] = toExpandedJson(txnPlusMeta);
                 obj[JS(meta)] = meta;
                 obj[JS(tx)] = txn;
-                obj[JS(tx)].as_object()[JS(ledger_index)] =
-                    txnPlusMeta.ledgerSequence;
+                obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
                 obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
             }
             else

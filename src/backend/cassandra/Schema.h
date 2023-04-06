@@ -32,15 +32,9 @@
 namespace Backend::Cassandra {
 
 template <SomeSettingsProvider SettingsProviderType>
-[[nodiscard]] std::string inline qualifiedTableName(
-    SettingsProviderType const& provider,
-    std::string_view name)
+[[nodiscard]] std::string inline qualifiedTableName(SettingsProviderType const& provider, std::string_view name)
 {
-    return fmt::format(
-        "{}.{}{}",
-        provider.getKeyspace(),
-        provider.getTablePrefix().value_or(""),
-        name);
+    return fmt::format("{}.{}{}", provider.getKeyspace(), provider.getTablePrefix().value_or(""), name);
 }
 
 /**
@@ -58,8 +52,7 @@ class Schema
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
 public:
-    explicit Schema(SettingsProviderType const& settingsProvider)
-        : settingsProvider_{std::cref(settingsProvider)}
+    explicit Schema(SettingsProviderType const& settingsProvider) : settingsProvider_{std::cref(settingsProvider)}
     {
     }
 
@@ -229,8 +222,7 @@ public:
                      PRIMARY KEY (issuer, taxon, token_id)
                   ) 
             )",
-            qualifiedTableName(
-                settingsProvider_.get(), "issuer_nf_tokens_v2")));
+            qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -259,8 +251,7 @@ public:
              WITH CLUSTERING ORDER BY (seq_idx DESC)
               AND default_time_to_live = {}
             )",
-            qualifiedTableName(
-                settingsProvider_.get(), "nf_token_transactions"),
+            qualifiedTableName(settingsProvider_.get(), "nf_token_transactions"),
             settingsProvider_.get().getTtl()));
 
         return statements;
@@ -275,9 +266,7 @@ public:
         std::reference_wrapper<Handle const> handle_;
 
     public:
-        Statements(
-            SettingsProviderType const& settingsProvider,
-            Handle const& handle)
+        Statements(SettingsProviderType const& settingsProvider, Handle const& handle)
             : settingsProvider_{settingsProvider}, handle_{std::cref(handle)}
         {
         }
@@ -313,8 +302,7 @@ public:
                        (ledger_sequence, hash)
                 VALUES (?, ?)
                 )",
-                qualifiedTableName(
-                    settingsProvider_.get(), "ledger_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")));
         }();
 
         PreparedStatement insertSuccessor = [this]() {
@@ -364,8 +352,7 @@ public:
                        (issuer, taxon, token_id)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(
-                    settingsProvider_.get(), "issuer_nf_tokens_v2")));
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")));
         }();
 
         PreparedStatement insertNFTURI = [this]() {
@@ -385,8 +372,7 @@ public:
                        (token_id, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(
-                    settingsProvider_.get(), "nf_token_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
         }();
 
         PreparedStatement insertLedgerHeader = [this]() {
@@ -491,8 +477,7 @@ public:
                   FROM {}               
                  WHERE ledger_sequence = ?               
                 )",
-                qualifiedTableName(
-                    settingsProvider_.get(), "ledger_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")));
         }();
 
         PreparedStatement selectLedgerPageKeys = [this]() {
@@ -595,8 +580,7 @@ public:
               ORDER BY seq_idx DESC
                  LIMIT ?
                 )",
-                qualifiedTableName(
-                    settingsProvider_.get(), "nf_token_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
         }();
 
         PreparedStatement selectNFTTxForward = [this]() {
@@ -609,8 +593,7 @@ public:
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                qualifiedTableName(
-                    settingsProvider_.get(), "nf_token_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
         }();
 
         PreparedStatement selectLedgerByHash = [this]() {

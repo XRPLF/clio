@@ -50,8 +50,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    TransactionEntryHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    TransactionEntryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
@@ -60,11 +59,11 @@ public:
     spec() const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(tx_hash),
-             validation::Required{},
-             validation::Uint256HexStringValidator},
+            {JS(tx_hash), validation::Required{}, validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator}};
+            {JS(ledger_index), validation::LedgerIndexValidator},
+        };
+
         return rpcSpec;
     }
 
@@ -73,10 +72,7 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);

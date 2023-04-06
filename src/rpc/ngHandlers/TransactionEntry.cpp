@@ -22,24 +22,17 @@
 namespace RPCng {
 
 TransactionEntryHandler::Result
-TransactionEntryHandler::process(
-    TransactionEntryHandler::Input input,
-    Context const& ctx) const
+TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = RPC::getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_,
-        ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
-        range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
     if (auto status = std::get_if<RPC::Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
-    auto const dbRet = sharedPtrBackend_->fetchTransaction(
-        ripple::uint256{input.txHash.c_str()}, ctx.yield);
+    auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
@@ -50,10 +43,7 @@ TransactionEntryHandler::process(
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
     if (!dbRet || dbRet->ledgerSequence != lgrInfo.seq)
-        return Error{RPC::Status{
-            RPC::RippledError::rpcTXN_NOT_FOUND,
-            "transactionNotFound",
-            "Transaction not found."}};
+        return Error{RPC::Status{RPC::RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
 
     auto [txn, meta] = RPC::toExpandedJson(*dbRet);
     TransactionEntryHandler::Output output;
@@ -65,10 +55,7 @@ TransactionEntryHandler::process(
 }
 
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    TransactionEntryHandler::Output const& output)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
 {
     jv = {
         {JS(metadata), output.metadata},
@@ -79,9 +66,7 @@ tag_invoke(
 }
 
 TransactionEntryHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<TransactionEntryHandler::Input>,
-    boost::json::value const& jv)
+tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
 
@@ -99,8 +84,7 @@ tag_invoke(
         }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
         {
-            input.ledgerIndex =
-                std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
     return input;

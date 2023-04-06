@@ -27,8 +27,7 @@ namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
 
 // Handles an HTTPS server connection
-class SslHttpSession : public HttpBase<SslHttpSession>,
-                       public std::enable_shared_from_this<SslHttpSession>
+class SslHttpSession : public HttpBase<SslHttpSession>, public std::enable_shared_from_this<SslHttpSession>
 {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
     std::optional<std::string> ip_;
@@ -63,11 +62,7 @@ public:
     {
         try
         {
-            ip_ = stream_.next_layer()
-                      .socket()
-                      .remote_endpoint()
-                      .address()
-                      .to_string();
+            ip_ = stream_.next_layer().socket().remote_endpoint().address().to_string();
         }
         catch (std::exception const&)
         {
@@ -108,16 +103,14 @@ public:
         // on the I/O objects in this session.
         net::dispatch(stream_.get_executor(), [self]() {
             // Set the timeout.
-            boost::beast::get_lowest_layer(self->stream())
-                .expires_after(std::chrono::seconds(30));
+            boost::beast::get_lowest_layer(self->stream()).expires_after(std::chrono::seconds(30));
 
             // Perform the SSL handshake
             // Note, this is the buffered version of the handshake.
             self->stream_.async_handshake(
                 ssl::stream_base::server,
                 self->buffer_.data(),
-                boost::beast::bind_front_handler(
-                    &SslHttpSession::on_handshake, self));
+                boost::beast::bind_front_handler(&SslHttpSession::on_handshake, self));
         });
     }
 
@@ -136,12 +129,10 @@ public:
     do_close()
     {
         // Set the timeout.
-        boost::beast::get_lowest_layer(stream_).expires_after(
-            std::chrono::seconds(30));
+        boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
 
         // Perform the SSL shutdown
-        stream_.async_shutdown(boost::beast::bind_front_handler(
-            &SslHttpSession::on_shutdown, shared_from_this()));
+        stream_.async_shutdown(boost::beast::bind_front_handler(&SslHttpSession::on_shutdown, shared_from_this()));
     }
 
     void

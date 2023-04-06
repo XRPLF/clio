@@ -69,8 +69,7 @@ public:
 
     using Result = RPCng::HandlerReturnType<Output>;
 
-    AccountTxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    AccountTxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -85,22 +84,17 @@ public:
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},
             {JS(forward), validation::Type<bool>{}},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Between{1, 100}},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
             {JS(marker),
              validation::WithCustomError{
                  validation::Type<boost::json::object>{},
-                 RPC::Status{
-                     RPC::RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
+                 RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
              validation::Section{
-                 {JS(ledger),
-                  validation::Required{},
-                  validation::Type<uint32_t>{}},
-                 {JS(seq),
-                  validation::Required{},
-                  validation::Type<uint32_t>{}},
-             }}};
+                 {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
+                 {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
+             }},
+        };
+
         return rpcSpec;
     }
 
@@ -109,18 +103,12 @@ public:
 
 private:
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
     friend void
-    tag_invoke(
-        boost::json::value_from_tag,
-        boost::json::value& jv,
-        Marker const& marker);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
 }  // namespace RPCng

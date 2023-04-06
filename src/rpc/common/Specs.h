@@ -43,9 +43,7 @@ struct FieldSpec final
      */
     template <Requirement... Requirements>
     FieldSpec(std::string const& key, Requirements&&... requirements)
-        : validator_{detail::makeFieldValidator<Requirements...>(
-              key,
-              std::forward<Requirements>(requirements)...)}
+        : validator_{detail::makeFieldValidator<Requirements...>(key, std::forward<Requirements>(requirements)...)}
     {
     }
 

@@ -25,8 +25,7 @@ Handle::Handle(Settings clusterSettings) : cluster_{clusterSettings}
 {
 }
 
-Handle::Handle(std::string_view contactPoints)
-    : Handle{Settings::defaultSettings().withContactPoints(contactPoints)}
+Handle::Handle(std::string_view contactPoints) : Handle{Settings::defaultSettings().withContactPoints(contactPoints)}
 {
 }
 
@@ -75,9 +74,7 @@ Handle::FutureType
 Handle::asyncReconnect(std::string_view keyspace) const
 {
     if (auto rc = asyncDisconnect().await(); not rc)  // sync
-        throw std::logic_error(
-            "Reconnect to keyspace '" + std::string{keyspace} +
-            "' failed: " + rc.error());
+        throw std::logic_error("Reconnect to keyspace '" + std::string{keyspace} + "' failed: " + rc.error());
     return asyncConnect(keyspace);
 }
 
@@ -99,8 +96,7 @@ Handle::asyncExecuteEach(std::vector<Statement> const& statements) const
 Handle::MaybeErrorType
 Handle::executeEach(std::vector<Statement> const& statements) const
 {
-    for (auto futures = asyncExecuteEach(statements);
-         auto const& future : futures)
+    for (auto futures = asyncExecuteEach(statements); auto const& future : futures)
     {
         if (auto const rc = future.await(); not rc)
             return rc;
@@ -116,12 +112,9 @@ Handle::asyncExecute(Statement const& statement) const
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(
-    Statement const& statement,
-    std::function<void(Handle::ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(Statement const& statement, std::function<void(Handle::ResultOrErrorType)>&& cb) const
 {
-    return Handle::FutureWithCallbackType{
-        cass_session_execute(session_, statement), std::move(cb)};
+    return Handle::FutureWithCallbackType{cass_session_execute(session_, statement), std::move(cb)};
 }
 
 Handle::ResultOrErrorType
@@ -143,12 +136,10 @@ Handle::execute(std::vector<Statement> const& statements) const
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(
-    std::vector<Statement> const& statements,
-    std::function<void(Handle::ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(std::vector<Statement> const& statements, std::function<void(Handle::ResultOrErrorType)>&& cb)
+    const
 {
-    return Handle::FutureWithCallbackType{
-        cass_session_execute_batch(session_, Batch{statements}), std::move(cb)};
+    return Handle::FutureWithCallbackType{cass_session_execute_batch(session_, Batch{statements}), std::move(cb)};
 }
 
 Handle::PreparedStatementType

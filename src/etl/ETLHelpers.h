@@ -77,14 +77,10 @@ public:
     /// @return true if sequence was validated, false otherwise
     /// a return value of false means the datastructure has been stopped
     bool
-    waitUntilValidatedByNetwork(
-        uint32_t sequence,
-        std::optional<uint32_t> maxWaitMs = {})
+    waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {})
     {
         std::unique_lock lck(m_);
-        auto pred = [sequence, this]() -> bool {
-            return (max_ && sequence <= *max_);
-        };
+        auto pred = [sequence, this]() -> bool { return (max_ && sequence <= *max_); };
         if (maxWaitMs)
             cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
         else
