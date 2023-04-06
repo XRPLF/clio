@@ -48,7 +48,7 @@ TEST_F(SettingsProviderTest, Defaults)
     EXPECT_EQ(settings.threads, std::thread::hardware_concurrency());
 
     EXPECT_EQ(settings.enableLog, false);
-    EXPECT_EQ(settings.connectionTimeout, std::chrono::milliseconds{1000});
+    EXPECT_EQ(settings.connectionTimeout, std::chrono::milliseconds{10000});
     EXPECT_EQ(settings.requestTimeout, std::chrono::milliseconds{0});
     EXPECT_EQ(settings.certificate, std::nullopt);
     EXPECT_EQ(settings.username, std::nullopt);
