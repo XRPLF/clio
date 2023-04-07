@@ -674,7 +674,6 @@ CassandraBackend::fetchNFTIDsByIssuer(
         {
             auto statement = CassandraStatement{selectNFTIDsByIssuerTaxon_};
             statement.bindNextBytes(issuer);
-            // TODO no idea why binding UInt fails
             statement.bindNextInt(*taxon);
             statement.bindNextBytes(cursorIn.value_or(ripple::uint256(0)));
             statement.bindNextUInt(limit);
@@ -683,10 +682,11 @@ CassandraBackend::fetchNFTIDsByIssuer(
 
         auto statement = CassandraStatement{selectNFTIDsByIssuer_};
         statement.bindNextBytes(issuer);
-        statement.bindNextUIntBytesTuple(
-            cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
-            cursorIn.value_or(ripple::uint256(0)));
-        statement.bindNextUInt(limit);
+
+        if (cursorIn.has_value())
+            statement.bindNextUInt(ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
+        else
+            statement.bindNextUInt(0);
         return statement;
     }();
 

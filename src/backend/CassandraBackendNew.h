@@ -544,8 +544,7 @@ public:
 
             auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
             if (cursorIn.has_value())
-                r.bindAt(
-                    1, ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
+                r.bindAt(1, ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
             else
                 r.bindAt(1, 0);
             return r;
