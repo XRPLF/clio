@@ -1314,7 +1314,9 @@ CassandraBackend::open(bool readOnly)
               << "    taxon bigint,"
               << "    token_id blob,"
               << "    PRIMARY KEY (issuer, taxon, token_id)"
-              << "  )";
+              << "  )"
+              << "  WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC)"
+              << "    AND default_time_to_live = " << ttl;
         if (!executeSimpleStatement(query.str()))
             continue;
 

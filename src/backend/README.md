@@ -172,7 +172,7 @@ CREATE TABLE clio.issuer_nf_tokens_v2 (
 	taxon bigint,      # The NFT's token taxon
 	token_id blob,     # The NFT's ID
 	PRIMARY KEY (issuer, taxon, token_id)
-)
+) WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC) ...
 ```
 This table indexes token IDs against their issuer and issuer/taxon
 combination. This is useful for determining all the NFTs a specific account
