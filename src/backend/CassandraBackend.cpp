@@ -1596,15 +1596,15 @@ CassandraBackend::open(bool readOnly)
 
         query.str("");
         query << "SELECT token_id FROM " << tablePrefix
-              << "issuer_nf_tokens_v2 WHERE issuer = ? AND taxon >= ? AND "
-                 "token_id > ? ORDER BY taxon, token_id ASC LIMIT ?";
+              << "issuer_nf_tokens_v2 WHERE issuer = ? AND (taxon, token_id) > (?, ?)
+                 "ORDER BY taxon ASC, token_id ASC LIMIT ?";
         if (!selectNFTIDsByIssuer_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");
         query << "SELECT token_id FROM " << tablePrefix
               << "issuer_nf_tokens_v2 WHERE issuer = ? AND taxon = ? AND "
-                 "token_id > ? ORDER BY taxon, token_id ASC LIMIT ?";
+                 "token_id > ? ORDER BY taxon ASC, token_id ASC LIMIT ?";
         if (!selectNFTIDsByIssuerTaxon_.prepareStatement(query, session_.get()))
             continue;
 

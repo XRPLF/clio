@@ -605,9 +605,8 @@ public:
                 SELECT token_id
                 FROM {}    
                 WHERE issuer = ?
-                  AND taxon >= ?
-                  AND token_id > ?
-                ORDER BY taxon, token_id ASC
+                  AND (taxon, token_id) > (?, ?)
+                ORDER BY taxon ASC, token_id ASC
                 LIMIT ?
                 )",
                 qualifiedTableName(
@@ -622,7 +621,7 @@ public:
                 WHERE issuer = ?
                   AND taxon = ?
                   AND token_id > ?
-                ORDER BY taxon, token_id ASC
+                ORDER BY taxon ASC, token_id ASC
                 LIMIT ?
                 )",
                 qualifiedTableName(
