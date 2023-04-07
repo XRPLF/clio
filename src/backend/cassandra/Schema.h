@@ -214,15 +214,15 @@ public:
 
         statements.emplace_back(fmt::format(
             R"(
-            CREATE TABLE IF NOT EXISTS {}
-                ( 
-                    issuer blob,
-                    taxon bigint,
+           CREATE TABLE IF NOT EXISTS {}
+                  ( 
+                      issuer blob,
+                       taxon bigint,
                     token_id blob,
-                    PRIMARY KEY (issuer, taxon, token_id)
-                ) 
-                WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC)
-                    AND default_time_to_live = {}
+                     PRIMARY KEY (issuer, taxon, token_id)
+                  ) 
+             WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC)
+              AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2"),
             settingsProvider_.get().getTtl()));
