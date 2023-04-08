@@ -57,6 +57,7 @@ doNFTsByIssuer(Context const& context)
 
     boost::json::object response = {};
     response["issuer"] = ripple::toBase58(issuer);
+    response["limit"] = limit;
     if (maybeTaxon.has_value())
         response["taxon"] = *maybeTaxon;
 
