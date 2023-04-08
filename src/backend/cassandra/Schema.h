@@ -214,10 +214,10 @@ public:
 
         statements.emplace_back(fmt::format(
             R"(
-            CREATE TABLE IF NOT EXISTS {}
-                ( 
-                    issuer blob,
-                    taxon bigint,
+           CREATE TABLE IF NOT EXISTS {}
+                  ( 
+                      issuer blob,
+                       taxon bigint,
                     token_id blob,
                      PRIMARY KEY (issuer, taxon, token_id)
                   ) 
