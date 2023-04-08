@@ -271,6 +271,40 @@ public:
         curBindingIndex_++;
     }
 
+    // TODO: tuple binding desperately needs to be implemented using templates
+    void
+    bindNextUIntBytesTuple(std::uint32_t const first, ripple::uint256 const& second)
+    {
+        CassTuple* tuple = cass_tuple_new(2);
+        CassError rc = cass_tuple_set_int64(tuple, 0, first);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding int to tuple: " << rc << ", " << cass_error_desc(rc);
+            log_.error() << ss.str();
+            throw std::runtime_error(ss.str());
+        }
+        rc = cass_tuple_set_bytes(
+            tuple, 1, static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(second.data())), second.size());
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding bytes to tuple: " << rc << ", " << cass_error_desc(rc);
+            log_.error() << ss.str();
+            throw std::runtime_error(ss.str());
+        }
+        rc = cass_statement_bind_tuple(statement_, curBindingIndex_, tuple);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding tuple to statement: " << rc << ", " << cass_error_desc(rc);
+            log_.error() << ss.str();
+            throw std::runtime_error(ss.str());
+        }
+        cass_tuple_free(tuple);
+        curBindingIndex_++;
+    }
+
     ~CassandraStatement()
     {
         if (statement_)

@@ -21,6 +21,7 @@
 
 #include <backend/cassandra/impl/ManagedObject.h>
 
+#include <ripple/basics/base_uint.h>
 #include <cassandra.h>
 
 #include <functional>
@@ -80,6 +81,15 @@ public:
         {
             auto const rc = cass_tuple_set_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
+        }
+        else if constexpr (std::is_same_v<decayed_t, ripple::uint256>)
+        {
+            auto const rc = cass_tuple_set_bytes(
+                *this,
+                idx,
+                static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(value.data())),
+                value.size());
+            throwErrorIfNeeded(rc, "Bind ripple::uint256");
         }
         else
         {

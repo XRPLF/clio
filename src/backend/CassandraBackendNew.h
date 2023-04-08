@@ -496,29 +496,25 @@ public:
         std::optional<ripple::uint256> const& cursorIn,
         boost::asio::yield_context& yield) const override
     {
-        Statement statement = [&taxon, &issuer, &cursorIn, this]() {
+        Statement statement = [&taxon, &issuer, &cursorIn, &limit, this]() {
             if (taxon.has_value())
             {
                 auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
                 r.bindAt(1, *taxon);
+                r.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
+                r.bindAt(3, limit);
                 return r;
             }
 
             auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
-            if (cursorIn.has_value())
-                r.bindAt(
-                    1, ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
-            else
-                r.bindAt(1, 0);
+            r.bindAt(
+                1,
+                std::make_tuple(
+                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
+                    cursorIn.value_or(ripple::uint256(0))));
+            r.bindAt(2, limit);
             return r;
         }();
-
-        if (cursorIn.has_value())
-            statement.bindAt(2, *cursorIn);
-        else
-            statement.bindAt(2, 0x00);
-
-        statement.bindAt(3, limit);
 
         auto const res = executor_.read(yield, statement);
         auto const& results = res.value();

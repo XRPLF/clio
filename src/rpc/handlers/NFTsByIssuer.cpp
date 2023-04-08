@@ -45,15 +45,15 @@ doNFTsByIssuer(Context const& context)
     auto const maybeTaxon = getUInt(request, "taxon");
 
     std::optional<ripple::uint256> maybeCursor;
-    if (auto const maybeCursorStr = getString(request, "marker");
-        maybeCursorStr.has_value())
+    if (auto const maybeCursorStr = getString(request, "marker"); maybeCursorStr.has_value())
     {
+        // TODO why is this necessary?
+        maybeCursor = ripple::uint256{};
         if (!maybeCursor->parseHex(*maybeCursorStr))
             return Status{RippledError::rpcINVALID_PARAMS, "markerMalformed"};
     }
 
-    auto const dbResponse = context.backend->fetchNFTIDsByIssuer(
-        issuer, maybeTaxon, limit, maybeCursor, context.yield);
+    auto const dbResponse = context.backend->fetchNFTIDsByIssuer(issuer, maybeTaxon, limit, maybeCursor, context.yield);
 
     boost::json::object response = {};
     response["issuer"] = ripple::toBase58(issuer);
@@ -65,8 +65,7 @@ doNFTsByIssuer(Context const& context)
     // TODO try std::execution::par_unseq with transform and then remove_if?
     for (auto const nftID : dbResponse)
     {
-        auto const nftResponse =
-            context.backend->fetchNFT(nftID, lgrInfo.seq, context.yield);
+        auto const nftResponse = context.backend->fetchNFT(nftID, lgrInfo.seq, context.yield);
         if (!nftResponse)
             continue;
 
@@ -85,10 +84,8 @@ doNFTsByIssuer(Context const& context)
 
         nft[JS(flags)] = ripple::nft::getFlags(nftResponse->tokenID);
         nft["transfer_fee"] = ripple::nft::getTransferFee(nftResponse->tokenID);
-        nft[JS(issuer)] =
-            ripple::toBase58(ripple::nft::getIssuer(nftResponse->tokenID));
-        nft["nft_taxon"] =
-            ripple::nft::toUInt32(ripple::nft::getTaxon(nftResponse->tokenID));
+        nft[JS(issuer)] = ripple::toBase58(ripple::nft::getIssuer(nftResponse->tokenID));
+        nft["nft_taxon"] = ripple::nft::toUInt32(ripple::nft::getTaxon(nftResponse->tokenID));
         nft[JS(nft_serial)] = ripple::nft::getSerial(nftResponse->tokenID);
 
         nfts.push_back(nft);
