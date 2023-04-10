@@ -203,32 +203,31 @@ public:
     void
     bindNextByteList(std::vector<ripple::uint256> const& data)
     {
-        CassTuple* tuple = cass_tuple_new(data.size());
-        for (int i = 0; i < data.size(); ++i)
+        CassCollection* valueList = cass_collection_new(CASS_COLLECTION_TYPE_LIST, data.size());
+        for (auto const& datum : data)
         {
-            auto const rc = cass_tuple_set_bytes(
-                tuple,
-                i,
-                static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(data[i].data())),
-                data[i].size());
+            auto const rc = cass_collection_append_bytes(
+                valueList,
+                static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(datum.data())),
+                datum.size());
             if (rc != CASS_OK)
             {
                 std::stringstream ss;
-                ss << "Error binding bytes to tuple: " << rc << ", " << cass_error_desc(rc);
+                ss << "Error binding bytes to collection: " << rc << ", " << cass_error_desc(rc);
                 log_.error() << ss.str();
                 throw std::runtime_error(ss.str());
             }
         }
 
-        auto const rc = cass_statement_bind_tuple(statement_, curBindingIndex_, tuple);
+        auto const rc = cass_statement_bind_collection(statement_, curBindingIndex_, valueList);
         if (rc != CASS_OK)
         {
             std::stringstream ss;
-            ss << "Error binding tuple to statement: " << rc << ", " << cass_error_desc(rc);
+            ss << "Error binding collection to statement: " << rc << ", " << cass_error_desc(rc);
             log_.error() << ss.str();
             throw std::runtime_error(ss.str());
         }
-        cass_tuple_free(tuple);
+        cass_collection_free(valueList);
         curBindingIndex_++;
     }
 
