@@ -661,15 +661,18 @@ CassandraBackend::fetchNFTTransactions(
     return {txns, {}};
 }
 
-std::vector<ripple::uint256>
-CassandraBackend::fetchNFTIDsByIssuer(
+NFTsAndCursor
+CassandraBackend::fetchNFTsByIssuer(
     ripple::AccountID const& issuer,
     std::optional<std::uint32_t> const& taxon,
+    std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
     std::optional<ripple::uint256> const& cursorIn,
     boost::asio::yield_context& yield) const
 {
-    CassandraStatement const statement = [&taxon, &issuer, &cursorIn, &limit, this]() {
+    NFTsAndCursor ret;
+
+    CassandraStatement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
         if (taxon.has_value())
         {
             auto statement = CassandraStatement{selectNFTIDsByIssuerTaxon_};
@@ -690,17 +693,56 @@ CassandraBackend::fetchNFTIDsByIssuer(
         return statement;
     }();
 
-    auto result = executeAsyncRead(statement, yield);
-    std::vector<ripple::uint256> nftIDs;
+    auto idQueryResult = executeAsyncRead(idQueryStatement, yield);
+    if (!idQueryResult.hasResult())
+        return ret;
 
-    if (!result.hasResult())
-        return nftIDs;
+    std::vector<ripple::uint256> nftIDs;
+    do
+        nftIDs.push_back(idQueryResult.getUInt256());
+    while (idQueryResult.nextRow());
+
+    if (nftIDs.size() == limit)
+        ret.cursor = nftIDs.back();
+
+    // TODO these two queries should happen in parallel
+    auto nftQueryStatement = CassandraStatement{selectNFTBulk_};
+    nftQueryStatement.bindNextByteList(nftIDs);
+    nftQueryStatement.bindNextInt(ledgerSequence);
+
+    auto nftQueryResult = executeAsyncRead(nftQueryStatement, yield);
+
+    auto nftURIQueryStatement = CassandraStatement{selectNFTURIBulk_};
+    nftURIQueryStatement.bindNextByteList(nftIDs);
+    nftURIQueryStatement.bindNextInt(ledgerSequence);
+
+    auto nftURIQueryResult = executeAsyncRead(nftURIQueryStatement, yield);
+    //
+
+    if (!nftQueryResult.hasResult())
+        return ret;
+
+    std::unordered_map<std::string, Blob> nftURIMap;
+    if (nftURIQueryResult.hasResult())
+    {
+        do
+            nftURIMap.insert({ripple::strHex(nftURIQueryResult.getUInt256()), nftURIQueryResult.getBytes()});
+        while (nftURIQueryResult.nextRow());
+    }
 
     do
-        nftIDs.push_back(result.getUInt256());
-    while (result.nextRow());
+    {
+        NFT nft;
+        nft.tokenID = nftQueryResult.getBytes();
+        nft.ledgerSequence = nftQueryResult.getUInt32();
+        nft.owner = nftQueryResult.getBytes();
+        nft.isBurned = nftQueryResult.getBool();
+        if (nftURIMap.contains(ripple::strHex(nft.tokenID)))
+            nft.uri = nftURIMap.at(ripple::strHex(nft.tokenID));
+        ret.nfts.push_back(nft);
+    } while (nftQueryResult.nextRow());
 
-    return nftIDs;
+    return ret;
 }
 
 TransactionsAndCursor
@@ -1539,6 +1581,16 @@ CassandraBackend::open(bool readOnly)
             continue;
 
         query.str("");
+        query << "SELECT token_id,sequence,owner,is_burned"
+              << " FROM " << tablePrefix << "nf_tokens WHERE"
+              << " token_id IN ? AND"
+              << " sequence <= ?"
+              << " ORDER BY sequence DESC"
+              << " PER PARTITION LIMIT 1";
+        if (!selectNFTBulk_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
         query << "INSERT INTO " << tablePrefix << "issuer_nf_tokens_v2"
               << " (issuer,taxon,token_id)"
               << " VALUES (?,?,?)";
@@ -1559,6 +1611,15 @@ CassandraBackend::open(bool readOnly)
               << " ORDER BY sequence DESC"
               << " LIMIT 1";
         if (!selectNFTURI_.prepareStatement(query, session_.get()))
+            continue;
+
+        query.str("");
+        query << "SELECT token_id,uri FROM " << tablePrefix << "nf_token_uris"
+              << " WHERE token_id IN ? AND"
+              << " sequence <= ?"
+              << " ORDER BY sequence DESC"
+              << " PER PARTITION LIMIT 1";
+        if (!selectNFTURIBulk_.prepareStatement(query, session_.get()))
             continue;
 
         query.str("");

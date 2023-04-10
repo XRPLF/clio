@@ -488,15 +488,18 @@ public:
         return {txns, {}};
     }
 
-    std::vector<ripple::uint256>
-    fetchNFTIDsByIssuer(
+    NFTsAndCursor
+    fetchNFTsByIssuer(
         ripple::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
+        std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
         std::optional<ripple::uint256> const& cursorIn,
         boost::asio::yield_context& yield) const override
     {
-        Statement statement = [&taxon, &issuer, &cursorIn, &limit, this]() {
+        NFTsAndCursor ret;
+
+        Statement idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
             if (taxon.has_value())
             {
                 auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
@@ -516,12 +519,9 @@ public:
             return r;
         }();
 
-        auto const res = executor_.read(yield, statement);
-        auto const& results = res.value();
+        auto const& idQueryResults = executor_.read(yield, idQueryStatement).value();
         std::vector<ripple::uint256> nftIDs;
-
-        for (auto const [nftID] : extract<ripple::uint256>(results))
-        {
+        for (auto const [nftID] : extract<ripple::uint256>(idQueryResults))
             nftIDs.push_back(nftID);
         }
 
@@ -566,7 +566,42 @@ public:
             nftIDs.push_back(nftID);
         }
 
-        return nftIDs;
+        if (nftIDs.size() == 0)
+            return ret;
+
+        if (nftIDs.size() == limit)
+            ret.cursor = nftIDs.back();
+
+        /// TODO these two queries should happen in parallel
+        auto nftQueryStatement = schema_->selectNFTBulk.bind(nftIDs);
+        nftQueryStatement.bindAt(1, ledgerSequence);
+
+        auto const& nftQueryResults = executor_.read(yield, nftQueryStatement).value();
+
+        auto nftURIQueryStatement = schema_->selectNFTURIBulk.bind(nftIDs);
+        nftURIQueryStatement.bindAt(1, ledgerSequence);
+
+        auto const& nftURIQueryResults = executor_.read(yield, nftURIQueryStatement).value();
+        ///
+        //
+
+        std::unordered_map<std::string, Blob> nftURIMap;
+        for (auto const [nftID, uri] : extract<ripple::uint256, Blob>(nftURIQueryResults))
+            nftURIMap.insert({ripple::strHex(nftID), uri});
+
+        for (auto const [nftID, seq, owner, isBurned] : extract<ripple::uint256, std::uint32_t, ripple::AccountID, bool>(nftQueryResults))
+        {
+            NFT nft;
+            nft.tokenID = nftID;
+            nft.ledgerSequence = seq;
+            nft.owner = owner;
+            nft.isBurned = isBurned;
+            if (nftURIMap.contains(ripple::strHex(nft.tokenID)))
+                nft.uri = nftURIMap.at(ripple::strHex(nft.tokenID));
+            ret.nfts.push_back(nft);
+        }
+
+        return ret;
     }
 
     std::optional<Blob>

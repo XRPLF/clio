@@ -347,21 +347,22 @@ public:
         boost::asio::yield_context& yield) const = 0;
 
     /**
-     * @brief Fetches all NFT IDs issued by a given address.
+     * @brief Fetches all NFTs issued by a given address.
      *
      * @param issuer AccountID of issuer you wish you query.
      * @param taxon Optional taxon of NFTs by which you wish to filter.
-     * @param limit Paging limit as to how many NFTs to return per page.
+     * @param limit Paging limit.
      * @param cursorIn Optional cursor to allow us to pick up from where we
      * last left off.
-     * @param yield Currently executing coroutine is passed in as input.
-     * @return std::vector<ripple::uint256> of NFT IDs for this issuer, or
-     * this issuer/taxon combination.
+     * @param yield Currently executing coroutine.
+     * @return std::vector<NFT> of NFTs issued by this account, or
+     * this issuer/taxon combination if taxon is passed and an optional marker
      */
-    virtual std::vector<ripple::uint256>
-    fetchNFTIDsByIssuer(
+    virtual NFTsAndCursor
+    fetchNFTsByIssuer(
         ripple::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
+        std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
         std::optional<ripple::uint256> const& cursorIn,
         boost::asio::yield_context& yield) const = 0;

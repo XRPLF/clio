@@ -201,6 +201,34 @@ public:
     }
 
     void
+    bindNextByteList(std::vector<ripple::uint256> const& data)
+    {
+        CassTuple* tuple = cass_tuple_new(data.size());
+        for (int i = 0; i < data.size(); ++i)
+        {
+            auto const rc = cass_tuple_set_bytes(tuple, i, static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(data[i].data())), data[i].size());
+            if (rc != CASS_OK)
+            {
+                std::stringstream ss;
+                ss << "Error binding bytes to tuple: " << rc << ", " << cass_error_desc(rc);
+                log_.error() << ss.str();
+                throw std::runtime_error(ss.str());
+            }
+        }
+
+        auto const rc = cass_statement_bind_tuple(statement_, curBindingIndex_, tuple);
+        if (rc != CASS_OK)
+        {
+            std::stringstream ss;
+            ss << "Error binding tuple to statement: " << rc << ", " << cass_error_desc(rc);
+            log_.error() << ss.str();
+            throw std::runtime_error(ss.str());
+        }
+        cass_tuple_free(tuple);
+        curBindingIndex_++;
+    }
+
+    void
     bindNextUInt(std::uint32_t const value)
     {
         if (!statement_)
@@ -649,9 +677,11 @@ private:
     CassandraPreparedStatement selectAccountTxForward_;
     CassandraPreparedStatement insertNFT_;
     CassandraPreparedStatement selectNFT_;
+    CassandraPreparedStatement selectNFTBulk_;
     CassandraPreparedStatement insertIssuerNFT_;
     CassandraPreparedStatement insertNFTURI_;
     CassandraPreparedStatement selectNFTURI_;
+    CassandraPreparedStatement selectNFTURIBulk_;
     CassandraPreparedStatement insertNFTTx_;
     CassandraPreparedStatement selectNFTTx_;
     CassandraPreparedStatement selectNFTTxForward_;
@@ -904,10 +934,11 @@ public:
         std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context& yield) const override;
 
-    std::vector<ripple::uint256>
-    fetchNFTIDsByIssuer(
+    NFTsAndCursor
+    fetchNFTsByIssuer(
         ripple::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
+        std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
         std::optional<ripple::uint256> const& cursorIn,
         boost::asio::yield_context& yield) const override;

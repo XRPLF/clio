@@ -53,49 +53,45 @@ doNFTsByIssuer(Context const& context)
             return Status{RippledError::rpcINVALID_PARAMS, "markerMalformed"};
     }
 
-    auto const dbResponse = context.backend->fetchNFTIDsByIssuer(issuer, maybeTaxon, limit, maybeCursor, context.yield);
+    auto const dbResponse = context.backend->fetchNFTsByIssuer(issuer, maybeTaxon, lgrInfo.seq, limit, maybeCursor, context.yield);
 
     boost::json::object response = {};
+
     response["issuer"] = ripple::toBase58(issuer);
     response["limit"] = limit;
-    if (maybeTaxon.has_value())
-        response["taxon"] = *maybeTaxon;
+    response["ledger_index"] = lgrInfo.seq;
 
-    boost::json::array nfts;
-
-    // TODO try std::execution::par_unseq with transform and then remove_if?
-    for (auto const nftID : dbResponse)
+    boost::json::array nftsJson;
+    for (auto const& nft : dbResponse.nfts)
     {
-        auto const nftResponse = context.backend->fetchNFT(nftID, lgrInfo.seq, context.yield);
-        if (!nftResponse)
-            continue;
-
         // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
-        // as the `nft_info` API. We should factor this out
+        // for each element of the `nfts_by_issuer` API. We should factor this out
         // so that the formats don't diverge. In the mean time, do not make any
         // changes to this formatting without making the same changes to that
         // formatting.
-        boost::json::object nft = {};
+        boost::json::object nftJson;
 
-        nft[JS(nft_id)] = ripple::strHex(nftResponse->tokenID);
-        nft[JS(ledger_index)] = nftResponse->ledgerSequence;
-        nft[JS(owner)] = ripple::toBase58(nftResponse->owner);
-        nft["is_burned"] = nftResponse->isBurned;
-        nft[JS(uri)] = ripple::strHex(nftResponse->uri);
+        nftJson[JS(nft_id)] = ripple::strHex(nft.tokenID);
+        nftJson[JS(ledger_index)] = nft.ledgerSequence;
+        nftJson[JS(owner)] = ripple::toBase58(nft.owner);
+        nftJson["is_burned"] = nft.isBurned;
+        nftJson[JS(uri)] = ripple::strHex(nft.uri);
 
-        nft[JS(flags)] = ripple::nft::getFlags(nftResponse->tokenID);
-        nft["transfer_fee"] = ripple::nft::getTransferFee(nftResponse->tokenID);
-        nft[JS(issuer)] = ripple::toBase58(ripple::nft::getIssuer(nftResponse->tokenID));
-        nft["nft_taxon"] = ripple::nft::toUInt32(ripple::nft::getTaxon(nftResponse->tokenID));
-        nft[JS(nft_serial)] = ripple::nft::getSerial(nftResponse->tokenID);
+        nftJson[JS(flags)] = ripple::nft::getFlags(nft.tokenID);
+        nftJson["transfer_fee"] = ripple::nft::getTransferFee(nft.tokenID);
+        nftJson[JS(issuer)] = ripple::toBase58(ripple::nft::getIssuer(nft.tokenID));
+        nftJson["nft_taxon"] = ripple::nft::toUInt32(ripple::nft::getTaxon(nft.tokenID));
+        nftJson[JS(nft_serial)] = ripple::nft::getSerial(nft.tokenID);
 
-        nfts.push_back(nft);
+        nftsJson.push_back(nftJson);
     }
+    response["nfts"] = nftsJson;
 
-    response["nfts"] = nfts;
+    if (dbResponse.cursor.has_value())
+        response["marker"] = ripple::strHex(*dbResponse.cursor);
 
-    if (dbResponse.size() >= limit)
-        response["marker"] = ripple::strHex(dbResponse.back());
+    if (maybeTaxon.has_value())
+        response["taxon"] = *maybeTaxon;
 
     return response;
 }

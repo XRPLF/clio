@@ -92,6 +92,7 @@ public:
         using uchar_vec_t = std::vector<unsigned char>;
         using uint_tuple_t = std::tuple<uint32_t, uint32_t>;
         using uint_bytes_tuple_t = std::tuple<uint32_t, ripple::uint256>;
+        using bytes_vector_t = std::vector<ripple::uint256>;
 
         if constexpr (std::is_same_v<decayed_t, ripple::uint256>)
         {
@@ -115,7 +116,7 @@ public:
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         }
         // TODO is there a better way to do this with a generic tuple type?
-        else if constexpr (std::is_same_v<decayed_t, uint_tuple_t> || std::is_same_v<decayed_t, uint_bytes_tuple_t>)
+        else if constexpr (std::is_same_v<decayed_t, uint_tuple_t> || std::is_same_v<decayed_t, uint_bytes_tuple_t> || std::is_same_v<decayed_t, bytes_vector_t>)
         {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");

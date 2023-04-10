@@ -153,6 +153,12 @@ struct NFT
     }
 };
 
+struct NFTsAndCursor
+{
+    std::vector<NFT> nfts;
+    std::optional<ripple::uint256> cursor;
+};
+
 struct LedgerRange
 {
     std::uint32_t minSequence;
