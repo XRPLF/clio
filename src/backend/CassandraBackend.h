@@ -206,7 +206,11 @@ public:
         CassTuple* tuple = cass_tuple_new(data.size());
         for (int i = 0; i < data.size(); ++i)
         {
-            auto const rc = cass_tuple_set_bytes(tuple, i, static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(data[i].data())), data[i].size());
+            auto const rc = cass_tuple_set_bytes(
+                tuple,
+                i,
+                static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(data[i].data())),
+                data[i].size());
             if (rc != CASS_OK)
             {
                 std::stringstream ss;

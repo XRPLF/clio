@@ -589,7 +589,8 @@ public:
         for (auto const [nftID, uri] : extract<ripple::uint256, Blob>(nftURIQueryResults))
             nftURIMap.insert({ripple::strHex(nftID), uri});
 
-        for (auto const [nftID, seq, owner, isBurned] : extract<ripple::uint256, std::uint32_t, ripple::AccountID, bool>(nftQueryResults))
+        for (auto const [nftID, seq, owner, isBurned] :
+             extract<ripple::uint256, std::uint32_t, ripple::AccountID, bool>(nftQueryResults))
         {
             NFT nft;
             nft.tokenID = nftID;

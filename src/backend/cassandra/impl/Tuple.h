@@ -49,8 +49,7 @@ public:
     }
 
     template <typename Types>
-    explicit Tuple(Types&& value)
-        : ManagedObject{cass_tuple_new(value.size()), deleter}
+    explicit Tuple(Types&& value) : ManagedObject{cass_tuple_new(value.size()), deleter}
     {
         for (int i = 0; i < value.size(); ++i)
             bindAt(i, value[i]);

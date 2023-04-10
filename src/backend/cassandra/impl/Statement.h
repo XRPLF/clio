@@ -116,7 +116,9 @@ public:
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         }
         // TODO is there a better way to do this with a generic tuple type?
-        else if constexpr (std::is_same_v<decayed_t, uint_tuple_t> || std::is_same_v<decayed_t, uint_bytes_tuple_t> || std::is_same_v<decayed_t, bytes_vector_t>)
+        else if constexpr (
+            std::is_same_v<decayed_t, uint_tuple_t> || std::is_same_v<decayed_t, uint_bytes_tuple_t> ||
+            std::is_same_v<decayed_t, bytes_vector_t>)
         {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");

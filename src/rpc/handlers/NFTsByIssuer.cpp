@@ -53,7 +53,8 @@ doNFTsByIssuer(Context const& context)
             return Status{RippledError::rpcINVALID_PARAMS, "markerMalformed"};
     }
 
-    auto const dbResponse = context.backend->fetchNFTsByIssuer(issuer, maybeTaxon, lgrInfo.seq, limit, maybeCursor, context.yield);
+    auto const dbResponse =
+        context.backend->fetchNFTsByIssuer(issuer, maybeTaxon, lgrInfo.seq, limit, maybeCursor, context.yield);
 
     boost::json::object response = {};
 

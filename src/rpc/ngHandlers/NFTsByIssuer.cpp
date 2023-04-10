@@ -20,7 +20,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/ngHandlers/NFTsByIssuer.h>
 
-
 namespace RPNng {
 
 NFTsByIssuer::Result
@@ -39,4 +38,4 @@ NFTsByIssuer::process(NFTsByIssuer::Input input, Context const& ctx) const
 
     auto const issuer = RPC::accountFromStringStrict(input.issuer);
 }
-}  // namespace RPCng
+}  // namespace RPNng
