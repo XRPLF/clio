@@ -38,6 +38,7 @@
 #include <rpc/handlers/LedgerData.h>
 #include <rpc/handlers/LedgerEntry.h>
 #include <rpc/handlers/LedgerRange.h>
+#include <rpc/handlers/NFTsByIssuer.h>
 #include <rpc/handlers/NFTBuyOffers.h>
 #include <rpc/handlers/NFTHistory.h>
 #include <rpc/handlers/NFTInfo.h>
@@ -75,6 +76,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"ledger_data", {LedgerDataHandler{backend}}},
           {"ledger_entry", {LedgerEntryHandler{backend}}},
           {"ledger_range", {LedgerRangeHandler{backend}}},
+          {"nfts_by_issuer", {NFTsByIssuerHandler{backend}, true}},  // clio only
           {"nft_history", {NFTHistoryHandler{backend}, true}},  // clio only
           {"nft_buy_offers", {NFTBuyOffersHandler{backend}}},
           {"nft_info", {NFTInfoHandler{backend}, true}},  // clio only

@@ -17,54 +17,46 @@
 */
 //==============================================================================
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
-#include <boost/json.hpp>
-
 #include <rpc/RPCHelpers.h>
+#include <rpc/ngHandlers/NFTsByIssuer.h>
 
-namespace RPC {
+#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 
-Result
-doNFTsByIssuer(Context const& context)
+using namespace ripple;
+using namespace ::RPC;
+
+namespace RPCng {
+
+NFTsByIssuerHandler::Result
+NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ctx) const
 {
-    auto const request = context.params;
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    ripple::AccountID issuer;
-    if (auto const status = getAccount(request, issuer, "issuer"); status)
-        return status;
+    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
 
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
+    auto const limit = input.limit.value_or(NFTsByIssuerHandler::LIMIT_DEFAULT);
 
-    auto const maybeLedgerInfo = ledgerInfoFromRequest(context);
-    if (auto const status = std::get_if<Status>(&maybeLedgerInfo); status)
-        return *status;
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(maybeLedgerInfo);
+    auto const issuer = accountFromStringStrict(input.nftIssuer);
 
-    auto const maybeTaxon = getUInt(request, "taxon");
-
-    std::optional<ripple::uint256> maybeCursor;
-    if (auto const maybeCursorStr = getString(request, "marker"); maybeCursorStr.has_value())
-    {
-        // TODO why is this necessary?
-        maybeCursor = ripple::uint256{};
-        if (!maybeCursor->parseHex(*maybeCursorStr))
-            return Status{RippledError::rpcINVALID_PARAMS, "markerMalformed"};
-    }
+    std::optional<uint256> cursor;
+    if (input.marker)
+        cursor = uint256{input.marker->c_str()};
 
     auto const dbResponse =
-        context.backend->fetchNFTsByIssuer(issuer, maybeTaxon, lgrInfo.seq, limit, maybeCursor, context.yield);
+        sharedPtrBackend_->fetchNFTsByIssuer(*issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield);
 
-    boost::json::object response = {};
+    auto output = NFTsByIssuerHandler::Output{};
 
-    response["issuer"] = ripple::toBase58(issuer);
-    response["limit"] = limit;
-    response["ledger_index"] = lgrInfo.seq;
+    output.nftIssuer = toBase58(*issuer);
+    output.limit = limit;
+    output.ledgerIndex = lgrInfo.seq;
+    output.nftTaxon = input.nftTaxon;
 
-    boost::json::array nftsJson;
-    for (auto const& nft : dbResponse.nfts)
-    {
+    std::transform(dbResponse.nfts.begin(), dbResponse.nfts.end(), output.nfts.begin(), [](auto const& nft) {
         // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
         // for each element of the `nfts_by_issuer` API. We should factor this out
         // so that the formats don't diverge. In the mean time, do not make any
@@ -72,29 +64,58 @@ doNFTsByIssuer(Context const& context)
         // formatting.
         boost::json::object nftJson;
 
-        nftJson[JS(nft_id)] = ripple::strHex(nft.tokenID);
+        nftJson[JS(nft_id)] = strHex(nft.tokenID);
         nftJson[JS(ledger_index)] = nft.ledgerSequence;
-        nftJson[JS(owner)] = ripple::toBase58(nft.owner);
+        nftJson[JS(owner)] = toBase58(nft.owner);
         nftJson["is_burned"] = nft.isBurned;
-        nftJson[JS(uri)] = ripple::strHex(nft.uri);
+        nftJson[JS(uri)] = strHex(nft.uri);
 
-        nftJson[JS(flags)] = ripple::nft::getFlags(nft.tokenID);
-        nftJson["transfer_fee"] = ripple::nft::getTransferFee(nft.tokenID);
-        nftJson[JS(issuer)] = ripple::toBase58(ripple::nft::getIssuer(nft.tokenID));
-        nftJson["nft_taxon"] = ripple::nft::toUInt32(ripple::nft::getTaxon(nft.tokenID));
-        nftJson[JS(nft_serial)] = ripple::nft::getSerial(nft.tokenID);
+        nftJson[JS(flags)] = nft::getFlags(nft.tokenID);
+        nftJson["transfer_fee"] = nft::getTransferFee(nft.tokenID);
+        nftJson[JS(issuer)] = toBase58(nft::getIssuer(nft.tokenID));
+        nftJson["nft_taxon"] = nft::toUInt32(nft::getTaxon(nft.tokenID));
+        nftJson[JS(nft_serial)] = nft::getSerial(nft.tokenID);
 
-        nftsJson.push_back(nftJson);
-    }
-    response["nfts"] = nftsJson;
+        return nftJson;
+    });
 
     if (dbResponse.cursor.has_value())
-        response["marker"] = ripple::strHex(*dbResponse.cursor);
+        output.marker = strHex(*dbResponse.cursor);
 
-    if (maybeTaxon.has_value())
-        response["taxon"] = *maybeTaxon;
-
-    return response;
+    return output;
 }
 
-}  // namespace RPC
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHandler::Output const& output)
+{
+    auto object = boost::json::object{
+        {"nft_issuer", output.nftIssuer},
+        {JS(limit), output.limit},
+        {JS(ledger_index), output.ledgerIndex},
+        {"nfts", output.nfts},
+        {JS(validated), output.validated},
+    };
+
+    if (output.marker.has_value())
+        object[JS(marker)] = *output.marker;
+
+    if (output.nftTaxon.has_value())
+        object["nft_taxon"] = *output.nftTaxon;
+
+    jv = std::move(object);
+}
+
+NFTsByIssuerHandler::Input
+tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::value const& jv)
+{
+    auto const& jsonObject = jv.as_object();
+    NFTsByIssuerHandler::Input input;
+
+    input.nftIssuer = jsonObject.at("nft_issuer").as_string().c_str();
+
+    if (jsonObject.contains("nft_taxon"))
+        input.nftTaxon = jsonObject.at("nft_taxon").as_int64();
+
+    return input;
+}
+}  // namespace RPCng

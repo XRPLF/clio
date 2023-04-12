@@ -32,7 +32,7 @@ NFTInfoHandler::process(
     NFTInfoHandler::Input input,
     boost::asio::yield_context& yield) const
 {
-    auto const tokenID = ripple::uint256{input.nftID.c_str()};
+    auto const tokenID = uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_,
@@ -62,9 +62,7 @@ NFTInfoHandler::process(
     output.issuer = toBase58(nft::getIssuer(nft.tokenID));
     output.taxon = nft::toUInt32(nft::getTaxon(nft.tokenID));
     output.serial = nft::getSerial(nft.tokenID);
-
-    if (not nft.isBurned)
-        output.uri = strHex(nft.uri);
+    output.uri = strHex(nft.uri);
 
     return output;
 }
@@ -81,7 +79,7 @@ tag_invoke(
     // so that the formats don't diverge. In the mean time, do not make any
     // changes to this formatting without making the same changes to that
     // formatting.
-    auto object = boost::json::object{
+    auto const object = boost::json::object{
         {JS(nft_id), output.nftID},
         {JS(ledger_index), output.ledgerIndex},
         {JS(owner), output.owner},
@@ -92,11 +90,8 @@ tag_invoke(
         {"nft_taxon", output.taxon},
         {JS(nft_serial), output.serial},
         {JS(validated), output.validated},
+        {JS(uri), output.uri},
     };
-
-    if (output.uri)
-        object[JS(uri)] = *(output.uri);
-
     jv = std::move(object);
 }
 

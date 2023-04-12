@@ -23,7 +23,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
-#include <rpc/ngHandlers/NFTInfo.h>
 
 namespace RPCng {
 class NFTsByIssuerHandler
@@ -33,23 +32,27 @@ class NFTsByIssuerHandler
 public:
     struct Output
     {
-        std::vector<NFTOutput> nfts;
+        // TODO use a better type than json
+        boost::json::array nfts;
         uint32_t ledgerIndex;
-        std::string issuer;
+        std::string nftIssuer;
         bool validated = true;
-        std::optional<uint32_t> taxon;
+        std::optional<uint32_t> nftTaxon;
         uint32_t limit;
         std::optional<std::string> marker;
     };
 
     struct Input
     {
-        std::string issuer;
-        std::optional<uint32_t> taxon;
+        std::string nftIssuer;
+        std::optional<uint32_t> nftTaxon;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         std::optional<std::string> marker;
+        std::optional<uint32_t> limit;
     };
+
+    static auto constexpr LIMIT_DEFAULT = 50;
 
     using Result = RPCng::HandlerReturnType<Output>;
 
@@ -61,9 +64,12 @@ public:
     spec() const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
+            {"nft_issuer", validation::Required{}, validation::AccountValidator},
+            {"nft_taxon", validation::Type<uint32_t>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
+            {JS(marker), validation::Uint256HexStringValidator},
         };
 
         return rpcSpec;

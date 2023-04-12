@@ -92,6 +92,7 @@ target_sources(clio PRIVATE
   src/rpc/handlers/LedgerData.cpp
   src/rpc/handlers/LedgerEntry.cpp
   src/rpc/handlers/LedgerRange.cpp
+  src/rpc/handlers/NFTsByIssuer.cpp
   src/rpc/handlers/NFTBuyOffers.cpp
   src/rpc/handlers/NFTHistory.cpp
   src/rpc/handlers/NFTInfo.cpp
@@ -147,6 +148,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/ServerInfoTest.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/RandomTest.cpp
+    unittests/rpc/handlers/NFTsByIssuerTest.cpp
     unittests/rpc/handlers/NFTInfoTest.cpp
     unittests/rpc/handlers/NFTBuyOffersTest.cpp
     unittests/rpc/handlers/NFTSellOffersTest.cpp

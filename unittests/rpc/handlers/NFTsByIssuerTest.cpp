@@ -18,35 +18,35 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/NFTInfo.h>
+#include <rpc/ngHandlers/NFTsByIssuer.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace RPCng;
 namespace json = boost::json;
 using namespace testing;
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
-constexpr static auto NFTID2 = "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022";
+// constexpr static auto NFTID2 = "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022";
 
-class RPCNFTInfoHandlerTest : public HandlerBaseTest
+class RPCNFTsByIssuerHandlerTest : public HandlerBaseTest
 {
 };
 
-TEST_F(RPCNFTInfoHandlerTest, NonHexLedgerHash)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
-                "nft_id": "{}", 
+                "nft_issuer": "{}", 
                 "ledger_hash": "xxx"
             }})",
-            NFTID));
+            ACCOUNT));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
@@ -56,16 +56,16 @@ TEST_F(RPCNFTInfoHandlerTest, NonHexLedgerHash)
     });
 }
 
-TEST_F(RPCNFTInfoHandlerTest, NonStringLedgerHash)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{
-                "nft_id": "{}", 
+                "nft_issuer": "{}", 
                 "ledger_hash": 123
             }})",
-            NFTID));
+            ACCOUNT));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
@@ -75,16 +75,16 @@ TEST_F(RPCNFTInfoHandlerTest, NonStringLedgerHash)
     });
 }
 
-TEST_F(RPCNFTInfoHandlerTest, InvalidLedgerIndexString)
+TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
-                "nft_id": "{}", 
+                "nft_issuer": "{}", 
                 "ledger_index": "notvalidated"
             }})",
-            NFTID));
+            ACCOUNT));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
@@ -94,57 +94,71 @@ TEST_F(RPCNFTInfoHandlerTest, InvalidLedgerIndexString)
     });
 }
 
-// error case: nft_id invalid format, length is incorrect
-TEST_F(RPCNFTInfoHandlerTest, NFTIDInvalidFormat)
+// error case: nft_issuer invalid format, length is incorrect
+TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(R"({ 
-            "nft_id": "00080000B4F4AFC5FBCBD76873F18006173D2193467D3EE7"
+            "nft_issuer": "xxx"
         })");
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "nft_idMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "nft_issuerMalformed");
     });
 }
 
-// error case: nft_id invalid format
-TEST_F(RPCNFTInfoHandlerTest, NFTIDNotString)
+// error case: nft_issuer missing
+TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerMissing)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
+        auto const input = json::parse(R"({})");
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Required field 'nft_issuer' missing");
+    });
+}
+
+// error case: nft_issuer invalid format
+TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(R"({ 
-            "nft_id": 12
+            "nft_issuer": 12
         })");
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "nft_idNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "nft_issuerNotString");
     });
 }
 
 // error case ledger non exist via hash
-TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     // mock fetchLedgerByHash return empty
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_id": "{}",
+            "nft_issuer": "{}",
             "ledger_hash": "{}"
         }})",
-        NFTID,
+        ACCOUNT,
         LEDGERHASH));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
@@ -155,7 +169,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 }
 
 // error case ledger non exist via index
-TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -165,12 +179,12 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_id": "{}",
+            "nft_issuer": "{}",
             "ledger_index": "4"
         }})",
-        NFTID));
+        ACCOUNT));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -179,7 +193,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
     });
 }
 
-TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -189,12 +203,12 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_id": "{}",
+            "nft_issuer": "{}",
             "ledger_index": 4
         }})",
-        NFTID));
+        ACCOUNT));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -205,7 +219,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 
 // error case ledger > max seq via hash
 // idk why this case will happen in reality
-TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -216,13 +230,13 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_id": "{}",
+            "nft_issuer": "{}",
             "ledger_hash": "{}"
         }})",
-        NFTID,
+        ACCOUNT,
         LEDGERHASH));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -232,7 +246,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 }
 
 // error case ledger > max seq via index
-TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
+TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -242,12 +256,12 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_id": "{}",
+            "nft_issuer": "{}",
             "ledger_index": "31"
         }})",
-        NFTID));
+        ACCOUNT));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -256,92 +270,67 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
     });
 }
 
-// error case nft does not exist
-TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
+// normal case when issuer does not exist or has no NFTs
+TEST_F(RPCNFTsByIssuerHandlerTest, IssuerNotExistOrHasNoNFTs)
 {
+    auto const currentOutput = fmt::format(
+        R"({{
+            "nft_issuer": "{}",
+            "ledger_index": 30,
+            "nfts": [],
+            "validated": true
+        }})",
+        ACCOUNT);
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    // fetch nft return emtpy
-    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(std::optional<NFT>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
+    // fetch nfts return emtpy
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(
+        *rawBackendPtr, fetchNFTsByIssuer(account, Ref(Const(std::nullopt)), Const(30), _, Ref(Const(std::nullopt)), _))
+        .WillByDefault(Return(NFTsAndCursor{}));
+    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer).Times(1);
+
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_id": "{}",
+            "nft_issuer": "{}",
             "ledger_hash": "{}"
         }})",
-        NFTID,
+        ACCOUNT,
         LEDGERHASH));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "NFT not found");
-    });
-}
-
-// normal case when only provide nft_id
-TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
-{
-    constexpr static auto currentOutput = R"({
-        "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-        "ledger_index": 30,
-        "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "is_burned": false,
-        "flags": 1,
-        "transfer_fee": 0,
-        "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
-        "nft_taxon": 0,
-        "nft_serial": 4,
-        "uri": "757269",
-        "validated": true
-    })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-
-    // fetch nft return something
-    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq));
-    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
-
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "nft_id": "{}"
-        }})",
-        NFTID));
-    runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
+        auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(currentOutput), *output);
     });
 }
 
-// nft is burned -> should not omit uri
-TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
+// normal case when issuer has a single nft
+TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
 {
-    constexpr static auto currentOutput = R"({
-        "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+    auto const currentOutput = fmt::format(
+        R"({{
+        "nft_issuer": "{}",
         "ledger_index": 30,
-        "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "is_burned": true,
-        "flags": 1,
-        "transfer_fee": 0,
-        "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
-        "nft_taxon": 0,
-        "nft_serial": 4,
-        "uri": "757269",
+        "nfts": [{{
+            "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+            "ledger_index": 29,
+            "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "is_burned": false,
+            "flags": 1,
+            "transfer_fee": 0,
+            "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
+            "nft_taxon": 0,
+            "nft_serial": 4,
+            "uri": "757269"
+        }}],
         "validated": true
-    })";
+    }})",
+        ACCOUNT);
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -349,101 +338,20 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    // fetch nft return something
-    auto const nft =
-        std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{'u', 'r', 'i'}, true));
-    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
+    // fetch nfts return something
+    std::vector<NFT> const nfts = {CreateNFT(NFTID, ACCOUNT, 29)};
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, Ref(Const(std::nullopt)), 30, _, Ref(Const(std::nullopt)), _))
+        .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_id": "{}"
+            "nft_issuer": "{}"
         }})",
-        NFTID));
+        ACCOUNT));
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output);
-    });
-}
-
-// uri is not available -> should specify an empty string
-TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
-{
-    constexpr static auto currentOutput = R"({
-        "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-        "ledger_index": 30,
-        "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "is_burned": false,
-        "flags": 1,
-        "transfer_fee": 0,
-        "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
-        "nft_taxon": 0,
-        "nft_serial": 4,
-        "uri": "",
-        "validated": true
-    })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-
-    // fetch nft return something
-    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{}));
-    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
-
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "nft_id": "{}"
-        }})",
-        NFTID));
-    runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output);
-    });
-}
-
-// check taxon field, transfer fee and serial
-TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
-{
-    constexpr static auto currentOutput = R"({
-        "nft_id": "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022",
-        "ledger_index": 30,
-        "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "is_burned": false,
-        "flags": 8,
-        "transfer_fee": 5000,
-        "issuer": "rnX4gsB86NNrGV8xHcJ5hbR2aKtSetbuwg",
-        "nft_taxon": 7826,
-        "nft_serial": 34,
-        "uri": "757269",
-        "validated": true
-    })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-
-    // fetch nft return something
-    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID2, ACCOUNT, ledgerInfo.seq));
-    ON_CALL(*rawBackendPtr, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*rawBackendPtr, fetchNFT(ripple::uint256{NFTID2}, 30, _)).Times(1);
-
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "nft_id": "{}"
-        }})",
-        NFTID2));
-    runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTsByIssuerHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(currentOutput), *output);
