@@ -39,8 +39,6 @@ public:
         bool both = false;
     };
 
-    using Output = VoidOutput;
-
     struct Input
     {
         std::optional<std::vector<std::string>> accounts;
@@ -49,6 +47,7 @@ public:
         std::optional<std::vector<OrderBook>> books;
     };
 
+    using Output = VoidOutput;
     using Result = RPCng::HandlerReturnType<Output>;
 
     BaseUnsubscribeHandler(

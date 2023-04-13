@@ -603,3 +603,38 @@ TEST_F(RPCUnsubscribeTest, Books)
         EXPECT_TRUE(output->as_object().empty());
     });
 }
+
+TEST_F(RPCUnsubscribeTest, SingleBooks)
+{
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "books": [
+                    {{
+                        "taker_pays": 
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "taker_gets": 
+                        {{
+                            "currency": "USD",
+                            "issuer": "{}"
+                        }}
+                    }}
+                ]
+        }})",
+        ACCOUNT));
+
+    auto const parsedBookMaybe = RPC::parseBook(input.as_object().at("books").as_array()[0].as_object());
+    auto const book = std::get<ripple::Book>(parsedBookMaybe);
+
+    MockSubscriptionManager* rawSubscriptionManagerPtr =
+        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->as_object().empty());
+    });
+}
