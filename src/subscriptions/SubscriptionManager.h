@@ -98,7 +98,7 @@ public:
     publish(std::shared_ptr<Message> const& message, Key const& key);
 
     std::uint64_t
-    count()
+    count() const
     {
         return subCount_.load();
     }
@@ -330,7 +330,7 @@ public:
     cleanup(session_ptr session);
 
     boost::json::object
-    report()
+    report() const
     {
         boost::json::object counts = {};
 

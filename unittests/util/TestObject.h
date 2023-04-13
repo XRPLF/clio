@@ -23,6 +23,7 @@
 
 #include <ripple/ledger/ReadView.h>
 
+#include <optional>
 #include <string_view>
 
 /*
@@ -35,7 +36,7 @@ GetAccountIDWithString(std::string_view id);
  * Create a simple ledgerInfo object with only hash and seq
  */
 [[nodiscard]] ripple::LedgerInfo
-CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq);
+CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
 
 /*
  * Create a FeeSetting ledger object

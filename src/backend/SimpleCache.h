@@ -37,11 +37,11 @@ class SimpleCache
     };
 
     // counters for fetchLedgerObject(s) hit rate
-    mutable std::atomic_uint32_t objectReqCounter_;
-    mutable std::atomic_uint32_t objectHitCounter_;
+    mutable std::atomic_uint32_t objectReqCounter_ = 0;
+    mutable std::atomic_uint32_t objectHitCounter_ = 0;
     // counters for fetchSuccessorKey hit rate
-    mutable std::atomic_uint32_t successorReqCounter_;
-    mutable std::atomic_uint32_t successorHitCounter_;
+    mutable std::atomic_uint32_t successorReqCounter_ = 0;
+    mutable std::atomic_uint32_t successorHitCounter_ = 0;
 
     std::map<ripple::uint256, CacheEntry> map_;
     mutable std::shared_mutex mtx_;

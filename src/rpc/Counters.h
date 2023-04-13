@@ -47,7 +47,7 @@ private:
     void
     initializeCounter(std::string const& method);
 
-    std::shared_mutex mutex_;
+    mutable std::shared_mutex mutex_;
     std::unordered_map<std::string, MethodInfo> methodInfo_;
 
     std::reference_wrapper<const WorkQueue> workQueue_;
@@ -65,7 +65,7 @@ public:
     rpcForwarded(std::string const& method);
 
     boost::json::object
-    report();
+    report() const;
 };
 
 }  // namespace RPC

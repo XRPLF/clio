@@ -162,6 +162,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/LedgerEntryTest.cpp
     unittests/rpc/handlers/LedgerRangeTest.cpp
     unittests/rpc/handlers/NoRippleCheckTest.cpp
+    unittests/rpc/handlers/ServerInfoTest.cpp
     unittests/rpc/handlers/PingTest.cpp
     unittests/rpc/handlers/RandomTest.cpp
     unittests/rpc/handlers/NFTInfoTest.cpp
