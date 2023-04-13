@@ -19,7 +19,7 @@ jobs:
     name: Build on MacOS and run tests
     needs: lint
     continue-on-error: false
-    runs-on: [self-hosted, mac-runner]
+    runs-on: [self-hosted, macOS]
 
     steps:
       - uses: actions/checkout@v3
