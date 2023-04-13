@@ -351,11 +351,7 @@ private:
     void
     sendAll(std::string const& pubMsg, std::unordered_set<SessionPtrType>& subs);
 
-<<<<<<< HEAD
     using CleanupFunction = std::function<void(SessionPtrType const)>;
-=======
-    using CleanupFunction = std::function<void(session_ptr const)>;
->>>>>>> aef8525 (Init)
 
     void
     subscribeHelper(std::shared_ptr<WsBase> const& session, Subscription& subs, CleanupFunction&& func);

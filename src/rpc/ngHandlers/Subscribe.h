@@ -71,11 +71,42 @@ public:
     RpcSpecConstRef
     spec() const
     {
+        static auto const booksValidator =
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+                if (!value.is_array())
+                    return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+                for (auto const& book : value.as_array())
+                {
+                    if (!book.is_object())
+                        return Error{
+                            RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
+                    if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
+                    {
+                        return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
+                    }
+
+                    if (book.as_object().contains("snapshot") && !book.as_object().at("snapshot").is_bool())
+                    {
+                        return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
+                    }
+
+                    if (book.as_object().contains("taker"))
+                    {
+                        if (auto const err = validation::AccountValidator.verify(book.as_object(), "taker"); !err)
+                            return err;
+                    }
+
+                    auto const parsedBook = RPC::parseBook(book.as_object());
+                    if (auto const status = std::get_if<RPC::Status>(&parsedBook))
+                        return Error(*status);
+                }
+                return MaybeError{};
+            }};
         static auto const rpcSpec = RpcSpec{
             {JS(streams), validation::SubscribeStreamValidator},
             {JS(accounts), validation::SubscribeAccountsValidator},
             {JS(accounts_proposed), validation::SubscribeAccountsValidator},
-            {JS(books), validation::SubscribeBooksValidator}};
+            {JS(books), booksValidator}};
         return rpcSpec;
     }
 

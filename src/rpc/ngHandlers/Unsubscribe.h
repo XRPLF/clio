@@ -82,9 +82,9 @@ public:
             }};
 
         static auto const rpcSpec = RpcSpec{
-            {JS(streams), validation::SubscibeStreamValidator},
-            {JS(accounts), validation::SubscibeAccountsValidator},
-            {JS(accounts_proposed), validation::SubscibeAccountsValidator},
+            {JS(streams), validation::SubscribeStreamValidator},
+            {JS(accounts), validation::SubscribeAccountsValidator},
+            {JS(accounts_proposed), validation::SubscribeAccountsValidator},
             {JS(books), booksValidator}};
 
         return rpcSpec;
