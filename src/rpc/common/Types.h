@@ -65,7 +65,7 @@ struct Context
     // TODO: we shall change yield_context to const yield_context after we
     // update backend interfaces to use const& yield
     std::reference_wrapper<boost::asio::yield_context> yield;
-    std::shared_ptr<WsBase const> session;
+    std::shared_ptr<WsBase> session;
     bool isAdmin = false;
     std::string clientIp;
 };
