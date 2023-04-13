@@ -189,7 +189,7 @@ SubscriptionMap<Key>::publish(std::shared_ptr<Message> const& message, Key const
 
 class SubscriptionManager
 {
-    using session_ptr = std::shared_ptr<WsBase>;
+    using SessionPtrType = std::shared_ptr<WsBase>;
     clio::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
@@ -251,7 +251,7 @@ public:
     }
 
     boost::json::object
-    subLedger(boost::asio::yield_context& yield, session_ptr session);
+    subLedger(boost::asio::yield_context& yield, SessionPtrType session);
 
     void
     pubLedger(
@@ -264,28 +264,28 @@ public:
     pubBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
 
     void
-    unsubLedger(session_ptr session);
+    unsubLedger(SessionPtrType session);
 
     void
-    subTransactions(session_ptr session);
+    subTransactions(SessionPtrType session);
 
     void
-    unsubTransactions(session_ptr session);
+    unsubTransactions(SessionPtrType session);
 
     void
     pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerInfo const& lgrInfo);
 
     void
-    subAccount(ripple::AccountID const& account, session_ptr& session);
+    subAccount(ripple::AccountID const& account, SessionPtrType const& session);
 
     void
-    unsubAccount(ripple::AccountID const& account, session_ptr& session);
+    unsubAccount(ripple::AccountID const& account, SessionPtrType const& session);
 
     void
-    subBook(ripple::Book const& book, session_ptr session);
+    subBook(ripple::Book const& book, SessionPtrType session);
 
     void
-    unsubBook(ripple::Book const& book, session_ptr session);
+    unsubBook(ripple::Book const& book, SessionPtrType session);
 
     void
     subBookChanges(std::shared_ptr<WsBase> session);
@@ -294,16 +294,16 @@ public:
     unsubBookChanges(std::shared_ptr<WsBase> session);
 
     void
-    subManifest(session_ptr session);
+    subManifest(SessionPtrType session);
 
     void
-    unsubManifest(session_ptr session);
+    unsubManifest(SessionPtrType session);
 
     void
-    subValidation(session_ptr session);
+    subValidation(SessionPtrType session);
 
     void
-    unsubValidation(session_ptr session);
+    unsubValidation(SessionPtrType session);
 
     void
     forwardProposedTransaction(boost::json::object const& response);
@@ -315,19 +315,19 @@ public:
     forwardValidation(boost::json::object const& response);
 
     void
-    subProposedAccount(ripple::AccountID const& account, session_ptr session);
+    subProposedAccount(ripple::AccountID const& account, SessionPtrType session);
 
     void
-    unsubProposedAccount(ripple::AccountID const& account, session_ptr session);
+    unsubProposedAccount(ripple::AccountID const& account, SessionPtrType session);
 
     void
-    subProposedTransactions(session_ptr session);
+    subProposedTransactions(SessionPtrType session);
 
     void
-    unsubProposedTransactions(session_ptr session);
+    unsubProposedTransactions(SessionPtrType session);
 
     void
-    cleanup(session_ptr session);
+    cleanup(SessionPtrType session);
 
     boost::json::object
     report() const
@@ -349,16 +349,20 @@ public:
 
 private:
     void
-    sendAll(std::string const& pubMsg, std::unordered_set<session_ptr>& subs);
+    sendAll(std::string const& pubMsg, std::unordered_set<SessionPtrType>& subs);
 
-    using CleanupFunction = std::function<void(session_ptr)>;
+    using CleanupFunction = std::function<void(SessionPtrType const)>;
 
     void
-    subscribeHelper(std::shared_ptr<WsBase>& session, Subscription& subs, CleanupFunction&& func);
+    subscribeHelper(std::shared_ptr<WsBase> const& session, Subscription& subs, CleanupFunction&& func);
 
     template <typename Key>
     void
-    subscribeHelper(std::shared_ptr<WsBase>& session, Key const& k, SubscriptionMap<Key>& subs, CleanupFunction&& func);
+    subscribeHelper(
+        std::shared_ptr<WsBase> const& session,
+        Key const& k,
+        SubscriptionMap<Key>& subs,
+        CleanupFunction&& func);
 
     /**
      * This is how we chose to cleanup subscriptions that have been closed.
@@ -367,5 +371,5 @@ private:
      * closed.
      */
     std::mutex cleanupMtx_;
-    std::unordered_map<session_ptr, std::vector<CleanupFunction>> cleanupFuncs_ = {};
+    std::unordered_map<SessionPtrType, std::vector<CleanupFunction>> cleanupFuncs_ = {};
 };

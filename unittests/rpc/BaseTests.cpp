@@ -440,3 +440,94 @@ TEST_F(RPCBaseTest, IssuerValidator)
     err = spec.validate(failingInput);
     ASSERT_FALSE(err);
 }
+
+TEST_F(RPCBaseTest, SubscribeStreamValidator)
+{
+    auto const spec = RpcSpec{{"streams", SubscribeStreamValidator}};
+    auto passingInput = json::parse(
+        R"({ 
+            "streams": 
+            [
+                "ledger", 
+                "transactions_proposed",
+                "validations",
+                "transactions",
+                "manifests",
+                "transactions",
+                "book_changes"
+            ]
+        })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "streams": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+
+    failingInput = json::parse(R"({ "streams": ["test"]})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+
+    failingInput = json::parse(R"({ "streams": [123]})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+}
+
+TEST_F(RPCBaseTest, SubscribeAccountsValidator)
+{
+    auto const spec = RpcSpec{{"accounts", SubscribeAccountsValidator}};
+    auto passingInput =
+        json::parse(R"({ "accounts": ["rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn","rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"]})");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "accounts": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+
+    failingInput = json::parse(R"({ "accounts": ["test"]})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+
+    failingInput = json::parse(R"({ "accounts": [123]})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+}
+
+TEST_F(RPCBaseTest, SubscribeBooksValidator)
+{
+    auto const spec = RpcSpec{{"books", SubscribeBooksValidator}};
+    auto passingInput = json::parse(
+        R"({ 
+            "books": [{
+                "taker_pays": 
+                {
+                    "currency": "XRP"
+                },
+                "taker_gets": 
+                {
+                    "currency": "USD",
+                    "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq"
+                }
+            }]
+        })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "books": 256})");
+    auto err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+
+    failingInput = json::parse(R"({ "books": ["test"]})");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+
+    failingInput = json::parse(
+        R"({ 
+            "books": [{
+                "taker_pays": 
+                {
+                    "currency": "XRP"
+                }
+            }]
+        })");
+    err = spec.validate(failingInput);
+    ASSERT_FALSE(err);
+}

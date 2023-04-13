@@ -134,7 +134,7 @@ CustomValidator AccountValidator =
         // remove all old handler, this function can be moved to here
         if (!RPC::accountFromStringStrict(value.as_string().c_str()))
         {
-            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
+            return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED, std::string(key) + "Malformed"}};
         }
         return MaybeError{};
     }};
@@ -196,6 +196,73 @@ CustomValidator IssuerValidator =
                     "Invalid field '{}', bad issuer account "
                     "one.",
                     key)}};
+        return MaybeError{};
+    }};
+
+CustomValidator SubscribeStreamValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        static std::unordered_set<std::string> const validStreams = {
+            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"};
+        if (!value.is_array())
+        {
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+        }
+        for (auto const& v : value.as_array())
+        {
+            if (!v.is_string())
+                return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "streamNotString"}};
+            if (not validStreams.contains(v.as_string().c_str()))
+                return Error{RPC::Status{RPC::RippledError::rpcSTREAM_MALFORMED}};
+        }
+        return MaybeError{};
+    }};
+
+CustomValidator SubscribeAccountsValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_array())
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+        if (value.as_array().size() == 0)
+            return Error{RPC::Status{RPC::RippledError::rpcACT_MALFORMED, std::string(key) + " malformed."}};
+
+        for (auto const& v : value.as_array())
+        {
+            auto obj = boost::json::object();
+            auto const keyItem = std::string(key) + "'sItem";
+            obj[keyItem] = v;
+            if (auto const err = AccountValidator.verify(obj, keyItem); !err)
+                return err;
+        }
+        return MaybeError{};
+    }};
+
+CustomValidator SubscribeBooksValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_array())
+            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+        for (auto const& book : value.as_array())
+        {
+            if (!book.is_object())
+                return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
+            if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
+            {
+                return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
+            }
+
+            if (book.as_object().contains("snapshot") && !book.as_object().at("snapshot").is_bool())
+            {
+                return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
+            }
+
+            if (book.as_object().contains("taker"))
+            {
+                if (auto const err = AccountValidator.verify(book.as_object(), "taker"); !err)
+                    return err;
+            }
+
+            auto const parsedBook = RPC::parseBook(book.as_object());
+            if (auto const status = std::get_if<RPC::Status>(&parsedBook))
+                return Error(*status);
+        }
         return MaybeError{};
     }};
 

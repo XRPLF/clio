@@ -205,7 +205,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "accountMalformed");
     });
 }

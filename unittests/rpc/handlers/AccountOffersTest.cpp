@@ -80,7 +80,7 @@ generateTestValuesForParametersTest()
         {
             "AccountInvalid",
             R"({"account": "123"})",
-            "invalidParams",
+            "actMalformed",
             "accountMalformed",
         },
         {
