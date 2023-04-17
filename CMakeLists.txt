@@ -88,6 +88,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/NFTBuyOffers.cpp
   src/rpc/ngHandlers/NFTSellOffers.cpp
   src/rpc/ngHandlers/NFTHistory.cpp
+  src/rpc/ngHandlers/LedgerData.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -171,6 +172,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/NFTHistoryTest.cpp
     unittests/rpc/handlers/SubscribeTest.cpp
     unittests/rpc/handlers/UnsubscribeTest.cpp
+    unittests/rpc/handlers/LedgerDataTest.cpp
     # Backend
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp
