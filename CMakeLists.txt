@@ -89,6 +89,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/NFTSellOffers.cpp
   src/rpc/ngHandlers/NFTHistory.cpp
   src/rpc/ngHandlers/LedgerData.cpp
+  src/rpc/ngHandlers/AccountNFTs.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -156,6 +157,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/AccountOffersTest.cpp
     unittests/rpc/handlers/AccountInfoTest.cpp
     unittests/rpc/handlers/AccountChannelsTest.cpp
+    unittests/rpc/handlers/AccountNFTsTest.cpp
     unittests/rpc/handlers/BookOffersTest.cpp
     unittests/rpc/handlers/GatewayBalancesTest.cpp
     unittests/rpc/handlers/TxTest.cpp

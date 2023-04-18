@@ -487,3 +487,27 @@ CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers)
     signerlists.setFieldArray(ripple::sfSignerEntries, list);
     return signerlists;
 }
+
+ripple::STObject
+CreateNFTTokenPage(
+    std::vector<std::pair<std::string, std::string>> const& tokens,
+    std::optional<ripple::uint256> previousPage)
+{
+    auto tokenPage = ripple::STObject(ripple::sfLedgerEntry);
+    tokenPage.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    tokenPage.setFieldU32(ripple::sfFlags, 0);
+    tokenPage.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256());
+    tokenPage.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    if (previousPage)
+        tokenPage.setFieldH256(ripple::sfPreviousPageMin, *previousPage);
+    ripple::STArray list;
+    for (auto const& token : tokens)
+    {
+        auto entry = ripple::STObject(ripple::sfNFToken);
+        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{token.first.c_str()});
+        entry.setFieldVL(ripple::sfURI, ripple::Slice(token.second.c_str(), token.second.size()));
+        list.push_back(entry);
+    }
+    tokenPage.setFieldArray(ripple::sfNFTokens, list);
+    return tokenPage;
+}
