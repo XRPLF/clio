@@ -90,6 +90,7 @@ target_sources(clio PRIVATE
   src/rpc/ngHandlers/NFTHistory.cpp
   src/rpc/ngHandlers/LedgerData.cpp
   src/rpc/ngHandlers/AccountNFTs.cpp
+  src/rpc/ngHandlers/AccountObjects.cpp
   ## RPC Methods
   # Account
   src/rpc/handlers/AccountChannels.cpp
@@ -175,6 +176,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/SubscribeTest.cpp
     unittests/rpc/handlers/UnsubscribeTest.cpp
     unittests/rpc/handlers/LedgerDataTest.cpp
+    unittests/rpc/handlers/AccountObjectsTest.cpp
     # Backend
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp
