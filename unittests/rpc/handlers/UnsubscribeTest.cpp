@@ -572,19 +572,17 @@ TEST_F(RPCUnsubscribeTest, Books)
     auto const input = json::parse(fmt::format(
         R"({{
             "books": [
-                    {{
-                        "taker_pays": 
-                        {{
-                            "currency": "XRP"
-                        }},
-                        "taker_gets": 
-                        {{
-                            "currency": "USD",
-                            "issuer": "{}"
-                        }},
-                        "both": true
-                    }}
-                ]
+                {{
+                    "taker_pays": {{
+                        "currency": "XRP"
+                    }},
+                    "taker_gets": {{
+                        "currency": "USD",
+                        "issuer": "{}"
+                    }},
+                    "both": true
+                }}
+            ]
         }})",
         ACCOUNT));
 
@@ -609,18 +607,16 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     auto const input = json::parse(fmt::format(
         R"({{
             "books": [
-                    {{
-                        "taker_pays": 
-                        {{
-                            "currency": "XRP"
-                        }},
-                        "taker_gets": 
-                        {{
-                            "currency": "USD",
-                            "issuer": "{}"
-                        }}
+                {{
+                    "taker_pays": {{
+                        "currency": "XRP"
+                    }},
+                    "taker_gets": {{
+                        "currency": "USD",
+                        "issuer": "{}"
                     }}
-                ]
+                }}
+            ]
         }})",
         ACCOUNT));
 

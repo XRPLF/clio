@@ -64,15 +64,16 @@ public:
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
                 if (!value.is_array())
                     return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+
                 for (auto const& book : value.as_array())
                 {
                     if (!book.is_object())
                         return Error{
                             RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
+
                     if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
-                    {
                         return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
-                    }
+
                     auto const parsedBook = RPC::parseBook(book.as_object());
                     if (auto const status = std::get_if<RPC::Status>(&parsedBook))
                         return Error(*status);
@@ -93,41 +94,37 @@ public:
     process(Input input, Context const& ctx) const
     {
         if (input.streams)
-        {
-            unsubscribeToStreams(*(input.streams), ctx.session);
-        }
+            unsubscribeFromStreams(*(input.streams), ctx.session);
+
         if (input.accounts)
-        {
-            unsubscribeToAccounts(*(input.accounts), ctx.session);
-        }
+            unsubscribeFromAccounts(*(input.accounts), ctx.session);
+
         if (input.accountsProposed)
-        {
-            unsubscribeToProposedAccounts(*(input.accountsProposed), ctx.session);
-        }
+            unsubscribeFromProposedAccounts(*(input.accountsProposed), ctx.session);
+
         if (input.books)
-        {
-            unsubscribeToBooks(*(input.books), ctx.session);
-        }
+            unsubscribeFromBooks(*(input.books), ctx.session);
+
         return Output{};
     }
 
 private:
     void
-    unsubscribeToStreams(std::vector<std::string> const& streams, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<WsBase> const& session) const
     {
-        for (auto const& s : streams)
+        for (auto const& stream : streams)
         {
-            if (s == "ledger")
+            if (stream == "ledger")
                 subscriptions_->unsubLedger(session);
-            else if (s == "transactions")
+            else if (stream == "transactions")
                 subscriptions_->unsubTransactions(session);
-            else if (s == "transactions_proposed")
+            else if (stream == "transactions_proposed")
                 subscriptions_->unsubProposedTransactions(session);
-            else if (s == "validations")
+            else if (stream == "validations")
                 subscriptions_->unsubValidation(session);
-            else if (s == "manifests")
+            else if (stream == "manifests")
                 subscriptions_->unsubManifest(session);
-            else if (s == "book_changes")
+            else if (stream == "book_changes")
                 subscriptions_->unsubBookChanges(session);
             else
                 assert(false);
@@ -135,7 +132,7 @@ private:
     }
 
     void
-    unsubscribeToAccounts(std::vector<std::string> accounts, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<WsBase> const& session) const
     {
         for (auto const& account : accounts)
         {
@@ -145,7 +142,7 @@ private:
     }
 
     void
-    unsubscribeToProposedAccounts(std::vector<std::string> accountsProposed, std::shared_ptr<WsBase> const& session)
+    unsubscribeFromProposedAccounts(std::vector<std::string> accountsProposed, std::shared_ptr<WsBase> const& session)
         const
     {
         for (auto const& account : accountsProposed)
@@ -156,7 +153,7 @@ private:
     }
 
     void
-    unsubscribeToBooks(std::vector<OrderBook> const& books, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<WsBase> const& session) const
     {
         for (auto const& orderBook : books)
         {
