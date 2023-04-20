@@ -322,6 +322,23 @@ TEST_F(RPCBaseTest, CustomValidator)
     ASSERT_FALSE(spec.validate(failingInput));
 }
 
+TEST_F(RPCBaseTest, NotSupported)
+{
+    auto spec = RpcSpec{
+        {"taker", Type<uint32_t>{}, NotSupported{123}},
+        {"getter", NotSupported{}},
+    };
+
+    auto passingInput = json::parse(R"({ "taker": 2 })");
+    ASSERT_TRUE(spec.validate(passingInput));
+
+    auto failingInput = json::parse(R"({ "taker": 123 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+
+    failingInput = json::parse(R"({ "taker": 2, "getter": 2 })");
+    ASSERT_FALSE(spec.validate(failingInput));
+}
+
 TEST_F(RPCBaseTest, LedgerIndexValidator)
 {
     auto spec = RpcSpec{
