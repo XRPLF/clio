@@ -60,7 +60,7 @@ public:
 
     MOCK_METHOD(void, subAccount, (ripple::AccountID const&, session_ptr&), ());
 
-    MOCK_METHOD(void, unsubAccount, (ripple::AccountID const&, session_ptr&), ());
+    MOCK_METHOD(void, unsubAccount, (ripple::AccountID const&, session_ptr const&), ());
 
     MOCK_METHOD(void, subBook, (ripple::Book const&, session_ptr), ());
 

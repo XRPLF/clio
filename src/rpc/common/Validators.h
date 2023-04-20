@@ -494,10 +494,4 @@ extern CustomValidator SubscribeStreamValidator;
  */
 extern CustomValidator SubscribeAccountsValidator;
 
-/**
- * @brief Provide a validator for validating valid books used in
- * subscribe/unsubscribe
- */
-extern CustomValidator SubscribeBooksValidator;
-
 }  // namespace RPCng::validation

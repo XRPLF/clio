@@ -25,29 +25,17 @@
 #include <rpc/common/Validators.h>
 
 namespace RPCng {
+
 template <typename SubscriptionManagerType>
-class BaseSubscribeHandler
+class BaseUnsubscribeHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
 
 public:
-    struct Output
-    {
-        // response of stream "ledger"
-        // TODO: use better type than json, this type will be used in the stream as well
-        std::optional<boost::json::object> ledger;
-        // books returns nothing by default, if snapshot is true, it returns offers
-        // TODO: use better type than json
-        std::optional<boost::json::array> offers;
-        bool validated = true;
-    };
-
     struct OrderBook
     {
         ripple::Book book;
-        std::optional<std::string> taker;
-        bool snapshot = false;
         bool both = false;
     };
 
@@ -59,9 +47,10 @@ public:
         std::optional<std::vector<OrderBook>> books;
     };
 
+    using Output = VoidOutput;
     using Result = RPCng::HandlerReturnType<Output>;
 
-    BaseSubscribeHandler(
+    BaseUnsubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
         std::shared_ptr<SubscriptionManagerType> const& subscriptions)
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
@@ -75,6 +64,7 @@ public:
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
                 if (!value.is_array())
                     return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+
                 for (auto const& book : value.as_array())
                 {
                     if (!book.is_object())
@@ -83,13 +73,6 @@ public:
 
                     if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
                         return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
-
-                    if (book.as_object().contains("snapshot") && !book.as_object().at("snapshot").is_bool())
-                        return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
-
-                    if (book.as_object().contains("taker"))
-                        if (auto const err = validation::AccountValidator.verify(book.as_object(), "taker"); !err)
-                            return err;
 
                     auto const parsedBook = RPC::parseBook(book.as_object());
                     if (auto const status = std::get_if<RPC::Status>(&parsedBook))
@@ -103,126 +86,81 @@ public:
             {JS(accounts), validation::SubscribeAccountsValidator},
             {JS(accounts_proposed), validation::SubscribeAccountsValidator},
             {JS(books), booksValidator}};
+
         return rpcSpec;
     }
 
     Result
     process(Input input, Context const& ctx) const
     {
-        Output output;
         if (input.streams)
-        {
-            auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
-            if (!ledger.empty())
-                output.ledger = ledger;
-        }
+            unsubscribeFromStreams(*(input.streams), ctx.session);
+
         if (input.accounts)
-            subscribeToAccounts(*(input.accounts), ctx.session);
+            unsubscribeFromAccounts(*(input.accounts), ctx.session);
+
         if (input.accountsProposed)
-            subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
+            unsubscribeFromProposedAccounts(*(input.accountsProposed), ctx.session);
+
         if (input.books)
-        {
-            auto const offers = subscribeToBooks(*(input.books), ctx.session, ctx.yield);
-            if (!offers.empty())
-                output.offers = offers;
-        };
-        return output;
+            unsubscribeFromBooks(*(input.books), ctx.session);
+
+        return Output{};
     }
 
 private:
-    boost::json::object
-    subscribeToStreams(
-        boost::asio::yield_context& yield,
-        std::vector<std::string> const& streams,
-        std::shared_ptr<WsBase> const& session) const
+    void
+    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<WsBase> const& session) const
     {
-        boost::json::object response;
         for (auto const& stream : streams)
         {
             if (stream == "ledger")
-                response = subscriptions_->subLedger(yield, session);
+                subscriptions_->unsubLedger(session);
             else if (stream == "transactions")
-                subscriptions_->subTransactions(session);
+                subscriptions_->unsubTransactions(session);
             else if (stream == "transactions_proposed")
-                subscriptions_->subProposedTransactions(session);
+                subscriptions_->unsubProposedTransactions(session);
             else if (stream == "validations")
-                subscriptions_->subValidation(session);
+                subscriptions_->unsubValidation(session);
             else if (stream == "manifests")
-                subscriptions_->subManifest(session);
+                subscriptions_->unsubManifest(session);
             else if (stream == "book_changes")
-                subscriptions_->subBookChanges(session);
+                subscriptions_->unsubBookChanges(session);
+            else
+                assert(false);
         }
-        return response;
     }
 
     void
-    subscribeToAccounts(std::vector<std::string> const& accounts, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<WsBase> const& session) const
     {
         for (auto const& account : accounts)
         {
-            auto const accountID = RPC::accountFromStringStrict(account);
-            subscriptions_->subAccount(*accountID, session);
+            auto accountID = RPC::accountFromStringStrict(account);
+            subscriptions_->unsubAccount(*accountID, session);
         }
     }
+
     void
-    subscribeToAccountsProposed(std::vector<std::string> const& accounts, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromProposedAccounts(std::vector<std::string> accountsProposed, std::shared_ptr<WsBase> const& session)
+        const
     {
-        for (auto const& account : accounts)
+        for (auto const& account : accountsProposed)
         {
-            auto const accountID = RPC::accountFromStringStrict(account);
-            subscriptions_->subProposedAccount(*accountID, session);
+            auto accountID = RPC::accountFromStringStrict(account);
+            subscriptions_->unsubProposedAccount(*accountID, session);
         }
     }
 
-    boost::json::array
-    subscribeToBooks(
-        std::vector<OrderBook> const& books,
-        std::shared_ptr<WsBase> const& session,
-        boost::asio::yield_context& yield) const
+    void
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<WsBase> const& session) const
     {
-        boost::json::array snapshots;
-        std::optional<Backend::LedgerRange> rng;
-        static auto constexpr fetchLimit = 200;
-
-        for (auto const& internalBook : books)
+        for (auto const& orderBook : books)
         {
-            if (internalBook.snapshot)
-            {
-                if (!rng)
-                    rng = sharedPtrBackend_->fetchLedgerRange();
-                auto const getOrderBook = [&](auto const& book) {
-                    auto const bookBase = getBookBase(book);
-                    auto const [offers, _] =
-                        sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, fetchLimit, yield);
-
-                    // the taker is not really uesed, same issue with
-                    // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
-                    auto const takerID =
-                        internalBook.taker ? RPC::accountFromStringStrict(*(internalBook.taker)) : beast::zero;
-
-                    auto const orderBook =
-                        RPC::postProcessOrderBook(offers, book, *takerID, *sharedPtrBackend_, rng->maxSequence, yield);
-                    std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
-                };
-                getOrderBook(internalBook.book);
-                if (internalBook.both)
-                    getOrderBook(ripple::reversed(internalBook.book));
-            }
-
-            subscriptions_->subBook(internalBook.book, session);
-            if (internalBook.both)
-                subscriptions_->subBook(ripple::reversed(internalBook.book), session);
+            subscriptions_->unsubBook(orderBook.book, session);
+            if (orderBook.both)
+                subscriptions_->unsubBook(ripple::reversed(orderBook.book), session);
         }
-
-        return snapshots;
-    }
-
-    friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
-    {
-        jv = output.ledger ? *(output.ledger) : boost::json::object();
-        if (output.offers)
-            jv.as_object().emplace(JS(offers), *(output.offers));
     }
 
     friend Input
@@ -255,12 +193,8 @@ private:
             {
                 auto const& bookObject = book.as_object();
                 OrderBook internalBook;
-                if (auto const& taker = bookObject.find(JS(taker)); taker != bookObject.end())
-                    internalBook.taker = taker->value().as_string().c_str();
                 if (auto const& both = bookObject.find(JS(both)); both != bookObject.end())
                     internalBook.both = both->value().as_bool();
-                if (auto const& snapshot = bookObject.find(JS(snapshot)); snapshot != bookObject.end())
-                    internalBook.snapshot = snapshot->value().as_bool();
                 auto const parsedBookMaybe = RPC::parseBook(book.as_object());
                 internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
                 input.books->push_back(internalBook);
@@ -270,6 +204,6 @@ private:
     }
 };
 
-using SubscribeHandler = BaseSubscribeHandler<SubscriptionManager>;
+using UnsubscribeHandler = BaseUnsubscribeHandler<SubscriptionManager>;
 
 }  // namespace RPCng
