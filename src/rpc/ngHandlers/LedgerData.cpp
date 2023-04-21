@@ -87,7 +87,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     if (input.diffMarker)
     {
         // keep the same logic as previous implementation
-        auto const diff = sharedPtrBackend_->fetchLedgerDiff(*(input.diffMarker), ctx.yield);
+        auto diff = sharedPtrBackend_->fetchLedgerDiff(*(input.diffMarker), ctx.yield);
         std::vector<ripple::uint256> keys;
         for (auto& [key, object] : diff)
         {
@@ -119,9 +119,9 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     }
     auto const end = std::chrono::system_clock::now();
 
-    auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    log_.debug() << "Number of results = " << results.size() << " fetched in "
+                 << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds";
 
-    log_.debug() << "Number of results = " << results.size() << " fetched in " << time << " microseconds";
     output.states.reserve(results.size());
     for (auto const& [key, object] : results)
     {
@@ -140,10 +140,10 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     }
     if (input.outOfOrder)
         output.cacheFull = sharedPtrBackend_->cache().isFull();
-    auto const end2 = std::chrono::system_clock::now();
 
-    time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count();
-    log_.debug() << "Number of results = " << results.size() << " serialized in " << time << " microseconds";
+    auto const end2 = std::chrono::system_clock::now();
+    log_.debug() << "Number of results = " << results.size() << " serialized in "
+                 << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count() << " microseconds";
 
     return output;
 }
