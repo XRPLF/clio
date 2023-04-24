@@ -45,11 +45,10 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
-
     auto const accountID = RPC::accountFromStringStrict(input.account);
-
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+
     if (!accountLedgerObject)
         return Error{RPC::Status{RPC::RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
@@ -72,6 +71,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     response.account = input.account;
 
     auto const& nextMarker = std::get<RPC::AccountCursor>(next);
+
     if (nextMarker.isNonZero())
         response.marker = nextMarker.toString();
 
@@ -83,9 +83,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
 {
     boost::json::array objects;
     for (auto const& sle : output.accountObjects)
-    {
         objects.push_back(RPC::toJson(sle));
-    }
+
     jv = {
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
@@ -93,6 +92,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         {JS(limit), output.limit},
         {JS(account), output.account},
         {JS(account_objects), objects}};
+
     if (output.marker)
         jv.as_object()[JS(marker)] = *(output.marker);
 }
@@ -103,6 +103,7 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     auto const& jsonObject = jv.as_object();
     AccountObjectsHandler::Input input;
     input.account = jv.at(JS(account)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 

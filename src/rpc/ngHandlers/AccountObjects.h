@@ -31,6 +31,7 @@ class AccountObjectsHandler
 {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
 
 public:
     struct Output
@@ -98,7 +99,5 @@ private:
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
-
-    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
 };
 }  // namespace RPCng
