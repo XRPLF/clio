@@ -481,7 +481,7 @@ CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers)
         entry.setAccountID(ripple::sfAccount, GetAccountIDWithString(signer.first));
         entry.setFieldU16(ripple::sfSignerWeight, signer.second);
         quorum += signer.second;
-        list.push_back(entry);
+        list.push_back(std::move(entry));
     }
     signerlists.setFieldU32(ripple::sfSignerQuorum, quorum);
     signerlists.setFieldArray(ripple::sfSignerEntries, list);
@@ -506,7 +506,7 @@ CreateNFTTokenPage(
         auto entry = ripple::STObject(ripple::sfNFToken);
         entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{token.first.c_str()});
         entry.setFieldVL(ripple::sfURI, ripple::Slice(token.second.c_str(), token.second.size()));
-        list.push_back(entry);
+        list.push_back(std::move(entry));
     }
     tokenPage.setFieldArray(ripple::sfNFTokens, list);
     return tokenPage;

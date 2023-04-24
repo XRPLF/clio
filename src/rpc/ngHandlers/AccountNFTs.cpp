@@ -46,6 +46,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     response.limit = input.limit;
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
+
     // if a marker was passed, start at the page specified in marker. Else,
     // start at the max page
     auto const pageKey =
@@ -62,11 +63,11 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     {
         auto const arr = page->getFieldArray(ripple::sfNFTokens);
 
-        for (auto const& o : arr)
+        for (auto const& nft : arr)
         {
-            auto const nftokenID = o[ripple::sfNFTokenID];
+            auto const nftokenID = nft[ripple::sfNFTokenID];
 
-            response.nfts.push_back(RPC::toBoostJson(o.getJson(ripple::JsonOptions::none)));
+            response.nfts.push_back(RPC::toBoostJson(nft.getJson(ripple::JsonOptions::none)));
             auto& obj = response.nfts.back().as_object();
 
             // Pull out the components of the nft ID.
@@ -121,24 +122,20 @@ tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::va
     AccountNFTsHandler::Input input;
     input.account = jsonObject.at(JS(account)).as_string().c_str();
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
-    {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
-    }
+
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
+
     if (jsonObject.contains(JS(marker)))
         input.marker = jsonObject.at(JS(marker)).as_string().c_str();
+
     return input;
 }
 

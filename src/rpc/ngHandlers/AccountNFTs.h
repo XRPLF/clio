@@ -35,6 +35,7 @@ public:
         std::string account;
         std::string ledgerHash;
         uint32_t ledgerIndex;
+        // TODO: use better type than json
         boost::json::array nfts;
         uint32_t limit;
         std::optional<std::string> marker;
