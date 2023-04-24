@@ -212,5 +212,10 @@ CreateNFTBuyOffer(std::string_view tokenID, std::string_view account);
 [[nodiscard]] ripple::STObject
 CreateNFTSellOffer(std::string_view tokenID, std::string_view account);
 
-ripple::STObject
+[[nodiscard]] ripple::STObject
 CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers);
+
+[[nodiscard]] ripple::STObject
+CreateNFTTokenPage(
+    std::vector<std::pair<std::string, std::string>> const& tokens,
+    std::optional<ripple::uint256> previousPage);
