@@ -22,7 +22,6 @@
 #include <rpc/common/Validators.h>
 
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 
 #include <charconv>
 #include <string_view>

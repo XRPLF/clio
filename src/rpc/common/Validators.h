@@ -23,6 +23,8 @@
 #include <rpc/common/Specs.h>
 #include <rpc/common/Types.h>
 
+#include <fmt/core.h>
+
 namespace RPCng::validation {
 
 /**
@@ -106,6 +108,65 @@ struct Required final
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
 };
+
+/**
+ * @brief A validator that forbids a field to be present
+ * If there is a value provided, it will forbid the field only when the value equals
+ * If there is no value provided, it will forbid the field when the field shows up
+ */
+template <typename... T>
+class NotSupported;
+
+/**
+ * @brief A specialized NotSupported validator that forbids a field to be present when the value equals the given value
+ */
+template <typename T>
+class NotSupported<T> final
+{
+    T value_;
+
+public:
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        if (value.is_object() and value.as_object().contains(key.data()))
+        {
+            using boost::json::value_to;
+            auto const res = value_to<T>(value.as_object().at(key.data()));
+            if (value_ == res)
+                return Error{RPC::Status{
+                    RPC::RippledError::rpcNOT_SUPPORTED,
+                    fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)}};
+        }
+        return {};
+    }
+
+    NotSupported(T val) : value_(val)
+    {
+    }
+};
+
+/**
+ * @brief A specialized NotSupported validator that forbids a field to be present
+ */
+template <>
+class NotSupported<> final
+{
+public:
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        if (value.is_object() and value.as_object().contains(key.data()))
+        {
+            return Error{RPC::Status{RPC::RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
+        }
+        return {};
+    }
+};
+
+// deduction guide to avoid having to specify the template arguments
+template <typename... T>
+NotSupported(T&&... t) -> NotSupported<T...>;
 
 /**
  * @brief Validates that the type of the value is one of the given types
