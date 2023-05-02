@@ -465,7 +465,7 @@ TEST_F(BackendCassandraTest, Basic)
         }
 
         // obtain a time-based seed:
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        auto const seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::string accountBlobOld = accountBlob;
         {
             lgrInfoNext.seq = lgrInfoNext.seq + 1;
@@ -546,7 +546,7 @@ TEST_F(BackendCassandraTest, Basic)
         auto generateObjects = [](size_t numObjects, uint32_t ledgerSequence) {
             std::vector<std::pair<std::string, std::string>> res{numObjects};
             ripple::uint256 key;
-            key = ledgerSequence * 100000;
+            key = ledgerSequence * 100000ul;
 
             for (auto& blob : res)
             {
@@ -567,7 +567,7 @@ TEST_F(BackendCassandraTest, Basic)
         auto generateTxns = [](size_t numTxns, uint32_t ledgerSequence) {
             std::vector<std::tuple<std::string, std::string, std::string>> res{numTxns};
             ripple::uint256 base;
-            base = ledgerSequence * 100000;
+            base = ledgerSequence * 100000ul;
             for (auto& blob : res)
             {
                 ++base;
@@ -581,7 +581,7 @@ TEST_F(BackendCassandraTest, Basic)
         auto generateAccounts = [](uint32_t ledgerSequence, uint32_t numAccounts) {
             std::vector<ripple::AccountID> accounts;
             ripple::AccountID base;
-            base = ledgerSequence * 998765;
+            base = ledgerSequence * 998765ul;
             for (size_t i = 0; i < numAccounts; ++i)
             {
                 ++base;
@@ -1130,7 +1130,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_FALSE(obj);
         }
 
-        auto generateObjects = [](size_t numObjects, uint32_t ledgerSequence) {
+        auto generateObjects = [](size_t numObjects, uint64_t ledgerSequence) {
             std::vector<std::pair<std::string, std::string>> res{numObjects};
             ripple::uint256 key;
             key = ledgerSequence * 100000;

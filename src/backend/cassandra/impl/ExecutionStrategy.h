@@ -168,8 +168,8 @@ public:
         incrementOutstandingRequestCount();
 
         // Note: lifetime is controlled by std::shared_from_this internally
-        AsyncExecutor<decltype(statement), HandleType>::run(
-            ioc_, handle_.get(), std::move(statement), [this](auto const&) { decrementOutstandingRequestCount(); });
+        AsyncExecutor<std::decay_t<decltype(statement)>, HandleType>::run(
+            ioc_, handle_, std::move(statement), [this](auto const&) { decrementOutstandingRequestCount(); });
     }
 
     /**
@@ -181,13 +181,16 @@ public:
      * @throw DatabaseTimeout on timeout
      */
     void
-    write(std::vector<StatementType> const& statements)
+    write(std::vector<StatementType>&& statements)
     {
+        if (statements.empty())
+            return;
+
         incrementOutstandingRequestCount();
 
         // Note: lifetime is controlled by std::shared_from_this internally
-        AsyncExecutor<decltype(statements), HandleType>::run(
-            ioc_, handle_.get(), statements, [this](auto const&) { decrementOutstandingRequestCount(); });
+        AsyncExecutor<std::decay_t<decltype(statements)>, HandleType>::run(
+            ioc_, handle_, std::move(statements), [this](auto const&) { decrementOutstandingRequestCount(); });
     }
 
     /**
@@ -223,11 +226,12 @@ public:
     {
         auto handler = HandlerType{token};
         auto result = AsyncResultType{handler};
+        auto const numStatements = statements.size();
 
         // todo: perhaps use policy instead
         while (true)
         {
-            numReadRequestsOutstanding_ += statements.size();
+            numReadRequestsOutstanding_ += numStatements;
 
             auto const future = handle_.get().asyncExecute(statements, [handler](auto&&) mutable {
                 boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
@@ -238,7 +242,7 @@ public:
             // suspend coroutine until completion handler is called
             result.get();
 
-            numReadRequestsOutstanding_ -= statements.size();
+            numReadRequestsOutstanding_ -= numStatements;
 
             // it's safe to call blocking get on future here as we already
             // waited for the coroutine to resume above.

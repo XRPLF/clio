@@ -735,7 +735,7 @@ public:
                 });
         }
 
-        executor_.write(statements);
+        executor_.write(std::move(statements));
     }
 
     void
@@ -749,7 +749,7 @@ public:
                 record.tokenID, std::make_tuple(record.ledgerSequence, record.transactionIndex), record.txHash);
         });
 
-        executor_.write(statements);
+        executor_.write(std::move(statements));
     }
 
     void
@@ -794,7 +794,7 @@ public:
             }
         }
 
-        executor_.write(statements);
+        executor_.write(std::move(statements));
     }
 
     void

@@ -58,7 +58,7 @@ concept SomeExecutionStrategy = requires(
     { a.writeSync(statement) } -> std::same_as<ResultOrError>;
     { a.writeSync(prepared) } -> std::same_as<ResultOrError>;
     { a.write(prepared) } -> std::same_as<void>;
-    { a.write(statements) } -> std::same_as<void>;
+    { a.write(std::move(statements)) } -> std::same_as<void>;
     { a.read(token, prepared) } -> std::same_as<ResultOrError>;
     { a.read(token, statement) } -> std::same_as<ResultOrError>;
     { a.read(token, statements) } -> std::same_as<ResultOrError>;
