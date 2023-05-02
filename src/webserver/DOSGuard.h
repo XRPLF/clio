@@ -20,6 +20,7 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/chrono/chrono_io.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 
 #include <chrono>
@@ -295,7 +296,7 @@ private:
         timer_.async_wait([this](boost::system::error_code const& error) {
             if (error == boost::asio::error::operation_aborted)
                 return;
-            std::cout << "call timer" << std::endl;
+            std::cout << "call timer:" << boost::chrono::system_clock::now() << std::endl;
             dosGuard_->clear();
             createTimer();
         });
