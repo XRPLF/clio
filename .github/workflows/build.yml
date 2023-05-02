@@ -62,7 +62,7 @@ jobs:
             echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-      # - name: Run Test
-      #   run: |
-      #     cd clio/build
-      #     ./clio_tests --gtest_filter="-BackendTest*:BackendCassandraBaseTest*:BackendCassandraTest*"
+      - name: Run Test
+        run: |
+          cd clio/build
+          ./clio_tests --gtest_filter="-BackendTest*:BackendCassandraBaseTest*:BackendCassandraTest*"
