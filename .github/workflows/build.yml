@@ -55,6 +55,7 @@ jobs:
           # fi
           cd build
           make clio
+          make clio_tests
       # - name: Run Test
       #   run: |
       #     cd clio/build
