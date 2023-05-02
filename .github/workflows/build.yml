@@ -57,7 +57,7 @@ jobs:
         run: |
           export BOOST_ROOT=$(pwd)/boost
           cd clio
-          cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm@14/bin/clang++' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm@14/bin/clang++'
+          cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm@14/bin/clang' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm@14/bin/clang++'
           if ! cmake --build build -j; then
             echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
             exit 1
