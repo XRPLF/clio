@@ -55,7 +55,7 @@ jobs:
 
       - name: Build clio
         run: |
-          export BOOST_ROOT=$(pwd)/boost
+          export BOOST_ROOT=$(pwd)/boost_1_77_0
           cd clio
           cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm@14/bin/clang' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm@14/bin/clang++'
           if ! cmake --build build -j; then
