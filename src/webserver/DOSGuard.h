@@ -295,7 +295,7 @@ private:
         timer_.async_wait([this](boost::system::error_code const& error) {
             if (error == boost::asio::error::operation_aborted)
                 return;
-
+            std::cout << "call timer" << std::endl;
             dosGuard_->clear();
             createTimer();
         });
