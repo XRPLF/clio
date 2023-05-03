@@ -198,7 +198,6 @@ verifyNFTs(
 
 }
 
-//TODO: add ledger seq param
 static void
 doVerification(
     Backend::CassandraBackend& backend,
@@ -239,7 +238,6 @@ doVerification(
     {
         std::vector<std::uint32_t> ledgerSequencePage;
 
-        // TDOD: change doTryGetTxPageResult
         CassResult const* result =
             doTryGetTxPageResult(nftTxQuery, timer, backend);
 
@@ -260,11 +258,6 @@ doVerification(
                     "Could not retrieve hash from nf_token_transactions");
             }
 
-            //auto const txHash = ripple::uint256::fromVoid(buf);
-            // auto const tx =
-            //     doTryFetchTransaction(timer, backend, txHash, yield);
-
-            //TODO cast buf and compare to ledger sequence
             std::uint32_t seq = static_cast<std::uint32_t>(buf);
             if(seq <= ledgerRange->maxSequence)
                 ledgerSequencePage.push_back(seq);
@@ -312,7 +305,7 @@ doVerification(
                     ripple::to_string(object.key),
                     std::string(object.blob.begin(), object.blob.end()));
 
-                //TODO: write helper function to verify vector of NFTs
+                //helper function to verify vector of NFTs
                 verifyNFTs(toVerify, backend, yield);
             }
             cursor = page.cursor;
@@ -324,8 +317,6 @@ doVerification(
 int
 main(int argc, char* argv[])
 {
-    //TODO: pass in ledger index when migrator started
-
     if (argc < 2)
     {
         std::cerr << "Didn't provide config path!" << std::endl;
