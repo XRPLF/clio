@@ -93,70 +93,6 @@ doTryGetTxPageResult(
     return doTryGetTxPageResult(query, timer, backend, attempts + 1);
 }
 
-static std::variant<Blob, RPC::Status>
-getURI(NFTsData const& nft, Backend::CassandraBackend& backend,  boost::asio::yield_context& yield)
-{
-    // Fetch URI from ledger
-    // The correct page will be > bookmark and <= last. We need to calculate
-    // the first possible page however, since bookmark is not guaranteed to
-    // exist.
-    auto const bookmark = ripple::keylet::nftpage(
-        ripple::keylet::nftpage_min(nft.owner), nft.tokenID);
-    auto const last = ripple::keylet::nftpage_max(nft.owner);
-
-    ripple::uint256 nextKey = last.key;
-    std::optional<ripple::STLedgerEntry> sle;
-
-    // when this loop terminates, `sle` will contain the correct page for
-    // this NFT.
-    //
-    // 1) We start at the last NFTokenPage, which is guaranteed to exist,
-    // grab the object from the DB and deserialize it.
-    //
-    // 2) If that NFTokenPage has a PreviousPageMin value and the
-    // PreviousPageMin value is > bookmark, restart loop. Otherwise
-    // terminate and use the `sle` from this iteration.
-    do
-    {
-        auto const blob = backend.fetchLedgerObject(
-            ripple::Keylet(ripple::ltNFTOKEN_PAGE, nextKey).key,
-            nft.ledgerSequence,
-            yield);
-
-        if (!blob || blob->size() == 0)
-            return RPC::Status{
-                RPC::RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
-
-        sle = ripple::STLedgerEntry(
-            ripple::SerialIter{blob->data(), blob->size()}, nextKey);
-
-        if (sle->isFieldPresent(ripple::sfPreviousPageMin))
-            nextKey = sle->getFieldH256(ripple::sfPreviousPageMin);
-
-    } while (sle && sle->key() != nextKey && nextKey > bookmark.key);
-
-    if (!sle)
-        return RPC::Status{
-            RPC::RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
-
-    auto const nfts = sle->getFieldArray(ripple::sfNFTokens);
-    auto const findNft = std::find_if(
-        nfts.begin(),
-        nfts.end(),
-        [&nft](ripple::STObject const& candidate) {
-            return candidate.getFieldH256(ripple::sfNFTokenID) ==
-                nft.tokenID;
-        });
-
-    if (findNft == nfts.end())
-        return RPC::Status{
-            RPC::RippledError::rpcINTERNAL, "Cannot find NFTokenPage for this NFT"};
-
-    ripple::Blob const uriField = findNft->getFieldVL(ripple::sfURI);
-
-    return uriField;
-}
-
 static void
 verifyNFTs(
     std::vector<NFTsData>& nfts,
@@ -175,18 +111,8 @@ verifyNFTs(
         Blob writtenUriBlob = writtenNFT->uri;
         std::string writtenUriStr = ripple::strHex(writtenUriBlob);
 
-        auto fetchOldUri = getURI(nft, backend, yield);
-
-        std::string oldUriStr;
-        // An error occurred
-        if (RPC::Status const* status = std::get_if<RPC::Status>(&fetchOldUri); status){
-            BOOST_LOG_TRIVIAL(warning) <<"\nNFTokenID "<< to_string(nft.tokenID) << " failed to fetch old URI!\n";
-            BOOST_LOG_TRIVIAL(warning) <<"Owner "<< ripple::toBase58(nft.owner) << "\n";
-            BOOST_LOG_TRIVIAL(warning) <<"Ldgr Seq "<< nft.ledgerSequence << "\n";
-        }
-        // A URI was found
-        if (Blob const* uri = std::get_if<Blob>(&fetchOldUri); uri)
-            oldUriStr = ripple::strHex(*uri);
+        auto fetchOldUri = nft.uri;
+        std::string oldUriStr = nft.uri.has_value() ? ripple::strHex(nft.uri.value()) : "";
 
         if(oldUriStr.compare(writtenUriStr) != 0){
             BOOST_LOG_TRIVIAL(warning) <<"\nNFTokenID "<< to_string(nft.tokenID) << " failed to match URIs!\n";  
