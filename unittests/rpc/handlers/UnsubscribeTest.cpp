@@ -512,6 +512,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubValidation).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubManifest).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBookChanges).Times(1);
+    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedTransactions).Times(1);
 
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
