@@ -228,7 +228,7 @@ doVerification(
      */
     std::stringstream query;
     std::vector<std::uint32_t> ledgerSequencesChanged;
-    query << "SELECT sequence FROM" << backend.tablePrefix()
+    query << "SELECT sequence FROM " << backend.tablePrefix()
           << "nf_token_uris" ; // may need to run unique
     CassStatement* nftTxQuery = cass_statement_new(query.str().c_str(), 0);
     cass_statement_set_paging_size(nftTxQuery, 1000);
@@ -247,13 +247,10 @@ doVerification(
         CassIterator* txPageIterator = cass_iterator_from_result(result);
         while (cass_iterator_next(txPageIterator))
         {
-            cass_byte_t const* buf;
-            std::size_t bufSize;
+            cass_int64_t buf;
 
-            CassError const rc = cass_value_get_bytes(
-                cass_row_get_column(cass_iterator_get_row(txPageIterator), 0),
-                &buf,
-                &bufSize);
+            CassError rc = cass_value_get_int64(cass_row_get_column(cass_iterator_get_row(txPageIterator), 0), &buf);
+            
             if (rc != CASS_OK)
             {
                 cass_iterator_free(txPageIterator);
@@ -268,9 +265,9 @@ doVerification(
             //     doTryFetchTransaction(timer, backend, txHash, yield);
 
             //TODO cast buf and compare to ledger sequence
-            std::uint32_t const* ledgerSeqUint = reinterpret_cast<const std::uint32_t*>(buf);
-            if(*ledgerSeqUint <= ledgerRange->maxSequence)
-                ledgerSequencePage.push_back(*ledgerSeqUint);
+            std::uint32_t seq = static_cast<std::uint32_t>(buf);
+            if(seq <= ledgerRange->maxSequence)
+                ledgerSequencePage.push_back(seq);
         }
 
         // make ledgerSequencePage unique
