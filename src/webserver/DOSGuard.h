@@ -295,6 +295,7 @@ private:
         timer_.async_wait([this](boost::system::error_code const& error) {
             if (error == boost::asio::error::operation_aborted)
                 return;
+
             dosGuard_->clear();
             createTimer();
         });
