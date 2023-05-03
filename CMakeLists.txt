@@ -66,30 +66,35 @@ target_sources(clio PRIVATE
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
   src/rpc/BookChanges.cpp
-  ## NextGen RPC
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
-  ## NextGen RPC handler
-  src/rpc/ngHandlers/AccountChannels.cpp
-  src/rpc/ngHandlers/AccountCurrencies.cpp
-  src/rpc/ngHandlers/AccountLines.cpp
-  src/rpc/ngHandlers/AccountTx.cpp
-  src/rpc/ngHandlers/AccountOffers.cpp
-  src/rpc/ngHandlers/AccountInfo.cpp
-  src/rpc/ngHandlers/BookOffers.cpp
-  src/rpc/ngHandlers/GatewayBalances.cpp
-  src/rpc/ngHandlers/LedgerEntry.cpp
-  src/rpc/ngHandlers/LedgerRange.cpp
-  src/rpc/ngHandlers/TransactionEntry.cpp
-  src/rpc/ngHandlers/Tx.cpp
-  src/rpc/ngHandlers/Random.cpp
-  src/rpc/ngHandlers/NoRippleCheck.cpp
-  src/rpc/ngHandlers/NFTInfo.cpp
-  src/rpc/ngHandlers/NFTOffersCommon.cpp
-  src/rpc/ngHandlers/NFTBuyOffers.cpp
-  src/rpc/ngHandlers/NFTSellOffers.cpp
-  ## tmp
+  # RPC impl
+  src/rpc/common/impl/HandlerProvider.cpp
+  ## RPC handler
+  src/rpc/handlers/AccountChannels.cpp
+  src/rpc/handlers/AccountCurrencies.cpp
+  src/rpc/handlers/AccountInfo.cpp
+  src/rpc/handlers/AccountLines.cpp
+  src/rpc/handlers/AccountNFTs.cpp
+  src/rpc/handlers/AccountObjects.cpp
+  src/rpc/handlers/AccountOffers.cpp
+  src/rpc/handlers/AccountTx.cpp
   src/rpc/handlers/BookChanges.cpp
+  src/rpc/handlers/BookOffers.cpp
+  src/rpc/handlers/GatewayBalances.cpp
+  src/rpc/handlers/Ledger.cpp
+  src/rpc/handlers/LedgerData.cpp
+  src/rpc/handlers/LedgerEntry.cpp
+  src/rpc/handlers/LedgerRange.cpp
+  src/rpc/handlers/NFTBuyOffers.cpp
+  src/rpc/handlers/NFTHistory.cpp
+  src/rpc/handlers/NFTInfo.cpp
+  src/rpc/handlers/NFTOffersCommon.cpp
+  src/rpc/handlers/NFTSellOffers.cpp
+  src/rpc/handlers/NoRippleCheck.cpp
+  src/rpc/handlers/Random.cpp
+  src/rpc/handlers/TransactionEntry.cpp
+  src/rpc/handlers/Tx.cpp
   ## Util
   src/config/Config.cpp
   src/log/Logger.cpp

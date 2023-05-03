@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/common/AnyHandler.h>
+#include <rpc/common/Types.h>
 
 #include <memory>
 #include <optional>
@@ -31,37 +32,29 @@ namespace RPC {
 
 class HandlerTable
 {
-    struct Handler
-    {
-        RPCng::AnyHandler handler;
-        bool isClioOnly = false;
-    };
-
-    std::unordered_map<std::string, Handler> handlerMap_;
+    std::shared_ptr<HandlerProvider const> provider_;
 
 public:
-    HandlerTable(std::shared_ptr<BackendInterface> const& backend);
+    HandlerTable(std::shared_ptr<HandlerProvider const> const& provider) : provider_{provider}
+    {
+    }
 
     bool
     contains(std::string const& method) const
     {
-        return handlerMap_.contains(method);
+        return provider_->contains(method);
     }
 
-    std::optional<RPCng::AnyHandler>
+    std::optional<AnyHandler>
     getHandler(std::string const& command) const
     {
-        if (!handlerMap_.contains(command))
-            return {};
-
-        return handlerMap_.at(command).handler;
+        return provider_->getHandler(command);
     }
 
     bool
     isClioOnly(std::string const& command) const
     {
-        return handlerMap_.contains(command) &&
-            handlerMap_.at(command).isClioOnly;
+        return provider_->isClioOnly(command);
     }
 };
 

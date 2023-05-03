@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace RPCng {
+namespace RPC {
 
 /**
  * @brief Represents a Specification for one field of an RPC command
@@ -51,7 +51,7 @@ struct FieldSpec final
      * @brief Validates the passed JSON value using the stored requirements
      *
      * @param value The JSON value to validate
-     * @return Nothing on success; @ref RPC::Status on error
+     * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
     validate(boost::json::value const& value) const;
@@ -81,7 +81,7 @@ struct RpcSpec final
      * @brief Validates the passed JSON value using the stored field specs
      *
      * @param value The JSON value to validate
-     * @return Nothing on success; @ref RPC::Status on error
+     * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
     validate(boost::json::value const& value) const;
@@ -90,4 +90,4 @@ private:
     std::vector<FieldSpec> fields_;
 };
 
-}  // namespace RPCng
+}  // namespace RPC

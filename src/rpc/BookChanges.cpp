@@ -30,8 +30,7 @@ void
 tag_invoke(json::value_from_tag, json::value& jv, BookChange const& change)
 {
     auto amountStr = [](STAmount const& amount) -> std::string {
-        return isXRP(amount) ? to_string(amount.xrp())
-                             : to_string(amount.iou());
+        return isXRP(amount) ? to_string(amount.xrp()) : to_string(amount.iou());
     };
 
     auto currencyStr = [](STAmount const& amount) -> std::string {
@@ -51,16 +50,16 @@ tag_invoke(json::value_from_tag, json::value& jv, BookChange const& change)
 }
 
 json::object const
-computeBookChanges(
-    ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions)
+computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions)
 {
+    using json::value_from;
+
     return {
         {JS(type), "bookChanges"},
         {JS(ledger_index), lgrInfo.seq},
         {JS(ledger_hash), to_string(lgrInfo.hash)},
         {JS(ledger_time), lgrInfo.closeTime.time_since_epoch().count()},
-        {JS(changes), json::value_from(BookChanges::compute(transactions))},
+        {JS(changes), value_from(BookChanges::compute(transactions))},
     };
 }
 

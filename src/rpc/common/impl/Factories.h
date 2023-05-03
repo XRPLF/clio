@@ -26,14 +26,14 @@
 
 #include <optional>
 
-namespace RPCng::detail {
+namespace RPC::detail {
 
 template <Requirement... Requirements>
 [[nodiscard]] auto
 makeFieldValidator(std::string const& key, Requirements&&... requirements)
 {
     return [key, ... r = std::forward<Requirements>(requirements)](boost::json::value const& j) -> MaybeError {
-        std::optional<RPC::Status> firstFailure = std::nullopt;
+        std::optional<Status> firstFailure = std::nullopt;
 
         // This expands in order of Requirements and stops evaluating after
         // first failure which is stored in `firstFailure` and can be checked
@@ -55,4 +55,4 @@ makeFieldValidator(std::string const& key, Requirements&&... requirements)
     };
 }
 
-}  // namespace RPCng::detail
+}  // namespace RPC::detail

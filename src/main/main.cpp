@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2022-2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,8 @@
 #include <config/Config.h>
 #include <etl/ReportingETL.h>
 #include <log/Logger.h>
+#include <rpc/Counters.h>
+#include <rpc/common/impl/HandlerProvider.h>
 #include <webserver/Listener.h>
 
 #include <boost/asio/dispatch.hpp>
@@ -129,11 +131,8 @@ parseCerts(Config const& config)
     std::string key = contents.str();
 
     ssl::context ctx{ssl::context::tlsv12};
-
     ctx.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2);
-
     ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
-
     ctx.use_private_key(boost::asio::buffer(key.data(), key.size()), boost::asio::ssl::context::file_format::pem);
 
     return ctx;
@@ -211,11 +210,16 @@ try
     // mode, ETL only publishes
     auto etl = ReportingETL::make_ReportingETL(config, ioc, backend, subscriptions, balancer, ledgers);
 
+    auto workQueue = WorkQueue::make_WorkQueue(config);
+    auto counters = RPC::Counters::make_Counters(workQueue);
+    auto const handlerProvider =
+        std::make_shared<RPC::detail::ProductionHandlerProvider const>(backend, subscriptions, balancer, etl, counters);
     auto const rpcEngine = RPC::RPCEngine::make_RPCEngine(
-        config, backend, subscriptions, balancer, dosGuard);
+        config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 
     // The server handles incoming RPCs
-    auto httpServer = Server::make_HttpServer(config, ioc, ctxRef, backend, subscriptions, balancer, etl, dosGuard);
+    auto httpServer =
+        Server::make_HttpServer(config, ioc, ctxRef, backend, rpcEngine, subscriptions, balancer, etl, dosGuard);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

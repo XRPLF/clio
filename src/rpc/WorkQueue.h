@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <config/Config.h>
 #include <log/Logger.h>
 
 #include <boost/asio.hpp>
@@ -43,6 +44,18 @@ class WorkQueue
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
+
+    static WorkQueue
+    make_WorkQueue(clio::Config const& config)
+    {
+        static clio::Logger log{"RPC"};
+        auto const serverConfig = config.section("server");
+        auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
+        auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
+
+        log.info() << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
+        return WorkQueue{numThreads, maxQueueSize};
+    }
 
     template <typename F>
     bool

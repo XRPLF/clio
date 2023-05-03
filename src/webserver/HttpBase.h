@@ -398,8 +398,7 @@ handle_request(
                 "application/json",
                 boost::json::serialize(RPC::makeError(RPC::RippledError::rpcNOT_READY))));
 
-        std::optional<RPC::Context> context = RPC::make_HttpContext(
-            yc, request, tagFactory.with(std::cref(http->tag())), *range, ip);
+        auto context = RPC::make_HttpContext(yc, request, tagFactory.with(std::cref(http->tag())), *range, ip);
 
         if (!context)
             return send(httpResponse(
@@ -408,8 +407,7 @@ handle_request(
                 boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
 
         boost::json::object response;
-        auto [v, timeDiff] =
-            util::timed([&]() { return rpcEngine->buildResponse(*context); });
+        auto [v, timeDiff] = util::timed([&]() { return rpcEngine->buildResponse(*context); });
 
         auto us = std::chrono::duration<int, std::milli>(timeDiff);
         RPC::logDuration(*context, us);

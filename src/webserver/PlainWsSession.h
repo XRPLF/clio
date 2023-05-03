@@ -59,17 +59,7 @@ public:
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer&& buffer)
-        : WsSession(
-              ioc,
-              ip,
-              backend,
-              rpcEngine,
-              subscriptions,
-              balancer,
-              etl,
-              tagFactory,
-              dosGuard,
-              std::move(buffer))
+        : WsSession(ioc, ip, backend, rpcEngine, subscriptions, balancer, etl, tagFactory, dosGuard, std::move(buffer))
         , ws_(std::move(socket))
     {
     }

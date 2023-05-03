@@ -20,25 +20,9 @@
 #include <etl/ETLSource.h>
 #include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/impl/HandlerProvider.h>
 #include <webserver/HttpBase.h>
 #include <webserver/WsBase.h>
-
-#include <rpc/ngHandlers/AccountChannels.h>
-#include <rpc/ngHandlers/AccountCurrencies.h>
-#include <rpc/ngHandlers/AccountLines.h>
-#include <rpc/ngHandlers/AccountOffers.h>
-#include <rpc/ngHandlers/AccountTx.h>
-#include <rpc/ngHandlers/BookOffers.h>
-#include <rpc/ngHandlers/GatewayBalances.h>
-#include <rpc/ngHandlers/LedgerEntry.h>
-#include <rpc/ngHandlers/LedgerRange.h>
-#include <rpc/ngHandlers/NFTBuyOffers.h>
-#include <rpc/ngHandlers/NFTInfo.h>
-#include <rpc/ngHandlers/NFTSellOffers.h>
-#include <rpc/ngHandlers/NoRippleCheck.h>
-#include <rpc/ngHandlers/Ping.h>
-#include <rpc/ngHandlers/TransactionEntry.h>
-#include <rpc/ngHandlers/Tx.h>
 
 #include <boost/asio/spawn.hpp>
 
@@ -46,7 +30,7 @@
 
 using namespace std;
 using namespace clio;
-using namespace RPCng;
+using namespace RPC;
 
 // local to compilation unit loggers
 namespace {
@@ -55,28 +39,8 @@ clio::Logger gLog{"RPC"};
 }  // namespace
 
 namespace RPC {
-Context::Context(
-    boost::asio::yield_context& yield_,
-    string const& command_,
-    uint32_t version_,
-    boost::json::object const& params_,
-    shared_ptr<WsBase> const& session_,
-    util::TagDecoratorFactory const& tagFactory_,
-    Backend::LedgerRange const& range_,
-    string const& clientIp_)
-    : Taggable(tagFactory_)
-    , yield(yield_)
-    , method(command_)
-    , version(version_)
-    , params(params_)
-    , session(session_)
-    , range(range_)
-    , clientIp(clientIp_)
-{
-    gPerfLog.debug() << tag() << "new Context created";
-}
 
-optional<Context>
+optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
@@ -96,10 +60,10 @@ make_WsContext(
 
     string command = commandValue.as_string().c_str();
 
-    return make_optional<Context>(yc, command, 1, request, session, tagFactory, range, clientIp);
+    return make_optional<Web::Context>(yc, command, 1, request, session, tagFactory, range, clientIp);
 }
 
-optional<Context>
+optional<Web::Context>
 make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
@@ -126,7 +90,7 @@ make_HttpContext(
     if (!array.at(0).is_object())
         return {};
 
-    return make_optional<Context>(yc, command, 1, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
+    return make_optional<Web::Context>(yc, command, 1, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
 }
 
 static unordered_set<string> forwardCommands{
@@ -140,26 +104,39 @@ static unordered_set<string> forwardCommands{
     "channel_authorize",
     "channel_verify"};
 
-HandlerTable::HandlerTable(std::shared_ptr<BackendInterface> const& backend)
-    : handlerMap_{
-          {"account_channels", {AnyHandler{AccountChannelsHandler{backend}}}},
-          {"account_currencies", {AnyHandler{AccountCurrenciesHandler{backend}}}},
-          {"account_lines", {AnyHandler{AccountLinesHandler{backend}}}},
-          {"account_offers", {AnyHandler{AccountOffersHandler{backend}}}},
-          {"account_tx", {AnyHandler{AccountTxHandler{backend}}}},
-          {"book_offers", {AnyHandler{BookOffersHandler{backend}}}},
-          {"gateway_balances", {AnyHandler{GatewayBalancesHandler{backend}}}},
-          {"ledger_entry", {AnyHandler{LedgerEntryHandler{backend}}}},
-          {"ledger_range", {AnyHandler{LedgerRangeHandler{backend}}}},
-          {"nft_buy_offers", {AnyHandler{NFTBuyOffersHandler{backend}}}},
-          {"nft_sell_offers", {AnyHandler{NFTSellOffersHandler{backend}}}},
-          {"nft_info", {AnyHandler{NFTInfoHandler{backend}}}},
-          {"noripple_check", {AnyHandler{NoRippleCheckHandler{backend}}}},
-          {"ping", {AnyHandler{PingHandler{}}}},
-          {"transaction_entry", {AnyHandler{TransactionEntryHandler{backend}}}},
-          {"tx", {AnyHandler{TxHandler{backend}}}},
-      }
+RPCEngine::RPCEngine(
+    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<SubscriptionManager> const& subscriptions,
+    std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL> const& etl,
+    clio::DOSGuard const& dosGuard,
+    WorkQueue& workQueue,
+    Counters& counters,
+    std::shared_ptr<HandlerProvider const> const& handlerProvider)
+    : backend_{backend}
+    , subscriptions_{subscriptions}
+    , balancer_{balancer}
+    , dosGuard_{std::cref(dosGuard)}
+    , workQueue_{std::ref(workQueue)}
+    , counters_{std::ref(counters)}
+    , handlerTable_{handlerProvider}
 {
+}
+
+std::shared_ptr<RPCEngine>
+RPCEngine::make_RPCEngine(
+    clio::Config const& config,
+    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<SubscriptionManager> const& subscriptions,
+    std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL> const& etl,
+    clio::DOSGuard const& dosGuard,
+    WorkQueue& workQueue,
+    Counters& counters,
+    std::shared_ptr<HandlerProvider const> const& handlerProvider)
+{
+    return std::make_shared<RPCEngine>(
+        backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 }
 
 bool
@@ -175,13 +152,13 @@ RPCEngine::isClioOnly(string const& method) const
 }
 
 bool
-RPCEngine::shouldSuppressValidatedFlag(RPC::Context const& context) const
+RPCEngine::shouldSuppressValidatedFlag(Web::Context const& context) const
 {
     return boost::iequals(context.method, "subscribe") || boost::iequals(context.method, "unsubscribe");
 }
 
 bool
-RPCEngine::shouldForwardToRippled(Context const& ctx) const
+RPCEngine::shouldForwardToRippled(Web::Context const& ctx) const
 {
     auto request = ctx.params;
 
@@ -201,7 +178,7 @@ RPCEngine::shouldForwardToRippled(Context const& ctx) const
 }
 
 Result
-RPCEngine::buildResponse(Context const& ctx)
+RPCEngine::buildResponse(Web::Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
     {
@@ -210,7 +187,7 @@ RPCEngine::buildResponse(Context const& ctx)
 
         auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
 
-        counters_.rpcForwarded(ctx.method);
+        counters_.get().rpcForwarded(ctx.method);
 
         if (!res)
             return Status{RippledError::rpcFAILED_TO_FORWARD};
@@ -231,7 +208,11 @@ RPCEngine::buildResponse(Context const& ctx)
     try
     {
         gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
-        auto const v = (*method).process(ctx.params, ctx.yield);
+
+        auto const isAdmin = ctx.clientIp == "127.0.0.1";
+        auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
+        auto const v = (*method).process(ctx.params, context);
+
         gPerfLog.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
         if (v)
@@ -262,13 +243,13 @@ RPCEngine::buildResponse(Context const& ctx)
 void
 RPCEngine::notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
 {
-    counters_.rpcComplete(method, duration);
+    counters_.get().rpcComplete(method, duration);
 }
 
 void
 RPCEngine::notifyErrored(std::string const& method)
 {
-    counters_.rpcErrored(method);
+    counters_.get().rpcErrored(method);
 }
 
 }  // namespace RPC

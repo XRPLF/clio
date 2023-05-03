@@ -18,11 +18,11 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/ServerInfo.h>
+#include <rpc/handlers/ServerInfo.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 
@@ -60,7 +60,7 @@ protected:
     }
 
     void
-    validateNormalOutput(RPCng::ReturnType const& output)
+    validateNormalOutput(RPC::ReturnType const& output)
     {
         ASSERT_TRUE(output);
         auto const& result = output.value().as_object();
@@ -96,7 +96,7 @@ protected:
     }
 
     void
-    validateAdminOutput(RPCng::ReturnType const& output)
+    validateAdminOutput(RPC::ReturnType const& output)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();
@@ -105,7 +105,7 @@ protected:
     }
 
     void
-    validateRippledOutput(RPCng::ReturnType const& output)
+    validateRippledOutput(RPC::ReturnType const& output)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();
@@ -118,7 +118,7 @@ protected:
     }
 
     void
-    validateCacheOutput(RPCng::ReturnType const& output)
+    validateCacheOutput(RPC::ReturnType const& output)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();

@@ -18,13 +18,13 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/NFTHistory.h>
+#include <rpc/handlers/NFTHistory.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
 #include <fmt/core.h>
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

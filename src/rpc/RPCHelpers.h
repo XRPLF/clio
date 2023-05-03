@@ -28,18 +28,13 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
-#include <ripple/protocol/jss.h>
 #include <backend/BackendInterface.h>
+#include <rpc/JS.h>
 #include <rpc/RPC.h>
-
-// Useful macro for borrowing from ripple::jss
-// static strings. (J)son (S)trings
-#define JS(x) ripple::jss::x.c_str()
-
-// Access (SF)ield name (S)trings
-#define SFS(x) ripple::x.jsonName.c_str()
+#include <webserver/Context.h>
 
 namespace RPC {
+
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
@@ -94,7 +89,7 @@ generatePubLedgerMessage(
     std::uint32_t txnCount);
 
 std::variant<Status, ripple::LedgerInfo>
-ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Context const& ctx);
+ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx);
 
 std::variant<Status, ripple::LedgerInfo>
 getLedgerInfoFromHashOrSeq(
@@ -143,7 +138,7 @@ read(
     std::shared_ptr<Backend::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
     ripple::LedgerInfo const& lgrInfo,
-    Context const& context);
+    Web::Context const& context);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -279,7 +274,7 @@ getNFTID(boost::json::object const& request);
 std::variant<Status, boost::json::object>
 traverseTransactions(
     std::shared_ptr<Backend::BackendInterface const> const& backend,
-    Context const& context,
+    Web::Context const& context,
     std::function<Backend::TransactionsAndCursor(
         std::shared_ptr<Backend::BackendInterface const> const& backend,
         bool const,

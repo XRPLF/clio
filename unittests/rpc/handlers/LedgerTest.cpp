@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Ledger.h>
+#include <rpc/handlers/Ledger.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
@@ -33,7 +33,7 @@ constexpr static auto INDEX2 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B2501
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

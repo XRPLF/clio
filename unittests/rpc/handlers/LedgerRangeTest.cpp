@@ -18,12 +18,12 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/LedgerRange.h>
+#include <rpc/handlers/LedgerRange.h>
 #include <util/Fixtures.h>
 
 #include <fmt/core.h>
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

@@ -25,7 +25,7 @@
 
 #include <fmt/core.h>
 
-namespace RPCng::validation {
+namespace RPC::validation {
 
 /**
  * @brief Check that the type is the same as what was expected
@@ -134,8 +134,8 @@ public:
             using boost::json::value_to;
             auto const res = value_to<T>(value.as_object().at(key.data()));
             if (value_ == res)
-                return Error{RPC::Status{
-                    RPC::RippledError::rpcNOT_SUPPORTED,
+                return Error{Status{
+                    RippledError::rpcNOT_SUPPORTED,
                     fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)}};
         }
         return {};
@@ -158,7 +158,7 @@ public:
     {
         if (value.is_object() and value.as_object().contains(key.data()))
         {
-            return Error{RPC::Status{RPC::RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
+            return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
         }
         return {};
     }
@@ -192,7 +192,7 @@ struct Type final
         auto const convertible = (checkType<Types>(res) || ...);
 
         if (not convertible)
-            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
         return {};
     }
@@ -237,7 +237,7 @@ public:
         // todo: may want a way to make this code more generic (e.g. use a free
         // function that can be overridden for this comparison)
         if (res < min_ || res > max_)
-            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
         return {};
     }
@@ -278,7 +278,7 @@ public:
         using boost::json::value_to;
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (res != original_)
-            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
         return {};
     }
@@ -325,7 +325,7 @@ public:
         using boost::json::value_to;
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
-            return Error{RPC::Status{RPC::RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
         return {};
     }
@@ -387,7 +387,7 @@ public:
     {
         validator_ = [... r = std::forward<Requirements>(requirements)](
                          boost::json::value const& j, std::string_view key) -> MaybeError {
-            std::optional<RPC::Status> firstFailure = std::nullopt;
+            std::optional<Status> firstFailure = std::nullopt;
 
             // the check logic is the same as fieldspec
             // clang-format off
@@ -439,14 +439,14 @@ template <typename Requirement>
 class WithCustomError final
 {
     Requirement requirement;
-    RPC::Status error;
+    Status error;
 
 public:
     /**
      * @brief Constructs a validator that calls the given validator "req" and
      * return customized error "err"
      */
-    WithCustomError(Requirement req, RPC::Status err) : requirement{std::move(req)}, error{err}
+    WithCustomError(Requirement req, Status err) : requirement{std::move(req)}, error{err}
     {
     }
 
@@ -555,4 +555,4 @@ extern CustomValidator SubscribeStreamValidator;
  */
 extern CustomValidator SubscribeAccountsValidator;
 
-}  // namespace RPCng::validation
+}  // namespace RPC::validation

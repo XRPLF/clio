@@ -298,7 +298,7 @@ public:
             if (!range)
                 return sendError(RPC::RippledError::rpcNOT_READY);
 
-            std::optional<RPC::Context> context = RPC::make_WsContext(
+            auto context = RPC::make_WsContext(
                 yield, request, shared_from_this(), tagFactory_.with(std::cref(tag())), *range, *ip);
 
             if (!context)
@@ -312,7 +312,7 @@ public:
             auto [v, timeDiff] = util::timed([this, &context]() { return rpcEngine_->buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
-            logDuration(*context, us);
+            RPC::logDuration(*context, us);
 
             if (auto status = std::get_if<RPC::Status>(&v))
             {

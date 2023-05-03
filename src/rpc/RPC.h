@@ -27,6 +27,7 @@
 #include <rpc/HandlerTable.h>
 #include <rpc/common/AnyHandler.h>
 #include <util/Taggable.h>
+#include <webserver/Context.h>
 #include <webserver/DOSGuard.h>
 
 #include <boost/asio/spawn.hpp>
@@ -55,28 +56,6 @@ class ReportingETL;
 
 namespace RPC {
 
-struct Context : public util::Taggable
-{
-    clio::Logger perfLog_{"Performance"};
-    boost::asio::yield_context& yield;
-    std::string method;
-    std::uint32_t version;
-    boost::json::object const& params;
-    std::shared_ptr<WsBase> session;
-    Backend::LedgerRange const& range;
-    std::string clientIp;
-
-    Context(
-        boost::asio::yield_context& yield_,
-        std::string const& command_,
-        std::uint32_t version_,
-        boost::json::object const& params_,
-        std::shared_ptr<WsBase> const& session_,
-        util::TagDecoratorFactory const& tagFactory_,
-        Backend::LedgerRange const& range_,
-        std::string const& clientIp_);
-};
-
 struct AccountCursor
 {
     ripple::uint256 index;
@@ -97,7 +76,7 @@ struct AccountCursor
 
 using Result = std::variant<Status, boost::json::object>;
 
-std::optional<Context>
+std::optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
@@ -106,7 +85,7 @@ make_WsContext(
     Backend::LedgerRange const& range,
     std::string const& clientIp);
 
-std::optional<Context>
+std::optional<Web::Context>
 make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
@@ -123,28 +102,21 @@ class RPCEngine
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::reference_wrapper<clio::DOSGuard const> dosGuard_;
+    std::reference_wrapper<WorkQueue> workQueue_;
+    std::reference_wrapper<Counters> counters_;
 
     HandlerTable handlerTable_;
-    WorkQueue workQueue_;
-    Counters counters_;
 
 public:
     RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptions,
         std::shared_ptr<ETLLoadBalancer> const& balancer,
+        std::shared_ptr<ReportingETL> const& etl,
         clio::DOSGuard const& dosGuard,
-        uint32_t numWorkerThreads,
-        uint32_t maxQueueSize)
-        : backend_{backend}
-        , subscriptions_{subscriptions}
-        , balancer_{balancer}
-        , dosGuard_{std::cref(dosGuard)}
-        , handlerTable_{backend}
-        , workQueue_{numWorkerThreads, maxQueueSize}
-        , counters_{workQueue_}
-    {
-    }
+        WorkQueue& workQueue,
+        Counters& counters,
+        std::shared_ptr<HandlerProvider const> const& handlerProvider);
 
     static std::shared_ptr<RPCEngine>
     make_RPCEngine(
@@ -152,33 +124,18 @@ public:
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptions,
         std::shared_ptr<ETLLoadBalancer> const& balancer,
-        clio::DOSGuard const& dosGuard)
-    {
-        static clio::Logger log{"RPC"};
-        auto const serverConfig = config.section("server");
-        auto const numThreads = config.valueOr<uint32_t>(
-            "workers", std::thread::hardware_concurrency());
-        auto const maxQueueSize = serverConfig.valueOr<uint32_t>(
-            "max_queue_size", 0);  // 0 is no limit
-
-        log.info() << "Number of workers = " << numThreads
-                   << ". Max queue size = " << maxQueueSize;
-
-        return std::make_shared<RPCEngine>(
-            backend,
-            subscriptions,
-            balancer,
-            dosGuard,
-            numThreads,
-            maxQueueSize);
-    }
+        std::shared_ptr<ReportingETL> const& etl,
+        clio::DOSGuard const& dosGuard,
+        WorkQueue& workQueue,
+        Counters& counters,
+        std::shared_ptr<HandlerProvider const> const& handlerProvider);
 
     /**
      * @brief Main request processor routine
      * @param ctx The @ref Context of the request
      */
     Result
-    buildResponse(Context const& ctx);
+    buildResponse(Web::Context const& ctx);
 
     /**
      * @brief Used to schedule request processing onto the work queue
@@ -189,8 +146,7 @@ public:
     bool
     post(Fn&& func, std::string const& ip)
     {
-        return workQueue_.postCoro(
-            std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
+        return workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
     }
 
     /**
@@ -200,19 +156,17 @@ public:
      * microseconds
      */
     void
-    notifyComplete(
-        std::string const& method,
-        std::chrono::microseconds const& duration);
+    notifyComplete(std::string const& method, std::chrono::microseconds const& duration);
 
     void
     notifyErrored(std::string const& method);
 
 private:
     bool
-    shouldSuppressValidatedFlag(RPC::Context const& context) const;
+    shouldSuppressValidatedFlag(Web::Context const& context) const;
 
     bool
-    shouldForwardToRippled(Context const& ctx) const;
+    shouldForwardToRippled(Web::Context const& ctx) const;
 
     bool
     isClioOnly(std::string const& method) const;
@@ -223,7 +177,7 @@ private:
 
 template <class T>
 void
-logDuration(Context const& ctx, T const& dur)
+logDuration(Web::Context const& ctx, T const& dur)
 {
     static clio::Logger log{"RPC"};
     std::stringstream ss;

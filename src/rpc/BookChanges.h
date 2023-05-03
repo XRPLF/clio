@@ -2,11 +2,9 @@
 /*
     This file is part of clio: https://github.com/XRPLF/clio
     Copyright (c) 2023, the clio developers.
-
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
     copyright notice and this permission notice appear in all copies.
-
     THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
     WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
     MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -18,22 +16,17 @@
 //==============================================================================
 
 #pragma once
-<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
-========
 
 #include <ripple/app/ledger/Ledger.h>
 #include <ripple/basics/ToString.h>
->>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
 
+#include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 
-#include <set>
+#include <boost/json.hpp>
+#include <algorithm>
 
-<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
-namespace RPCng {
-========
 namespace RPC {
->>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -46,6 +39,10 @@ struct BookChange
     ripple::STAmount lowRate;
     ripple::STAmount openRate;
     ripple::STAmount closeRate;
+
+private:
+    friend void
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change);
 };
 
 /**
@@ -97,39 +94,32 @@ private:
             using namespace ripple;
 
             auto const& metaType = node.getFName();
-            auto const nodeType = node.getFieldU16(ripple::sfLedgerEntryType);
+            auto const nodeType = node.getFieldU16(sfLedgerEntryType);
 
-            // we only care about ripple::ltOFFER objects being modified or
-            // deleted
-            if (nodeType != ripple::ltOFFER || metaType == ripple::sfCreatedNode)
+            // we only care about ltOFFER objects being modified or deleted
+            if (nodeType != ltOFFER || metaType == sfCreatedNode)
                 return;
 
-            // if either FF or PF are missing we can't compute
-            // but generally these are cancelled rather than crossed
-            // so skipping them is consistent
-            if (!node.isFieldPresent(ripple::sfFinalFields) || !node.isFieldPresent(ripple::sfPreviousFields))
+            // if either FF or PF are missing we can't compute but generally these are cancelled rather than crossed so
+            // skipping them is consistent
+            if (!node.isFieldPresent(sfFinalFields) || !node.isFieldPresent(sfPreviousFields))
                 return;
 
-            auto const& finalFields = node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>();
-            auto const& previousFields = node.peekAtField(ripple::sfPreviousFields).downcast<ripple::STObject>();
+            auto const& finalFields = node.peekAtField(sfFinalFields).downcast<STObject>();
+            auto const& previousFields = node.peekAtField(sfPreviousFields).downcast<STObject>();
 
             // defensive case that should never be hit
-            if (!finalFields.isFieldPresent(ripple::sfTakerGets) || !finalFields.isFieldPresent(ripple::sfTakerPays) ||
-                !previousFields.isFieldPresent(ripple::sfTakerGets) ||
-                !previousFields.isFieldPresent(ripple::sfTakerPays))
+            if (!finalFields.isFieldPresent(sfTakerGets) || !finalFields.isFieldPresent(sfTakerPays) ||
+                !previousFields.isFieldPresent(sfTakerGets) || !previousFields.isFieldPresent(sfTakerPays))
                 return;
 
             // filter out any offers deleted by explicit offer cancels
-            if (metaType == ripple::sfDeletedNode && offerCancel_ &&
-                finalFields.getFieldU32(ripple::sfSequence) == *offerCancel_)
+            if (metaType == sfDeletedNode && offerCancel_ && finalFields.getFieldU32(sfSequence) == *offerCancel_)
                 return;
 
-            // compute the difference in gets and pays actually
-            // affected onto the offer
-            auto const deltaGets =
-                finalFields.getFieldAmount(ripple::sfTakerGets) - previousFields.getFieldAmount(ripple::sfTakerGets);
-            auto const deltaPays =
-                finalFields.getFieldAmount(ripple::sfTakerPays) - previousFields.getFieldAmount(ripple::sfTakerPays);
+            // compute the difference in gets and pays actually affected onto the offer
+            auto const deltaGets = finalFields.getFieldAmount(sfTakerGets) - previousFields.getFieldAmount(sfTakerGets);
+            auto const deltaPays = finalFields.getFieldAmount(sfTakerPays) - previousFields.getFieldAmount(sfTakerPays);
 
             transformAndStore(deltaGets, deltaPays);
         }
@@ -151,7 +141,7 @@ private:
             if (second == beast::zero)
                 return;
 
-            auto const rate = divide(first, second, ripple::noIssue());
+            auto const rate = divide(first, second, noIssue());
 
             if (first < beast::zero)
                 first = -first;
@@ -192,39 +182,29 @@ private:
         void
         handleBookChange(Backend::TransactionAndMetadata const& blob)
         {
-<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
-            auto const [tx, meta] = RPC::deserializeTxPlusMeta(blob);
-            if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
-========
             using namespace ripple;
 
             auto const [tx, meta] = deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(sfTransactionType))
->>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
                 return;
 
             offerCancel_ = shouldCancelOffer(tx);
-            for (auto const& node : meta->getFieldArray(ripple::sfAffectedNodes))
+            for (auto const& node : meta->getFieldArray(sfAffectedNodes))
                 handleAffectedNode(node);
         }
 
         std::optional<uint32_t>
         shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx) const
         {
-<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
-            switch (tx->getFieldU16(ripple::sfTransactionType))
-========
             using namespace ripple;
 
             switch (tx->getFieldU16(sfTransactionType))
->>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h
             {
-                // in future if any other ways emerge to cancel an offer
-                // this switch makes them easy to add
-                case ripple::ttOFFER_CANCEL:
-                case ripple::ttOFFER_CREATE:
-                    if (tx->isFieldPresent(ripple::sfOfferSequence))
-                        return tx->getFieldU32(ripple::sfOfferSequence);
+                // in future if any other ways emerge to cancel an offer this switch makes them easy to add
+                case ttOFFER_CANCEL:
+                case ttOFFER_CREATE:
+                    if (tx->isFieldPresent(sfOfferSequence))
+                        return tx->getFieldU32(sfOfferSequence);
                 default:
                     return std::nullopt;
             }
@@ -232,36 +212,7 @@ private:
     };
 };
 
-<<<<<<<< HEAD:src/rpc/BookChangesHelper.h
-inline void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change)
-{
-    auto amountStr = [](ripple::STAmount const& amount) -> std::string {
-        return isXRP(amount) ? to_string(amount.xrp()) : to_string(amount.iou());
-    };
-
-    auto currencyStr = [](ripple::STAmount const& amount) -> std::string {
-        return isXRP(amount) ? "XRP_drops" : to_string(amount.issue());
-    };
-
-    jv = {
-        {JS(currency_a), currencyStr(change.sideAVolume)},
-        {JS(currency_b), currencyStr(change.sideBVolume)},
-        {JS(volume_a), amountStr(change.sideAVolume)},
-        {JS(volume_b), amountStr(change.sideBVolume)},
-        {JS(high), to_string(change.highRate.iou())},
-        {JS(low), to_string(change.lowRate.iou())},
-        {JS(open), to_string(change.openRate.iou())},
-        {JS(close), to_string(change.closeRate.iou())},
-    };
-}
-
-}  // namespace RPCng
-========
 [[nodiscard]] boost::json::object const
-computeBookChanges(
-    ripple::LedgerInfo const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions);
+computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
 
 }  // namespace RPC
->>>>>>>> 2748470 (Move bookchanges and remove backend from ctx):src/rpc/BookChanges.h

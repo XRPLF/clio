@@ -19,7 +19,7 @@
 
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/BookOffers.h>
+#include <rpc/handlers/BookOffers.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
@@ -38,7 +38,7 @@ constexpr static auto PAYS20XRPGETS10USDBOOKDIR = "7B1767D41DBCE79D9585CF9D0262A
 // transfer rate x2
 constexpr static auto TRANSFERRATEX2 = 2000000000;
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

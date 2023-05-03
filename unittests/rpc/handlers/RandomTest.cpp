@@ -19,10 +19,10 @@
 
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Random.h>
+#include <rpc/handlers/Random.h>
 #include <util/Fixtures.h>
 
-using namespace RPCng;
+using namespace RPC;
 
 class RPCRandomHandlerTest : public NoLoggerFixture
 {

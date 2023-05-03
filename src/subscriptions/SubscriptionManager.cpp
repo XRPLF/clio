@@ -248,7 +248,6 @@ SubscriptionManager::pubBookChanges(
     ripple::LedgerInfo const& lgrInfo,
     std::vector<Backend::TransactionAndMetadata> const& transactions)
 {
-    // TODO: change to ngRPC after old RPC is removed
     auto const json = RPC::computeBookChanges(lgrInfo, transactions);
     auto const bookChangesMsg = std::make_shared<Message>(boost::json::serialize(json));
     bookChangesSubscribers_.publish(bookChangesMsg);

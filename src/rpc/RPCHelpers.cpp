@@ -20,6 +20,8 @@
 #include <ripple/basics/StringUtilities.h>
 #include <backend/BackendInterface.h>
 #include <log/Logger.h>
+#include <rpc/Errors.h>
+#include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
 
@@ -484,7 +486,7 @@ parseStringAsUInt(std::string const& value)
 }
 
 std::variant<Status, ripple::LedgerInfo>
-ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Context const& ctx)
+ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx)
 {
     auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
@@ -547,7 +549,7 @@ getLedgerInfoFromHashOrSeq(
     uint32_t maxSeq)
 {
     std::optional<ripple::LedgerInfo> lgrInfo;
-    auto const err = RPC::Status{RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+    auto const err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash)
     {
         // invoke uint256's constructor to parse the hex string , instead of
@@ -813,7 +815,7 @@ read(
     std::shared_ptr<Backend::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
     ripple::LedgerInfo const& lgrInfo,
-    Context const& context)
+    Web::Context const& context)
 {
     if (auto const blob = backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
     {
@@ -1463,7 +1465,7 @@ getNFTID(boost::json::object const& request)
 std::variant<Status, boost::json::object>
 traverseTransactions(
     std::shared_ptr<Backend::BackendInterface const> const& backend,
-    Context const& context,
+    Web::Context const& context,
     std::function<Backend::TransactionsAndCursor(
         std::shared_ptr<Backend::BackendInterface const> const& backend,
         bool const,

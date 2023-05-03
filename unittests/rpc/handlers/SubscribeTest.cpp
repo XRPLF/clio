@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Subscribe.h>
+#include <rpc/handlers/Subscribe.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <util/Fixtures.h>
 #include <util/MockWsBase.h>
@@ -29,7 +29,7 @@
 #include <chrono>
 
 using namespace std::chrono_literals;
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

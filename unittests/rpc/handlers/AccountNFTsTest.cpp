@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/AccountNFTs.h>
+#include <rpc/handlers/AccountNFTs.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
@@ -36,7 +36,7 @@ constexpr static auto PAGE = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255A
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

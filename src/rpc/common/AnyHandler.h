@@ -23,7 +23,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/impl/Processors.h>
 
-namespace RPCng {
+namespace RPC {
 
 /**
  * @brief A type-erased Handler that can contain any (NextGen) RPC handler class
@@ -69,7 +69,7 @@ public:
      * @brief Process incoming JSON by the stored handler
      *
      * @param value The JSON to process
-     * @return JSON result or @ref RPC::Status on error
+     * @return JSON result or @ref Status on error
      */
     [[nodiscard]] ReturnType
     process(boost::json::value const& value) const
@@ -82,7 +82,7 @@ public:
      * coroutine
      *
      * @param value The JSON to process
-     * @return JSON result or @ref RPC::Status on error
+     * @return JSON result or @ref Status on error
      */
     [[nodiscard]] ReturnType
     process(boost::json::value const& value, Context const& ctx) const
@@ -138,4 +138,4 @@ private:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace RPCng
+}  // namespace RPC

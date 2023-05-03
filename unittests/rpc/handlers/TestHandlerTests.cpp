@@ -25,8 +25,8 @@
 #include <boost/json/parse.hpp>
 
 using namespace std;
-using namespace RPCng;
-using namespace RPCng::validation;
+using namespace RPC;
+using namespace RPC::validation;
 using namespace unittests::detail;
 
 namespace json = boost::json;
