@@ -68,7 +68,7 @@ public:
      * @brief Create a new instance of the AsyncExecutor and execute it.
      */
     static void
-    run(boost::asio::io_context& ioc, HandleType const& handle, StatementType data, CallbackType&& onComplete)
+    run(boost::asio::io_context& ioc, HandleType const& handle, StatementType&& data, CallbackType&& onComplete)
     {
         // this is a helper that allows us to use std::make_shared below
         struct EnableMakeShared : public AsyncExecutor<StatementType, HandleType, RetryPolicyType>
@@ -107,6 +107,8 @@ private:
                 else
                     onComplete_(std::move(res));  // report error
             }
+
+            self = nullptr;  // explicitly decrement refcount
         };
 
         std::scoped_lock lck{mtx_};

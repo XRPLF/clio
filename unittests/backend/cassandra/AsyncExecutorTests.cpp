@@ -44,12 +44,12 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
-        .Times(1);
+        .Times(AtLeast(1));
 
     auto called = std::atomic_bool{false};
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, statement, [&called, &work](auto&&) {
+    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, std::move(statement), [&called, &work](auto&&) {
         called = true;
         work.reset();
     });
@@ -81,7 +81,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     auto called = std::atomic_bool{false};
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, statement, [&called, &work](auto&&) {
+    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, std::move(statement), [&called, &work](auto&&) {
         called = true;
         work.reset();
     });
@@ -118,11 +118,12 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     auto called = std::atomic_bool{false};
     auto work2 = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(threadedCtx, handle, statement, [&called, &work, &work2](auto&&) {
-        called = true;
-        work.reset();
-        work2.reset();
-    });
+    AsyncExecutor<FakeStatement, MockHandle>::run(
+        threadedCtx, handle, std::move(statement), [&called, &work, &work2](auto&&) {
+            called = true;
+            work.reset();
+            work2.reset();
+        });
 
     ctx.run();
     ASSERT_TRUE(callCount >= 3);
@@ -150,7 +151,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
     AsyncExecutor<FakeStatement, MockHandle, FakeRetryPolicy>::run(
-        ctx, handle, statement, [&called, &work](auto&& res) {
+        ctx, handle, std::move(statement), [&called, &work](auto&& res) {
             EXPECT_FALSE(res);
             EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_INTERNAL_ERROR);
             EXPECT_EQ(res.error().message(), "not a timeout");

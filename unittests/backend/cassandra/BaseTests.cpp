@@ -343,6 +343,58 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
     dropKeyspace(handle, "test");
 }
 
+TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
+{
+    using std::to_string;
+    auto const entries = std::vector<std::string>{
+        "first",
+        "second",
+        "third",
+        "fourth",
+        "fifth",
+    };
+
+    auto handle = createHandle("127.0.0.1", "test");
+    std::string q1 =
+        "CREATE TABLE IF NOT EXISTS strings "
+        "(hash blob PRIMARY KEY, sequence bigint) "
+        "WITH default_time_to_live = " +
+        to_string(5000);
+    auto f1 = handle.asyncExecute(q1);
+    if (auto const rc = f1.await(); not rc)
+        std::cout << "oops: " << rc.error() << '\n';
+
+    std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
+    auto insert = handle.prepare(q2);
+
+    // write data in bulk
+    {
+        bool complete = false;
+        std::optional<Backend::Cassandra::FutureWithCallback> fut;
+
+        {
+            std::vector<Statement> statements;
+            int64_t idx = 1000;
+
+            for (auto const& entry : entries)
+                statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
+
+            ASSERT_EQ(statements.size(), entries.size());
+            fut.emplace(handle.asyncExecute(statements, [&](auto const res) {
+                complete = true;
+                EXPECT_TRUE(res);
+            }));
+            // statements are destructed here, async execute needs to survive
+        }
+
+        auto const res = fut.value().await();  // future should still signal it finished
+        EXPECT_TRUE(res);
+        ASSERT_TRUE(complete);
+    }
+
+    dropKeyspace(handle, "test");
+}
+
 TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
 {
     auto handle = createHandle("127.0.0.1", "test");

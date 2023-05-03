@@ -376,12 +376,12 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
             An<std::function<void(FakeResultOrError)>&&>()))
         .Times(totalRequests);  // one per write call
 
-    auto statements = std::vector<FakeStatement>(16);
+    auto makeStatements = [] { return std::vector<FakeStatement>(16); };
     for (auto i = 0u; i < totalRequests; ++i)
-        strat.write(statements);
+        strat.write(makeStatements());
 
     strat.sync();                         // make sure all above writes are finished
-    ASSERT_EQ(callCount, totalRequests);  // all requests should finish
+    EXPECT_EQ(callCount, totalRequests);  // all requests should finish
 
     work.reset();
     thread.join();
