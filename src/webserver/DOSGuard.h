@@ -20,7 +20,6 @@
 #pragma once
 
 #include <boost/asio.hpp>
-#include <boost/chrono/chrono_io.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 
 #include <chrono>
