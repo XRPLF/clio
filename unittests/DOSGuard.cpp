@@ -173,7 +173,5 @@ protected:
 TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
 {
     EXPECT_CALL(guard, clear()).Times(AtLeast(2));
-    std::cout << " ctx run:" << boost::chrono::system_clock::now() << std::endl;
-    ctx.run_for(std::chrono::milliseconds(500));
-    std::cout << " ctx end:" << boost::chrono::system_clock::now() << std::endl;
+    ctx.run_for(std::chrono::milliseconds(400));
 }
