@@ -45,19 +45,20 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install llvm@14 pkg-config protobuf openssl ninja cassandra-cpp-driver bison cmake
+          brew install pkg-config protobuf openssl ninja cassandra-cpp-driver bison cmake
 
       - name: Setup environment for llvm-14
         run: |
-          export PATH="/usr/local/opt/llvm@14/bin:$PATH"
-          export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
-          export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
+          export PATH="/usr/local/opt/llvm/bin:$PATH"
+          export LDFLAGS="-L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++"
+          export CPPFLAGS="-I/usr/local/opt/llvm/include"
 
       - name: Build clio
         run: |
           export BOOST_ROOT=$(pwd)/boost_1_77_0
           cd clio
-          cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm@14/bin/clang' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm@14/bin/clang++'
+          /usr/local/opt/llvm/bin/clang --version
+          cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm/bin/clang' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm/bin/clang++'
           if ! cmake --build build -j; then
             echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
             exit 1
