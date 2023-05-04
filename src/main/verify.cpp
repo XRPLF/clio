@@ -273,7 +273,6 @@ main(int argc, char* argv[])
 
     boost::asio::spawn(
         ioc, [&backend, &workGuard, &timer](boost::asio::yield_context yield) {
-            //TODO: add ledger seq
             doVerification(*backend, timer, yield);
             workGuard.reset();
         });
