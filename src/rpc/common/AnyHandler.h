@@ -52,6 +52,7 @@ public:
     AnyHandler(AnyHandler const& other) : pimpl_{other.pimpl_->clone()}
     {
     }
+
     AnyHandler&
     operator=(AnyHandler const& rhs)
     {
@@ -59,6 +60,7 @@ public:
         pimpl_.swap(copy.pimpl_);
         return *this;
     }
+
     AnyHandler(AnyHandler&&) = default;
     AnyHandler&
     operator=(AnyHandler&&) = default;

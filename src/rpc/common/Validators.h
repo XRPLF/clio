@@ -157,9 +157,8 @@ public:
     verify(boost::json::value const& value, std::string_view key) const
     {
         if (value.is_object() and value.as_object().contains(key.data()))
-        {
             return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
-        }
+
         return {};
     }
 };
@@ -228,13 +227,15 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
+        using boost::json::value_to;
+
         if (not value.is_object() or not value.as_object().contains(key.data()))
             return {};  // ignore. field does not exist, let 'required' fail
                         // instead
 
-        using boost::json::value_to;
         auto const res = value_to<Type>(value.as_object().at(key.data()));
-        // todo: may want a way to make this code more generic (e.g. use a free
+
+        // TODO: may want a way to make this code more generic (e.g. use a free
         // function that can be overridden for this comparison)
         if (res < min_ || res > max_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -271,11 +272,12 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
+        using boost::json::value_to;
+
         if (not value.is_object() or not value.as_object().contains(key.data()))
             return {};  // ignore. field does not exist, let 'required' fail
                         // instead
 
-        using boost::json::value_to;
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (res != original_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -318,11 +320,12 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
+        using boost::json::value_to;
+
         if (not value.is_object() or not value.as_object().contains(key.data()))
             return {};  // ignore. field does not exist, let 'required' fail
                         // instead
 
-        using boost::json::value_to;
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
             return Error{Status{RippledError::rpcINVALID_PARAMS}};

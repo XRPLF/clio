@@ -84,4 +84,5 @@ concept Handler =
 ) 
 and boost::json::has_value_from<typename T::Output>::value;
 // clang-format on
+
 }  // namespace RPC
