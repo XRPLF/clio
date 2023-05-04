@@ -109,13 +109,12 @@ class HttpBase : public util::Taggable
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
     std::shared_ptr<BackendInterface const> backend_;
+    std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& workQueue_;
     send_lambda lambda_;
 
 protected:
@@ -165,24 +164,22 @@ public:
     HttpBase(
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer buffer)
         : Taggable(tagFactory)
         , ioc_(ioc)
         , backend_(backend)
+        , rpcEngine_(rpcEngine)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , counters_(counters)
-        , workQueue_(queue)
         , lambda_(*this)
         , buffer_(std::move(buffer))
     {
@@ -262,13 +259,12 @@ public:
                 std::move(req_),
                 std::move(buffer_),
                 backend_,
+                rpcEngine_,
                 subscriptions_,
                 balancer_,
                 etl_,
                 tagFactory_,
-                dosGuard_,
-                counters_,
-                workQueue_);
+                dosGuard_);
         }
 
         // to avoid overwhelm work queue, the request limit check should be
@@ -283,26 +279,24 @@ public:
 
         auto session = derived().shared_from_this();
 
-        // Requests are handed using coroutines. Here we spawn a coroutine
-        // which will asynchronously handle a request.
-        if (!workQueue_.postCoro(
+        if (not rpcEngine_->post(
                 [this, ip, session](boost::asio::yield_context yield) {
                     handle_request(
                         yield,
                         std::move(req_),
                         lambda_,
                         backend_,
+                        rpcEngine_,
                         subscriptions_,
                         balancer_,
                         etl_,
                         tagFactory_,
                         dosGuard_,
-                        counters_,
                         *ip,
                         session,
                         perfLog_);
                 },
-                dosGuard_.isWhiteListed(*ip)))
+                ip.value()))
         {
             // Non-whitelist connection rejected due to full connection
             // queue
@@ -347,12 +341,12 @@ handle_request(
     boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,
     std::shared_ptr<BackendInterface const> backend,
+    std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
     clio::DOSGuard& dosGuard,
-    RPC::Counters& counters,
     std::string const& ip,
     std::shared_ptr<Session> http,
     clio::Logger& perfLog)
@@ -404,17 +398,7 @@ handle_request(
                 "application/json",
                 boost::json::serialize(RPC::makeError(RPC::RippledError::rpcNOT_READY))));
 
-        std::optional<RPC::Context> context = RPC::make_HttpContext(
-            yc,
-            request,
-            backend,
-            subscriptions,
-            balancer,
-            etl,
-            tagFactory.with(std::cref(http->tag())),
-            *range,
-            counters,
-            ip);
+        auto context = RPC::make_HttpContext(yc, request, tagFactory.with(std::cref(http->tag())), *range, ip);
 
         if (!context)
             return send(httpResponse(
@@ -423,14 +407,14 @@ handle_request(
                 boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
 
         boost::json::object response;
-        auto [v, timeDiff] = util::timed([&]() { return RPC::buildResponse(*context); });
+        auto [v, timeDiff] = util::timed([&]() { return rpcEngine->buildResponse(*context); });
 
         auto us = std::chrono::duration<int, std::milli>(timeDiff);
         RPC::logDuration(*context, us);
 
         if (auto status = std::get_if<RPC::Status>(&v))
         {
-            counters.rpcErrored(context->method);
+            rpcEngine->notifyErrored(context->method);
             auto error = RPC::makeError(*status);
             error["request"] = request;
             response["result"] = error;
@@ -442,7 +426,7 @@ handle_request(
             // This can still technically be an error. Clio counts forwarded
             // requests as successful.
 
-            counters.rpcComplete(context->method, us);
+            rpcEngine->notifyComplete(context->method, us);
 
             auto result = std::get<boost::json::object>(v);
             if (result.contains("result") && result.at("result").is_object())
@@ -456,7 +440,7 @@ handle_request(
 
         boost::json::array warnings;
         warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
-        auto lastCloseAge = context->etl->lastCloseAgeSeconds();
+        auto lastCloseAge = etl->lastCloseAgeSeconds();
         if (lastCloseAge >= 60)
             warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
         response["warnings"] = warnings;

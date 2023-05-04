@@ -32,8 +32,8 @@
 using namespace clio;
 using namespace std;
 
-using namespace RPCng;
-using namespace RPCng::validation;
+using namespace RPC;
+using namespace RPC::validation;
 
 namespace json = boost::json;
 

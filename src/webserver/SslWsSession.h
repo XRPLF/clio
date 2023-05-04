@@ -48,15 +48,14 @@ public:
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& b)
-        : WsSession(ioc, ip, backend, subscriptions, balancer, etl, tagFactory, dosGuard, counters, queue, std::move(b))
+        : WsSession(ioc, ip, backend, rpcEngine, subscriptions, balancer, etl, tagFactory, dosGuard, std::move(b))
         , ws_(std::move(stream))
     {
     }
@@ -81,13 +80,12 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     boost::beast::flat_buffer buffer_;
     std::optional<std::string> ip_;
     std::shared_ptr<BackendInterface const> backend_;
+    std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
     http::request<http::string_body> req_;
 
 public:
@@ -97,26 +95,24 @@ public:
         boost::asio::ip::tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& b)
         : ioc_(ioc)
         , https_(std::move(socket), ctx)
         , buffer_(std::move(b))
         , ip_(ip)
         , backend_(backend)
+        , rpcEngine_(rpcEngine)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
     {
     }
     SslWsUpgrader(
@@ -124,13 +120,12 @@ public:
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
         : ioc_(ioc)
@@ -138,13 +133,12 @@ public:
         , buffer_(std::move(b))
         , ip_(ip)
         , backend_(backend)
+        , rpcEngine_(rpcEngine)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
         , req_(std::move(req))
     {
     }
@@ -207,13 +201,12 @@ private:
             std::move(https_),
             ip_,
             backend_,
+            rpcEngine_,
             subscriptions_,
             balancer_,
             etl_,
             tagFactory_,
             dosGuard_,
-            counters_,
-            queue_,
             std::move(buffer_))
             ->run(std::move(req_));
     }

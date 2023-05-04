@@ -103,7 +103,6 @@ public:
 class SubscriptionManager;
 class ETLLoadBalancer;
 
-// Echoes back all received WebSocket messages
 template <typename Derived>
 class WsSession : public WsBase, public std::enable_shared_from_this<WsSession<Derived>>
 {
@@ -113,6 +112,7 @@ class WsSession : public WsBase, public std::enable_shared_from_this<WsSession<D
 
     boost::asio::io_context& ioc_;
     std::shared_ptr<BackendInterface const> backend_;
+    std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     // has to be a weak ptr because SubscriptionManager maintains collections
     // of std::shared_ptr<WsBase> objects. If this were shared, there would be
     // a cyclical dependency that would block destruction
@@ -121,8 +121,6 @@ class WsSession : public WsBase, public std::enable_shared_from_this<WsSession<D
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
     std::mutex mtx_;
 
     bool sending_ = false;
@@ -150,25 +148,23 @@ public:
         boost::asio::io_context& ioc,
         std::optional<std::string> ip,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer&& buffer)
         : WsBase(tagFactory)
         , buffer_(std::move(buffer))
         , ioc_(ioc)
         , backend_(backend)
+        , rpcEngine_(rpcEngine)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
         , ip_(ip)
     {
         perfLog_.info() << tag() << "session created";
@@ -181,8 +177,6 @@ public:
             dosGuard_.decrement(*ip_);
     }
 
-    // Access the derived class, this is part of
-    // the Curiously Recurring Template Pattern idiom.
     Derived&
     derived()
     {
@@ -304,18 +298,8 @@ public:
             if (!range)
                 return sendError(RPC::RippledError::rpcNOT_READY);
 
-            std::optional<RPC::Context> context = RPC::make_WsContext(
-                yield,
-                request,
-                backend_,
-                subscriptions_.lock(),
-                balancer_,
-                etl_,
-                shared_from_this(),
-                tagFactory_.with(std::cref(tag())),
-                *range,
-                counters_,
-                *ip);
+            auto context = RPC::make_WsContext(
+                yield, request, shared_from_this(), tagFactory_.with(std::cref(tag())), *range, *ip);
 
             if (!context)
             {
@@ -325,15 +309,14 @@ public:
 
             response = getDefaultWsResponse(id);
 
-            auto [v, timeDiff] = util::timed([&]() { return RPC::buildResponse(*context); });
+            auto [v, timeDiff] = util::timed([this, &context]() { return rpcEngine_->buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
-            logDuration(*context, us);
+            RPC::logDuration(*context, us);
 
             if (auto status = std::get_if<RPC::Status>(&v))
             {
-                counters_.rpcErrored(context->method);
-
+                rpcEngine_->notifyErrored(context->method);
                 auto error = RPC::makeError(*status);
 
                 if (!id.is_null())
@@ -344,7 +327,7 @@ public:
             }
             else
             {
-                counters_.rpcComplete(context->method, us);
+                rpcEngine_->notifyComplete(context->method, us);
 
                 auto const& result = std::get<boost::json::object>(v);
                 auto const isForwarded = result.contains("forwarded") && result.at("forwarded").is_bool() &&
@@ -445,11 +428,11 @@ public:
             auto id = request.contains("id") ? request.at("id") : nullptr;
             perfLog_.debug() << tag() << "Adding to work queue";
 
-            if (!queue_.postCoro(
-                    [shared_this = shared_from_this(), r = std::move(request), id](boost::asio::yield_context yield) {
-                        shared_this->handle_request(std::move(r), id, yield);
+            if (not rpcEngine_->post(
+                    [self = shared_from_this(), req = std::move(request), id](boost::asio::yield_context yield) {
+                        self->handle_request(std::move(req), id, yield);
                     },
-                    dosGuard_.isWhiteListed(*ip)))
+                    ip.value()))
                 sendError(RPC::RippledError::rpcTOO_BUSY, id, request);
         }
 

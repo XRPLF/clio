@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,84 +17,106 @@
 */
 //==============================================================================
 
-#include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/handlers/Tx.h>
 
 namespace RPC {
 
-// {
-//   transaction: <hex>
-// }
-
-Result
-doTx(Context const& context)
+TxHandler::Result
+TxHandler::process(Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
-
-    if (!request.contains(JS(transaction)))
-        return Status{RippledError::rpcINVALID_PARAMS, "specifyTransaction"};
-
-    if (!request.at(JS(transaction)).is_string())
-        return Status{RippledError::rpcINVALID_PARAMS, "transactionNotString"};
-
-    ripple::uint256 hash;
-    if (!hash.parseHex(request.at(JS(transaction)).as_string().c_str()))
-        return Status{RippledError::rpcINVALID_PARAMS, "malformedTransaction"};
-
-    bool binary = false;
-    if (request.contains(JS(binary)))
-    {
-        if (!request.at(JS(binary)).is_bool())
-            return Status{RippledError::rpcINVALID_PARAMS, "binaryFlagNotBool"};
-
-        binary = request.at(JS(binary)).as_bool();
-    }
-    auto minLedger = getUInt(request, JS(min_ledger));
-    auto maxLedger = getUInt(request, JS(max_ledger));
-    bool rangeSupplied = minLedger && maxLedger;
+    constexpr static auto maxLedgerRange = 1000u;
+    auto const rangeSupplied = input.minLedger && input.maxLedger;
 
     if (rangeSupplied)
     {
-        if (*minLedger > *maxLedger)
-            return Status{RippledError::rpcINVALID_LGR_RANGE};
-        if (*maxLedger - *minLedger > 1000)
-            return Status{RippledError::rpcEXCESSIVE_LGR_RANGE};
+        if (*input.minLedger > *input.maxLedger)
+            return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+
+        if (*input.maxLedger - *input.minLedger > maxLedgerRange)
+            return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
     }
 
-    auto range = context.backend->fetchLedgerRange();
-    if (!range)
-        return Status{RippledError::rpcNOT_READY};
+    auto output = TxHandler::Output{};
+    auto const dbResponse =
+        sharedPtrBackend_->fetchTransaction(ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
 
-    auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
     if (!dbResponse)
     {
         if (rangeSupplied)
         {
-            bool searchedAll = range->maxSequence >= *maxLedger && range->minSequence <= *minLedger;
+            auto const range = sharedPtrBackend_->fetchLedgerRange();
+            auto const searchedAll = range->maxSequence >= *input.maxLedger && range->minSequence <= *input.minLedger;
             boost::json::object extra;
             extra["searched_all"] = searchedAll;
-            return Status{RippledError::rpcTXN_NOT_FOUND, std::move(extra)};
+
+            return Error{Status{RippledError::rpcTXN_NOT_FOUND, std::move(extra)}};
         }
-        return Status{RippledError::rpcTXN_NOT_FOUND};
+
+        return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
     }
 
-    if (!binary)
+    // clio does not implement 'inLedger' which is a deprecated field
+    if (!input.binary)
     {
-        auto [txn, meta] = toExpandedJson(*dbResponse);
-        response = txn;
-        response[JS(meta)] = meta;
+        auto const [txn, meta] = toExpandedJson(*dbResponse);
+        output.tx = txn;
+        output.meta = meta;
     }
     else
     {
-        response[JS(tx)] = ripple::strHex(dbResponse->transaction);
-        response[JS(meta)] = ripple::strHex(dbResponse->metadata);
-        response[JS(hash)] = std::move(request.at(JS(transaction)).as_string());
+        output.txStr = ripple::strHex(dbResponse->transaction);
+        output.metaStr = ripple::strHex(dbResponse->metadata);
+        output.hash = std::move(input.transaction);
     }
-    response[JS(date)] = dbResponse->date;
-    response[JS(ledger_index)] = dbResponse->ledgerSequence;
 
-    return response;
+    output.date = dbResponse->date;
+    output.ledgerIndex = dbResponse->ledgerSequence;
+
+    return output;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Output const& output)
+{
+    auto obj = boost::json::object{};
+
+    if (output.tx)
+    {
+        obj = *output.tx;
+        obj["meta"] = *output.meta;
+    }
+    else
+    {
+        obj["meta"] = *output.metaStr;
+        obj["tx"] = *output.txStr;
+        obj["hash"] = output.hash;
+    }
+
+    obj["date"] = output.date;
+    obj["ledger_index"] = output.ledgerIndex;
+
+    jv = std::move(obj);
+}
+
+TxHandler::Input
+tag_invoke(boost::json::value_to_tag<TxHandler::Input>, boost::json::value const& jv)
+{
+    auto input = TxHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.transaction = jv.at("transaction").as_string().c_str();
+
+    if (jsonObject.contains("binary"))
+        input.binary = jv.at("binary").as_bool();
+
+    if (jsonObject.contains("min_ledger"))
+        input.minLedger = jv.at("min_ledger").as_int64();
+
+    if (jsonObject.contains("max_ledger"))
+        input.maxLedger = jv.at("max_ledger").as_int64();
+
+    return input;
 }
 
 }  // namespace RPC

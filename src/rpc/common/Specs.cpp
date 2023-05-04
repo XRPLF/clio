@@ -21,7 +21,7 @@
 
 #include <boost/json/value.hpp>
 
-namespace RPCng {
+namespace RPC {
 
 [[nodiscard]] MaybeError
 FieldSpec::validate(boost::json::value const& value) const
@@ -39,4 +39,4 @@ RpcSpec::validate(boost::json::value const& value) const
     return {};
 }
 
-}  // namespace RPCng
+}  // namespace RPC

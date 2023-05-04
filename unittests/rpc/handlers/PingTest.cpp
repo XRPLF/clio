@@ -18,10 +18,10 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Ping.h>
+#include <rpc/handlers/Ping.h>
 #include <util/Fixtures.h>
 
-using namespace RPCng;
+using namespace RPC;
 
 class RPCPingHandlerTest : public NoLoggerFixture
 {

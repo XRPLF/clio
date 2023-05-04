@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,25 +17,22 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
+#include <rpc/handlers/TransactionEntry.h>
 
 namespace RPC {
 
-Result
-doTransactionEntry(Context const& context)
+TransactionEntryHandler::Result
+TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context const& ctx) const
 {
-    boost::json::object response;
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    ripple::uint256 hash;
-    if (!hash.parseHex(getRequiredString(context.params, JS(tx_hash))))
-        return Status{RippledError::rpcINVALID_PARAMS, "malformedTransaction"};
-
-    auto dbResponse = context.backend->fetchTransaction(hash, context.yield);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
@@ -45,15 +42,51 @@ doTransactionEntry(Context const& context)
     // the API for transaction_entry says the method only searches the specified
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
-    if (!dbResponse || dbResponse->ledgerSequence != lgrInfo.seq)
-        return Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."};
+    if (!dbRet || dbRet->ledgerSequence != lgrInfo.seq)
+        return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
 
-    auto [txn, meta] = toExpandedJson(*dbResponse);
-    response[JS(tx_json)] = std::move(txn);
-    response[JS(metadata)] = std::move(meta);
-    response[JS(ledger_index)] = lgrInfo.seq;
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    return response;
+    auto output = TransactionEntryHandler::Output{};
+    auto [txn, meta] = toExpandedJson(*dbRet);
+
+    output.tx = std::move(txn);
+    output.metadata = std::move(meta);
+    output.ledgerIndex = lgrInfo.seq;
+    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+
+    return output;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
+{
+    jv = {
+        {JS(metadata), output.metadata},
+        {JS(tx_json), output.tx},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(ledger_hash), output.ledgerHash},
+    };
+}
+
+TransactionEntryHandler::Input
+tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::json::value const& jv)
+{
+    auto input = TransactionEntryHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.txHash = jv.at(JS(tx_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
 }
 
 }  // namespace RPC

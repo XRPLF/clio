@@ -28,18 +28,13 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
-#include <ripple/protocol/jss.h>
 #include <backend/BackendInterface.h>
+#include <rpc/JS.h>
 #include <rpc/RPC.h>
-
-// Useful macro for borrowing from ripple::jss
-// static strings. (J)son (S)trings
-#define JS(x) ripple::jss::x.c_str()
-
-// Access (SF)ield name (S)trings
-#define SFS(x) ripple::x.jsonName.c_str()
+#include <webserver/Context.h>
 
 namespace RPC {
+
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
@@ -94,7 +89,7 @@ generatePubLedgerMessage(
     std::uint32_t txnCount);
 
 std::variant<Status, ripple::LedgerInfo>
-ledgerInfoFromRequest(Context const& ctx);
+ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx);
 
 std::variant<Status, ripple::LedgerInfo>
 getLedgerInfoFromHashOrSeq(
@@ -139,7 +134,11 @@ ngTraverseOwnedNodes(
     std::function<void(ripple::SLE&&)> atOwnedNode);
 
 std::shared_ptr<ripple::SLE const>
-read(ripple::Keylet const& keylet, ripple::LedgerInfo const& lgrInfo, Context const& context);
+read(
+    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    ripple::Keylet const& keylet,
+    ripple::LedgerInfo const& lgrInfo,
+    Web::Context const& context);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -274,15 +273,12 @@ getNFTID(boost::json::object const& request);
 // be used for any future transaction enumeration APIs.
 std::variant<Status, boost::json::object>
 traverseTransactions(
-    Context const& context,
+    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    Web::Context const& context,
     std::function<Backend::TransactionsAndCursor(
         std::shared_ptr<Backend::BackendInterface const> const& backend,
-        std::uint32_t const,
         bool const,
         std::optional<Backend::TransactionsCursor> const&,
         boost::asio::yield_context& yield)> transactionFetcher);
-
-[[nodiscard]] boost::json::object const
-computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
 
 }  // namespace RPC

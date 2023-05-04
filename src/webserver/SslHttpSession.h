@@ -39,24 +39,22 @@ public:
         tcp::socket&& socket,
         ssl::context& ctx,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue,
         boost::beast::flat_buffer buffer)
         : HttpBase<SslHttpSession>(
               ioc,
               backend,
+              rpcEngine,
               subscriptions,
               balancer,
               etl,
               tagFactory,
               dosGuard,
-              counters,
-              queue,
               std::move(buffer))
         , stream_(std::move(socket), ctx)
     {

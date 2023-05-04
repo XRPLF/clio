@@ -19,8 +19,8 @@
 
 #include <etl/ETLSource.h>
 #include <log/Logger.h>
-#include <rpc/Handlers.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/impl/HandlerProvider.h>
 #include <webserver/HttpBase.h>
 #include <webserver/WsBase.h>
 
@@ -30,6 +30,7 @@
 
 using namespace std;
 using namespace clio;
+using namespace RPC;
 
 // local to compilation unit loggers
 namespace {
@@ -38,49 +39,14 @@ clio::Logger gLog{"RPC"};
 }  // namespace
 
 namespace RPC {
-Context::Context(
-    boost::asio::yield_context& yield_,
-    string const& command_,
-    uint32_t version_,
-    boost::json::object const& params_,
-    shared_ptr<BackendInterface const> const& backend_,
-    shared_ptr<SubscriptionManager> const& subscriptions_,
-    shared_ptr<ETLLoadBalancer> const& balancer_,
-    shared_ptr<ReportingETL const> const& etl_,
-    shared_ptr<WsBase> const& session_,
-    util::TagDecoratorFactory const& tagFactory_,
-    Backend::LedgerRange const& range_,
-    Counters& counters_,
-    string const& clientIp_)
-    : Taggable(tagFactory_)
-    , yield(yield_)
-    , method(command_)
-    , version(version_)
-    , params(params_)
-    , backend(backend_)
-    , subscriptions(subscriptions_)
-    , balancer(balancer_)
-    , etl(etl_)
-    , session(session_)
-    , range(range_)
-    , counters(counters_)
-    , clientIp(clientIp_)
-{
-    gPerfLog.debug() << tag() << "new Context created";
-}
 
-optional<Context>
+optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    shared_ptr<BackendInterface const> const& backend,
-    shared_ptr<SubscriptionManager> const& subscriptions,
-    shared_ptr<ETLLoadBalancer> const& balancer,
-    shared_ptr<ReportingETL const> const& etl,
     shared_ptr<WsBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
-    Counters& counters,
     string const& clientIp)
 {
     boost::json::value commandValue = nullptr;
@@ -93,22 +59,15 @@ make_WsContext(
         return {};
 
     string command = commandValue.as_string().c_str();
-
-    return make_optional<Context>(
-        yc, command, 1, request, backend, subscriptions, balancer, etl, session, tagFactory, range, counters, clientIp);
+    return make_optional<Web::Context>(yc, command, 1, request, session, tagFactory, range, clientIp);
 }
 
-optional<Context>
+optional<Web::Context>
 make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    shared_ptr<BackendInterface const> const& backend,
-    shared_ptr<SubscriptionManager> const& subscriptions,
-    shared_ptr<ETLLoadBalancer> const& balancer,
-    shared_ptr<ReportingETL const> const& etl,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
-    RPC::Counters& counters,
     string const& clientIp)
 {
     if (!request.contains("method") || !request.at("method").is_string())
@@ -130,104 +89,8 @@ make_HttpContext(
     if (!array.at(0).is_object())
         return {};
 
-    return make_optional<Context>(
-        yc,
-        command,
-        1,
-        array.at(0).as_object(),
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        nullptr,
-        tagFactory,
-        range,
-        counters,
-        clientIp);
+    return make_optional<Web::Context>(yc, command, 1, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
 }
-
-using LimitRange = tuple<uint32_t, uint32_t, uint32_t>;
-using HandlerFunction = function<Result(Context const&)>;
-
-struct Handler
-{
-    string method;
-    function<Result(Context const&)> handler;
-    optional<LimitRange> limit;
-    bool isClioOnly = false;
-};
-
-class HandlerTable
-{
-    unordered_map<string, Handler> handlerMap_;
-
-public:
-    HandlerTable(initializer_list<Handler> handlers)
-    {
-        for (auto const& handler : handlers)
-        {
-            handlerMap_[handler.method] = std::move(handler);
-        }
-    }
-
-    bool
-    contains(string const& method)
-    {
-        return handlerMap_.contains(method);
-    }
-
-    optional<LimitRange>
-    getLimitRange(string const& command)
-    {
-        if (!handlerMap_.contains(command))
-            return {};
-
-        return handlerMap_[command].limit;
-    }
-
-    optional<HandlerFunction>
-    getHandler(string const& command)
-    {
-        if (!handlerMap_.contains(command))
-            return {};
-
-        return handlerMap_[command].handler;
-    }
-
-    bool
-    isClioOnly(string const& command)
-    {
-        return handlerMap_.contains(command) && handlerMap_[command].isClioOnly;
-    }
-};
-
-static HandlerTable handlerTable{
-    {"account_channels", &doAccountChannels, LimitRange{10, 50, 256}},
-    {"account_currencies", &doAccountCurrencies, {}},
-    {"account_info", &doAccountInfo, {}},
-    {"account_lines", &doAccountLines, LimitRange{10, 50, 256}},
-    {"account_nfts", &doAccountNFTs, LimitRange{1, 5, 10}},
-    {"account_objects", &doAccountObjects, LimitRange{10, 50, 256}},
-    {"account_offers", &doAccountOffers, LimitRange{10, 50, 256}},
-    {"account_tx", &doAccountTx, LimitRange{1, 50, 100}},
-    {"gateway_balances", &doGatewayBalances, {}},
-    {"noripple_check", &doNoRippleCheck, LimitRange{1, 300, 500}},
-    {"book_changes", &doBookChanges, {}},
-    {"book_offers", &doBookOffers, LimitRange{1, 50, 100}},
-    {"ledger", &doLedger, {}},
-    {"ledger_data", &doLedgerData, LimitRange{1, 100, 2048}},
-    {"nft_buy_offers", &doNFTBuyOffers, LimitRange{1, 50, 100}},
-    {"nft_history", &doNFTHistory, LimitRange{1, 50, 100}, true},
-    {"nft_info", &doNFTInfo, {}, true},
-    {"nft_sell_offers", &doNFTSellOffers, LimitRange{1, 50, 100}},
-    {"ledger_entry", &doLedgerEntry, {}},
-    {"ledger_range", &doLedgerRange, {}},
-    {"subscribe", &doSubscribe, {}},
-    {"server_info", &doServerInfo, {}},
-    {"unsubscribe", &doUnsubscribe, {}},
-    {"tx", &doTx, {}},
-    {"transaction_entry", &doTransactionEntry, {}},
-    {"random", &doRandom, {}}};
 
 static unordered_set<string> forwardCommands{
     "submit",
@@ -240,57 +103,55 @@ static unordered_set<string> forwardCommands{
     "channel_authorize",
     "channel_verify"};
 
-bool
-validHandler(string const& method)
+RPCEngine::RPCEngine(
+    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<SubscriptionManager> const& subscriptions,
+    std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL> const& etl,
+    clio::DOSGuard const& dosGuard,
+    WorkQueue& workQueue,
+    Counters& counters,
+    std::shared_ptr<HandlerProvider const> const& handlerProvider)
+    : backend_{backend}
+    , subscriptions_{subscriptions}
+    , balancer_{balancer}
+    , dosGuard_{std::cref(dosGuard)}
+    , workQueue_{std::ref(workQueue)}
+    , counters_{std::ref(counters)}
+    , handlerTable_{handlerProvider}
 {
-    return handlerTable.contains(method) || forwardCommands.contains(method);
+}
+
+std::shared_ptr<RPCEngine>
+RPCEngine::make_RPCEngine(
+    clio::Config const& config,
+    std::shared_ptr<BackendInterface> const& backend,
+    std::shared_ptr<SubscriptionManager> const& subscriptions,
+    std::shared_ptr<ETLLoadBalancer> const& balancer,
+    std::shared_ptr<ReportingETL> const& etl,
+    clio::DOSGuard const& dosGuard,
+    WorkQueue& workQueue,
+    Counters& counters,
+    std::shared_ptr<HandlerProvider const> const& handlerProvider)
+{
+    return std::make_shared<RPCEngine>(
+        backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 }
 
 bool
-isClioOnly(string const& method)
+RPCEngine::validHandler(string const& method) const
 {
-    return handlerTable.isClioOnly(method);
+    return handlerTable_.contains(method) || forwardCommands.contains(method);
 }
 
 bool
-shouldSuppressValidatedFlag(RPC::Context const& context)
+RPCEngine::isClioOnly(string const& method) const
 {
-    return boost::iequals(context.method, "subscribe") || boost::iequals(context.method, "unsubscribe");
-}
-
-Status
-getLimit(RPC::Context const& context, uint32_t& limit)
-{
-    if (!handlerTable.getHandler(context.method))
-        return Status{RippledError::rpcUNKNOWN_COMMAND};
-
-    if (!handlerTable.getLimitRange(context.method))
-        return Status{RippledError::rpcINVALID_PARAMS, "rpcDoesNotRequireLimit"};
-
-    auto [lo, def, hi] = *handlerTable.getLimitRange(context.method);
-
-    if (context.params.contains(JS(limit)))
-    {
-        string errMsg = "Invalid field 'limit', not unsigned integer.";
-        if (!context.params.at(JS(limit)).is_int64())
-            return Status{RippledError::rpcINVALID_PARAMS, errMsg};
-
-        int input = context.params.at(JS(limit)).as_int64();
-        if (input <= 0)
-            return Status{RippledError::rpcINVALID_PARAMS, errMsg};
-
-        limit = clamp(static_cast<uint32_t>(input), lo, hi);
-    }
-    else
-    {
-        limit = def;
-    }
-
-    return {};
+    return handlerTable_.isClioOnly(method);
 }
 
 bool
-shouldForwardToRippled(Context const& ctx)
+RPCEngine::shouldForwardToRippled(Web::Context const& ctx) const
 {
     auto request = ctx.params;
 
@@ -310,16 +171,15 @@ shouldForwardToRippled(Context const& ctx)
 }
 
 Result
-buildResponse(Context const& ctx)
+RPCEngine::buildResponse(Web::Context const& ctx)
 {
     if (shouldForwardToRippled(ctx))
     {
-        boost::json::object toForward = ctx.params;
+        auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res = ctx.balancer->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-
-        ctx.counters.rpcForwarded(ctx.method);
+        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        notifyForwarded(ctx.method);
 
         if (!res)
             return Status{RippledError::rpcFAILED_TO_FORWARD};
@@ -327,32 +187,30 @@ buildResponse(Context const& ctx)
         return *res;
     }
 
-    if (ctx.method == "ping")
-        return boost::json::object{};
-
-    if (ctx.backend->isTooBusy())
+    if (backend_->isTooBusy())
     {
         gLog.error() << "Database is too busy. Rejecting request";
         return Status{RippledError::rpcTOO_BUSY};
     }
 
-    auto method = handlerTable.getHandler(ctx.method);
-
+    auto const method = handlerTable_.getHandler(ctx.method);
     if (!method)
         return Status{RippledError::rpcUNKNOWN_COMMAND};
 
     try
     {
         gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
-        auto v = (*method)(ctx);
+
+        auto const isAdmin = ctx.clientIp == "127.0.0.1";  // TODO: this should be a strategy
+        auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
+        auto const v = (*method).process(ctx.params, context);
+
         gPerfLog.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
-        if (auto object = get_if<boost::json::object>(&v); object && not shouldSuppressValidatedFlag(ctx))
-        {
-            (*object)[JS(validated)] = true;
-        }
-
-        return v;
+        if (v)
+            return v->as_object();
+        else
+            return Status{v.error()};
     }
     catch (InvalidParamsError const& err)
     {
@@ -372,6 +230,27 @@ buildResponse(Context const& ctx)
         gLog.error() << ctx.tag() << " caught exception: " << err.what();
         return Status{RippledError::rpcINTERNAL};
     }
+}
+
+void
+RPCEngine::notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
+{
+    if (validHandler(method))
+        counters_.get().rpcComplete(method, duration);
+}
+
+void
+RPCEngine::notifyErrored(std::string const& method)
+{
+    if (validHandler(method))
+        counters_.get().rpcErrored(method);
+}
+
+void
+RPCEngine::notifyForwarded(std::string const& method)
+{
+    if (validHandler(method))
+        counters_.get().rpcForwarded(method);
 }
 
 }  // namespace RPC

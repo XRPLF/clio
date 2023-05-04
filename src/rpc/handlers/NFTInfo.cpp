@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,48 +17,96 @@
 */
 //==============================================================================
 
+#include <rpc/RPCHelpers.h>
+#include <rpc/handlers/NFTInfo.h>
+
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
-#include <boost/json.hpp>
 
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
+using namespace ripple;
+using namespace ::RPC;
 
 namespace RPC {
 
-Result
-doNFTInfo(Context const& context)
+NFTInfoHandler::Result
+NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 {
-    auto const request = context.params;
-    boost::json::object response = {};
+    auto const tokenID = ripple::uint256{input.nftID.c_str()};
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto const maybeTokenID = getNFTID(request);
-    if (auto const status = std::get_if<Status>(&maybeTokenID); status)
-        return *status;
-    auto const tokenID = std::get<ripple::uint256>(maybeTokenID);
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    auto const maybeLedgerInfo = ledgerInfoFromRequest(context);
-    if (auto const status = std::get_if<Status>(&maybeLedgerInfo); status)
-        return *status;
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(maybeLedgerInfo);
+    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
 
-    auto const dbResponse = context.backend->fetchNFT(tokenID, lgrInfo.seq, context.yield);
-    if (!dbResponse)
-        return Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"};
+    if (not maybeNft.has_value())
+        return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
 
-    response[JS(nft_id)] = ripple::strHex(dbResponse->tokenID);
-    response[JS(ledger_index)] = dbResponse->ledgerSequence;
-    response[JS(owner)] = ripple::toBase58(dbResponse->owner);
-    response["is_burned"] = dbResponse->isBurned;
-    response[JS(uri)] = ripple::strHex(dbResponse->uri);
+    auto const& nft = *maybeNft;
+    auto output = NFTInfoHandler::Output{};
 
-    response[JS(flags)] = ripple::nft::getFlags(dbResponse->tokenID);
-    response["transfer_fee"] = ripple::nft::getTransferFee(dbResponse->tokenID);
-    response[JS(issuer)] = ripple::toBase58(ripple::nft::getIssuer(dbResponse->tokenID));
-    response["nft_taxon"] = ripple::nft::toUInt32(ripple::nft::getTaxon(dbResponse->tokenID));
-    response[JS(nft_serial)] = ripple::nft::getSerial(dbResponse->tokenID);
+    output.nftID = strHex(nft.tokenID);
+    output.ledgerIndex = nft.ledgerSequence;
+    output.owner = toBase58(nft.owner);
+    output.isBurned = nft.isBurned;
+    output.flags = nft::getFlags(nft.tokenID);
+    output.transferFee = nft::getTransferFee(nft.tokenID);
+    output.issuer = toBase58(nft::getIssuer(nft.tokenID));
+    output.taxon = nft::toUInt32(nft::getTaxon(nft.tokenID));
+    output.serial = nft::getSerial(nft.tokenID);
 
-    return response;
+    if (not nft.isBurned)
+        output.uri = strHex(nft.uri);
+
+    return output;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::Output const& output)
+{
+    // TODO: use JStrings when they become available
+    auto object = boost::json::object{
+        {JS(nft_id), output.nftID},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(owner), output.owner},
+        {"is_burned", output.isBurned},
+        {JS(flags), output.flags},
+        {"transfer_fee", output.transferFee},
+        {JS(issuer), output.issuer},
+        {"nft_taxon", output.taxon},
+        {JS(nft_serial), output.serial},
+        {JS(validated), output.validated},
+    };
+
+    if (output.uri)
+        object[JS(uri)] = *(output.uri);
+
+    jv = std::move(object);
+}
+
+NFTInfoHandler::Input
+tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value const& jv)
+{
+    auto const& jsonObject = jv.as_object();
+    auto input = NFTInfoHandler::Input{};
+
+    input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
 }
 
 }  // namespace RPC

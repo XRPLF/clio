@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,98 +17,40 @@
 */
 //==============================================================================
 
+#include <rpc/handlers/LedgerData.h>
+
 #include <ripple/app/ledger/LedgerToJson.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
-#include <rpc/RPCHelpers.h>
 
-#include <boost/json.hpp>
-
-// Get state nodes from a ledger
-//   Inputs:
-//     limit:        integer, maximum number of entries
-//     marker:       opaque, resume point
-//     binary:       boolean, format
-//     type:         string // optional, defaults to all ledger node types
-//   Outputs:
-//     ledger_hash:  chosen ledger's hash
-//     ledger_index: chosen ledger's index
-//     state:        array of state nodes
-//     marker:       resume point, if any
-//
-//
-
-using namespace clio;
-
-// local to compilation unit loggers
-namespace {
-clio::Logger gLog{"RPC"};
-}  // namespace
+#include <algorithm>
 
 namespace RPC {
 
-using boost::json::value_to;
-
-Result
-doLedgerData(Context const& context)
+LedgerDataHandler::Result
+LedgerDataHandler::process(Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
+    // marker must be int if outOfOrder is true
+    if (input.outOfOrder && input.marker)
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "outOfOrderMarkerNotInt"}};
 
-    bool const binary = getBool(request, "binary", false);
+    if (!input.outOfOrder && input.diffMarker)
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "markerNotString"}};
 
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    if (!binary)
-        limit = std::clamp(limit, {1}, {256});
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    bool outOfOrder = false;
-    if (request.contains("out_of_order"))
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+
+    // no marker -> first call, return header information
+    auto header = boost::json::object();
+    Output output;
+
+    if ((!input.marker) && (!input.diffMarker))
     {
-        if (!request.at("out_of_order").is_bool())
-            return Status{RippledError::rpcINVALID_PARAMS, "binaryFlagNotBool"};
-        outOfOrder = request.at("out_of_order").as_bool();
-    }
-
-    std::optional<ripple::uint256> marker;
-    std::optional<uint32_t> diffMarker;
-    if (request.contains(JS(marker)))
-    {
-        if (!request.at(JS(marker)).is_string())
-        {
-            if (outOfOrder)
-            {
-                if (!request.at(JS(marker)).is_int64())
-                    return Status{RippledError::rpcINVALID_PARAMS, "markerNotStringOrInt"};
-                diffMarker = value_to<uint32_t>(request.at(JS(marker)));
-            }
-            else
-                return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
-        }
-        else
-        {
-            gLog.debug() << "Parsing marker";
-
-            marker = ripple::uint256{};
-            if (!marker->parseHex(request.at(JS(marker)).as_string().c_str()))
-                return Status{RippledError::rpcINVALID_PARAMS, "markerMalformed"};
-        }
-    }
-
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
-
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-
-    boost::json::object header;
-    // no marker means this is the first call, so we return header info
-    if (!request.contains(JS(marker)))
-    {
-        if (binary)
+        if (input.binary)
         {
             header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
         }
@@ -132,79 +74,155 @@ doLedgerData(Context const& context)
         }
 
         header[JS(closed)] = true;
-        response[JS(ledger)] = header;
+        output.header = std::move(header);
     }
     else
     {
-        if (!outOfOrder && !context.backend->fetchLedgerObject(*marker, lgrInfo.seq, context.yield))
-            return Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"};
+        if (input.marker && !sharedPtrBackend_->fetchLedgerObject(*(input.marker), lgrInfo.seq, ctx.yield))
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"}};
     }
 
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
+    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerIndex = lgrInfo.seq;
 
-    auto start = std::chrono::system_clock::now();
+    auto const start = std::chrono::system_clock::now();
     std::vector<Backend::LedgerObject> results;
-    if (diffMarker)
+
+    if (input.diffMarker)
     {
-        assert(outOfOrder);
-        auto diff = context.backend->fetchLedgerDiff(*diffMarker, context.yield);
+        // keep the same logic as previous implementation
+        auto diff = sharedPtrBackend_->fetchLedgerDiff(*(input.diffMarker), ctx.yield);
         std::vector<ripple::uint256> keys;
-        for (auto&& [key, object] : diff)
+
+        for (auto& [key, object] : diff)
         {
             if (!object.size())
-            {
                 keys.push_back(std::move(key));
-            }
         }
-        auto objs = context.backend->fetchLedgerObjects(keys, lgrInfo.seq, context.yield);
+
+        auto objs = sharedPtrBackend_->fetchLedgerObjects(keys, lgrInfo.seq, ctx.yield);
+
         for (size_t i = 0; i < objs.size(); ++i)
         {
-            auto&& obj = objs[i];
+            auto& obj = objs[i];
             if (obj.size())
                 results.push_back({std::move(keys[i]), std::move(obj)});
         }
-        if (*diffMarker > lgrInfo.seq)
-            response["marker"] = *diffMarker - 1;
+
+        if (*(input.diffMarker) > lgrInfo.seq)
+            output.diffMarker = *(input.diffMarker) - 1;
     }
     else
     {
-        auto page = context.backend->fetchLedgerPage(marker, lgrInfo.seq, limit, outOfOrder, context.yield);
+        // limit's limitation is different based on binary or json
+        // framework can not handler the check right now, adjust the value here
+        auto const limit =
+            std::min(input.limit, input.binary ? LedgerDataHandler::LIMITBINARY : LedgerDataHandler::LIMITJSON);
+        auto page = sharedPtrBackend_->fetchLedgerPage(input.marker, lgrInfo.seq, limit, input.outOfOrder, ctx.yield);
         results = std::move(page.objects);
+
         if (page.cursor)
-            response["marker"] = ripple::strHex(*(page.cursor));
-        else if (outOfOrder)
-            response["marker"] = context.backend->fetchLedgerRange()->maxSequence;
+            output.marker = ripple::strHex(*(page.cursor));
+        else if (input.outOfOrder)
+            output.diffMarker = sharedPtrBackend_->fetchLedgerRange()->maxSequence;
     }
-    auto end = std::chrono::system_clock::now();
 
-    auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto const end = std::chrono::system_clock::now();
+    log_.debug() << "Number of results = " << results.size() << " fetched in "
+                 << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds";
 
-    gLog.debug() << "Number of results = " << results.size() << " fetched in " << time << " microseconds";
-    boost::json::array objects;
-    objects.reserve(results.size());
+    output.states.reserve(results.size());
+
     for (auto const& [key, object] : results)
     {
-        ripple::STLedgerEntry sle{ripple::SerialIter{object.data(), object.size()}, key};
-        if (binary)
+        ripple::STLedgerEntry const sle{ripple::SerialIter{object.data(), object.size()}, key};
+
+        if (input.binary)
         {
             boost::json::object entry;
             entry[JS(data)] = ripple::serializeHex(sle);
             entry[JS(index)] = ripple::to_string(sle.key());
-            objects.push_back(std::move(entry));
+            output.states.push_back(std::move(entry));
         }
         else
-            objects.push_back(toJson(sle));
+        {
+            output.states.push_back(toJson(sle));
+        }
     }
-    response[JS(state)] = std::move(objects);
-    if (outOfOrder)
-        response["cache_full"] = context.backend->cache().isFull();
-    auto end2 = std::chrono::system_clock::now();
 
-    time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count();
-    gLog.debug() << "Number of results = " << results.size() << " serialized in " << time << " microseconds";
+    if (input.outOfOrder)
+        output.cacheFull = sharedPtrBackend_->cache().isFull();
 
-    return response;
+    auto const end2 = std::chrono::system_clock::now();
+    log_.debug() << "Number of results = " << results.size() << " serialized in "
+                 << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count() << " microseconds";
+
+    return output;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerDataHandler::Output const& output)
+{
+    auto obj = boost::json::object{
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(state), output.states},
+    };
+
+    if (output.header)
+        obj[JS(ledger)] = *(output.header);
+
+    if (output.cacheFull)
+        obj["cache_full"] = *(output.cacheFull);
+
+    if (output.diffMarker)
+        obj[JS(marker)] = *(output.diffMarker);
+
+    else if (output.marker)
+        obj[JS(marker)] = *(output.marker);
+
+    jv = std::move(obj);
+}
+
+LedgerDataHandler::Input
+tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::value const& jv)
+{
+    auto input = LedgerDataHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    if (jsonObject.contains(JS(binary)))
+    {
+        input.binary = jsonObject.at(JS(binary)).as_bool();
+        input.limit = input.binary ? LedgerDataHandler::LIMITBINARY : LedgerDataHandler::LIMITJSON;
+    }
+
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jsonObject.at(JS(limit)).as_int64();
+
+    if (jsonObject.contains("out_of_order"))
+        input.outOfOrder = jsonObject.at("out_of_order").as_bool();
+
+    if (jsonObject.contains("marker"))
+    {
+        if (jsonObject.at("marker").is_string())
+            input.marker = ripple::uint256{jsonObject.at("marker").as_string().c_str()};
+        else
+            input.diffMarker = jsonObject.at("marker").as_int64();
+    }
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
 }
 
 }  // namespace RPC

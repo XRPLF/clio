@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <config/Config.h>
 #include <log/Logger.h>
 
 #include <boost/asio.hpp>
@@ -41,8 +42,24 @@ class WorkQueue
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
     clio::Logger log_{"RPC"};
 
+    std::vector<std::thread> threads_ = {};
+    boost::asio::io_context ioc_ = {};
+    std::optional<boost::asio::io_context::work> work_{ioc_};
+
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
+
+    static WorkQueue
+    make_WorkQueue(clio::Config const& config)
+    {
+        static clio::Logger log{"RPC"};
+        auto const serverConfig = config.section("server");
+        auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
+        auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
+
+        log.info() << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
+        return WorkQueue{numThreads, maxQueueSize};
+    }
 
     template <typename F>
     bool
@@ -53,38 +70,39 @@ public:
             log_.warn() << "Queue is full. rejecting job. current size = " << curSize_ << " max size = " << maxSize_;
             return false;
         }
+
         ++curSize_;
         auto start = std::chrono::system_clock::now();
-        // Each time we enqueue a job, we want to post a symmetrical job that
-        // will dequeue and run the job at the front of the job queue.
-        boost::asio::spawn(ioc_, [this, f = std::move(f), start](boost::asio::yield_context yield) {
-            auto run = std::chrono::system_clock::now();
-            auto wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
-            // increment queued_ here, in the same place we implement
-            // durationUs_
+
+        // Each time we enqueue a job, we want to post a symmetrical job that will dequeue and run the job at the front
+        // of the job queue.
+        boost::asio::spawn(ioc_, [this, f = std::move(f), start](auto yield) {
+            auto const run = std::chrono::system_clock::now();
+            auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
+
+            // increment queued_ here, in the same place we implement durationUs_
             ++queued_;
             durationUs_ += wait;
             log_.info() << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
+
             f(yield);
+
             --curSize_;
         });
+
         return true;
     }
 
     boost::json::object
     report() const
     {
-        boost::json::object obj;
+        auto obj = boost::json::object{};
+
         obj["queued"] = queued_;
         obj["queued_duration_us"] = durationUs_;
         obj["current_queue_size"] = curSize_;
         obj["max_queue_size"] = maxSize_;
+
         return obj;
     }
-
-private:
-    std::vector<std::thread> threads_ = {};
-
-    boost::asio::io_context ioc_ = {};
-    std::optional<boost::asio::io_context::work> work_{ioc_};
 };

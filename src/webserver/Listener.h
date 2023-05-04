@@ -45,13 +45,12 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     std::shared_ptr<BackendInterface const> backend_;
+    std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
-    RPC::Counters& counters_;
-    WorkQueue& queue_;
     boost::beast::flat_buffer buffer_;
 
 public:
@@ -60,24 +59,22 @@ public:
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
         util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        RPC::Counters& counters,
-        WorkQueue& queue)
+        clio::DOSGuard& dosGuard)
         : ioc_(ioc)
         , stream_(std::move(socket))
         , ctx_(ctx)
         , backend_(backend)
+        , rpcEngine_(rpcEngine)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , counters_(counters)
-        , queue_(queue)
     {
     }
 
@@ -116,13 +113,12 @@ public:
                 stream_.release_socket(),
                 *ctx_,
                 backend_,
+                rpcEngine_,
                 subscriptions_,
                 balancer_,
                 etl_,
                 tagFactory_,
                 dosGuard_,
-                counters_,
-                queue_,
                 std::move(buffer_))
                 ->run();
             return;
@@ -133,13 +129,12 @@ public:
             ioc_,
             stream_.release_socket(),
             backend_,
+            rpcEngine_,
             subscriptions_,
             balancer_,
             etl_,
             tagFactory_,
             dosGuard_,
-            counters_,
-            queue_,
             std::move(buffer_))
             ->run();
     }
@@ -153,26 +148,24 @@ make_websocket_session(
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
+    std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    clio::DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    WorkQueue& queue)
+    clio::DOSGuard& dosGuard)
 {
     std::make_shared<WsUpgrader>(
         ioc,
         std::move(stream),
         ip,
         backend,
+        rpcEngine,
         subscriptions,
         balancer,
         etl,
         tagFactory,
         dosGuard,
-        counters,
-        queue,
         std::move(buffer),
         std::move(req))
         ->run();
@@ -186,26 +179,24 @@ make_websocket_session(
     http::request<http::string_body> req,
     boost::beast::flat_buffer buffer,
     std::shared_ptr<BackendInterface const> backend,
+    std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
     util::TagDecoratorFactory const& tagFactory,
-    clio::DOSGuard& dosGuard,
-    RPC::Counters& counters,
-    WorkQueue& queue)
+    clio::DOSGuard& dosGuard)
 {
     std::make_shared<SslWsUpgrader>(
         ioc,
         std::move(stream),
         ip,
         backend,
+        rpcEngine,
         subscriptions,
         balancer,
         etl,
         tagFactory,
         dosGuard,
-        counters,
-        queue,
         std::move(buffer),
         std::move(req))
         ->run();
@@ -221,22 +212,20 @@ class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslS
     std::optional<std::reference_wrapper<ssl::context>> ctx_;
     tcp::acceptor acceptor_;
     std::shared_ptr<BackendInterface const> backend_;
+    std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<ETLLoadBalancer> balancer_;
     std::shared_ptr<ReportingETL const> etl_;
     util::TagDecoratorFactory tagFactory_;
     clio::DOSGuard& dosGuard_;
-    WorkQueue queue_;
-    RPC::Counters counters_;
 
 public:
     Listener(
         boost::asio::io_context& ioc,
-        uint32_t numWorkerThreads,
-        uint32_t maxQueueSize,
         std::optional<std::reference_wrapper<ssl::context>> ctx,
         tcp::endpoint endpoint,
         std::shared_ptr<BackendInterface const> backend,
+        std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<ETLLoadBalancer> balancer,
         std::shared_ptr<ReportingETL const> etl,
@@ -246,13 +235,12 @@ public:
         , ctx_(ctx)
         , acceptor_(net::make_strand(ioc))
         , backend_(backend)
+        , rpcEngine_(rpcEngine)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , etl_(etl)
         , tagFactory_(std::move(tagFactory))
         , dosGuard_(dosGuard)
-        , queue_(numWorkerThreads, maxQueueSize)
-        , counters_(queue_)
     {
         boost::beast::error_code ec;
 
@@ -311,13 +299,12 @@ private:
                 std::move(socket),
                 ctxRef,
                 backend_,
+                rpcEngine_,
                 subscriptions_,
                 balancer_,
                 etl_,
                 tagFactory_,
-                dosGuard_,
-                counters_,
-                queue_)
+                dosGuard_)
                 ->run();
         }
 
@@ -337,6 +324,7 @@ make_HttpServer(
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<ssl::context>> sslCtx,
     std::shared_ptr<BackendInterface const> backend,
+    std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<ETLLoadBalancer> balancer,
     std::shared_ptr<ReportingETL const> etl,
@@ -349,18 +337,13 @@ make_HttpServer(
     auto const serverConfig = config.section("server");
     auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
     auto const port = serverConfig.value<unsigned short>("port");
-    auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
-    auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
-
-    log.info() << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
 
     auto server = std::make_shared<HttpServer>(
         ioc,
-        numThreads,
-        maxQueueSize,
         sslCtx,
         boost::asio::ip::tcp::endpoint{address, port},
         backend,
+        rpcEngine,
         subscriptions,
         balancer,
         etl,

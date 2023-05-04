@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/AccountNFTs.h>
+#include <rpc/handlers/AccountNFTs.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
@@ -36,7 +36,7 @@ constexpr static auto PAGE = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255A
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 
@@ -156,7 +156,6 @@ TEST_P(AccountNFTParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
-        std::cout << err << std::endl;
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -326,7 +325,6 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     runSpawn([&](auto& yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
 }

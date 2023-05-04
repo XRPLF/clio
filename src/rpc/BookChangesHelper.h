@@ -23,7 +23,7 @@
 
 #include <set>
 
-namespace RPCng {
+namespace RPC {
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -229,4 +229,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
     };
 }
 
-}  // namespace RPCng
+[[nodiscard]] boost::json::object const
+computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
+
+}  // namespace RPC

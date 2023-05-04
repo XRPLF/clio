@@ -78,8 +78,7 @@ struct Status
     Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)){};
 
     // HACK. Some rippled handlers explicitly specify errors.
-    // This means that we have to be able to duplicate this
-    // functionality.
+    // This means that we have to be able to duplicate this functionality.
     explicit Status(std::string const& message) : code(ripple::rpcUNKNOWN), message(message)
     {
     }
@@ -99,6 +98,7 @@ struct Status
     {
         if (auto err = std::get_if<RippledError>(&code))
             return *err != RippledError::rpcSUCCESS;
+
         return true;
     }
 
@@ -113,6 +113,7 @@ struct Status
     {
         if (auto err = std::get_if<RippledError>(&code))
             return *err == other;
+
         return false;
     }
 
@@ -127,6 +128,7 @@ struct Status
     {
         if (auto err = std::get_if<ClioError>(&code))
             return *err == other;
+
         return false;
     }
 };
@@ -180,6 +182,7 @@ public:
     explicit AccountNotFoundError(std::string const& acct) : account(acct)
     {
     }
+
     const char*
     what() const throw() override
     {

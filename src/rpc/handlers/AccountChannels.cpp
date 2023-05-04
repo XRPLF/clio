@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,118 +17,170 @@
 */
 //==============================================================================
 
-#include <ripple/app/ledger/Ledger.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-#include <algorithm>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-
 #include <rpc/RPCHelpers.h>
+#include <rpc/handlers/AccountChannels.h>
 
 namespace RPC {
 
 void
-addChannel(boost::json::array& jsonLines, ripple::SLE const& line)
+AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle) const
 {
-    boost::json::object jDst;
-    jDst[JS(channel_id)] = ripple::to_string(line.key());
-    jDst[JS(account)] = ripple::to_string(line.getAccountID(ripple::sfAccount));
-    jDst[JS(destination_account)] = ripple::to_string(line.getAccountID(ripple::sfDestination));
-    jDst[JS(amount)] = line[ripple::sfAmount].getText();
-    jDst[JS(balance)] = line[ripple::sfBalance].getText();
-    if (publicKeyType(line[ripple::sfPublicKey]))
-    {
-        ripple::PublicKey const pk(line[ripple::sfPublicKey]);
-        jDst[JS(public_key)] = toBase58(ripple::TokenType::AccountPublic, pk);
-        jDst[JS(public_key_hex)] = strHex(pk);
-    }
-    jDst[JS(settle_delay)] = line[ripple::sfSettleDelay];
-    if (auto const& v = line[~ripple::sfExpiration])
-        jDst[JS(expiration)] = *v;
-    if (auto const& v = line[~ripple::sfCancelAfter])
-        jDst[JS(cancel_after)] = *v;
-    if (auto const& v = line[~ripple::sfSourceTag])
-        jDst[JS(source_tag)] = *v;
-    if (auto const& v = line[~ripple::sfDestinationTag])
-        jDst[JS(destination_tag)] = *v;
+    ChannelResponse channel;
+    channel.channelID = ripple::to_string(channelSle.key());
+    channel.account = ripple::to_string(channelSle.getAccountID(ripple::sfAccount));
+    channel.accountDestination = ripple::to_string(channelSle.getAccountID(ripple::sfDestination));
+    channel.amount = channelSle[ripple::sfAmount].getText();
+    channel.balance = channelSle[ripple::sfBalance].getText();
+    channel.settleDelay = channelSle[ripple::sfSettleDelay];
 
-    jsonLines.push_back(jDst);
+    if (publicKeyType(channelSle[ripple::sfPublicKey]))
+    {
+        ripple::PublicKey const pk(channelSle[ripple::sfPublicKey]);
+        channel.publicKey = toBase58(ripple::TokenType::AccountPublic, pk);
+        channel.publicKeyHex = strHex(pk);
+    }
+
+    if (auto const& v = channelSle[~ripple::sfExpiration])
+        channel.expiration = *v;
+
+    if (auto const& v = channelSle[~ripple::sfCancelAfter])
+        channel.cancelAfter = *v;
+
+    if (auto const& v = channelSle[~ripple::sfSourceTag])
+        channel.sourceTag = *v;
+
+    if (auto const& v = channelSle[~ripple::sfDestinationTag])
+        channel.destinationTag = *v;
+
+    jsonChannels.push_back(channel);
 }
 
-Result
-doAccountChannels(Context const& context)
+AccountChannelsHandler::Result
+AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const accountID = accountFromStringStrict(input.account);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
-    ripple::AccountID accountID;
-    if (auto const status = getAccount(request, accountID); status)
-        return status;
+    if (!accountLedgerObject)
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto rawAcct =
-        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto const destAccountID = input.destinationAccount ? accountFromStringStrict(input.destinationAccount.value())
+                                                        : std::optional<ripple::AccountID>{};
 
-    if (!rawAcct)
-        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
-
-    ripple::AccountID destAccount;
-    if (auto const status = getAccount(request, destAccount, JS(destination_account)); status)
-        return status;
-
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
-
-    std::optional<std::string> marker = {};
-    if (request.contains(JS(marker)))
-    {
-        if (!request.at(JS(marker)).is_string())
-            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
-
-        marker = request.at(JS(marker)).as_string().c_str();
-    }
-
-    response[JS(account)] = ripple::to_string(accountID);
-    response[JS(channels)] = boost::json::value(boost::json::array_kind);
-    response[JS(limit)] = limit;
-    boost::json::array& jsonChannels = response.at(JS(channels)).as_array();
-
+    Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltPAYCHAN && sle.getAccountID(ripple::sfAccount) == accountID &&
-            (!destAccount || destAccount == sle.getAccountID(ripple::sfDestination)))
+            (!destAccountID || *destAccountID == sle.getAccountID(ripple::sfDestination)))
         {
-            addChannel(jsonChannels, sle);
+            addChannel(response.channels, sle);
         }
 
         return true;
     };
 
-    auto next =
-        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
+    auto const next = ngTraverseOwnedNodes(
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
+    response.account = input.account;
+    response.limit = input.limit;
+    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerIndex = lgrInfo.seq;
 
-    if (auto status = std::get_if<RPC::Status>(&next))
-        return *status;
-
-    auto nextMarker = std::get<RPC::AccountCursor>(next);
-
+    auto const nextMarker = std::get<AccountCursor>(next);
     if (nextMarker.isNonZero())
-        response[JS(marker)] = nextMarker.toString();
+        response.marker = nextMarker.toString();
 
     return response;
 }
 
+AccountChannelsHandler::Input
+tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json::value const& jv)
+{
+    auto input = AccountChannelsHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.account = jv.at(JS(account)).as_string().c_str();
+
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jv.at(JS(limit)).as_int64();
+
+    if (jsonObject.contains(JS(marker)))
+        input.marker = jv.at(JS(marker)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(destination_account)))
+        input.destinationAccount = jv.at(JS(destination_account)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsHandler::Output const& output)
+{
+    auto obj = boost::json::object{
+        {JS(account), output.account},
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(limit), output.limit},
+        {JS(channels), output.channels},
+    };
+
+    if (output.marker)
+        obj[JS(marker)] = output.marker.value();
+
+    jv = std::move(obj);
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsHandler::ChannelResponse const& channel)
+{
+    auto obj = boost::json::object{
+        {JS(channel_id), channel.channelID},
+        {JS(account), channel.account},
+        {JS(destination_account), channel.accountDestination},
+        {JS(amount), channel.amount},
+        {JS(balance), channel.balance},
+        {JS(settle_delay), channel.settleDelay},
+    };
+
+    if (channel.publicKey)
+        obj[JS(public_key)] = *(channel.publicKey);
+
+    if (channel.publicKeyHex)
+        obj[JS(public_key_hex)] = *(channel.publicKeyHex);
+
+    if (channel.expiration)
+        obj[JS(expiration)] = *(channel.expiration);
+
+    if (channel.cancelAfter)
+        obj[JS(cancel_after)] = *(channel.cancelAfter);
+
+    if (channel.sourceTag)
+        obj[JS(source_tag)] = *(channel.sourceTag);
+
+    if (channel.destinationTag)
+        obj[JS(destination_tag)] = *(channel.destinationTag);
+
+    jv = std::move(obj);
+}
 }  // namespace RPC

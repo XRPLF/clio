@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,90 +17,85 @@
 */
 //==============================================================================
 
-#include <ripple/app/ledger/Ledger.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
-
-#include <boost/json.hpp>
-
-#include <algorithm>
-
-using namespace clio;
-
-// local to compilation unit loggers
-namespace {
-clio::Logger gLog{"RPC"};
-}  // namespace
+#include <rpc/handlers/BookOffers.h>
 
 namespace RPC {
 
-Result
-doBookOffers(Context const& context)
+BookOffersHandler::Result
+BookOffersHandler::process(Input input, Context const& ctx) const
 {
-    auto request = context.params;
+    auto bookMaybe = parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
+    if (auto const status = std::get_if<Status>(&bookMaybe))
+        return Error{*status};
 
-    boost::json::object response = {};
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    // check ledger
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    ripple::Book book;
-    ripple::uint256 bookBase;
-    if (request.contains("book"))
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const book = std::get<ripple::Book>(bookMaybe);
+    auto const bookKey = getBookBase(book);
+
+    // TODO: Add perfomance metrics if needed in future
+    auto [offers, _] = sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
+
+    auto output = BookOffersHandler::Output{};
+    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerIndex = lgrInfo.seq;
+    output.offers = postProcessOrderBook(
+        offers, book, input.taker ? *(input.taker) : beast::zero, *sharedPtrBackend_, lgrInfo.seq, ctx.yield);
+
+    return output;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookOffersHandler::Output const& output)
+{
+    jv = boost::json::object{
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(offers), output.offers},
+    };
+}
+
+BookOffersHandler::Input
+tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::value const& jv)
+{
+    auto input = BookOffersHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    ripple::to_currency(input.getsCurrency, jv.at(JS(taker_gets)).as_object().at(JS(currency)).as_string().c_str());
+    ripple::to_currency(input.paysCurrency, jv.at(JS(taker_pays)).as_object().at(JS(currency)).as_string().c_str());
+
+    if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer)))
+        ripple::to_issuer(input.getsID, jv.at(JS(taker_gets)).as_object().at(JS(issuer)).as_string().c_str());
+
+    if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer)))
+        ripple::to_issuer(input.paysID, jv.at(JS(taker_pays)).as_object().at(JS(issuer)).as_string().c_str());
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
     {
-        if (!request.at("book").is_string())
-            return Status{RippledError::rpcINVALID_PARAMS, "bookNotString"};
-
-        if (!bookBase.parseHex(request.at("book").as_string().c_str()))
-            return Status{RippledError::rpcINVALID_PARAMS, "invalidBook"};
-    }
-    else
-    {
-        auto parsed = parseBook(request);
-        if (auto status = std::get_if<Status>(&parsed))
-            return *status;
-        else
-        {
-            book = std::get<ripple::Book>(parsed);
-            bookBase = getBookBase(book);
-        }
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
     }
 
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
+    if (jsonObject.contains(JS(taker)))
+        input.taker = accountFromStringStrict(jv.at(JS(taker)).as_string().c_str());
 
-    ripple::AccountID takerID = beast::zero;
-    if (auto const status = getTaker(request, takerID); status)
-        return status;
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jv.at(JS(limit)).as_int64();
 
-    auto start = std::chrono::system_clock::now();
-    auto [offers, _] = context.backend->fetchBookOffers(bookBase, lgrInfo.seq, limit, context.yield);
-    auto end = std::chrono::system_clock::now();
-
-    gLog.warn() << "Time loading books: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-                << " milliseconds - request = " << request;
-
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
-
-    response[JS(offers)] = postProcessOrderBook(offers, book, takerID, *context.backend, lgrInfo.seq, context.yield);
-
-    auto end2 = std::chrono::system_clock::now();
-
-    gLog.warn() << "Time transforming to json: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - end).count()
-                << " milliseconds - request = " << request;
-    return response;
+    return input;
 }
 
 }  // namespace RPC

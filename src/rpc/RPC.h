@@ -20,16 +20,23 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <config/Config.h>
 #include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
+#include <rpc/HandlerTable.h>
+#include <rpc/common/AnyHandler.h>
 #include <util/Taggable.h>
+#include <webserver/Context.h>
+#include <webserver/DOSGuard.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <fmt/core.h>
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 
 /*
@@ -49,41 +56,6 @@ class ETLLoadBalancer;
 class ReportingETL;
 
 namespace RPC {
-
-struct Context : public util::Taggable
-{
-    clio::Logger perfLog_{"Performance"};
-    boost::asio::yield_context& yield;
-    std::string method;
-    std::uint32_t version;
-    boost::json::object const& params;
-    std::shared_ptr<BackendInterface const> const& backend;
-    // this needs to be an actual shared_ptr, not a reference. The above
-    // references refer to shared_ptr members of WsBase, but WsBase contains
-    // SubscriptionManager as a weak_ptr, to prevent a shared_ptr cycle.
-    std::shared_ptr<SubscriptionManager> subscriptions;
-    std::shared_ptr<ETLLoadBalancer> const& balancer;
-    std::shared_ptr<ReportingETL const> const& etl;
-    std::shared_ptr<WsBase> session;
-    Backend::LedgerRange const& range;
-    Counters& counters;
-    std::string clientIp;
-
-    Context(
-        boost::asio::yield_context& yield_,
-        std::string const& command_,
-        std::uint32_t version_,
-        boost::json::object const& params_,
-        std::shared_ptr<BackendInterface const> const& backend_,
-        std::shared_ptr<SubscriptionManager> const& subscriptions_,
-        std::shared_ptr<ETLLoadBalancer> const& balancer_,
-        std::shared_ptr<ReportingETL const> const& etl_,
-        std::shared_ptr<WsBase> const& session_,
-        util::TagDecoratorFactory const& tagFactory_,
-        Backend::LedgerRange const& range_,
-        Counters& counters_,
-        std::string const& clientIp_);
-};
 
 struct AccountCursor
 {
@@ -105,61 +77,131 @@ struct AccountCursor
 
 using Result = std::variant<Status, boost::json::object>;
 
-std::optional<Context>
+std::optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
     std::shared_ptr<WsBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
-    Counters& counters,
     std::string const& clientIp);
 
-std::optional<Context>
+std::optional<Web::Context>
 make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<BackendInterface const> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
-    Counters& counters,
     std::string const& clientIp);
 
-Result
-buildResponse(Context const& ctx);
+/**
+ * @brief The RPC engine that ties all RPC-related functionality together
+ */
+class RPCEngine
+{
+    std::shared_ptr<BackendInterface> backend_;
+    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::reference_wrapper<clio::DOSGuard const> dosGuard_;
+    std::reference_wrapper<WorkQueue> workQueue_;
+    std::reference_wrapper<Counters> counters_;
 
-bool
-validHandler(std::string const& method);
+    HandlerTable handlerTable_;
 
-bool
-isClioOnly(std::string const& method);
+public:
+    RPCEngine(
+        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<SubscriptionManager> const& subscriptions,
+        std::shared_ptr<ETLLoadBalancer> const& balancer,
+        std::shared_ptr<ReportingETL> const& etl,
+        clio::DOSGuard const& dosGuard,
+        WorkQueue& workQueue,
+        Counters& counters,
+        std::shared_ptr<HandlerProvider const> const& handlerProvider);
 
-Status
-getLimit(RPC::Context const& context, std::uint32_t& limit);
+    static std::shared_ptr<RPCEngine>
+    make_RPCEngine(
+        clio::Config const& config,
+        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<SubscriptionManager> const& subscriptions,
+        std::shared_ptr<ETLLoadBalancer> const& balancer,
+        std::shared_ptr<ReportingETL> const& etl,
+        clio::DOSGuard const& dosGuard,
+        WorkQueue& workQueue,
+        Counters& counters,
+        std::shared_ptr<HandlerProvider const> const& handlerProvider);
+
+    /**
+     * @brief Main request processor routine
+     * @param ctx The @ref Context of the request
+     */
+    Result
+    buildResponse(Web::Context const& ctx);
+
+    /**
+     * @brief Used to schedule request processing onto the work queue
+     * @param func The lambda to execute when this request is handled
+     * @param ip The ip address for which this request is being executed
+     */
+    template <typename Fn>
+    bool
+    post(Fn&& func, std::string const& ip)
+    {
+        return workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
+    }
+
+    /**
+     * @brief Notify the system that specified method was executed
+     * @param method
+     * @param duration The time it took to execute the method specified in
+     * microseconds
+     */
+    void
+    notifyComplete(std::string const& method, std::chrono::microseconds const& duration);
+
+    /**
+     * @brief Notify the system that specified method failed to execute
+     * @param method
+     */
+    void
+    notifyErrored(std::string const& method);
+
+    /**
+     * @brief Notify the system that specified method execution was forwarded to rippled
+     * @param method
+     */
+    void
+    notifyForwarded(std::string const& method);
+
+private:
+    bool
+    shouldForwardToRippled(Web::Context const& ctx) const;
+
+    bool
+    isClioOnly(std::string const& method) const;
+
+    bool
+    validHandler(std::string const& method) const;
+};
 
 template <class T>
 void
-logDuration(Context const& ctx, T const& dur)
+logDuration(Web::Context const& ctx, T const& dur)
 {
+    using boost::json::serialize;
+
     static clio::Logger log{"RPC"};
-    std::stringstream ss;
-    ss << ctx.tag()
-       << "Request processing duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
-       << " milliseconds. request = " << ctx.params;
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+    auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+    auto const msg =
+        fmt::format("Request processing duration = {} milliseconds. request = {}", millis, serialize(ctx.params));
+
     if (seconds > 10)
-        log.error() << ss.str();
+        log.error() << ctx.tag() << msg;
     else if (seconds > 1)
-        log.warn() << ss.str();
+        log.warn() << ctx.tag() << msg;
     else
-        log.info() << ss.str();
+        log.info() << ctx.tag() << msg;
 }
 
 }  // namespace RPC

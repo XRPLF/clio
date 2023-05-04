@@ -23,7 +23,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/impl/Processors.h>
 
-namespace RPCng {
+namespace RPC {
 
 /**
  * @brief A type-erased Handler that can contain any (NextGen) RPC handler class
@@ -39,10 +39,8 @@ public:
      * @brief Type-erases any handler class.
      *
      * @tparam HandlerType The real type of wrapped handler class
-     * @tparam ProcessingStrategy A strategy that implements how processing of
-     * JSON is to be done
-     * @param handler The handler to wrap. Required to fulfil the @ref Handler
-     * concept.
+     * @tparam ProcessingStrategy A strategy that implements how processing of JSON is to be done
+     * @param handler The handler to wrap. Required to fulfil the @ref Handler concept.
      */
     template <Handler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
@@ -54,6 +52,7 @@ public:
     AnyHandler(AnyHandler const& other) : pimpl_{other.pimpl_->clone()}
     {
     }
+
     AnyHandler&
     operator=(AnyHandler const& rhs)
     {
@@ -61,6 +60,7 @@ public:
         pimpl_.swap(copy.pimpl_);
         return *this;
     }
+
     AnyHandler(AnyHandler&&) = default;
     AnyHandler&
     operator=(AnyHandler&&) = default;
@@ -69,7 +69,7 @@ public:
      * @brief Process incoming JSON by the stored handler
      *
      * @param value The JSON to process
-     * @return JSON result or @ref RPC::Status on error
+     * @return JSON result or @ref Status on error
      */
     [[nodiscard]] ReturnType
     process(boost::json::value const& value) const
@@ -78,11 +78,10 @@ public:
     }
 
     /**
-     * @brief Process incoming JSON by the stored handler in a provided
-     * coroutine
+     * @brief Process incoming JSON by the stored handler in a provided coroutine
      *
      * @param value The JSON to process
-     * @return JSON result or @ref RPC::Status on error
+     * @return JSON result or @ref Status on error
      */
     [[nodiscard]] ReturnType
     process(boost::json::value const& value, Context const& ctx) const
@@ -138,4 +137,4 @@ private:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace RPCng
+}  // namespace RPC

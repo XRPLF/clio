@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,24 +17,29 @@
 */
 //==============================================================================
 
-#include <cassert>
+#include <rpc/RPCHelpers.h>
+#include <rpc/handlers/Random.h>
 
 #include <ripple/beast/utility/rngfill.h>
 #include <ripple/crypto/csprng.h>
 
-#include <rpc/RPCHelpers.h>
-
 namespace RPC {
 
-Result
-doRandom(Context const& context)
+RandomHandler::Result
+RandomHandler::process() const
 {
     ripple::uint256 rand;
-
     beast::rngfill(rand.begin(), rand.size(), ripple::crypto_prng());
-    boost::json::object result;
-    result[JS(random)] = ripple::strHex(rand);
-    return result;
+
+    return Output{ripple::strHex(rand)};
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, RandomHandler::Output const& output)
+{
+    jv = {
+        {JS(random), output.random},
+    };
 }
 
 }  // namespace RPC

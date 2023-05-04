@@ -47,7 +47,8 @@ getWarningInfo(WarningCode code)
          "want to talk to rippled, include 'ledger_index':'current' in your "
          "request"},
         {warnRPC_OUTDATED, "This server may be out of date"},
-        {warnRPC_RATE_LIMIT, "You are about to be rate limited"}};
+        {warnRPC_RATE_LIMIT, "You are about to be rate limited"},
+    };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
     if (auto it = find_if(begin(infos), end(infos), matchByCode); it != end(infos))
@@ -59,10 +60,12 @@ getWarningInfo(WarningCode code)
 boost::json::object
 makeWarning(WarningCode code)
 {
-    boost::json::object json;
+    auto json = boost::json::object{};
     auto const& info = getWarningInfo(code);
+
     json["id"] = code;
     json["message"] = static_cast<string>(info.message);
+
     return json;
 }
 
@@ -94,6 +97,7 @@ makeError(RippledError err, optional<string_view> customError, optional<string_v
     json["error_message"] = customMessage.value_or(info.message.c_str()).data();
     json["status"] = "error";
     json["type"] = "response";
+
     return json;
 }
 
@@ -108,6 +112,7 @@ makeError(ClioError err, optional<string_view> customError, optional<string_view
     json["error_message"] = customMessage.value_or(info.message).data();
     json["status"] = "error";
     json["type"] = "response";
+
     return json;
 }
 
@@ -120,9 +125,7 @@ makeError(Status const& status)
         overloadSet{
             [&status, &wrapOptional](RippledError err) {
                 if (err == ripple::rpcUNKNOWN)
-                {
                     return boost::json::object{{"error", status.message}, {"type", "response"}, {"status", "error"}};
-                }
 
                 return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },
@@ -131,13 +134,11 @@ makeError(Status const& status)
             },
         },
         status.code);
+
     if (status.extraInfo)
-    {
         for (auto& [key, value] : status.extraInfo.value())
-        {
             res[key] = value;
-        }
-    }
+
     return res;
 }
 

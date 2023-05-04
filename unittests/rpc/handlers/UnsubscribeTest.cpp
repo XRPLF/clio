@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <rpc/common/AnyHandler.h>
-#include <rpc/ngHandlers/Unsubscribe.h>
+#include <rpc/handlers/Unsubscribe.h>
 #include <util/Fixtures.h>
 #include <util/MockSubscriptionManager.h>
 #include <util/MockWsBase.h>
@@ -26,7 +26,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPCng;
+using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
 

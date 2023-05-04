@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,98 +17,110 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <boost/json.hpp>
-
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
-
-// {
-//   account: <ident>,
-//   strict: <bool>        // optional (default false)
-//                         //   if true only allow public keys and addresses.
-//   ledger_hash : <ledger>
-//   ledger_index : <ledger_index>
-//   signer_lists : <bool> // optional (default false)
-//                         //   if true return SignerList(s).
-//   queue : <bool>        // optional (default false)
-//                         //   if true return information about transactions
-//                         //   in the current TxQ, only if the requested
-//                         //   ledger is open. Otherwise if true, returns an
-//                         //   error.
-// }
+#include <rpc/handlers/AccountInfo.h>
 
 namespace RPC {
-
-Result
-doAccountInfo(Context const& context)
+AccountInfoHandler::Result
+AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
+    if (!input.account && !input.ident)
+        return Error{Status{RippledError::rpcACT_MALFORMED}};
 
-    std::string strIdent;
-    if (request.contains(JS(account)))
-        strIdent = request.at(JS(account)).as_string().c_str();
-    else if (request.contains(JS(ident)))
-        strIdent = request.at(JS(ident)).as_string().c_str();
-    else
-        return Status{RippledError::rpcACT_MALFORMED};
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    // We only need to fetch the ledger header because the ledger hash is
-    // supposed to be included in the response. The ledger sequence is specified
-    // in the request
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const accountStr = input.account.value_or(input.ident.value_or(""));
+    auto const accountID = accountFromStringStrict(accountStr);
+    auto const accountKeylet = ripple::keylet::account(*accountID);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
-    // Get info on account.
-    auto accountID = accountFromStringStrict(strIdent);
-    if (!accountID)
-        return Status{RippledError::rpcACT_MALFORMED};
+    if (!accountLedgerObject)
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto key = ripple::keylet::account(accountID.value());
-    std::optional<std::vector<unsigned char>> dbResponse =
-        context.backend->fetchLedgerObject(key.key, lgrInfo.seq, context.yield);
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key};
 
-    if (!dbResponse)
-        return Status{RippledError::rpcACT_NOT_FOUND};
-
-    ripple::STLedgerEntry sle{ripple::SerialIter{dbResponse->data(), dbResponse->size()}, key.key};
-
-    if (!key.check(sle))
-        return Status{RippledError::rpcDB_DESERIALIZATION};
-
-    response[JS(account_data)] = toJson(sle);
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
+    if (!accountKeylet.check(sle))
+        return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
     // Return SignerList(s) if that is requested.
-    if (request.contains(JS(signer_lists)) && request.at(JS(signer_lists)).as_bool())
+    if (input.signerLists)
     {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
-        boost::json::array signerList;
-        auto signersKey = ripple::keylet::signers(*accountID);
+        auto const signersKey = ripple::keylet::signers(*accountID);
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const signers = context.backend->fetchLedgerObject(signersKey.key, lgrInfo.seq, context.yield);
+        auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
+        std::vector<ripple::STLedgerEntry> signerList;
+
         if (signers)
         {
-            ripple::STLedgerEntry sleSigners{ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
-            if (!signersKey.check(sleSigners))
-                return Status{RippledError::rpcDB_DESERIALIZATION};
+            ripple::STLedgerEntry const sleSigners{
+                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
 
-            signerList.push_back(toJson(sleSigners));
+            if (!signersKey.check(sleSigners))
+                return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
+
+            signerList.push_back(sleSigners);
         }
 
-        response[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signerList);
+        return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, signerList);
     }
 
-    return response;
+    return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle);
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandler::Output const& output)
+{
+    jv = boost::json::object{
+        {JS(account_data), toJson(output.accountData)},
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+    };
+
+    if (output.signerLists)
+    {
+        jv.as_object()[JS(signer_lists)] = boost::json::array();
+        for (auto const& signerList : output.signerLists.value())
+            jv.as_object()[JS(signer_lists)].as_array().push_back(toJson(signerList));
+    }
+}
+
+AccountInfoHandler::Input
+tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::value const& jv)
+{
+    auto input = AccountInfoHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    if (jsonObject.contains(JS(ident)))
+        input.ident = jsonObject.at(JS(ident)).as_string().c_str();
+
+    if (jsonObject.contains(JS(account)))
+        input.account = jsonObject.at(JS(account)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    if (jsonObject.contains(JS(signer_lists)))
+        input.signerLists = jsonObject.at(JS(signer_lists)).as_bool();
+
+    return input;
 }
 
 }  // namespace RPC

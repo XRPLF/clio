@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,133 +17,144 @@
 */
 //==============================================================================
 
-#include <ripple/app/ledger/Ledger.h>
-#include <ripple/app/paths/TrustLine.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-#include <algorithm>
-#include <rpc/RPCHelpers.h>
-
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <rpc/handlers/AccountOffers.h>
 
 namespace RPC {
 
 void
-addOffer(boost::json::array& offersJson, ripple::SLE const& offer)
+AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const
 {
-    auto quality = getQuality(offer.getFieldH256(ripple::sfBookDirectory));
-    ripple::STAmount rate = ripple::amountFromQuality(quality);
+    auto offer = AccountOffersHandler::Offer();
+    offer.takerPays = offerSle.getFieldAmount(ripple::sfTakerPays);
+    offer.takerGets = offerSle.getFieldAmount(ripple::sfTakerGets);
+    offer.seq = offerSle.getFieldU32(ripple::sfSequence);
+    offer.flags = offerSle.getFieldU32(ripple::sfFlags);
 
-    ripple::STAmount takerPays = offer.getFieldAmount(ripple::sfTakerPays);
-    ripple::STAmount takerGets = offer.getFieldAmount(ripple::sfTakerGets);
+    auto const quality = getQuality(offerSle.getFieldH256(ripple::sfBookDirectory));
+    auto const rate = ripple::amountFromQuality(quality);
+    offer.quality = rate.getText();
 
-    boost::json::object obj;
+    if (offerSle.isFieldPresent(ripple::sfExpiration))
+        offer.expiration = offerSle.getFieldU32(ripple::sfExpiration);
 
-    if (!takerPays.native())
-    {
-        obj[JS(taker_pays)] = boost::json::value(boost::json::object_kind);
-        boost::json::object& takerPaysJson = obj.at(JS(taker_pays)).as_object();
-
-        takerPaysJson[JS(value)] = takerPays.getText();
-        takerPaysJson[JS(currency)] = ripple::to_string(takerPays.getCurrency());
-        takerPaysJson[JS(issuer)] = ripple::to_string(takerPays.getIssuer());
-    }
-    else
-    {
-        obj[JS(taker_pays)] = takerPays.getText();
-    }
-
-    if (!takerGets.native())
-    {
-        obj[JS(taker_gets)] = boost::json::value(boost::json::object_kind);
-        boost::json::object& takerGetsJson = obj.at(JS(taker_gets)).as_object();
-
-        takerGetsJson[JS(value)] = takerGets.getText();
-        takerGetsJson[JS(currency)] = ripple::to_string(takerGets.getCurrency());
-        takerGetsJson[JS(issuer)] = ripple::to_string(takerGets.getIssuer());
-    }
-    else
-    {
-        obj[JS(taker_gets)] = takerGets.getText();
-    }
-
-    obj[JS(seq)] = offer.getFieldU32(ripple::sfSequence);
-    obj[JS(flags)] = offer.getFieldU32(ripple::sfFlags);
-    obj[JS(quality)] = rate.getText();
-    if (offer.isFieldPresent(ripple::sfExpiration))
-        obj[JS(expiration)] = offer.getFieldU32(ripple::sfExpiration);
-
-    offersJson.push_back(obj);
+    offers.push_back(offer);
 };
 
-Result
-doAccountOffers(Context const& context)
+AccountOffersHandler::Result
+AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const accountID = accountFromStringStrict(input.account);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
-    ripple::AccountID accountID;
-    if (auto const status = getAccount(request, accountID); status)
-        return status;
+    if (!accountLedgerObject)
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto rawAcct =
-        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
-
-    if (!rawAcct)
-        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
-
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
-
-    std::optional<std::string> marker = {};
-    if (request.contains(JS(marker)))
-    {
-        if (!request.at(JS(marker)).is_string())
-            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
-
-        marker = request.at(JS(marker)).as_string().c_str();
-    }
-
-    response[JS(account)] = ripple::to_string(accountID);
-    response[JS(limit)] = limit;
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
-    response[JS(offers)] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonLines = response.at(JS(offers)).as_array();
+    Output response;
+    response.account = ripple::to_string(*accountID);
+    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerIndex = lgrInfo.seq;
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltOFFER)
-        {
-            addOffer(jsonLines, sle);
-        }
+            addOffer(response.offers, sle);
 
         return true;
     };
 
-    auto next =
-        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
+    auto const next = ngTraverseOwnedNodes(
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
-    if (auto status = std::get_if<RPC::Status>(&next))
-        return *status;
+    if (auto const status = std::get_if<Status>(&next))
+        return Error{*status};
 
-    auto nextMarker = std::get<RPC::AccountCursor>(next);
+    auto const nextMarker = std::get<AccountCursor>(next);
 
     if (nextMarker.isNonZero())
-        response[JS(marker)] = nextMarker.toString();
+        response.marker = nextMarker.toString();
 
     return response;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHandler::Output const& output)
+{
+    jv = {
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(account), output.account},
+        {JS(offers), boost::json::value_from(output.offers)},
+    };
+
+    if (output.marker)
+        jv.as_object()[JS(marker)] = *output.marker;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHandler::Offer const& offer)
+{
+    jv = {
+        {JS(seq), offer.seq},
+        {JS(flags), offer.flags},
+        {JS(quality), offer.quality},
+    };
+
+    auto& jsonObject = jv.as_object();
+
+    if (offer.expiration)
+        jsonObject[JS(expiration)] = *offer.expiration;
+
+    auto const convertAmount = [&](const char* field, ripple::STAmount const& amount) {
+        if (amount.native())
+            jsonObject[field] = amount.getText();
+        else
+            jsonObject[field] = {
+                {JS(currency), ripple::to_string(amount.getCurrency())},
+                {JS(issuer), ripple::to_string(amount.getIssuer())},
+                {JS(value), amount.getText()},
+            };
+    };
+
+    convertAmount(JS(taker_pays), offer.takerPays);
+    convertAmount(JS(taker_gets), offer.takerGets);
+}
+
+AccountOffersHandler::Input
+tag_invoke(boost::json::value_to_tag<AccountOffersHandler::Input>, boost::json::value const& jv)
+{
+    auto input = AccountOffersHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.account = jsonObject.at(JS(account)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+    {
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+    }
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jsonObject.at(JS(limit)).as_int64();
+
+    if (jsonObject.contains(JS(marker)))
+        input.marker = jsonObject.at(JS(marker)).as_string().c_str();
+
+    return input;
 }
 
 }  // namespace RPC

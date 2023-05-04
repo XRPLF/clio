@@ -27,29 +27,30 @@
 
 class WsBase;
 class SubscriptionManager;
-namespace RPCng {
+
+namespace RPC {
 
 /**
  * @brief Return type used for Validators that can return error but don't have
  * specific value to return
  */
-using MaybeError = util::Expected<void, RPC::Status>;
+using MaybeError = util::Expected<void, Status>;
 
 /**
  * @brief The type that represents just the error part of @ref MaybeError
  */
-using Error = util::Unexpected<RPC::Status>;
+using Error = util::Unexpected<Status>;
 
 /**
  * @brief Return type for each individual handler
  */
 template <typename OutputType>
-using HandlerReturnType = util::Expected<OutputType, RPC::Status>;
+using HandlerReturnType = util::Expected<OutputType, Status>;
 
 /**
  * @brief The final return type out of RPC engine
  */
-using ReturnType = util::Expected<boost::json::value, RPC::Status>;
+using ReturnType = util::Expected<boost::json::value, Status>;
 
 struct RpcSpec;
 struct FieldSpec;
@@ -70,10 +71,27 @@ struct Context
     std::string clientIp;
 };
 
+class AnyHandler;
+
+class HandlerProvider
+{
+public:
+    virtual ~HandlerProvider() = default;
+
+    virtual bool
+    contains(std::string const& method) const = 0;
+
+    virtual std::optional<AnyHandler>
+    getHandler(std::string const& command) const = 0;
+
+    virtual bool
+    isClioOnly(std::string const& command) const = 0;
+};
+
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput const&)
 {
     jv = boost::json::object{};
 }
 
-}  // namespace RPCng
+}  // namespace RPC

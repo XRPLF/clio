@@ -27,8 +27,8 @@
 using namespace testing;
 using namespace std;
 
-using namespace RPCng;
-using namespace RPCng::validation;
+using namespace RPC;
+using namespace RPC::validation;
 using namespace unittests::detail;
 
 namespace json = boost::json;
@@ -40,7 +40,7 @@ class RPCDefaultProcessorTest : public NoLoggerFixture
 TEST_F(RPCDefaultProcessorTest, ValidInput)
 {
     HandlerMock handler;
-    RPCng::detail::DefaultProcessor<HandlerMock> processor;
+    RPC::detail::DefaultProcessor<HandlerMock> processor;
 
     auto const input = json::parse(R"({ "something": "works" })");
     auto const spec = RpcSpec{{"something", Required{}}};
@@ -55,7 +55,7 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
 TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 {
     HandlerWithoutInputMock handler;
-    RPCng::detail::DefaultProcessor<HandlerWithoutInputMock> processor;
+    RPC::detail::DefaultProcessor<HandlerWithoutInputMock> processor;
 
     auto const data = InOutFake{"works"};
     auto const input = json::parse(R"({})");
@@ -68,7 +68,7 @@ TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 TEST_F(RPCDefaultProcessorTest, InvalidInput)
 {
     HandlerMock handler;
-    RPCng::detail::DefaultProcessor<HandlerMock> processor;
+    RPC::detail::DefaultProcessor<HandlerMock> processor;
 
     auto const input = json::parse(R"({ "other": "nope" })");
     auto const spec = RpcSpec{{"something", Required{}}};

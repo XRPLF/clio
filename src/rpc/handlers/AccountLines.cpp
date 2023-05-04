@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,146 +17,107 @@
 */
 //==============================================================================
 
-#include <ripple/app/ledger/Ledger.h>
-#include <ripple/app/paths/TrustLine.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-
-#include <algorithm>
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-#include <rpc/RPCHelpers.h>
+#include <rpc/RPC.h>
+#include <rpc/handlers/AccountLines.h>
 
 namespace RPC {
 
 void
-addLine(
-    boost::json::array& jsonLines,
-    ripple::SLE const& line,
+AccountLinesHandler::addLine(
+    std::vector<LineResponse>& lines,
+    ripple::SLE const& lineSle,
     ripple::AccountID const& account,
-    std::optional<ripple::AccountID> const& peerAccount)
+    std::optional<ripple::AccountID> const& peerAccount) const
 {
-    auto flags = line.getFieldU32(ripple::sfFlags);
-    auto lowLimit = line.getFieldAmount(ripple::sfLowLimit);
-    auto highLimit = line.getFieldAmount(ripple::sfHighLimit);
-    auto lowID = lowLimit.getIssuer();
-    auto highID = highLimit.getIssuer();
-    auto lowQualityIn = line.getFieldU32(ripple::sfLowQualityIn);
-    auto lowQualityOut = line.getFieldU32(ripple::sfLowQualityOut);
-    auto highQualityIn = line.getFieldU32(ripple::sfHighQualityIn);
-    auto highQualityOut = line.getFieldU32(ripple::sfHighQualityOut);
-    auto balance = line.getFieldAmount(ripple::sfBalance);
+    auto const flags = lineSle.getFieldU32(ripple::sfFlags);
+    auto const lowLimit = lineSle.getFieldAmount(ripple::sfLowLimit);
+    auto const highLimit = lineSle.getFieldAmount(ripple::sfHighLimit);
+    auto const lowID = lowLimit.getIssuer();
+    auto const highID = highLimit.getIssuer();
+    auto const lowQualityIn = lineSle.getFieldU32(ripple::sfLowQualityIn);
+    auto const lowQualityOut = lineSle.getFieldU32(ripple::sfLowQualityOut);
+    auto const highQualityIn = lineSle.getFieldU32(ripple::sfHighQualityIn);
+    auto const highQualityOut = lineSle.getFieldU32(ripple::sfHighQualityOut);
+    auto balance = lineSle.getFieldAmount(ripple::sfBalance);
 
-    bool viewLowest = (lowID == account);
-    auto lineLimit = viewLowest ? lowLimit : highLimit;
-    auto lineLimitPeer = !viewLowest ? lowLimit : highLimit;
-    auto lineAccountIDPeer = !viewLowest ? lowID : highID;
-    auto lineQualityIn = viewLowest ? lowQualityIn : highQualityIn;
-    auto lineQualityOut = viewLowest ? lowQualityOut : highQualityOut;
+    auto const viewLowest = (lowID == account);
+    auto const lineLimit = viewLowest ? lowLimit : highLimit;
+    auto const lineLimitPeer = not viewLowest ? lowLimit : highLimit;
+    auto const lineAccountIDPeer = not viewLowest ? lowID : highID;
+    auto const lineQualityIn = viewLowest ? lowQualityIn : highQualityIn;
+    auto const lineQualityOut = viewLowest ? lowQualityOut : highQualityOut;
 
     if (peerAccount && peerAccount != lineAccountIDPeer)
         return;
 
-    if (!viewLowest)
+    if (not viewLowest)
         balance.negate();
 
-    bool lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineAuthPeer = flags & (!viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineNoRipplePeer = flags & (!viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool lineFreezePeer = flags & (!viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool const lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool const lineAuthPeer = flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
+    bool const lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool const lineNoRipplePeer = flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+    bool const lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool const lineFreezePeer = flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
 
-    ripple::STAmount const& saBalance(balance);
-    ripple::STAmount const& saLimit(lineLimit);
-    ripple::STAmount const& saLimitPeer(lineLimitPeer);
+    ripple::STAmount const& saBalance = balance;
+    ripple::STAmount const& saLimit = lineLimit;
+    ripple::STAmount const& saLimitPeer = lineLimitPeer;
 
-    boost::json::object jPeer;
-    jPeer[JS(account)] = ripple::to_string(lineAccountIDPeer);
-    jPeer[JS(balance)] = saBalance.getText();
-    jPeer[JS(currency)] = ripple::to_string(saBalance.issue().currency);
-    jPeer[JS(limit)] = saLimit.getText();
-    jPeer[JS(limit_peer)] = saLimitPeer.getText();
-    jPeer[JS(quality_in)] = lineQualityIn;
-    jPeer[JS(quality_out)] = lineQualityOut;
+    LineResponse line;
+    line.account = ripple::to_string(lineAccountIDPeer);
+    line.balance = saBalance.getText();
+    line.currency = ripple::to_string(saBalance.issue().currency);
+    line.limit = saLimit.getText();
+    line.limitPeer = saLimitPeer.getText();
+    line.qualityIn = lineQualityIn;
+    line.qualityOut = lineQualityOut;
+
     if (lineAuth)
-        jPeer[JS(authorized)] = true;
-    if (lineAuthPeer)
-        jPeer[JS(peer_authorized)] = true;
-    if (lineFreeze)
-        jPeer[JS(freeze)] = true;
-    if (lineFreezePeer)
-        jPeer[JS(freeze_peer)] = true;
-    jPeer[JS(no_ripple)] = lineNoRipple;
-    jPeer[JS(no_ripple_peer)] = lineNoRipplePeer;
+        line.authorized = true;
 
-    jsonLines.push_back(jPeer);
+    if (lineAuthPeer)
+        line.peerAuthorized = true;
+
+    if (lineFreeze)
+        line.freeze = true;
+
+    if (lineFreezePeer)
+        line.freezePeer = true;
+
+    line.noRipple = lineNoRipple;
+    line.noRipplePeer = lineNoRipplePeer;
+    lines.push_back(line);
 }
 
-Result
-doAccountLines(Context const& context)
+AccountLinesHandler::Result
+AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const accountID = accountFromStringStrict(input.account);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
-    ripple::AccountID accountID;
-    if (auto const status = getAccount(request, accountID); status)
-        return status;
+    if (not accountLedgerObject)
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto rawAcct =
-        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
+    auto const peerAccountID = input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
 
-    if (!rawAcct)
-        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
+    Output response;
+    response.lines.reserve(input.limit);
 
-    std::optional<ripple::AccountID> peerAccount;
-    if (auto const status = getOptionalAccount(request, peerAccount, JS(peer)); status)
-        return status;
-
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
-
-    std::optional<std::string> marker = {};
-    if (request.contains(JS(marker)))
-    {
-        if (not request.at(JS(marker)).is_string())
-            return Status{RippledError::rpcINVALID_PARAMS, "markerNotString"};
-
-        marker = request.at(JS(marker)).as_string().c_str();
-    }
-
-    auto ignoreDefault = false;
-    if (request.contains(JS(ignore_default)))
-    {
-        if (not request.at(JS(ignore_default)).is_bool())
-            return Status{RippledError::rpcINVALID_PARAMS, "ignoreDefaultNotBool"};
-
-        ignoreDefault = request.at(JS(ignore_default)).as_bool();
-    }
-
-    response[JS(account)] = ripple::to_string(accountID);
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
-    response[JS(limit)] = limit;
-    response[JS(lines)] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonLines = response.at(JS(lines)).as_array();
-
-    auto const addToResponse = [&](ripple::SLE&& sle) -> void {
+    auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
             auto ignore = false;
-            if (ignoreDefault)
+            if (input.ignoreDefault)
             {
                 if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
                     ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve);
@@ -164,23 +125,109 @@ doAccountLines(Context const& context)
                     ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve);
             }
 
-            if (!ignore)
-                addLine(jsonLines, sle, accountID, peerAccount);
+            if (not ignore)
+                addLine(response.lines, sle, *accountID, peerAccountID);
         }
     };
 
-    auto next =
-        traverseOwnedNodes(*context.backend, accountID, lgrInfo.seq, limit, marker, context.yield, addToResponse);
+    auto const next = ngTraverseOwnedNodes(
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+    auto const nextMarker = std::get<AccountCursor>(next);
 
-    if (auto status = std::get_if<RPC::Status>(&next))
-        return *status;
-
-    auto nextMarker = std::get<RPC::AccountCursor>(next);
+    response.account = input.account;
+    response.limit = input.limit;  // not documented,
+                                   // https://github.com/XRPLF/xrpl-dev-portal/issues/1838
+    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerIndex = lgrInfo.seq;
 
     if (nextMarker.isNonZero())
-        response[JS(marker)] = nextMarker.toString();
+        response.marker = nextMarker.toString();
 
     return response;
+}
+
+AccountLinesHandler::Input
+tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::value const& jv)
+{
+    auto input = AccountLinesHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.account = jv.at(JS(account)).as_string().c_str();
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jv.at(JS(limit)).as_int64();
+
+    if (jsonObject.contains(JS(marker)))
+        input.marker = jv.at(JS(marker)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(peer)))
+        input.peer = jv.at(JS(peer)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ignore_default)))
+        input.ignoreDefault = jv.at(JS(ignore_default)).as_bool();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountLinesHandler::Output const& output)
+{
+    auto obj = boost::json::object{
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(limit), output.limit},
+        {JS(lines), output.lines},
+    };
+
+    if (output.marker)
+        obj[JS(marker)] = output.marker.value();
+
+    jv = std::move(obj);
+}
+
+void
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    [[maybe_unused]] AccountLinesHandler::LineResponse const& line)
+{
+    auto obj = boost::json::object{
+        {JS(account), line.account},
+        {JS(balance), line.balance},
+        {JS(currency), line.currency},
+        {JS(limit), line.limit},
+        {JS(limit_peer), line.limitPeer},
+        {JS(quality_in), line.qualityIn},
+        {JS(quality_out), line.qualityOut},
+    };
+
+    obj[JS(no_ripple)] = line.noRipple;
+    obj[JS(no_ripple_peer)] = line.noRipplePeer;
+
+    if (line.authorized)
+        obj[JS(authorized)] = *(line.authorized);
+
+    if (line.peerAuthorized)
+        obj[JS(peer_authorized)] = *(line.peerAuthorized);
+
+    if (line.freeze)
+        obj[JS(freeze)] = *(line.freeze);
+
+    if (line.freezePeer)
+        obj[JS(freeze_peer)] = *(line.freezePeer);
+
+    jv = std::move(obj);
 }
 
 }  // namespace RPC

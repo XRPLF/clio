@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -18,96 +18,84 @@
 //==============================================================================
 
 #include <ripple/protocol/TxFlags.h>
-#include <rpc/RPCHelpers.h>
+#include <rpc/RPC.h>
+#include <rpc/handlers/NoRippleCheck.h>
+
+#include <fmt/core.h>
 
 namespace RPC {
 
-boost::json::object
-getBaseTx(ripple::AccountID const& accountID, std::uint32_t accountSeq, ripple::Fees const& fees)
+NoRippleCheckHandler::Result
+NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& ctx) const
 {
-    boost::json::object tx;
-    tx[JS(Sequence)] = accountSeq;
-    tx[JS(Account)] = ripple::toBase58(accountID);
-    tx[JS(Fee)] = RPC::toBoostJson(fees.units.jsonClipped());
-    return tx;
-}
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-Result
-doNoRippleCheck(Context const& context)
-{
-    auto const& request = context.params;
+    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    ripple::AccountID accountID;
-    if (auto const status = getAccount(request, accountID); status)
-        return status;
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const accountID = accountFromStringStrict(input.account);
+    auto const keylet = ripple::keylet::account(*accountID).key;
+    auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
 
-    std::string role = getRequiredString(request, "role");
-    bool roleGateway = false;
-    {
-        if (role == "gateway")
-            roleGateway = true;
-        else if (role != "user")
-            return Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"};
-    }
-
-    std::uint32_t limit = 300;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
-
-    bool includeTxs = getBool(request, "transactions", false);
-
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
-
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
-    std::optional<ripple::Fees> fees =
-        includeTxs ? context.backend->fetchFees(lgrInfo.seq, context.yield) : std::nullopt;
-
-    boost::json::array transactions;
-
-    auto keylet = ripple::keylet::account(accountID);
-    auto accountObj = context.backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield);
     if (!accountObj)
-        throw AccountNotFoundError(ripple::toBase58(accountID));
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    ripple::SerialIter it{accountObj->data(), accountObj->size()};
-    ripple::SLE sle{it, keylet.key};
+    auto it = ripple::SerialIter{accountObj->data(), accountObj->size()};
+    auto sle = ripple::SLE{it, keylet};
+    auto accountSeq = sle.getFieldU32(ripple::sfSequence);
+    bool const bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
+    auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
-    std::uint32_t accountSeq = sle.getFieldU32(ripple::sfSequence);
+    auto output = NoRippleCheckHandler::Output();
 
-    boost::json::array problems;
-    bool bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
-    if (bDefaultRipple & !roleGateway)
+    if (input.transactions)
+        output.transactions.emplace(boost::json::array());
+
+    auto const getBaseTx = [&](ripple::AccountID const& accountID, std::uint32_t accountSeq) {
+        boost::json::object tx;
+        tx[JS(Sequence)] = accountSeq;
+        tx[JS(Account)] = ripple::toBase58(accountID);
+        tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
+
+        return tx;
+    };
+
+    if (bDefaultRipple && !input.roleGateway)
     {
-        problems.push_back(
+        output.problems.push_back(
             "You appear to have set your default ripple flag even though "
             "you "
             "are not a gateway. This is not recommended unless you are "
             "experimenting");
     }
-    else if (roleGateway & !bDefaultRipple)
+    else if (input.roleGateway && !bDefaultRipple)
     {
-        problems.push_back("You should immediately set your default ripple flag");
-        if (includeTxs)
+        output.problems.push_back("You should immediately set your default ripple flag");
+
+        if (input.transactions)
         {
-            auto tx = getBaseTx(accountID, accountSeq++, *fees);
-            tx[JS(TransactionType)] = JS(AccountSet);
-            tx[JS(SetFlag)] = 8;
-            transactions.push_back(tx);
+            auto tx = getBaseTx(*accountID, accountSeq++);
+            tx[JS(TransactionType)] = "AccountSet";
+            tx[JS(SetFlag)] = ripple::asfDefaultRipple;
+            output.transactions->push_back(tx);
         }
     }
 
-    traverseOwnedNodes(
-        *context.backend,
-        accountID,
+    auto limit = input.limit;
+
+    ngTraverseOwnedNodes(
+        *sharedPtrBackend_,
+        *accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
-        context.yield,
-        [roleGateway, includeTxs, &fees, &transactions, &accountSeq, &limit, &accountID, &problems](
-            ripple::SLE&& ownedItem) {
-            if (ownedItem.getType() == ripple::ltRIPPLE_STATE)
+        ctx.yield,
+        [&](ripple::SLE&& ownedItem) {
+            // don't push to result if limit is reached
+            if (limit != 0 && ownedItem.getType() == ripple::ltRIPPLE_STATE)
             {
                 bool const bLow = accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
 
@@ -116,12 +104,12 @@ doNoRippleCheck(Context const& context)
 
                 std::string problem;
                 bool needFix = false;
-                if (bNoRipple & roleGateway)
+                if (bNoRipple && input.roleGateway)
                 {
                     problem = "You should clear the no ripple flag on your ";
                     needFix = true;
                 }
-                else if (!bNoRipple & !roleGateway)
+                else if (!bNoRipple && !input.roleGateway)
                 {
                     problem =
                         "You should probably set the no ripple flag on "
@@ -130,41 +118,85 @@ doNoRippleCheck(Context const& context)
                 }
                 if (needFix)
                 {
+                    --limit;
+
                     ripple::AccountID peer =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit).getIssuer();
                     ripple::STAmount peerLimit =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
-                    problem += to_string(peerLimit.getCurrency());
-                    problem += " line to ";
-                    problem += to_string(peerLimit.getIssuer());
-                    problems.emplace_back(problem);
-                    if (includeTxs)
+
+                    problem += fmt::format(
+                        "{} line to {}", to_string(peerLimit.getCurrency()), to_string(peerLimit.getIssuer()));
+                    output.problems.emplace_back(problem);
+
+                    if (input.transactions)
                     {
                         ripple::STAmount limitAmount(
                             ownedItem.getFieldAmount(bLow ? ripple::sfLowLimit : ripple::sfHighLimit));
                         limitAmount.setIssuer(peer);
-                        auto tx = getBaseTx(accountID, accountSeq++, *fees);
-                        tx[JS(TransactionType)] = JS(TrustSet);
-                        tx[JS(LimitAmount)] = RPC::toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
-                        tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple : ripple::tfSetNoRipple;
-                        transactions.push_back(tx);
-                    }
 
-                    if (limit-- == 0)
-                        return false;
+                        auto tx = getBaseTx(*accountID, accountSeq++);
+
+                        tx[JS(TransactionType)] = "TrustSet";
+                        tx[JS(LimitAmount)] = toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
+                        tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple : ripple::tfSetNoRipple;
+
+                        output.transactions->push_back(tx);
+                    }
                 }
             }
+
             return true;
         });
 
-    boost::json::object response;
-    response[JS(ledger_index)] = lgrInfo.seq;
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response["problems"] = std::move(problems);
-    if (includeTxs)
-        response[JS(transactions)] = std::move(transactions);
+    output.ledgerIndex = lgrInfo.seq;
+    output.ledgerHash = ripple::strHex(lgrInfo.hash);
 
-    return response;
+    return output;
+}
+
+NoRippleCheckHandler::Input
+tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::value const& jv)
+{
+    auto input = NoRippleCheckHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.account = jsonObject.at(JS(account)).as_string().c_str();
+    input.roleGateway = jsonObject.at(JS(role)).as_string() == "gateway";
+
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jsonObject.at(JS(limit)).as_int64();
+
+    if (jsonObject.contains(JS(transactions)))
+        input.transactions = jsonObject.at(JS(transactions)).as_bool();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NoRippleCheckHandler::Output const& output)
+{
+    auto obj = boost::json::object{
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {"problems", output.problems},
+    };
+
+    if (output.transactions)
+        obj.emplace(JS(transactions), *(output.transactions));
+
+    jv = std::move(obj);
 }
 
 }  // namespace RPC

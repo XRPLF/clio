@@ -20,6 +20,8 @@
 #include <ripple/basics/StringUtilities.h>
 #include <backend/BackendInterface.h>
 #include <log/Logger.h>
+#include <rpc/Errors.h>
+#include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
 
@@ -484,7 +486,7 @@ parseStringAsUInt(std::string const& value)
 }
 
 std::variant<Status, ripple::LedgerInfo>
-ledgerInfoFromRequest(Context const& ctx)
+ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx)
 {
     auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
@@ -497,7 +499,7 @@ ledgerInfoFromRequest(Context const& ctx)
         if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
             return Status{RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
-        auto lgrInfo = ctx.backend->fetchLedgerByHash(ledgerHash, ctx.yield);
+        auto lgrInfo = backend->fetchLedgerByHash(ledgerHash, ctx.yield);
 
         if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
             return Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -529,7 +531,7 @@ ledgerInfoFromRequest(Context const& ctx)
     if (!ledgerSequence)
         return Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"};
 
-    auto lgrInfo = ctx.backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
+    auto lgrInfo = backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
         return Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -547,7 +549,7 @@ getLedgerInfoFromHashOrSeq(
     uint32_t maxSeq)
 {
     std::optional<ripple::LedgerInfo> lgrInfo;
-    auto const err = RPC::Status{RPC::RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+    auto const err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash)
     {
         // invoke uint256's constructor to parse the hex string , instead of
@@ -809,9 +811,13 @@ traverseOwnedNodes(
 }
 
 std::shared_ptr<ripple::SLE const>
-read(ripple::Keylet const& keylet, ripple::LedgerInfo const& lgrInfo, Context const& context)
+read(
+    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    ripple::Keylet const& keylet,
+    ripple::LedgerInfo const& lgrInfo,
+    Web::Context const& context)
 {
-    if (auto const blob = context.backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
+    if (auto const blob = backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
     {
         return std::make_shared<ripple::SLE const>(ripple::SerialIter{blob->data(), blob->size()}, keylet.key);
     }
@@ -1458,10 +1464,10 @@ getNFTID(boost::json::object const& request)
 // is. Split it out into some helper functions.
 std::variant<Status, boost::json::object>
 traverseTransactions(
-    Context const& context,
+    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    Web::Context const& context,
     std::function<Backend::TransactionsAndCursor(
         std::shared_ptr<Backend::BackendInterface const> const& backend,
-        std::uint32_t const,
         bool const,
         std::optional<Backend::TransactionsCursor> const&,
         boost::asio::yield_context& yield)> transactionFetcher)
@@ -1564,7 +1570,7 @@ traverseTransactions(
         if (request.contains(JS(ledger_index_max)) || request.contains(JS(ledger_index_min)))
             return Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"};
 
-        auto v = ledgerInfoFromRequest(context);
+        auto v = ledgerInfoFromRequest(backend, context);
         if (auto status = std::get_if<Status>(&v); status)
             return *status;
 
@@ -1579,15 +1585,8 @@ traverseTransactions(
             cursor = {maxIndex, INT32_MAX};
     }
 
-    std::uint32_t limit;
-    if (auto const status = getLimit(context, limit); status)
-        return status;
-
-    if (request.contains(JS(limit)))
-        response[JS(limit)] = limit;
-
     boost::json::array txns;
-    auto [blobs, retCursor] = transactionFetcher(context.backend, limit, forward, cursor, context.yield);
+    auto [blobs, retCursor] = transactionFetcher(backend, forward, cursor, context.yield);
     auto timeDiff = util::timed([&, &retCursor = retCursor, &blobs = blobs]() {
         if (retCursor)
         {

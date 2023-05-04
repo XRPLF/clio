@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,90 +17,99 @@
 */
 //==============================================================================
 
-#include <ripple/app/ledger/Ledger.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
-#include <boost/json.hpp>
-#include <algorithm>
-
-#include <backend/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
+#include <rpc/handlers/AccountCurrencies.h>
 
 namespace RPC {
-
-Result
-doAccountCurrencies(Context const& context)
+AccountCurrenciesHandler::Result
+AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context const& ctx) const
 {
-    auto request = context.params;
-    boost::json::object response = {};
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-    auto v = ledgerInfoFromRequest(context);
-    if (auto status = std::get_if<Status>(&v))
-        return *status;
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
 
-    auto lgrInfo = std::get<ripple::LedgerInfo>(v);
+    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const accountID = accountFromStringStrict(input.account);
 
-    ripple::AccountID accountID;
-    if (auto const status = getAccount(request, accountID); status)
-        return status;
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    if (!accountLedgerObject)
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto rawAcct =
-        context.backend->fetchLedgerObject(ripple::keylet::account(accountID).key, lgrInfo.seq, context.yield);
-
-    if (!rawAcct)
-        return Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"};
-
-    std::set<std::string> send, receive;
+    Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
+            auto balance = sle.getFieldAmount(ripple::sfBalance);
+            auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
+            auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
+            bool const viewLowest = (lowLimit.getIssuer() == accountID);
+            auto const lineLimit = viewLowest ? lowLimit : highLimit;
+            auto const lineLimitPeer = !viewLowest ? lowLimit : highLimit;
 
-            auto lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
-            auto highLimit = sle.getFieldAmount(ripple::sfHighLimit);
-            bool viewLowest = (lowLimit.getIssuer() == accountID);
-            auto lineLimit = viewLowest ? lowLimit : highLimit;
-            auto lineLimitPeer = !viewLowest ? lowLimit : highLimit;
             if (!viewLowest)
                 balance.negate();
 
             if (balance < lineLimit)
-                receive.insert(ripple::to_string(balance.getCurrency()));
+                response.receiveCurrencies.insert(ripple::to_string(balance.getCurrency()));
+
             if ((-balance) < lineLimitPeer)
-                send.insert(ripple::to_string(balance.getCurrency()));
+                response.sendCurrencies.insert(ripple::to_string(balance.getCurrency()));
         }
 
         return true;
     };
 
-    traverseOwnedNodes(
-        *context.backend,
-        accountID,
+    // traverse all owned nodes, limit->max, marker->empty
+    ngTraverseOwnedNodes(
+        *sharedPtrBackend_,
+        *accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
-        context.yield,
+        ctx.yield,
         addToResponse);
 
-    response[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-    response[JS(ledger_index)] = lgrInfo.seq;
-
-    response[JS(receive_currencies)] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonReceive = response.at(JS(receive_currencies)).as_array();
-
-    for (auto const& currency : receive)
-        jsonReceive.push_back(currency.c_str());
-
-    response[JS(send_currencies)] = boost::json::value(boost::json::array_kind);
-    boost::json::array& jsonSend = response.at(JS(send_currencies)).as_array();
-
-    for (auto const& currency : send)
-        jsonSend.push_back(currency.c_str());
+    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerIndex = lgrInfo.seq;
 
     return response;
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountCurrenciesHandler::Output const& output)
+{
+    jv = {
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(receive_currencies), output.receiveCurrencies},
+        {JS(send_currencies), output.sendCurrencies},
+    };
+}
+
+AccountCurrenciesHandler::Input
+tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::json::value const& jv)
+{
+    auto input = AccountCurrenciesHandler::Input{};
+    auto const& jsonObject = jv.as_object();
+
+    input.account = jv.at(JS(account)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    return input;
 }
 
 }  // namespace RPC

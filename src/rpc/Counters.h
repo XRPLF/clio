@@ -55,6 +55,12 @@ private:
 public:
     Counters(WorkQueue const& wq) : workQueue_(std::cref(wq)){};
 
+    static Counters
+    make_Counters(WorkQueue const& wq)
+    {
+        return Counters{wq};
+    }
+
     void
     rpcErrored(std::string const& method);
 
