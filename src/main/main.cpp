@@ -12,9 +12,10 @@
 
 static std::uint32_t const MAX_RETRIES = 5;
 static std::chrono::seconds const WAIT_TIME = std::chrono::seconds(60);
+static std::uint32_t const NFT_WRITE_BATCH_SIZE = 10000;
 
 static void
-wait(boost::asio::steady_timer& timer, std::string const reason)
+wait(boost::asio::steady_timer& timer, std::string const& reason)
 {
     BOOST_LOG_TRIVIAL(info) << reason << ". Waiting";
     timer.expires_after(WAIT_TIME);
@@ -22,18 +23,31 @@ wait(boost::asio::steady_timer& timer, std::string const reason)
     BOOST_LOG_TRIVIAL(info) << "Done";
 }
 
-static void
+static std::vector<NFTsData>
 doNFTWrite(
-    std::vector<NFTsData>& nfts,
+    std::vector<NFTsData>&& nfts,
     Backend::CassandraBackend& backend,
-    std::string const tag)
+    std::string const& tag)
 {
-    if (nfts.size() <= 0)
-        return;
+    if (nfts.size() == 0)
+        return nfts;
     auto const size = nfts.size();
     backend.writeNFTs(std::move(nfts));
     backend.sync();
     BOOST_LOG_TRIVIAL(info) << tag << ": Wrote " << size << " records";
+    nfts.clear();
+    return nfts;
+}
+
+static std::vector<NFTsData>
+maybeDoNFTWrite(
+    std::vector<NFTsData>&& nfts,
+    Backend::CassandraBackend& backend,
+    std::string const& tag)
+{
+    if (nfts.size() < NFT_WRITE_BATCH_SIZE)
+        return nfts;
+    return doNFTWrite(std::move(nfts), backend, tag);
 }
 
 static std::optional<Backend::TransactionAndMetadata>
@@ -122,6 +136,8 @@ doMigration(
         return;
     }
 
+    std::vector<NFTsData> toWrite;
+
     /*
      * Step 1 - Look at all NFT transactions recorded in
      * `nf_token_transactions` and reload any NFTokenMint transactions. These
@@ -140,8 +156,6 @@ doMigration(
     // For all NFT txs, paginated in groups of 1000...
     while (morePages)
     {
-        std::vector<NFTsData> toWrite;
-
         CassResult const* result =
             doTryGetTxPageResult(nftTxQuery, timer, backend);
 
@@ -195,7 +209,7 @@ doMigration(
                 std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
         }
 
-        doNFTWrite(toWrite, backend, "TX");
+        toWrite = maybeDoNFTWrite(std::move(toWrite), backend, "TX");
 
         morePages = cass_result_has_more_pages(result);
         if (morePages)
@@ -205,6 +219,7 @@ doMigration(
     }
 
     cass_statement_free(nftTxQuery);
+    toWrite = doNFTWrite(std::move(toWrite), backend, "TX");
     BOOST_LOG_TRIVIAL(info) << "\nDone with transaction loading!\n";
 
     /*
@@ -216,21 +231,27 @@ doMigration(
      */
     std::optional<ripple::uint256> cursor;
 
+    // For each object page in initial ledger
     do
     {
         auto const page = doTryFetchLedgerPage(
             timer, backend, cursor, ledgerRange->minSequence, yield);
+
+        // For each object in page of 2000
         for (auto const& object : page.objects)
         {
-            std::vector<NFTsData> toWrite = getNFTDataFromObj(
+            std::vector<NFTsData> objectNFTs = getNFTDataFromObj(
                 ledgerRange->minSequence,
                 std::string(object.key.begin(), object.key.end()),
                 std::string(object.blob.begin(), object.blob.end()));
-            doNFTWrite(toWrite, backend, "OBJ");
+            toWrite.insert(toWrite.end(), objectNFTs.begin(), objectNFTs.end());
         }
+
+        toWrite = maybeDoNFTWrite(std::move(toWrite), backend, "OBJ");
         cursor = page.cursor;
     } while (cursor.has_value());
 
+    toWrite = doNFTWrite(std::move(toWrite), backend, "OBJ");
     BOOST_LOG_TRIVIAL(info) << "\nDone with object loading!\n";
 
     /*
