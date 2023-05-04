@@ -159,8 +159,19 @@ public:
     void
     notifyComplete(std::string const& method, std::chrono::microseconds const& duration);
 
+    /**
+     * @brief Notify the system that specified method failed to execute
+     * @param method
+     */
     void
     notifyErrored(std::string const& method);
+
+    /**
+     * @brief Notify the system that specified method execution was forwarded to rippled
+     * @param method
+     */
+    void
+    notifyForwarded(std::string const& method);
 
 private:
     bool

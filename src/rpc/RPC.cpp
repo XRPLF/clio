@@ -179,7 +179,7 @@ RPCEngine::buildResponse(Web::Context const& ctx)
         toForward["command"] = ctx.method;
 
         auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-        counters_.get().rpcForwarded(ctx.method);
+        notifyForwarded(ctx.method);
 
         if (!res)
             return Status{RippledError::rpcFAILED_TO_FORWARD};
@@ -235,13 +235,22 @@ RPCEngine::buildResponse(Web::Context const& ctx)
 void
 RPCEngine::notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
 {
-    counters_.get().rpcComplete(method, duration);
+    if (validHandler(method))
+        counters_.get().rpcComplete(method, duration);
 }
 
 void
 RPCEngine::notifyErrored(std::string const& method)
 {
-    counters_.get().rpcErrored(method);
+    if (validHandler(method))
+        counters_.get().rpcErrored(method);
+}
+
+void
+RPCEngine::notifyForwarded(std::string const& method)
+{
+    if (validHandler(method))
+        counters_.get().rpcForwarded(method);
 }
 
 }  // namespace RPC
