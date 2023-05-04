@@ -106,7 +106,7 @@ verifyNFTs(
         std::optional<Backend::NFT> writtenNFT = backend.fetchNFT(nft.tokenID, nft.ledgerSequence, yield);
 
         if(!writtenNFT.has_value())
-            throw std::runtime_error("NFT is not written!");
+            throw std::runtime_error("NFT was not written!");
 
         Blob writtenUriBlob = writtenNFT->uri;
         std::string writtenUriStr = ripple::strHex(writtenUriBlob);
@@ -207,7 +207,7 @@ doVerification(
     ledgerSequencesChanged.erase(unique(ledgerSequencesChanged.begin(), ledgerSequencesChanged.end()), ledgerSequencesChanged.end());
 
     cass_statement_free(nftTxQuery);
-    BOOST_LOG_TRIVIAL(info) << "\nDone with transaction loading!\n";
+    BOOST_LOG_TRIVIAL(info) << "\nDone with querying ledger sequences!\n";
 
     /*
      * Step 2 - Pull every object from our initial ledger and load all NFTs
@@ -238,7 +238,7 @@ doVerification(
             cursor = page.cursor;
         } while (cursor.has_value());
     }
-    BOOST_LOG_TRIVIAL(info) << "\nDone with object loading!\n";
+    BOOST_LOG_TRIVIAL(info) << "\nDone with migration verification!\n";
 }
 
 int
