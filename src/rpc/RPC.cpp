@@ -186,7 +186,6 @@ RPCEngine::buildResponse(Web::Context const& ctx)
         toForward["command"] = ctx.method;
 
         auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-
         counters_.get().rpcForwarded(ctx.method);
 
         if (!res)

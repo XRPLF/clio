@@ -20,7 +20,7 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <rpc/BookChanges.h>
+#include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include <rpc/BookChanges.h>
+#include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
 #include <subscriptions/SubscriptionManager.h>
 #include <webserver/WsBase.h>

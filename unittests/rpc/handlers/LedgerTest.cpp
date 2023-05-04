@@ -170,7 +170,6 @@ TEST_P(LedgerParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
-        std::cout << err << std::endl;
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });

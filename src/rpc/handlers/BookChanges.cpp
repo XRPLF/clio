@@ -76,4 +76,18 @@ tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::va
     return input;
 }
 
+[[nodiscard]] boost::json::object const
+computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions)
+{
+    using boost::json::value_from;
+
+    return {
+        {JS(type), "bookChanges"},
+        {JS(ledger_index), lgrInfo.seq},
+        {JS(ledger_hash), to_string(lgrInfo.hash)},
+        {JS(ledger_time), lgrInfo.closeTime.time_since_epoch().count()},
+        {JS(changes), value_from(BookChanges::compute(transactions))},
+    };
+}
+
 }  // namespace RPC

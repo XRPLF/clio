@@ -65,7 +65,6 @@ target_sources(clio PRIVATE
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
-  src/rpc/BookChanges.cpp
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
   # RPC impl

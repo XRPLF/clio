@@ -39,10 +39,8 @@ public:
      * @brief Type-erases any handler class.
      *
      * @tparam HandlerType The real type of wrapped handler class
-     * @tparam ProcessingStrategy A strategy that implements how processing of
-     * JSON is to be done
-     * @param handler The handler to wrap. Required to fulfil the @ref Handler
-     * concept.
+     * @tparam ProcessingStrategy A strategy that implements how processing of JSON is to be done
+     * @param handler The handler to wrap. Required to fulfil the @ref Handler concept.
      */
     template <Handler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
@@ -78,8 +76,7 @@ public:
     }
 
     /**
-     * @brief Process incoming JSON by the stored handler in a provided
-     * coroutine
+     * @brief Process incoming JSON by the stored handler in a provided coroutine
      *
      * @param value The JSON to process
      * @return JSON result or @ref Status on error

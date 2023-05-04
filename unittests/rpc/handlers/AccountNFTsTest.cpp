@@ -156,7 +156,6 @@ TEST_P(AccountNFTParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
-        std::cout << err << std::endl;
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -326,7 +325,6 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     runSpawn([&](auto& yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
 }

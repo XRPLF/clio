@@ -40,9 +40,6 @@ Counters::initializeCounter(std::string const& method)
 void
 Counters::rpcErrored(std::string const& method)
 {
-    // if (!validHandler(method))
-    //     return;
-
     initializeCounter(method);
 
     std::shared_lock lk(mutex_);
@@ -54,9 +51,6 @@ Counters::rpcErrored(std::string const& method)
 void
 Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
-    // if (!validHandler(method))
-    //     return;
-
     initializeCounter(method);
 
     std::shared_lock lk(mutex_);
@@ -69,9 +63,6 @@ Counters::rpcComplete(std::string const& method, std::chrono::microseconds const
 void
 Counters::rpcForwarded(std::string const& method)
 {
-    // if (!validHandler(method))
-    //     return;
-
     initializeCounter(method);
 
     std::shared_lock lk(mutex_);
