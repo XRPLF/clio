@@ -71,7 +71,6 @@ doTryFetchLedgerPage(
     }
 }
 
-//TODO change this function
 static const CassResult*
 doTryGetTxPageResult(
     CassStatement* const query,
