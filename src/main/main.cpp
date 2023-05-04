@@ -224,7 +224,7 @@ doMigration(
         {
             std::vector<NFTsData> toWrite = getNFTDataFromObj(
                 ledgerRange->minSequence,
-                ripple::to_string(object.key),
+                std::string(object.key.begin(), object.key.end()),
                 std::string(object.blob.begin(), object.blob.end()));
             doNFTWrite(toWrite, backend, "OBJ");
         }
