@@ -116,6 +116,7 @@ verifyNFTs(
 
         if(oldUriStr.compare(writtenUriStr) != 0){
             BOOST_LOG_TRIVIAL(warning) <<"\nNFTokenID "<< to_string(nft.tokenID) << " failed to match URIs!\n";  
+            throw std::runtime_error("Failed to match!");
         }
         else{
             BOOST_LOG_TRIVIAL(info) <<"\nNFTokenID "<< to_string(nft.tokenID) << " URI matched!\n";         
