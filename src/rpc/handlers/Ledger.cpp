@@ -31,8 +31,8 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
-
     Output output;
+
     if (input.binary)
     {
         output.header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
@@ -56,12 +56,14 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
         output.header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
         output.header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
     }
+
     output.header[JS(closed)] = true;
 
     if (input.transactions)
     {
         output.header[JS(transactions)] = boost::json::value(boost::json::array_kind);
         boost::json::array& jsonTxs = output.header.at(JS(transactions)).as_array();
+
         if (input.expand)
         {
             auto txns = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
@@ -83,6 +85,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                         entry[JS(tx_blob)] = ripple::strHex(obj.transaction);
                         entry[JS(meta)] = ripple::strHex(obj.metadata);
                     }
+
                     return entry;
                 });
         }
@@ -100,12 +103,15 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     if (input.diff)
     {
         output.header["diff"] = boost::json::value(boost::json::array_kind);
+
         boost::json::array& jsonDiff = output.header.at("diff").as_array();
         auto diff = sharedPtrBackend_->fetchLedgerDiff(lgrInfo.seq, ctx.yield);
+
         for (auto const& obj : diff)
         {
             boost::json::object entry;
             entry["object_id"] = ripple::strHex(obj.key);
+
             if (input.binary)
             {
                 entry["object"] = ripple::strHex(obj.blob);
@@ -126,6 +132,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
 
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
+
     return output;
 }
 
@@ -145,6 +152,7 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
 {
     auto const& jsonObject = jv.as_object();
     LedgerHandler::Input input;
+
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 

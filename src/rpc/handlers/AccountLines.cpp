@@ -72,17 +72,21 @@ AccountLinesHandler::addLine(
     line.limitPeer = saLimitPeer.getText();
     line.qualityIn = lineQualityIn;
     line.qualityOut = lineQualityOut;
+
     if (lineAuth)
         line.authorized = true;
+
     if (lineAuthPeer)
         line.peerAuthorized = true;
+
     if (lineFreeze)
         line.freeze = true;
+
     if (lineFreezePeer)
         line.freezePeer = true;
+
     line.noRipple = lineNoRipple;
     line.noRipplePeer = lineNoRipplePeer;
-
     lines.push_back(line);
 }
 
@@ -116,13 +120,9 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
             if (input.ignoreDefault)
             {
                 if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
-                {
                     ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve);
-                }
                 else
-                {
                     ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve);
-                }
             }
 
             if (not ignore)
@@ -132,6 +132,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
 
     auto const next = ngTraverseOwnedNodes(
         *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+    auto const nextMarker = std::get<AccountCursor>(next);
 
     response.account = input.account;
     response.limit = input.limit;  // not documented,
@@ -139,7 +140,6 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    auto const nextMarker = std::get<AccountCursor>(next);
     if (nextMarker.isNonZero())
         response.marker = nextMarker.toString();
 
@@ -154,35 +154,26 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
 
     input.account = jv.at(JS(account)).as_string().c_str();
     if (jsonObject.contains(JS(limit)))
-    {
         input.limit = jv.at(JS(limit)).as_int64();
-    }
+
     if (jsonObject.contains(JS(marker)))
-    {
         input.marker = jv.at(JS(marker)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(peer)))
-    {
         input.peer = jv.at(JS(peer)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ignore_default)))
-    {
         input.ignoreDefault = jv.at(JS(ignore_default)).as_bool();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
-        }
     }
 
     return input;
@@ -198,8 +189,10 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountLinesHand
         {JS(limit), output.limit},
         {JS(lines), output.lines},
     };
+
     if (output.marker)
         obj[JS(marker)] = output.marker.value();
+
     jv = std::move(obj);
 }
 
@@ -224,13 +217,17 @@ tag_invoke(
 
     if (line.authorized)
         obj[JS(authorized)] = *(line.authorized);
+
     if (line.peerAuthorized)
         obj[JS(peer_authorized)] = *(line.peerAuthorized);
+
     if (line.freeze)
         obj[JS(freeze)] = *(line.freeze);
+
     if (line.freezePeer)
         obj[JS(freeze_peer)] = *(line.freezePeer);
 
     jv = std::move(obj);
 }
+
 }  // namespace RPC

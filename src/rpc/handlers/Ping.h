@@ -35,4 +35,5 @@ public:
         return Output{};
     }
 };
+
 }  // namespace RPC

@@ -77,6 +77,7 @@ public:
                     if (auto const status = std::get_if<Status>(&parsedBook))
                         return Error(*status);
                 }
+
                 return MaybeError{};
             }};
 
@@ -84,7 +85,8 @@ public:
             {JS(streams), validation::SubscribeStreamValidator},
             {JS(accounts), validation::SubscribeAccountsValidator},
             {JS(accounts_proposed), validation::SubscribeAccountsValidator},
-            {JS(books), booksValidator}};
+            {JS(books), booksValidator},
+        };
 
         return rpcSpec;
     }
@@ -135,7 +137,7 @@ private:
     {
         for (auto const& account : accounts)
         {
-            auto accountID = accountFromStringStrict(account);
+            auto const accountID = accountFromStringStrict(account);
             subscriptions_->unsubAccount(*accountID, session);
         }
     }
@@ -146,7 +148,7 @@ private:
     {
         for (auto const& account : accountsProposed)
         {
-            auto accountID = accountFromStringStrict(account);
+            auto const accountID = accountFromStringStrict(account);
             subscriptions_->unsubProposedAccount(*accountID, session);
         }
     }
@@ -157,6 +159,7 @@ private:
         for (auto const& orderBook : books)
         {
             subscriptions_->unsubBook(orderBook.book, session);
+
             if (orderBook.both)
                 subscriptions_->unsubBook(ripple::reversed(orderBook.book), session);
         }
@@ -165,8 +168,9 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
     {
+        auto input = Input{};
         auto const& jsonObject = jv.as_object();
-        Input input;
+
         if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end())
         {
             input.streams = std::vector<std::string>();
@@ -190,15 +194,18 @@ private:
             input.books = std::vector<OrderBook>();
             for (auto const& book : books->value().as_array())
             {
+                auto internalBook = OrderBook{};
                 auto const& bookObject = book.as_object();
-                OrderBook internalBook;
+
                 if (auto const& both = bookObject.find(JS(both)); both != bookObject.end())
                     internalBook.both = both->value().as_bool();
+
                 auto const parsedBookMaybe = parseBook(book.as_object());
                 internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
                 input.books->push_back(internalBook);
             }
         }
+
         return input;
     }
 };

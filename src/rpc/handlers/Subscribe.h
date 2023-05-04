@@ -75,6 +75,7 @@ public:
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
                 if (!value.is_array())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+
                 for (auto const& book : value.as_array())
                 {
                     if (!book.is_object())
@@ -94,6 +95,7 @@ public:
                     if (auto const status = std::get_if<Status>(&parsedBook))
                         return Error(*status);
                 }
+
                 return MaybeError{};
             }};
 
@@ -101,30 +103,37 @@ public:
             {JS(streams), validation::SubscribeStreamValidator},
             {JS(accounts), validation::SubscribeAccountsValidator},
             {JS(accounts_proposed), validation::SubscribeAccountsValidator},
-            {JS(books), booksValidator}};
+            {JS(books), booksValidator},
+        };
+
         return rpcSpec;
     }
 
     Result
     process(Input input, Context const& ctx) const
     {
-        Output output;
+        auto output = Output{};
+
         if (input.streams)
         {
             auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
             if (!ledger.empty())
                 output.ledger = ledger;
         }
+
         if (input.accounts)
             subscribeToAccounts(*(input.accounts), ctx.session);
+
         if (input.accountsProposed)
             subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
+
         if (input.books)
         {
             auto const offers = subscribeToBooks(*(input.books), ctx.session, ctx.yield);
             if (!offers.empty())
                 output.offers = offers;
         };
+
         return output;
     }
 
@@ -135,7 +144,8 @@ private:
         std::vector<std::string> const& streams,
         std::shared_ptr<WsBase> const& session) const
     {
-        boost::json::object response;
+        auto response = boost::json::object{};
+
         for (auto const& stream : streams)
         {
             if (stream == "ledger")
@@ -151,6 +161,7 @@ private:
             else if (stream == "book_changes")
                 subscriptions_->subBookChanges(session);
         }
+
         return response;
     }
 
@@ -163,6 +174,7 @@ private:
             subscriptions_->subAccount(*accountID, session);
         }
     }
+
     void
     subscribeToAccountsProposed(std::vector<std::string> const& accounts, std::shared_ptr<WsBase> const& session) const
     {
@@ -179,9 +191,10 @@ private:
         std::shared_ptr<WsBase> const& session,
         boost::asio::yield_context& yield) const
     {
+        static auto constexpr fetchLimit = 200;
+
         boost::json::array snapshots;
         std::optional<Backend::LedgerRange> rng;
-        static auto constexpr fetchLimit = 200;
 
         for (auto const& internalBook : books)
         {
@@ -189,6 +202,7 @@ private:
             {
                 if (!rng)
                     rng = sharedPtrBackend_->fetchLedgerRange();
+
                 auto const getOrderBook = [&](auto const& book) {
                     auto const bookBase = getBookBase(book);
                     auto const [offers, _] =
@@ -203,12 +217,15 @@ private:
                         postProcessOrderBook(offers, book, *takerID, *sharedPtrBackend_, rng->maxSequence, yield);
                     std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
                 };
+
                 getOrderBook(internalBook.book);
+
                 if (internalBook.both)
                     getOrderBook(ripple::reversed(internalBook.book));
             }
 
             subscriptions_->subBook(internalBook.book, session);
+
             if (internalBook.both)
                 subscriptions_->subBook(ripple::reversed(internalBook.book), session);
         }
@@ -220,6 +237,7 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
         jv = output.ledger ? *(output.ledger) : boost::json::object();
+
         if (output.offers)
             jv.as_object().emplace(JS(offers), *(output.offers));
     }
@@ -227,44 +245,53 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
     {
+        auto input = Input{};
         auto const& jsonObject = jv.as_object();
-        Input input;
+
         if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end())
         {
             input.streams = std::vector<std::string>();
             for (auto const& stream : streams->value().as_array())
                 input.streams->push_back(stream.as_string().c_str());
         }
+
         if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end())
         {
             input.accounts = std::vector<std::string>();
             for (auto const& account : accounts->value().as_array())
                 input.accounts->push_back(account.as_string().c_str());
         }
+
         if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed)); accountsProposed != jsonObject.end())
         {
             input.accountsProposed = std::vector<std::string>();
             for (auto const& account : accountsProposed->value().as_array())
                 input.accountsProposed->push_back(account.as_string().c_str());
         }
+
         if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end())
         {
             input.books = std::vector<OrderBook>();
             for (auto const& book : books->value().as_array())
             {
+                auto internalBook = OrderBook{};
                 auto const& bookObject = book.as_object();
-                OrderBook internalBook;
+
                 if (auto const& taker = bookObject.find(JS(taker)); taker != bookObject.end())
                     internalBook.taker = taker->value().as_string().c_str();
+
                 if (auto const& both = bookObject.find(JS(both)); both != bookObject.end())
                     internalBook.both = both->value().as_bool();
+
                 if (auto const& snapshot = bookObject.find(JS(snapshot)); snapshot != bookObject.end())
                     internalBook.snapshot = snapshot->value().as_bool();
+
                 auto const parsedBookMaybe = parseBook(book.as_object());
                 internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
                 input.books->push_back(internalBook);
             }
         }
+
         return input;
     }
 };

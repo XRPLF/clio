@@ -27,8 +27,13 @@
 namespace RPC {
 class LedgerDataHandler
 {
+    // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     clio::Logger log_{"RPC"};
+
+    // constants
+    static uint32_t constexpr LIMITBINARY = 2048;
+    static uint32_t constexpr LIMITJSON = 256;
 
 public:
     struct Output
@@ -83,9 +88,6 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    static uint32_t constexpr LIMITBINARY = 2048;
-    static uint32_t constexpr LIMITJSON = 256;
-
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 

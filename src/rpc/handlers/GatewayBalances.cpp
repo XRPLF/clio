@@ -28,6 +28,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
@@ -36,6 +37,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
@@ -52,6 +54,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
             auto const viewLowest = (lowLimit.getIssuer() == accountID);
             auto const flags = sle.getFieldU32(ripple::sfFlags);
             auto const freeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+
             if (!viewLowest)
                 balance.negate();
 
@@ -62,8 +65,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
             auto const& peer = !viewLowest ? lowID : highID;
 
             // Here, a negative balance means the cold wallet owes (normal)
-            // A positive balance means the cold wallet has an asset
-            // (unusual)
+            // A positive balance means the cold wallet has an asset (unusual)
 
             if (input.hotWallets.count(peer) > 0)
             {
@@ -102,6 +104,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                 }
             }
         }
+
         return true;
     };
 
@@ -118,14 +121,14 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     if (auto status = std::get_if<Status>(&ret))
         return Error{*status};
 
-    if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), [&](auto const& hw) {
-            return output.hotBalances.contains(hw);
-        }))
+    auto inHotbalances = [&](auto const& hw) { return output.hotBalances.contains(hw); };
+    if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), inHotbalances))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidHotWallet"}};
 
     output.accountID = input.account;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
+
     return output;
 }
 
@@ -137,15 +140,15 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
     {
         boost::json::object obligations;
         for (auto const& [k, v] : output.sums)
-        {
             obligations[ripple::to_string(k)] = v.getText();
-        }
+
         obj[JS(obligations)] = std::move(obligations);
     }
 
     auto const toJson = [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const& balances) {
         boost::json::object balancesObj;
-        if (!balances.empty())
+
+        if (not balances.empty())
         {
             for (auto const& [accId, accBalances] : balances)
             {
@@ -157,9 +160,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
                     entry[JS(value)] = balance.getText();
                     arr.push_back(std::move(entry));
                 }
+
                 balancesObj[ripple::to_string(accId)] = std::move(arr);
             }
         }
+
         return balancesObj;
     };
 
@@ -170,13 +175,17 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
     // document:https://xrpl.org/gateway_balances.html#gateway_balances
     if (auto balances = toJson(output.frozenBalances); balances.size())
         obj[JS(frozen_balances)] = balances;
+
     if (auto balances = toJson(output.assets); balances.size())
         obj[JS(assets)] = balances;
+
     obj[JS(account)] = output.accountID;
     obj[JS(ledger_index)] = output.ledgerIndex;
     obj[JS(ledger_hash)] = output.ledgerHash;
+
     if (output.overflow)
         obj["overflow"] = true;
+
     jv = std::move(obj);
 }
 
@@ -185,22 +194,20 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
 {
     auto const& jsonObject = jv.as_object();
     GatewayBalancesHandler::Input input;
+
     input.account = jv.at(JS(account)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
-        }
     }
+
     if (jsonObject.contains(JS(hotwallet)))
     {
         if (jsonObject.at(JS(hotwallet)).is_string())
@@ -217,6 +224,8 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
                 [](auto const& hotWallet) { return *accountFromStringStrict(hotWallet.as_string().c_str()); });
         }
     }
+
     return input;
 }
+
 }  // namespace RPC

@@ -35,11 +35,13 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
     auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
+
     if (not maybeNft.has_value())
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
 
@@ -89,27 +91,22 @@ NFTInfoHandler::Input
 tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
-    NFTInfoHandler::Input input;
+    auto input = NFTInfoHandler::Input{};
 
     input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
-    }
 
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
     }
 
     return input;
 }
+
 }  // namespace RPC

@@ -32,7 +32,8 @@ std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHan
     {"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
     {"check", ripple::ltCHECK},
     {"nft_page", ripple::ltNFTOKEN_PAGE},
-    {"nft_offer", ripple::ltNFTOKEN_OFFER}};
+    {"nft_offer", ripple::ltNFTOKEN_OFFER},
+};
 
 AccountObjectsHandler::Result
 AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const& ctx) const
@@ -81,7 +82,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHandler::Output const& output)
 {
-    boost::json::array objects;
+    auto objects = boost::json::array{};
     for (auto const& sle : output.accountObjects)
         objects.push_back(toJson(sle));
 
@@ -91,7 +92,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         {JS(validated), output.validated},
         {JS(limit), output.limit},
         {JS(account), output.account},
-        {JS(account_objects), objects}};
+        {JS(account_objects), objects},
+    };
 
     if (output.marker)
         jv.as_object()[JS(marker)] = *(output.marker);
@@ -102,6 +104,7 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
 {
     auto const& jsonObject = jv.as_object();
     AccountObjectsHandler::Input input;
+
     input.account = jv.at(JS(account)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_hash)))

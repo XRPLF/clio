@@ -29,12 +29,12 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
+
     if (input.ledgerIndexMin)
     {
         if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
-        {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
-        }
+
         minIndex = *input.ledgerIndexMin;
     }
 
@@ -42,6 +42,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     {
         if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
+
         maxIndex = *input.ledgerIndexMax;
     }
 
@@ -79,14 +80,17 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     }
 
     static auto constexpr limitDefault = 50;
+
     auto const limit = input.limit.value_or(limitDefault);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
+
     auto const [txnsAndCursor, timeDiff] = util::timed(
         [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
     log_.info() << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
-    auto const [blobs, retCursor] = txnsAndCursor;
 
     Output response;
+    auto const [blobs, retCursor] = txnsAndCursor;
+
     if (retCursor)
         response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
 
@@ -106,6 +110,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         }
 
         boost::json::object obj;
+
         if (!input.binary)
         {
             auto [txn, meta] = toExpandedJson(txnPlusMeta);
@@ -122,8 +127,8 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
             // only clio has this field
             obj[JS(date)] = txnPlusMeta.date;
         }
-        obj[JS(validated)] = true;
 
+        obj[JS(validated)] = true;
         response.transactions.push_back(obj);
     }
 
@@ -143,9 +148,12 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTHistoryHandle
         {JS(ledger_index_min), output.ledgerIndexMin},
         {JS(ledger_index_max), output.ledgerIndexMax},
         {JS(transactions), output.transactions},
-        {JS(validated), output.validated}};
+        {JS(validated), output.validated},
+    };
+
     if (output.marker)
         jv.as_object()[JS(marker)] = boost::json::value_from(*(output.marker));
+
     if (output.limit)
         jv.as_object()[JS(limit)] = *(output.limit);
 }
@@ -153,56 +161,51 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTHistoryHandle
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTHistoryHandler::Marker const& marker)
 {
-    jv = {{JS(ledger), marker.ledger}, {JS(seq), marker.seq}};
+    jv = {
+        {JS(ledger), marker.ledger},
+        {JS(seq), marker.seq},
+    };
 }
 
 NFTHistoryHandler::Input
 tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::value const& jv)
 {
     auto const& jsonObject = jv.as_object();
-    NFTHistoryHandler::Input input;
+    auto input = NFTHistoryHandler::Input{};
+
     input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_index_min)) && jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
-    {
         input.ledgerIndexMin = jsonObject.at(JS(ledger_index_min)).as_int64();
-    }
+
     if (jsonObject.contains(JS(ledger_index_max)) && jsonObject.at(JS(ledger_index_max)).as_int64() != -1)
-    {
         input.ledgerIndexMax = jsonObject.at(JS(ledger_index_max)).as_int64();
-    }
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
     }
+
     if (jsonObject.contains(JS(binary)))
-    {
         input.binary = jsonObject.at(JS(binary)).as_bool();
-    }
+
     if (jsonObject.contains(JS(forward)))
-    {
         input.forward = jsonObject.at(JS(forward)).as_bool();
-    }
+
     if (jsonObject.contains(JS(limit)))
-    {
         input.limit = jsonObject.at(JS(limit)).as_int64();
-    }
+
     if (jsonObject.contains(JS(marker)))
-    {
         input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
-    }
+
     return input;
 }
 

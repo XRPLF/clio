@@ -117,4 +117,5 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LineResponse const& line);
 };
+
 }  // namespace RPC

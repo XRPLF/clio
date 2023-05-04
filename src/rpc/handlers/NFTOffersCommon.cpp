@@ -64,6 +64,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus =
         getLedgerInfoFromHashOrSeq(*sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
@@ -83,14 +84,13 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     {
         cursor = uint256(input.marker->c_str());
 
-        // We have a start point. Use limit - 1 from the result and use the
-        // very last one for the resume.
+        // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
         auto const sle = [this, &cursor, &lgrInfo, &yield]() -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftoffer(cursor).key;
+
             if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield); blob)
-            {
                 return std::make_shared<SLE const>(SerialIter{blob->data(), blob->size()}, key);
-            }
+
             return nullptr;
         }();
 
@@ -106,8 +106,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     }
     else
     {
-        // We have no start point, limit should be one higher than
-        // requested.
+        // We have no start point, limit should be one higher than requested.
         offers.reserve(++reserve);
     }
 
@@ -156,6 +155,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandler
 
     if (output.marker)
         object[JS(marker)] = *(output.marker);
+
     if (output.limit)
         object[JS(limit)] = *(output.limit);
 
@@ -171,31 +171,21 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
-    }
 
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
     }
 
     if (jsonObject.contains(JS(marker)))
-    {
         input.marker = jsonObject.at(JS(marker)).as_string().c_str();
-    }
 
     if (jsonObject.contains(JS(limit)))
-    {
         input.limit = jsonObject.at(JS(limit)).as_int64();
-    }
 
     return input;
 }

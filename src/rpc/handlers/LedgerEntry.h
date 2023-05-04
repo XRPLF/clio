@@ -80,11 +80,16 @@ public:
                 if (!value.is_array() || value.as_array().size() != 2 || !value.as_array()[0].is_string() ||
                     !value.as_array()[1].is_string() ||
                     value.as_array()[0].as_string() == value.as_array()[1].as_string())
+                {
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "malformedAccounts"}};
+                }
+
                 auto const id1 = ripple::parseBase58<ripple::AccountID>(value.as_array()[0].as_string().c_str());
                 auto const id2 = ripple::parseBase58<ripple::AccountID>(value.as_array()[1].as_string().c_str());
+
                 if (!id1 || !id2)
                     return Error{Status{ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"}};
+
                 return MaybeError{};
             }};
 
@@ -165,4 +170,5 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
+
 }  // namespace RPC

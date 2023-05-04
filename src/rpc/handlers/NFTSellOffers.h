@@ -23,6 +23,7 @@
 #include <rpc/handlers/NFTOffersCommon.h>
 
 namespace RPC {
+
 class NFTSellOffersHandler : public NFTOffersHandlerBase
 {
 public:
@@ -34,4 +35,5 @@ public:
     Result
     process(Input input, Context const& ctx) const;
 };
+
 }  // namespace RPC

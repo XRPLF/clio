@@ -37,8 +37,8 @@ public:
         bool validated = true;
     };
 
-    // the taker is not really used in both clio and rippled, both of them
-    // return all the offers regardless the funding status
+    // the taker is not really used in both clio and rippled, both of them return all the offers regardless the funding
+    // status
     struct Input
     {
         std::optional<std::string> ledgerHash;
@@ -47,8 +47,7 @@ public:
         std::optional<ripple::AccountID> taker;
         ripple::Currency paysCurrency;
         ripple::Currency getsCurrency;
-        // accountID will be filled by input converter, if no issuer is given,
-        // will use XRP issuer
+        // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
         ripple::AccountID paysID = ripple::xrpAccount();
         ripple::AccountID getsID = ripple::xrpAccount();
     };

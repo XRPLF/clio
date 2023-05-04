@@ -39,6 +39,7 @@ BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx)
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
     response.ledgerTime = lgrInfo.closeTime.time_since_epoch().count();
+
     return response;
 }
 
@@ -73,6 +74,7 @@ tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::va
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
     }
+
     return input;
 }
 

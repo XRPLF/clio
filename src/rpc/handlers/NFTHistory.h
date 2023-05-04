@@ -52,7 +52,7 @@ public:
         bool validated = true;
     };
 
-    // TODO: we did not implement the "strict" field
+    // TODO: We did not implement the "strict" field
     struct Input
     {
         std::string nftID;
@@ -111,4 +111,5 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
+
 }  // namespace RPC

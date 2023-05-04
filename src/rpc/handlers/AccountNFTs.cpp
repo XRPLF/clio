@@ -34,25 +34,24 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
-
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    Output response;
+    auto response = Output{};
     response.account = input.account;
     response.limit = input.limit;
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    // if a marker was passed, start at the page specified in marker. Else,
-    // start at the max page
+    // if a marker was passed, start at the page specified in marker. Else, start at the max page
     auto const pageKey =
         input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
-
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
+
     if (!blob)
         return response;
 
@@ -89,8 +88,8 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
                 response.marker = to_string(nextKey.key);
                 return response;
             }
-            auto const nextBlob = sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
 
+            auto const nextBlob = sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
             page.emplace(ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key});
         }
         else
@@ -98,6 +97,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
             page.reset();
         }
     }
+
     return response;
 }
 
@@ -110,7 +110,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountNFTsHandl
         {JS(validated), output.validated},
         {JS(account), output.account},
         {JS(account_nfts), output.nfts},
-        {JS(limit), output.limit}};
+        {JS(limit), output.limit},
+    };
+
     if (output.marker)
         jv.as_object()[JS(marker)] = *output.marker;
 }
@@ -118,9 +120,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountNFTsHandl
 AccountNFTsHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::value const& jv)
 {
+    auto input = AccountNFTsHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    AccountNFTsHandler::Input input;
+
     input.account = jsonObject.at(JS(account)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
@@ -131,6 +135,7 @@ tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::va
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
     }
+
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
 

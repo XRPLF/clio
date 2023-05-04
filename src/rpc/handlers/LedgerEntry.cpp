@@ -22,10 +22,12 @@
 #include <unordered_map>
 
 namespace RPC {
+
 LedgerEntryHandler::Result
 LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx) const
 {
     ripple::uint256 key;
+
     if (input.index)
     {
         key = ripple::uint256{std::string_view(*(input.index))};
@@ -39,6 +41,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const keyOrStatus = composeKeyFromDirectory(*input.directory);
         if (auto const status = std::get_if<Status>(&keyOrStatus))
             return Error{*status};
+
         key = std::get<ripple::uint256>(keyOrStatus);
     }
     else if (input.offer)
@@ -53,6 +56,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const id2 = ripple::parseBase58<ripple::AccountID>(
             input.rippleStateAccount->at(JS(accounts)).as_array().at(1).as_string().c_str());
         auto const currency = ripple::to_currency(input.rippleStateAccount->at(JS(currency)).as_string().c_str());
+
         key = ripple::keylet::line(*id1, *id2, currency).key;
     }
     else if (input.escrow)
@@ -66,11 +70,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             ripple::parseBase58<ripple::AccountID>(input.depositPreauth->at(JS(owner)).as_string().c_str());
         auto const authorized =
             ripple::parseBase58<ripple::AccountID>(input.depositPreauth->at(JS(authorized)).as_string().c_str());
+
         key = ripple::keylet::depositPreauth(*owner, *authorized).key;
     }
     else if (input.ticket)
     {
         auto const id = ripple::parseBase58<ripple::AccountID>(input.ticket->at(JS(account)).as_string().c_str());
+
         key = ripple::getTicketIndex(*id, input.ticket->at(JS(ticket_seq)).as_int64());
     }
     else
@@ -89,10 +95,12 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
     auto const ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
+
     if (!ledgerObject || ledgerObject->size() == 0)
         return Error{Status{"entryNotFound"}};
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
+
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
         return Error{Status{"unexpectedLedgerType"}};
 
@@ -100,14 +108,12 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
+
     if (input.binary)
-    {
         output.nodeBinary = ripple::strHex(*ledgerObject);
-    }
     else
-    {
         output.node = toJson(sle);
-    }
+
     return output;
 }
 
@@ -117,6 +123,7 @@ LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory
     // can not specify both dir_root and owner.
     if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
         return Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"};
+
     // at least one should availiable
     if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))
         return Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"};
@@ -141,15 +148,14 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerEntryHandl
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
-        {JS(index), output.index}};
+        {JS(index), output.index},
+    };
+
     if (output.nodeBinary)
-    {
         object[JS(node_binary)] = *(output.nodeBinary);
-    }
     else
-    {
         object[JS(node)] = *(output.node);
-    }
+
     jv = std::move(object);
 }
 
@@ -158,25 +164,21 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
 {
     auto const& jsonObject = jv.as_object();
     LedgerEntryHandler::Input input;
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
-        }
     }
+
     if (jsonObject.contains(JS(binary)))
-    {
         input.binary = jv.at(JS(binary)).as_bool();
-    }
+
     // check all the protential index
     static auto const indexFieldTypeMap = std::unordered_map<std::string, ripple::LedgerEntryType>{
         {JS(index), ripple::ltANY},
@@ -186,13 +188,15 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(escrow), ripple::ltESCROW},
         {JS(payment_channel), ripple::ltPAYCHAN},
         {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
-        {JS(ticket), ripple::ltTICKET}};
+        {JS(ticket), ripple::ltTICKET},
+    };
 
     auto const indexFieldType =
         std::find_if(indexFieldTypeMap.begin(), indexFieldTypeMap.end(), [&jsonObject](auto const& pair) {
             auto const& [field, _] = pair;
             return jsonObject.contains(field) && jsonObject.at(field).is_string();
         });
+
     if (indexFieldType != indexFieldTypeMap.end())
     {
         input.index = jv.at(indexFieldType->first).as_string().c_str();
@@ -228,6 +232,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     {
         input.ticket = jv.at(JS(ticket)).as_object();
     }
+
     return input;
 }
 

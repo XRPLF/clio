@@ -43,7 +43,7 @@ public:
         bool validated = true;
     };
 
-    // TODO:we did not implement the "strict" field
+    // TODO: We did not implement the "strict" field (can't be implemented?)
     struct Input
     {
         std::string account;
@@ -80,4 +80,5 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
+
 }  // namespace RPC

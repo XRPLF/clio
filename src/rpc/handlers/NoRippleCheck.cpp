@@ -39,18 +39,18 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     auto const accountID = accountFromStringStrict(input.account);
     auto const keylet = ripple::keylet::account(*accountID).key;
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
+
     if (!accountObj)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    ripple::SerialIter it{accountObj->data(), accountObj->size()};
-    ripple::SLE sle{it, keylet};
+    auto it = ripple::SerialIter{accountObj->data(), accountObj->size()};
+    auto sle = ripple::SLE{it, keylet};
     auto accountSeq = sle.getFieldU32(ripple::sfSequence);
-
     bool const bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
-
     auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
     auto output = NoRippleCheckHandler::Output();
+
     if (input.transactions)
         output.transactions.emplace(boost::json::array());
 
@@ -59,6 +59,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
         tx[JS(Sequence)] = accountSeq;
         tx[JS(Account)] = ripple::toBase58(accountID);
         tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
+
         return tx;
     };
 
@@ -73,6 +74,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     else if (input.roleGateway && !bDefaultRipple)
     {
         output.problems.push_back("You should immediately set your default ripple flag");
+
         if (input.transactions)
         {
             auto tx = getBaseTx(*accountID, accountSeq++);
@@ -81,7 +83,9 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
             output.transactions->push_back(tx);
         }
     }
+
     auto limit = input.limit;
+
     ngTraverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
@@ -114,64 +118,67 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
                 }
                 if (needFix)
                 {
-                    limit--;
+                    --limit;
+
                     ripple::AccountID peer =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit).getIssuer();
                     ripple::STAmount peerLimit =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
+
                     problem += fmt::format(
                         "{} line to {}", to_string(peerLimit.getCurrency()), to_string(peerLimit.getIssuer()));
                     output.problems.emplace_back(problem);
+
                     if (input.transactions)
                     {
                         ripple::STAmount limitAmount(
                             ownedItem.getFieldAmount(bLow ? ripple::sfLowLimit : ripple::sfHighLimit));
                         limitAmount.setIssuer(peer);
+
                         auto tx = getBaseTx(*accountID, accountSeq++);
+
                         tx[JS(TransactionType)] = "TrustSet";
                         tx[JS(LimitAmount)] = toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
                         tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple : ripple::tfSetNoRipple;
+
                         output.transactions->push_back(tx);
                     }
                 }
             }
+
             return true;
         });
 
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
+
     return output;
 }
 
 NoRippleCheckHandler::Input
 tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::value const& jv)
 {
+    auto input = NoRippleCheckHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    NoRippleCheckHandler::Input input;
+
     input.account = jsonObject.at(JS(account)).as_string().c_str();
     input.roleGateway = jsonObject.at(JS(role)).as_string() == "gateway";
+
     if (jsonObject.contains(JS(limit)))
-    {
         input.limit = jsonObject.at(JS(limit)).as_int64();
-    }
+
     if (jsonObject.contains(JS(transactions)))
-    {
         input.transactions = jsonObject.at(JS(transactions)).as_bool();
-    }
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
     }
 
     return input;
@@ -181,11 +188,15 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NoRippleCheckHandler::Output const& output)
 {
     auto obj = boost::json::object{
-        {JS(ledger_hash), output.ledgerHash}, {JS(ledger_index), output.ledgerIndex}, {"problems", output.problems}};
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
+        {"problems", output.problems},
+    };
+
     if (output.transactions)
-    {
         obj.emplace(JS(transactions), *(output.transactions));
-    }
+
     jv = std::move(obj);
 }
+
 }  // namespace RPC

@@ -51,7 +51,7 @@ public:
         bool validated = true;
     };
 
-    // TODO:we did not implement the "strict" field
+    // TODO: We did not implement the "strict" field
     struct Input
     {
         std::string account;

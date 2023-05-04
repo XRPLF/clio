@@ -87,7 +87,9 @@ public:
             {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
             {JS(marker),
              validation::WithCustomError{
-                 validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
+                 validation::Type<boost::json::object>{},
+                 Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"},
+             },
              validation::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},

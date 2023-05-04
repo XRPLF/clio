@@ -31,6 +31,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     // marker must be int if outOfOrder is true
     if (input.outOfOrder && input.marker)
         return Error{Status{RippledError::rpcINVALID_PARAMS, "outOfOrderMarkerNotInt"}};
+
     if (!input.outOfOrder && input.diffMarker)
         return Error{Status{RippledError::rpcINVALID_PARAMS, "markerNotString"}};
 
@@ -43,9 +44,10 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
 
-    Output output;
     // no marker -> first call, return header information
     auto header = boost::json::object();
+    Output output;
+
     if ((!input.marker) && (!input.diffMarker))
     {
         if (input.binary)
@@ -70,6 +72,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
             header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
             header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
         }
+
         header[JS(closed)] = true;
         output.header = std::move(header);
     }
@@ -84,23 +87,28 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
 
     auto const start = std::chrono::system_clock::now();
     std::vector<Backend::LedgerObject> results;
+
     if (input.diffMarker)
     {
         // keep the same logic as previous implementation
         auto diff = sharedPtrBackend_->fetchLedgerDiff(*(input.diffMarker), ctx.yield);
         std::vector<ripple::uint256> keys;
+
         for (auto& [key, object] : diff)
         {
             if (!object.size())
                 keys.push_back(std::move(key));
         }
+
         auto objs = sharedPtrBackend_->fetchLedgerObjects(keys, lgrInfo.seq, ctx.yield);
+
         for (size_t i = 0; i < objs.size(); ++i)
         {
             auto& obj = objs[i];
             if (obj.size())
                 results.push_back({std::move(keys[i]), std::move(obj)});
         }
+
         if (*(input.diffMarker) > lgrInfo.seq)
             output.diffMarker = *(input.diffMarker) - 1;
     }
@@ -112,20 +120,23 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
             std::min(input.limit, input.binary ? LedgerDataHandler::LIMITBINARY : LedgerDataHandler::LIMITJSON);
         auto page = sharedPtrBackend_->fetchLedgerPage(input.marker, lgrInfo.seq, limit, input.outOfOrder, ctx.yield);
         results = std::move(page.objects);
+
         if (page.cursor)
             output.marker = ripple::strHex(*(page.cursor));
         else if (input.outOfOrder)
             output.diffMarker = sharedPtrBackend_->fetchLedgerRange()->maxSequence;
     }
-    auto const end = std::chrono::system_clock::now();
 
+    auto const end = std::chrono::system_clock::now();
     log_.debug() << "Number of results = " << results.size() << " fetched in "
                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds";
 
     output.states.reserve(results.size());
+
     for (auto const& [key, object] : results)
     {
         ripple::STLedgerEntry const sle{ripple::SerialIter{object.data(), object.size()}, key};
+
         if (input.binary)
         {
             boost::json::object entry;
@@ -138,6 +149,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
             output.states.push_back(toJson(sle));
         }
     }
+
     if (input.outOfOrder)
         output.cacheFull = sharedPtrBackend_->cache().isFull();
 
@@ -157,13 +169,16 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerDataHandle
         {JS(validated), output.validated},
         {JS(state), output.states},
     };
+
     if (output.header)
         obj[JS(ledger)] = *(output.header);
+
     if (output.cacheFull)
         obj["cache_full"] = *(output.cacheFull);
 
     if (output.diffMarker)
         obj[JS(marker)] = *(output.diffMarker);
+
     else if (output.marker)
         obj[JS(marker)] = *(output.marker);
 
@@ -180,39 +195,30 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
         input.binary = jsonObject.at(JS(binary)).as_bool();
         input.limit = input.binary ? LedgerDataHandler::LIMITBINARY : LedgerDataHandler::LIMITJSON;
     }
+
     if (jsonObject.contains(JS(limit)))
-    {
         input.limit = jsonObject.at(JS(limit)).as_int64();
-    }
+
     if (jsonObject.contains("out_of_order"))
-    {
         input.outOfOrder = jsonObject.at("out_of_order").as_bool();
-    }
+
     if (jsonObject.contains("marker"))
     {
         if (jsonObject.at("marker").is_string())
-        {
             input.marker = ripple::uint256{jsonObject.at("marker").as_string().c_str()};
-        }
         else
-        {
             input.diffMarker = jsonObject.at("marker").as_int64();
-        }
     }
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
-        }
     }
 
     return input;

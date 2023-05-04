@@ -36,9 +36,11 @@ TxHandler::process(Input input, Context const& ctx) const
         if (*input.maxLedger - *input.minLedger > maxLedgerRange)
             return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
     }
-    TxHandler::Output output;
+
+    auto output = TxHandler::Output{};
     auto const dbResponse =
         sharedPtrBackend_->fetchTransaction(ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
+
     if (!dbResponse)
     {
         if (rangeSupplied)
@@ -47,8 +49,10 @@ TxHandler::process(Input input, Context const& ctx) const
             auto const searchedAll = range->maxSequence >= *input.maxLedger && range->minSequence <= *input.minLedger;
             boost::json::object extra;
             extra["searched_all"] = searchedAll;
+
             return Error{Status{RippledError::rpcTXN_NOT_FOUND, std::move(extra)}};
         }
+
         return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
     }
 
@@ -68,6 +72,7 @@ TxHandler::process(Input input, Context const& ctx) const
 
     output.date = dbResponse->date;
     output.ledgerIndex = dbResponse->ledgerSequence;
+
     return output;
 }
 
@@ -75,6 +80,7 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Output const& output)
 {
     auto obj = boost::json::object{};
+
     if (output.tx)
     {
         obj = *output.tx;
@@ -86,29 +92,30 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Outpu
         obj["tx"] = *output.txStr;
         obj["hash"] = output.hash;
     }
+
     obj["date"] = output.date;
     obj["ledger_index"] = output.ledgerIndex;
+
     jv = std::move(obj);
 }
 
 TxHandler::Input
 tag_invoke(boost::json::value_to_tag<TxHandler::Input>, boost::json::value const& jv)
 {
-    TxHandler::Input input;
+    auto input = TxHandler::Input{};
     auto const& jsonObject = jv.as_object();
+
     input.transaction = jv.at("transaction").as_string().c_str();
+
     if (jsonObject.contains("binary"))
-    {
         input.binary = jv.at("binary").as_bool();
-    }
+
     if (jsonObject.contains("min_ledger"))
-    {
         input.minLedger = jv.at("min_ledger").as_int64();
-    }
+
     if (jsonObject.contains("max_ledger"))
-    {
         input.maxLedger = jv.at("max_ledger").as_int64();
-    }
+
     return input;
 }
 

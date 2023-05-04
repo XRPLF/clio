@@ -45,12 +45,14 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
     if (!dbRet || dbRet->ledgerSequence != lgrInfo.seq)
         return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
 
+    auto output = TransactionEntryHandler::Output{};
     auto [txn, meta] = toExpandedJson(*dbRet);
-    TransactionEntryHandler::Output output;
+
     output.tx = std::move(txn);
     output.metadata = std::move(meta);
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
+
     return output;
 }
 
@@ -68,25 +70,23 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntry
 TransactionEntryHandler::Input
 tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::json::value const& jv)
 {
+    auto input = TransactionEntryHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    TransactionEntryHandler::Input input;
     input.txHash = jv.at(JS(tx_hash)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
-        }
     }
+
     return input;
 }
+
 }  // namespace RPC

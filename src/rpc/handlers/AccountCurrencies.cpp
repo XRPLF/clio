@@ -42,19 +42,23 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
         {
-            ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
+            auto balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
             auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
             bool const viewLowest = (lowLimit.getIssuer() == accountID);
             auto const lineLimit = viewLowest ? lowLimit : highLimit;
             auto const lineLimitPeer = !viewLowest ? lowLimit : highLimit;
+
             if (!viewLowest)
                 balance.negate();
+
             if (balance < lineLimit)
                 response.receiveCurrencies.insert(ripple::to_string(balance.getCurrency()));
+
             if ((-balance) < lineLimitPeer)
                 response.sendCurrencies.insert(ripple::to_string(balance.getCurrency()));
         }
+
         return true;
     };
 
@@ -70,6 +74,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
+
     return response;
 }
 
@@ -81,7 +86,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountCurrencie
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
         {JS(receive_currencies), output.receiveCurrencies},
-        {JS(send_currencies), output.sendCurrencies}};
+        {JS(send_currencies), output.sendCurrencies},
+    };
 }
 
 AccountCurrenciesHandler::Input
@@ -90,21 +96,18 @@ tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::js
     auto const& jsonObject = jv.as_object();
     AccountCurrenciesHandler::Input input;
     input.account = jv.at(JS(account)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_hash)))
-    {
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
-    }
+
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
-        }
     }
+
     return input;
 }
 

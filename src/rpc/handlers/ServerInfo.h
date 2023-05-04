@@ -133,19 +133,20 @@ public:
         if (not fees.has_value())
             return Error{Status{RippledError::rpcINTERNAL}};
 
+        auto output = Output{};
         auto const sinceEpoch = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
         auto const age = static_cast<int32_t>(sinceEpoch) -
             static_cast<int32_t>(lgrInfo->closeTime.time_since_epoch().count()) -
             static_cast<int32_t>(rippleEpochStart);
 
-        Output output;
-
         output.info.completeLedgers = fmt::format("{}-{}", range->minSequence, range->maxSequence);
+
         if (ctx.isAdmin)
             output.info.adminSection = {counters_.get().report(), subscriptions_->report(), etl_->getInfo()};
 
         auto const serverInfoRippled =
             balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.yield);
+
         if (serverInfoRippled && !serverInfoRippled->contains(JS(error)))
         {
             if (serverInfoRippled->contains(JS(result)) &&
@@ -159,7 +160,6 @@ public:
         output.info.validatedLedger.hash = ripple::strHex(lgrInfo->hash);
         output.info.validatedLedger.seq = lgrInfo->seq;
         output.info.validatedLedger.fees = fees;
-
         output.info.cache.size = backend_->cache().size();
         output.info.cache.isFull = backend_->cache().isFull();
         output.info.cache.latestLedgerSeq = backend_->cache().latestLedgerSequence();
@@ -195,6 +195,7 @@ private:
             try
             {
                 auto const& rippledInfo = info.rippledInfo.value();
+
                 jv.as_object()[JS(load_factor)] = rippledInfo.at(JS(load_factor));
                 jv.as_object()[JS(validation_quorum)] = rippledInfo.at(JS(validation_quorum));
                 jv.as_object()["rippled_version"] = rippledInfo.at(JS(build_version));

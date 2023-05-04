@@ -31,6 +31,8 @@ class AccountObjectsHandler
 {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+
+    // constants
     static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
 
 public:
@@ -51,7 +53,7 @@ public:
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;  //[10,400]
+        uint32_t limit = 200;  // [10,400]
         std::optional<std::string> marker;
         std::optional<ripple::LedgerEntryType> type;
     };
@@ -83,7 +85,8 @@ public:
                  "deposit_preauth",
                  "check",
                  "nft_page",
-                 "nft_offer"}},
+                 "nft_offer",
+             }},
             {JS(marker), validation::AccountMarkerValidator},
         };
 
@@ -100,4 +103,5 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
+
 }  // namespace RPC

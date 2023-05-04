@@ -24,17 +24,19 @@ namespace RPC {
 void
 AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const
 {
-    AccountOffersHandler::Offer offer;
+    auto offer = AccountOffersHandler::Offer();
     offer.takerPays = offerSle.getFieldAmount(ripple::sfTakerPays);
     offer.takerGets = offerSle.getFieldAmount(ripple::sfTakerGets);
-
     offer.seq = offerSle.getFieldU32(ripple::sfSequence);
     offer.flags = offerSle.getFieldU32(ripple::sfFlags);
+
     auto const quality = getQuality(offerSle.getFieldH256(ripple::sfBookDirectory));
-    ripple::STAmount const rate = ripple::amountFromQuality(quality);
+    auto const rate = ripple::amountFromQuality(quality);
     offer.quality = rate.getText();
+
     if (offerSle.isFieldPresent(ripple::sfExpiration))
         offer.expiration = offerSle.getFieldU32(ripple::sfExpiration);
+
     offers.push_back(offer);
 };
 
@@ -49,11 +51,10 @@ AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& 
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
-
     auto const accountID = accountFromStringStrict(input.account);
-
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
@@ -64,9 +65,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& 
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltOFFER)
-        {
             addOffer(response.offers, sle);
-        }
 
         return true;
     };
@@ -93,7 +92,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHan
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
         {JS(account), output.account},
-        {JS(offers), boost::json::value_from(output.offers)}};
+        {JS(offers), boost::json::value_from(output.offers)},
+    };
+
     if (output.marker)
         jv.as_object()[JS(marker)] = *output.marker;
 }
@@ -101,24 +102,28 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHan
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHandler::Offer const& offer)
 {
-    jv = {{JS(seq), offer.seq}, {JS(flags), offer.flags}, {JS(quality), offer.quality}};
+    jv = {
+        {JS(seq), offer.seq},
+        {JS(flags), offer.flags},
+        {JS(quality), offer.quality},
+    };
+
     auto& jsonObject = jv.as_object();
+
     if (offer.expiration)
         jsonObject[JS(expiration)] = *offer.expiration;
 
     auto const convertAmount = [&](const char* field, ripple::STAmount const& amount) {
         if (amount.native())
-        {
             jsonObject[field] = amount.getText();
-        }
         else
-        {
             jsonObject[field] = {
                 {JS(currency), ripple::to_string(amount.getCurrency())},
                 {JS(issuer), ripple::to_string(amount.getIssuer())},
-                {JS(value), amount.getText()}};
-        }
+                {JS(value), amount.getText()},
+            };
     };
+
     convertAmount(JS(taker_pays), offer.takerPays);
     convertAmount(JS(taker_gets), offer.takerGets);
 }
@@ -128,7 +133,9 @@ tag_invoke(boost::json::value_to_tag<AccountOffersHandler::Input>, boost::json::
 {
     auto const& jsonObject = jv.as_object();
     AccountOffersHandler::Input input;
+
     input.account = jsonObject.at(JS(account)).as_string().c_str();
+
     if (jsonObject.contains(JS(ledger_hash)))
     {
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
@@ -136,18 +143,17 @@ tag_invoke(boost::json::value_to_tag<AccountOffersHandler::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
     }
+
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
+
     if (jsonObject.contains(JS(marker)))
         input.marker = jsonObject.at(JS(marker)).as_string().c_str();
+
     return input;
 }
 

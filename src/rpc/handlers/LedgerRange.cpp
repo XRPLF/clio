@@ -28,13 +28,9 @@ LedgerRangeHandler::Result
 LedgerRangeHandler::process() const
 {
     if (auto const maybeRange = sharedPtrBackend_->fetchLedgerRange(); maybeRange)
-    {
         return Output{*maybeRange};
-    }
     else
-    {
         return Error{Status{RippledError::rpcNOT_READY, "rangeNotFound"}};
-    }
 }
 
 void

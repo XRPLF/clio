@@ -66,9 +66,8 @@ public:
         static auto const hotWalletValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
                 if (!value.is_string() && !value.is_array())
-                {
                     return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotStringOrArray"}};
-                }
+
                 // wallet needs to be an valid accountID or public key
                 auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
                 auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
@@ -76,17 +75,22 @@ public:
                     {
                         auto const pk = ripple::parseBase58<ripple::PublicKey>(
                             ripple::TokenType::AccountPublic, j.as_string().c_str());
+
                         if (pk)
                             return ripple::calcAccountID(*pk);
+
                         return ripple::parseBase58<ripple::AccountID>(j.as_string().c_str());
                     }
+
                     return {};
                 };
+
                 for (auto const& wallet : wallets)
                 {
                     if (!getAccountID(wallet))
                         return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
                 }
+
                 return MaybeError{};
             }};
 
@@ -110,4 +114,5 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
+
 }  // namespace RPC
