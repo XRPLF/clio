@@ -72,7 +72,7 @@ jobs:
     name: Build on Mac/Clang14 and run tests
     needs: lint
     continue-on-error: false
-    runs-on: macos-12
+    runs-on: [self-hosted, macOS]
 
     steps:
       - uses: actions/checkout@v3
@@ -83,27 +83,35 @@ jobs:
         id: boost
         uses: actions/cache@v3
         with:
-          path: boost
+          path: boost_1_77_0
           key: ${{ runner.os }}-boost
 
-      - name: Build boost
-        if: steps.boost.outputs.cache-hit != 'true'
+      - name: Build Boost
+        if: ${{ steps.boost.outputs.cache-hit != 'true' }}
         run: |
-          curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
+          rm -rf boost_1_77_0.tar.gz boost_1_77_0 # cleanup if needed first
+          curl -s -fOJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
           tar zxf boost_1_77_0.tar.gz
-          mv boost_1_77_0 boost
-          cd boost
+          cd boost_1_77_0
           ./bootstrap.sh
-          ./b2 cxxflags="-std=c++14"
-      - name: install deps
+          ./b2 define=BOOST_ASIO_HAS_STD_INVOKE_RESULT cxxflags="-std=c++20"
+
+      - name: Install dependencies
         run: |
-          brew install pkg-config protobuf openssl ninja cassandra-cpp-driver bison
+          brew install llvm@14 pkg-config protobuf openssl ninja cassandra-cpp-driver bison cmake
+
+      - name: Setup environment for llvm-14
+        run: |
+          export PATH="/usr/local/opt/llvm@14/bin:$PATH"
+          export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
+          export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
+
       - name: Build clio
         run: |
-          export BOOST_ROOT=$(pwd)/boost
+          export BOOST_ROOT=$(pwd)/boost_1_77_0
           cd clio
-          cmake -B build
-          if ! cmake --build build -j$(nproc); then
+          cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm@14/bin/clang' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm@14/bin/clang++'
+          if ! cmake --build build -j; then
             echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
@@ -159,11 +167,9 @@ jobs:
           cd boost
           ./bootstrap.sh
           ./b2
-
       - name: install deps
         run: |
           sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format gcovr
-
       - name: Build clio
         run: |
           export BOOST_ROOT=$(pwd)/boost
@@ -175,7 +181,6 @@ jobs:
           fi
           cd build
           make clio_tests-ccov
-
       - name: Code Coverage Summary Report
         uses: irongut/CodeCoverageSummary@v1.2.0
         with:
@@ -191,7 +196,6 @@ jobs:
           cp clio/build/clio_tests-gcc-cov/report.html ./UnitTestCoverage/report.html
           cp code-coverage-results.md ./UnitTestCoverage/out.md
           cat code-coverage-results.md > $GITHUB_STEP_SUMMARY
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -206,4 +210,3 @@ jobs:
         with:
           name: code_coverage_report
           path: clio/build/clio_tests-gcc-cov/out.xml
-
