@@ -40,7 +40,6 @@ public:
         // books returns nothing by default, if snapshot is true, it returns offers
         // TODO: use better type than json
         std::optional<boost::json::array> offers;
-        bool validated = true;
     };
 
     struct OrderBook

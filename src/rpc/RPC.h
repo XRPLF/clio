@@ -164,9 +164,6 @@ public:
 
 private:
     bool
-    shouldSuppressValidatedFlag(Web::Context const& context) const;
-
-    bool
     shouldForwardToRippled(Web::Context const& ctx) const;
 
     bool

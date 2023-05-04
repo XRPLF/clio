@@ -151,12 +151,6 @@ RPCEngine::isClioOnly(string const& method) const
 }
 
 bool
-RPCEngine::shouldSuppressValidatedFlag(Web::Context const& context) const
-{
-    return boost::iequals(context.method, "subscribe") || boost::iequals(context.method, "unsubscribe");
-}
-
-bool
 RPCEngine::shouldForwardToRippled(Web::Context const& ctx) const
 {
     auto request = ctx.params;
