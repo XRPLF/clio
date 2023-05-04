@@ -97,8 +97,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
 AccountInfoHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::value const& jv)
 {
+    auto input = AccountInfoHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    AccountInfoHandler::Input input;
 
     if (jsonObject.contains(JS(ident)))
         input.ident = jsonObject.at(JS(ident)).as_string().c_str();

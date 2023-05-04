@@ -61,8 +61,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChangesHandl
 BookChangesHandler::Input
 tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::value const& jv)
 {
+    auto input = BookChangesHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    BookChangesHandler::Input input;
 
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();

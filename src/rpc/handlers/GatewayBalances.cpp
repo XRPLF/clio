@@ -41,7 +41,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    GatewayBalancesHandler::Output output;
+    auto output = GatewayBalancesHandler::Output{};
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE)
@@ -192,8 +192,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
 GatewayBalancesHandler::Input
 tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json::value const& jv)
 {
+    auto input = GatewayBalancesHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    GatewayBalancesHandler::Input input;
 
     input.account = jv.at(JS(account)).as_string().c_str();
 

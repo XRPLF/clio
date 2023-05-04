@@ -93,8 +93,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountCurrencie
 AccountCurrenciesHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::json::value const& jv)
 {
+    auto input = AccountCurrenciesHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    AccountCurrenciesHandler::Input input;
+
     input.account = jv.at(JS(account)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_hash)))

@@ -170,8 +170,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountTxHandler
 AccountTxHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::value const& jv)
 {
+    auto input = AccountTxHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    AccountTxHandler::Input input;
 
     input.account = jsonObject.at(JS(account)).as_string().c_str();
 

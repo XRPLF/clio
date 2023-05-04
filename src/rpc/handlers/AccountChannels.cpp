@@ -105,8 +105,8 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
 AccountChannelsHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json::value const& jv)
 {
+    auto input = AccountChannelsHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    AccountChannelsHandler::Input input;
 
     input.account = jv.at(JS(account)).as_string().c_str();
 

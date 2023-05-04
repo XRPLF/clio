@@ -59,7 +59,6 @@ make_WsContext(
         return {};
 
     string command = commandValue.as_string().c_str();
-
     return make_optional<Web::Context>(yc, command, 1, request, session, tagFactory, range, clientIp);
 }
 
@@ -208,7 +207,7 @@ RPCEngine::buildResponse(Web::Context const& ctx)
     {
         gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-        auto const isAdmin = ctx.clientIp == "127.0.0.1";
+        auto const isAdmin = ctx.clientIp == "127.0.0.1";  // TODO: this should be a strategy
         auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
         auto const v = (*method).process(ctx.params, context);
 

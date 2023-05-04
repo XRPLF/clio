@@ -104,7 +104,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
         return Error{Status{"unexpectedLedgerType"}};
 
-    LedgerEntryHandler::Output output;
+    auto output = LedgerEntryHandler::Output{};
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -162,8 +162,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerEntryHandl
 LedgerEntryHandler::Input
 tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::value const& jv)
 {
+    auto input = LedgerEntryHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    LedgerEntryHandler::Input input;
 
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();

@@ -32,6 +32,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <fmt/core.h>
 
 #include <optional>
 #include <string>
@@ -180,17 +181,16 @@ void
 logDuration(Web::Context const& ctx, T const& dur)
 {
     static clio::Logger log{"RPC"};
-    std::stringstream ss;
-    ss << ctx.tag()
-       << "Request processing duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(dur).count()
-       << " milliseconds. request = " << ctx.params;
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+    auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+    auto const msg = fmt::format("Request processing duration = {} milliseconds. request = {}", millis, ctx.params);
+
     if (seconds > 10)
-        log.error() << ss.str();
+        log.error() << ctx.tag() << msg;
     else if (seconds > 1)
-        log.warn() << ss.str();
+        log.warn() << ctx.tag() << msg;
     else
-        log.info() << ss.str();
+        log.info() << ctx.tag() << msg;
 }
 
 }  // namespace RPC

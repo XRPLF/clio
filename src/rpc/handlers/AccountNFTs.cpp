@@ -56,7 +56,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
         return response;
 
     std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
-    auto numPages = 0;
+    auto numPages = 0u;
 
     while (page)
     {

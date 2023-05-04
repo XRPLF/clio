@@ -44,7 +44,7 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     // TODO: Add perfomance metrics if needed in future
     auto [offers, _] = sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
-    BookOffersHandler::Output output;
+    auto output = BookOffersHandler::Output{};
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
     output.offers = postProcessOrderBook(
@@ -66,8 +66,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookOffersHandle
 BookOffersHandler::Input
 tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::value const& jv)
 {
-    BookOffersHandler::Input input;
+    auto input = BookOffersHandler::Input{};
     auto const& jsonObject = jv.as_object();
+
     ripple::to_currency(input.getsCurrency, jv.at(JS(taker_gets)).as_object().at(JS(currency)).as_string().c_str());
     ripple::to_currency(input.paysCurrency, jv.at(JS(taker_pays)).as_object().at(JS(currency)).as_string().c_str());
 

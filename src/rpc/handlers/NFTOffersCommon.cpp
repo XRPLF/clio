@@ -165,8 +165,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandler
 NFTOffersHandlerBase::Input
 tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::value const& jv)
 {
+    auto input = NFTOffersHandlerBase::Input{};
     auto const& jsonObject = jv.as_object();
-    NFTOffersHandlerBase::Input input;
 
     input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
 

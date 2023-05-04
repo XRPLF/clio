@@ -149,8 +149,8 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
 AccountLinesHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::value const& jv)
 {
+    auto input = AccountLinesHandler::Input{};
     auto const& jsonObject = jv.as_object();
-    AccountLinesHandler::Input input;
 
     input.account = jv.at(JS(account)).as_string().c_str();
     if (jsonObject.contains(JS(limit)))

@@ -44,6 +44,7 @@ Counters::rpcErrored(std::string const& method)
 
     std::shared_lock lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
+
     counters.started++;
     counters.errored++;
 }
@@ -55,6 +56,7 @@ Counters::rpcComplete(std::string const& method, std::chrono::microseconds const
 
     std::shared_lock lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
+
     counters.started++;
     counters.finished++;
     counters.duration += rpcDuration.count();
@@ -67,6 +69,7 @@ Counters::rpcForwarded(std::string const& method)
 
     std::shared_lock lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
+
     counters.forwarded++;
 }
 
@@ -74,13 +77,14 @@ boost::json::object
 Counters::report() const
 {
     std::shared_lock lk(mutex_);
-    boost::json::object obj = {};
+    auto obj = boost::json::object{};
+
     obj[JS(rpc)] = boost::json::object{};
     auto& rpc = obj[JS(rpc)].as_object();
 
     for (auto const& [method, info] : methodInfo_)
     {
-        boost::json::object counters = {};
+        auto counters = boost::json::object{};
         counters[JS(started)] = std::to_string(info.started);
         counters[JS(finished)] = std::to_string(info.finished);
         counters[JS(errored)] = std::to_string(info.errored);
@@ -89,6 +93,7 @@ Counters::report() const
 
         rpc[method] = std::move(counters);
     }
+
     obj["work_queue"] = workQueue_.get().report();
 
     return obj;

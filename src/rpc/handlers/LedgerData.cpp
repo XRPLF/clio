@@ -188,8 +188,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerDataHandle
 LedgerDataHandler::Input
 tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::value const& jv)
 {
-    LedgerDataHandler::Input input;
+    auto input = LedgerDataHandler::Input{};
     auto const& jsonObject = jv.as_object();
+
     if (jsonObject.contains(JS(binary)))
     {
         input.binary = jsonObject.at(JS(binary)).as_bool();
