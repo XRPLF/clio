@@ -178,7 +178,7 @@ public:
     {
         for (auto const& handler : handlers)
         {
-            handlerMap_[handler.method] = move(handler);
+            handlerMap_[handler.method] = std::move(handler);
         }
     }
 
