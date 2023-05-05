@@ -12,49 +12,63 @@
 
 static std::uint32_t const MAX_RETRIES = 5;
 static std::chrono::seconds const WAIT_TIME = std::chrono::seconds(60);
+static std::uint32_t const NFT_WRITE_BATCH_SIZE = 10000;
 
 static void
-wait(boost::asio::steady_timer& timer, std::string const reason)
+wait(boost::asio::steady_timer& timer, std::string const& reason)
 {
-    BOOST_LOG_TRIVIAL(info) << reason << ". Waiting";
+    BOOST_LOG_TRIVIAL(info) << reason << ". Waiting then retrying";
     timer.expires_after(WAIT_TIME);
     timer.wait();
-    BOOST_LOG_TRIVIAL(info) << "Done";
+    BOOST_LOG_TRIVIAL(info) << "Done waiting";
 }
 
-static void
+static std::vector<NFTsData>
 doNFTWrite(
     std::vector<NFTsData>& nfts,
     Backend::CassandraBackend& backend,
-    std::string const tag)
+    std::string const& tag)
 {
-    if (nfts.size() <= 0)
-        return;
+    if (nfts.size() == 0)
+        return nfts;
     auto const size = nfts.size();
     backend.writeNFTs(std::move(nfts));
     backend.sync();
     BOOST_LOG_TRIVIAL(info) << tag << ": Wrote " << size << " records";
+    return {};
 }
 
-static std::optional<Backend::TransactionAndMetadata>
-doTryFetchTransaction(
+static std::vector<NFTsData>
+maybeDoNFTWrite(
+    std::vector<NFTsData>& nfts,
+    Backend::CassandraBackend& backend,
+    std::string const& tag)
+{
+    if (nfts.size() < NFT_WRITE_BATCH_SIZE)
+        return nfts;
+    return doNFTWrite(nfts, backend, tag);
+}
+
+static std::vector<Backend::TransactionAndMetadata>
+doTryFetchTransactions(
     boost::asio::steady_timer& timer,
     Backend::CassandraBackend& backend,
-    ripple::uint256 const& hash,
+    std::vector<ripple::uint256> const& hashes,
     boost::asio::yield_context& yield,
     std::uint32_t const attempts = 0)
 {
     try
     {
-        return backend.fetchTransaction(hash, yield);
+        return backend.fetchTransactions(hashes, yield);
     }
     catch (Backend::DatabaseTimeout const& e)
     {
         if (attempts >= MAX_RETRIES)
             throw e;
 
-        wait(timer, "Transaction read error");
-        return doTryFetchTransaction(timer, backend, hash, yield, attempts + 1);
+        wait(timer, "Transactions read error");
+        return doTryFetchTransactions(
+            timer, backend, hashes, yield, attempts + 1);
     }
 }
 
@@ -69,7 +83,7 @@ doTryFetchLedgerPage(
 {
     try
     {
-        return backend.fetchLedgerPage(cursor, sequence, 2000, false, yield);
+        return backend.fetchLedgerPage(cursor, sequence, 10000, false, yield);
     }
     catch (Backend::DatabaseTimeout const& e)
     {
@@ -104,24 +118,12 @@ doTryGetTxPageResult(
 }
 
 static void
-doMigration(
+doMigrationStepOne(
     Backend::CassandraBackend& backend,
     boost::asio::steady_timer& timer,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context& yield,
+    Backend::LedgerRange const& ledgerRange)
 {
-    BOOST_LOG_TRIVIAL(info) << "Beginning migration";
-    auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
-
-    /*
-     * Step 0 - If we haven't downloaded the initial ledger yet, just short
-     * circuit.
-     */
-    if (!ledgerRange)
-    {
-        BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
-        return;
-    }
-
     /*
      * Step 1 - Look at all NFT transactions recorded in
      * `nf_token_transactions` and reload any NFTokenMint transactions. These
@@ -130,6 +132,9 @@ doMigration(
      * the tokens in `nf_tokens` because we also want to cover the extreme
      * edge case of a token that is re-minted with a different URI.
      */
+    std::string const stepTag = "Step 1 - transaction loading";
+    std::vector<NFTsData> toWrite;
+
     std::stringstream query;
     query << "SELECT hash FROM " << backend.tablePrefix()
           << "nf_token_transactions";
@@ -140,10 +145,10 @@ doMigration(
     // For all NFT txs, paginated in groups of 1000...
     while (morePages)
     {
-        std::vector<NFTsData> toWrite;
-
         CassResult const* result =
             doTryGetTxPageResult(nftTxQuery, timer, backend);
+
+        std::vector<ripple::uint256> txHashes;
 
         // For each tx in page...
         CassIterator* txPageIterator = cass_iterator_from_result(result);
@@ -165,37 +170,29 @@ doMigration(
                     "Could not retrieve hash from nf_token_transactions");
             }
 
-            auto const txHash = ripple::uint256::fromVoid(buf);
-            auto const tx =
-                doTryFetchTransaction(timer, backend, txHash, yield);
-            if (!tx)
-            {
-                cass_iterator_free(txPageIterator);
-                cass_result_free(result);
-                cass_statement_free(nftTxQuery);
-                std::stringstream ss;
-                ss << "Could not fetch tx with hash "
-                   << ripple::to_string(txHash);
-                throw std::runtime_error(ss.str());
-            }
+            txHashes.push_back(ripple::uint256::fromVoid(buf));
+        }
 
-            // Not really sure how cassandra paging works, but we want to skip
-            // any transactions that were loaded since the migration started
-            if (tx->ledgerSequence > ledgerRange->maxSequence)
+        auto const txs =
+            doTryFetchTransactions(timer, backend, txHashes, yield);
+
+        for (auto const& tx : txs)
+        {
+            if (tx.ledgerSequence > ledgerRange.maxSequence)
                 continue;
 
             ripple::STTx const sttx{ripple::SerialIter{
-                tx->transaction.data(), tx->transaction.size()}};
+                tx.transaction.data(), tx.transaction.size()}};
             if (sttx.getTxnType() != ripple::TxType::ttNFTOKEN_MINT)
                 continue;
 
             ripple::TxMeta const txMeta{
-                sttx.getTransactionID(), tx->ledgerSequence, tx->metadata};
+                sttx.getTransactionID(), tx.ledgerSequence, tx.metadata};
             toWrite.push_back(
                 std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
         }
 
-        doNFTWrite(toWrite, backend, "TX");
+        toWrite = maybeDoNFTWrite(toWrite, backend, stepTag);
 
         morePages = cass_result_has_more_pages(result);
         if (morePages)
@@ -205,8 +202,16 @@ doMigration(
     }
 
     cass_statement_free(nftTxQuery);
-    BOOST_LOG_TRIVIAL(info) << "\nDone with transaction loading!\n";
+    doNFTWrite(toWrite, backend, stepTag);
+}
 
+static void
+doMigrationStepTwo(
+    Backend::CassandraBackend& backend,
+    boost::asio::steady_timer& timer,
+    boost::asio::yield_context& yield,
+    Backend::LedgerRange const& ledgerRange)
+{
     /*
      * Step 2 - Pull every object from our initial ledger and load all NFTs
      * found in any NFTokenPage object. Prior to this migration, we were not
@@ -214,32 +219,43 @@ doMigration(
      * missed. This will also record the URI of any NFTs minted prior to the
      * start sequence.
      */
+    std::string const stepTag = "Step 2 - initial ledger loading";
+    std::vector<NFTsData> toWrite;
     std::optional<ripple::uint256> cursor;
 
+    // For each object page in initial ledger
     do
     {
         auto const page = doTryFetchLedgerPage(
-            timer, backend, cursor, ledgerRange->minSequence, yield);
+            timer, backend, cursor, ledgerRange.minSequence, yield);
+
+        // For each object in page
         for (auto const& object : page.objects)
         {
-            std::vector<NFTsData> toWrite = getNFTDataFromObj(
-                ledgerRange->minSequence,
-                ripple::to_string(object.key),
+            auto const objectNFTs = getNFTDataFromObj(
+                ledgerRange.minSequence,
+                std::string(object.key.begin(), object.key.end()),
                 std::string(object.blob.begin(), object.blob.end()));
-            doNFTWrite(toWrite, backend, "OBJ");
+            toWrite.insert(toWrite.end(), objectNFTs.begin(), objectNFTs.end());
         }
+
+        toWrite = maybeDoNFTWrite(toWrite, backend, stepTag);
         cursor = page.cursor;
     } while (cursor.has_value());
 
-    BOOST_LOG_TRIVIAL(info) << "\nDone with object loading!\n";
+    doNFTWrite(toWrite, backend, stepTag);
+}
 
+static bool
+doMigrationStepThree(Backend::CassandraBackend& backend)
+{
     /*
      * Step 3 - Drop the old `issuer_nf_tokens` table, which is replaced by
      * `issuer_nf_tokens_v2`. Normally, we should probably not drop old tables
      * in migrations, but here it is safe since the old table wasn't yet being
      * used to serve any data anyway.
      */
-    query.str("");
+    std::stringstream query;
     query << "DROP TABLE " << backend.tablePrefix() << "issuer_nf_tokens";
     CassStatement* issuerDropTableQuery =
         cass_statement_new(query.str().c_str(), 0);
@@ -249,12 +265,42 @@ doMigration(
     cass_future_free(fut);
     cass_statement_free(issuerDropTableQuery);
     backend.sync();
-    if (rc != CASS_OK)
-        BOOST_LOG_TRIVIAL(warning) << "\nCould not drop old issuer_nf_tokens "
+    return rc == CASS_OK;
+}
+
+static void
+doMigration(
+    Backend::CassandraBackend& backend,
+    boost::asio::steady_timer& timer,
+    boost::asio::yield_context& yield)
+{
+    BOOST_LOG_TRIVIAL(info) << "Beginning migration";
+    auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
+
+    /*
+     * Step 0 - If we haven't downloaded the initial ledger yet, just short
+     * circuit.
+     */
+    if (!ledgerRange)
+    {
+        BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
+        return;
+    }
+
+    doMigrationStepOne(backend, timer, yield, *ledgerRange);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 1 done!\n";
+
+    doMigrationStepTwo(backend, timer, yield, *ledgerRange);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 2 done!\n";
+
+    auto const stepThreeResult = doMigrationStepThree(backend);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 3 done!";
+    if (stepThreeResult)
+        BOOST_LOG_TRIVIAL(info) << "Dropped old 'issuer_nf_tokens' table!\n";
+    else
+        BOOST_LOG_TRIVIAL(warning) << "Could not drop old issuer_nf_tokens "
                                       "table. If it still exists, "
                                       "you should drop it yourself\n";
-    else
-        BOOST_LOG_TRIVIAL(info) << "\nDropped old 'issuer_nf_tokens' table!\n";
 
     BOOST_LOG_TRIVIAL(info)
         << "\nCompleted migration from " << ledgerRange->minSequence << " to "

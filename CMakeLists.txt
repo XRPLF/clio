@@ -12,6 +12,9 @@ if(VERBOSE)
   set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
 endif()
 
+#c++20 removed std::result_of but boost 1.75 is still using it.
+add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
+
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
