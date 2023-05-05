@@ -132,6 +132,10 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
 
     auto const next = ngTraverseOwnedNodes(
         *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+
+    if (auto status = std::get_if<Status>(&next))
+        return Error{*status};
+
     auto const nextMarker = std::get<AccountCursor>(next);
 
     response.account = input.account;
@@ -183,6 +187,7 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountLinesHandler::Output const& output)
 {
     auto obj = boost::json::object{
+        {JS(account), output.account},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},

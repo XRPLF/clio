@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
 #include <rpc/handlers/Tx.h>
 
 namespace RPC {
@@ -84,17 +83,17 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Outpu
     if (output.tx)
     {
         obj = *output.tx;
-        obj["meta"] = *output.meta;
+        obj[JS(meta)] = *output.meta;
     }
     else
     {
-        obj["meta"] = *output.metaStr;
-        obj["tx"] = *output.txStr;
-        obj["hash"] = output.hash;
+        obj[JS(meta)] = *output.metaStr;
+        obj[JS(tx)] = *output.txStr;
+        obj[JS(hash)] = output.hash;
     }
-
-    obj["date"] = output.date;
-    obj["ledger_index"] = output.ledgerIndex;
+    obj[JS(validated)] = output.validated;
+    obj[JS(date)] = output.date;
+    obj[JS(ledger_index)] = output.ledgerIndex;
 
     jv = std::move(obj);
 }
@@ -105,16 +104,16 @@ tag_invoke(boost::json::value_to_tag<TxHandler::Input>, boost::json::value const
     auto input = TxHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    input.transaction = jv.at("transaction").as_string().c_str();
+    input.transaction = jv.at(JS(transaction)).as_string().c_str();
 
-    if (jsonObject.contains("binary"))
-        input.binary = jv.at("binary").as_bool();
+    if (jsonObject.contains(JS(binary)))
+        input.binary = jv.at(JS(binary)).as_bool();
 
-    if (jsonObject.contains("min_ledger"))
-        input.minLedger = jv.at("min_ledger").as_int64();
+    if (jsonObject.contains(JS(min_ledger)))
+        input.minLedger = jv.at(JS(min_ledger)).as_int64();
 
-    if (jsonObject.contains("max_ledger"))
-        input.maxLedger = jv.at("max_ledger").as_int64();
+    if (jsonObject.contains(JS(max_ledger)))
+        input.maxLedger = jv.at(JS(max_ledger)).as_int64();
 
     return input;
 }

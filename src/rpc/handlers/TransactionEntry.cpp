@@ -60,6 +60,7 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
 {
     jv = {
+        {JS(validated), output.validated},
         {JS(metadata), output.metadata},
         {JS(tx_json), output.tx},
         {JS(ledger_index), output.ledgerIndex},

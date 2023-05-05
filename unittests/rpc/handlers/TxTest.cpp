@@ -193,7 +193,8 @@ TEST_F(RPCTxTest, DefaultParameter)
                 "TransactionResult":"tesSUCCESS"
             },
             "date":123456,
-            "ledger_index":100
+            "ledger_index":100,
+            "validated": true
     })";
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx;
@@ -225,7 +226,8 @@ TEST_F(RPCTxTest, ReturnBinary)
         "tx":"120007240000006464400000000000012C65D5071AFD498D00000158415500000000C1F76FF6ECB0BAC600000000D31252CF902EF8DD8451243869B38667CBD89DF368400000000000000273047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
         "hash":"05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
         "date":123456,
-        "ledger_index":100
+        "ledger_index":100,
+        "validated": true
     })";
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx;

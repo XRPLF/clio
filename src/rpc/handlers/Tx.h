@@ -20,6 +20,7 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -60,10 +61,10 @@ public:
     spec() const
     {
         static const RpcSpec rpcSpec = {
-            {"transaction", validation::Required{}, validation::Uint256HexStringValidator},
-            {"binary", validation::Type<bool>{}},
-            {"min_ledger", validation::Type<uint32_t>{}},
-            {"max_ledger", validation::Type<uint32_t>{}},
+            {JS(transaction), validation::Required{}, validation::Uint256HexStringValidator},
+            {JS(binary), validation::Type<bool>{}},
+            {JS(min_ledger), validation::Type<uint32_t>{}},
+            {JS(max_ledger), validation::Type<uint32_t>{}},
         };
 
         return rpcSpec;
