@@ -198,17 +198,15 @@ doMigration(
                 }),
             txs.end());
 
-        std::transform(
-            txs.begin(),
-            txs.end(),
-            toWrite.end(),
-            [](Backend::TransactionAndMetadata const& tx) {
-                ripple::STTx const sttx{ripple::SerialIter{
-                    tx.transaction.data(), tx.transaction.size()}};
-                ripple::TxMeta const txMeta{
-                    sttx.getTransactionID(), tx.ledgerSequence, tx.metadata};
-                return std::get<1>(getNFTDataFromTx(txMeta, sttx)).value();
-            });
+        for (auto const& tx : txs)
+        {
+            ripple::STTx const sttx{ripple::SerialIter{
+                tx.transaction.data(), tx.transaction.size()}};
+            ripple::TxMeta const txMeta{
+                sttx.getTransactionID(), tx.ledgerSequence, tx.metadata};
+            toWrite.push_back(
+                std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
+        }
 
         toWrite = maybeDoNFTWrite(toWrite, backend, "TX");
 
