@@ -185,23 +185,17 @@ doMigration(
         }
 
         auto txs = doTryFetchTransactions(timer, backend, txHashes, yield);
-        txs.erase(
-            std::remove_if(
-                txs.begin(),
-                txs.end(),
-                [&ledgerRange](Backend::TransactionAndMetadata const& tx) {
-                    if (tx.ledgerSequence > ledgerRange->maxSequence)
-                        return true;
-                    ripple::STTx const sttx{ripple::SerialIter{
-                        tx.transaction.data(), tx.transaction.size()}};
-                    return sttx.getTxnType() != ripple::TxType::ttNFTOKEN_MINT;
-                }),
-            txs.end());
 
         for (auto const& tx : txs)
         {
+            if (tx.ledgerSequence > ledgerRange->maxSequence)
+                continue;
+
             ripple::STTx const sttx{ripple::SerialIter{
                 tx.transaction.data(), tx.transaction.size()}};
+            if (sttx.getTxnType() != ripple::TxType::ttNFTOKEN_MINT)
+                continue;
+
             ripple::TxMeta const txMeta{
                 sttx.getTransactionID(), tx.ledgerSequence, tx.metadata};
             toWrite.push_back(
