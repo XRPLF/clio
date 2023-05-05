@@ -144,12 +144,8 @@ doVerification(
     }
 
     /*
-     * Step 1 - Look at all NFT transactions recorded in
-     * `nf_token_transactions` and reload any NFTokenMint transactions. These
-     * will contain the URI of any tokens that were minted after our start
-     * sequence. We look at transactions for this step instead of directly at
-     * the tokens in `nf_tokens` because we also want to cover the extreme
-     * edge case of a token that is re-minted with a different URI.
+     * Step 1 - Find all ledger sequences from `nf_token_uris` 
+     * prior to when this verification script started running
      */
     std::stringstream query;
     std::vector<std::uint32_t> ledgerSequencesChanged;
@@ -210,13 +206,9 @@ doVerification(
 
     /*
      * Step 2 - Pull every object from our initial ledger and load all NFTs
-     * found in any NFTokenPage object. Prior to this migration, we were not
-     * pulling out NFTs from the initial ledger, so all these NFTs would be
-     * missed. This will also record the URI of any NFTs minted prior to the
-     * start sequence.
+     * found in any NFTokenPage object. Compare each URI in the NFToken object
+     * with the what has been written in the `nf_token_uris`.
      */
-
-
     for(auto const ledgerSeq: ledgerSequencesChanged){
         std::optional<ripple::uint256> cursor;
 
