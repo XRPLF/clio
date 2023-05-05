@@ -83,7 +83,7 @@ doTryFetchLedgerPage(
 {
     try
     {
-        return backend.fetchLedgerPage(cursor, sequence, 2000, false, yield);
+        return backend.fetchLedgerPage(cursor, sequence, 10000, false, yield);
     }
     catch (Backend::DatabaseTimeout const& e)
     {
@@ -118,26 +118,12 @@ doTryGetTxPageResult(
 }
 
 static void
-doMigration(
+doMigrationStepOne(
     Backend::CassandraBackend& backend,
     boost::asio::steady_timer& timer,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context& yield,
+    Backend::LedgerRange const& ledgerRange)
 {
-    BOOST_LOG_TRIVIAL(info) << "Beginning migration";
-    auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
-
-    /*
-     * Step 0 - If we haven't downloaded the initial ledger yet, just short
-     * circuit.
-     */
-    if (!ledgerRange)
-    {
-        BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
-        return;
-    }
-
-    std::vector<NFTsData> toWrite;
-
     /*
      * Step 1 - Look at all NFT transactions recorded in
      * `nf_token_transactions` and reload any NFTokenMint transactions. These
@@ -146,6 +132,9 @@ doMigration(
      * the tokens in `nf_tokens` because we also want to cover the extreme
      * edge case of a token that is re-minted with a different URI.
      */
+    std::string const stepTag = "Step 1 - transaction loading";
+    std::vector<NFTsData> toWrite;
+
     std::stringstream query;
     query << "SELECT hash FROM " << backend.tablePrefix()
           << "nf_token_transactions";
@@ -184,11 +173,12 @@ doMigration(
             txHashes.push_back(ripple::uint256::fromVoid(buf));
         }
 
-        auto txs = doTryFetchTransactions(timer, backend, txHashes, yield);
+        auto const txs =
+            doTryFetchTransactions(timer, backend, txHashes, yield);
 
         for (auto const& tx : txs)
         {
-            if (tx.ledgerSequence > ledgerRange->maxSequence)
+            if (tx.ledgerSequence > ledgerRange.maxSequence)
                 continue;
 
             ripple::STTx const sttx{ripple::SerialIter{
@@ -202,7 +192,7 @@ doMigration(
                 std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
         }
 
-        toWrite = maybeDoNFTWrite(toWrite, backend, "TX");
+        toWrite = maybeDoNFTWrite(toWrite, backend, stepTag);
 
         morePages = cass_result_has_more_pages(result);
         if (morePages)
@@ -212,9 +202,16 @@ doMigration(
     }
 
     cass_statement_free(nftTxQuery);
-    toWrite = doNFTWrite(toWrite, backend, "TX");
-    BOOST_LOG_TRIVIAL(info) << "\nDone with transaction loading!\n";
+    doNFTWrite(toWrite, backend, stepTag);
+}
 
+static void
+doMigrationStepTwo(
+    Backend::CassandraBackend& backend,
+    boost::asio::steady_timer& timer,
+    boost::asio::yield_context& yield,
+    Backend::LedgerRange const& ledgerRange)
+{
     /*
      * Step 2 - Pull every object from our initial ledger and load all NFTs
      * found in any NFTokenPage object. Prior to this migration, we were not
@@ -222,38 +219,43 @@ doMigration(
      * missed. This will also record the URI of any NFTs minted prior to the
      * start sequence.
      */
+    std::string const stepTag = "Step 2 - initial ledger loading";
+    std::vector<NFTsData> toWrite;
     std::optional<ripple::uint256> cursor;
 
     // For each object page in initial ledger
     do
     {
         auto const page = doTryFetchLedgerPage(
-            timer, backend, cursor, ledgerRange->minSequence, yield);
+            timer, backend, cursor, ledgerRange.minSequence, yield);
 
-        // For each object in page of 2000
+        // For each object in page
         for (auto const& object : page.objects)
         {
-            std::vector<NFTsData> objectNFTs = getNFTDataFromObj(
-                ledgerRange->minSequence,
+            auto const objectNFTs = getNFTDataFromObj(
+                ledgerRange.minSequence,
                 std::string(object.key.begin(), object.key.end()),
                 std::string(object.blob.begin(), object.blob.end()));
             toWrite.insert(toWrite.end(), objectNFTs.begin(), objectNFTs.end());
         }
 
-        toWrite = maybeDoNFTWrite(toWrite, backend, "OBJ");
+        toWrite = maybeDoNFTWrite(toWrite, backend, stepTag);
         cursor = page.cursor;
     } while (cursor.has_value());
 
-    toWrite = doNFTWrite(toWrite, backend, "OBJ");
-    BOOST_LOG_TRIVIAL(info) << "\nDone with object loading!\n";
+    doNFTWrite(toWrite, backend, stepTag);
+}
 
+static bool
+doMigrationStepThree(Backend::CassandraBackend& backend)
+{
     /*
      * Step 3 - Drop the old `issuer_nf_tokens` table, which is replaced by
      * `issuer_nf_tokens_v2`. Normally, we should probably not drop old tables
      * in migrations, but here it is safe since the old table wasn't yet being
      * used to serve any data anyway.
      */
-    query.str("");
+    std::stringstream query;
     query << "DROP TABLE " << backend.tablePrefix() << "issuer_nf_tokens";
     CassStatement* issuerDropTableQuery =
         cass_statement_new(query.str().c_str(), 0);
@@ -263,12 +265,42 @@ doMigration(
     cass_future_free(fut);
     cass_statement_free(issuerDropTableQuery);
     backend.sync();
-    if (rc != CASS_OK)
-        BOOST_LOG_TRIVIAL(warning) << "\nCould not drop old issuer_nf_tokens "
+    return rc == CASS_OK;
+}
+
+static void
+doMigration(
+    Backend::CassandraBackend& backend,
+    boost::asio::steady_timer& timer,
+    boost::asio::yield_context& yield)
+{
+    BOOST_LOG_TRIVIAL(info) << "Beginning migration";
+    auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
+
+    /*
+     * Step 0 - If we haven't downloaded the initial ledger yet, just short
+     * circuit.
+     */
+    if (!ledgerRange)
+    {
+        BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
+        return;
+    }
+
+    doMigrationStepOne(backend, timer, yield, *ledgerRange);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 1 done!\n";
+
+    doMigrationStepTwo(backend, timer, yield, *ledgerRange);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 2 done!\n";
+
+    auto const stepThreeResult = doMigrationStepThree(backend);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 3 done!";
+    if (stepThreeResult)
+        BOOST_LOG_TRIVIAL(info) << "Dropped old 'issuer_nf_tokens' table!\n";
+    else
+        BOOST_LOG_TRIVIAL(warning) << "Could not drop old issuer_nf_tokens "
                                       "table. If it still exists, "
                                       "you should drop it yourself\n";
-    else
-        BOOST_LOG_TRIVIAL(info) << "\nDropped old 'issuer_nf_tokens' table!\n";
 
     BOOST_LOG_TRIVIAL(info)
         << "\nCompleted migration from " << ledgerRange->minSequence << " to "
