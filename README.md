@@ -15,20 +15,20 @@ to the above-referenced PR, so it is very safe to drop.
 
 This tool should be used as follows, with regard to the above update:
 
-1. __Stop serving requests from your clio__ If you need to achieve zero downtime, you have two options:
-    - Temporarily point your traffic to someone else's clio that has already performed this
+1. __Compile or download the new version of `clio`__, but don't run it just yet.
+2. __Stop serving requests from your existing `clio`__. If you need to achieve zero downtime, you have two options:
+    - Temporarily point your traffic to someone else's `clio` that has already performed this
     migration. The XRPL Foundation should have performed this on their servers before this
     release. Ask in our Discord what server to point traffic to.
     - Create a new temporary `clio` instance running _the prior release_ and make sure
     that its config.json specifies `read_only: true`. You can safely serve data
     from this separate instance.
-2. __Stop your clio and upgrade it to the version after the above PR__
-3. __Start your clio__ Now, your clio is writing new data correctly. This tool will update your
-old data, while your new clio is running and writing new ledgers.
+3. __Stop your `clio` and restart it, running the new version__. Now, your `clio` is writing new data correctly. This tool will update your
+old data, while your upgraded `clio` is running and writing new ledgers.
 5. __Run this tool__, using the _exact_ same config as what you are using for your
-production clio.
+production `clio`.
 6. __Once this tool terminates successfully__, you can resume serving requests
-from your clio.
+from your `clio`.
 
 
 ## Notes on timing
