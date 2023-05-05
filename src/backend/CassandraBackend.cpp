@@ -550,7 +550,7 @@ CassandraBackend::fetchTransactions(
     std::vector<TransactionAndMetadata> results{numHashes};
     std::vector<std::shared_ptr<ReadCallbackData<result_type>>> cbs;
     cbs.reserve(numHashes);
-    auto timeDiff = util::timed([&]() {
+    [[maybe_unused]] auto timeDiff = util::timed([&]() {
         for (std::size_t i = 0; i < hashes.size(); ++i)
         {
             CassandraStatement statement{selectTransaction_};
@@ -580,9 +580,9 @@ CassandraBackend::fetchTransactions(
             throw DatabaseTimeout();
     }
 
-    log_.debug() << "Fetched " << numHashes
-                 << " transactions from Cassandra in " << timeDiff
-                 << " milliseconds";
+    // log_.debug() << "Fetched " << numHashes
+    //              << " transactions from Cassandra in " << timeDiff
+    //              << " milliseconds";
     return results;
 }
 
