@@ -213,7 +213,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                                             "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08"
                                         },
                                         "ledger_index":30,
-                                        "ledger_hash":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
+                                        "ledger_hash":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                                        "validated":true
                                     })";
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx;

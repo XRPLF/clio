@@ -90,6 +90,9 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
     auto const next = ngTraverseOwnedNodes(
         *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
+    if (auto status = std::get_if<Status>(&next))
+        return Error{*status};
+
     response.account = input.account;
     response.limit = input.limit;
     response.ledgerHash = ripple::strHex(lgrInfo.hash);

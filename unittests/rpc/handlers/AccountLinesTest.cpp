@@ -429,6 +429,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
             ACCOUNT));
         auto const correctOutput =
             R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index": 30,
                 "validated": true,
@@ -624,6 +625,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
 TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
 {
     constexpr static auto correctOutput = R"({
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
