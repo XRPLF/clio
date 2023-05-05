@@ -25,7 +25,7 @@ wait(boost::asio::steady_timer& timer, std::string const& reason)
 
 static std::vector<NFTsData>
 doNFTWrite(
-    std::vector<NFTsData>&& nfts,
+    std::vector<NFTsData>& nfts,
     Backend::CassandraBackend& backend,
     std::string const& tag)
 {
@@ -35,19 +35,18 @@ doNFTWrite(
     backend.writeNFTs(std::move(nfts));
     backend.sync();
     BOOST_LOG_TRIVIAL(info) << tag << ": Wrote " << size << " records";
-    nfts.clear();
-    return nfts;
+    return {};
 }
 
 static std::vector<NFTsData>
 maybeDoNFTWrite(
-    std::vector<NFTsData>&& nfts,
+    std::vector<NFTsData>& nfts,
     Backend::CassandraBackend& backend,
     std::string const& tag)
 {
     if (nfts.size() < NFT_WRITE_BATCH_SIZE)
         return nfts;
-    return doNFTWrite(std::move(nfts), backend, tag);
+    return doNFTWrite(nfts, backend, tag);
 }
 
 static std::optional<Backend::TransactionAndMetadata>
@@ -209,7 +208,7 @@ doMigration(
                 std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
         }
 
-        toWrite = maybeDoNFTWrite(std::move(toWrite), backend, "TX");
+        toWrite = maybeDoNFTWrite(toWrite, backend, "TX");
 
         morePages = cass_result_has_more_pages(result);
         if (morePages)
@@ -219,7 +218,7 @@ doMigration(
     }
 
     cass_statement_free(nftTxQuery);
-    toWrite = doNFTWrite(std::move(toWrite), backend, "TX");
+    toWrite = doNFTWrite(toWrite, backend, "TX");
     BOOST_LOG_TRIVIAL(info) << "\nDone with transaction loading!\n";
 
     /*
@@ -247,11 +246,11 @@ doMigration(
             toWrite.insert(toWrite.end(), objectNFTs.begin(), objectNFTs.end());
         }
 
-        toWrite = maybeDoNFTWrite(std::move(toWrite), backend, "OBJ");
+        toWrite = maybeDoNFTWrite(toWrite, backend, "OBJ");
         cursor = page.cursor;
     } while (cursor.has_value());
 
-    toWrite = doNFTWrite(std::move(toWrite), backend, "OBJ");
+    toWrite = doNFTWrite(toWrite, backend, "OBJ");
     BOOST_LOG_TRIVIAL(info) << "\nDone with object loading!\n";
 
     /*
