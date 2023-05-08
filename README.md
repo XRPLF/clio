@@ -91,7 +91,7 @@ you should copy your existing clio config somewhere and:
 ./clio_migrator <config path>
 ```
 
-This migration will take a few hours to complete. After this completes, it is optional to perform a database verification to ensure the fields are migrated correctly, by running:
+After the migration completes, it is optional to perform a database verification to ensure the fields are migrated correctly:
 ```
 ./clio_verifier <config path>
 ```
