@@ -134,7 +134,7 @@ doVerification(
     auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
 
     /*
-     * Step 0 - If we haven't downloaded the initial ledger yet, just short
+     * If we haven't downloaded the initial ledger yet, just short
      * circuit.
      */
     if (!ledgerRange)
@@ -144,92 +144,28 @@ doVerification(
     }
 
     /*
-     * Step 1 - Find all ledger sequences from `nf_token_uris` 
-     * prior to when this verification script started running
-     */
-    std::stringstream query;
-    std::vector<std::uint32_t> ledgerSequencesChanged;
-    query << "SELECT sequence FROM " << backend.tablePrefix()
-          << "nf_token_uris" ; // may need to run unique
-    CassStatement* nftTxQuery = cass_statement_new(query.str().c_str(), 0);
-    cass_statement_set_paging_size(nftTxQuery, 1000);
-    cass_bool_t morePages = cass_true;
-
-    // For all NFT txs, paginated in groups of 1000...
-    while (morePages)
+     * Find all NFTokenPage objects and compare the URIs with what has been
+     * written by the migrator
+     */ 
+    std::optional<ripple::uint256> cursor;
+    do
     {
-        std::vector<std::uint32_t> ledgerSequencePage;
-
-        CassResult const* result =
-            doTryGetTxPageResult(nftTxQuery, timer, backend);
-
-        // For each tx in page...
-        CassIterator* txPageIterator = cass_iterator_from_result(result);
-        while (cass_iterator_next(txPageIterator))
+        auto const page = doTryFetchLedgerPage(
+            timer, backend, cursor, ledgerRange->maxSequence, yield);
+        for (auto const& object : page.objects)
         {
-            cass_int64_t buf;
+            std::vector<NFTsData> toVerify = getNFTDataFromObj(
+                ledgerRange->maxSequence,
+                std::string(object.key.begin(), object.key.end()),
+                std::string(object.blob.begin(), object.blob.end()));
 
-            CassError rc = cass_value_get_int64(cass_row_get_column(cass_iterator_get_row(txPageIterator), 0), &buf);
-            
-            if (rc != CASS_OK)
-            {
-                cass_iterator_free(txPageIterator);
-                cass_result_free(result);
-                cass_statement_free(nftTxQuery);
-                throw std::runtime_error(
-                    "Could not retrieve hash from nf_token_transactions");
-            }
-
-            std::uint32_t seq = static_cast<std::uint32_t>(buf);
-            if(seq <= ledgerRange->maxSequence)
-                ledgerSequencePage.push_back(seq);
+            //helper function to verify vector of NFTs
+            verifyNFTs(toVerify, backend, yield);
         }
+        cursor = page.cursor;
+    } while (cursor.has_value());
 
-        // make ledgerSequencePage unique
-        sort(ledgerSequencePage.begin(), ledgerSequencePage.end());
-        ledgerSequencePage.erase(unique(ledgerSequencePage.begin(), ledgerSequencePage.end()), ledgerSequencePage.end());
-        ledgerSequencesChanged.insert(ledgerSequencesChanged.end(), ledgerSequencePage.begin(), ledgerSequencePage.end());
-
-        morePages = cass_result_has_more_pages(result);
-        if (morePages)
-            cass_statement_set_paging_state(nftTxQuery, result);
-        cass_iterator_free(txPageIterator);
-        cass_result_free(result);
-    }
-
-    //unique the ledgerSequencesChanged vector
-    sort(ledgerSequencesChanged.begin(), ledgerSequencesChanged.end());
-    ledgerSequencesChanged.erase(unique(ledgerSequencesChanged.begin(), ledgerSequencesChanged.end()), ledgerSequencesChanged.end());
-
-    cass_statement_free(nftTxQuery);
-    BOOST_LOG_TRIVIAL(info) << "\nDone with querying ledger sequences!\n";
-
-    /*
-     * Step 2 - Pull every object from our initial ledger and load all NFTs
-     * found in any NFTokenPage object. Compare each URI in the NFToken object
-     * with the what has been written in the `nf_token_uris`.
-     */
-    for(auto const ledgerSeq: ledgerSequencesChanged){
-        std::optional<ripple::uint256> cursor;
-
-        do
-        {
-            auto const page = doTryFetchLedgerPage(
-                timer, backend, cursor, ledgerSeq, yield);
-            for (auto const& object : page.objects)
-            {
-                std::vector<NFTsData> toVerify = getNFTDataFromObj(
-                    ledgerSeq,
-                    ripple::to_string(object.key),
-                    std::string(object.blob.begin(), object.blob.end()));
-
-                //helper function to verify vector of NFTs
-                verifyNFTs(toVerify, backend, yield);
-            }
-            cursor = page.cursor;
-        } while (cursor.has_value());
-    }
-    BOOST_LOG_TRIVIAL(info) << "\nDone with migration verification!\n";
+    BOOST_LOG_TRIVIAL(info) << "\nDone with verification!\n";
 }
 
 int
