@@ -25,6 +25,12 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
+/**
+ * @brief The account_offers method retrieves a list of offers made by a given account.
+ *
+ * For more details see: https://xrpl.org/account_offers.html
+ */
 class AccountOffersHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

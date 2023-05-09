@@ -23,6 +23,12 @@
 #include <rpc/handlers/NFTOffersCommon.h>
 
 namespace RPC {
+
+/**
+ * @brief The nft_buy_offers method returns a list of buy offers for a given NFToken object.
+ *
+ * For more details see: https://xrpl.org/nft_buy_offers.html
+ */
 class NFTBuyOffersHandler : public NFTOffersHandlerBase
 {
 public:

@@ -295,6 +295,11 @@ private:
     }
 };
 
+/**
+ * @brief The subscribe method requests periodic notifications from the server when certain events happen.
+ *
+ * For more details see: https://xrpl.org/subscribe.html
+ */
 using SubscribeHandler = BaseSubscribeHandler<SubscriptionManager>;
 
 }  // namespace RPC

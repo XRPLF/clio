@@ -210,6 +210,12 @@ private:
     }
 };
 
+/**
+ * @brief The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
+ * subscriptions.
+ *
+ * For more details see: https://xrpl.org/unsubscribe.html
+ */
 using UnsubscribeHandler = BaseUnsubscribeHandler<SubscriptionManager>;
 
 }  // namespace RPC

@@ -26,6 +26,12 @@
 
 namespace RPC {
 
+/**
+ * @brief The ledger_entry method returns a single ledger object from the XRP Ledger in its raw format.
+ * The clio has not supported: nft_page
+ *
+ * For more details see: https://xrpl.org/ledger_entry.html
+ */
 class LedgerEntryHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

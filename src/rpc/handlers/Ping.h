@@ -23,6 +23,11 @@
 
 namespace RPC {
 
+/**
+ * @brief The ping command returns an acknowledgement, so that clients can test the connection status and latency.
+ *
+ * For more details see https://xrpl.org/ping.html
+ */
 class PingHandler
 {
 public:

@@ -26,6 +26,12 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
+/**
+ * @brief The nft_history command asks the Clio server for past transaction metadata for the NFT being queried.
+ *
+ * For more details see: https://xrpl.org/nft_history.html#nft_history
+ */
 class NFTHistoryHandler
 {
     clio::Logger log_{"RPC"};

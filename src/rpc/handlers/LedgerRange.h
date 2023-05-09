@@ -28,6 +28,11 @@
 
 namespace RPC {
 
+/**
+ * @brief The ledger_range command returns the index number of the earliest and latest ledgers that the server has.
+ *
+ * Not documented in the official rippled API docs.
+ */
 class LedgerRangeHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
