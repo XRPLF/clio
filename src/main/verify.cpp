@@ -24,29 +24,6 @@ wait(boost::asio::steady_timer& timer, std::string const reason)
     BOOST_LOG_TRIVIAL(info) << "Done";
 }
 
-
-static std::optional<Backend::TransactionAndMetadata>
-doTryFetchTransaction(
-    boost::asio::steady_timer& timer,
-    Backend::CassandraBackend& backend,
-    ripple::uint256 const& hash,
-    boost::asio::yield_context& yield,
-    std::uint32_t const attempts = 0)
-{
-    try
-    {
-        return backend.fetchTransaction(hash, yield);
-    }
-    catch (Backend::DatabaseTimeout const& e)
-    {
-        if (attempts >= MAX_RETRIES)
-            throw e;
-
-        wait(timer, "Transaction read error");
-        return doTryFetchTransaction(timer, backend, hash, yield, attempts + 1);
-    }
-}
-
 static Backend::LedgerPage
 doTryFetchLedgerPage(
     boost::asio::steady_timer& timer,
@@ -71,27 +48,6 @@ doTryFetchLedgerPage(
     }
 }
 
-static const CassResult*
-doTryGetTxPageResult(
-    CassStatement* const query,
-    boost::asio::steady_timer& timer,
-    Backend::CassandraBackend& backend,
-    std::uint32_t const attempts = 0)
-{
-    CassFuture* fut = cass_session_execute(backend.cautionGetSession(), query);
-    CassResult const* result = cass_future_get_result(fut);
-    cass_future_free(fut);
-
-    if (result != nullptr)
-        return result;
-
-    if (attempts >= MAX_RETRIES)
-        throw std::runtime_error("Already retried too many times");
-
-    wait(timer, "Unexpected empty result from nft paging");
-    return doTryGetTxPageResult(query, timer, backend, attempts + 1);
-}
-
 static void
 verifyNFTs(
     std::vector<NFTsData>& nfts,
@@ -101,7 +57,7 @@ verifyNFTs(
     if (nfts.size() <= 0)
         return;
 
-    for(auto const& nft: nfts){
+    for(auto const& nft : nfts){
         std::optional<Backend::NFT> writtenNFT = backend.fetchNFT(nft.tokenID, nft.ledgerSequence, yield);
 
         if(!writtenNFT.has_value())
@@ -117,11 +73,7 @@ verifyNFTs(
             BOOST_LOG_TRIVIAL(warning) <<"\nNFTokenID "<< to_string(nft.tokenID) << " failed to match URIs!\n";  
             throw std::runtime_error("Failed to match!");
         }
-        else{
-            BOOST_LOG_TRIVIAL(info) <<"\nNFTokenID "<< to_string(nft.tokenID) << " URI matched!\n";         
-        }
     }
-
 }
 
 static void
@@ -139,7 +91,7 @@ doVerification(
      */
     if (!ledgerRange)
     {
-        BOOST_LOG_TRIVIAL(info) << "There is no data to verification";
+        BOOST_LOG_TRIVIAL(info) << "There is no data to verify";
         return;
     }
 
@@ -148,6 +100,7 @@ doVerification(
      * written by the migrator
      */ 
     std::optional<ripple::uint256> cursor;
+    int nftCnt = 0;
     do
     {
         auto const page = doTryFetchLedgerPage(
@@ -161,10 +114,13 @@ doVerification(
 
             //helper function to verify vector of NFTs
             verifyNFTs(toVerify, backend, yield);
+            nftCnt += toVerify.size();
         }
         cursor = page.cursor;
     } while (cursor.has_value());
 
+    BOOST_LOG_TRIVIAL(info) << "\nLedger range: " << ledgerRange->minSequence << "-" << ledgerRange->maxSequence << "\n";
+    BOOST_LOG_TRIVIAL(info) << "\nVerified " << nftCnt << " NFTs!\n";
     BOOST_LOG_TRIVIAL(info) << "\nDone with verification!\n";
 }
 
