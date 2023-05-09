@@ -25,6 +25,10 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+/**
+ * @brief The account_nfts method returns a list of NFToken objects for the specified account.
+ * https://xrpl.org/account_nfts.html
+ */
 class AccountNFTsHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

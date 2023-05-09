@@ -27,6 +27,11 @@
 #include <set>
 
 namespace RPC {
+/**
+ * @brief The account_currencies command retrieves a list of currencies that an account can send or receive,
+ * based on its trust lines.
+ * https://xrpl.org/account_currencies.html
+ */
 class AccountCurrenciesHandler
 {
     // dependencies

@@ -25,6 +25,10 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+/**
+ * @brief The account_info command retrieves information about an account, its activity, and its XRP balance.
+ * https://xrpl.org/account_info.html
+ */
 class AccountInfoHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

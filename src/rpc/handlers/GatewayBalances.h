@@ -25,6 +25,11 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+/**
+ * The gateway_balances command calculates the total balances issued by a given account, optionally excluding amounts
+ * held by operational addresses.
+ * https://xrpl.org/gateway_balances.html#gateway_balances
+ */
 class GatewayBalancesHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

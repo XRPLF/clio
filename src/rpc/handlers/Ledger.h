@@ -25,6 +25,11 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
+/**
+ * @brief Retrieve information about the public ledger.
+ * https://xrpl.org/ledger.html
+ */
 class LedgerHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

@@ -25,6 +25,10 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+/**
+ * @brief The nft_info command asks the Clio server for information about the NFT being queried.
+ * https://xrpl.org/nft_info.html
+ */
 class NFTInfoHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

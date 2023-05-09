@@ -25,6 +25,12 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
+/**
+ * @brief The ledger_data method retrieves contents of the specified ledger. You can iterate through several calls to
+ * retrieve the entire contents of a single ledger version.
+ * https://xrpl.org/ledger_data.html
+ */
 class LedgerDataHandler
 {
     // dependencies

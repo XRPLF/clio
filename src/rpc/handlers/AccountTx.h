@@ -26,6 +26,10 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+/**
+ * @brief The account_tx method retrieves a list of transactions that involved the specified account.
+ * https://xrpl.org/account_tx.html
+ */
 class AccountTxHandler
 {
     clio::Logger log_{"RPC"};

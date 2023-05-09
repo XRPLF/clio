@@ -26,7 +26,11 @@
 #include <string>
 
 namespace RPC {
-
+/**
+ * @brief The random command provides a random number to be used as a source of entropy for random number generation by
+ * clients.
+ * https://xrpl.org/random.html
+ */
 class RandomHandler
 {
 public:

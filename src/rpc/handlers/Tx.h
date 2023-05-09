@@ -25,6 +25,10 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+/**
+ * @brief The tx method retrieves information on a single transaction, by its identifying hash.
+ * https://xrpl.org/tx.html
+ */
 class TxHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
