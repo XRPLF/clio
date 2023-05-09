@@ -13,6 +13,8 @@
 
 static std::uint32_t const MAX_RETRIES = 5;
 static std::chrono::seconds const WAIT_TIME = std::chrono::seconds(60);
+static std::uint32_t const MIN_VERIFICATION_BATCH = 2000;
+
 using Blob = std::vector<unsigned char>;
 
 static void
@@ -48,17 +50,42 @@ doTryFetchLedgerPage(
     }
 }
 
-static void
+static std::optional<Backend::NFT>
+doTryGetNFT(
+  boost::asio::steady_timer& timer,
+  Backend::CassandraBackend& backend,
+  ripple::uint256 const& nftID,
+  std::uint32_t const seq,
+  boost::asio::yield_context& yield,
+  std::uint32_t const attempts = 0)
+{
+    try
+    {
+        return backend.fetchNFT(nftID, seq, yield);
+    }
+    catch (Backend::DatabaseTimeout const& e)
+    {
+        if (attempts >= MAX_RETRIES)
+	    throw e;
+
+	wait(timer, "NFT read error");
+	return doTryGetNFT(timer, backend, nftID, seq, yield, attempts + 1);
+    }
+}
+
+static std::vector<NFTsData>
 verifyNFTs(
+    boost::asio::steady_timer& timer,
+    std::uint32_t const seq,
     std::vector<NFTsData>& nfts,
     Backend::CassandraBackend& backend,
     boost::asio::yield_context& yield)
 {
     if (nfts.size() <= 0)
-        return;
+        return nfts;
 
-    for(auto const& nft : nfts){
-        std::optional<Backend::NFT> writtenNFT = backend.fetchNFT(nft.tokenID, nft.ledgerSequence, yield);
+    for (auto const& nft : nfts) {
+        auto const writtenNFT = doTryGetNFT(timer, backend, nft.tokenID, seq, yield);
 
         if(!writtenNFT.has_value())
             throw std::runtime_error("NFT was not written!");
@@ -69,11 +96,27 @@ verifyNFTs(
         auto fetchOldUri = nft.uri;
         std::string oldUriStr = nft.uri.has_value() ? ripple::strHex(nft.uri.value()) : "";
 
-        if(oldUriStr.compare(writtenUriStr) != 0){
+        if (oldUriStr.compare(writtenUriStr) != 0){
             BOOST_LOG_TRIVIAL(warning) <<"\nNFTokenID "<< to_string(nft.tokenID) << " failed to match URIs!\n";  
             throw std::runtime_error("Failed to match!");
         }
     }
+
+    BOOST_LOG_TRIVIAL(info) << "Verified " << nfts.size() << " NFTs";
+    return {};
+}
+
+static std::vector<NFTsData>
+maybeVerifyNFTs(
+    boost::asio::steady_timer& timer,
+    std::uint32_t const seq,
+    std::vector<NFTsData>& nfts,
+    Backend::CassandraBackend& backend,
+    boost::asio::yield_context& yield)
+{
+    if (nfts.size() < MIN_VERIFICATION_BATCH)
+        return nfts;
+    return verifyNFTs(timer, seq, nfts, backend, yield);
 }
 
 static void
@@ -95,32 +138,32 @@ doVerification(
         return;
     }
 
+    std::vector<NFTsData> toVerify;
+
     /*
      * Find all NFTokenPage objects and compare the URIs with what has been
      * written by the migrator
      */ 
     std::optional<ripple::uint256> cursor;
-    int nftCnt = 0;
     do
     {
         auto const page = doTryFetchLedgerPage(
             timer, backend, cursor, ledgerRange->maxSequence, yield);
         for (auto const& object : page.objects)
         {
-            std::vector<NFTsData> toVerify = getNFTDataFromObj(
+            auto const nfts = getNFTDataFromObj(
                 ledgerRange->maxSequence,
                 std::string(object.key.begin(), object.key.end()),
                 std::string(object.blob.begin(), object.blob.end()));
-
-            //helper function to verify vector of NFTs
-            verifyNFTs(toVerify, backend, yield);
-            nftCnt += toVerify.size();
+	    toVerify.insert(toVerify.end(), nfts.begin(), nfts.end());
         }
+
+        toVerify = maybeVerifyNFTs(timer, ledgerRange->maxSequence, toVerify, backend, yield);
         cursor = page.cursor;
     } while (cursor.has_value());
 
+    verifyNFTs(timer, ledgerRange->maxSequence, toVerify, backend, yield);
     BOOST_LOG_TRIVIAL(info) << "\nLedger range: " << ledgerRange->minSequence << "-" << ledgerRange->maxSequence << "\n";
-    BOOST_LOG_TRIVIAL(info) << "\nVerified " << nftCnt << " NFTs!\n";
     BOOST_LOG_TRIVIAL(info) << "\nDone with verification!\n";
 }
 
