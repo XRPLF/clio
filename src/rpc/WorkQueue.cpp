@@ -27,3 +27,10 @@ WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
     while (--numWorkers)
         threads_.emplace_back([this] { ioc_.run(); });
 }
+
+WorkQueue::~WorkQueue()
+{
+    work_.reset();
+    for (auto& thread : threads_)
+        thread.join();
+}

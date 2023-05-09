@@ -48,6 +48,7 @@ class WorkQueue
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
+    ~WorkQueue();
 
     static WorkQueue
     make_WorkQueue(clio::Config const& config)

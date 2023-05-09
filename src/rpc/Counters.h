@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include <boost/json.hpp>
-#include <chrono>
-#include <cstdint>
-#include <functional>
 #include <rpc/WorkQueue.h>
-#include <shared_mutex>
+
+#include <boost/json.hpp>
+
+#include <chrono>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -32,22 +32,16 @@ namespace RPC {
 
 class Counters
 {
-private:
     struct MethodInfo
     {
-        MethodInfo() = default;
-
-        std::atomic_uint64_t started{0};
-        std::atomic_uint64_t finished{0};
-        std::atomic_uint64_t errored{0};
-        std::atomic_uint64_t forwarded{0};
-        std::atomic_uint64_t duration{0};
+        std::uint64_t started = 0u;
+        std::uint64_t finished = 0u;
+        std::uint64_t errored = 0u;
+        std::uint64_t forwarded = 0u;
+        std::uint64_t duration = 0u;
     };
 
-    void
-    initializeCounter(std::string const& method);
-
-    mutable std::shared_mutex mutex_;
+    mutable std::mutex mutex_;
     std::unordered_map<std::string, MethodInfo> methodInfo_;
 
     std::reference_wrapper<const WorkQueue> workQueue_;
