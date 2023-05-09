@@ -18,33 +18,17 @@
 //==============================================================================
 
 #include <rpc/Counters.h>
+#include <rpc/JS.h>
 #include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 
 namespace RPC {
 
 void
-Counters::initializeCounter(std::string const& method)
-{
-    std::shared_lock lk(mutex_);
-    if (methodInfo_.count(method) == 0)
-    {
-        lk.unlock();
-        std::scoped_lock ulk(mutex_);
-
-        // This calls the default constructor for methodInfo of the method.
-        methodInfo_[method];
-    }
-}
-
-void
 Counters::rpcErrored(std::string const& method)
 {
-    initializeCounter(method);
-
-    std::shared_lock lk(mutex_);
+    std::scoped_lock lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
-
     counters.started++;
     counters.errored++;
 }
@@ -52,11 +36,8 @@ Counters::rpcErrored(std::string const& method)
 void
 Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
-    initializeCounter(method);
-
-    std::shared_lock lk(mutex_);
+    std::scoped_lock lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
-
     counters.started++;
     counters.finished++;
     counters.duration += rpcDuration.count();
@@ -65,18 +46,15 @@ Counters::rpcComplete(std::string const& method, std::chrono::microseconds const
 void
 Counters::rpcForwarded(std::string const& method)
 {
-    initializeCounter(method);
-
-    std::shared_lock lk(mutex_);
+    std::scoped_lock lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
-
     counters.forwarded++;
 }
 
 boost::json::object
 Counters::report() const
 {
-    std::shared_lock lk(mutex_);
+    std::scoped_lock lk(mutex_);
     auto obj = boost::json::object{};
 
     obj[JS(rpc)] = boost::json::object{};
