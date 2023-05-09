@@ -32,7 +32,8 @@ namespace RPC {
  * @brief The account_channels method returns information about an account's Payment Channels. This includes only
  * channels where the specified account is the channel's source, not the destination.
  * All information retrieved is relative to a particular version of the ledger.
- * https://xrpl.org/account_channels.html
+ *
+ * For more details see: https://xrpl.org/account_channels.html
  */
 class AccountChannelsHandler
 {

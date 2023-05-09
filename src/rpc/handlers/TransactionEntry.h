@@ -25,9 +25,11 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
 /**
  * @brief The transaction_entry method retrieves information on a single transaction from a specific ledger version.
- * https://xrpl.org/transaction_entry.html
+ *
+ * For more details see: https://xrpl.org/transaction_entry.html
  */
 class TransactionEntryHandler
 {

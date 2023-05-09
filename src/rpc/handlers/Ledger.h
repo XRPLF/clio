@@ -28,7 +28,8 @@ namespace RPC {
 
 /**
  * @brief Retrieve information about the public ledger.
- * https://xrpl.org/ledger.html
+ *
+ * For more details see: https://xrpl.org/ledger.html
  */
 class LedgerHandler
 {

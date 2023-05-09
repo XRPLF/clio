@@ -297,7 +297,8 @@ private:
 
 /**
  * @brief The subscribe method requests periodic notifications from the server when certain events happen.
- * https://xrpl.org/subscribe.html
+ *
+ * For more details see: https://xrpl.org/subscribe.html
  */
 using SubscribeHandler = BaseSubscribeHandler<SubscriptionManager>;
 

@@ -27,6 +27,11 @@
 
 namespace RPC {
 
+/**
+ * @brief BookChangesHandler returns the order book changes for a given ledger.
+ *
+ * This API is not documented in the rippled API documentation.
+ */
 class BookChangesHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;

@@ -26,9 +26,11 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
 /**
  * @brief The account_tx method retrieves a list of transactions that involved the specified account.
- * https://xrpl.org/account_tx.html
+ *
+ * For more details see: https://xrpl.org/account_tx.html
  */
 class AccountTxHandler
 {

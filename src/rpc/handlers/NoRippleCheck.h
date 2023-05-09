@@ -27,10 +27,12 @@
 #include <set>
 
 namespace RPC {
+
 /**
  * @brief The noripple_check command provides a quick way to check the status of the Default Ripple field for an account
  * and the No Ripple flag of its trust lines, compared with the recommended settings.
- * https://xrpl.org/noripple_check.html
+ *
+ * For more details see: https://xrpl.org/noripple_check.html
  */
 class NoRippleCheckHandler
 {

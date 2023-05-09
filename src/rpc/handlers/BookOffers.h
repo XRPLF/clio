@@ -24,9 +24,11 @@
 #include <rpc/common/Validators.h>
 
 namespace RPC {
+
 /**
  * @brief The book_offers method retrieves a list of Offers between two currencies, also known as an order book.
- * https://xrpl.org/book_offers.html
+ *
+ * For more details see: https://xrpl.org/book_offers.html
  */
 class BookOffersHandler
 {

@@ -242,7 +242,8 @@ private:
 /**
  * @brief The server_info command asks the Clio server for a human-readable version of various information about the
  * Clio server being queried.
- * https://xrpl.org/server_info-clio.html
+ *
+ * For more details see: https://xrpl.org/server_info-clio.html
  */
 using ServerInfoHandler = BaseServerInfoHandler<SubscriptionManager, ETLLoadBalancer, ReportingETL, Counters>;
 

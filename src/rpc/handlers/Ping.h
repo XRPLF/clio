@@ -22,9 +22,11 @@
 #include <rpc/common/Types.h>
 
 namespace RPC {
+
 /**
  * @brief The ping command returns an acknowledgement, so that clients can test the connection status and latency.
- * https://xrpl.org/ping.html
+ *
+ * For more details see https://xrpl.org/ping.html
  */
 class PingHandler
 {

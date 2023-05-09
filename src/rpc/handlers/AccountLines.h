@@ -27,10 +27,12 @@
 #include <vector>
 
 namespace RPC {
+
 /**
  * @brief The account_lines method returns information about an account's trust lines, which contain balances in all
  * non-XRP currencies and assets.
- * https://xrpl.org/account_lines.html
+ *
+ * For more details see: https://xrpl.org/account_lines.html
  */
 class AccountLinesHandler
 {
