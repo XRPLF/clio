@@ -119,6 +119,7 @@ if(BUILD_TESTS)
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/CountersTest.cpp
+    unittests/rpc/AdminVerificationTest.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp

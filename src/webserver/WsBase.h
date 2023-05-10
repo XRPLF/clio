@@ -25,6 +25,7 @@
 #include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <rpc/RPCEngine.h>
 #include <rpc/WorkQueue.h>
 #include <subscriptions/Message.h>
 #include <subscriptions/SubscriptionManager.h>

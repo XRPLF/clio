@@ -96,9 +96,9 @@ SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<Blob>
 SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
+    std::shared_lock lck{mtx_};
     if (seq > latestSeq_)
         return {};
-    std::shared_lock lck{mtx_};
     objectReqCounter_++;
     auto e = map_.find(key);
     if (e == map_.end())

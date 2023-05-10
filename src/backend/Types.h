@@ -56,8 +56,8 @@ struct TransactionAndMetadata
 {
     Blob transaction;
     Blob metadata;
-    std::uint32_t ledgerSequence;
-    std::uint32_t date;
+    std::uint32_t ledgerSequence = 0;
+    std::uint32_t date = 0;
 
     TransactionAndMetadata() = default;
     TransactionAndMetadata(
