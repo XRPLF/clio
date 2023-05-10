@@ -18,8 +18,7 @@
 //==============================================================================
 
 #include <etl/ETLSource.h>
-#include <log/Logger.h>
-#include <rpc/RPCHelpers.h>
+#include <rpc/RPC.h>
 #include <rpc/common/impl/HandlerProvider.h>
 #include <webserver/HttpBase.h>
 #include <webserver/WsBase.h>
@@ -31,12 +30,6 @@
 using namespace std;
 using namespace clio;
 using namespace RPC;
-
-// local to compilation unit loggers
-namespace {
-clio::Logger gPerfLog{"Performance"};
-clio::Logger gLog{"RPC"};
-}  // namespace
 
 namespace RPC {
 
@@ -90,167 +83,6 @@ make_HttpContext(
         return {};
 
     return make_optional<Web::Context>(yc, command, 1, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
-}
-
-static unordered_set<string> forwardCommands{
-    "submit",
-    "submit_multisigned",
-    "fee",
-    "ledger_closed",
-    "ledger_current",
-    "ripple_path_find",
-    "manifest",
-    "channel_authorize",
-    "channel_verify"};
-
-RPCEngine::RPCEngine(
-    std::shared_ptr<BackendInterface> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL> const& etl,
-    clio::DOSGuard const& dosGuard,
-    WorkQueue& workQueue,
-    Counters& counters,
-    std::shared_ptr<HandlerProvider const> const& handlerProvider)
-    : backend_{backend}
-    , subscriptions_{subscriptions}
-    , balancer_{balancer}
-    , dosGuard_{std::cref(dosGuard)}
-    , workQueue_{std::ref(workQueue)}
-    , counters_{std::ref(counters)}
-    , handlerTable_{handlerProvider}
-{
-}
-
-std::shared_ptr<RPCEngine>
-RPCEngine::make_RPCEngine(
-    clio::Config const& config,
-    std::shared_ptr<BackendInterface> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptions,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL> const& etl,
-    clio::DOSGuard const& dosGuard,
-    WorkQueue& workQueue,
-    Counters& counters,
-    std::shared_ptr<HandlerProvider const> const& handlerProvider)
-{
-    return std::make_shared<RPCEngine>(
-        backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
-}
-
-bool
-RPCEngine::validHandler(string const& method) const
-{
-    return handlerTable_.contains(method) || forwardCommands.contains(method);
-}
-
-bool
-RPCEngine::isClioOnly(string const& method) const
-{
-    return handlerTable_.isClioOnly(method);
-}
-
-bool
-RPCEngine::shouldForwardToRippled(Web::Context const& ctx) const
-{
-    auto request = ctx.params;
-
-    if (isClioOnly(ctx.method))
-        return false;
-
-    if (forwardCommands.find(ctx.method) != forwardCommands.end())
-        return true;
-
-    if (specifiesCurrentOrClosedLedger(request))
-        return true;
-
-    if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").as_bool())
-        return true;
-
-    return false;
-}
-
-Result
-RPCEngine::buildResponse(Web::Context const& ctx)
-{
-    if (shouldForwardToRippled(ctx))
-    {
-        auto toForward = ctx.params;
-        toForward["command"] = ctx.method;
-
-        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-        notifyForwarded(ctx.method);
-
-        if (!res)
-            return Status{RippledError::rpcFAILED_TO_FORWARD};
-
-        return *res;
-    }
-
-    if (backend_->isTooBusy())
-    {
-        gLog.error() << "Database is too busy. Rejecting request";
-        return Status{RippledError::rpcTOO_BUSY};
-    }
-
-    auto const method = handlerTable_.getHandler(ctx.method);
-    if (!method)
-        return Status{RippledError::rpcUNKNOWN_COMMAND};
-
-    try
-    {
-        gPerfLog.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
-
-        auto const isAdmin = ctx.clientIp == "127.0.0.1";  // TODO: this should be a strategy
-        auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
-        auto const v = (*method).process(ctx.params, context);
-
-        gPerfLog.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
-
-        if (v)
-            return v->as_object();
-        else
-            return Status{v.error()};
-    }
-    catch (InvalidParamsError const& err)
-    {
-        return Status{RippledError::rpcINVALID_PARAMS, err.what()};
-    }
-    catch (AccountNotFoundError const& err)
-    {
-        return Status{RippledError::rpcACT_NOT_FOUND, err.what()};
-    }
-    catch (Backend::DatabaseTimeout const& t)
-    {
-        gLog.error() << "Database timeout";
-        return Status{RippledError::rpcTOO_BUSY};
-    }
-    catch (exception const& err)
-    {
-        gLog.error() << ctx.tag() << " caught exception: " << err.what();
-        return Status{RippledError::rpcINTERNAL};
-    }
-}
-
-void
-RPCEngine::notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
-{
-    if (validHandler(method))
-        counters_.get().rpcComplete(method, duration);
-}
-
-void
-RPCEngine::notifyErrored(std::string const& method)
-{
-    if (validHandler(method))
-        counters_.get().rpcErrored(method);
-}
-
-void
-RPCEngine::notifyForwarded(std::string const& method)
-{
-    if (validHandler(method))
-        counters_.get().rpcForwarded(method);
 }
 
 }  // namespace RPC

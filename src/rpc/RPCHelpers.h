@@ -20,8 +20,7 @@
 #pragma once
 
 /*
- * This file contains a variety of utility functions used when executing
- * the handlers
+ * This file contains a variety of utility functions used when executing the handlers.
  */
 
 #include <ripple/app/ledger/Ledger.h>
@@ -30,8 +29,10 @@
 #include <ripple/protocol/STTx.h>
 #include <backend/BackendInterface.h>
 #include <rpc/JS.h>
-#include <rpc/RPC.h>
+#include <rpc/common/Types.h>
 #include <webserver/Context.h>
+
+#include <fmt/core.h>
 
 namespace RPC {
 
@@ -280,5 +281,25 @@ traverseTransactions(
         bool const,
         std::optional<Backend::TransactionsCursor> const&,
         boost::asio::yield_context& yield)> transactionFetcher);
+
+template <class T>
+void
+logDuration(Web::Context const& ctx, T const& dur)
+{
+    using boost::json::serialize;
+
+    static clio::Logger log{"RPC"};
+    auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+    auto const msg =
+        fmt::format("Request processing duration = {} milliseconds. request = {}", millis, serialize(ctx.params));
+
+    if (seconds > 10)
+        log.error() << ctx.tag() << msg;
+    else if (seconds > 1)
+        log.warn() << ctx.tag() << msg;
+    else
+        log.info() << ctx.tag() << msg;
+}
 
 }  // namespace RPC

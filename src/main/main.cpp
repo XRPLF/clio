@@ -30,6 +30,7 @@
 #include <etl/ReportingETL.h>
 #include <log/Logger.h>
 #include <rpc/Counters.h>
+#include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
 #include <webserver/Listener.h>
 

@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <rpc/RPC.h>
 #include <rpc/handlers/AccountLines.h>
 
 namespace RPC {

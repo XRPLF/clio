@@ -21,7 +21,6 @@
 #include <backend/BackendInterface.h>
 #include <log/Logger.h>
 #include <rpc/Errors.h>
-#include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
 

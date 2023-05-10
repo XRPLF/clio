@@ -22,6 +22,8 @@
 #include <rpc/Errors.h>
 #include <util/Expected.h>
 
+#include <ripple/basics/base_uint.h>
+
 #include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
 
@@ -69,6 +71,26 @@ struct Context
     std::shared_ptr<WsBase> session;
     bool isAdmin = false;
     std::string clientIp;
+};
+
+using Result = std::variant<Status, boost::json::object>;
+
+struct AccountCursor
+{
+    ripple::uint256 index;
+    std::uint32_t hint;
+
+    std::string
+    toString() const
+    {
+        return ripple::strHex(index) + "," + std::to_string(hint);
+    }
+
+    bool
+    isNonZero() const
+    {
+        return index.isNonZero() || hint != 0;
+    }
 };
 
 class AnyHandler;

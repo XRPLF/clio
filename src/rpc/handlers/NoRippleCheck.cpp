@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include <ripple/protocol/TxFlags.h>
-#include <rpc/RPC.h>
 #include <rpc/handlers/NoRippleCheck.h>
 
 #include <fmt/core.h>

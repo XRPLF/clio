@@ -19,7 +19,6 @@
 
 #include <rpc/Counters.h>
 #include <rpc/JS.h>
-#include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 
 namespace RPC {

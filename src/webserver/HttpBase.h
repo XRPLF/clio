@@ -41,6 +41,7 @@
 #include <main/Build.h>
 #include <rpc/Counters.h>
 #include <rpc/RPC.h>
+#include <rpc/RPCEngine.h>
 #include <rpc/WorkQueue.h>
 #include <util/Profiler.h>
 #include <util/Taggable.h>
