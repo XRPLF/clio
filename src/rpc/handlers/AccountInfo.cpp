@@ -19,12 +19,14 @@
 
 #include <rpc/handlers/AccountInfo.h>
 
+#include <ripple/protocol/ErrorCodes.h>
+
 namespace RPC {
 AccountInfoHandler::Result
 AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
     if (!input.account && !input.ident)
-        return Error{Status{RippledError::rpcACT_MALFORMED}};
+        return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
@@ -40,7 +42,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     ripple::STLedgerEntry const sle{
         ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key};
