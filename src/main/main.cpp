@@ -326,7 +326,7 @@ main(int argc, char* argv[])
     }
 
     auto const type = config.value<std::string>("database.type");
-    if (!boost::iequals(type, "cassandra"))
+    if (!(boost::iequals(type, "cassandra") || boost::iequals(type, "cassandra-new")))
     {
         std::cerr << "Migration only for cassandra dbs" << std::endl;
         return EXIT_FAILURE;
