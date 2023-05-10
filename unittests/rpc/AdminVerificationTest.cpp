@@ -17,26 +17,24 @@
 */
 //==============================================================================
 
-#pragma once
+#include <util/Fixtures.h>
 
-#include <string_view>
+#include <rpc/common/impl/AdminVerificationStrategy.h>
 
-namespace RPC::detail {
+#include <boost/json.hpp>
+#include <gtest/gtest.h>
 
-class IPAdminVerificationStrategy final
+class RPCAdminVerificationTest : public NoLoggerFixture
 {
-public:
-    /**
-     * @brief Checks whether request is from a host that is considered authorized as admin.
-     *
-     * @param ip The ip addr of the client
-     * @return true if authorized; false otherwise
-     */
-    bool
-    isAdmin(std::string_view ip) const
-    {
-        return ip == "127.0.0.1";
-    }
+protected:
+    RPC::detail::IPAdminVerificationStrategy strat_;
 };
 
-}  // namespace RPC::detail
+TEST_F(RPCAdminVerificationTest, IsAdminOnlyForIP_127_0_0_1)
+{
+    EXPECT_TRUE(strat_.isAdmin("127.0.0.1"));
+    EXPECT_FALSE(strat_.isAdmin("127.0.0.2"));
+    EXPECT_FALSE(strat_.isAdmin("127"));
+    EXPECT_FALSE(strat_.isAdmin(""));
+    EXPECT_FALSE(strat_.isAdmin("localhost"));
+}

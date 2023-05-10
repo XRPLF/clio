@@ -140,7 +140,7 @@ public:
         {
             perfLog_.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-            auto const isAdmin = adminVerifier_.isAdmin(ctx);
+            auto const isAdmin = adminVerifier_.isAdmin(ctx.clientIp);
             auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
             auto const v = (*method).process(ctx.params, context);
 
