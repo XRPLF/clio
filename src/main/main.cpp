@@ -29,9 +29,9 @@ doNFTWrite(
     Backend::CassandraBackend& backend,
     std::string const& tag)
 {
-    if (nfts.size() == 0)
-        return nfts;
     auto const size = nfts.size();
+    if (size == 0)
+        return nfts;
     backend.writeNFTs(std::move(nfts));
     backend.sync();
     BOOST_LOG_TRIVIAL(info) << tag << ": Wrote " << size << " records";
@@ -246,7 +246,7 @@ doMigrationStepTwo(
     doNFTWrite(toWrite, backend, stepTag);
 }
 
-static bool
+static void
 doMigrationStepThree(Backend::CassandraBackend& backend)
 {
     /*
@@ -265,7 +265,11 @@ doMigrationStepThree(Backend::CassandraBackend& backend)
     cass_future_free(fut);
     cass_statement_free(issuerDropTableQuery);
     backend.sync();
-    return rc == CASS_OK;
+
+    if (rc != CASS_OK)
+        BOOST_LOG_TRIVIAL(warning) << "Could not drop old issuer_nf_tokens "
+                                      "table. If it still exists, "
+                                      "you should drop it yourself\n";
 }
 
 static void
@@ -293,14 +297,8 @@ doMigration(
     doMigrationStepTwo(backend, timer, yield, *ledgerRange);
     BOOST_LOG_TRIVIAL(info) << "\nStep 2 done!\n";
 
-    auto const stepThreeResult = doMigrationStepThree(backend);
-    BOOST_LOG_TRIVIAL(info) << "\nStep 3 done!";
-    if (stepThreeResult)
-        BOOST_LOG_TRIVIAL(info) << "Dropped old 'issuer_nf_tokens' table!\n";
-    else
-        BOOST_LOG_TRIVIAL(warning) << "Could not drop old issuer_nf_tokens "
-                                      "table. If it still exists, "
-                                      "you should drop it yourself\n";
+    doMigrationStepThree(backend);
+    BOOST_LOG_TRIVIAL(info) << "\nStep 3 done!\n";
 
     BOOST_LOG_TRIVIAL(info)
         << "\nCompleted migration from " << ledgerRange->minSequence << " to "
@@ -326,7 +324,7 @@ main(int argc, char* argv[])
     }
 
     auto const type = config.value<std::string>("database.type");
-    if (!(boost::iequals(type, "cassandra") || boost::iequals(type, "cassandra-new")))
+    if (!boost::iequals(type, "cassandra"))
     {
         std::cerr << "Migration only for cassandra dbs" << std::endl;
         return EXIT_FAILURE;

@@ -11,10 +11,10 @@ Specifically, it is meant to migrate NFT data such that:
 - The old `issuer_nf_tokens` table is dropped. This table was never used prior
 to the above-referenced PR, so it is very safe to drop.
 
-## How to use
-
+## Overall Migration Steps
 This tool should be used as follows, with regard to the above update:
 
+0. __Copy your current clio configuration file to this repo__.
 1. __Compile or download the new version of `clio`__, but don't run it just yet.
 2. __Stop serving requests from your existing `clio`__. If you need to achieve zero downtime, you have two options:
     - Temporarily point your traffic to someone else's `clio` that has already performed this
@@ -23,16 +23,46 @@ This tool should be used as follows, with regard to the above update:
     - Create a new temporary `clio` instance running _the prior release_ and make sure
     that its config.json specifies `read_only: true`. You can safely serve data
     from this separate instance.
-3. __Stop your `clio` and restart it, running the new version__. Now, your `clio` is writing new data correctly. This tool will update your
+3. __Stop your `clio` and restart it, running the new version__. You may make any changes necessary to the config,
+but do not change the old configuration you copied in Step 0.
+4. __Now, your `clio` is writing new data correctly__. This tool will update your
 old data, while your upgraded `clio` is running and writing new ledgers.
-5. __Run this tool__, using the _exact_ same config as what you are using for your
-production `clio`.
+5. __Run this tool__, using the configuration file you copied in Step 0.
+   Details on how to run the tool are below in the "usage" section.
 6. __Once this tool terminates successfully__, you can resume serving requests
 from your `clio`.
+7. __Optionally__ you can now use the included `clio_verifier` executable to
+   ensure that URIs were migrated correctly. This executable exit with a 0
+   status code if everything is OK. It will take a long time to run, and is
+   meant to be run while you are already fully running on the new version.
+   Details on how to run this tool are below in the "usage" section.
 
+## Usage
+### Compiling
+Git-clone this project to your server. Then from the top-level directory:
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build . -j 4
+```
 
-## Notes on timing
+### Running the migration
+Once this completes, the migrator will be compiled as `clio_migrator`. Then
+you should use the old config file you copied in Step 0 above to run it like
+so:
+```bash
+./clio_migrator <config path>
+```
 
+### OPTIONAL: running the verifier
+After the migration completes, it is optional to perform a database verification to ensure the URIs are migrated correctly.
+Again, use the old config file you copied in Step 0 above.
+```bash
+./clio_verifier <config path>
+```
+
+## Technical details and notes on timing
 The amount of time that this migration takes depends greatly on what your data
 looks like. This migration migrates data in three steps:
 
@@ -45,7 +75,7 @@ looks like. This migration migrates data in three steps:
     transactions
     - For any remaning transactions, pull the associated NFT data from them and
     write them to the database.
-2. __Initial ledger loading__ We need to also scan all objects in the initial
+2. __Initial ledger loading__. We need to also scan all objects in the initial
 ledger, looking for any NFTokenPage objects that would not have an associated
 transaction recorded.
     - Pull all objects from the initial ledger
@@ -60,10 +90,10 @@ not yet part of clio, removing this table will not affect anything.
 
 
 Step 1 is highly performance optimized. If you have a full-history clio
-set-up, this migration make take only a few minutes. We tested it on a
+set-up, this migration may take only a few minutes. We tested it on a
 full-history server and it completed in about 9 minutes.
 
-However Step 2 is not well-optimized and unfortuntely cannot be. If you have a
+However Step 2 is not well-optimized and unfortunately cannot be. If you have a
 clio server whose `start_sequence` is relatively recent (even if the
 `start_sequence` indicates a ledger prior to NFTs being enabled on your
 network), the migration will take longer. We tested it on a clio with a
@@ -72,27 +102,3 @@ hours.
 
 As a result, we recommend _assuming_ the worst case: that this migration will take about 8
 hours.
-
-
-
-## Compiling and running
-
-Git-clone this project to your server. Then from the top-level directory:
-```
-mkdir build
-cd build
-cmake ..
-cmake --build . -j 4
-```
-
-Once this completes, the migrator will be compiled as `clio_migrator`. Then
-you should copy your existing clio config somewhere and:
-```
-./clio_migrator <config path>
-```
-
-After the migration completes, it is optional to perform a database verification to ensure the fields are migrated correctly:
-```
-./clio_verifier <config path>
-```
-
