@@ -18,14 +18,14 @@
 //==============================================================================
 
 #include <rpc/RPCHelpers.h>
-#include <rpc/ngHandlers/NFTsByIssuer.h>
+#include <rpc/handlers/NFTsByIssuer.h>
 
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 
 using namespace ripple;
 using namespace ::RPC;
 
-namespace RPCng {
+namespace RPC {
 
 NFTsByIssuerHandler::Result
 NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ctx) const
@@ -118,4 +118,4 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
 
     return input;
 }
-}  // namespace RPCng
+}  // namespace RPC

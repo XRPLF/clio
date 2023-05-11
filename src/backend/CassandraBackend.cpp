@@ -685,11 +685,10 @@ CassandraBackend::fetchNFTsByIssuer(
 
         auto statement = CassandraStatement{selectNFTIDsByIssuer_};
         statement.bindNextBytes(issuer);
-
-        if (cursorIn.has_value())
-            statement.bindNextUInt(ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)));
-        else
-            statement.bindNextUInt(0);
+        statement.bindNextUIntBytesTuple(
+            cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
+            cursorIn.value_or(ripple::uint256(0)));
+        statement.bindNextUInt(limit);
         return statement;
     }();
 

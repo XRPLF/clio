@@ -24,7 +24,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPCng {
+namespace RPC {
 class NFTsByIssuerHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
@@ -54,7 +54,7 @@ public:
 
     static auto constexpr LIMIT_DEFAULT = 50;
 
-    using Result = RPCng::HandlerReturnType<Output>;
+    using Result = RPC::HandlerReturnType<Output>;
 
     NFTsByIssuerHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
@@ -85,4 +85,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPCng
+}  // namespace RPC
