@@ -99,3 +99,6 @@ target_sources(clio PRIVATE
 
 add_executable(clio_migrator src/main/main.cpp)
 target_link_libraries(clio_migrator PUBLIC clio)
+
+add_executable(clio_verifier src/main/verify.cpp)
+target_link_libraries(clio_verifier PUBLIC clio)
