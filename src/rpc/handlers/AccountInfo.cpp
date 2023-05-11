@@ -86,13 +86,15 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {JS(account_data), toJson(output.accountData)},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
     };
 
     if (output.signerLists)
     {
-        jv.as_object()[JS(signer_lists)] = boost::json::array();
+        auto signers = boost::json::array();
         for (auto const& signerList : output.signerLists.value())
-            jv.as_object()[JS(signer_lists)].as_array().push_back(toJson(signerList));
+            signers.push_back(toJson(signerList));
+        jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = signers;
     }
 }
 
