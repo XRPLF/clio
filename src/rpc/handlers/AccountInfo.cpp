@@ -94,7 +94,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         auto signers = boost::json::array();
         for (auto const& signerList : output.signerLists.value())
             signers.push_back(toJson(signerList));
-        jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = signers;
+        jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
     }
 }
 
