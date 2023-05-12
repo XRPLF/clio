@@ -288,7 +288,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
 // normal case when only provide nft_id
 TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
 {
-    constexpr static auto correntOutput = R"({
+    constexpr static auto currentOutput = R"({
         "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
         "ledger_index": 30,
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -322,14 +322,14 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correntOutput), *output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
     });
 }
 
-// nft is burned -> should omit uri
+// nft is burned -> should not omit uri
 TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
 {
-    constexpr static auto correntOutput = R"({
+    constexpr static auto currentOutput = R"({
         "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
         "ledger_index": 30,
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -339,6 +339,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
         "nft_serial": 4,
+        "uri": "757269",
         "validated": true
     })";
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
@@ -363,14 +364,14 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correntOutput), *output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
     });
 }
 
 // nft is not burned and uri is not available -> should specify null
 TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
 {
-    constexpr static auto correntOutput = R"({
+    constexpr static auto currentOutput = R"({
         "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
         "ledger_index": 30,
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -404,14 +405,14 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correntOutput), *output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
     });
 }
 
 // check taxon field, transfer fee and serial
 TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
 {
-    constexpr static auto correntOutput = R"({
+    constexpr static auto currentOutput = R"({
         "nft_id": "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022",
         "ledger_index": 30,
         "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -445,6 +446,6 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correntOutput), *output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
     });
 }

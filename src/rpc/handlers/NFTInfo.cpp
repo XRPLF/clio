@@ -57,9 +57,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     output.issuer = toBase58(nft::getIssuer(nft.tokenID));
     output.taxon = nft::toUInt32(nft::getTaxon(nft.tokenID));
     output.serial = nft::getSerial(nft.tokenID);
-
-    if (not nft.isBurned)
-        output.uri = strHex(nft.uri);
+    output.uri = strHex(nft.uri);
 
     return output;
 }
@@ -68,7 +66,7 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::Output const& output)
 {
     // TODO: use JStrings when they become available
-    auto object = boost::json::object{
+    jv = boost::json::object{
         {JS(nft_id), output.nftID},
         {JS(ledger_index), output.ledgerIndex},
         {JS(owner), output.owner},
@@ -79,12 +77,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::
         {"nft_taxon", output.taxon},
         {JS(nft_serial), output.serial},
         {JS(validated), output.validated},
+        {JS(uri), output.uri},
     };
-
-    if (output.uri)
-        object[JS(uri)] = *(output.uri);
-
-    jv = std::move(object);
 }
 
 NFTInfoHandler::Input
