@@ -66,7 +66,7 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<AccountInfoParamTestCaseBundle>{
-        AccountInfoParamTestCaseBundle{"MissingAccountAndIdent", R"({})", "actMalformed", "Account malformed."},
+        AccountInfoParamTestCaseBundle{"MissingAccountAndIdent", R"({})", "invalidParams", "Missing field 'account'."},
         AccountInfoParamTestCaseBundle{"AccountNotString", R"({"account":1})", "invalidParams", "accountNotString"},
         AccountInfoParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "actMalformed", "accountMalformed"},
         AccountInfoParamTestCaseBundle{"IdentNotString", R"({"ident":1})", "invalidParams", "identNotString"},
@@ -215,7 +215,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExsit)
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
 }
 
@@ -296,46 +296,47 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
                 "PreviousTxnLgrSeq":2,
                 "Sequence":2,
                 "TransferRate":0,
-                "index":"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+                "index":"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
+                "signer_lists":
+                [
+                    {{
+                        "Flags":0,
+                        "LedgerEntryType":"SignerList",
+                        "OwnerNode":"0",
+                        "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
+                        "PreviousTxnLgrSeq":0,
+                        "SignerEntries":
+                        [
+                            {{
+                                "SignerEntry":
+                                {{
+                                    "Account":"{}",
+                                    "SignerWeight":1
+                                }}
+                            }},
+                            {{
+                                "SignerEntry":
+                                {{
+                                    "Account":"{}",
+                                    "SignerWeight":1
+                                }}
+                            }}
+                        ],
+                        "SignerListID":0,
+                        "SignerQuorum":2,
+                        "index":"A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
+                    }}
+                ]
             }},
             "ledger_hash":"{}",
             "ledger_index":30,
-            "signer_lists":
-            [
-                {{
-                    "Flags":0,
-                    "LedgerEntryType":"SignerList",
-                    "OwnerNode":"0",
-                    "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                    "PreviousTxnLgrSeq":0,
-                    "SignerEntries":
-                    [
-                        {{
-                            "SignerEntry":
-                            {{
-                                "Account":"{}",
-                                "SignerWeight":1
-                            }}
-                        }},
-                        {{
-                            "SignerEntry":
-                            {{
-                                "Account":"{}",
-                                "SignerWeight":1
-                            }}
-                        }}
-                    ],
-                    "SignerListID":0,
-                    "SignerQuorum":2,
-                    "index":"A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
-                }}
-            ]
+            "validated":true
         }})",
         ACCOUNT,
         INDEX1,
-        LEDGERHASH,
         ACCOUNT1,
-        ACCOUNT2);
+        ACCOUNT2,
+        LEDGERHASH);
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max

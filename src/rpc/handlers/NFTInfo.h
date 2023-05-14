@@ -48,8 +48,7 @@ public:
         uint32_t taxon;
         uint32_t serial;  // TODO: documented as 'nft_sequence' atm.
                           // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
-        std::string uri;  // can be empty string
-                          // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
+        std::string uri;
 
         // validated should be sent via framework
         bool validated = true;

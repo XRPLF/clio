@@ -47,7 +47,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     }
 
     if (minIndex > maxIndex)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidIndex"}};
+        return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
 
     if (input.ledgerHash || input.ledgerIndex)
     {
