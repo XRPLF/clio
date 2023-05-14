@@ -61,7 +61,7 @@ target_sources(clio PRIVATE
   src/subscriptions/SubscriptionManager.cpp
   ## RPC
   src/rpc/Errors.cpp
-  src/rpc/RPC.cpp
+  src/rpc/Factories.cpp
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp

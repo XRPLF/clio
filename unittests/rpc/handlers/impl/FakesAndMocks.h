@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <rpc/RPC.h>
+#include <rpc/Factories.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Validators.h>
 
