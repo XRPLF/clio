@@ -39,7 +39,7 @@ Future::await() const
 {
     if (auto const rc = cass_future_error_code(*this); rc)
     {
-        auto errMsg = [this](std::string label) {
+        auto errMsg = [this](std::string const& label) {
             char const* message;
             std::size_t len;
             cass_future_error_message(*this, &message, &len);
@@ -55,7 +55,7 @@ Future::get() const
 {
     if (auto const rc = cass_future_error_code(*this); rc)
     {
-        auto const errMsg = [this](std::string label) {
+        auto const errMsg = [this](std::string const& label) {
             char const* message;
             std::size_t len;
             cass_future_error_message(*this, &message, &len);
@@ -76,7 +76,7 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
     auto* cb = static_cast<FutureWithCallback::fn_t*>(cbPtr);
     if (auto const rc = cass_future_error_code(ptr); rc)
     {
-        auto const errMsg = [&ptr](std::string label) {
+        auto const errMsg = [&ptr](std::string const& label) {
             char const* message;
             std::size_t len;
             cass_future_error_message(ptr, &message, &len);

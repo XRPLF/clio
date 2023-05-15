@@ -102,7 +102,7 @@ void
 Cluster::setupContactPoints(Settings::ContactPoints const& points)
 {
     using std::to_string;
-    auto throwErrorIfNeeded = [](CassError rc, std::string const label, std::string const value) {
+    auto throwErrorIfNeeded = [](CassError rc, std::string const& label, std::string const& value) {
         if (rc != CASS_OK)
             throw std::runtime_error("Cassandra: Error setting " + label + " [" + value + "]: " + cass_error_desc(rc));
     };
