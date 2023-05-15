@@ -109,7 +109,10 @@ public:
              validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(owner), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(owner),
+                      validation::Required{},
+                      validation::WithCustomError{
+                          validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
                      {JS(authorized), validation::Required{}, validation::AccountBase58Validator},
                  },
              }},
@@ -125,7 +128,10 @@ public:
              validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(owner), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(owner),
+                      validation::Required{},
+                      validation::WithCustomError{
+                          validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
                      {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
