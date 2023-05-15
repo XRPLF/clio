@@ -19,7 +19,7 @@
 
 #include <util/Fixtures.h>
 
-#include <rpc/RPC.h>
+#include <rpc/Factories.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Validators.h>

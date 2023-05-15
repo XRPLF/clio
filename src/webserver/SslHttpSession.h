@@ -81,7 +81,7 @@ public:
         return stream_;
     }
     boost::beast::ssl_stream<boost::beast::tcp_stream>
-    release_stream()
+    releaseStream()
     {
         return std::move(stream_);
     }
@@ -108,33 +108,33 @@ public:
             self->stream_.async_handshake(
                 ssl::stream_base::server,
                 self->buffer_.data(),
-                boost::beast::bind_front_handler(&SslHttpSession::on_handshake, self));
+                boost::beast::bind_front_handler(&SslHttpSession::onHandshake, self));
         });
     }
 
     void
-    on_handshake(boost::beast::error_code ec, std::size_t bytes_used)
+    onHandshake(boost::beast::error_code ec, std::size_t bytes_used)
     {
         if (ec)
             return httpFail(ec, "handshake");
 
         buffer_.consume(bytes_used);
 
-        do_read();
+        doRead();
     }
 
     void
-    do_close()
+    doClose()
     {
         // Set the timeout.
         boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
 
         // Perform the SSL shutdown
-        stream_.async_shutdown(boost::beast::bind_front_handler(&SslHttpSession::on_shutdown, shared_from_this()));
+        stream_.async_shutdown(boost::beast::bind_front_handler(&SslHttpSession::onShutdown, shared_from_this()));
     }
 
     void
-    on_shutdown(boost::beast::error_code ec)
+    onShutdown(boost::beast::error_code ec)
     {
         if (ec)
             return httpFail(ec, "shutdown");

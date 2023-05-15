@@ -24,7 +24,7 @@
 #include <etl/ReportingETL.h>
 #include <log/Logger.h>
 #include <rpc/Counters.h>
-#include <rpc/RPC.h>
+#include <rpc/Factories.h>
 #include <rpc/RPCEngine.h>
 #include <rpc/WorkQueue.h>
 #include <subscriptions/Message.h>
@@ -185,16 +185,16 @@ public:
     }
 
     void
-    do_write()
+    doWrite()
     {
         sending_ = true;
         derived().ws().async_write(
             net::buffer(messages_.front()->data(), messages_.front()->size()),
-            boost::beast::bind_front_handler(&WsSession::on_write, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&WsSession::onWrite, derived().shared_from_this()));
     }
 
     void
-    on_write(boost::system::error_code ec, std::size_t)
+    onWrite(boost::system::error_code ec, std::size_t)
     {
         if (ec)
         {
@@ -204,17 +204,17 @@ public:
         {
             messages_.pop();
             sending_ = false;
-            maybe_send_next();
+            maybeSendNext();
         }
     }
 
     void
-    maybe_send_next()
+    maybeSendNext()
     {
         if (ec_ || sending_ || messages_.empty())
             return;
 
-        do_write();
+        doWrite();
     }
 
     void
@@ -223,7 +223,7 @@ public:
         net::dispatch(
             derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
                 messages_.push(std::move(msg));
-                maybe_send_next();
+                maybeSendNext();
             });
     }
 
@@ -246,11 +246,11 @@ public:
         }));
 
         derived().ws().async_accept(
-            req, boost::beast::bind_front_handler(&WsSession::on_accept, this->shared_from_this()));
+            req, boost::beast::bind_front_handler(&WsSession::onAccept, this->shared_from_this()));
     }
 
     void
-    on_accept(boost::beast::error_code ec)
+    onAccept(boost::beast::error_code ec)
     {
         if (ec)
             return wsFail(ec, "accept");
@@ -258,11 +258,11 @@ public:
         perfLog_.info() << tag() << "accepting new connection";
 
         // Read a message
-        do_read();
+        doRead();
     }
 
     void
-    do_read()
+    doRead()
     {
         if (dead())
             return;
@@ -272,11 +272,11 @@ public:
         buffer_.consume(buffer_.size());
         // Read a message into our buffer
         derived().ws().async_read(
-            buffer_, boost::beast::bind_front_handler(&WsSession::on_read, this->shared_from_this()));
+            buffer_, boost::beast::bind_front_handler(&WsSession::onRead, this->shared_from_this()));
     }
 
     void
-    handle_request(boost::json::object const&& request, boost::json::value const& id, boost::asio::yield_context& yield)
+    handleRequest(boost::json::object const&& request, boost::json::value const& id, boost::asio::yield_context& yield)
     {
         auto ip = derived().ip();
         if (!ip)
@@ -371,7 +371,7 @@ public:
     }
 
     void
-    on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
+    onRead(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
@@ -431,12 +431,12 @@ public:
 
             if (not rpcEngine_->post(
                     [self = shared_from_this(), req = std::move(request), id](boost::asio::yield_context yield) {
-                        self->handle_request(std::move(req), id, yield);
+                        self->handleRequest(std::move(req), id, yield);
                     },
                     ip.value()))
                 sendError(RPC::RippledError::rpcTOO_BUSY, id, request);
         }
 
-        do_read();
+        doRead();
     }
 };
