@@ -189,6 +189,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(payment_channel), ripple::ltPAYCHAN},
         {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
         {JS(ticket), ripple::ltTICKET},
+        {JS(nft_page), ripple::ltNFTOKEN_PAGE},
     };
 
     auto const indexFieldType =
