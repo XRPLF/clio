@@ -270,18 +270,6 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request);
 std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request);
 
-// This function is the driver for both `account_tx` and `nft_tx` and should
-// be used for any future transaction enumeration APIs.
-std::variant<Status, boost::json::object>
-traverseTransactions(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
-    Web::Context const& context,
-    std::function<Backend::TransactionsAndCursor(
-        std::shared_ptr<Backend::BackendInterface const> const& backend,
-        bool const,
-        std::optional<Backend::TransactionsCursor> const&,
-        boost::asio::yield_context& yield)> transactionFetcher);
-
 template <class T>
 void
 logDuration(Web::Context const& ctx, T const& dur)
