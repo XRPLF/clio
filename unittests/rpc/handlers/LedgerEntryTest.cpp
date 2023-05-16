@@ -135,8 +135,8 @@ generateTestValuesForParametersTest()
                     "authorized": "invalid"
                 }
             })",
-            "malformedAddress",
-            "Malformed address."},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonOwnerNotString",
@@ -146,8 +146,8 @@ generateTestValuesForParametersTest()
                     "authorized": 123
                 }
             })",
-            "invalidParams",
-            "ownerNotString"},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonAuthorizedNotString",
@@ -312,19 +312,19 @@ generateTestValuesForParametersTest()
                     "seq": 123
                 }
             })",
-            "invalidParams",
-            "ownerNotString"},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonAccountInvalid",
             R"({
-                "ticket": {
-                    "account": "123",
+                "escrow": {
+                    "owner": "123",
                     "seq": 123
                 }
             })",
-            "malformedAddress",
-            "Malformed address."},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonSeqNotInt",
