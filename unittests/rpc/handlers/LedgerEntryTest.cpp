@@ -554,7 +554,6 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
-        std::cout << err << std::endl;
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
