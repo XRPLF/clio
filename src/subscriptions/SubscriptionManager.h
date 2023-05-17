@@ -22,16 +22,16 @@
 #include <backend/BackendInterface.h>
 #include <config/Config.h>
 #include <log/Logger.h>
-#include <subscriptions/Message.h>
+#include <webserver/interface/ConnectionBase.h>
 
 #include <memory>
 
-class WsBase;
+using SessionPtrType = std::shared_ptr<Server::ConnectionBase>;
 
 class Subscription
 {
     boost::asio::io_context::strand strand_;
-    std::unordered_set<std::shared_ptr<WsBase>> subscribers_ = {};
+    std::unordered_set<SessionPtrType> subscribers_ = {};
     std::atomic_uint64_t subCount_ = 0;
 
 public:
@@ -46,13 +46,13 @@ public:
     ~Subscription() = default;
 
     void
-    subscribe(std::shared_ptr<WsBase> const& session);
+    subscribe(SessionPtrType const& session);
 
     void
-    unsubscribe(std::shared_ptr<WsBase> const& session);
+    unsubscribe(SessionPtrType const& session);
 
     void
-    publish(std::shared_ptr<Message> const& message);
+    publish(std::shared_ptr<std::string> const& message);
 
     std::uint64_t
     count() const
@@ -70,8 +70,7 @@ public:
 template <class Key>
 class SubscriptionMap
 {
-    using ptr = std::shared_ptr<WsBase>;
-    using subscribers = std::set<ptr>;
+    using subscribers = std::set<SessionPtrType>;
 
     boost::asio::io_context::strand strand_;
     std::unordered_map<Key, subscribers> subscribers_ = {};
@@ -89,13 +88,13 @@ public:
     ~SubscriptionMap() = default;
 
     void
-    subscribe(std::shared_ptr<WsBase> const& session, Key const& key);
+    subscribe(SessionPtrType const& session, Key const& key);
 
     void
-    unsubscribe(std::shared_ptr<WsBase> const& session, Key const& key);
+    unsubscribe(SessionPtrType const& session, Key const& key);
 
     void
-    publish(std::shared_ptr<Message> const& message, Key const& key);
+    publish(std::shared_ptr<std::string> const& message, Key const& key);
 
     std::uint64_t
     count() const
@@ -106,7 +105,7 @@ public:
 
 template <class T>
 inline void
-sendToSubscribers(std::shared_ptr<Message> const& message, T& subscribers, std::atomic_uint64_t& counter)
+sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, std::atomic_uint64_t& counter)
 {
     for (auto it = subscribers.begin(); it != subscribers.end();)
     {
@@ -126,7 +125,7 @@ sendToSubscribers(std::shared_ptr<Message> const& message, T& subscribers, std::
 
 template <class T>
 inline void
-addSession(std::shared_ptr<WsBase> session, T& subscribers, std::atomic_uint64_t& counter)
+addSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
 {
     if (!subscribers.contains(session))
     {
@@ -137,7 +136,7 @@ addSession(std::shared_ptr<WsBase> session, T& subscribers, std::atomic_uint64_t
 
 template <class T>
 inline void
-removeSession(std::shared_ptr<WsBase> session, T& subscribers, std::atomic_uint64_t& counter)
+removeSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
 {
     if (subscribers.contains(session))
     {
@@ -148,14 +147,14 @@ removeSession(std::shared_ptr<WsBase> session, T& subscribers, std::atomic_uint6
 
 template <class Key>
 void
-SubscriptionMap<Key>::subscribe(std::shared_ptr<WsBase> const& session, Key const& account)
+SubscriptionMap<Key>::subscribe(SessionPtrType const& session, Key const& account)
 {
     boost::asio::post(strand_, [this, session, account]() { addSession(session, subscribers_[account], subCount_); });
 }
 
 template <class Key>
 void
-SubscriptionMap<Key>::unsubscribe(std::shared_ptr<WsBase> const& session, Key const& account)
+SubscriptionMap<Key>::unsubscribe(SessionPtrType const& session, Key const& account)
 {
     boost::asio::post(strand_, [this, account, session]() {
         if (!subscribers_.contains(account))
@@ -177,7 +176,7 @@ SubscriptionMap<Key>::unsubscribe(std::shared_ptr<WsBase> const& session, Key co
 
 template <class Key>
 void
-SubscriptionMap<Key>::publish(std::shared_ptr<Message> const& message, Key const& account)
+SubscriptionMap<Key>::publish(std::shared_ptr<std::string> const& message, Key const& account)
 {
     boost::asio::post(strand_, [this, account, message]() {
         if (!subscribers_.contains(account))
@@ -189,7 +188,6 @@ SubscriptionMap<Key>::publish(std::shared_ptr<Message> const& message, Key const
 
 class SubscriptionManager
 {
-    using SessionPtrType = std::shared_ptr<WsBase>;
     clio::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
@@ -288,10 +286,10 @@ public:
     unsubBook(ripple::Book const& book, SessionPtrType session);
 
     void
-    subBookChanges(std::shared_ptr<WsBase> session);
+    subBookChanges(SessionPtrType session);
 
     void
-    unsubBookChanges(std::shared_ptr<WsBase> session);
+    unsubBookChanges(SessionPtrType session);
 
     void
     subManifest(SessionPtrType session);
@@ -354,15 +352,11 @@ private:
     using CleanupFunction = std::function<void(SessionPtrType const)>;
 
     void
-    subscribeHelper(std::shared_ptr<WsBase> const& session, Subscription& subs, CleanupFunction&& func);
+    subscribeHelper(SessionPtrType const& session, Subscription& subs, CleanupFunction&& func);
 
     template <typename Key>
     void
-    subscribeHelper(
-        std::shared_ptr<WsBase> const& session,
-        Key const& k,
-        SubscriptionMap<Key>& subs,
-        CleanupFunction&& func);
+    subscribeHelper(SessionPtrType const& session, Key const& k, SubscriptionMap<Key>& subs, CleanupFunction&& func);
 
     /**
      * This is how we chose to cleanup subscriptions that have been closed.

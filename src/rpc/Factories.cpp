@@ -17,19 +17,10 @@
 */
 //==============================================================================
 
-#include <etl/Source.h>
 #include <rpc/Factories.h>
-#include <rpc/common/impl/HandlerProvider.h>
-#include <webserver/HttpBase.h>
-#include <webserver/WsBase.h>
-
-#include <boost/asio/spawn.hpp>
-
-#include <unordered_map>
 
 using namespace std;
 using namespace clio;
-using namespace RPC;
 
 namespace RPC {
 
@@ -37,7 +28,7 @@ optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    shared_ptr<WsBase> const& session,
+    shared_ptr<Server::ConnectionBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     string const& clientIp)

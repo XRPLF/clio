@@ -62,7 +62,7 @@ protected:
     }
 
     std::shared_ptr<SubscriptionManager> subManager_;
-    std::shared_ptr<WsBase> session_;
+    std::shared_ptr<Server::ConnectionBase> session_;
 };
 
 struct SubscribeParamTestCaseBundle
@@ -740,17 +740,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
-    auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(RPC::parseBook(
-        ripple::to_currency("USD"),  // pays
-        issuer,
-        ripple::xrpCurrency(),  // gets
-        ripple::xrpAccount())));
+    auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
+        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
 
-    auto const reversedBook = getBookBase(std::get<ripple::Book>(RPC::parseBook(
-        ripple::xrpCurrency(),  // pays
-        ripple::xrpAccount(),
-        ripple::to_currency("USD"),  // gets
-        issuer)));
+    auto const reversedBook = getBookBase(std::get<ripple::Book>(
+        RPC::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
 
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));

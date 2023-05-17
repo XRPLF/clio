@@ -77,7 +77,7 @@ public:
 
         // Each time we enqueue a job, we want to post a symmetrical job that will dequeue and run the job at the front
         // of the job queue.
-        boost::asio::spawn(ioc_, [this, f = std::move(f), start](auto yield) {
+        boost::asio::spawn(ioc_, [this, f = std::move(f), start](auto yield) mutable {
             auto const run = std::chrono::system_clock::now();
             auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
 

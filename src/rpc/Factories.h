@@ -20,15 +20,12 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <log/Logger.h>
-#include <rpc/Errors.h>
 #include <webserver/Context.h>
+#include <webserver/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <fmt/core.h>
 
-#include <chrono>
 #include <optional>
 #include <string>
 
@@ -39,19 +36,13 @@
  * This file is meant to contain any class or function that code outside of the rpc folder needs to use. For helper
  * functions or classes used within the rpc folder, use RPCHelpers.h.
  */
-
-class WsBase;
-class SubscriptionManager;
-class LoadBalancer;
-class ETLService;
-
 namespace RPC {
 
 std::optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<WsBase> const& session,
+    std::shared_ptr<Server::ConnectionBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     std::string const& clientIp);

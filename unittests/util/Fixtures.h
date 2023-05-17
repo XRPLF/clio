@@ -128,8 +128,18 @@ struct AsyncAsioContextTest : virtual public NoLoggerFixture
     ~AsyncAsioContextTest()
     {
         work.reset();
+        if (runner.joinable())
+            runner.join();
         ctx.stop();
-        runner.join();
+    }
+
+    void
+    stop()
+    {
+        work.reset();
+        ctx.stop();
+        if (runner.joinable())
+            runner.join();
     }
 
 protected:
