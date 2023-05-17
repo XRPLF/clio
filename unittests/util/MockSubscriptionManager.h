@@ -20,7 +20,7 @@
 #pragma once
 
 #include <ripple/ledger/ReadView.h>
-#include <webserver/WsBase.h>
+#include <webserver2/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -31,7 +31,7 @@
 class MockSubscriptionManager
 {
 public:
-    using session_ptr = std::shared_ptr<WsBase>;
+    using session_ptr = std::shared_ptr<Server::ConnectionBase>;
     MockSubscriptionManager()
     {
     }
@@ -66,9 +66,9 @@ public:
 
     MOCK_METHOD(void, unsubBook, (ripple::Book const&, session_ptr), ());
 
-    MOCK_METHOD(void, subBookChanges, (std::shared_ptr<WsBase>), ());
+    MOCK_METHOD(void, subBookChanges, (session_ptr), ());
 
-    MOCK_METHOD(void, unsubBookChanges, (std::shared_ptr<WsBase>), ());
+    MOCK_METHOD(void, unsubBookChanges, (session_ptr), ());
 
     MOCK_METHOD(void, subManifest, (session_ptr), ());
 

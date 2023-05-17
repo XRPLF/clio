@@ -62,7 +62,7 @@ protected:
     }
 
     std::shared_ptr<SubscriptionManager> subManager_;
-    std::shared_ptr<WsBase> session_;
+    std::shared_ptr<Server::ConnectionBase> session_;
 };
 
 struct SubscribeParamTestCaseBundle
@@ -743,11 +743,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(RPC::parseBook(
         ripple::to_currency("USD"),  // pays
         issuer,
-        ripple::xrpCurrency(),  // gets
+        ripple::xrpCurrency(),       // gets
         ripple::xrpAccount())));
 
     auto const reversedBook = getBookBase(std::get<ripple::Book>(RPC::parseBook(
-        ripple::xrpCurrency(),  // pays
+        ripple::xrpCurrency(),       // pays
         ripple::xrpAccount(),
         ripple::to_currency("USD"),  // gets
         issuer)));

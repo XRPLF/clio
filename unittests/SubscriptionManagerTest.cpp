@@ -22,7 +22,6 @@
 #include <util/MockBackend.h>
 #include <util/MockWsBase.h>
 #include <util/TestObject.h>
-#include <webserver/WsBase.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -66,7 +65,7 @@ TEST(SubscriptionManagerTest, InitAndReport)
 }
 
 void
-CheckSubscriberMessage(std::string out, std::shared_ptr<WsBase> session, int retry = 10)
+CheckSubscriberMessage(std::string out, std::shared_ptr<Server::ConnectionBase> session, int retry = 10)
 {
     auto sessionPtr = static_cast<MockSession*>(session.get());
     while (retry-- != 0)
@@ -87,7 +86,7 @@ protected:
     clio::Config cfg;
     std::shared_ptr<SubscriptionManager> subManagerPtr;
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
-    std::shared_ptr<WsBase> session;
+    std::shared_ptr<Server::ConnectionBase> session;
     void
     SetUp() override
     {
@@ -119,8 +118,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
         "books":2,
         "book_changes":2
     })";
-    std::shared_ptr<WsBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<Server::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<Server::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     subManagerPtr->subBookChanges(session1);
     subManagerPtr->subBookChanges(session2);
     subManagerPtr->subManifest(session1);
@@ -248,7 +247,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
     auto account = GetAccountIDWithString(ACCOUNT1);
     subManagerPtr->subProposedAccount(account, session);
 
-    std::shared_ptr<WsBase> sessionIdle = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<Server::ConnectionBase> sessionIdle = std::make_shared<MockSession>(tagDecoratorFactory);
     auto accountIdle = GetAccountIDWithString(ACCOUNT2);
     subManagerPtr->subProposedAccount(accountIdle, sessionIdle);
 
@@ -732,7 +731,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
     CheckSubscriberMessage(OrderbookPublish, session);
 
     // trigger by offer cancel meta data
-    std::shared_ptr<WsBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<Server::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     subManagerPtr->subBook(book, session1);
     metaObj = CreateMetaDataForCancelOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
@@ -821,7 +820,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
-    std::shared_ptr<WsBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<Server::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     subManagerPtr->subBook(book, session2);
     metaObj = CreateMetaDataForCreateOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();

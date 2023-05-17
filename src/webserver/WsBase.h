@@ -331,6 +331,7 @@ public:
                 rpcEngine_->notifyComplete(context->method, us);
 
                 auto const& result = std::get<boost::json::object>(v);
+
                 auto const isForwarded = result.contains("forwarded") && result.at("forwarded").is_bool() &&
                     result.at("forwarded").as_bool();
 

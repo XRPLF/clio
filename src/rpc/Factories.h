@@ -23,6 +23,7 @@
 #include <log/Logger.h>
 #include <rpc/Errors.h>
 #include <webserver/Context.h>
+#include <webserver2/details/WsBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -41,9 +42,6 @@
  */
 
 class WsBase;
-class SubscriptionManager;
-class LoadBalancer;
-class ETLService;
 
 namespace RPC {
 
@@ -51,7 +49,7 @@ std::optional<Web::Context>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
-    std::shared_ptr<WsBase> const& session,
+    std::shared_ptr<Server::ConnectionBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
     std::string const& clientIp);

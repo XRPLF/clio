@@ -27,7 +27,9 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
 
-class WsBase;
+namespace Server {
+struct ConnectionBase;
+}
 class SubscriptionManager;
 
 namespace RPC {
@@ -68,7 +70,7 @@ struct Context
     // TODO: we shall change yield_context to const yield_context after we
     // update backend interfaces to use const& yield
     std::reference_wrapper<boost::asio::yield_context> yield;
-    std::shared_ptr<WsBase> session;
+    std::shared_ptr<Server::ConnectionBase> session;
     bool isAdmin = false;
     std::string clientIp;
 };
