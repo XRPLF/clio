@@ -26,20 +26,20 @@
 #include <queue>
 #include <sstream>
 
-/// This datastructure is used to keep track of the sequence of the most recent
-/// ledger validated by the network. There are two methods that will wait until
-/// certain conditions are met. This datastructure is able to be "stopped". When
-/// the datastructure is stopped, any threads currently waiting are unblocked.
-/// Any later calls to methods of this datastructure will not wait. Once the
-/// datastructure is stopped, the datastructure remains stopped for the rest of
-/// its lifetime.
+/**
+ * @brief This datastructure is used to keep track of the sequence of the most recent ledger validated by the network.
+ *
+ * There are two methods that will wait until certain conditions are met. This datastructure is able to be "stopped".
+ * When the datastructure is stopped, any threads currently waiting are unblocked.
+ * Any later calls to methods of this datastructure will not wait. Once the datastructure is stopped, the datastructure
+ * remains stopped for the rest of its lifetime.
+ */
 class NetworkValidatedLedgers
 {
     // max sequence validated by network
     std::optional<uint32_t> max_;
 
     mutable std::mutex m_;
-
     std::condition_variable cv_;
 
 public:
@@ -49,8 +49,11 @@ public:
         return std::make_shared<NetworkValidatedLedgers>();
     }
 
-    /// Notify the datastructure that idx has been validated by the network
-    /// @param idx sequence validated by network
+    /**
+     * @brief Notify the datastructure that idx has been validated by the network
+     *
+     * @param idx sequence validated by network
+     */
     void
     push(uint32_t idx)
     {
@@ -60,10 +63,13 @@ public:
         cv_.notify_all();
     }
 
-    /// Get most recently validated sequence. If no ledgers are known to have
-    /// been validated, this function waits until the next ledger is validated
-    /// @return sequence of most recently validated ledger. empty optional if
-    /// the datastructure has been stopped
+    /**
+     * @brief Get most recently validated sequence.
+     *
+     * If no ledgers are known to have been validated, this function waits until the next ledger is validated
+     *
+     * @return sequence of most recently validated ledger. empty optional if the datastructure has been stopped
+     */
     std::optional<uint32_t>
     getMostRecent()
     {
@@ -72,10 +78,13 @@ public:
         return max_;
     }
 
-    /// Waits for the sequence to be validated by the network
-    /// @param sequence to wait for
-    /// @return true if sequence was validated, false otherwise
-    /// a return value of false means the datastructure has been stopped
+    /**
+     * @brief Waits for the sequence to be validated by the network
+     *
+     * @param sequence to wait for
+     * @return true if sequence was validated, false otherwise a return value of false means the datastructure has been
+     * stopped
+     */
     bool
     waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {})
     {
@@ -89,10 +98,13 @@ public:
     }
 };
 
-/// Generic thread-safe queue with an optional maximum size
-/// Note, we can't use a lockfree queue here, since we need the ability to wait
-/// for an element to be added or removed from the queue. These waits are
-/// blocking calls.
+// TODO: does the note make sense? lockfree queues provide the same blocking behaviour just without mutex, don't they?
+/**
+ * @brief Generic thread-safe queue with an optional maximum size
+ *
+ * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for an element to be
+ * added or removed from the queue. These waits are blocking calls.
+ */
 template <class T>
 class ThreadSafeQueue
 {
@@ -103,17 +115,26 @@ class ThreadSafeQueue
     std::optional<uint32_t> maxSize_;
 
 public:
-    /// @param maxSize maximum size of the queue. Calls that would cause the
-    /// queue to exceed this size will block until free space is available
+    /**
+     * @brief Create an instance of the queue
+     *
+     * @param maxSize maximum size of the queue. Calls that would cause the queue to exceed this size will block until
+     * free space is available
+     */
     ThreadSafeQueue(uint32_t maxSize) : maxSize_(maxSize)
     {
     }
 
-    /// Create a queue with no maximum size
+    /**
+     * @brief Create a queue with no maximum size
+     */
     ThreadSafeQueue() = default;
 
-    /// @param elt element to push onto queue
-    /// if maxSize is set, this method will block until free space is available
+    /**
+     * @brief Push element onto the queue
+     *
+     * @param elt element to push onto queue if maxSize is set, this method will block until free space is available
+     */
     void
     push(T const& elt)
     {
@@ -125,8 +146,12 @@ public:
         cv_.notify_all();
     }
 
-    /// @param elt element to push onto queue. elt is moved from
-    /// if maxSize is set, this method will block until free space is available
+    /**
+     * @brief Push element onto the queue
+     *
+     * @param elt element to push onto queue. elt is moved from if maxSize is set, this method will block until free
+     * space is available
+     */
     void
     push(T&& elt)
     {
@@ -138,7 +163,11 @@ public:
         cv_.notify_all();
     }
 
-    /// @return element popped from queue. Will block until queue is non-empty
+    /**
+     * @brief Pop element from the queue
+     *
+     * @return element popped from queue. Will block until queue is non-empty
+     */
     T
     pop()
     {
@@ -151,7 +180,12 @@ public:
             cv_.notify_all();
         return ret;
     }
-    /// @return element popped from queue. Will block until queue is non-empty
+
+    /**
+     * @brief Attempt to pop an element
+     *
+     * @return element popped from queue or empty optional if queue was empty
+     */
     std::optional<T>
     tryPop()
     {
@@ -167,8 +201,11 @@ public:
     }
 };
 
-/// Parititions the uint256 keyspace into numMarkers partitions, each of equal
-/// size.
+/**
+ * @brief Parititions the uint256 keyspace into numMarkers partitions, each of equal size.
+ *
+ * @param numMarkers total markers to partition for
+ */
 inline std::vector<ripple::uint256>
 getMarkers(size_t numMarkers)
 {

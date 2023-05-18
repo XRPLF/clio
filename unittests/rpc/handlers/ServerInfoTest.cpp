@@ -27,15 +27,15 @@ namespace json = boost::json;
 using namespace testing;
 
 using TestServerInfoHandler =
-    BaseServerInfoHandler<MockSubscriptionManager, MockETLLoadBalancer, MockReportingETL, MockCounters>;
+    BaseServerInfoHandler<MockSubscriptionManager, MockLoadBalancer, MockETLService, MockCounters>;
 
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto CLIENTIP = "1.1.1.1";
 
 class RPCServerInfoHandlerTest : public HandlerBaseTest,
-                                 public MockETLLoadBalancerTest,
+                                 public MockLoadBalancerTest,
                                  public MockSubscriptionManagerTest,
-                                 public MockReportingETLTest,
+                                 public MockETLServiceTest,
                                  public MockCountersTest
 {
 protected:
@@ -43,9 +43,9 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        MockETLLoadBalancerTest::SetUp();
+        MockLoadBalancerTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        MockReportingETLTest::SetUp();
+        MockETLServiceTest::SetUp();
         MockCountersTest::SetUp();
     }
 
@@ -53,9 +53,9 @@ protected:
     TearDown() override
     {
         MockCountersTest::TearDown();
-        MockReportingETLTest::TearDown();
+        MockETLServiceTest::TearDown();
         MockSubscriptionManagerTest::TearDown();
-        MockETLLoadBalancerTest::TearDown();
+        MockLoadBalancerTest::TearDown();
         HandlerBaseTest::TearDown();
     }
 
@@ -134,7 +134,7 @@ protected:
 TEST_F(RPCServerInfoHandlerTest, NoRangeErrorsOutWithNotReady)
 {
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");
@@ -158,7 +158,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");
@@ -185,7 +185,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");
@@ -201,7 +201,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockETLLoadBalancer* rawBalancerPtr = static_cast<MockETLLoadBalancer*>(mockLoadBalancerPtr.get());
+    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -218,7 +218,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_)).Times(1);
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");
@@ -237,11 +237,11 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockETLLoadBalancer* rawBalancerPtr = static_cast<MockETLLoadBalancer*>(mockLoadBalancerPtr.get());
+    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
     MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
     MockSubscriptionManager* rawSubscriptionManagerPtr =
         static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    MockReportingETL* rawReportingETLPtr = static_cast<MockReportingETL*>(mockReportingETLPtr.get());
+    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -265,11 +265,11 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     ON_CALL(*rawSubscriptionManagerPtr, report).WillByDefault(Return(empty));
     EXPECT_CALL(*rawSubscriptionManagerPtr, report).Times(1);
 
-    ON_CALL(*rawReportingETLPtr, getInfo).WillByDefault(Return(empty));
-    EXPECT_CALL(*rawReportingETLPtr, getInfo).Times(1);
+    ON_CALL(*rawETLServicePtr, getInfo).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawETLServicePtr, getInfo).Times(1);
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");
@@ -283,11 +283,11 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockETLLoadBalancer* rawBalancerPtr = static_cast<MockETLLoadBalancer*>(mockLoadBalancerPtr.get());
+    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
     MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
     MockSubscriptionManager* rawSubscriptionManagerPtr =
         static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    MockReportingETL* rawReportingETLPtr = static_cast<MockReportingETL*>(mockReportingETLPtr.get());
+    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -320,11 +320,11 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     ON_CALL(*rawSubscriptionManagerPtr, report).WillByDefault(Return(empty));
     EXPECT_CALL(*rawSubscriptionManagerPtr, report).Times(1);
 
-    ON_CALL(*rawReportingETLPtr, getInfo).WillByDefault(Return(empty));
-    EXPECT_CALL(*rawReportingETLPtr, getInfo).Times(1);
+    ON_CALL(*rawETLServicePtr, getInfo).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawETLServicePtr, getInfo).Times(1);
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");
@@ -339,11 +339,11 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockETLLoadBalancer* rawBalancerPtr = static_cast<MockETLLoadBalancer*>(mockLoadBalancerPtr.get());
+    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
     MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
     MockSubscriptionManager* rawSubscriptionManagerPtr =
         static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    MockReportingETL* rawReportingETLPtr = static_cast<MockReportingETL*>(mockReportingETLPtr.get());
+    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -373,11 +373,11 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     ON_CALL(*rawSubscriptionManagerPtr, report).WillByDefault(Return(empty));
     EXPECT_CALL(*rawSubscriptionManagerPtr, report).Times(1);
 
-    ON_CALL(*rawReportingETLPtr, getInfo).WillByDefault(Return(empty));
-    EXPECT_CALL(*rawReportingETLPtr, getInfo).Times(1);
+    ON_CALL(*rawETLServicePtr, getInfo).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawETLServicePtr, getInfo).Times(1);
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockReportingETLPtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
     runSpawn([&](auto& yield) {
         auto const req = json::parse("{}");

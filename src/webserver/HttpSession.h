@@ -40,8 +40,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer buffer)

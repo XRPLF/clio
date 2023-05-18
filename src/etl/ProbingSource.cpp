@@ -17,55 +17,55 @@
 */
 //==============================================================================
 
-#include <etl/ProbingETLSource.h>
+#include <etl/ProbingSource.h>
 #include <log/Logger.h>
 
 using namespace clio;
 
-ProbingETLSource::ProbingETLSource(
+ProbingSource::ProbingSource(
     clio::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl,
-    ETLLoadBalancer& balancer,
+    LoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)
     : sslCtx_{std::move(sslCtx)}
     , sslSrc_{make_shared<
-          SslETLSource>(config, ioc, std::ref(sslCtx_), backend, subscriptions, nwvl, balancer, make_SSLHooks())}
-    , plainSrc_{make_shared<PlainETLSource>(config, ioc, backend, subscriptions, nwvl, balancer, make_PlainHooks())}
+          SslSource>(config, ioc, std::ref(sslCtx_), backend, subscriptions, nwvl, balancer, make_SSLHooks())}
+    , plainSrc_{make_shared<PlainSource>(config, ioc, backend, subscriptions, nwvl, balancer, make_PlainHooks())}
 {
 }
 
 void
-ProbingETLSource::run()
+ProbingSource::run()
 {
     sslSrc_->run();
     plainSrc_->run();
 }
 
 void
-ProbingETLSource::pause()
+ProbingSource::pause()
 {
     sslSrc_->pause();
     plainSrc_->pause();
 }
 
 void
-ProbingETLSource::resume()
+ProbingSource::resume()
 {
     sslSrc_->resume();
     plainSrc_->resume();
 }
 
 bool
-ProbingETLSource::isConnected() const
+ProbingSource::isConnected() const
 {
     return currentSrc_ && currentSrc_->isConnected();
 }
 
 bool
-ProbingETLSource::hasLedger(uint32_t sequence) const
+ProbingSource::hasLedger(uint32_t sequence) const
 {
     if (!currentSrc_)
         return false;
@@ -73,7 +73,7 @@ ProbingETLSource::hasLedger(uint32_t sequence) const
 }
 
 boost::json::object
-ProbingETLSource::toJson() const
+ProbingSource::toJson() const
 {
     if (!currentSrc_)
     {
@@ -90,7 +90,7 @@ ProbingETLSource::toJson() const
 }
 
 std::string
-ProbingETLSource::toString() const
+ProbingSource::toString() const
 {
     if (!currentSrc_)
         return "{probing... ws: " + plainSrc_->toString() + ", wss: " + sslSrc_->toString() + "}";
@@ -98,23 +98,23 @@ ProbingETLSource::toString() const
 }
 
 boost::uuids::uuid
-ProbingETLSource::token() const
+ProbingSource::token() const
 {
     if (!currentSrc_)
         return boost::uuids::nil_uuid();
     return currentSrc_->token();
 }
 
-bool
-ProbingETLSource::loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly)
+std::pair<std::vector<std::string>, bool>
+ProbingSource::loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly)
 {
     if (!currentSrc_)
-        return false;
+        return {{}, false};
     return currentSrc_->loadInitialLedger(ledgerSequence, numMarkers, cacheOnly);
 }
 
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-ProbingETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
+ProbingSource::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     if (!currentSrc_)
         return {};
@@ -122,7 +122,7 @@ ProbingETLSource::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool get
 }
 
 std::optional<boost::json::object>
-ProbingETLSource::forwardToRippled(
+ProbingSource::forwardToRippled(
     boost::json::object const& request,
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
@@ -133,7 +133,7 @@ ProbingETLSource::forwardToRippled(
 }
 
 std::optional<boost::json::object>
-ProbingETLSource::requestFromRippled(
+ProbingSource::requestFromRippled(
     boost::json::object const& request,
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
@@ -143,14 +143,14 @@ ProbingETLSource::requestFromRippled(
     return currentSrc_->requestFromRippled(request, clientIp, yield);
 }
 
-ETLSourceHooks
-ProbingETLSource::make_SSLHooks() noexcept
+SourceHooks
+ProbingSource::make_SSLHooks() noexcept
 {
     return {// onConnected
             [this](auto ec) {
                 std::lock_guard lck(mtx_);
                 if (currentSrc_)
-                    return ETLSourceHooks::Action::STOP;
+                    return SourceHooks::Action::STOP;
 
                 if (!ec)
                 {
@@ -158,7 +158,7 @@ ProbingETLSource::make_SSLHooks() noexcept
                     currentSrc_ = sslSrc_;
                     log_.info() << "Selected WSS as the main source: " << currentSrc_->toString();
                 }
-                return ETLSourceHooks::Action::PROCEED;
+                return SourceHooks::Action::PROCEED;
             },
             // onDisconnected
             [this](auto ec) {
@@ -168,18 +168,18 @@ ProbingETLSource::make_SSLHooks() noexcept
                     currentSrc_ = nullptr;
                     plainSrc_->resume();
                 }
-                return ETLSourceHooks::Action::STOP;
+                return SourceHooks::Action::STOP;
             }};
 }
 
-ETLSourceHooks
-ProbingETLSource::make_PlainHooks() noexcept
+SourceHooks
+ProbingSource::make_PlainHooks() noexcept
 {
     return {// onConnected
             [this](auto ec) {
                 std::lock_guard lck(mtx_);
                 if (currentSrc_)
-                    return ETLSourceHooks::Action::STOP;
+                    return SourceHooks::Action::STOP;
 
                 if (!ec)
                 {
@@ -187,7 +187,7 @@ ProbingETLSource::make_PlainHooks() noexcept
                     currentSrc_ = plainSrc_;
                     log_.info() << "Selected Plain WS as the main source: " << currentSrc_->toString();
                 }
-                return ETLSourceHooks::Action::PROCEED;
+                return SourceHooks::Action::PROCEED;
             },
             // onDisconnected
             [this](auto ec) {
@@ -197,6 +197,6 @@ ProbingETLSource::make_PlainHooks() noexcept
                     currentSrc_ = nullptr;
                     sslSrc_->resume();
                 }
-                return ETLSourceHooks::Action::STOP;
+                return SourceHooks::Action::STOP;
             }};
 }

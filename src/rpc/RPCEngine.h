@@ -21,7 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <config/Config.h>
-#include <etl/ETLSource.h>
+#include <etl/Source.h>
 #include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
@@ -45,8 +45,8 @@
 
 class WsBase;
 class SubscriptionManager;
-class ETLLoadBalancer;
-class ReportingETL;
+class LoadBalancer;
+class ETLService;
 
 namespace RPC {
 
@@ -61,7 +61,7 @@ class RPCEngineBase
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
+    std::shared_ptr<LoadBalancer> balancer_;
     std::reference_wrapper<clio::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
@@ -73,8 +73,8 @@ public:
     RPCEngineBase(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptions,
-        std::shared_ptr<ETLLoadBalancer> const& balancer,
-        std::shared_ptr<ReportingETL> const& etl,
+        std::shared_ptr<LoadBalancer> const& balancer,
+        std::shared_ptr<ETLService> const& etl,
         clio::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
@@ -94,8 +94,8 @@ public:
         clio::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptions,
-        std::shared_ptr<ETLLoadBalancer> const& balancer,
-        std::shared_ptr<ReportingETL> const& etl,
+        std::shared_ptr<LoadBalancer> const& balancer,
+        std::shared_ptr<ETLService> const& etl,
         clio::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,

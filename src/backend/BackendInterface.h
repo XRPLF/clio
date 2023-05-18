@@ -21,7 +21,7 @@
 
 #include <ripple/ledger/ReadView.h>
 #include <backend/DBHelpers.h>
-#include <backend/SimpleCache.h>
+#include <backend/LedgerCache.h>
 #include <backend/Types.h>
 #include <config/Config.h>
 #include <log/Logger.h>
@@ -168,7 +168,7 @@ class BackendInterface
 protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
-    SimpleCache cache_;
+    LedgerCache cache_;
 
     /**
      * @brief Public read methods
@@ -190,15 +190,15 @@ public:
      * const version holds the original cache state; the other tracks
      * historical changes.
      *
-     * @return SimpleCache const&
+     * @return LedgerCache const&
      */
-    SimpleCache const&
+    LedgerCache const&
     cache() const
     {
         return cache_;
     }
 
-    SimpleCache&
+    LedgerCache&
     cache()
     {
         return cache_;
@@ -562,18 +562,6 @@ public:
      */
     bool
     finishWrites(std::uint32_t const ledgerSequence);
-
-    /**
-     * @brief Selectively delets parts of the database.
-     *
-     * @param numLedgersToKeep Unsigned 32-bit integer on number of ledgers to
-     * keep.
-     * @param yield Currently executing coroutine.
-     * @return true
-     * @return false
-     */
-    virtual bool
-    doOnlineDelete(std::uint32_t numLedgersToKeep, boost::asio::yield_context& yield) const = 0;
 
     virtual bool
     isTooBusy() const = 0;

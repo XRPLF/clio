@@ -19,19 +19,32 @@
 
 #pragma once
 
-#include <backend/DBHelpers.h>
+#include <atomic>
 
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
+struct SystemState
+{
+    /**
+     * @brief Whether the process is in strict read-only mode
+     *
+     * In strict read-only mode, the process will never attempt to become the ETL writer, and will only publish ledgers
+     * as they are written to the database.
+     */
+    bool isReadOnly = false;
 
-/**
- * @brief Pull NFT data from TX via ETLService
- */
-std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+    /**
+     * @brief Whether the process is writing to the database.
+     *
+     * Used by server_info
+     */
+    std::atomic_bool isWriting = false;
 
-/**
- * @brief Pull NFT data from ledger object via loadInitialLedger
- */
-std::vector<NFTsData>
-getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob);
+    /**
+     * @brief Whether the software is stopping
+     */
+    std::atomic_bool isStopping = false;
+
+    /**
+     * @brief Whether a write conflict was detected
+     */
+    std::atomic_bool writeConflict = false;
+};

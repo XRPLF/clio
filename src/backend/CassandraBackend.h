@@ -792,14 +792,6 @@ public:
         // probably was used in PG to start a transaction or smth.
     }
 
-    /*! Unused in this implementation */
-    bool
-    doOnlineDelete(std::uint32_t const numLedgersToKeep, boost::asio::yield_context& yield) const override
-    {
-        log_.trace() << __func__ << " call";
-        return true;
-    }
-
     bool
     isTooBusy() const override
     {

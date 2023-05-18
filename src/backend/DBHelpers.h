@@ -30,8 +30,9 @@
 
 #include <backend/Types.h>
 
-/// Struct used to keep track of what to write to
-/// account_transactions/account_tx tables
+/**
+ * @brief Struct used to keep track of what to write to account_transactions/account_tx tables
+ */
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
@@ -50,8 +51,11 @@ struct AccountTransactionsData
     AccountTransactionsData() = default;
 };
 
-/// Represents a link from a tx to an NFT that was targeted/modified/created
-/// by it. Gets written to nf_token_transactions table and the like.
+/**
+ * @brief Represents a link from a tx to an NFT that was targeted/modified/created by it
+ *
+ * Gets written to nf_token_transactions table and the like.
+ */
 struct NFTTransactionsData
 {
     ripple::uint256 tokenID;
@@ -65,8 +69,11 @@ struct NFTTransactionsData
     }
 };
 
-/// Represents an NFT state at a particular ledger. Gets written to nf_tokens
-/// table and the like.
+/**
+ * @brief Represents an NFT state at a particular ledger.
+ *
+ * Gets written to nf_tokens table and the like.
+ */
 struct NFTsData
 {
     ripple::uint256 tokenID;

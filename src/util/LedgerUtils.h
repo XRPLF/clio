@@ -19,19 +19,20 @@
 
 #pragma once
 
-#include <backend/DBHelpers.h>
+#include <ripple/basics/StringUtilities.h>
 
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
+#include <string>
 
-/**
- * @brief Pull NFT data from TX via ETLService
- */
-std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+namespace util {
 
-/**
- * @brief Pull NFT data from ledger object via loadInitialLedger
- */
-std::vector<NFTsData>
-getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob);
+inline std::string
+toString(ripple::LedgerInfo const& info)
+{
+    std::stringstream ss;
+    ss << "LedgerInfo { Sequence : " << info.seq << " Hash : " << ripple::strHex(info.hash)
+       << " TxHash : " << strHex(info.txHash) << " AccountHash : " << ripple::strHex(info.accountHash)
+       << " ParentHash : " << strHex(info.parentHash) << " }";
+    return ss.str();
+}
+
+}  // namespace util
