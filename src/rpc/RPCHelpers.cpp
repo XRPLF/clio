@@ -706,8 +706,8 @@ traverseOwnedNodes(
         if (auto const& indexes = sle.getFieldV256(ripple::sfIndexes);
             std::find(std::begin(indexes), std::end(indexes), hexMarker) == std::end(indexes))
         {
-            // result in empty dataset
-            return AccountCursor({beast::zero, 0});
+            // the index specified by marker is not in the page specified by marker
+            return Status(ripple::rpcINVALID_PARAMS, "Invalid marker");
         }
 
         currentIndex = hintIndex;
