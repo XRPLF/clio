@@ -76,7 +76,7 @@ public:
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 50;
+        uint32_t limit = 200;
         std::optional<std::string> marker;
     };
 

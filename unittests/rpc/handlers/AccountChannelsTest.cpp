@@ -387,7 +387,7 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index":30,
         "validated":true,
-        "limit":50,
+        "limit":200,
         "channels":[
             {
                 "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
@@ -613,7 +613,7 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index":30,
         "validated":true,
-        "limit":50,
+        "limit":200,
         "channels":[
             {
                 "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
