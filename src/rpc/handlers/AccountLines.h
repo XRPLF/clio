@@ -76,7 +76,7 @@ public:
         std::optional<std::string> peer;
         bool ignoreDefault = false;  // TODO: document
                                      // https://github.com/XRPLF/xrpl-dev-portal/issues/1839
-        uint32_t limit = 50;
+        uint32_t limit = 200;
         std::optional<std::string> marker;
     };
 
