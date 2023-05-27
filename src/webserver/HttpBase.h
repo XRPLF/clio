@@ -40,7 +40,7 @@
 #include <log/Logger.h>
 #include <main/Build.h>
 #include <rpc/Counters.h>
-#include <rpc/RPC.h>
+#include <rpc/Factories.h>
 #include <rpc/RPCEngine.h>
 #include <rpc/WorkQueue.h>
 #include <util/Profiler.h>
@@ -101,7 +101,7 @@ class HttpBase : public util::Taggable
                 self_.derived().stream(),
                 *sp,
                 boost::beast::bind_front_handler(
-                    &HttpBase::on_write, self_.derived().shared_from_this(), sp->need_eof()));
+                    &HttpBase::onWrite, self_.derived().shared_from_this(), sp->need_eof()));
         }
     };
 
@@ -199,7 +199,7 @@ public:
     }
 
     void
-    do_read()
+    doRead()
     {
         if (dead())
             return;
@@ -215,17 +215,17 @@ public:
             derived().stream(),
             buffer_,
             req_,
-            boost::beast::bind_front_handler(&HttpBase::on_read, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&HttpBase::onRead, derived().shared_from_this()));
     }
 
     void
-    on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
+    onRead(boost::beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
         // This means they closed the connection
         if (ec == http::error::end_of_stream)
-            return derived().do_close();
+            return derived().doClose();
 
         if (ec)
             return httpFail(ec, "read");
@@ -253,9 +253,9 @@ public:
             // Disable the timeout.
             // The websocket::stream uses its own timeout settings.
             boost::beast::get_lowest_layer(derived().stream()).expires_never();
-            return make_websocket_session(
+            return make_WebsocketSession(
                 ioc_,
-                derived().release_stream(),
+                derived().releaseStream(),
                 derived().ip(),
                 std::move(req_),
                 std::move(buffer_),
@@ -282,7 +282,7 @@ public:
 
         if (not rpcEngine_->post(
                 [this, ip, session](boost::asio::yield_context yield) {
-                    handle_request(
+                    handleRequest(
                         yield,
                         std::move(req_),
                         lambda_,
@@ -309,7 +309,7 @@ public:
     }
 
     void
-    on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
+    onWrite(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
@@ -320,14 +320,14 @@ public:
         {
             // This means we should close the connection, usually because
             // the response indicated the "Connection: close" semantic.
-            return derived().do_close();
+            return derived().doClose();
         }
 
         // We're done with the response so delete it
         res_ = nullptr;
 
         // Read another request
-        do_read();
+        doRead();
     }
 };
 
@@ -337,7 +337,7 @@ public:
 // caller to pass a generic lambda for receiving the response.
 template <class Body, class Allocator, class Send, class Session>
 void
-handle_request(
+handleRequest(
     boost::asio::yield_context& yc,
     boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
     Send&& send,

@@ -28,7 +28,6 @@ namespace RPC {
 
 /**
  * @brief The ledger_entry method returns a single ledger object from the XRP Ledger in its raw format.
- * The clio has not supported: nft_page
  *
  * For more details see: https://xrpl.org/ledger_entry.html
  */
@@ -47,7 +46,6 @@ public:
         bool validated = true;
     };
 
-    // TODO: nft_page has not been implemented
     struct Input
     {
         std::optional<std::string> ledgerHash;
@@ -111,7 +109,10 @@ public:
              validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(owner), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(owner),
+                      validation::Required{},
+                      validation::WithCustomError{
+                          validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
                      {JS(authorized), validation::Required{}, validation::AccountBase58Validator},
                  },
              }},
@@ -127,7 +128,10 @@ public:
              validation::IfType<std::string>{validation::Uint256HexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
-                     {JS(owner), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(owner),
+                      validation::Required{},
+                      validation::WithCustomError{
+                          validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
                      {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
@@ -156,6 +160,7 @@ public:
                      {JS(ticket_seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
+            {JS(nft_page), validation::Uint256HexStringValidator},
         };
 
         return rpcSpec;

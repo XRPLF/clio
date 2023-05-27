@@ -152,6 +152,12 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters.",
         },
+        {
+            "DiffNotBool",
+            R"({"diff": "x"})",
+            "invalidParams",
+            "Invalid parameters.",
+        },
     };
 }
 

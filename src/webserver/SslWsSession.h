@@ -59,6 +59,7 @@ public:
         , ws_(std::move(stream))
     {
     }
+
     boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
     ws()
     {
@@ -115,6 +116,7 @@ public:
         , dosGuard_(dosGuard)
     {
     }
+
     SslWsUpgrader(
         boost::asio::io_context& ioc,
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
@@ -152,12 +154,12 @@ public:
         boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
 
         net::dispatch(
-            https_.get_executor(), boost::beast::bind_front_handler(&SslWsUpgrader::do_upgrade, shared_from_this()));
+            https_.get_executor(), boost::beast::bind_front_handler(&SslWsUpgrader::doUpgrade, shared_from_this()));
     }
 
 private:
     void
-    on_handshake(boost::beast::error_code ec, std::size_t bytes_used)
+    onHandshake(boost::beast::error_code ec, std::size_t bytes_used)
     {
         if (ec)
             return logError(ec, "handshake");
@@ -165,11 +167,11 @@ private:
         // Consume the portion of the buffer used by the handshake
         buffer_.consume(bytes_used);
 
-        do_upgrade();
+        doUpgrade();
     }
 
     void
-    do_upgrade()
+    doUpgrade()
     {
         parser_.emplace();
 
@@ -180,11 +182,11 @@ private:
         // Set the timeout.
         boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
 
-        on_upgrade();
+        onUpgrade();
     }
 
     void
-    on_upgrade()
+    onUpgrade()
     {
         // See if it is a WebSocket Upgrade
         if (!websocket::is_upgrade(req_))

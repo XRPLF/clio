@@ -34,6 +34,7 @@ constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
 
 class RPCLedgerEntryTest : public HandlerBaseTest
 {
@@ -134,8 +135,8 @@ generateTestValuesForParametersTest()
                     "authorized": "invalid"
                 }
             })",
-            "malformedAddress",
-            "Malformed address."},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonOwnerNotString",
@@ -145,8 +146,8 @@ generateTestValuesForParametersTest()
                     "authorized": 123
                 }
             })",
-            "invalidParams",
-            "ownerNotString"},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonAuthorizedNotString",
@@ -311,19 +312,19 @@ generateTestValuesForParametersTest()
                     "seq": 123
                 }
             })",
-            "invalidParams",
-            "ownerNotString"},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonAccountInvalid",
             R"({
-                "ticket": {
-                    "account": "123",
+                "escrow": {
+                    "owner": "123",
                     "seq": 123
                 }
             })",
-            "malformedAddress",
-            "Malformed address."},
+            "malformedOwner",
+            "Malformed owner."},
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonSeqNotInt",
@@ -572,11 +573,11 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
     };
 };
 
-// content of index, payment_channel, check fields is ledger index
+// content of index, payment_channel, check, nft_page fields is ledger index
 INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup3,
     IndexTest,
-    Values("index", "payment_channel", "check"),
+    Values("index", "payment_channel", "check", "nft_page"),
     IndexTest::NameGenerator{});
 
 TEST_P(IndexTest, InvalidIndexUint256)
@@ -697,6 +698,17 @@ generateTestValuesForNormalPathTest()
                 INDEX1),
             ripple::uint256{INDEX1},
             CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)},
+        NormalPathTestBundle{
+            "Nft_page",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "nft_page": "{}"
+                }})",
+                INDEX1),
+            ripple::uint256{INDEX1},
+            CreateNFTTokenPage(
+                std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt)},
         NormalPathTestBundle{
             "Check",
             fmt::format(

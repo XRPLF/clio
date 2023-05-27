@@ -83,8 +83,11 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHandler::Output const& output)
 {
     auto objects = boost::json::array{};
-    for (auto const& sle : output.accountObjects)
-        objects.push_back(toJson(sle));
+    std::transform(
+        std::cbegin(output.accountObjects),
+        std::cend(output.accountObjects),
+        std::back_inserter(objects),
+        [](auto const& sle) { return toJson(sle); });
 
     jv = {
         {JS(ledger_hash), output.ledgerHash},

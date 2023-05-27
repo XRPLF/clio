@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include <rpc/RPC.h>
+#include <rpc/Errors.h>
 
 #include <boost/json.hpp>
 #include <gtest/gtest.h>

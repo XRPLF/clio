@@ -94,11 +94,11 @@ public:
         // Set the timeout.
         boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
         // Detect a TLS handshake
-        async_detect_ssl(stream_, buffer_, boost::beast::bind_front_handler(&Detector::on_detect, shared_from_this()));
+        async_detect_ssl(stream_, buffer_, boost::beast::bind_front_handler(&Detector::onDetect, shared_from_this()));
     }
 
     void
-    on_detect(boost::beast::error_code ec, bool result)
+    onDetect(boost::beast::error_code ec, bool result)
     {
         if (ec)
             return fail(ec, "detect");
@@ -141,7 +141,7 @@ public:
 };
 
 void
-make_websocket_session(
+make_WebsocketSession(
     boost::asio::io_context& ioc,
     boost::beast::tcp_stream stream,
     std::optional<std::string> const& ip,
@@ -172,7 +172,7 @@ make_websocket_session(
 }
 
 void
-make_websocket_session(
+make_WebsocketSession(
     boost::asio::io_context& ioc,
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
     std::optional<std::string> const& ip,
@@ -275,20 +275,20 @@ public:
     void
     run()
     {
-        do_accept();
+        doAccept();
     }
 
 private:
     void
-    do_accept()
+    doAccept()
     {
         // The new connection gets its own strand
         acceptor_.async_accept(
-            net::make_strand(ioc_), boost::beast::bind_front_handler(&Listener::on_accept, shared_from_this()));
+            net::make_strand(ioc_), boost::beast::bind_front_handler(&Listener::onAccept, shared_from_this()));
     }
 
     void
-    on_accept(boost::beast::error_code ec, tcp::socket socket)
+    onAccept(boost::beast::error_code ec, tcp::socket socket)
     {
         if (!ec)
         {
@@ -309,7 +309,7 @@ private:
         }
 
         // Accept another connection
-        do_accept();
+        doAccept();
     }
 };
 

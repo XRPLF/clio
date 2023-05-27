@@ -433,7 +433,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index": 30,
                 "validated": true,
-                "limit": 50,
+                "limit": 200,
                 "lines": [
                     {
                         "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -629,7 +629,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
-        "limit": 50,
+        "limit": 200,
         "lines": [
             {
                 "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",

@@ -26,7 +26,7 @@
 #include <boost/beast/websocket/ssl.hpp>
 
 #include <etl/ReportingETL.h>
-#include <rpc/RPC.h>
+#include <rpc/Factories.h>
 #include <webserver/Listener.h>
 #include <webserver/WsBase.h>
 
@@ -121,6 +121,7 @@ public:
         , ip_(ip)
     {
     }
+
     WsUpgrader(
         boost::asio::io_context& ioc,
         boost::beast::tcp_stream&& stream,
@@ -158,12 +159,12 @@ public:
         // thread-safe by default.
 
         net::dispatch(
-            http_.get_executor(), boost::beast::bind_front_handler(&WsUpgrader::do_upgrade, shared_from_this()));
+            http_.get_executor(), boost::beast::bind_front_handler(&WsUpgrader::doUpgrade, shared_from_this()));
     }
 
 private:
     void
-    do_upgrade()
+    doUpgrade()
     {
         parser_.emplace();
 
@@ -174,11 +175,11 @@ private:
         // Set the timeout.
         boost::beast::get_lowest_layer(http_).expires_after(std::chrono::seconds(30));
 
-        on_upgrade();
+        onUpgrade();
     }
 
     void
-    on_upgrade()
+    onUpgrade()
     {
         // See if it is a WebSocket Upgrade
         if (!websocket::is_upgrade(req_))

@@ -79,8 +79,9 @@ public:
     {
         return stream_;
     }
+
     boost::beast::tcp_stream
-    release_stream()
+    releaseStream()
     {
         return std::move(stream_);
     }
@@ -99,11 +100,11 @@ public:
         // on the I/O objects in this HttpSession. Although not strictly
         // necessary for single-threaded contexts, this example code is written
         // to be thread-safe by default.
-        net::dispatch(stream_.get_executor(), boost::beast::bind_front_handler(&HttpBase::do_read, shared_from_this()));
+        net::dispatch(stream_.get_executor(), boost::beast::bind_front_handler(&HttpBase::doRead, shared_from_this()));
     }
 
     void
-    do_close()
+    doClose()
     {
         // Send a TCP shutdown
         boost::beast::error_code ec;

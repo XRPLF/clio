@@ -311,7 +311,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 }
 
 // Send a valid marker, but marker contain an unexisting index
-// return empty
+// return invalid params error
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
@@ -345,13 +345,10 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
         auto count = 0;
         auto ret = traverseOwnedNodes(
             *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; });
-        auto cursor = std::get_if<AccountCursor>(&ret);
-        EXPECT_TRUE(cursor != nullptr);
-        EXPECT_EQ(count, 0);
-        EXPECT_EQ(
-            cursor->toString(),
-            "00000000000000000000000000000000000000000000000000000000000000"
-            "00,0");
+        auto status = std::get_if<Status>(&ret);
+        EXPECT_TRUE(status != nullptr);
+        EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(status->message, "Invalid marker");
     });
     ctx.run();
 }

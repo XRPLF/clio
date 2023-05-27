@@ -77,6 +77,7 @@ public:
             {JS(transactions), validation::Type<bool>{}},
             {JS(expand), validation::Type<bool>{}},
             {JS(binary), validation::Type<bool>{}},
+            {"diff", validation::Type<bool>{}},
         };
 
         return rpcSpec;

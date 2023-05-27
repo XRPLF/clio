@@ -181,8 +181,8 @@ generateTestValuesForParametersTest()
                 "ledger_index_max": 11,
                 "ledger_index_min": 20
             })",
-            "invalidParams",
-            "invalidIndex"},
+            "lgrIdxsInvalid",
+            "Ledger indexes invalid."},
         NFTHistoryParamTestCaseBundle{
             "LedgerIndexMaxMinAndLedgerIndex",
             R"({

@@ -112,16 +112,6 @@ std::ostream&
 operator<<(std::ostream& stream, Severity sev);
 
 /**
- * @brief Custom JSON parser for @ref Severity.
- *
- * @param value The JSON string to parse
- * @return Severity The parsed severity
- * @throws std::runtime_error Thrown if severity is not in the right format
- */
-Severity
-tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value);
-
-/**
  * @brief A simple thread-safe logger for the channel specified
  * in the constructor.
  *
@@ -185,6 +175,16 @@ class Logger final
     private:
         [[nodiscard]] std::string
         pretty_path(source_location_t const& loc, size_t max_depth = 3) const;
+
+        /**
+         * @brief Custom JSON parser for @ref Severity.
+         *
+         * @param value The JSON string to parse
+         * @return Severity The parsed severity
+         * @throws std::runtime_error Thrown if severity is not in the right format
+         */
+        friend Severity
+        tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value);
     };
 
 public:
