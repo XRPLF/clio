@@ -99,7 +99,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                     }
                     catch (std::runtime_error const& e)
                     {
-                        output.overflow = true;
+                        bal = ripple::STAmount(bal.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset);
                     }
                 }
             }

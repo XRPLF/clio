@@ -517,10 +517,9 @@ generateNormalPathTestBundles()
             fmt::format(
                 R"({{
                     "obligations":{{
-                        "JPY":"9922966390934554e80"
+                        "JPY":"9999999999999999e80"
                     }},
                     "account":"{}",
-                    "overflow":true,
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})",
