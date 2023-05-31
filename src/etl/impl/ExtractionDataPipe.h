@@ -19,14 +19,10 @@
 
 #pragma once
 
+#include <etl/ETLHelpers.h>
 #include <log/Logger.h>
 
-#include <ripple/ledger/ReadView.h>
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
-
-#include <atomic>
-#include <string>
+#include <memory>
 #include <vector>
 
 namespace clio::detail {
@@ -34,51 +30,104 @@ namespace clio::detail {
 /**
  * @brief A collection of thread safe async queues used by Extractor and Transformer to communicate
  */
+template <typename RawDataType>
 class ExtractionDataPipe
 {
+public:
+    using DataType = std::optional<RawDataType>;
+    using QueueType = ThreadSafeQueue<DataType>;  // TODO: probably should use boost::lockfree::queue instead?
+
+    constexpr static auto TOTAL_MAX_IN_QUEUE = 1000u;
+
+private:
     clio::Logger log_{"ETL"};
 
-    uint32_t numQueues_;
+    uint32_t stride_;
     uint32_t startSequence_;
-
-    using DataType = std::optional<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using QueueType = ThreadSafeQueue<DataType>;  // TODO: probably should use boost::lockfree::queue instead?
 
     std::vector<std::shared_ptr<QueueType>> queues_;
 
 public:
-    ExtractionDataPipe(uint32_t numQueues, uint32_t startSequence)
-        : numQueues_{numQueues}, startSequence_{startSequence}
+    /**
+     * @brief Create a new instance of the extraction data pipe
+     *
+     * @param stride
+     * @param startSequence
+     */
+    ExtractionDataPipe(uint32_t stride, uint32_t startSequence) : stride_{stride}, startSequence_{startSequence}
     {
-        uint32_t const maxQueueSize = 1000u / numQueues_;
-        for (size_t i = 0; i < numQueues_; ++i)
-            queues_.push_back(std::make_shared<QueueType>(maxQueueSize));
+        auto const maxQueueSize = TOTAL_MAX_IN_QUEUE / stride;
+        for (size_t i = 0; i < stride_; ++i)
+            queues_.push_back(std::make_unique<QueueType>(maxQueueSize));
     }
 
-    std::shared_ptr<QueueType>
-    getExtractor(uint32_t sequence)
+    /**
+     * @brief Push new data package for the specified sequence.
+     *
+     * Note: Potentially blocks until the underlying queue can accomodate another entry.
+     *
+     * @param sequence The sequence for which to enqueue the data package
+     * @param data The data to store
+     */
+    void
+    push(uint32_t sequence, DataType&& data)
     {
-        log_.debug() << "Grabbing extractor for " << sequence << "; start was " << startSequence_;
-        return queues_[(sequence - startSequence_) % numQueues_];
+        getQueue(sequence)->push(std::move(data));
     }
 
+    /**
+     * @brief Get data package for the given sequence
+     *
+     * Note: Potentially blocks until data is available.
+     *
+     * @param sequence The sequence for which data is required
+     * @return The data wrapped in an optional; nullopt means that there is no more data to expect
+     */
     DataType
     popNext(uint32_t sequence)
     {
-        return getExtractor(sequence)->pop();
+        return getQueue(sequence)->pop();
     }
 
+    /**
+     * @return Get the stride
+     */
     uint32_t
-    numQueues() const
+    getStride() const
     {
-        return numQueues_;
+        return stride_;
     }
 
+    /**
+     * @brief Hint the Transformer that the queue is done sending data
+     * @param sequence The sequence for which the extractor queue is to be hinted
+     */
+    void
+    finish(uint32_t sequence)
+    {
+        // empty optional hints the Transformer to shut down
+        push(sequence, std::nullopt);
+    }
+
+    /**
+     * @brief Unblocks internal queues
+     *
+     * Note: For now this must be called by the ETL when Transformer exits.
+     */
     void
     cleanup()
     {
-        for (auto i = 0u; i < numQueues_; ++i)
-            getExtractor(i)->tryPop();  // pop from each queue that might be blocked on a push
+        // TODO: this should not have to be called by hand. it should be done via RAII
+        for (auto i = 0u; i < stride_; ++i)
+            getQueue(i)->tryPop();  // pop from each queue that might be blocked on a push
+    }
+
+private:
+    std::shared_ptr<QueueType>
+    getQueue(uint32_t sequence)
+    {
+        log_.debug() << "Grabbing extraction queue for " << sequence << "; start was " << startSequence_;
+        return queues_[(sequence - startSequence_) % stride_];
     }
 };
 

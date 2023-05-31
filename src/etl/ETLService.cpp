@@ -39,8 +39,8 @@ ETLService::runETLPipeline(uint32_t startSequence, int numExtractors)
     }
 
     auto const begin = std::chrono::system_clock::now();
-    auto pipe = DataPipeType{numExtractors, startSequence};
     auto extractors = std::vector<std::unique_ptr<ExtractorType>>{};
+    auto pipe = DataPipeType{numExtractors, startSequence};
 
     for (auto i = 0u; i < numExtractors; ++i)
         extractors.push_back(std::make_unique<ExtractorType>(
@@ -48,7 +48,7 @@ ETLService::runETLPipeline(uint32_t startSequence, int numExtractors)
 
     auto transformer = TransformerType{pipe, backend_, ledgerLoader_, ledgerPublisher_, startSequence, state_};
     transformer.waitTillFinished();  // suspend current thread until exit condition is met
-    pipe.cleanup();
+    pipe.cleanup();                  // TODO: this should probably happen automatically using destructor
 
     // wait for all of the extractors to stop
     for (auto& t : extractors)

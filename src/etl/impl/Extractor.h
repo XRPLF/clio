@@ -88,7 +88,6 @@ private:
 
         double totalTime = 0.0;
         auto currentSequence = startSequence_;
-        auto transformQueue = pipe_.get().getExtractor(currentSequence);
 
         // Two stopping conditions:
         // - if there is a write conflict in the load thread, the ETL mechanism should stop.
@@ -112,15 +111,14 @@ private:
                         << "; Avg extract time = " << totalTime / (currentSequence - startSequence_ + 1)
                         << "; seq = " << currentSequence;
 
-            transformQueue->push(std::move(fetchResponse));
-            currentSequence += pipe_.get().numQueues();
+            pipe_.get().push(currentSequence, std::move(fetchResponse));
+            currentSequence += pipe_.get().getStride();
 
             if (finishSequence_ && currentSequence > *finishSequence_)
                 break;
         }
 
-        // empty optional tells the transformer to shut down
-        transformQueue->push({});
+        pipe_.get().finish(startSequence_);
     }
 
     bool

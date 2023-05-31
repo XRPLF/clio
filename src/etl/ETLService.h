@@ -34,6 +34,9 @@
 #include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
 
+#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
+#include <grpcpp/grpcpp.h>
+
 #include <memory>
 
 struct AccountTransactionsData;
@@ -60,7 +63,7 @@ class ETLService
     using SubscriptionManagerType = SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
-    using DataPipeType = clio::detail::ExtractionDataPipe;
+    using DataPipeType = clio::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
     using CacheLoaderType = clio::detail::CacheLoader<Backend::LedgerCache>;
     using LedgerFetcherType = clio::detail::LedgerFetcher<LoadBalancerType>;
     using ExtractorType = clio::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;

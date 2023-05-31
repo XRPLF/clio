@@ -107,10 +107,10 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
     return {std::move(response), success};
 }
 
-std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
+LoadBalancer::DataType
 LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
-    org::xrpl::rpc::v1::GetLedgerResponse response;
+    RawDataType response;
     bool success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
             auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);

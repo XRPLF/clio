@@ -182,15 +182,9 @@ public:
     BackendInterface() = default;
     virtual ~BackendInterface() = default;
 
-    /*! @brief LEDGER METHODS */
-public:
     /**
      * @brief Cache that holds states of the ledger
-     *
-     * const version holds the original cache state; the other tracks
-     * historical changes.
-     *
-     * @return LedgerCache const&
+     * @return Immutable cache
      */
     LedgerCache const&
     cache() const
@@ -198,6 +192,10 @@ public:
         return cache_;
     }
 
+    /**
+     * @brief Cache that holds states of the ledger
+     * @return Mutable cache
+     */
     LedgerCache&
     cache()
     {

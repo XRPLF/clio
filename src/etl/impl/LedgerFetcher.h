@@ -37,6 +37,10 @@ namespace clio::detail {
 template <typename LoadBalancerType>
 class LedgerFetcher
 {
+public:
+    using DataType = typename LoadBalancerType::DataType;
+
+private:
     clio::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
@@ -60,12 +64,12 @@ public:
      * @param sequence sequence of the ledger to extract
      * @return ledger header and transaction+metadata blobs; empty optional if the server is shutting down
      */
-    std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
+    DataType
     fetchData(uint32_t seq)
     {
         log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
 
-        std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response = loadBalancer_->fetchLedger(seq, false, false);
+        auto response = loadBalancer_->fetchLedger(seq, false, false);
         if (response)
             log_.trace() << "GetLedger reply = " << response->DebugString();
         return response;
@@ -81,12 +85,12 @@ public:
      * @return ledger header, transaction+metadata blobs, and all ledger objects created, modified or deleted between
      * this ledger and the parent; Empty optional if the server is shutting down
      */
-    std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
+    DataType
     fetchDataAndDiff(uint32_t seq)
     {
         log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
 
-        std::optional<org::xrpl::rpc::v1::GetLedgerResponse> response = loadBalancer_->fetchLedger(
+        auto response = loadBalancer_->fetchLedger(
             seq, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= seq);
         if (response)
             log_.trace() << "GetLedger reply = " << response->DebugString();

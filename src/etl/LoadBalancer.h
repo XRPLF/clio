@@ -42,6 +42,10 @@ class SubscriptionManager;
  */
 class LoadBalancer
 {
+public:
+    using RawDataType = org::xrpl::rpc::v1::GetLedgerResponse;
+    using DataType = std::optional<RawDataType>;
+
 private:
     clio::Logger log_{"ETL"};
     std::vector<std::unique_ptr<Source>> sources_;
@@ -105,7 +109,7 @@ public:
      * @return the extracted data, if extraction was successful. If the ledger was found in the database or the server
      * is shutting down, the optional will be empty
      */
-    std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
+    DataType
     fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
 
     /**

@@ -123,9 +123,8 @@ public:
     /**
      * @brief Populates the cache by walking through the given ledger.
      *
-     * Should only be called once. The default behavior is to
-     * return immediately and populate the cache in the background.
-     * This can be overridden via config parameter, to populate synchronously, or not at all.
+     * Should only be called once. The default behavior is to return immediately and populate the cache in the
+     * background. This can be overridden via config parameter, to populate synchronously, or not at all.
      */
     void
     load(uint32_t seq)
