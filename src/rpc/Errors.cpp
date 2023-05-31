@@ -77,7 +77,7 @@ getErrorInfo(ClioError code)
         {ClioError::rpcMALFORMED_REQUEST, "malformedRequest", "Malformed request."},
         {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
         {ClioError::rpcMALFORMED_ADDRESS, "malformedAddress", "Malformed address."},
-    };
+        {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."}};
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
     if (auto it = find_if(begin(infos), end(infos), matchByCode); it != end(infos))

@@ -38,6 +38,7 @@ enum class ClioError {
     rpcMALFORMED_REQUEST = 5001,
     rpcMALFORMED_OWNER = 5002,
     rpcMALFORMED_ADDRESS = 5003,
+    rpcINVALID_HOT_WALLET = 5004,
 };
 
 /**

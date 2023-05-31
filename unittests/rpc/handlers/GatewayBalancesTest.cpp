@@ -337,8 +337,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
             Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "invalidHotWallet");
+        EXPECT_EQ(err.at("error").as_string(), "invalidHotWallet");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid hot wallet.");
     });
 }
 
