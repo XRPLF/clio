@@ -21,7 +21,6 @@
 
 #include <backend/BackendInterface.h>
 #include <backend/CassandraBackend.h>
-#include <backend/CassandraBackendNew.h>
 #include <config/Config.h>
 #include <log/Logger.h>
 
@@ -34,17 +33,14 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
     static clio::Logger log{"Backend"};
     log.info() << "Constructing BackendInterface";
 
-    auto readOnly = config.valueOr("read_only", false);
+    // TODO: use readOnly in new backend to prevent creation of schema at startup
+    // auto readOnly = config.valueOr("read_only", false);
+
     auto type = config.value<std::string>("database.type");
     std::shared_ptr<BackendInterface> backend = nullptr;
 
-    if (boost::iequals(type, "cassandra"))
-    {
-        auto cfg = config.section("database." + type);
-        auto ttl = config.valueOr<uint32_t>("online_delete", 0) * 4;
-        backend = std::make_shared<CassandraBackend>(ioc, cfg, ttl);
-    }
-    else if (boost::iequals(type, "cassandra-new"))
+    // TODO: retire `cassandra-new` by next release after 2.0
+    if (boost::iequals(type, "cassandra") or boost::iequals(type, "cassandra-new"))
     {
         auto cfg = config.section("database." + type);
         auto ttl = config.valueOr<uint16_t>("online_delete", 0) * 4;
@@ -55,7 +51,6 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
     if (!backend)
         throw std::runtime_error("Invalid database type");
 
-    backend->open(readOnly);
     auto rng = backend->hardFetchLedgerRangeNoThrow();
     if (rng)
     {
@@ -64,7 +59,6 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
     }
 
     log.info() << "Constructed BackendInterface Successfully";
-
     return backend;
 }
 }  // namespace Backend
