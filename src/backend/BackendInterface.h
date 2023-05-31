@@ -575,22 +575,6 @@ public:
     virtual bool
     doOnlineDelete(std::uint32_t numLedgersToKeep, boost::asio::yield_context& yield) const = 0;
 
-    /**
-     * @brief Opens the database
-     *
-     * Open the database. Set up all of the necessary objects and
-     * datastructures. After this call completes, the database is
-     * ready for use.
-     *
-     * @param readOnly Boolean whether ledger is read only.
-     */
-    virtual void
-    open(bool readOnly) = 0;
-
-    /*! @brief Closes the database, releasing any resources. */
-    virtual void
-    close(){};
-
     virtual bool
     isTooBusy() const = 0;
 

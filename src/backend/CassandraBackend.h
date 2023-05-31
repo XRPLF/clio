@@ -86,18 +86,6 @@ public:
         log_.info() << "Created (revamped) CassandraBackend";
     }
 
-    /*! Not used in this implementation */
-    void
-    open([[maybe_unused]] bool readOnly) override
-    {
-    }
-
-    /*! Not used in this implementation */
-    void
-    close() override
-    {
-    }
-
     TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
