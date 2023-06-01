@@ -19,7 +19,7 @@
 
 #include <util/Fixtures.h>
 
-#include <backend/CassandraBackendNew.h>
+#include <backend/CassandraBackend.h>
 #include <config/Config.h>
 #include <etl/NFTHelpers.h>
 #include <rpc/RPCHelpers.h>

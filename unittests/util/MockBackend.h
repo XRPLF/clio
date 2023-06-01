@@ -148,10 +148,6 @@ public:
 
     MOCK_METHOD(bool, isTooBusy, (), (const, override));
 
-    MOCK_METHOD(void, open, (bool), (override));
-
-    MOCK_METHOD(void, close, (), (override));
-
     MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
 
     MOCK_METHOD(bool, doFinishWrites, (), (override));
