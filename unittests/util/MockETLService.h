@@ -24,10 +24,10 @@
 
 #include <chrono>
 
-class MockReportingETL
+class MockETLService
 {
 public:
-    MockReportingETL()
+    MockETLService()
     {
     }
 

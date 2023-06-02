@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <etl/ETLSource.h>
+#include <etl/Source.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -30,10 +30,10 @@
 
 #include <optional>
 
-class MockETLLoadBalancer
+class MockLoadBalancer
 {
 public:
-    MockETLLoadBalancer()
+    MockLoadBalancer()
     {
     }
 
@@ -41,7 +41,7 @@ public:
 
     MOCK_METHOD(std::optional<org::xrpl::rpc::v1::GetLedgerResponse>, fetchLedger, (uint32_t, bool, bool), ());
 
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (ETLSource*), (const));
+    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
 
     MOCK_METHOD(boost::json::value, toJson, (), (const));
 

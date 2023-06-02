@@ -17,80 +17,26 @@
 */
 //==============================================================================
 
+#include <backend/DBHelpers.h>
+#include <etl/ETLService.h>
+#include <etl/LoadBalancer.h>
+#include <etl/NFTHelpers.h>
+#include <etl/ProbingSource.h>
+#include <etl/Source.h>
+#include <log/Logger.h>
+#include <rpc/RPCHelpers.h>
+#include <util/Profiler.h>
+
 #include <ripple/beast/net/IPEndpoint.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/json.hpp>
-#include <boost/json/src.hpp>
-
-#include <backend/DBHelpers.h>
-#include <etl/ETLSource.h>
-#include <etl/NFTHelpers.h>
-#include <etl/ProbingETLSource.h>
-#include <etl/ReportingETL.h>
-#include <log/Logger.h>
-#include <rpc/RPCHelpers.h>
-#include <util/Profiler.h>
 
 #include <thread>
 
 using namespace clio;
-
-void
-ForwardCache::freshen()
-{
-    log_.trace() << "Freshening ForwardCache";
-
-    auto numOutstanding = std::make_shared<std::atomic_uint>(latestForwarded_.size());
-
-    for (auto const& cacheEntry : latestForwarded_)
-    {
-        boost::asio::spawn(
-            strand_, [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
-                boost::json::object request = {{"command", command}};
-                auto resp = source_.requestFromRippled(request, {}, yield);
-
-                if (!resp || resp->contains("error"))
-                    resp = {};
-
-                {
-                    std::scoped_lock lk(mtx_);
-                    latestForwarded_[command] = resp;
-                }
-            });
-    }
-}
-
-void
-ForwardCache::clear()
-{
-    std::scoped_lock lk(mtx_);
-    for (auto& cacheEntry : latestForwarded_)
-        latestForwarded_[cacheEntry.first] = {};
-}
-
-std::optional<boost::json::object>
-ForwardCache::get(boost::json::object const& request) const
-{
-    std::optional<std::string> command = {};
-    if (request.contains("command") && !request.contains("method") && request.at("command").is_string())
-        command = request.at("command").as_string().c_str();
-    else if (request.contains("method") && !request.contains("command") && request.at("method").is_string())
-        command = request.at("method").as_string().c_str();
-
-    if (!command)
-        return {};
-    if (RPC::specifiesCurrentOrClosedLedger(request))
-        return {};
-
-    std::shared_lock lk(mtx_);
-    if (!latestForwarded_.contains(*command))
-        return {};
-
-    return {latestForwarded_.at(*command)};
-}
 
 static boost::beast::websocket::stream_base::timeout
 make_TimeoutOption()
@@ -116,7 +62,7 @@ make_TimeoutOption()
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
+SourceImpl<Derived>::reconnect(boost::beast::error_code ec)
 {
     if (paused_)
         return;
@@ -162,7 +108,7 @@ ETLSourceImpl<Derived>::reconnect(boost::beast::error_code ec)
 }
 
 void
-PlainETLSource::close(bool startAgain)
+PlainSource::close(bool startAgain)
 {
     timer_.cancel();
     ioc_.post([this, startAgain]() {
@@ -202,7 +148,7 @@ PlainETLSource::close(bool startAgain)
 }
 
 void
-SslETLSource::close(bool startAgain)
+SslSource::close(bool startAgain)
 {
     timer_.cancel();
     ioc_.post([this, startAgain]() {
@@ -244,7 +190,7 @@ SslETLSource::close(bool startAgain)
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onResolve(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type results)
+SourceImpl<Derived>::onResolve(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type results)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
@@ -262,7 +208,7 @@ ETLSourceImpl<Derived>::onResolve(boost::beast::error_code ec, boost::asio::ip::
 }
 
 void
-PlainETLSource::onConnect(
+PlainSource::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
@@ -300,9 +246,7 @@ PlainETLSource::onConnect(
 }
 
 void
-SslETLSource::onConnect(
-    boost::beast::error_code ec,
-    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
@@ -339,7 +283,7 @@ SslETLSource::onConnect(
 }
 
 void
-SslETLSource::onSslHandshake(
+SslSource::onSslHandshake(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
@@ -358,10 +302,10 @@ SslETLSource::onSslHandshake(
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
+SourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
-    if (auto action = hooks_.onConnected(ec); action == ETLSourceHooks::Action::STOP)
+    if (auto action = hooks_.onConnected(ec); action == SourceHooks::Action::STOP)
         return;
 
     if (ec)
@@ -391,7 +335,7 @@ ETLSourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onWrite(boost::beast::error_code ec, size_t bytesWritten)
+SourceImpl<Derived>::onWrite(boost::beast::error_code ec, size_t bytesWritten)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
@@ -407,7 +351,7 @@ ETLSourceImpl<Derived>::onWrite(boost::beast::error_code ec, size_t bytesWritten
 
 template <class Derived>
 void
-ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
+SourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
 {
     log_.trace() << "ec = " << ec << " - " << toString();
     // if error or error reading message, start over
@@ -428,7 +372,7 @@ ETLSourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
 
 template <class Derived>
 bool
-ETLSourceImpl<Derived>::handleMessage()
+SourceImpl<Derived>::handleMessage()
 {
     log_.trace() << toString();
 
@@ -544,13 +488,12 @@ public:
         assert(nextPrefix_ > prefix || nextPrefix_ == 0x00);
 
         cur_ = std::make_unique<org::xrpl::rpc::v1::GetLedgerDataResponse>();
-
         next_ = std::make_unique<org::xrpl::rpc::v1::GetLedgerDataResponse>();
-
         context_ = std::make_unique<grpc::ClientContext>();
     }
 
     enum class CallStatus { MORE, DONE, ERRORED };
+
     CallStatus
     process(
         std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
@@ -661,26 +604,25 @@ public:
 };
 
 template <class Derived>
-bool
-ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence, uint32_t numMarkers, bool cacheOnly)
+std::pair<std::vector<std::string>, bool>
+SourceImpl<Derived>::loadInitialLedger(uint32_t sequence, uint32_t numMarkers, bool cacheOnly)
 {
     if (!stub_)
-        return false;
+        return {{}, false};
 
     grpc::CompletionQueue cq;
-
     void* tag;
-
     bool ok = false;
-
     std::vector<AsyncCallData> calls;
     auto markers = getMarkers(numMarkers);
 
     for (size_t i = 0; i < markers.size(); ++i)
     {
         std::optional<ripple::uint256> nextMarker;
+
         if (i + 1 < markers.size())
             nextMarker = markers[i + 1];
+
         calls.emplace_back(sequence, markers[i], nextMarker);
     }
 
@@ -694,35 +636,37 @@ ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence, uint32_t numMarkers
     size_t incr = 500000;
     size_t progress = incr;
     std::vector<std::string> edgeKeys;
+
     while (numFinished < calls.size() && cq.Next(&tag, &ok))
     {
         assert(tag);
-
         auto ptr = static_cast<AsyncCallData*>(tag);
 
         if (!ok)
         {
             log_.error() << "loadInitialLedger - ok is false";
-            return false;
-            // handle cancelled
+            return {{}, false};  // handle cancelled
         }
         else
         {
             log_.trace() << "Marker prefix = " << ptr->getMarkerPrefix();
+
             auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
             if (result != AsyncCallData::CallStatus::MORE)
             {
                 numFinished++;
                 log_.debug() << "Finished a marker. "
                              << "Current number of finished = " << numFinished;
+
                 std::string lastKey = ptr->getLastKey();
+
                 if (lastKey.size())
                     edgeKeys.push_back(ptr->getLastKey());
             }
+
             if (result == AsyncCallData::CallStatus::ERRORED)
-            {
                 abort = true;
-            }
+
             if (backend_->cache().size() > progress)
             {
                 log_.info() << "Downloaded " << backend_->cache().size() << " records from rippled";
@@ -730,67 +674,14 @@ ETLSourceImpl<Derived>::loadInitialLedger(uint32_t sequence, uint32_t numMarkers
             }
         }
     }
+
     log_.info() << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
-    size_t numWrites = 0;
-    if (!abort)
-    {
-        backend_->cache().setFull();
-        if (!cacheOnly)
-        {
-            auto seconds = util::timed<std::chrono::seconds>([&]() {
-                for (auto& key : edgeKeys)
-                {
-                    log_.debug() << "Writing edge key = " << ripple::strHex(key);
-                    auto succ = backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
-                    if (succ)
-                        backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
-                }
-                ripple::uint256 prev = Backend::firstKey;
-                while (auto cur = backend_->cache().getSuccessor(prev, sequence))
-                {
-                    assert(cur);
-                    if (prev == Backend::firstKey)
-                    {
-                        backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
-                    }
-
-                    if (isBookDir(cur->key, cur->blob))
-                    {
-                        auto base = getBookBase(cur->key);
-                        // make sure the base is not an actual object
-                        if (!backend_->cache().get(cur->key, sequence))
-                        {
-                            auto succ = backend_->cache().getSuccessor(base, sequence);
-                            assert(succ);
-                            if (succ->key == cur->key)
-                            {
-                                log_.debug() << "Writing book successor = " << ripple::strHex(base) << " - "
-                                             << ripple::strHex(cur->key);
-
-                                backend_->writeSuccessor(uint256ToString(base), sequence, uint256ToString(cur->key));
-                            }
-                        }
-                        ++numWrites;
-                    }
-                    prev = std::move(cur->key);
-                    if (numWrites % 100000 == 0 && numWrites != 0)
-                        log_.info() << "Wrote " << numWrites << " book successors";
-                }
-
-                backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(Backend::lastKey));
-
-                ++numWrites;
-            });
-            log_.info() << "Looping through cache and submitting all writes took " << seconds
-                        << " seconds. numWrites = " << std::to_string(numWrites);
-        }
-    }
-    return !abort;
+    return {std::move(edgeKeys), !abort};
 }
 
 template <class Derived>
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-ETLSourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
+SourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     org::xrpl::rpc::v1::GetLedgerResponse response;
     if (!stub_)
@@ -808,7 +699,7 @@ ETLSourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects, bo
     grpc::Status status = stub_->GetLedger(&context, request, &response);
     if (status.ok() && !response.is_unlimited())
     {
-        log_.warn() << "ETLSourceImpl::fetchLedger - is_unlimited is "
+        log_.warn() << "SourceImpl::fetchLedger - is_unlimited is "
                        "false. Make sure secure_gateway is set "
                        "correctly on the ETL source. source = "
                     << toString() << " status = " << status.error_message();
@@ -816,112 +707,9 @@ ETLSourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects, bo
     return {status, std::move(response)};
 }
 
-static std::unique_ptr<ETLSource>
-make_ETLSource(
-    clio::Config const& config,
-    boost::asio::io_context& ioContext,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
-    ETLLoadBalancer& balancer)
-{
-    auto src = std::make_unique<ProbingETLSource>(
-        config, ioContext, backend, subscriptions, networkValidatedLedgers, balancer);
-
-    src->run();
-
-    return src;
-}
-
-ETLLoadBalancer::ETLLoadBalancer(
-    clio::Config const& config,
-    boost::asio::io_context& ioContext,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> nwvl)
-{
-    if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
-        downloadRanges_ = std::clamp(*value, 1u, 256u);
-    else if (backend->fetchLedgerRange())
-        downloadRanges_ = 4;
-
-    for (auto const& entry : config.array("etl_sources"))
-    {
-        std::unique_ptr<ETLSource> source = make_ETLSource(entry, ioContext, backend, subscriptions, nwvl, *this);
-
-        sources_.push_back(std::move(source));
-        log_.info() << "Added etl source - " << sources_.back()->toString();
-    }
-}
-
-void
-ETLLoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
-{
-    execute(
-        [this, &sequence, cacheOnly](auto& source) {
-            bool res = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
-            if (!res)
-            {
-                log_.error() << "Failed to download initial ledger."
-                             << " Sequence = " << sequence << " source = " << source->toString();
-            }
-            return res;
-        },
-        sequence);
-}
-
-std::optional<org::xrpl::rpc::v1::GetLedgerResponse>
-ETLLoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
-{
-    org::xrpl::rpc::v1::GetLedgerResponse response;
-    bool success = execute(
-        [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
-            auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
-            response = std::move(data);
-            if (status.ok() && response.validated())
-            {
-                log.info() << "Successfully fetched ledger = " << ledgerSequence
-                           << " from source = " << source->toString();
-                return true;
-            }
-            else
-            {
-                log.warn() << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
-                           << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
-                           << ", source = " << source->toString();
-                return false;
-            }
-        },
-        ledgerSequence);
-    if (success)
-        return response;
-    else
-        return {};
-}
-
-std::optional<boost::json::object>
-ETLLoadBalancer::forwardToRippled(
-    boost::json::object const& request,
-    std::string const& clientIp,
-    boost::asio::yield_context& yield) const
-{
-    srand((unsigned)time(0));
-    auto sourceIdx = rand() % sources_.size();
-    auto numAttempts = 0;
-    while (numAttempts < sources_.size())
-    {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield))
-            return res;
-
-        sourceIdx = (sourceIdx + 1) % sources_.size();
-        ++numAttempts;
-    }
-    return {};
-}
-
 template <class Derived>
 std::optional<boost::json::object>
-ETLSourceImpl<Derived>::forwardToRippled(
+SourceImpl<Derived>::forwardToRippled(
     boost::json::object const& request,
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
@@ -937,7 +725,7 @@ ETLSourceImpl<Derived>::forwardToRippled(
 
 template <class Derived>
 std::optional<boost::json::object>
-ETLSourceImpl<Derived>::requestFromRippled(
+SourceImpl<Derived>::requestFromRippled(
     boost::json::object const& request,
     std::string const& clientIp,
     boost::asio::yield_context& yield) const
@@ -1027,54 +815,4 @@ ETLSourceImpl<Derived>::requestFromRippled(
         log_.error() << "Encountered exception : " << e.what();
         return {};
     }
-}
-
-template <class Func>
-bool
-ETLLoadBalancer::execute(Func f, uint32_t ledgerSequence)
-{
-    srand((unsigned)time(0));
-    auto sourceIdx = rand() % sources_.size();
-    auto numAttempts = 0;
-
-    while (true)
-    {
-        auto& source = sources_[sourceIdx];
-
-        log_.debug() << "Attempting to execute func. ledger sequence = " << ledgerSequence
-                     << " - source = " << source->toString();
-        // Originally, it was (source->hasLedger(ledgerSequence) || true)
-        /* Sometimes rippled has ledger but doesn't actually know. However,
-        but this does NOT happen in the normal case and is safe to remove
-        This || true is only needed when loading full history standalone */
-        if (source->hasLedger(ledgerSequence))
-        {
-            bool res = f(source);
-            if (res)
-            {
-                log_.debug() << "Successfully executed func at source = " << source->toString()
-                             << " - ledger sequence = " << ledgerSequence;
-                break;
-            }
-            else
-            {
-                log_.warn() << "Failed to execute func at source = " << source->toString()
-                            << " - ledger sequence = " << ledgerSequence;
-            }
-        }
-        else
-        {
-            log_.warn() << "Ledger not present at source = " << source->toString()
-                        << " - ledger sequence = " << ledgerSequence;
-        }
-        sourceIdx = (sourceIdx + 1) % sources_.size();
-        numAttempts++;
-        if (numAttempts % sources_.size() == 0)
-        {
-            log_.info() << "Ledger sequence " << ledgerSequence << " is not yet available from any configured sources. "
-                        << "Sleeping and trying again";
-            std::this_thread::sleep_for(std::chrono::seconds(2));
-        }
-    }
-    return true;
 }

@@ -42,8 +42,8 @@
 
 class WsBase;
 class SubscriptionManager;
-class ETLLoadBalancer;
-class ReportingETL;
+class LoadBalancer;
+class ETLService;
 
 namespace RPC {
 

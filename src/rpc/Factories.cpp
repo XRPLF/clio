@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include <etl/ETLSource.h>
+#include <etl/Source.h>
 #include <rpc/Factories.h>
 #include <rpc/common/impl/HandlerProvider.h>
 #include <webserver/HttpBase.h>

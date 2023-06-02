@@ -36,7 +36,7 @@
 #include <string>
 #include <thread>
 
-#include <etl/ReportingETL.h>
+#include <etl/ETLService.h>
 #include <log/Logger.h>
 #include <main/Build.h>
 #include <rpc/Counters.h>
@@ -112,8 +112,8 @@ class HttpBase : public util::Taggable
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<ETLService const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
     send_lambda lambda_;
@@ -167,8 +167,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer buffer)
@@ -344,8 +344,8 @@ handleRequest(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<LoadBalancer> balancer,
+    std::shared_ptr<ETLService const> etl,
     util::TagDecoratorFactory const& tagFactory,
     clio::DOSGuard& dosGuard,
     std::string const& ip,

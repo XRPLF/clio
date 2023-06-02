@@ -19,7 +19,7 @@
 
 #include <rpc/common/impl/HandlerProvider.h>
 
-#include <etl/ReportingETL.h>
+#include <etl/ETLService.h>
 #include <rpc/Counters.h>
 #include <subscriptions/SubscriptionManager.h>
 
@@ -56,8 +56,8 @@ namespace RPC::detail {
 ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<BackendInterface> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptionManager,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    std::shared_ptr<LoadBalancer> const& balancer,
+    std::shared_ptr<ETLService const> const& etl,
     Counters const& counters)
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},

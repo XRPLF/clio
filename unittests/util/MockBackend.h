@@ -144,8 +144,6 @@ public:
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 
-    MOCK_METHOD(bool, doOnlineDelete, (std::uint32_t, boost::asio::yield_context&), (const, override));
-
     MOCK_METHOD(bool, isTooBusy, (), (const, override));
 
     MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));

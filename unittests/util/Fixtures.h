@@ -21,8 +21,8 @@
 
 #include "MockBackend.h"
 #include "MockCounters.h"
-#include "MockETLLoadBalancer.h"
-#include "MockReportingETL.h"
+#include "MockETLService.h"
+#include "MockLoadBalancer.h"
 #include "MockSubscriptionManager.h"
 #include <log/Logger.h>
 
@@ -219,13 +219,13 @@ protected:
 /**
  * @brief Fixture with a mock etl balancer
  */
-struct MockETLLoadBalancerTest : virtual public NoLoggerFixture
+struct MockLoadBalancerTest : virtual public NoLoggerFixture
 {
     void
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        mockLoadBalancerPtr = std::make_shared<MockETLLoadBalancer>();
+        mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
     }
     void
     TearDown() override
@@ -234,28 +234,28 @@ struct MockETLLoadBalancerTest : virtual public NoLoggerFixture
     }
 
 protected:
-    std::shared_ptr<MockETLLoadBalancer> mockLoadBalancerPtr;
+    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr;
 };
 
 /**
  * @brief Fixture with a mock subscription manager
  */
-struct MockReportingETLTest : virtual public NoLoggerFixture
+struct MockETLServiceTest : virtual public NoLoggerFixture
 {
     void
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        mockReportingETLPtr = std::make_shared<MockReportingETL>();
+        mockETLServicePtr = std::make_shared<MockETLService>();
     }
     void
     TearDown() override
     {
-        mockReportingETLPtr.reset();
+        mockETLServicePtr.reset();
     }
 
 protected:
-    std::shared_ptr<MockReportingETL> mockReportingETLPtr;
+    std::shared_ptr<MockETLService> mockETLServicePtr;
 };
 
 /**

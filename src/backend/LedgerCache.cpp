@@ -17,18 +17,19 @@
 */
 //==============================================================================
 
-#include <backend/SimpleCache.h>
+#include <backend/LedgerCache.h>
+
 namespace Backend {
 
 uint32_t
-SimpleCache::latestLedgerSequence() const
+LedgerCache::latestLedgerSequence() const
 {
     std::shared_lock lck{mtx_};
     return latestSeq_;
 }
 
 void
-SimpleCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground)
+LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground)
 {
     if (disabled_)
         return;
@@ -64,7 +65,7 @@ SimpleCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 }
 
 std::optional<LedgerObject>
-SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
     if (!full_)
         return {};
@@ -80,7 +81,7 @@ SimpleCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 }
 
 std::optional<LedgerObject>
-SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 {
     if (!full_)
         return {};
@@ -93,8 +94,9 @@ SimpleCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
     --e;
     return {{e->first, e->second.blob}};
 }
+
 std::optional<Blob>
-SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
     std::shared_lock lck{mtx_};
     if (seq > latestSeq_)
@@ -110,13 +112,13 @@ SimpleCache::get(ripple::uint256 const& key, uint32_t seq) const
 }
 
 void
-SimpleCache::setDisabled()
+LedgerCache::setDisabled()
 {
     disabled_ = true;
 }
 
 void
-SimpleCache::setFull()
+LedgerCache::setFull()
 {
     if (disabled_)
         return;
@@ -127,28 +129,32 @@ SimpleCache::setFull()
 }
 
 bool
-SimpleCache::isFull() const
+LedgerCache::isFull() const
 {
     return full_;
 }
+
 size_t
-SimpleCache::size() const
+LedgerCache::size() const
 {
     std::shared_lock lck{mtx_};
     return map_.size();
 }
+
 float
-SimpleCache::getObjectHitRate() const
+LedgerCache::getObjectHitRate() const
 {
     if (!objectReqCounter_)
         return 1;
     return ((float)objectHitCounter_) / objectReqCounter_;
 }
+
 float
-SimpleCache::getSuccessorHitRate() const
+LedgerCache::getSuccessorHitRate() const
 {
     if (!successorReqCounter_)
         return 1;
     return ((float)successorHitCounter_) / successorReqCounter_;
 }
+
 }  // namespace Backend

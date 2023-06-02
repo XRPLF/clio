@@ -19,6 +19,10 @@
 
 #pragma once
 
+#include <config/Config.h>
+#include <etl/Source.h>
+#include <log/Logger.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
@@ -27,35 +31,44 @@
 
 #include <mutex>
 
-#include <config/Config.h>
-#include <etl/ETLSource.h>
-#include <log/Logger.h>
-
-/// This ETLSource implementation attempts to connect over both secure websocket
-/// and plain websocket. First to connect pauses the other and the probing is
-/// considered done at this point. If however the connected source loses
-/// connection the probing is kickstarted again.
-class ProbingETLSource : public ETLSource
+/**
+ * @brief This Source implementation attempts to connect over both secure websocket and plain websocket.
+ *
+ * First to connect pauses the other and the probing is considered done at this point.
+ * If however the connected source loses connection the probing is kickstarted again.
+ */
+class ProbingSource : public Source
 {
     clio::Logger log_{"ETL"};
 
     std::mutex mtx_;
     boost::asio::ssl::context sslCtx_;
-    std::shared_ptr<ETLSource> sslSrc_;
-    std::shared_ptr<ETLSource> plainSrc_;
-    std::shared_ptr<ETLSource> currentSrc_;
+    std::shared_ptr<Source> sslSrc_;
+    std::shared_ptr<Source> plainSrc_;
+    std::shared_ptr<Source> currentSrc_;
 
 public:
-    ProbingETLSource(
+    /**
+     * @brief Create an instance of the probing source
+     *
+     * @param config The configuration to use
+     * @param ioc io context to run on
+     * @param backend BackendInterface implementation
+     * @param subscriptions Subscription manager
+     * @param nwvl The network validated ledgers datastructure
+     * @param balancer Load balancer to use
+     * @param sslCtx The SSL context to use; defaults to tlsv12
+     */
+    ProbingSource(
         clio::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
-        ETLLoadBalancer& balancer,
+        LoadBalancer& balancer,
         boost::asio::ssl::context sslCtx = boost::asio::ssl::context{boost::asio::ssl::context::tlsv12});
 
-    ~ProbingETLSource() = default;
+    ~ProbingSource() = default;
 
     void
     run() override;
@@ -78,7 +91,7 @@ public:
     std::string
     toString() const override;
 
-    bool
+    std::pair<std::vector<std::string>, bool>
     loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly = false) override;
 
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
@@ -98,9 +111,9 @@ private:
         std::string const& clientIp,
         boost::asio::yield_context& yield) const override;
 
-    ETLSourceHooks
+    SourceHooks
     make_SSLHooks() noexcept;
 
-    ETLSourceHooks
+    SourceHooks
     make_PlainHooks() noexcept;
 };

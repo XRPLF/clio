@@ -27,7 +27,7 @@
 
 #include <backend/BackendFactory.h>
 #include <config/Config.h>
-#include <etl/ReportingETL.h>
+#include <etl/ETLService.h>
 #include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/RPCEngine.h>
@@ -182,8 +182,8 @@ try
     }
     LogService::info() << "Number of io threads = " << threads;
 
-    // IO context to handle all incoming requests, as well as other things
-    // This is not the only io context in the application
+    // IO context to handle all incoming requests, as well as other things.
+    // This is not the only io context in the application.
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
@@ -196,20 +196,17 @@ try
     // Manages clients subscribed to streams
     auto subscriptions = SubscriptionManager::make_SubscriptionManager(config, backend);
 
-    // Tracks which ledgers have been validated by the
-    // network
+    // Tracks which ledgers have been validated by the network
     auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
 
     // Handles the connection to one or more rippled nodes.
     // ETL uses the balancer to extract data.
     // The server uses the balancer to forward RPCs to a rippled node.
-    // The balancer itself publishes to streams (transactions_proposed and
-    // accounts_proposed)
-    auto balancer = ETLLoadBalancer::make_ETLLoadBalancer(config, ioc, backend, subscriptions, ledgers);
+    // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
+    auto balancer = LoadBalancer::make_LoadBalancer(config, ioc, backend, subscriptions, ledgers);
 
-    // ETL is responsible for writing and publishing to streams. In read-only
-    // mode, ETL only publishes
-    auto etl = ReportingETL::make_ReportingETL(config, ioc, backend, subscriptions, balancer, ledgers);
+    // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
+    auto etl = ETLService::make_ETLService(config, ioc, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = WorkQueue::make_WorkQueue(config);
     auto counters = RPC::Counters::make_Counters(workQueue);

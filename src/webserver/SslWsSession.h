@@ -25,7 +25,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 
-#include <etl/ReportingETL.h>
+#include <etl/ETLService.h>
 
 #include <webserver/WsBase.h>
 
@@ -35,7 +35,7 @@ namespace ssl = boost::asio::ssl;
 namespace websocket = boost::beast::websocket;
 using tcp = boost::asio::ip::tcp;
 
-class ReportingETL;
+class ETLService;
 
 class SslWsSession : public WsSession<SslWsSession>
 {
@@ -50,8 +50,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer&& b)
@@ -83,8 +83,8 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader>
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<ETLService const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
     http::request<http::string_body> req_;
@@ -98,8 +98,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer&& b)
@@ -124,8 +124,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer&& b,

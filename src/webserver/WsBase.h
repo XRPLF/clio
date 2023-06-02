@@ -20,8 +20,8 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <etl/ETLSource.h>
-#include <etl/ReportingETL.h>
+#include <etl/ETLService.h>
+#include <etl/Source.h>
 #include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/Factories.h>
@@ -102,7 +102,7 @@ public:
 };
 
 class SubscriptionManager;
-class ETLLoadBalancer;
+class LoadBalancer;
 
 template <typename Derived>
 class WsSession : public WsBase, public std::enable_shared_from_this<WsSession<Derived>>
@@ -118,8 +118,8 @@ class WsSession : public WsBase, public std::enable_shared_from_this<WsSession<D
     // of std::shared_ptr<WsBase> objects. If this were shared, there would be
     // a cyclical dependency that would block destruction
     std::weak_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<ETLService const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
     std::mutex mtx_;
@@ -151,8 +151,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard,
         boost::beast::flat_buffer&& buffer)

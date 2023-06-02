@@ -47,8 +47,8 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<ETLService const> etl_;
     util::TagDecoratorFactory const& tagFactory_;
     clio::DOSGuard& dosGuard_;
     boost::beast::flat_buffer buffer_;
@@ -61,8 +61,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory const& tagFactory,
         clio::DOSGuard& dosGuard)
         : ioc_(ioc)
@@ -150,8 +150,8 @@ make_WebsocketSession(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<LoadBalancer> balancer,
+    std::shared_ptr<ETLService const> etl,
     util::TagDecoratorFactory const& tagFactory,
     clio::DOSGuard& dosGuard)
 {
@@ -181,8 +181,8 @@ make_WebsocketSession(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<LoadBalancer> balancer,
+    std::shared_ptr<ETLService const> etl,
     util::TagDecoratorFactory const& tagFactory,
     clio::DOSGuard& dosGuard)
 {
@@ -214,8 +214,8 @@ class Listener : public std::enable_shared_from_this<Listener<PlainSession, SslS
     std::shared_ptr<BackendInterface const> backend_;
     std::shared_ptr<RPC::RPCEngine> rpcEngine_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::shared_ptr<ReportingETL const> etl_;
+    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<ETLService const> etl_;
     util::TagDecoratorFactory tagFactory_;
     clio::DOSGuard& dosGuard_;
 
@@ -227,8 +227,8 @@ public:
         std::shared_ptr<BackendInterface const> backend,
         std::shared_ptr<RPC::RPCEngine> rpcEngine,
         std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<ETLLoadBalancer> balancer,
-        std::shared_ptr<ReportingETL const> etl,
+        std::shared_ptr<LoadBalancer> balancer,
+        std::shared_ptr<ETLService const> etl,
         util::TagDecoratorFactory tagFactory,
         clio::DOSGuard& dosGuard)
         : ioc_(ioc)
@@ -326,8 +326,8 @@ make_HttpServer(
     std::shared_ptr<BackendInterface const> backend,
     std::shared_ptr<RPC::RPCEngine> rpcEngine,
     std::shared_ptr<SubscriptionManager> subscriptions,
-    std::shared_ptr<ETLLoadBalancer> balancer,
-    std::shared_ptr<ReportingETL const> etl,
+    std::shared_ptr<LoadBalancer> balancer,
+    std::shared_ptr<ETLService const> etl,
     clio::DOSGuard& dosGuard)
 {
     static clio::Logger log{"WebServer"};

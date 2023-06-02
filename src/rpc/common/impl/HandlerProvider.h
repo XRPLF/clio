@@ -29,8 +29,8 @@
 #include <unordered_map>
 
 class SubscriptionManager;
-class ReportingETL;
-class ETLLoadBalancer;
+class ETLService;
+class LoadBalancer;
 
 namespace RPC {
 class Counters;
@@ -56,8 +56,8 @@ public:
     ProductionHandlerProvider(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptionManager,
-        std::shared_ptr<ETLLoadBalancer> const& balancer,
-        std::shared_ptr<ReportingETL const> const& etl,
+        std::shared_ptr<LoadBalancer> const& balancer,
+        std::shared_ptr<ETLService const> const& etl,
         Counters const& counters);
 
     bool

@@ -27,8 +27,10 @@
 #include <shared_mutex>
 #include <utility>
 #include <vector>
+
 namespace Backend {
-class SimpleCache
+
+class LedgerCache
 {
     struct CacheEntry
     {
@@ -39,22 +41,23 @@ class SimpleCache
     // counters for fetchLedgerObject(s) hit rate
     mutable std::atomic_uint32_t objectReqCounter_ = 0;
     mutable std::atomic_uint32_t objectHitCounter_ = 0;
+
     // counters for fetchSuccessorKey hit rate
     mutable std::atomic_uint32_t successorReqCounter_ = 0;
     mutable std::atomic_uint32_t successorHitCounter_ = 0;
 
     std::map<ripple::uint256, CacheEntry> map_;
+
     mutable std::shared_mutex mtx_;
     uint32_t latestSeq_ = 0;
     std::atomic_bool full_ = false;
     std::atomic_bool disabled_ = false;
-    // temporary set to prevent background thread from writing already deleted
-    // data. not used when cache is full
+
+    // temporary set to prevent background thread from writing already deleted data. not used when cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
 
 public:
-    // Update the cache with new ledger objects
-    // set isBackground to true when writing old data from a background thread
+    // Update the cache with new ledger objects set isBackground to true when writing old data from a background thread
     void
     update(std::vector<LedgerObject> const& blobs, uint32_t seq, bool isBackground = false);
 

@@ -30,8 +30,8 @@
 #include <fmt/core.h>
 
 class SubscriptionManager;
-class ReportingETL;
-class ETLLoadBalancer;
+class ETLService;
+class LoadBalancer;
 
 namespace RPC {
 class Counters;
@@ -39,17 +39,13 @@ class Counters;
 
 namespace RPC {
 
-template <
-    typename SubscriptionManagerType,
-    typename ETLLoadBalancerType,
-    typename ReportingETLType,
-    typename CountersType>
+template <typename SubscriptionManagerType, typename LoadBalancerType, typename ETLServiceType, typename CountersType>
 class BaseServerInfoHandler
 {
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
-    std::shared_ptr<ETLLoadBalancerType> balancer_;
-    std::shared_ptr<ReportingETLType const> etl_;
+    std::shared_ptr<LoadBalancerType> balancer_;
+    std::shared_ptr<ETLServiceType const> etl_;
     std::reference_wrapper<CountersType const> counters_;
 
 public:
@@ -101,8 +97,8 @@ public:
     BaseServerInfoHandler(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManagerType> const& subscriptions,
-        std::shared_ptr<ETLLoadBalancerType> const& balancer,
-        std::shared_ptr<ReportingETLType const> const& etl,
+        std::shared_ptr<LoadBalancerType> const& balancer,
+        std::shared_ptr<ETLServiceType const> const& etl,
         CountersType const& counters)
         : backend_(backend)
         , subscriptions_(subscriptions)
@@ -245,6 +241,6 @@ private:
  *
  * For more details see: https://xrpl.org/server_info-clio.html
  */
-using ServerInfoHandler = BaseServerInfoHandler<SubscriptionManager, ETLLoadBalancer, ReportingETL, Counters>;
+using ServerInfoHandler = BaseServerInfoHandler<SubscriptionManager, LoadBalancer, ETLService, Counters>;
 
 }  // namespace RPC
