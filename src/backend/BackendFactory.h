@@ -43,9 +43,7 @@ make_Backend(boost::asio::io_context& ioc, clio::Config const& config)
     if (boost::iequals(type, "cassandra") or boost::iequals(type, "cassandra-new"))
     {
         auto cfg = config.section("database." + type);
-        auto ttl = config.valueOr<uint16_t>("online_delete", 0) * 4;
-        backend =
-            std::make_shared<Backend::Cassandra::CassandraBackend>(Backend::Cassandra::SettingsProvider{cfg, ttl});
+        backend = std::make_shared<Backend::Cassandra::CassandraBackend>(Backend::Cassandra::SettingsProvider{cfg});
     }
 
     if (!backend)

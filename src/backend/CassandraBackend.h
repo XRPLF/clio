@@ -26,6 +26,7 @@
 #include <backend/cassandra/SettingsProvider.h>
 #include <backend/cassandra/impl/ExecutionStrategy.h>
 #include <log/Logger.h>
+#include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 
 #include <ripple/app/tx/impl/details/NFTokenUtils.h>
@@ -231,7 +232,7 @@ public:
             {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue)
                 {
-                    return deserializeHeader(ripple::makeSlice(*maybeValue));
+                    return util::deserializeHeader(ripple::makeSlice(*maybeValue));
                 }
 
                 log_.error() << "Could not fetch ledger by sequence - no rows";

@@ -173,12 +173,11 @@ public:
 
                 subscriptions_->pubBookChanges(lgrInfo, transactions);
 
+                setLastPublishTime();
                 log_.info() << "Published ledger " << std::to_string(lgrInfo.seq);
             }
             else
                 log_.info() << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
-
-            setLastPublishTime();
         });
 
         // we track latest publish-requested seq, not necessarily already published

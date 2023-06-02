@@ -167,7 +167,8 @@ public:
         {
             log_.debug() << "Cache not full. Cache size = " << cache_.get().size() << ". Sleeping ...";
             std::this_thread::sleep_for(std::chrono::seconds(10));
-            log_.info() << "Cache is full. Cache size = " << cache_.get().size();
+            if (cache_.get().isFull())
+                log_.info() << "Cache is full. Cache size = " << cache_.get().size();
         }
     }
 

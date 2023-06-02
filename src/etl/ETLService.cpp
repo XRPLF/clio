@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -244,7 +244,6 @@ ETLService::ETLService(
     std::shared_ptr<LoadBalancerType> balancer,
     std::shared_ptr<NetworkValidatedLedgersType> ledgers)
     : backend_(backend)
-    , subscriptions_(subscriptions)
     , loadBalancer_(balancer)
     , networkValidatedLedgers_(ledgers)
     , cacheLoader_(config, ioc, backend, backend->cache())

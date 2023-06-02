@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -74,7 +74,6 @@ class ETLService
     clio::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManagerType> subscriptions_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
     std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers_;
 

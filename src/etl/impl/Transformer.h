@@ -20,7 +20,6 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>  // for deserializeHeader: should be moved to util?
 #include <etl/SystemState.h>
 #include <log/Logger.h>
 #include <util/LedgerUtils.h>
@@ -166,7 +165,7 @@ private:
     buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
     {
         log_.debug() << "Beginning ledger update";
-        ripple::LedgerInfo lgrInfo = deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
+        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
         log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
         backend_->startWrites();

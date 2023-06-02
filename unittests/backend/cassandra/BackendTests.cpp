@@ -113,7 +113,7 @@ TEST_F(BackendCassandraTest, Basic)
         };
 
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
-        ripple::LedgerInfo lgrInfo = deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         backend->writeSuccessor(uint256ToString(Backend::firstKey), lgrInfo.seq, uint256ToString(Backend::lastKey));
@@ -932,7 +932,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
         std::string accountBlob = hexStringToBinaryString(accountHex);
         std::string accountIndexBlob = hexStringToBinaryString(accountIndexHex);
-        ripple::LedgerInfo lgrInfo = deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend->startWrites();
         backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));

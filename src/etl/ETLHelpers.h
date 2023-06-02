@@ -100,7 +100,7 @@ public:
 
 // TODO: does the note make sense? lockfree queues provide the same blocking behaviour just without mutex, don't they?
 /**
- * @brief Generic thread-safe queue with an optional maximum size
+ * @brief Generic thread-safe queue with a max capacity
  *
  * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for an element to be
  * added or removed from the queue. These waits are blocking calls.
@@ -112,7 +112,7 @@ class ThreadSafeQueue
 
     mutable std::mutex m_;
     std::condition_variable cv_;
-    std::optional<uint32_t> maxSize_;
+    uint32_t maxSize_;
 
 public:
     /**
@@ -126,22 +126,17 @@ public:
     }
 
     /**
-     * @brief Create a queue with no maximum size
-     */
-    ThreadSafeQueue() = default;
-
-    /**
      * @brief Push element onto the queue
      *
-     * @param elt element to push onto queue if maxSize is set, this method will block until free space is available
+     * Note: This method will block until free space is available
+     *
+     * @param elt element to push onto queue
      */
     void
     push(T const& elt)
     {
         std::unique_lock lck(m_);
-        // if queue has a max size, wait until not full
-        if (maxSize_)
-            cv_.wait(lck, [this]() { return queue_.size() <= *maxSize_; });
+        cv_.wait(lck, [this]() { return queue_.size() <= maxSize_; });
         queue_.push(elt);
         cv_.notify_all();
     }
@@ -149,16 +144,15 @@ public:
     /**
      * @brief Push element onto the queue
      *
-     * @param elt element to push onto queue. elt is moved from if maxSize is set, this method will block until free
-     * space is available
+     * Note: This method will block until free space is available
+     *
+     * @param elt element to push onto queue. elt is moved from
      */
     void
     push(T&& elt)
     {
         std::unique_lock lck(m_);
-        // if queue has a max size, wait until not full
-        if (maxSize_)
-            cv_.wait(lck, [this]() { return queue_.size() <= *maxSize_; });
+        cv_.wait(lck, [this]() { return queue_.size() <= maxSize_; });
         queue_.push(std::move(elt));
         cv_.notify_all();
     }
@@ -166,18 +160,20 @@ public:
     /**
      * @brief Pop element from the queue
      *
-     * @return element popped from queue. Will block until queue is non-empty
+     * Note: Will block until queue is non-empty
+     *
+     * @return element popped from queue
      */
     T
     pop()
     {
         std::unique_lock lck(m_);
         cv_.wait(lck, [this]() { return !queue_.empty(); });
+
         T ret = std::move(queue_.front());
         queue_.pop();
-        // if queue has a max size, unblock any possible pushers
-        if (maxSize_)
-            cv_.notify_all();
+
+        cv_.notify_all();
         return ret;
     }
 
@@ -192,11 +188,11 @@ public:
         std::scoped_lock lck(m_);
         if (queue_.empty())
             return {};
+
         T ret = std::move(queue_.front());
         queue_.pop();
-        // if queue has a max size, unblock any possible pushers
-        if (maxSize_)
-            cv_.notify_all();
+
+        cv_.notify_all();
         return ret;
     }
 };

@@ -20,7 +20,6 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>  // for deserializeHeader: should be moved to util?
 #include <etl/NFTHelpers.h>
 #include <etl/SystemState.h>
 #include <etl/impl/LedgerFetcher.h>
@@ -156,7 +155,7 @@ public:
         if (!ledgerData)
             return {};
 
-        ripple::LedgerInfo lgrInfo = deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
+        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
         log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
 
