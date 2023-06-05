@@ -233,7 +233,8 @@ private:
         if (specifiesCurrentOrClosedLedger(request))
             return true;
 
-        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").as_bool())
+        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
+            request.at("queue").as_bool())
             return true;
 
         return false;
