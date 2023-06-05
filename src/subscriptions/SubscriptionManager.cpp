@@ -20,7 +20,6 @@
 #include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
 #include <subscriptions/SubscriptionManager.h>
-#include <webserver2/interface/ConnectionBase.h>
 
 void
 Subscription::subscribe(SessionPtrType const& session)

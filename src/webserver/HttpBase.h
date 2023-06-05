@@ -363,7 +363,10 @@ handleRequest(
     };
 
     if (req.method() == http::verb::get && req.body() == "")
-        return send(httpResponse(http::status::ok, "text/html", defaultResponse));
+    {
+        send(httpResponse(http::status::ok, "text/html", defaultResponse));
+        return;
+    }
 
     if (req.method() != http::verb::post)
         return send(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
@@ -434,7 +437,6 @@ handleRequest(
                 result["status"] = "success";
 
             response["result"] = result;
-            std::cout << response << std::endl;
         }
 
         boost::json::array warnings;

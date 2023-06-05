@@ -20,16 +20,12 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
-#include <log/Logger.h>
-#include <rpc/Errors.h>
 #include <webserver/Context.h>
-#include <webserver2/details/WsBase.h>
+#include <webserver2/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <fmt/core.h>
 
-#include <chrono>
 #include <optional>
 #include <string>
 
@@ -40,9 +36,6 @@
  * This file is meant to contain any class or function that code outside of the rpc folder needs to use. For helper
  * functions or classes used within the rpc folder, use RPCHelpers.h.
  */
-
-class WsBase;
-
 namespace RPC {
 
 std::optional<Web::Context>
