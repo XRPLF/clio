@@ -216,7 +216,7 @@ try
     // init the web server
     // step1:  prepare the executor
     auto executor =
-        std::make_shared<RPCExecutor<RPC::RPCEngine, ReportingETL>>(config, backend, rpcEngine, etl, subscriptions);
+        std::make_shared<RPCExecutor<RPC::RPCEngine, ETLService>>(config, backend, rpcEngine, etl, subscriptions);
     // step2: prepare the http server
     auto ctx = parseCerts(config);
     auto const ctxRef =

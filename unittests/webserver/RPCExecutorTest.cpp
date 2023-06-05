@@ -17,8 +17,8 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
+#include <util/MockETLService.h>
 #include <util/MockRPCEngine.h>
-#include <util/MockReportingETL.h>
 #include <webserver2/RPCExecutor.h>
 
 #include <chrono>
@@ -58,12 +58,12 @@ protected:
     {
         MockBackendTest::SetUp();
 
-        etl = std::make_shared<MockReportingETL>();
+        etl = std::make_shared<MockETLService>();
         rpcEngine = std::make_shared<MockAsyncRPCEngine>();
         tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
         subManager = std::make_shared<SubscriptionManager>(cfg, mockBackendPtr);
         session = std::make_shared<MockWsBase>(*tagFactory);
-        rpcExecutor = std::make_shared<RPCExecutor<MockAsyncRPCEngine, MockReportingETL>>(
+        rpcExecutor = std::make_shared<RPCExecutor<MockAsyncRPCEngine, MockETLService>>(
             cfg, mockBackendPtr, rpcEngine, etl, subManager);
     }
 
@@ -74,10 +74,10 @@ protected:
     }
 
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine;
-    std::shared_ptr<MockReportingETL> etl;
+    std::shared_ptr<MockETLService> etl;
     std::shared_ptr<SubscriptionManager> subManager;
     std::shared_ptr<util::TagDecoratorFactory> tagFactory;
-    std::shared_ptr<RPCExecutor<MockAsyncRPCEngine, MockReportingETL>> rpcExecutor;
+    std::shared_ptr<RPCExecutor<MockAsyncRPCEngine, MockETLService>> rpcExecutor;
     std::shared_ptr<MockWsBase> session;
     clio::Config cfg;
 };
@@ -649,8 +649,8 @@ TEST_F(WebRPCExecutorTest, WsTooBusy)
     session->upgraded = true;
 
     auto rpcEngine2 = std::make_shared<MockRPCEngine>();
-    auto rpcExecutor2 = std::make_shared<RPCExecutor<MockRPCEngine, MockReportingETL>>(
-        cfg, mockBackendPtr, rpcEngine2, etl, subManager);
+    auto rpcExecutor2 =
+        std::make_shared<RPCExecutor<MockRPCEngine, MockETLService>>(cfg, mockBackendPtr, rpcEngine2, etl, subManager);
     auto request = boost::json::parse(R"({
                                             "command": "server_info",
                                             "id": 99
@@ -670,8 +670,8 @@ TEST_F(WebRPCExecutorTest, WsTooBusy)
 TEST_F(WebRPCExecutorTest, HTTPTooBusy)
 {
     auto rpcEngine2 = std::make_shared<MockRPCEngine>();
-    auto rpcExecutor2 = std::make_shared<RPCExecutor<MockRPCEngine, MockReportingETL>>(
-        cfg, mockBackendPtr, rpcEngine2, etl, subManager);
+    auto rpcExecutor2 =
+        std::make_shared<RPCExecutor<MockRPCEngine, MockETLService>>(cfg, mockBackendPtr, rpcEngine2, etl, subManager);
     auto request = boost::json::parse(R"({
                                             "method": "server_info",
                                             "params": [{}]
