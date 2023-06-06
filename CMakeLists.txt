@@ -116,6 +116,7 @@ if(BUILD_TESTS)
     unittests/util/TestObject.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTest.cpp
+    unittests/etl/ExtractorTest.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp

@@ -26,8 +26,6 @@
 #include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-#include <optional>
-
 class MockSubscriptionManager
 {
 public:
