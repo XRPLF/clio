@@ -26,13 +26,9 @@
 #include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-class MockSubscriptionManager
+struct MockSubscriptionManager
 {
-public:
     using session_ptr = std::shared_ptr<WsBase>;
-    MockSubscriptionManager()
-    {
-    }
 
     MOCK_METHOD(boost::json::object, subLedger, (boost::asio::yield_context&, session_ptr), ());
 

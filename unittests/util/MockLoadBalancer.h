@@ -30,21 +30,12 @@
 
 #include <optional>
 
-class MockLoadBalancer
+struct MockLoadBalancer
 {
-public:
-    MockLoadBalancer()
-    {
-    }
-
     MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-
     MOCK_METHOD(std::optional<org::xrpl::rpc::v1::GetLedgerResponse>, fetchLedger, (uint32_t, bool, bool), ());
-
     MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-
     MOCK_METHOD(boost::json::value, toJson, (), (const));
-
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,

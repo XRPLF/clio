@@ -24,16 +24,11 @@
 #include <chrono>
 
 template <typename DataType>
-class MockExtractionDataPipe
+struct MockExtractionDataPipe
 {
-public:
     MOCK_METHOD(void, push, (uint32_t, std::optional<DataType>&&), ());
-
     MOCK_METHOD(std::optional<DataType>, popNext, (uint32_t), ());
-
     MOCK_METHOD(uint32_t, getStride, (), (const));
-
     MOCK_METHOD(void, finish, (uint32_t), ());
-
     MOCK_METHOD(void, cleanup, (), ());
 };

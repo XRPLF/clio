@@ -24,10 +24,8 @@
 #include <optional>
 
 template <typename DataType>
-class MockLedgerFetcher
+struct MockLedgerFetcher
 {
-public:
     MOCK_METHOD(std::optional<DataType>, fetchData, (uint32_t), ());
-
     MOCK_METHOD(std::optional<DataType>, fetchDataAndDiff, (uint32_t), ());
 };

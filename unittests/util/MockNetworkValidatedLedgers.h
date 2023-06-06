@@ -23,14 +23,9 @@
 
 #include <optional>
 
-class MockNetworkValidatedLedgers
+struct MockNetworkValidatedLedgers
 {
-public:
     MOCK_METHOD(void, push, (uint32_t), ());
-
     MOCK_METHOD(std::optional<uint32_t>, getMostRecent, (), ());
-
-    //    MOCK_METHOD(bool, waitUntilValidatedByNetwork, (uint32_t, std::optional<uint32_t>), ());
-
     MOCK_METHOD(bool, waitUntilValidatedByNetwork, (uint32_t), ());
 };
