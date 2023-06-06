@@ -82,7 +82,7 @@ TEST_F(ETLExtractorTest, StopsWhenCurrentSequenceExceedsFinishSequence)
     EXPECT_CALL(dataPipe_, push).Times(3);
     EXPECT_CALL(dataPipe_, finish(0)).Times(1);
 
-    // run the thread. expected to invoke for seq 0, 4, 8 and finally stop as seq will be greater than finishing seq
+    // expected to invoke for seq 0, 4, 8 and finally stop as seq will be greater than finishing seq
     extractor_ = std::make_unique<ExtractorType>(dataPipe_, networkValidatedLedgers_, ledgerFetcher_, 0, 11, state_);
 }
 
@@ -118,7 +118,7 @@ TEST_F(ETLExtractorTest, StopsIfFetchIsUnsuccessful)
     EXPECT_CALL(dataPipe_, finish(0)).Times(1);
 
     // we break immediately because fetchDataAndDiff returns nullopt
-    extractor_ = std::make_unique<ExtractorType>(dataPipe_, networkValidatedLedgers_, ledgerFetcher_, 0, 1, state_);
+    extractor_ = std::make_unique<ExtractorType>(dataPipe_, networkValidatedLedgers_, ledgerFetcher_, 0, 64, state_);
 }
 
 TEST_F(ETLExtractorTest, StopsIfWaitingUntilValidatedByNetworkTimesOut)
@@ -153,7 +153,7 @@ TEST_F(ETLExtractorTest, SendsCorrectResponseToDataPipe)
     EXPECT_CALL(dataPipe_, push).Times(1).WillOnce(SaveArg<1>(&optionalResponse));
     EXPECT_CALL(dataPipe_, finish(0)).Times(1);
 
-    // run the thread. expect to finish after just one response due to finishSequence set to 1
+    // expect to finish after just one response due to finishSequence set to 1
     extractor_ = std::make_unique<ExtractorType>(dataPipe_, networkValidatedLedgers_, ledgerFetcher_, 0, 1, state_);
     extractor_->waitTillFinished();  // this is what clio does too. waiting for the thread to join
 

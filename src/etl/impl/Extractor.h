@@ -24,8 +24,6 @@
 #include <util/Profiler.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
 
 #include <chrono>
 #include <mutex>
