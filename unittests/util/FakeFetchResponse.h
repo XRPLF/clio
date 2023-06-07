@@ -19,26 +19,37 @@
 
 #pragma once
 
-#include <etl/Source.h>
+#include <cstddef>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <gmock/gmock.h>
-
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
-
-#include <optional>
-
-struct MockLoadBalancer
+class FakeTransactionsList
 {
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<org::xrpl::rpc::v1::GetLedgerResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context&),
-        (const));
+    std::size_t size_ = 0;
+
+public:
+    std::size_t
+    transactions_size()
+    {
+        return size_;
+    }
+};
+
+struct FakeFetchResponse
+{
+    uint32_t id;
+
+    FakeFetchResponse(uint32_t id = 0) : id{id}
+    {
+    }
+
+    bool
+    operator==(FakeFetchResponse const& other) const
+    {
+        return other.id == id;
+    }
+
+    FakeTransactionsList
+    transactions_list() const
+    {
+        return {};
+    }
 };

@@ -24,18 +24,10 @@
 
 #include <chrono>
 
-class MockCounters
+struct MockCounters
 {
-public:
-    MockCounters()
-    {
-    }
-
     MOCK_METHOD(void, rpcErrored, (std::string const&), ());
-
     MOCK_METHOD(void, rpcComplete, (std::string const&, std::chrono::microseconds const&), ());
-
     MOCK_METHOD(void, rpcForwarded, (std::string const&), ());
-
     MOCK_METHOD(boost::json::object, report, (), (const));
 };

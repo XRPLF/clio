@@ -24,12 +24,12 @@
 
 using namespace Backend;
 
-class MockBackend : public BackendInterface
+struct MockBackend : public BackendInterface
 {
-public:
     MockBackend(clio::Config)
     {
     }
+
     MOCK_METHOD(
         std::optional<ripple::LedgerInfo>,
         fetchLedgerBySequence,

@@ -19,26 +19,16 @@
 
 #pragma once
 
-#include <etl/Source.h>
-
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
+#include <chrono>
 
-#include <optional>
-
-struct MockLoadBalancer
+template <typename DataType>
+struct MockExtractionDataPipe
 {
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<org::xrpl::rpc::v1::GetLedgerResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context&),
-        (const));
+    MOCK_METHOD(void, push, (uint32_t, std::optional<DataType>&&), ());
+    MOCK_METHOD(std::optional<DataType>, popNext, (uint32_t), ());
+    MOCK_METHOD(uint32_t, getStride, (), (const));
+    MOCK_METHOD(void, finish, (uint32_t), ());
+    MOCK_METHOD(void, cleanup, (), ());
 };
