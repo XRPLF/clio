@@ -246,18 +246,18 @@ public:
         // dosGuard served request++ and check ip address
         if (!dosGuard_.get().request(clientIp))
         {
-            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(msg));
+            sendError(RPC::RippledError::rpcSLOW_DOWN, msg);
         }
         else
         {
             try
             {
-                (*handler_)(std::move(msg), shared_from_this());
+                (*handler_)(msg, shared_from_this());
             }
             catch (std::exception const& e)
             {
                 perfLog_.error() << tag() << "Caught exception : " << e.what();
-                sendError(RPC::RippledError::rpcINTERNAL, std::move(msg));
+                sendError(RPC::RippledError::rpcINTERNAL, msg);
             }
         }
 

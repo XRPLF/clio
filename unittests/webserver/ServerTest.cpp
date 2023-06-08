@@ -162,9 +162,9 @@ class EchoExecutor
 {
 public:
     void
-    operator()(std::string&& reqStr, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& ws)
     {
-        ws->send(std::move(reqStr), http::status::ok);
+        ws->send(std::string(reqStr), http::status::ok);
     }
 
     void
@@ -177,7 +177,7 @@ class ExceptionExecutor
 {
 public:
     void
-    operator()(std::string&& req, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(std::string const& req, std::shared_ptr<Server::ConnectionBase> const& ws)
     {
         throw std::runtime_error("MyError");
     }
@@ -225,10 +225,9 @@ TEST_F(WebServerTest, WsInternalError)
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"id":"id1"})");
     wsClient.disconnect();
-    std::cout << res << std::endl;
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":{"id":"id1"}, "id":"id1"})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})");
 }
 
 TEST_F(WebServerTest, WsInternalErrorNotJson)
@@ -239,7 +238,6 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost("not json");
     wsClient.disconnect();
-    std::cout << res << std::endl;
     EXPECT_EQ(
         res,
         R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})");

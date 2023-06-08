@@ -58,7 +58,7 @@ public:
      * @param connection The connection
      */
     void
-    operator()(std::string&& reqStr, std::shared_ptr<Server::ConnectionBase> const& connection)
+    operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& connection)
     {
         auto req = boost::json::object{};
         try
