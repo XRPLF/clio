@@ -21,41 +21,24 @@
 
 #include <webserver/interface/ConnectionBase.h>
 
-struct MockSession : public Server::ConnectionBase
-{
-    std::string message;
-    void
-    send(std::shared_ptr<std::string> msg_type) override
-    {
-        message += std::string(msg_type->data());
-    }
+#include <boost/beast.hpp>
+#include <boost/json.hpp>
 
-    void
-    send(std::string&& msg, boost::beast::http::status status = boost::beast::http::status::ok) override
-    {
-        message += msg;
-    }
+#include <memory>
 
-    MockSession(util::TagDecoratorFactory const& factory) : Server::ConnectionBase(factory, "")
-    {
-    }
+namespace Server {
+
+/**
+ * @brief Each executor fulfills this interface
+ */
+// clang-format off
+template <typename T>
+concept ServerHandler = requires(T handler, boost::json::object&& req, std::shared_ptr<ConnectionBase> const& ws, boost::beast::error_code ec) {
+    // the callback when server receives a request
+    { handler(std::move(req), ws) };
+    // the callback when there is an error
+    { handler(ec, ws) };
 };
+// clang-format on
 
-struct MockDeadSession : public Server::ConnectionBase
-{
-    void
-    send(std::shared_ptr<std::string> _) override
-    {
-        // err happen, the session should remove from subscribers
-        ec_.assign(2, boost::system::system_category());
-    }
-
-    void
-    send(std::string&& _, boost::beast::http::status __ = boost::beast::http::status::ok) override
-    {
-    }
-
-    MockDeadSession(util::TagDecoratorFactory const& factory) : Server::ConnectionBase(factory, "")
-    {
-    }
-};
+}  // namespace Server

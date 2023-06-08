@@ -28,25 +28,17 @@
 #include <backend/BackendFactory.h>
 #include <config/Config.h>
 #include <etl/ETLService.h>
-#include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
-#include <webserver/Listener.h>
+#include <webserver/RPCExecutor.h>
+#include <webserver/Server.h>
 
-#include <boost/asio/dispatch.hpp>
-#include <boost/asio/strand.hpp>
-#include <boost/beast/websocket.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/json.hpp>
 #include <boost/program_options.hpp>
 
-#include <algorithm>
-#include <cstdlib>
-#include <fstream>
-#include <functional>
-#include <iostream>
 #include <main/Build.h>
 #include <memory>
 #include <sstream>
@@ -55,6 +47,7 @@
 #include <vector>
 
 using namespace clio;
+using namespace boost::asio;
 namespace po = boost::program_options;
 
 /**
@@ -132,9 +125,9 @@ parseCerts(Config const& config)
     std::string key = contents.str();
 
     ssl::context ctx{ssl::context::tlsv12};
-    ctx.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2);
-    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
-    ctx.use_private_key(boost::asio::buffer(key.data(), key.size()), boost::asio::ssl::context::file_format::pem);
+    ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2);
+    ctx.use_certificate_chain(buffer(cert.data(), cert.size()));
+    ctx.use_private_key(buffer(key.data(), key.size()), ssl::context::file_format::pem);
 
     return ctx;
 }
@@ -146,7 +139,7 @@ parseCerts(Config const& config)
  * @param numThreads Number of worker threads to start
  */
 void
-start(boost::asio::io_context& ioc, std::uint32_t numThreads)
+start(io_context& ioc, std::uint32_t numThreads)
 {
     std::vector<std::thread> v;
     v.reserve(numThreads - 1);
@@ -171,9 +164,6 @@ try
     LogService::init(config);
     LogService::info() << "Clio version: " << Build::getClioFullVersionString();
 
-    auto ctx = parseCerts(config);
-    auto ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
-
     auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
     {
@@ -184,7 +174,7 @@ try
 
     // IO context to handle all incoming requests, as well as other things.
     // This is not the only io context in the application.
-    boost::asio::io_context ioc{threads};
+    io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
     auto sweepHandler = IntervalSweepHandler{config, ioc};
@@ -215,9 +205,12 @@ try
     auto const rpcEngine = RPC::RPCEngine::make_RPCEngine(
         config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 
-    // The server handles incoming RPCs
-    auto httpServer =
-        Server::make_HttpServer(config, ioc, ctxRef, backend, rpcEngine, subscriptions, balancer, etl, dosGuard);
+    // init the web server
+    auto executor =
+        std::make_shared<RPCExecutor<RPC::RPCEngine, ETLService>>(config, backend, rpcEngine, etl, subscriptions);
+    auto ctx = parseCerts(config);
+    auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
+    auto const httpServer = Server::make_HttpServer(config, ioc, ctxRef, dosGuard, executor);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

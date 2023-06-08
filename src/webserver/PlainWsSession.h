@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,147 +19,82 @@
 
 #pragma once
 
-#include <boost/asio/dispatch.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/beast/websocket/ssl.hpp>
+#include <webserver/details/WsBase.h>
 
-#include <etl/ETLService.h>
-#include <rpc/Factories.h>
-#include <webserver/Listener.h>
-#include <webserver/WsBase.h>
+namespace Server {
 
-#include <iostream>
-
-namespace http = boost::beast::http;
-namespace net = boost::asio;
-namespace ssl = boost::asio::ssl;
-namespace websocket = boost::beast::websocket;
-using tcp = boost::asio::ip::tcp;
-
-class ETLService;
-
-// Echoes back all received WebSocket messages
-class PlainWsSession : public WsSession<PlainWsSession>
+/**
+ * @brief The plain WebSocket session class, just to hold the plain stream. Other operations will be handled by the base
+ * class
+ */
+template <ServerHandler Handler>
+class PlainWsSession : public WsSession<PlainWsSession, Handler>
 {
-    websocket::stream<boost::beast::tcp_stream> ws_;
+    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
 
 public:
-    // Take ownership of the socket
     explicit PlainWsSession(
-        boost::asio::io_context& ioc,
         boost::asio::ip::tcp::socket&& socket,
-        std::optional<std::string> ip,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<RPC::RPCEngine> rpcEngine,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<LoadBalancer> balancer,
-        std::shared_ptr<ETLService const> etl,
-        util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
+        std::string ip,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::shared_ptr<Handler> const& callback,
         boost::beast::flat_buffer&& buffer)
-        : WsSession(ioc, ip, backend, rpcEngine, subscriptions, balancer, etl, tagFactory, dosGuard, std::move(buffer))
+        : WsSession<PlainWsSession, Handler>(ip, tagFactory, dosGuard, callback, std::move(buffer))
         , ws_(std::move(socket))
     {
     }
 
-    websocket::stream<boost::beast::tcp_stream>&
+    boost::beast::websocket::stream<boost::beast::tcp_stream>&
     ws()
     {
         return ws_;
     }
 
-    std::optional<std::string>
-    ip()
-    {
-        return ip_;
-    }
-
     ~PlainWsSession() = default;
 };
 
-class WsUpgrader : public std::enable_shared_from_this<WsUpgrader>
+/**
+ * @brief The plain WebSocket upgrader class, upgrade from http session to websocket session.
+ * Pass the socket to the session class after upgrade.
+ */
+template <ServerHandler Handler>
+class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<Handler>>
 {
-    boost::asio::io_context& ioc_;
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    std::shared_ptr<BackendInterface const> backend_;
-    std::shared_ptr<RPC::RPCEngine> rpcEngine_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<LoadBalancer> balancer_;
-    std::shared_ptr<ETLService const> etl_;
-    util::TagDecoratorFactory const& tagFactory_;
-    clio::DOSGuard& dosGuard_;
+    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
+    std::reference_wrapper<clio::DOSGuard> dosGuard_;
     http::request<http::string_body> req_;
-    std::optional<std::string> ip_;
+    std::string ip_;
+    std::shared_ptr<Handler> const handler_;
 
 public:
     WsUpgrader(
-        boost::asio::io_context& ioc,
-        boost::asio::ip::tcp::socket&& socket,
-        std::optional<std::string> ip,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<RPC::RPCEngine> rpcEngine,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<LoadBalancer> balancer,
-        std::shared_ptr<ETLService const> etl,
-        util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
-        boost::beast::flat_buffer&& b)
-        : ioc_(ioc)
-        , http_(std::move(socket))
-        , buffer_(std::move(b))
-        , backend_(backend)
-        , rpcEngine_(rpcEngine)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
-        , tagFactory_(tagFactory)
-        , dosGuard_(dosGuard)
-        , ip_(ip)
-    {
-    }
-
-    WsUpgrader(
-        boost::asio::io_context& ioc,
         boost::beast::tcp_stream&& stream,
-        std::optional<std::string> ip,
-        std::shared_ptr<BackendInterface const> backend,
-        std::shared_ptr<RPC::RPCEngine> rpcEngine,
-        std::shared_ptr<SubscriptionManager> subscriptions,
-        std::shared_ptr<LoadBalancer> balancer,
-        std::shared_ptr<ETLService const> etl,
-        util::TagDecoratorFactory const& tagFactory,
-        clio::DOSGuard& dosGuard,
+        std::string ip,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
-        : ioc_(ioc)
-        , http_(std::move(stream))
+        : http_(std::move(stream))
         , buffer_(std::move(b))
-        , backend_(backend)
-        , rpcEngine_(rpcEngine)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , req_(std::move(req))
         , ip_(ip)
+        , handler_(handler)
     {
     }
 
     void
     run()
     {
-        // We need to be executing within a strand to perform async operations
-        // on the I/O objects in this session. Although not strictly necessary
-        // for single-threaded contexts, this example code is written to be
-        // thread-safe by default.
-
-        net::dispatch(
-            http_.get_executor(), boost::beast::bind_front_handler(&WsUpgrader::doUpgrade, shared_from_this()));
+        boost::asio::dispatch(
+            http_.get_executor(),
+            boost::beast::bind_front_handler(&WsUpgrader<Handler>::doUpgrade, this->shared_from_this()));
     }
 
 private:
@@ -168,11 +103,9 @@ private:
     {
         parser_.emplace();
 
-        // Apply a reasonable limit to the allowed size
-        // of the body in bytes to prevent abuse.
-        parser_->body_limit(10000);
+        constexpr static auto MaxBobySize = 10000;
+        parser_->body_limit(MaxBobySize);
 
-        // Set the timeout.
         boost::beast::get_lowest_layer(http_).expires_after(std::chrono::seconds(30));
 
         onUpgrade();
@@ -182,25 +115,17 @@ private:
     onUpgrade()
     {
         // See if it is a WebSocket Upgrade
-        if (!websocket::is_upgrade(req_))
+        if (!boost::beast::websocket::is_upgrade(req_))
             return;
 
         // Disable the timeout.
         // The websocket::stream uses its own timeout settings.
         boost::beast::get_lowest_layer(http_).expires_never();
 
-        std::make_shared<PlainWsSession>(
-            ioc_,
-            http_.release_socket(),
-            ip_,
-            backend_,
-            rpcEngine_,
-            subscriptions_,
-            balancer_,
-            etl_,
-            tagFactory_,
-            dosGuard_,
-            std::move(buffer_))
+        std::make_shared<PlainWsSession<Handler>>(
+            http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
             ->run(std::move(req_));
     }
 };
+
+}  // namespace Server

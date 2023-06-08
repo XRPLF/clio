@@ -111,7 +111,9 @@ public:
 
 private:
     void
-    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromStreams(
+        std::vector<std::string> const& streams,
+        std::shared_ptr<Server::ConnectionBase> const& session) const
     {
         for (auto const& stream : streams)
         {
@@ -133,7 +135,8 @@ private:
     }
 
     void
-    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<Server::ConnectionBase> const& session)
+        const
     {
         for (auto const& account : accounts)
         {
@@ -143,8 +146,9 @@ private:
     }
 
     void
-    unsubscribeFromProposedAccounts(std::vector<std::string> accountsProposed, std::shared_ptr<WsBase> const& session)
-        const
+    unsubscribeFromProposedAccounts(
+        std::vector<std::string> accountsProposed,
+        std::shared_ptr<Server::ConnectionBase> const& session) const
     {
         for (auto const& account : accountsProposed)
         {
@@ -154,7 +158,8 @@ private:
     }
 
     void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<Server::ConnectionBase> const& session)
+        const
     {
         for (auto const& orderBook : books)
         {
