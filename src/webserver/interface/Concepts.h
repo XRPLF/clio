@@ -22,7 +22,6 @@
 #include <webserver/interface/ConnectionBase.h>
 
 #include <boost/beast.hpp>
-#include <boost/json.hpp>
 
 #include <memory>
 
