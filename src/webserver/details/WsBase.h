@@ -221,12 +221,19 @@ public:
 
         perfLog_.info() << tag() << "Received request from ip = " << this->clientIp;
 
-        auto sendError = [this](auto error, boost::json::value const& request) {
+        auto sendError = [this](auto error, std::string const& requestStr) {
             auto e = RPC::makeError(error);
-
-            if (request.is_object() && request.as_object().contains("id"))
-                e["id"] = request.as_object().at("id");
-            e["request"] = request;
+            try
+            {
+                auto request = boost::json::parse(requestStr);
+                if (request.is_object() && request.as_object().contains("id"))
+                    e["id"] = request.as_object().at("id");
+                e["request"] = std::move(request);
+            }
+            catch (std::exception&)
+            {
+                e["request"] = std::move(requestStr);
+            }
 
             auto responseStr = boost::json::serialize(e);
             log_.trace() << responseStr;
@@ -236,37 +243,21 @@ public:
 
         std::string msg{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
 
-        boost::json::value raw = [](std::string&& msg) {
-            try
-            {
-                return boost::json::parse(msg);
-            }
-            catch (std::exception&)
-            {
-                return boost::json::value{msg};
-            }
-        }(std::move(msg));
-
         // dosGuard served request++ and check ip address
         if (!dosGuard_.get().request(clientIp))
         {
-            sendError(RPC::RippledError::rpcSLOW_DOWN, raw);
-        }
-        else if (!raw.is_object())
-        {
-            sendError(RPC::RippledError::rpcBAD_SYNTAX, raw);
+            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(msg));
         }
         else
         {
-            auto request = raw.as_object();
             try
             {
-                (*handler_)(std::move(request), shared_from_this());
+                (*handler_)(std::move(msg), shared_from_this());
             }
             catch (std::exception const& e)
             {
                 perfLog_.error() << tag() << "Caught exception : " << e.what();
-                sendError(RPC::RippledError::rpcINTERNAL, raw);
+                sendError(RPC::RippledError::rpcINTERNAL, std::move(msg));
             }
         }
 

@@ -33,7 +33,7 @@ namespace Server {
  */
 // clang-format off
 template <typename T>
-concept ServerHandler = requires(T handler, boost::json::object&& req, std::shared_ptr<ConnectionBase> const& ws, boost::beast::error_code ec) {
+concept ServerHandler = requires(T handler, std::string&& req, std::shared_ptr<ConnectionBase> const& ws, boost::beast::error_code ec) {
     // the callback when server receives a request
     { handler(std::move(req), ws) };
     // the callback when there is an error
