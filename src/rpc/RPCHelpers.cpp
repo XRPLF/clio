@@ -965,7 +965,7 @@ getAccountsFromTransaction(boost::json::object const& transaction)
         }
         else if (value.is_string())
         {
-            auto account = accountFromStringStrict(value.as_string().c_str());
+            auto account = ripple::parseBase58<ripple::AccountID>(value.as_string().c_str());
             if (account)
             {
                 accounts.push_back(*account);
