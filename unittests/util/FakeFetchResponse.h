@@ -21,6 +21,18 @@
 
 #include <cstddef>
 
+class FakeLedgerObjects
+{
+    std::vector<int> objects;
+
+public:
+    std::vector<int>*
+    mutable_objects()
+    {
+        return &objects;
+    }
+};
+
 class FakeTransactionsList
 {
     std::size_t size_ = 0;
@@ -33,11 +45,26 @@ public:
     }
 };
 
+class FakeObjectsList
+{
+    std::size_t size_ = 0;
+
+public:
+    std::size_t
+    objects_size()
+    {
+        return size_;
+    }
+};
+
 struct FakeFetchResponse
 {
     uint32_t id;
+    bool objectNeighborsIncluded;
+    FakeLedgerObjects ledgerObjects;
 
-    FakeFetchResponse(uint32_t id = 0) : id{id}
+    FakeFetchResponse(uint32_t id = 0, bool objectNeighborsIncluded = false)
+        : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}
     {
     }
 
@@ -51,5 +78,23 @@ struct FakeFetchResponse
     transactions_list() const
     {
         return {};
+    }
+
+    FakeObjectsList
+    ledger_objects() const
+    {
+        return {};
+    }
+
+    bool
+    object_neighbors_included() const
+    {
+        return objectNeighborsIncluded;
+    }
+
+    FakeLedgerObjects&
+    mutable_ledger_objects()
+    {
+        return ledgerObjects;
     }
 };

@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/SystemState.h>
+#include <etl/impl/LedgerLoader.h>
 #include <log/Logger.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
@@ -49,6 +50,8 @@ namespace clio::detail {
 template <typename DataPipeType, typename LedgerLoaderType, typename LedgerPublisherType>
 class Transformer
 {
+    using DataType = typename LedgerLoaderType::DataType;
+
     clio::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
@@ -162,7 +165,7 @@ private:
      * @return the newly built ledger and data to write to the database
      */
     std::pair<ripple::LedgerInfo, bool>
-    buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
+    buildNextLedger(DataType& rawData)
     {
         log_.debug() << "Beginning ledger update";
         ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
@@ -207,7 +210,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    updateCache(ripple::LedgerInfo const& lgrInfo, org::xrpl::rpc::v1::GetLedgerResponse& rawData)
+    updateCache(ripple::LedgerInfo const& lgrInfo, DataType& rawData)
     {
         std::vector<Backend::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(rawData.ledger_objects().objects_size());
@@ -338,7 +341,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    writeSuccessors(ripple::LedgerInfo const& lgrInfo, org::xrpl::rpc::v1::GetLedgerResponse& rawData)
+    writeSuccessors(ripple::LedgerInfo const& lgrInfo, DataType& rawData)
     {
         // Write successor info, if included from rippled
         if (rawData.object_neighbors_included())

@@ -29,8 +29,6 @@
 
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/ledger/ReadView.h>
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
 
 #include <memory>
 
@@ -49,6 +47,10 @@ namespace clio::detail {
 template <typename LoadBalancerType, typename LedgerFetcherType>
 class LedgerLoader
 {
+public:
+    using DataType = typename LoadBalancerType::RawDataType;
+
+private:
     clio::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
@@ -81,7 +83,7 @@ public:
      * nft_token_transactions tables (mostly transaction hashes, corresponding nodestore hashes and affected accounts)
      */
     FormattedTransactionsData
-    insertTransactions(ripple::LedgerInfo const& ledger, org::xrpl::rpc::v1::GetLedgerResponse& data)
+    insertTransactions(ripple::LedgerInfo const& ledger, DataType& data)
     {
         FormattedTransactionsData result;
 

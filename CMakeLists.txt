@@ -117,6 +117,7 @@ if(BUILD_TESTS)
     # ETL
     unittests/etl/ExtractionDataPipeTest.cpp
     unittests/etl/ExtractorTest.cpp
+    unittests/etl/TransformerTest.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
