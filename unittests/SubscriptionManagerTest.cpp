@@ -226,10 +226,21 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerValidation)
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerProposedTransaction)
 {
     subManagerPtr->subProposedTransactions(session);
+    // transaction contains account and its public key
+    // make sure it is not parsed to two identical accounts
     constexpr static auto dummyTransaction = R"({
         "transaction":
         {
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+            "Account":"rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb",
+            "Amount":"40000000",
+            "Destination":"rDgGprMjMWkJRnJ8M5RXq3SXYD8zuQncPc",
+            "Fee":"20",
+            "Flags":2147483648,
+            "Sequence":13767283,
+            "SigningPubKey":"036F3CFFE1EA77C1EEC5DCCA38C83E62E3AC068F8A16369620AF1D609BA5A620B2",
+            "TransactionType":"Payment",
+            "TxnSignature":"30450221009BD0D563B24E50B26A42F30455AD21C3D5CD4D80174C41F7B54969FFC08DE94C02201FC35320B56D56D1E34D1D281D48AC68CBEDDD6EE9DFA639CCB08BB251453A87",
+            "hash":"F44393295DB860C6860769C16F5B23887762F09F87A8D1174E0FCFF9E7247F07"
         }
     })";
     subManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
