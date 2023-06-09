@@ -115,12 +115,6 @@ public:
         using namespace std::chrono;
 
         auto const range = backend_->fetchLedgerRange();
-
-        // TODO: remove this check in https://github.com/XRPLF/clio/issues/592
-        // note: this should happen on framework level.
-        if (not range.has_value())
-            return Error{Status{RippledError::rpcNOT_READY, "emptyDatabase", "The server has no data in the database"}};
-
         auto const lgrInfo = backend_->fetchLedgerBySequence(range->maxSequence, ctx.yield);
         if (not lgrInfo.has_value())
             return Error{Status{RippledError::rpcINTERNAL}};

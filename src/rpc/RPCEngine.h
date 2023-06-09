@@ -117,24 +117,31 @@ public:
             auto toForward = ctx.params;
             toForward["command"] = ctx.method;
 
-            auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-            notifyForwarded(ctx.method);
-
-            if (!res)
+            if (auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield); not res)
+            {
+                notifyFailedToForward(ctx.method);
                 return Status{RippledError::rpcFAILED_TO_FORWARD};
-
-            return *res;
+            }
+            else
+            {
+                notifyForwarded(ctx.method);
+                return *res;
+            }
         }
 
         if (backend_->isTooBusy())
         {
             log_.error() << "Database is too busy. Rejecting request";
+            notifyTooBusy();  // TODO: should we add ctx.method if we have it?
             return Status{RippledError::rpcTOO_BUSY};
         }
 
         auto const method = handlerTable_.getHandler(ctx.method);
         if (!method)
+        {
+            notifyUnknownCommand();
             return Status{RippledError::rpcUNKNOWN_COMMAND};
+        }
 
         try
         {
@@ -149,24 +156,23 @@ public:
             if (v)
                 return v->as_object();
             else
+            {
+                notifyErrored(ctx.method);
                 return Status{v.error()};
-        }
-        catch (InvalidParamsError const& err)
-        {
-            return Status{RippledError::rpcINVALID_PARAMS, err.what()};
-        }
-        catch (AccountNotFoundError const& err)
-        {
-            return Status{RippledError::rpcACT_NOT_FOUND, err.what()};
+            }
         }
         catch (Backend::DatabaseTimeout const& t)
         {
             log_.error() << "Database timeout";
+            notifyTooBusy();
+
             return Status{RippledError::rpcTOO_BUSY};
         }
-        catch (std::exception const& err)
+        catch (std::exception const& ex)
         {
-            log_.error() << ctx.tag() << " caught exception: " << err.what();
+            log_.error() << ctx.tag() << " caught exception: " << ex.what();
+            notifyInternalError();
+
             return Status{RippledError::rpcINTERNAL};
         }
     }
@@ -180,7 +186,13 @@ public:
     bool
     post(Fn&& func, std::string const& ip)
     {
-        return workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
+        if (!workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip)))
+        {
+            notifyTooBusy();
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -197,7 +209,24 @@ public:
     }
 
     /**
-     * @brief Notify the system that specified method failed to execute
+     * @brief Notify the system that specified method failed to execute due to a recoverable user error
+     *
+     * Used for errors based on user input, not actual failures of the db or clio itself.
+     *
+     * @param method
+     */
+    void
+    notifyFailed(std::string const& method)
+    {
+        if (validHandler(method))
+            counters_.get().rpcFailed(method);
+    }
+
+    /**
+     * @brief Notify the system that specified method failed due to some unrecoverable error
+     *
+     * Used for erors such as database timeout, internal errors, etc.
+     *
      * @param method
      */
     void
@@ -216,6 +245,64 @@ public:
     {
         if (validHandler(method))
             counters_.get().rpcForwarded(method);
+    }
+
+    /**
+     * @brief Notify the system that specified method failed to be forwarded to rippled
+     * @param method
+     */
+    void
+    notifyFailedToForward(std::string const& method)
+    {
+        if (validHandler(method))
+            counters_.get().rpcFailedToForward(method);
+    }
+
+    /**
+     * @brief Notify the system that the RPC system is too busy to handle an incoming request
+     */
+    void
+    notifyTooBusy()
+    {
+        counters_.get().onTooBusy();
+    }
+
+    /**
+     * @brief Notify the system that the RPC system was not ready to handle an incoming request
+     *
+     * This happens when the backend is not yet have a ledger range
+     */
+    void
+    notifyNotReady()
+    {
+        counters_.get().onNotReady();
+    }
+
+    /**
+     * @brief Notify the system that the incoming request did not specify the RPC method/command
+     */
+    void
+    notifyBadSyntax()
+    {
+        counters_.get().onBadSyntax();
+    }
+
+    /**
+     * @brief Notify the system that the incoming request specified an unknown/unsupported method/command
+     */
+    void
+    notifyUnknownCommand()
+    {
+        counters_.get().onUnknownCommand();
+    }
+
+    /**
+     * @brief Notify the system that the incoming request lead to an internal error (unrecoverable)
+     */
+    void
+    notifyInternalError()
+    {
+        counters_.get().onInternalError();
     }
 
 private:

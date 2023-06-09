@@ -27,10 +27,8 @@ namespace RPC {
 LedgerRangeHandler::Result
 LedgerRangeHandler::process() const
 {
-    if (auto const maybeRange = sharedPtrBackend_->fetchLedgerRange(); maybeRange)
-        return Output{*maybeRange};
-    else
-        return Error{Status{RippledError::rpcNOT_READY, "rangeNotFound"}};
+    // note: we can't get here if range is not available so it's safe
+    return Output{sharedPtrBackend_->fetchLedgerRange().value()};
 }
 
 void

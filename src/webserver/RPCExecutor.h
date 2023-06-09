@@ -121,14 +121,11 @@ private:
             if (!id.is_null())
                 e["id"] = id;
             e["request"] = request;
+
             if (connection->upgraded)
-            {
                 return e;
-            }
             else
-            {
                 return boost::json::object{{"result", e}};
-            }
         };
 
         try
@@ -136,9 +133,12 @@ private:
             auto const range = backend_->fetchLedgerRange();
             // for the error happened before the handler, we don't attach the clio warning
             if (!range)
+            {
+                rpcEngine_->notifyNotReady();
                 return connection->send(
                     boost::json::serialize(composeError(RPC::RippledError::rpcNOT_READY)),
                     boost::beast::http::status::ok);
+            }
 
             auto context = connection->upgraded
                 ? RPC::make_WsContext(
@@ -149,6 +149,8 @@ private:
             {
                 perfLog_.warn() << connection->tag() << "Could not create RPC context";
                 log_.warn() << connection->tag() << "Could not create RPC context";
+
+                rpcEngine_->notifyBadSyntax();
                 return connection->send(
                     boost::json::serialize(composeError(RPC::RippledError::rpcBAD_SYNTAX)),
                     boost::beast::http::status::ok);
@@ -162,16 +164,16 @@ private:
             boost::json::object response;
             if (auto const status = std::get_if<RPC::Status>(&v))
             {
-                rpcEngine_->notifyErrored(context->method);
+                // note: error statuses are counted/notified in buildResponse itself
                 response = std::move(composeError(*status));
                 auto const responseStr = boost::json::serialize(response);
+
                 perfLog_.debug() << context->tag() << "Encountered error: " << responseStr;
                 log_.debug() << context->tag() << "Encountered error: " << responseStr;
             }
             else
             {
-                // This can still technically be an error. Clio counts forwarded
-                // requests as successful.
+                // This can still technically be an error. Clio counts forwarded requests as successful.
                 rpcEngine_->notifyComplete(context->method, us);
 
                 auto& result = std::get<boost::json::object>(v);
@@ -189,6 +191,7 @@ private:
                 {
                     response["result"] = result;
                 }
+
                 // for ws , there is additional field "status" in response
                 // otherwise , the "status" is in the "result" field
                 if (connection->upgraded)
@@ -215,10 +218,15 @@ private:
             response["warnings"] = warnings;
             connection->send(boost::json::serialize(response), boost::beast::http::status::ok);
         }
-        catch (std::exception const& e)
+        catch (std::exception const& ex)
         {
-            perfLog_.error() << connection->tag() << "Caught exception : " << e.what();
-            log_.error() << connection->tag() << "Caught exception : " << e.what();
+            // note: while we are catching this in buildResponse too, this is here to make sure
+            // that any other code that may throw is outside of buildResponse is also worked around.
+            perfLog_.error() << connection->tag() << "Caught exception: " << ex.what();
+            log_.error() << connection->tag() << "Caught exception: " << ex.what();
+
+            rpcEngine_->notifyInternalError();
+
             return connection->send(
                 boost::json::serialize(composeError(RPC::RippledError::rpcINTERNAL)),
                 boost::beast::http::status::internal_server_error);
