@@ -868,12 +868,151 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("offers").as_array().size(), 20);
-        EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
-        EXPECT_EQ(output->as_object().at("offers").as_array()[10].as_object(), json::parse(expectedReversedOffer));
+        EXPECT_EQ(output->as_object().at("bids").as_array().size(), 10);
+        EXPECT_EQ(output->as_object().at("asks").as_array().size(), 10);
+        EXPECT_EQ(output->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
+        EXPECT_EQ(output->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
         std::this_thread::sleep_for(20ms);
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
+    });
+}
+
+TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
+{
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "books": 
+            [
+                {{
+                    "taker_gets": 
+                    {{
+                        "currency": "XRP"
+                    }},
+                    "taker_pays": 
+                    {{
+                        "currency": "USD",
+                        "issuer": "{}"
+                    }},
+                    "snapshot": true
+                }}
+            ]
+        }})",
+        ACCOUNT));
+    mockBackendPtr->updateRange(MINSEQ);
+    mockBackendPtr->updateRange(MAXSEQ);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const issuer = GetAccountIDWithString(ACCOUNT);
+
+    auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
+        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+
+    auto const reversedBook = getBookBase(std::get<ripple::Book>(
+        RPC::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
+
+    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
+        .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
+
+    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
+        .WillByDefault(Return(std::nullopt));
+
+    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(reversedBook, MAXSEQ, _))
+        .WillByDefault(Return(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}));
+
+    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(2);
+
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(5);
+
+    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{INDEX2});
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
+        .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes, INDEX1).getSerializer().peekData()));
+
+    // for reverse
+    auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{INDEX1});
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, MAXSEQ, _))
+        .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes2, INDEX2).getSerializer().peekData()));
+
+    // offer owner account root
+    ON_CALL(
+        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _))
+        .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
+
+    // issuer account root
+    ON_CALL(
+        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _))
+        .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
+
+    // fee
+    auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
+
+    auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
+        ACCOUNT2,
+        10,
+        20,
+        ripple::to_string(ripple::xrpCurrency()),
+        ripple::to_string(ripple::to_currency("USD")),
+        toBase58(ripple::xrpAccount()),
+        ACCOUNT,
+        PAYS20USDGETS10XRPBOOKDIR);
+
+    // for reverse
+    // offer owner is USD issuer
+    auto const gets10USDPays20XRPOffer = CreateOfferLedgerObject(
+        ACCOUNT,
+        10,
+        20,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT,
+        toBase58(ripple::xrpAccount()),
+        PAYS20XRPGETS10USDBOOKDIR);
+
+    std::vector<Blob> bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
+
+    // for reverse
+    std::vector<Blob> bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
+
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    static auto const expectedOffer = fmt::format(
+        R"({{
+            "Account":"{}",
+            "BookDirectory":"{}",
+            "BookNode":"0",
+            "Flags":0,
+            "LedgerEntryType":"Offer",
+            "OwnerNode":"0",
+            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq":0,
+            "Sequence":0,
+            "TakerGets":"10",
+            "TakerPays":
+            {{
+                "currency":"USD",
+                "issuer":"{}",
+                "value":"20"
+            }},
+            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+            "owner_funds":"193",
+            "quality":"2"
+        }})",
+        ACCOUNT2,
+        PAYS20USDGETS10XRPBOOKDIR,
+        ACCOUNT);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);
+        EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
+        std::this_thread::sleep_for(20ms);
+        auto const report = subManager_->report();
+        // original book + reverse book
+        EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
 }
