@@ -170,7 +170,7 @@ public:
         }
         catch (std::exception const& ex)
         {
-            log_.error() << ctx.tag() << " caught exception: " << ex.what();
+            log_.error() << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 
             return Status{RippledError::rpcINTERNAL};
