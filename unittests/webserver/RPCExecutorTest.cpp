@@ -625,7 +625,13 @@ TEST_F(WebRPCExecutorTest, WsTooBusy)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     static auto constexpr response =
-        R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})";
+        R"({
+            "error":"tooBusy",
+            "error_code":9,
+            "error_message":"The server is too busy to help you now.",
+            "status":"error",
+            "type":"response"
+        })";
     EXPECT_CALL(*rpcEngine2, post).WillOnce(testing::Return(false));
     (*rpcExecutor2)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -645,7 +651,13 @@ TEST_F(WebRPCExecutorTest, HTTPTooBusy)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     static auto constexpr response =
-        R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})";
+        R"({
+            "error":"tooBusy",
+            "error_code":9,
+            "error_message":"The server is too busy to help you now.",
+            "status":"error",
+            "type":"response"
+        })";
 
     EXPECT_CALL(*rpcEngine2, post).WillOnce(testing::Return(false));
     (*rpcExecutor2)(std::move(request), session);
@@ -656,7 +668,13 @@ TEST_F(WebRPCExecutorTest, HTTPRequestNotJson)
 {
     static auto constexpr request = "not json";
     static auto constexpr response =
-        R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response"})";
+        R"({
+            "error":"badSyntax",
+            "error_code":1,
+            "error_message":"Syntax error.",
+            "status":"error",
+            "type":"response"
+        })";
 
     (*rpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -667,7 +685,13 @@ TEST_F(WebRPCExecutorTest, WsRequestNotJson)
     session->upgraded = true;
     static auto constexpr request = "not json";
     static auto constexpr response =
-        R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response"})";
+        R"({
+            "error":"badSyntax",
+            "error_code":1,
+            "error_message":"Syntax error.",
+            "status":"error",
+            "type":"response"
+        })";
 
     (*rpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));

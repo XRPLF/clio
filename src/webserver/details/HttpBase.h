@@ -209,8 +209,7 @@ public:
 
         try
         {
-            std::string reqStr = req_.body();
-            (*handler_)(std::move(reqStr), derived().shared_from_this());
+            (*handler_)(req_.body(), derived().shared_from_this());
         }
         catch (std::exception const& e)
         {

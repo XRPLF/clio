@@ -221,7 +221,7 @@ public:
 
         perfLog_.info() << tag() << "Received request from ip = " << this->clientIp;
 
-        auto sendError = [this](auto error, std::string const& requestStr) {
+        auto sendError = [this](auto error, std::string&& requestStr) {
             auto e = RPC::makeError(error);
             try
             {
@@ -246,7 +246,7 @@ public:
         // dosGuard served request++ and check ip address
         if (!dosGuard_.get().request(clientIp))
         {
-            sendError(RPC::RippledError::rpcSLOW_DOWN, msg);
+            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(msg));
         }
         else
         {
@@ -257,7 +257,7 @@ public:
             catch (std::exception const& e)
             {
                 perfLog_.error() << tag() << "Caught exception : " << e.what();
-                sendError(RPC::RippledError::rpcINTERNAL, msg);
+                sendError(RPC::RippledError::rpcINTERNAL, std::move(msg));
             }
         }
 
