@@ -60,34 +60,39 @@ public:
     void
     operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& connection)
     {
-        auto req = boost::json::object{};
         try
         {
-            req = boost::json::parse(reqStr).as_object();
+            auto req = boost::json::parse(reqStr).as_object();
+            perfLog_.debug() << connection->tag() << "Adding to work queue";
+
+            if (not connection->upgraded and not req.contains("params"))
+                req["params"] = boost::json::array({boost::json::object{}});
+
+            if (!rpcEngine_->post(
+                    [request = std::move(req), connection, this](boost::asio::yield_context yc) mutable {
+                        handleRequest(yc, std::move(request), connection);
+                    },
+                    connection->clientIp))
+            {
+                rpcEngine_->notifyTooBusy();
+                connection->send(
+                    boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY)),
+                    boost::beast::http::status::ok);
+            }
         }
-        catch (boost::exception const& _)
+        catch (boost::system::system_error const&)
         {
+            // system_error thrown when json parsing failed
+            rpcEngine_->notifyBadSyntax();
             connection->send(
                 boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX)),
                 boost::beast::http::status::ok);
-            return;
         }
-
-        perfLog_.debug() << connection->tag() << "Adding to work queue";
-        // specially handle for http connections
-        if (!connection->upgraded)
+        catch (std::exception const& ex)
         {
-            if (!req.contains("params"))
-                req["params"] = boost::json::array({boost::json::object{}});
-        }
-        if (!rpcEngine_->post(
-                [request = std::move(req), connection, this](boost::asio::yield_context yc) mutable {
-                    handleRequest(yc, std::move(request), connection);
-                },
-                connection->clientIp))
-        {
-            connection->send(
-                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok);
+            perfLog_.error() << connection->tag() << "Caught exception: " << ex.what();
+            rpcEngine_->notifyInternalError();
+            throw;
         }
     }
 

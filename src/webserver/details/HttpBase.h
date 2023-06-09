@@ -198,6 +198,7 @@ public:
         // connection limit
         if (!dosGuard_.get().request(clientIp))
         {
+            // TODO: this looks like it could be useful to count too in the future
             return sender_(httpResponse(
                 http::status::service_unavailable,
                 "text/plain",
@@ -210,9 +211,8 @@ public:
         {
             (*handler_)(req_.body(), derived().shared_from_this());
         }
-        catch (std::exception const& e)
+        catch (std::exception const&)
         {
-            perfLog_.error() << tag() << "Caught exception : " << e.what();
             return sender_(httpResponse(
                 http::status::internal_server_error,
                 "application/json",

@@ -58,6 +58,7 @@ public:
     MOCK_METHOD(void, notifyFailedToForward, (std::string const&), ());
     MOCK_METHOD(void, notifyNotReady, (), ());
     MOCK_METHOD(void, notifyBadSyntax, (), ());
+    MOCK_METHOD(void, notifyTooBusy, (), ());
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
     MOCK_METHOD(RPC::Result, buildResponse, (Web::Context const&), ());
@@ -78,6 +79,7 @@ public:
     MOCK_METHOD(void, notifyFailedToForward, (std::string const&), ());
     MOCK_METHOD(void, notifyNotReady, (), ());
     MOCK_METHOD(void, notifyBadSyntax, (), ());
+    MOCK_METHOD(void, notifyTooBusy, (), ());
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
     MOCK_METHOD(RPC::Result, buildResponse, (Web::Context const&), ());
