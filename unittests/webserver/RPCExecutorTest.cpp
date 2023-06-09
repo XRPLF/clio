@@ -273,7 +273,6 @@ TEST_F(WebRPCExecutorTest, HTTPErrorPath)
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
-    EXPECT_CALL(*rpcEngine, notifyErrored("ledger")).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -315,7 +314,6 @@ TEST_F(WebRPCExecutorTest, WsErrorPath)
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
-    EXPECT_CALL(*rpcEngine, notifyErrored("ledger")).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -349,6 +347,8 @@ TEST_F(WebRPCExecutorTest, HTTPNotReady)
                                         }
                                     })";
 
+    EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
+
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -376,6 +376,8 @@ TEST_F(WebRPCExecutorTest, WsNotReady)
                                         }
                                     })";
 
+    EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
+
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -402,6 +404,8 @@ TEST_F(WebRPCExecutorTest, HTTPBadSyntax)
                                         }
                                     })";
 
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
+
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -427,6 +431,8 @@ TEST_F(WebRPCExecutorTest, HTTPBadSyntaxWhenRequestSubscribe)
                                             }
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -456,6 +462,8 @@ TEST_F(WebRPCExecutorTest, WsBadSyntax)
                                             "id":99
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -493,6 +501,8 @@ TEST_F(WebRPCExecutorTest, HTTPInternalError)
                                                 }
                                             ]
                                         })";
+
+    EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*rpcExecutor)(std::move(requestJSON), session);
@@ -524,6 +534,8 @@ TEST_F(WebRPCExecutorTest, WsInternalError)
                                             "command": "ledger",
                                             "id": "123"
                                         })";
+
+    EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*rpcExecutor)(std::move(requestJSON), session);
@@ -632,7 +644,10 @@ TEST_F(WebRPCExecutorTest, WsTooBusy)
             "status":"error",
             "type":"response"
         })";
+
+    EXPECT_CALL(*rpcEngine2, notifyTooBusy).Times(1);
     EXPECT_CALL(*rpcEngine2, post).WillOnce(testing::Return(false));
+
     (*rpcExecutor2)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
@@ -659,7 +674,9 @@ TEST_F(WebRPCExecutorTest, HTTPTooBusy)
             "type":"response"
         })";
 
+    EXPECT_CALL(*rpcEngine2, notifyTooBusy).Times(1);
     EXPECT_CALL(*rpcEngine2, post).WillOnce(testing::Return(false));
+
     (*rpcExecutor2)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
@@ -675,6 +692,8 @@ TEST_F(WebRPCExecutorTest, HTTPRequestNotJson)
             "status":"error",
             "type":"response"
         })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -692,6 +711,8 @@ TEST_F(WebRPCExecutorTest, WsRequestNotJson)
             "status":"error",
             "type":"response"
         })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));

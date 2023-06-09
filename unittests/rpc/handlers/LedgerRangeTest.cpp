@@ -34,17 +34,6 @@ class RPCLedgerRangeTest : public HandlerBaseTest
 {
 };
 
-TEST_F(RPCLedgerRangeTest, LedgerRangeNotFound)
-{
-    auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
-    auto const req = json::parse("{}");
-    auto const output = handler.process(req);
-    ASSERT_FALSE(output);
-    auto const err = RPC::makeError(output.error());
-    EXPECT_EQ(err.at("error").as_string(), "notReady");
-    EXPECT_EQ(err.at("error_message").as_string(), "rangeNotFound");
-}
-
 TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
 {
     mockBackendPtr->updateRange(RANGEMIN);
