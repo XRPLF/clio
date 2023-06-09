@@ -58,8 +58,21 @@ public:
      * @param connection The connection
      */
     void
-    operator()(boost::json::object&& req, std::shared_ptr<Server::ConnectionBase> const& connection)
+    operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& connection)
     {
+        auto req = boost::json::object{};
+        try
+        {
+            req = boost::json::parse(reqStr).as_object();
+        }
+        catch (boost::exception const& _)
+        {
+            connection->send(
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX)),
+                boost::beast::http::status::ok);
+            return;
+        }
+
         perfLog_.debug() << connection->tag() << "Adding to work queue";
         // specially handle for http connections
         if (!connection->upgraded)

@@ -207,21 +207,9 @@ public:
 
         log_.info() << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
 
-        auto request = boost::json::object{};
         try
         {
-            request = boost::json::parse(req_.body()).as_object();
-        }
-        catch (boost::exception const& e)
-        {
-            return sender_(httpResponse(
-                http::status::ok,
-                "application/json",
-                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX))));
-        }
-        try
-        {
-            (*handler_)(std::move(request), derived().shared_from_this());
+            (*handler_)(req_.body(), derived().shared_from_this());
         }
         catch (std::exception const& e)
         {

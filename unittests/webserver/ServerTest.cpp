@@ -162,9 +162,9 @@ class EchoExecutor
 {
 public:
     void
-    operator()(boost::json::object&& req, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& ws)
     {
-        ws->send(boost::json::serialize(req), http::status::ok);
+        ws->send(std::string(reqStr), http::status::ok);
     }
 
     void
@@ -177,7 +177,7 @@ class ExceptionExecutor
 {
 public:
     void
-    operator()(boost::json::object&& req, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(std::string const& req, std::shared_ptr<Server::ConnectionBase> const& ws)
     {
         throw std::runtime_error("MyError");
     }
@@ -207,52 +207,6 @@ TEST_F(WebServerTest, Ws)
     wsClient.disconnect();
 }
 
-TEST_F(WebServerTest, HttpBodyNotJsonValue)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
-    auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({)");
-    EXPECT_EQ(
-        res,
-        R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response"})");
-}
-
-TEST_F(WebServerTest, HttpBodyNotJsonObject)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
-    auto const res = HttpSyncClient::syncPost("localhost", "8888", R"("123")");
-    EXPECT_EQ(
-        res,
-        R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response"})");
-}
-
-TEST_F(WebServerTest, WsBodyNotJsonValue)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    WebSocketSyncClient wsClient;
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
-    wsClient.connect("localhost", "8888");
-    auto const res = wsClient.syncPost(R"({)");
-    wsClient.disconnect();
-    EXPECT_EQ(
-        res,
-        R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response","request":["{"]})");
-}
-
-TEST_F(WebServerTest, WsBodyNotJsonObject)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", "8888");
-    auto const res = wsClient.syncPost(R"("Hello")");
-    wsClient.disconnect();
-    EXPECT_EQ(
-        res,
-        R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response","request":"Hello"})");
-}
-
 TEST_F(WebServerTest, HttpInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
@@ -269,11 +223,24 @@ TEST_F(WebServerTest, WsInternalError)
     auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
-    auto const res = wsClient.syncPost(R"({})");
+    auto const res = wsClient.syncPost(R"({"id":"id1"})");
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":{}})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})");
+}
+
+TEST_F(WebServerTest, WsInternalErrorNotJson)
+{
+    auto e = std::make_shared<ExceptionExecutor>();
+    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+    WebSocketSyncClient wsClient;
+    wsClient.connect("localhost", "8888");
+    auto const res = wsClient.syncPost("not json");
+    wsClient.disconnect();
+    EXPECT_EQ(
+        res,
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})");
 }
 
 TEST_F(WebServerTest, Https)
