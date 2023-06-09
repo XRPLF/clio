@@ -36,13 +36,22 @@ class Counters
     {
         std::uint64_t started = 0u;
         std::uint64_t finished = 0u;
+        std::uint64_t failed = 0u;
         std::uint64_t errored = 0u;
         std::uint64_t forwarded = 0u;
+        std::uint64_t failedForward = 0u;
         std::uint64_t duration = 0u;
     };
 
     mutable std::mutex mutex_;
     std::unordered_map<std::string, MethodInfo> methodInfo_;
+
+    // counters that don't carry RPC method information
+    std::atomic_uint64_t tooBusyCounter_;
+    std::atomic_uint64_t notReadyCounter_;
+    std::atomic_uint64_t badSyntaxCounter_;
+    std::atomic_uint64_t unknownCommandCounter_;
+    std::atomic_uint64_t internalErrorCounter_;
 
     std::reference_wrapper<const WorkQueue> workQueue_;
 
@@ -56,6 +65,9 @@ public:
     }
 
     void
+    rpcFailed(std::string const& method);
+
+    void
     rpcErrored(std::string const& method);
 
     void
@@ -63,6 +75,24 @@ public:
 
     void
     rpcForwarded(std::string const& method);
+
+    void
+    rpcFailedToForward(std::string const& method);
+
+    void
+    onTooBusy();
+
+    void
+    onNotReady();
+
+    void
+    onBadSyntax();
+
+    void
+    onUnknownCommand();
+
+    void
+    onInternalError();
 
     boost::json::object
     report() const;

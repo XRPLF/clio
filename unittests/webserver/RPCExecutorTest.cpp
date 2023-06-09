@@ -94,13 +94,13 @@ TEST_F(WebRPCExecutorTest, HTTPDefaultPath)
 
     static auto constexpr result = "{}";
     static auto constexpr response = R"({
-                                        "result":{
-                                            "status":"success"
+                                        "result": {
+                                            "status": "success"
                                         },
-                                        "warnings":[
+                                        "warnings": [
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             }
                                         ]
                                     })";
@@ -128,15 +128,14 @@ TEST_F(WebRPCExecutorTest, WsNormalPath)
 
     static auto constexpr result = "{}";
     static auto constexpr response = R"({
-                                        "result":{
-                                        },
-                                        "id":99,
-                                        "status":"success",
-                                        "type":"response",
-                                        "warnings":[
+                                        "result":{},
+                                        "id": 99,
+                                        "status": "success",
+                                        "type": "response",
+                                        "warnings": [
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             }
                                         ]
                                     })";
@@ -175,10 +174,10 @@ TEST_F(WebRPCExecutorTest, HTTPForwardedPath)
                                         "forwarded": true,
                                         "warnings":[
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             }
-                                            ]
+                                        ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(boost::json::parse(result).as_object()));
@@ -207,19 +206,19 @@ TEST_F(WebRPCExecutorTest, WsForwardedPath)
                                             "index": 1
                                         },
                                         "forwarded": true
-                                    })";
+                                   })";
     static auto constexpr response = R"({
                                         "result":{
                                             "index": 1
-                                            },
+                                        },
                                         "forwarded": true,
-                                        "id":99,
-                                        "status":"success",
-                                        "type":"response",
-                                        "warnings":[
+                                        "id": 99,
+                                        "status": "success",
+                                        "type": "response",
+                                        "warnings": [
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             }
                                         ]
                                     })";
@@ -247,15 +246,15 @@ TEST_F(WebRPCExecutorTest, HTTPErrorPath)
                                                 "method": "ledger",
                                                 "params": [
                                                     {
-                                                    "ledger_index": "xx"
+                                                        "ledger_index": "xx"
                                                     }
                                                 ]
                                             }
                                         },
-                                        "warnings":[
+                                        "warnings": [
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             }
                                         ]
                                     })";
@@ -273,7 +272,6 @@ TEST_F(WebRPCExecutorTest, HTTPErrorPath)
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
-    EXPECT_CALL(*rpcEngine, notifyErrored("ledger")).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -297,10 +295,10 @@ TEST_F(WebRPCExecutorTest, WsErrorPath)
                                             "ledger_index": "xx",
                                             "id": "123"
                                         },
-                                        "warnings":[
+                                        "warnings": [
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             }
                                         ]
                                     })";
@@ -315,7 +313,6 @@ TEST_F(WebRPCExecutorTest, WsErrorPath)
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
-    EXPECT_CALL(*rpcEngine, notifyErrored("ledger")).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -332,22 +329,20 @@ TEST_F(WebRPCExecutorTest, HTTPNotReady)
                                     })";
 
     static auto constexpr response = R"({
-                                        "result":{
-                                            "error":"notReady",
-                                            "error_code":13,
-                                            "error_message":"Not ready to handle this request.",
-                                            "status":"error",
-                                            "type":"response",
-                                            "request":{
-                                                "method":"server_info",
-                                                "params":[
-                                                    {
-                                                    
-                                                    }
-                                                ]
+                                        "result": {
+                                            "error": "notReady",
+                                            "error_code": 13,
+                                            "error_message": "Not ready to handle this request.",
+                                            "status": "error",
+                                            "type": "response",
+                                            "request": {
+                                                "method": "server_info",
+                                                "params": [{}]
                                             }
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -364,17 +359,19 @@ TEST_F(WebRPCExecutorTest, WsNotReady)
                                     })";
 
     static auto constexpr response = R"({
-                                        "error":"notReady",
-                                        "error_code":13,
-                                        "error_message":"Not ready to handle this request.",
-                                        "status":"error",
-                                        "type":"response",
-                                        "id":99,
-                                        "request":{
-                                            "command":"server_info",
-                                            "id":99
+                                        "error": "notReady",
+                                        "error_code": 13,
+                                        "error_message": "Not ready to handle this request.",
+                                        "status": "error",
+                                        "type": "response",
+                                        "id": 99,
+                                        "request": {
+                                            "command": "server_info",
+                                            "id": 99
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -390,17 +387,19 @@ TEST_F(WebRPCExecutorTest, HTTPBadSyntax)
 
     static auto constexpr response = R"({
                                         "result":{
-                                            "error":"badSyntax",
-                                            "error_code":1,
-                                            "error_message":"Syntax error.",
-                                            "status":"error",
-                                            "type":"response",
-                                            "request":{
-                                                "method2":"server_info",
-                                                "params":[{}]
+                                            "error": "badSyntax",
+                                            "error_code": 1,
+                                            "error_message": "Syntax error.",
+                                            "status": "error",
+                                            "type": "response",
+                                            "request": {
+                                                "method2": "server_info",
+                                                "params": [{}]
                                             }
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -415,18 +414,20 @@ TEST_F(WebRPCExecutorTest, HTTPBadSyntaxWhenRequestSubscribe)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     static auto constexpr response = R"({
-                                        "result":{
-                                            "error":"badSyntax",
-                                            "error_code":1,
-                                            "error_message":"Syntax error.",
-                                            "status":"error",
-                                            "type":"response",
-                                            "request":{
-                                                "method":"subscribe",
-                                                "params":[{}]
+                                        "result": {
+                                            "error": "badSyntax",
+                                            "error_code": 1,
+                                            "error_message": "Syntax error.",
+                                            "status": "error",
+                                            "type": "response",
+                                            "request": {
+                                                "method": "subscribe",
+                                                "params": [{}]
                                             }
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -445,17 +446,19 @@ TEST_F(WebRPCExecutorTest, WsBadSyntax)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     static auto constexpr response = R"({
-                                        "error":"badSyntax",
-                                        "error_code":1,
-                                        "error_message":"Syntax error.",
-                                        "status":"error",
-                                        "type":"response",
-                                        "id":99,
+                                        "error": "badSyntax",
+                                        "error_code": 1,
+                                        "error_message": "Syntax error.",
+                                        "status": "error",
+                                        "type": "response",
+                                        "id": 99,
                                         "request":{
-                                            "command2":"server_info",
-                                            "id":99
+                                            "command2": "server_info",
+                                            "id": 99
                                         }
                                     })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
@@ -466,18 +469,14 @@ TEST_F(WebRPCExecutorTest, HTTPInternalError)
 {
     static auto constexpr response = R"({
                                         "result": {
-                                            "error":"internal",
-                                            "error_code":73,
-                                            "error_message":"Internal error.",
-                                            "status":"error",
-                                            "type":"response",
-                                            "request":{
+                                            "error": "internal",
+                                            "error_code": 73,
+                                            "error_message": "Internal error.",
+                                            "status": "error",
+                                            "type": "response",
+                                            "request": {
                                                 "method": "ledger",
-                                                "params": [
-                                                    {
-
-                                                    }
-                                                ]
+                                                "params": [{}]
                                             }
                                         }
                                     })";
@@ -487,12 +486,10 @@ TEST_F(WebRPCExecutorTest, HTTPInternalError)
 
     static auto constexpr requestJSON = R"({
                                             "method": "ledger",
-                                            "params": [
-                                                {
-
-                                                }
-                                            ]
+                                            "params": [{}]
                                         })";
+
+    EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*rpcExecutor)(std::move(requestJSON), session);
@@ -505,15 +502,15 @@ TEST_F(WebRPCExecutorTest, WsInternalError)
     session->upgraded = true;
 
     static auto constexpr response = R"({
-                                        "error":"internal",
-                                        "error_code":73,
-                                        "error_message":"Internal error.",
-                                        "status":"error",
-                                        "type":"response",
-                                        "id":"123",
-                                        "request":{
-                                            "command":"ledger",
-                                            "id":"123"
+                                        "error": "internal",
+                                        "error_code": 73,
+                                        "error_message": "Internal error.",
+                                        "status": "error",
+                                        "type": "response",
+                                        "id": "123",
+                                        "request": {
+                                            "command": "ledger",
+                                            "id": "123"
                                         }
                                     })";
 
@@ -524,6 +521,8 @@ TEST_F(WebRPCExecutorTest, WsInternalError)
                                             "command": "ledger",
                                             "id": "123"
                                         })";
+
+    EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*rpcExecutor)(std::move(requestJSON), session);
@@ -543,17 +542,17 @@ TEST_F(WebRPCExecutorTest, HTTPOutDated)
 
     static auto constexpr result = "{}";
     static auto constexpr response = R"({
-                                        "result":{
-                                            "status":"success"
+                                        "result": {
+                                            "status": "success"
                                         },
-                                        "warnings":[
+                                        "warnings": [
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             },
                                             {
-                                                "id":2002,
-                                                "message":"This server may be out of date"
+                                                "id": 2002,
+                                                "message": "This server may be out of date"
                                             }
                                         ]
                                     })";
@@ -582,19 +581,18 @@ TEST_F(WebRPCExecutorTest, WsOutdated)
 
     static auto constexpr result = "{}";
     static auto constexpr response = R"({
-                                        "result":{
-                                        },
-                                        "id":99,
-                                        "status":"success",
-                                        "type":"response",
+                                        "result":{},
+                                        "id": 99,
+                                        "status": "success",
+                                        "type": "response",
                                         "warnings":[
                                             {
-                                                "id":2001,
-                                                "message":"This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
                                             },
                                             {
-                                                "id":2002,
-                                                "message":"This server may be out of date"
+                                                "id": 2002,
+                                                "message": "This server may be out of date"
                                             }
                                         ]
                                     })";
@@ -613,9 +611,9 @@ TEST_F(WebRPCExecutorTest, WsTooBusy)
 {
     session->upgraded = true;
 
-    auto rpcEngine2 = std::make_shared<MockRPCEngine>();
-    auto rpcExecutor2 =
-        std::make_shared<RPCExecutor<MockRPCEngine, MockETLService>>(cfg, mockBackendPtr, rpcEngine2, etl, subManager);
+    auto localRpcEngine = std::make_shared<MockRPCEngine>();
+    auto localRpcExecutor = std::make_shared<RPCExecutor<MockRPCEngine, MockETLService>>(
+        cfg, mockBackendPtr, localRpcEngine, etl, subManager);
     static auto constexpr request = R"({
                                         "command": "server_info",
                                         "id": 99
@@ -626,22 +624,25 @@ TEST_F(WebRPCExecutorTest, WsTooBusy)
 
     static auto constexpr response =
         R"({
-            "error":"tooBusy",
-            "error_code":9,
-            "error_message":"The server is too busy to help you now.",
-            "status":"error",
-            "type":"response"
+            "error": "tooBusy",
+            "error_code": 9,
+            "error_message": "The server is too busy to help you now.",
+            "status": "error",
+            "type": "response"
         })";
-    EXPECT_CALL(*rpcEngine2, post).WillOnce(testing::Return(false));
-    (*rpcExecutor2)(std::move(request), session);
+
+    EXPECT_CALL(*localRpcEngine, notifyTooBusy).Times(1);
+    EXPECT_CALL(*localRpcEngine, post).WillOnce(testing::Return(false));
+
+    (*localRpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
 TEST_F(WebRPCExecutorTest, HTTPTooBusy)
 {
-    auto rpcEngine2 = std::make_shared<MockRPCEngine>();
-    auto rpcExecutor2 =
-        std::make_shared<RPCExecutor<MockRPCEngine, MockETLService>>(cfg, mockBackendPtr, rpcEngine2, etl, subManager);
+    auto localRpcEngine = std::make_shared<MockRPCEngine>();
+    auto localRpcExecutor = std::make_shared<RPCExecutor<MockRPCEngine, MockETLService>>(
+        cfg, mockBackendPtr, localRpcEngine, etl, subManager);
     static auto constexpr request = R"({
                                         "method": "server_info",
                                         "params": [{}]
@@ -652,15 +653,17 @@ TEST_F(WebRPCExecutorTest, HTTPTooBusy)
 
     static auto constexpr response =
         R"({
-            "error":"tooBusy",
-            "error_code":9,
-            "error_message":"The server is too busy to help you now.",
-            "status":"error",
-            "type":"response"
+            "error": "tooBusy",
+            "error_code": 9,
+            "error_message": "The server is too busy to help you now.",
+            "status": "error",
+            "type": "response"
         })";
 
-    EXPECT_CALL(*rpcEngine2, post).WillOnce(testing::Return(false));
-    (*rpcExecutor2)(std::move(request), session);
+    EXPECT_CALL(*localRpcEngine, notifyTooBusy).Times(1);
+    EXPECT_CALL(*localRpcEngine, post).WillOnce(testing::Return(false));
+
+    (*localRpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -669,12 +672,14 @@ TEST_F(WebRPCExecutorTest, HTTPRequestNotJson)
     static auto constexpr request = "not json";
     static auto constexpr response =
         R"({
-            "error":"badSyntax",
-            "error_code":1,
-            "error_message":"Syntax error.",
-            "status":"error",
-            "type":"response"
+            "error": "badSyntax",
+            "error_code": 1,
+            "error_message": "Syntax error.",
+            "status": "error",
+            "type": "response"
         })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
@@ -686,12 +691,14 @@ TEST_F(WebRPCExecutorTest, WsRequestNotJson)
     static auto constexpr request = "not json";
     static auto constexpr response =
         R"({
-            "error":"badSyntax",
-            "error_code":1,
-            "error_message":"Syntax error.",
-            "status":"error",
-            "type":"response"
+            "error": "badSyntax",
+            "error_code": 1,
+            "error_message": "Syntax error.",
+            "status": "error",
+            "type": "response"
         })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*rpcExecutor)(std::move(request), session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));

@@ -230,7 +230,7 @@ public:
                     e["id"] = request.as_object().at("id");
                 e["request"] = std::move(request);
             }
-            catch (std::exception&)
+            catch (std::exception const&)
             {
                 e["request"] = std::move(requestStr);
             }
@@ -246,6 +246,7 @@ public:
         // dosGuard served request++ and check ip address
         if (!dosGuard_.get().request(clientIp))
         {
+            // TODO: could be useful to count in counters in the future too
             sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(msg));
         }
         else
@@ -254,9 +255,8 @@ public:
             {
                 (*handler_)(msg, shared_from_this());
             }
-            catch (std::exception const& e)
+            catch (std::exception const&)
             {
-                perfLog_.error() << tag() << "Caught exception : " << e.what();
                 sendError(RPC::RippledError::rpcINTERNAL, std::move(msg));
             }
         }

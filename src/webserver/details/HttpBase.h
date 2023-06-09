@@ -38,7 +38,8 @@ namespace Server {
 using tcp = boost::asio::ip::tcp;
 
 /**
- * This is the implementation class for http sessions
+ * @brief This is the implementation class for http sessions
+ *
  * @tparam Derived The derived class
  * @tparam Handler The handler class, will be called when a request is received.
  */
@@ -66,13 +67,11 @@ class HttpBase : public ConnectionBase
             if (self_.dead())
                 return;
 
-            // The lifetime of the message has to extend
-            // for the duration of the async operation so
-            // we use a shared_ptr to manage it.
+            // The lifetime of the message has to extend for the duration of the async operation so we use a shared_ptr
+            // to manage it.
             auto sp = std::make_shared<http::message<isRequest, Body, Fields>>(std::move(msg));
 
-            // Store a type-erased version of the shared
-            // pointer in the class to keep it alive.
+            // Store a type-erased version of the shared pointer in the class to keep it alive.
             self_.res_ = sp;
 
             // Write the response
@@ -199,6 +198,7 @@ public:
         // connection limit
         if (!dosGuard_.get().request(clientIp))
         {
+            // TODO: this looks like it could be useful to count too in the future
             return sender_(httpResponse(
                 http::status::service_unavailable,
                 "text/plain",
@@ -211,9 +211,8 @@ public:
         {
             (*handler_)(req_.body(), derived().shared_from_this());
         }
-        catch (std::exception const& e)
+        catch (std::exception const&)
         {
-            perfLog_.error() << tag() << "Caught exception : " << e.what();
             return sender_(httpResponse(
                 http::status::internal_server_error,
                 "application/json",

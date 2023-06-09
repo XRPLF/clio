@@ -131,22 +131,6 @@ protected:
     }
 };
 
-TEST_F(RPCServerInfoHandlerTest, NoRangeErrorsOutWithNotReady)
-{
-    auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
-
-    runSpawn([&](auto& yield) {
-        auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
-
-        ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "emptyDatabase");
-        EXPECT_EQ(err.at("error_message").as_string(), "The server has no data in the database");
-    });
-}
-
 TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());

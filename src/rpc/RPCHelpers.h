@@ -216,54 +216,6 @@ parseBook(boost::json::object const& request);
 std::variant<Status, ripple::AccountID>
 parseTaker(boost::json::value const& request);
 
-std::optional<std::uint32_t>
-getUInt(boost::json::object const& request, std::string const& field);
-
-std::uint32_t
-getUInt(boost::json::object const& request, std::string const& field, std::uint32_t dfault);
-
-std::uint32_t
-getRequiredUInt(boost::json::object const& request, std::string const& field);
-
-std::optional<bool>
-getBool(boost::json::object const& request, std::string const& field);
-
-bool
-getBool(boost::json::object const& request, std::string const& field, bool dfault);
-
-bool
-getRequiredBool(boost::json::object const& request, std::string const& field);
-
-std::optional<std::string>
-getString(boost::json::object const& request, std::string const& field);
-
-std::string
-getRequiredString(boost::json::object const& request, std::string const& field);
-
-std::string
-getString(boost::json::object const& request, std::string const& field, std::string dfault);
-
-Status
-getHexMarker(boost::json::object const& request, ripple::uint256& marker);
-
-Status
-getAccount(boost::json::object const& request, ripple::AccountID& accountId);
-
-Status
-getAccount(boost::json::object const& request, ripple::AccountID& destAccount, boost::string_view const& field);
-
-Status
-getOptionalAccount(
-    boost::json::object const& request,
-    std::optional<ripple::AccountID>& account,
-    boost::string_view const& field);
-
-Status
-getTaker(boost::json::object const& request, ripple::AccountID& takerID);
-
-Status
-getChannelId(boost::json::object const& request, ripple::uint256& channelId);
-
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request);
 

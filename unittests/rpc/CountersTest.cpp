@@ -37,11 +37,18 @@ protected:
 
 TEST_F(RPCCountersTest, CheckThatCountersAddUp)
 {
-    for (auto i = 0u; i < 512; ++i)
+    for (auto i = 0u; i < 512u; ++i)
     {
         counters.rpcErrored("error");
         counters.rpcComplete("complete", std::chrono::milliseconds{1u});
         counters.rpcForwarded("forward");
+        counters.rpcFailedToForward("failedToForward");
+        counters.rpcFailed("failed");
+        counters.onTooBusy();
+        counters.onNotReady();
+        counters.onBadSyntax();
+        counters.onUnknownCommand();
+        counters.onInternalError();
     }
 
     auto const report = counters.report();
@@ -51,17 +58,43 @@ TEST_F(RPCCountersTest, CheckThatCountersAddUp)
     EXPECT_STREQ(rpc.at("error").as_object().at(JS(finished)).as_string().c_str(), "0");
     EXPECT_STREQ(rpc.at("error").as_object().at(JS(errored)).as_string().c_str(), "512");
     EXPECT_STREQ(rpc.at("error").as_object().at("forwarded").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("error").as_object().at("failed_forward").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("error").as_object().at(JS(failed)).as_string().c_str(), "0");
 
     EXPECT_STREQ(rpc.at("complete").as_object().at(JS(started)).as_string().c_str(), "512");
     EXPECT_STREQ(rpc.at("complete").as_object().at(JS(finished)).as_string().c_str(), "512");
     EXPECT_STREQ(rpc.at("complete").as_object().at(JS(errored)).as_string().c_str(), "0");
     EXPECT_STREQ(rpc.at("complete").as_object().at("forwarded").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("complete").as_object().at("failed_forward").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("complete").as_object().at(JS(failed)).as_string().c_str(), "0");
     EXPECT_STREQ(rpc.at("complete").as_object().at(JS(duration_us)).as_string().c_str(), "512000");  // 1000 per call
 
     EXPECT_STREQ(rpc.at("forward").as_object().at(JS(started)).as_string().c_str(), "0");
     EXPECT_STREQ(rpc.at("forward").as_object().at(JS(finished)).as_string().c_str(), "0");
     EXPECT_STREQ(rpc.at("forward").as_object().at(JS(errored)).as_string().c_str(), "0");
     EXPECT_STREQ(rpc.at("forward").as_object().at("forwarded").as_string().c_str(), "512");
+    EXPECT_STREQ(rpc.at("forward").as_object().at("failed_forward").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("forward").as_object().at(JS(failed)).as_string().c_str(), "0");
+
+    EXPECT_STREQ(rpc.at("failed").as_object().at(JS(started)).as_string().c_str(), "512");
+    EXPECT_STREQ(rpc.at("failed").as_object().at(JS(finished)).as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failed").as_object().at(JS(errored)).as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failed").as_object().at("forwarded").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failed").as_object().at("failed_forward").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failed").as_object().at(JS(failed)).as_string().c_str(), "512");
+
+    EXPECT_STREQ(rpc.at("failedToForward").as_object().at(JS(started)).as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failedToForward").as_object().at(JS(finished)).as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failedToForward").as_object().at(JS(errored)).as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failedToForward").as_object().at("forwarded").as_string().c_str(), "0");
+    EXPECT_STREQ(rpc.at("failedToForward").as_object().at("failed_forward").as_string().c_str(), "512");
+    EXPECT_STREQ(rpc.at("failedToForward").as_object().at(JS(failed)).as_string().c_str(), "0");
+
+    EXPECT_STREQ(report.at("too_busy_errors").as_string().c_str(), "512");
+    EXPECT_STREQ(report.at("not_ready_errors").as_string().c_str(), "512");
+    EXPECT_STREQ(report.at("bad_syntax_errors").as_string().c_str(), "512");
+    EXPECT_STREQ(report.at("unknown_command_errors").as_string().c_str(), "512");
+    EXPECT_STREQ(report.at("internal_errors").as_string().c_str(), "512");
 
     EXPECT_EQ(report.at("work_queue"), queue.report());  // Counters report includes queue report
 }
