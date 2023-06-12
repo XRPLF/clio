@@ -37,9 +37,13 @@ public:
         // response of stream "ledger"
         // TODO: use better type than json, this type will be used in the stream as well
         std::optional<boost::json::object> ledger;
-        // books returns nothing by default, if snapshot is true, it returns offers
+        // books returns nothing by default, if snapshot is true and both is false, offers go to offers list
         // TODO: use better type than json
         std::optional<boost::json::array> offers;
+        // if snapshot is true and both is true, reversed book' offers go to asks list
+        std::optional<boost::json::array> asks;
+        // if snapshot is true and both is true, original book' offers go to bids list
+        std::optional<boost::json::array> bids;
     };
 
     struct OrderBook
@@ -128,9 +132,7 @@ public:
 
         if (input.books)
         {
-            auto const offers = subscribeToBooks(*(input.books), ctx.session, ctx.yield);
-            if (!offers.empty())
-                output.offers = offers;
+            subscribeToBooks(*(input.books), ctx.session, ctx.yield, output);
         };
 
         return output;
@@ -188,15 +190,15 @@ private:
         }
     }
 
-    boost::json::array
+    void
     subscribeToBooks(
         std::vector<OrderBook> const& books,
         std::shared_ptr<Server::ConnectionBase> const& session,
-        boost::asio::yield_context& yield) const
+        boost::asio::yield_context& yield,
+        Output& output) const
     {
         static auto constexpr fetchLimit = 200;
 
-        boost::json::array snapshots;
         std::optional<Backend::LedgerRange> rng;
 
         for (auto const& internalBook : books)
@@ -206,7 +208,7 @@ private:
                 if (!rng)
                     rng = sharedPtrBackend_->fetchLedgerRange();
 
-                auto const getOrderBook = [&](auto const& book) {
+                auto const getOrderBook = [&](auto const& book, auto& snapshots) {
                     auto const bookBase = getBookBase(book);
                     auto const [offers, _] =
                         sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, fetchLimit, yield);
@@ -221,10 +223,21 @@ private:
                     std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
                 };
 
-                getOrderBook(internalBook.book);
-
                 if (internalBook.both)
-                    getOrderBook(ripple::reversed(internalBook.book));
+                {
+                    if (!output.bids)
+                        output.bids = boost::json::array();
+                    if (!output.asks)
+                        output.asks = boost::json::array();
+                    getOrderBook(internalBook.book, *(output.bids));
+                    getOrderBook(ripple::reversed(internalBook.book), *(output.asks));
+                }
+                else
+                {
+                    if (!output.offers)
+                        output.offers = boost::json::array();
+                    getOrderBook(internalBook.book, *(output.offers));
+                }
             }
 
             subscriptions_->subBook(internalBook.book, session);
@@ -232,8 +245,6 @@ private:
             if (internalBook.both)
                 subscriptions_->subBook(ripple::reversed(internalBook.book), session);
         }
-
-        return snapshots;
     }
 
     friend void
@@ -243,6 +254,10 @@ private:
 
         if (output.offers)
             jv.as_object().emplace(JS(offers), *(output.offers));
+        if (output.asks)
+            jv.as_object().emplace(JS(asks), *(output.asks));
+        if (output.bids)
+            jv.as_object().emplace(JS(bids), *(output.bids));
     }
 
     friend Input
