@@ -19,13 +19,14 @@
 
 #pragma once
 
+#include <util/FakeFetchResponse.h>
+
 #include <gmock/gmock.h>
 
 #include <optional>
 
-template <typename DataType>
 struct MockLedgerFetcher
 {
-    MOCK_METHOD(std::optional<DataType>, fetchData, (uint32_t), ());
-    MOCK_METHOD(std::optional<DataType>, fetchDataAndDiff, (uint32_t), ());
+    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchData, (uint32_t), ());
+    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchDataAndDiff, (uint32_t), ());
 };

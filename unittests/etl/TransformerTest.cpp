@@ -34,8 +34,8 @@ class ETLTransformerTest : public MockBackendTest
 {
 protected:
     using DataType = FakeFetchResponse;
-    using ExtractionDataPipeType = MockExtractionDataPipe<DataType>;
-    using LedgerLoaderType = MockLedgerLoader<DataType>;
+    using ExtractionDataPipeType = MockExtractionDataPipe;
+    using LedgerLoaderType = MockLedgerLoader;
     using LedgerPublisherType = MockLedgerPublisher;
     using TransformerType = clio::detail::Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType>;
 

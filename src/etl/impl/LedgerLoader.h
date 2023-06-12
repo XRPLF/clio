@@ -48,7 +48,9 @@ template <typename LoadBalancerType, typename LedgerFetcherType>
 class LedgerLoader
 {
 public:
-    using DataType = typename LoadBalancerType::RawDataType;
+    using GetLedgerResponseType = typename LoadBalancerType::GetLedgerResponseType;
+    using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
+    using RawLedgerObjectType = typename LoadBalancerType::RawLedgerObjectType;
 
 private:
     clio::Logger log_{"ETL"};
@@ -83,7 +85,7 @@ public:
      * nft_token_transactions tables (mostly transaction hashes, corresponding nodestore hashes and affected accounts)
      */
     FormattedTransactionsData
-    insertTransactions(ripple::LedgerInfo const& ledger, DataType& data)
+    insertTransactions(ripple::LedgerInfo const& ledger, GetLedgerResponseType& data)
     {
         FormattedTransactionsData result;
 
@@ -150,10 +152,9 @@ public:
             return {};
         }
 
-        // fetch the ledger from the network. This function will not return until
-        // either the fetch is successful, or the server is being shutdown. This
-        // only fetches the ledger header and the transactions+metadata
-        std::optional<org::xrpl::rpc::v1::GetLedgerResponse> ledgerData{fetcher_.get().fetchData(sequence)};
+        // Fetch the ledger from the network. This function will not return until either the fetch is successful, or the
+        // server is being shutdown. This only fetches the ledger header and the transactions+metadata
+        OptionalGetLedgerResponseType ledgerData{fetcher_.get().fetchData(sequence)};
         if (!ledgerData)
             return {};
 

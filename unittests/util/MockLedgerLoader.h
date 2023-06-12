@@ -25,11 +25,15 @@
 
 #include <optional>
 
-template <typename InDataType>
 struct MockLedgerLoader
 {
-    using DataType = InDataType;
+    using GetLedgerResponseType = FakeFetchResponse;
+    using RawLedgerObjectType = FakeLedgerObject;
 
-    MOCK_METHOD(FormattedTransactionsData, insertTransactions, (ripple::LedgerInfo const&, DataType& data), ());
+    MOCK_METHOD(
+        FormattedTransactionsData,
+        insertTransactions,
+        (ripple::LedgerInfo const&, GetLedgerResponseType& data),
+        ());
     MOCK_METHOD(std::optional<ripple::LedgerInfo>, loadInitialLedger, (uint32_t sequence), ());
 };

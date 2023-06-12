@@ -107,10 +107,10 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
     return {std::move(response), success};
 }
 
-LoadBalancer::DataType
+LoadBalancer::OptionalGetLedgerResponseType
 LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
-    RawDataType response;
+    GetLedgerResponseType response;
     bool success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
             auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);

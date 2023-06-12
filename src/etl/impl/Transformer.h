@@ -50,7 +50,8 @@ namespace clio::detail {
 template <typename DataPipeType, typename LedgerLoaderType, typename LedgerPublisherType>
 class Transformer
 {
-    using DataType = typename LedgerLoaderType::DataType;
+    using GetLedgerResponseType = typename LedgerLoaderType::GetLedgerResponseType;
+    using RawLedgerObjectType = typename LedgerLoaderType::RawLedgerObjectType;
 
     clio::Logger log_{"ETL"};
 
@@ -165,7 +166,7 @@ private:
      * @return the newly built ledger and data to write to the database
      */
     std::pair<ripple::LedgerInfo, bool>
-    buildNextLedger(DataType& rawData)
+    buildNextLedger(GetLedgerResponseType& rawData)
     {
         log_.debug() << "Beginning ledger update";
         ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
@@ -210,7 +211,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    updateCache(ripple::LedgerInfo const& lgrInfo, DataType& rawData)
+    updateCache(ripple::LedgerInfo const& lgrInfo, GetLedgerResponseType& rawData)
     {
         std::vector<Backend::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(rawData.ledger_objects().objects_size());
@@ -227,7 +228,7 @@ private:
             cacheUpdates.push_back({*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
             log_.debug() << "key = " << ripple::strHex(*key) << " - mod type = " << obj.mod_type();
 
-            if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED && !rawData.object_neighbors_included())
+            if (obj.mod_type() != RawLedgerObjectType::MODIFIED && !rawData.object_neighbors_included())
             {
                 log_.debug() << "object neighbors not included. using cache";
 
@@ -268,7 +269,7 @@ private:
                 }
             }
 
-            if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
+            if (obj.mod_type() == RawLedgerObjectType::MODIFIED)
                 modified.insert(*key);
 
             backend_->writeLedgerObject(std::move(*obj.mutable_key()), lgrInfo.seq, std::move(*obj.mutable_data()));
@@ -341,7 +342,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    writeSuccessors(ripple::LedgerInfo const& lgrInfo, DataType& rawData)
+    writeSuccessors(ripple::LedgerInfo const& lgrInfo, GetLedgerResponseType& rawData)
     {
         // Write successor info, if included from rippled
         if (rawData.object_neighbors_included())
@@ -361,7 +362,7 @@ private:
 
             for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
             {
-                if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
+                if (obj.mod_type() != RawLedgerObjectType::MODIFIED)
                 {
                     std::string* predPtr = obj.mutable_predecessor();
                     if (!predPtr->size())
@@ -370,7 +371,7 @@ private:
                     if (!succPtr->size())
                         *succPtr = uint256ToString(Backend::lastKey);
 
-                    if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::DELETED)
+                    if (obj.mod_type() == RawLedgerObjectType::DELETED)
                     {
                         log_.debug() << "Modifying successors for deleted object " << ripple::strHex(obj.key()) << " - "
                                      << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
