@@ -187,10 +187,7 @@ public:
     post(Fn&& func, std::string const& ip)
     {
         if (!workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip)))
-        {
-            notifyTooBusy();
             return false;
-        }
 
         return true;
     }

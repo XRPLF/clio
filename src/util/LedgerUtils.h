@@ -30,7 +30,6 @@ inline ripple::LedgerInfo
 deserializeHeader(ripple::Slice data)
 {
     ripple::SerialIter sit(data.data(), data.size());
-
     ripple::LedgerInfo info;
 
     info.seq = sit.get32();
@@ -42,7 +41,6 @@ deserializeHeader(ripple::Slice data)
     info.closeTime = ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
     info.closeTimeResolution = ripple::NetClock::duration{sit.get8()};
     info.closeFlags = sit.get8();
-
     info.hash = sit.get256();
 
     return info;

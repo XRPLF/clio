@@ -114,6 +114,7 @@ if(BUILD_TESTS)
     unittests/SubscriptionTest.cpp
     unittests/SubscriptionManagerTest.cpp
     unittests/util/TestObject.cpp
+    unittests/util/StringUtils.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTest.cpp
     unittests/etl/ExtractorTest.cpp

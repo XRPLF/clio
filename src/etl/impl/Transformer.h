@@ -108,19 +108,13 @@ public:
     }
 
 private:
-    bool
-    isStopping() const
-    {
-        return state_.get().isStopping;
-    }
-
     void
     process()
     {
         beast::setCurrentThreadName("ETLService transform");
         uint32_t currentSequence = startSequence_;
 
-        while (not state_.get().writeConflict)
+        while (not hasWriteConflict())
         {
             auto fetchResponse = pipe_.get().popNext(currentSequence);
             ++currentSequence;
@@ -133,27 +127,32 @@ private:
             if (isStopping())
                 continue;
 
-            auto const numTxns = fetchResponse->transactions_list().transactions_size();
-            auto const numObjects = fetchResponse->ledger_objects().objects_size();
             auto const start = std::chrono::system_clock::now();
             auto [lgrInfo, success] = buildNextLedger(*fetchResponse);
-            auto const end = std::chrono::system_clock::now();
 
-            auto duration = ((end - start).count()) / 1000000000.0;
             if (success)
+            {
+                auto const numTxns = fetchResponse->transactions_list().transactions_size();
+                auto const numObjects = fetchResponse->ledger_objects().objects_size();
+                auto const end = std::chrono::system_clock::now();
+                auto const duration = ((end - start).count()) / 1000000000.0;
+
                 log_.info() << "Load phase of etl : "
                             << "Successfully wrote ledger! Ledger info: " << util::toString(lgrInfo)
                             << ". txn count = " << numTxns << ". object count = " << numObjects
                             << ". load time = " << duration << ". load txns per second = " << numTxns / duration
                             << ". load objs per second = " << numObjects / duration;
+            }
             else
+            {
                 log_.error() << "Error writing ledger. " << util::toString(lgrInfo);
+            }
 
             // success is false if the ledger was already written
             if (success)
                 publisher_.get().publish(lgrInfo);
 
-            state_.get().writeConflict = !success;
+            setWriteConflict(not success);
         }
     }
 
@@ -173,10 +172,7 @@ private:
 
         log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
         backend_->startWrites();
-        log_.debug() << "started writes";
-
         backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
-        log_.debug() << "wrote ledger header";
 
         writeSuccessors(lgrInfo, rawData);
         updateCache(lgrInfo, rawData);
@@ -184,7 +180,7 @@ private:
         log_.debug() << "Inserted/modified/deleted all objects. Number of objects = "
                      << rawData.ledger_objects().objects_size();
 
-        FormattedTransactionsData insertTxResult = loader_.get().insertTransactions(lgrInfo, rawData);
+        auto insertTxResult = loader_.get().insertTransactions(lgrInfo, rawData);
 
         log_.debug() << "Inserted all transactions. Number of transactions  = "
                      << rawData.transactions_list().transactions_size();
@@ -193,13 +189,11 @@ private:
         backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
         backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
 
-        log_.debug() << "wrote account_tx";
-
         auto [success, duration] =
             util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
 
-        log_.debug() << "Finished writes. took " << std::to_string(duration);
-        log_.debug() << "Finished ledger update. " << util::toString(lgrInfo);
+        log_.debug() << "Finished writes. Total time: " << std::to_string(duration);
+        log_.debug() << "Finished ledger update: " << util::toString(lgrInfo);
 
         return {lgrInfo, success};
     }
@@ -236,12 +230,12 @@ private:
                     throw std::runtime_error("Cache is not full, but object neighbors were not included");
 
                 auto const blob = obj.mutable_data();
-                bool checkBookBase = false;
-                bool const isDeleted = (blob->size() == 0);
+                auto checkBookBase = false;
+                auto const isDeleted = (blob->size() == 0);
 
                 if (isDeleted)
                 {
-                    auto old = backend_->cache().get(*key, lgrInfo.seq - 1);
+                    auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
                     assert(old);
                     checkBookBase = isBookDir(*key, *old);
                 }
@@ -252,10 +246,10 @@ private:
 
                 if (checkBookBase)
                 {
-                    log_.debug() << "Is book dir. key = " << ripple::strHex(*key);
+                    log_.debug() << "Is book dir. Key = " << ripple::strHex(*key);
 
-                    auto bookBase = getBookBase(*key);
-                    auto oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
+                    auto const bookBase = getBookBase(*key);
+                    auto const oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
                     assert(oldFirstDir);
 
                     // We deleted the first directory, or we added a directory prior to the old first directory
@@ -391,6 +385,24 @@ private:
                     log_.debug() << "object modified " << ripple::strHex(obj.key());
             }
         }
+    }
+
+    bool
+    isStopping() const
+    {
+        return state_.get().isStopping;
+    }
+
+    bool
+    hasWriteConflict() const
+    {
+        return state_.get().writeConflict;
+    }
+
+    void
+    setWriteConflict(bool conflict)
+    {
+        state_.get().writeConflict = conflict;
     }
 };
 

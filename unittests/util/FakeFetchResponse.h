@@ -171,6 +171,11 @@ struct FakeFetchResponse
     {
     }
 
+    FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+        : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+    {
+    }
+
     bool
     operator==(FakeFetchResponse const& other) const
     {

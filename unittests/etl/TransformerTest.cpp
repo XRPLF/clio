@@ -23,12 +23,21 @@
 #include <util/MockExtractionDataPipe.h>
 #include <util/MockLedgerLoader.h>
 #include <util/MockLedgerPublisher.h>
+#include <util/StringUtils.h>
 
 #include <gtest/gtest.h>
 
 #include <memory>
 
 using namespace testing;
+
+// taken from BackendTests
+constexpr static auto RAW_HEADER =
+    "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
+    "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
+    "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
+    "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
+    "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
 class ETLTransformerTest : public MockBackendTest
 {
@@ -65,16 +74,77 @@ public:
     }
 };
 
-TEST_F(ETLTransformerTest, Tmp)
+TEST_F(ETLTransformerTest, StopsOnWriteConflict)
 {
-    // ON_CALL(dataPipe_, getStride).WillByDefault(Return(4));
-    // EXPECT_CALL(dataPipe_, getStride).Times(3);
+    state_.writeConflict = true;
 
-    // auto response = FakeFetchResponse{};
-    // ON_CALL(ledgerFetcher_, fetchDataAndDiff(_)).WillByDefault(Return(response));
-    // EXPECT_CALL(ledgerFetcher_, fetchDataAndDiff).Times(3);
-    // EXPECT_CALL(dataPipe_, push).Times(3);
-    // EXPECT_CALL(dataPipe_, finish(0)).Times(1);
+    EXPECT_CALL(dataPipe_, popNext).Times(0);
+    EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
+
+    transformer_ =
+        std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
+
+    transformer_->waitTillFinished();  // explicitly joins the thread
+}
+
+TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
+
+    auto const blob = hexStringToBinaryString(RAW_HEADER);
+    auto const response = std::make_optional<FakeFetchResponse>(blob);
+
+    ON_CALL(dataPipe_, popNext).WillByDefault([this, &response](auto) -> std::optional<FakeFetchResponse> {
+        if (state_.isStopping)
+            return std::nullopt;
+        return response;
+    });
+    ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(true));
+
+    // TODO: most of this should be hidden in a smaller entity that is injected into the transformer thread
+    EXPECT_CALL(dataPipe_, popNext).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, startWrites).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeLedger(_, _)).Times(AtLeast(1));
+    EXPECT_CALL(ledgerLoader_, insertTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeAccountTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeNFTs).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeNFTTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, doFinishWrites).Times(AtLeast(1));
+    EXPECT_CALL(ledgerPublisher_, publish(_)).Times(AtLeast(1));
+
+    transformer_ =
+        std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
+
+    // after 10ms we start spitting out empty responses which means the extractor is finishing up
+    // this is normally combined with stopping the entire thing by setting the isStopping flag.
+    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    state_.isStopping = true;
+}
+
+TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
+
+    auto const blob = hexStringToBinaryString(RAW_HEADER);
+    auto const response = std::make_optional<FakeFetchResponse>(blob);
+
+    ON_CALL(dataPipe_, popNext).WillByDefault(Return(response));
+    ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(false));  // emulate write failure
+
+    // TODO: most of this should be hidden in a smaller entity that is injected into the transformer thread
+    EXPECT_CALL(dataPipe_, popNext).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, startWrites).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeLedger(_, _)).Times(AtLeast(1));
+    EXPECT_CALL(ledgerLoader_, insertTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeAccountTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeNFTs).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeNFTTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, doFinishWrites).Times(AtLeast(1));
+
+    // should not call publish
+    EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
     transformer_ =
         std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
