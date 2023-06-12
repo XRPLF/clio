@@ -186,10 +186,7 @@ public:
     bool
     post(Fn&& func, std::string const& ip)
     {
-        if (!workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip)))
-            return false;
-
-        return true;
+        return workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
     }
 
     /**

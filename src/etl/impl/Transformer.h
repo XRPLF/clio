@@ -142,15 +142,14 @@ private:
                             << ". txn count = " << numTxns << ". object count = " << numObjects
                             << ". load time = " << duration << ". load txns per second = " << numTxns / duration
                             << ". load objs per second = " << numObjects / duration;
+
+                // success is false if the ledger was already written
+                publisher_.get().publish(lgrInfo);
             }
             else
             {
                 log_.error() << "Error writing ledger. " << util::toString(lgrInfo);
             }
-
-            // success is false if the ledger was already written
-            if (success)
-                publisher_.get().publish(lgrInfo);
 
             setWriteConflict(not success);
         }
