@@ -528,7 +528,7 @@ public:
                 SELECT hash, seq_idx 
                   FROM {}               
                  WHERE account = ?
-                   AND seq_idx <= ?
+                   AND seq_idx < ?
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")));
@@ -540,7 +540,7 @@ public:
                 SELECT hash, seq_idx 
                   FROM {}               
                  WHERE account = ?
-                   AND seq_idx >= ?
+                   AND seq_idx > ?
               ORDER BY seq_idx ASC 
                  LIMIT ?
                 )",
