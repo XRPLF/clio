@@ -38,7 +38,7 @@ template <typename LoadBalancerType>
 class LedgerFetcher
 {
 public:
-    using DataType = typename LoadBalancerType::DataType;
+    using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
 
 private:
     clio::Logger log_{"ETL"};
@@ -64,7 +64,7 @@ public:
      * @param sequence sequence of the ledger to extract
      * @return ledger header and transaction+metadata blobs; empty optional if the server is shutting down
      */
-    DataType
+    OptionalGetLedgerResponseType
     fetchData(uint32_t seq)
     {
         log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
@@ -85,7 +85,7 @@ public:
      * @return ledger header, transaction+metadata blobs, and all ledger objects created, modified or deleted between
      * this ledger and the parent; Empty optional if the server is shutting down
      */
-    DataType
+    OptionalGetLedgerResponseType
     fetchDataAndDiff(uint32_t seq)
     {
         log_.debug() << "Attempting to fetch ledger with sequence = " << seq;

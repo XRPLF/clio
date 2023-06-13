@@ -29,8 +29,6 @@
 
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/ledger/ReadView.h>
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
 
 #include <memory>
 
@@ -49,6 +47,12 @@ namespace clio::detail {
 template <typename LoadBalancerType, typename LedgerFetcherType>
 class LedgerLoader
 {
+public:
+    using GetLedgerResponseType = typename LoadBalancerType::GetLedgerResponseType;
+    using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
+    using RawLedgerObjectType = typename LoadBalancerType::RawLedgerObjectType;
+
+private:
     clio::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
@@ -81,7 +85,7 @@ public:
      * nft_token_transactions tables (mostly transaction hashes, corresponding nodestore hashes and affected accounts)
      */
     FormattedTransactionsData
-    insertTransactions(ripple::LedgerInfo const& ledger, org::xrpl::rpc::v1::GetLedgerResponse& data)
+    insertTransactions(ripple::LedgerInfo const& ledger, GetLedgerResponseType& data)
     {
         FormattedTransactionsData result;
 
@@ -148,10 +152,9 @@ public:
             return {};
         }
 
-        // fetch the ledger from the network. This function will not return until
-        // either the fetch is successful, or the server is being shutdown. This
-        // only fetches the ledger header and the transactions+metadata
-        std::optional<org::xrpl::rpc::v1::GetLedgerResponse> ledgerData{fetcher_.get().fetchData(sequence)};
+        // Fetch the ledger from the network. This function will not return until either the fetch is successful, or the
+        // server is being shutdown. This only fetches the ledger header and the transactions+metadata
+        OptionalGetLedgerResponseType ledgerData{fetcher_.get().fetchData(sequence)};
         if (!ledgerData)
             return {};
 

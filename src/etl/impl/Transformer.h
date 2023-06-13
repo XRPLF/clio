@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <etl/SystemState.h>
+#include <etl/impl/LedgerLoader.h>
 #include <log/Logger.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
@@ -49,6 +50,9 @@ namespace clio::detail {
 template <typename DataPipeType, typename LedgerLoaderType, typename LedgerPublisherType>
 class Transformer
 {
+    using GetLedgerResponseType = typename LedgerLoaderType::GetLedgerResponseType;
+    using RawLedgerObjectType = typename LedgerLoaderType::RawLedgerObjectType;
+
     clio::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
@@ -104,19 +108,13 @@ public:
     }
 
 private:
-    bool
-    isStopping() const
-    {
-        return state_.get().isStopping;
-    }
-
     void
     process()
     {
         beast::setCurrentThreadName("ETLService transform");
         uint32_t currentSequence = startSequence_;
 
-        while (not state_.get().writeConflict)
+        while (not hasWriteConflict())
         {
             auto fetchResponse = pipe_.get().popNext(currentSequence);
             ++currentSequence;
@@ -129,27 +127,31 @@ private:
             if (isStopping())
                 continue;
 
-            auto const numTxns = fetchResponse->transactions_list().transactions_size();
-            auto const numObjects = fetchResponse->ledger_objects().objects_size();
             auto const start = std::chrono::system_clock::now();
             auto [lgrInfo, success] = buildNextLedger(*fetchResponse);
-            auto const end = std::chrono::system_clock::now();
 
-            auto duration = ((end - start).count()) / 1000000000.0;
             if (success)
+            {
+                auto const numTxns = fetchResponse->transactions_list().transactions_size();
+                auto const numObjects = fetchResponse->ledger_objects().objects_size();
+                auto const end = std::chrono::system_clock::now();
+                auto const duration = ((end - start).count()) / 1000000000.0;
+
                 log_.info() << "Load phase of etl : "
                             << "Successfully wrote ledger! Ledger info: " << util::toString(lgrInfo)
                             << ". txn count = " << numTxns << ". object count = " << numObjects
                             << ". load time = " << duration << ". load txns per second = " << numTxns / duration
                             << ". load objs per second = " << numObjects / duration;
-            else
-                log_.error() << "Error writing ledger. " << util::toString(lgrInfo);
 
-            // success is false if the ledger was already written
-            if (success)
+                // success is false if the ledger was already written
                 publisher_.get().publish(lgrInfo);
+            }
+            else
+            {
+                log_.error() << "Error writing ledger. " << util::toString(lgrInfo);
+            }
 
-            state_.get().writeConflict = !success;
+            setWriteConflict(not success);
         }
     }
 
@@ -162,17 +164,14 @@ private:
      * @return the newly built ledger and data to write to the database
      */
     std::pair<ripple::LedgerInfo, bool>
-    buildNextLedger(org::xrpl::rpc::v1::GetLedgerResponse& rawData)
+    buildNextLedger(GetLedgerResponseType& rawData)
     {
         log_.debug() << "Beginning ledger update";
         ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
         log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
         backend_->startWrites();
-        log_.debug() << "started writes";
-
         backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
-        log_.debug() << "wrote ledger header";
 
         writeSuccessors(lgrInfo, rawData);
         updateCache(lgrInfo, rawData);
@@ -180,7 +179,7 @@ private:
         log_.debug() << "Inserted/modified/deleted all objects. Number of objects = "
                      << rawData.ledger_objects().objects_size();
 
-        FormattedTransactionsData insertTxResult = loader_.get().insertTransactions(lgrInfo, rawData);
+        auto insertTxResult = loader_.get().insertTransactions(lgrInfo, rawData);
 
         log_.debug() << "Inserted all transactions. Number of transactions  = "
                      << rawData.transactions_list().transactions_size();
@@ -189,13 +188,11 @@ private:
         backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
         backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
 
-        log_.debug() << "wrote account_tx";
-
         auto [success, duration] =
             util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
 
-        log_.debug() << "Finished writes. took " << std::to_string(duration);
-        log_.debug() << "Finished ledger update. " << util::toString(lgrInfo);
+        log_.debug() << "Finished writes. Total time: " << std::to_string(duration);
+        log_.debug() << "Finished ledger update: " << util::toString(lgrInfo);
 
         return {lgrInfo, success};
     }
@@ -207,7 +204,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    updateCache(ripple::LedgerInfo const& lgrInfo, org::xrpl::rpc::v1::GetLedgerResponse& rawData)
+    updateCache(ripple::LedgerInfo const& lgrInfo, GetLedgerResponseType& rawData)
     {
         std::vector<Backend::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(rawData.ledger_objects().objects_size());
@@ -224,7 +221,7 @@ private:
             cacheUpdates.push_back({*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
             log_.debug() << "key = " << ripple::strHex(*key) << " - mod type = " << obj.mod_type();
 
-            if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED && !rawData.object_neighbors_included())
+            if (obj.mod_type() != RawLedgerObjectType::MODIFIED && !rawData.object_neighbors_included())
             {
                 log_.debug() << "object neighbors not included. using cache";
 
@@ -232,12 +229,12 @@ private:
                     throw std::runtime_error("Cache is not full, but object neighbors were not included");
 
                 auto const blob = obj.mutable_data();
-                bool checkBookBase = false;
-                bool const isDeleted = (blob->size() == 0);
+                auto checkBookBase = false;
+                auto const isDeleted = (blob->size() == 0);
 
                 if (isDeleted)
                 {
-                    auto old = backend_->cache().get(*key, lgrInfo.seq - 1);
+                    auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
                     assert(old);
                     checkBookBase = isBookDir(*key, *old);
                 }
@@ -248,10 +245,10 @@ private:
 
                 if (checkBookBase)
                 {
-                    log_.debug() << "Is book dir. key = " << ripple::strHex(*key);
+                    log_.debug() << "Is book dir. Key = " << ripple::strHex(*key);
 
-                    auto bookBase = getBookBase(*key);
-                    auto oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
+                    auto const bookBase = getBookBase(*key);
+                    auto const oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
                     assert(oldFirstDir);
 
                     // We deleted the first directory, or we added a directory prior to the old first directory
@@ -265,7 +262,7 @@ private:
                 }
             }
 
-            if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
+            if (obj.mod_type() == RawLedgerObjectType::MODIFIED)
                 modified.insert(*key);
 
             backend_->writeLedgerObject(std::move(*obj.mutable_key()), lgrInfo.seq, std::move(*obj.mutable_data()));
@@ -338,7 +335,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    writeSuccessors(ripple::LedgerInfo const& lgrInfo, org::xrpl::rpc::v1::GetLedgerResponse& rawData)
+    writeSuccessors(ripple::LedgerInfo const& lgrInfo, GetLedgerResponseType& rawData)
     {
         // Write successor info, if included from rippled
         if (rawData.object_neighbors_included())
@@ -358,7 +355,7 @@ private:
 
             for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects()))
             {
-                if (obj.mod_type() != org::xrpl::rpc::v1::RawLedgerObject::MODIFIED)
+                if (obj.mod_type() != RawLedgerObjectType::MODIFIED)
                 {
                     std::string* predPtr = obj.mutable_predecessor();
                     if (!predPtr->size())
@@ -367,7 +364,7 @@ private:
                     if (!succPtr->size())
                         *succPtr = uint256ToString(Backend::lastKey);
 
-                    if (obj.mod_type() == org::xrpl::rpc::v1::RawLedgerObject::DELETED)
+                    if (obj.mod_type() == RawLedgerObjectType::DELETED)
                     {
                         log_.debug() << "Modifying successors for deleted object " << ripple::strHex(obj.key()) << " - "
                                      << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
@@ -387,6 +384,24 @@ private:
                     log_.debug() << "object modified " << ripple::strHex(obj.key());
             }
         }
+    }
+
+    bool
+    isStopping() const
+    {
+        return state_.get().isStopping;
+    }
+
+    bool
+    hasWriteConflict() const
+    {
+        return state_.get().writeConflict;
+    }
+
+    void
+    setWriteConflict(bool conflict)
+    {
+        state_.get().writeConflict = conflict;
     }
 };
 

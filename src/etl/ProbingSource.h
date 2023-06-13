@@ -39,6 +39,11 @@
  */
 class ProbingSource : public Source
 {
+public:
+    // TODO: inject when unit tests will be written for ProbingSource
+    using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
+
+private:
     clio::Logger log_{"ETL"};
 
     std::mutex mtx_;
@@ -94,7 +99,7 @@ public:
     std::pair<std::vector<std::string>, bool>
     loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly = false) override;
 
-    std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
+    std::pair<grpc::Status, GetLedgerResponseType>
     fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) override;
 
     std::optional<boost::json::object>

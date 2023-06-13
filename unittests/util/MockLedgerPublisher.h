@@ -19,26 +19,16 @@
 
 #pragma once
 
-#include <etl/Source.h>
-#include <util/FakeFetchResponse.h>
-
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <gmock/gmock.h>
 
 #include <optional>
 
-struct MockLoadBalancer
+struct MockLedgerPublisher
 {
-    using RawLedgerObjectType = FakeLedgerObject;
-
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context&),
-        (const));
+    MOCK_METHOD(bool, publish, (uint32_t, std::optional<uint32_t>), ());
+    MOCK_METHOD(void, publish, (ripple::LedgerInfo const&), ());
+    MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
+    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
+    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
+    MOCK_METHOD(std::optional<uint32_t>, getLastPublishedSequence, (), (const));
 };

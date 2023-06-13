@@ -33,9 +33,8 @@ using namespace testing;
 class ETLExtractorTest : public NoLoggerFixture
 {
 protected:
-    using DataType = FakeFetchResponse;
-    using ExtractionDataPipeType = MockExtractionDataPipe<DataType>;
-    using LedgerFetcherType = MockLedgerFetcher<DataType>;
+    using ExtractionDataPipeType = MockExtractionDataPipe;
+    using LedgerFetcherType = MockLedgerFetcher;
     using ExtractorType =
         clio::detail::Extractor<ExtractionDataPipeType, MockNetworkValidatedLedgers, LedgerFetcherType>;
 

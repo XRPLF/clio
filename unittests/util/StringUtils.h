@@ -19,26 +19,16 @@
 
 #pragma once
 
-#include <etl/Source.h>
-#include <util/FakeFetchResponse.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/ledger/ReadView.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <gmock/gmock.h>
+#include <string>
 
-#include <optional>
+std::string
+hexStringToBinaryString(std::string const& hex);
 
-struct MockLoadBalancer
-{
-    using RawLedgerObjectType = FakeLedgerObject;
+ripple::uint256
+binaryStringToUint256(std::string const& bin);
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context&),
-        (const));
-};
+std::string
+ledgerInfoToBinaryString(ripple::LedgerInfo const& info);

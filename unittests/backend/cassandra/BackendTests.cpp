@@ -18,13 +18,13 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
+#include <util/StringUtils.h>
 
 #include <backend/CassandraBackend.h>
 #include <config/Config.h>
 #include <etl/NFTHelpers.h>
 #include <rpc/RPCHelpers.h>
 
-#include <ripple/basics/base_uint.h>
 #include <boost/json/parse.hpp>
 #include <fmt/compile.h>
 #include <gtest/gtest.h>
@@ -88,29 +88,6 @@ TEST_F(BackendCassandraTest, Basic)
             "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
             "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
             "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
-
-        auto hexStringToBinaryString = [](auto const& hex) {
-            auto blob = ripple::strUnHex(hex);
-            std::string strBlob;
-            for (auto c : *blob)
-            {
-                strBlob += c;
-            }
-            return strBlob;
-        };
-        [[maybe_unused]] auto binaryStringToUint256 = [](auto const& bin) -> ripple::uint256 {
-            ripple::uint256 uint;
-            return uint.fromVoid((void const*)bin.data());
-        };
-        [[maybe_unused]] auto ledgerInfoToBinaryString = [](auto const& info) {
-            auto blob = ledgerInfoToBlob(info, true);
-            std::string strBlob;
-            for (auto c : blob)
-            {
-                strBlob += c;
-            }
-            return strBlob;
-        };
 
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
         ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
@@ -905,29 +882,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             "17C5C9DCCF872F36837C2C6136ACF80F2A24079CF81FD0624000000005FF0E0781"
             "142252F328CF91263417762570D67220CCB33B1370";
         std::string accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
-
-        auto hexStringToBinaryString = [](auto const& hex) {
-            auto blob = ripple::strUnHex(hex);
-            std::string strBlob;
-            for (auto c : *blob)
-            {
-                strBlob += c;
-            }
-            return strBlob;
-        };
-        auto binaryStringToUint256 = [](auto const& bin) -> ripple::uint256 {
-            ripple::uint256 uint;
-            return uint.fromVoid((void const*)bin.data());
-        };
-        auto ledgerInfoToBinaryString = [](auto const& info) {
-            auto blob = ledgerInfoToBlob(info, true);
-            std::string strBlob;
-            for (auto c : blob)
-            {
-                strBlob += c;
-            }
-            return strBlob;
-        };
 
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
         std::string accountBlob = hexStringToBinaryString(accountHex);

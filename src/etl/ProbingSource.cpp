@@ -113,7 +113,7 @@ ProbingSource::loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t num
     return currentSrc_->loadInitialLedger(ledgerSequence, numMarkers, cacheOnly);
 }
 
-std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
+std::pair<grpc::Status, ProbingSource::GetLedgerResponseType>
 ProbingSource::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     if (!currentSrc_)

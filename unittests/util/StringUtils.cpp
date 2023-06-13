@@ -17,28 +17,36 @@
 */
 //==============================================================================
 
-#pragma once
+#include <util/StringUtils.h>
 
-#include <etl/Source.h>
-#include <util/FakeFetchResponse.h>
+#include <rpc/RPCHelpers.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <gmock/gmock.h>
-
-#include <optional>
-
-struct MockLoadBalancer
+std::string
+hexStringToBinaryString(std::string const& hex)
 {
-    using RawLedgerObjectType = FakeLedgerObject;
+    auto const blob = ripple::strUnHex(hex);
+    std::string strBlob;
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context&),
-        (const));
+    for (auto c : *blob)
+        strBlob += c;
+
+    return strBlob;
+}
+
+ripple::uint256
+binaryStringToUint256(std::string const& bin)
+{
+    ripple::uint256 uint;
+    return uint.fromVoid((void const*)bin.data());
+}
+
+std::string
+ledgerInfoToBinaryString(ripple::LedgerInfo const& info)
+{
+    auto const blob = RPC::ledgerInfoToBlob(info, true);
+    std::string strBlob;
+    for (auto c : blob)
+        strBlob += c;
+
+    return strBlob;
 };

@@ -17,10 +17,11 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
 #include <backend/BackendInterface.h>
 #include <log/Logger.h>
+
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/STLedgerEntry.h>
 
 using namespace clio;
 

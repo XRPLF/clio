@@ -19,26 +19,21 @@
 
 #pragma once
 
-#include <etl/Source.h>
-#include <util/FakeFetchResponse.h>
+#include <etl/impl/LedgerLoader.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <gmock/gmock.h>
 
 #include <optional>
 
-struct MockLoadBalancer
+struct MockLedgerLoader
 {
+    using GetLedgerResponseType = FakeFetchResponse;
     using RawLedgerObjectType = FakeLedgerObject;
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
     MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context&),
-        (const));
+        FormattedTransactionsData,
+        insertTransactions,
+        (ripple::LedgerInfo const&, GetLedgerResponseType& data),
+        ());
+    MOCK_METHOD(std::optional<ripple::LedgerInfo>, loadInitialLedger, (uint32_t sequence), ());
 };
