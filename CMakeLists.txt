@@ -154,6 +154,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/BookChangesTest.cpp
     unittests/rpc/handlers/LedgerTest.cpp
     # Backend
+    unittests/backend/BackendFactoryTest.cpp
     unittests/backend/cassandra/BaseTests.cpp
     unittests/backend/cassandra/BackendTests.cpp
     unittests/backend/cassandra/RetryPolicyTests.cpp

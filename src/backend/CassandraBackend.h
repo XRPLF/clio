@@ -72,7 +72,7 @@ public:
         if (auto const res = handle_.connect(); not res)
             throw std::runtime_error("Could not connect to Cassandra: " + res.error());
 
-        if (!readOnly)
+        if (not readOnly)
         {
             if (auto const res = handle_.execute(schema_.createKeyspace); not res)
             {
@@ -85,15 +85,17 @@ public:
             if (auto const res = handle_.executeEach(schema_.createSchema); not res)
                 throw std::runtime_error("Could not create schema: " + res.error());
         }
+
         try
         {
             schema_.prepareStatements(handle_);
         }
-        catch (std::exception const& ex)
+        catch (std::runtime_error const& ex)
         {
-            log_.error() << "Failed to prepare the statements for Clio-Readonly:" << readOnly;
+            log_.error() << "Failed to prepare the statements: " << ex.what() << " readOnly: " << readOnly;
             throw;
         }
+
         log_.info() << "Created (revamped) CassandraBackend";
     }
 
