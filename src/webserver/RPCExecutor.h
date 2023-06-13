@@ -130,7 +130,7 @@ private:
             if (connection->upgraded)
                 return e;
             else
-                return boost::json::object{{"result", e}};
+                return {{"result", e}};
         };
 
         try
