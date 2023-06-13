@@ -92,7 +92,7 @@ public:
         }
         catch (std::runtime_error const& ex)
         {
-            log_.error() << "Failed to prepare the statements: " << ex.what() << " readOnly: " << readOnly;
+            log_.error() << "Failed to prepare the statements: " << ex.what() << "; readOnly: " << readOnly;
             throw;
         }
 
