@@ -24,7 +24,7 @@
 std::string
 hexStringToBinaryString(std::string const& hex)
 {
-    auto blob = ripple::strUnHex(hex);
+    auto const blob = ripple::strUnHex(hex);
     std::string strBlob;
 
     for (auto c : *blob)
@@ -43,7 +43,7 @@ binaryStringToUint256(std::string const& bin)
 std::string
 ledgerInfoToBinaryString(ripple::LedgerInfo const& info)
 {
-    auto blob = RPC::ledgerInfoToBlob(info, true);
+    auto const blob = RPC::ledgerInfoToBlob(info, true);
     std::string strBlob;
     for (auto c : blob)
         strBlob += c;
