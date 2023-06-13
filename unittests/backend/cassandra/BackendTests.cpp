@@ -61,7 +61,7 @@ protected:
     SetUp() override
     {
         SyncAsioContextTest::SetUp();
-        backend = std::make_unique<CassandraBackend>(settingsProvider);
+        backend = std::make_unique<CassandraBackend>(settingsProvider, false);
     }
     void
     TearDown() override
