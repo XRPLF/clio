@@ -67,6 +67,7 @@ public:
         std::optional<uint32_t> ledgerIndex;
         std::optional<int32_t> ledgerIndexMin;
         std::optional<int32_t> ledgerIndexMax;
+        bool usingValidatedLedger = false;
         bool binary = false;
         bool forward = false;
         std::optional<uint32_t> limit;

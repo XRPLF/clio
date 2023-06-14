@@ -528,19 +528,21 @@ public:
                 SELECT hash, seq_idx 
                   FROM {}               
                  WHERE account = ?
-                   AND seq_idx < ?
+                   AND seq_idx <= ?
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")));
         }();
 
+        // the smallest transaction idx is 0, we use uint to store the transaction index, so we shall use ">=" to
+        // include it(the transaction with idx 0) in the result
         PreparedStatement selectAccountTxForward = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT hash, seq_idx 
                   FROM {}               
                  WHERE account = ?
-                   AND seq_idx > ?
+                   AND seq_idx >= ?
               ORDER BY seq_idx ASC 
                  LIMIT ?
                 )",
