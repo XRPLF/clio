@@ -49,7 +49,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     if (minIndex > maxIndex)
         return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
 
-    if (input.ledgerHash || input.ledgerIndex)
+    if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {
         // rippled does not have this check
         if (input.ledgerIndexMax || input.ledgerIndexMin)
@@ -190,6 +190,9 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        else
+            // could not get the latest validated ledger seq here, using this flag to indicate that
+            input.usingValidatedLedger = true;
     }
 
     if (jsonObject.contains(JS(binary)))
