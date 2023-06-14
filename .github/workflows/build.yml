@@ -118,7 +118,7 @@ jobs:
       - name: Run Test
         run: |
           cd clio/build
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*"
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   test_clio:
     name: Test Clio

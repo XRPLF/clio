@@ -7,7 +7,7 @@ If you wish to test the backend component you will need to have access to a **lo
 ## Running
 To run the unit tests, first build Clio as normal, then execute `./clio_tests` to run all unit tests.
 
-**Note:** If you don't want to test the Cassandra backend code, the relevant tests can be disabled like this: `./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*"`
+**Note:** If you don't want to test the Cassandra backend code, the relevant tests can be disabled like this: `./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"`
 
 # Adding Unit Tests
 To add unit tests, please create a separate file for the component you are trying to cover (unless it already exists) and use any other existing unit test file as an example.
