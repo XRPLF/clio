@@ -34,11 +34,15 @@ namespace RPC {
  * @brief Custom clio RPC Errors.
  */
 enum class ClioError {
+    // normal clio errors start with 5000
     rpcMALFORMED_CURRENCY = 5000,
     rpcMALFORMED_REQUEST = 5001,
     rpcMALFORMED_OWNER = 5002,
     rpcMALFORMED_ADDRESS = 5003,
     rpcINVALID_HOT_WALLET = 5004,
+
+    // special system errors start with 6000
+    rpcINVALID_API_VERSION = 6000,
 };
 
 /**

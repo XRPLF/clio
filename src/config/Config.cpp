@@ -142,6 +142,15 @@ Config::section(key_type key) const
     throw std::logic_error("No section found at '" + key + "'");
 }
 
+Config
+Config::sectionOr(key_type key, boost::json::object fallback) const
+{
+    auto maybe_element = lookup(key);
+    if (maybe_element && maybe_element->is_object())
+        return Config{std::move(*maybe_element)};
+    return Config{std::move(fallback)};
+}
+
 Config::array_type
 Config::array() const
 {

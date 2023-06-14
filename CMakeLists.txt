@@ -68,6 +68,7 @@ target_sources(clio PRIVATE
   src/rpc/WorkQueue.cpp
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
+  src/rpc/common/impl/APIVersionParser.cpp
   # RPC impl
   src/rpc/common/impl/HandlerProvider.cpp
   ## RPC handler
@@ -125,6 +126,7 @@ if(BUILD_TESTS)
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/CountersTest.cpp
     unittests/rpc/AdminVerificationTest.cpp
+    unittests/rpc/APIVersionTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp

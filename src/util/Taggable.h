@@ -259,6 +259,9 @@ protected:
 
 public:
     virtual ~Taggable() = default;
+    Taggable(Taggable&&) = default;
+    Taggable&
+    operator=(Taggable&&) = default;
 
     /**
      * @brief Getter for tag decorator.

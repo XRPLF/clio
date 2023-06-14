@@ -32,37 +32,41 @@
 
 namespace Web {
 
-struct Context : public util::Taggable
+struct Context : util::Taggable
 {
-    clio::Logger perfLog_{"Performance"};
-    boost::asio::yield_context& yield;
+    std::reference_wrapper<boost::asio::yield_context> yield;
     std::string method;
-    std::uint32_t version;
-    boost::json::object const& params;
+    std::uint32_t apiVersion;
+    boost::json::object params;
     std::shared_ptr<Server::ConnectionBase> session;
-    Backend::LedgerRange const& range;
+    Backend::LedgerRange range;
     std::string clientIp;
 
     Context(
-        boost::asio::yield_context& yield_,
-        std::string const& command_,
-        std::uint32_t version_,
-        boost::json::object const& params_,
-        std::shared_ptr<Server::ConnectionBase> const& session_,
-        util::TagDecoratorFactory const& tagFactory_,
-        Backend::LedgerRange const& range_,
-        std::string const& clientIp_)
-        : Taggable(tagFactory_)
-        , yield(yield_)
-        , method(command_)
-        , version(version_)
-        , params(params_)
-        , session(session_)
-        , range(range_)
-        , clientIp(clientIp_)
+        boost::asio::yield_context& yield,
+        std::string const& command,
+        std::uint32_t apiVersion,
+        boost::json::object params,
+        std::shared_ptr<Server::ConnectionBase> const& session,
+        util::TagDecoratorFactory const& tagFactory,
+        Backend::LedgerRange const& range,
+        std::string const& clientIp)
+        : Taggable(tagFactory)
+        , yield(std::ref(yield))
+        , method(command)
+        , apiVersion(apiVersion)
+        , params(std::move(params))
+        , session(session)
+        , range(range)
+        , clientIp(clientIp)
     {
-        perfLog_.debug() << tag() << "new Context created";
+        static clio::Logger perfLog{"Performance"};
+        perfLog.debug() << tag() << "new Context created";
     }
+
+    Context(Context&&) = default;
+    Context&
+    operator=(Context&&) = default;
 };
 
 }  // namespace Web

@@ -59,22 +59,14 @@ concept ContextProcessWithoutInput = requires(T a, typename T::Output out, Conte
 };
 
 template <typename T>
-concept NonContextProcess = requires(T a, typename T::Input in, typename T::Output out) {
-    { a.process(in) } -> std::same_as<HandlerReturnType<decltype(out)>>; 
-};
-
-template <typename T>
-concept HandlerWithInput = requires(T a) {
-    { a.spec() } -> std::same_as<RpcSpecConstRef>; 
+concept HandlerWithInput = requires(T a, uint32_t version) {
+    { a.spec(version) } -> std::same_as<RpcSpecConstRef>; 
 }
-and (ContextProcessWithInput<T> or NonContextProcess<T>)
+and ContextProcessWithInput<T>
 and boost::json::has_value_to<typename T::Input>::value;
 
 template <typename T>
-concept HandlerWithoutInput = requires(T a, typename T::Output out) {
-    { a.process() } -> std::same_as<HandlerReturnType<decltype(out)>>; 
-} 
-or ContextProcessWithoutInput<T>;
+concept HandlerWithoutInput = ContextProcessWithoutInput<T>;
 
 template <typename T>
 concept Handler = 

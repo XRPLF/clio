@@ -64,7 +64,7 @@ public:
     }
 
     RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         static const RpcSpec rpcSpec = {
             {JS(transaction), validation::Required{}, validation::Uint256HexStringValidator},

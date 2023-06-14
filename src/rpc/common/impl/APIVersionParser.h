@@ -19,36 +19,31 @@
 
 #pragma once
 
-#include <rpc/common/Types.h>
+#include <config/Config.h>
+#include <log/Logger.h>
+#include <rpc/common/APIVersion.h>
+#include <util/Expected.h>
 
-#include <boost/json/value.hpp>
+namespace RPC::detail {
 
-#include <string>
-
-namespace RPC {
-
-/**
- * @brief The random command provides a random number to be used as a source of entropy for random number generation by
- * clients.
- *
- * For more details see: https://xrpl.org/random.html
- */
-class RandomHandler
+class ProductionAPIVersionParser : public APIVersionParser
 {
+    clio::Logger log_{"RPC"};
+
+    uint32_t defaultVersion_;
+    uint32_t minVersion_;
+    uint32_t maxVersion_;
+
 public:
-    struct Output
-    {
-        std::string random;
-    };
+    ProductionAPIVersionParser(
+        uint32_t defaultVersion = API_VERSION_DEFAULT,
+        uint32_t minVersion = API_VERSION_MIN,
+        uint32_t maxVersion = API_VERSION_MAX);
 
-    using Result = HandlerReturnType<Output>;
+    ProductionAPIVersionParser(clio::Config const& config);
 
-    Result
-    process(Context const& ctx) const;
-
-private:
-    friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
+    util::Expected<uint32_t, std::string>
+    parse(boost::json::object const& request) const override;
 };
 
-}  // namespace RPC
+}  // namespace RPC::detail

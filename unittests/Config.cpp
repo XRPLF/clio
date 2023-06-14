@@ -153,6 +153,21 @@ TEST_F(ConfigTest, Section)
     ASSERT_EQ(sub.value<bool>("bool"), true);
 }
 
+TEST_F(ConfigTest, SectionOr)
+{
+    {
+        auto sub = cfg.sectionOr("section.test", {});  // exists
+
+        ASSERT_EQ(sub.value<string>("str"), "hello");
+        ASSERT_EQ(sub.value<int64_t>("int"), 9042);
+        ASSERT_EQ(sub.value<bool>("bool"), true);
+    }
+    {
+        auto sub = cfg.sectionOr("section.doesnotexist", {{"int", 9043}});  // does not exist
+        ASSERT_EQ(sub.value<int64_t>("int"), 9043);                         // default from fallback
+    }
+}
+
 TEST_F(ConfigTest, Array)
 {
     auto arr = cfg.array("arr");

@@ -25,7 +25,7 @@
 namespace RPC {
 
 LedgerRangeHandler::Result
-LedgerRangeHandler::process() const
+LedgerRangeHandler::process([[maybe_unused]] Context const& ctx) const
 {
     // note: we can't get here if range is not available so it's safe
     return Output{sharedPtrBackend_->fetchLedgerRange().value()};

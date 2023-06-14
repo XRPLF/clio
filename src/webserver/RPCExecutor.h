@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include <rpc/Errors.h>
 #include <rpc/Factories.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/impl/APIVersionParser.h>
 #include <util/Profiler.h>
 
 #include <boost/json/parse.hpp>
@@ -37,6 +39,7 @@ class RPCExecutor
     // subscription manager holds the shared_ptr of this class
     std::weak_ptr<SubscriptionManager> const subscriptions_;
     util::TagDecoratorFactory const tagFactory_;
+    RPC::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
     clio::Logger log_{"RPC"};
     clio::Logger perfLog_{"Performance"};
@@ -48,7 +51,12 @@ public:
         std::shared_ptr<Engine> const& rpcEngine,
         std::shared_ptr<ETL const> const& etl,
         std::shared_ptr<SubscriptionManager> const& subscriptions)
-        : backend_(backend), rpcEngine_(rpcEngine), etl_(etl), subscriptions_(subscriptions), tagFactory_(config)
+        : backend_(backend)
+        , rpcEngine_(rpcEngine)
+        , etl_(etl)
+        , subscriptions_(subscriptions)
+        , tagFactory_(config)
+        , apiVersionParser_(config.sectionOr("api_version", {}))
     {
     }
 
@@ -136,29 +144,39 @@ private:
         try
         {
             auto const range = backend_->fetchLedgerRange();
-            // for the error happened before the handler, we don't attach the clio warning
             if (!range)
             {
+                // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
                 return connection->send(
                     boost::json::serialize(composeError(RPC::RippledError::rpcNOT_READY)),
                     boost::beast::http::status::ok);
             }
 
-            auto context = connection->upgraded
-                ? RPC::make_WsContext(
-                      yc, request, connection, tagFactory_.with(connection->tag()), *range, connection->clientIp)
-                : RPC::make_HttpContext(yc, request, tagFactory_.with(connection->tag()), *range, connection->clientIp);
+            auto context = connection->upgraded ? RPC::make_WsContext(
+                                                      yc,
+                                                      request,
+                                                      connection,
+                                                      tagFactory_.with(connection->tag()),
+                                                      *range,
+                                                      connection->clientIp,
+                                                      std::cref(apiVersionParser_))
+                                                : RPC::make_HttpContext(
+                                                      yc,
+                                                      request,
+                                                      tagFactory_.with(connection->tag()),
+                                                      *range,
+                                                      connection->clientIp,
+                                                      std::cref(apiVersionParser_));
 
             if (!context)
             {
-                perfLog_.warn() << connection->tag() << "Could not create RPC context";
-                log_.warn() << connection->tag() << "Could not create RPC context";
+                auto const err = context.error();
+                perfLog_.warn() << connection->tag() << "Could not create Web context: " << err;
+                log_.warn() << connection->tag() << "Could not create Web context: " << err;
 
                 rpcEngine_->notifyBadSyntax();
-                return connection->send(
-                    boost::json::serialize(composeError(RPC::RippledError::rpcBAD_SYNTAX)),
-                    boost::beast::http::status::ok);
+                return connection->send(boost::json::serialize(composeError(err)), boost::beast::http::status::ok);
             }
 
             auto [v, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });

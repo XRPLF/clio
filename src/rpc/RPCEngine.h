@@ -148,7 +148,7 @@ public:
             perfLog_.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
             auto const isAdmin = adminVerifier_.isAdmin(ctx.clientIp);
-            auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
+            auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp, ctx.apiVersion};
             auto const v = (*method).process(ctx.params, context);
 
             perfLog_.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
@@ -303,7 +303,7 @@ private:
     bool
     shouldForwardToRippled(Web::Context const& ctx) const
     {
-        auto request = ctx.params;
+        auto const& request = ctx.params;
 
         if (isClioOnly(ctx.method))
             return false;

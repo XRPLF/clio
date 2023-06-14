@@ -378,6 +378,71 @@ TEST_F(WebRPCExecutorTest, WsNotReady)
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
+TEST_F(WebRPCExecutorTest, HTTPInvalidAPIVersion)
+{
+    static auto constexpr request = R"({
+                                        "method": "server_info",
+                                        "params": [{
+                                            "api_version": null
+                                        }]
+                                    })";
+
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+
+    static auto constexpr response = R"({
+                                        "result": {
+                                            "error": "invalid_API_version",
+                                            "error_code": 6000,
+                                            "error_message": "API version must be an integer",
+                                            "status": "error",
+                                            "type": "response",
+                                            "request": {
+                                                "method": "server_info",
+                                                "params": [{
+                                                    "api_version": null
+                                                }]
+                                            }
+                                        }
+                                    })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
+
+    (*rpcExecutor)(std::move(request), session);
+    std::this_thread::sleep_for(200ms);
+    EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
+}
+
+TEST_F(WebRPCExecutorTest, WSInvalidAPIVersion)
+{
+    session->upgraded = true;
+    static auto constexpr request = R"({
+                                        "method": "server_info",
+                                        "api_version": null
+                                    })";
+
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+
+    static auto constexpr response = R"({
+                                        "error": "invalid_API_version",
+                                        "error_code": 6000,
+                                        "error_message": "API version must be an integer",
+                                        "status": "error",
+                                        "type": "response",
+                                        "request": {
+                                            "method": "server_info",
+                                            "api_version": null
+                                        }
+                                    })";
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
+
+    (*rpcExecutor)(std::move(request), session);
+    std::this_thread::sleep_for(200ms);
+    EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
+}
+
 TEST_F(WebRPCExecutorTest, HTTPBadSyntax)
 {
     static auto constexpr request = R"({"method2": "server_info"})";
@@ -389,7 +454,7 @@ TEST_F(WebRPCExecutorTest, HTTPBadSyntax)
                                         "result":{
                                             "error": "badSyntax",
                                             "error_code": 1,
-                                            "error_message": "Syntax error.",
+                                            "error_message": "Method is not specified or is not a string.",
                                             "status": "error",
                                             "type": "response",
                                             "request": {
@@ -417,7 +482,7 @@ TEST_F(WebRPCExecutorTest, HTTPBadSyntaxWhenRequestSubscribe)
                                         "result": {
                                             "error": "badSyntax",
                                             "error_code": 1,
-                                            "error_message": "Syntax error.",
+                                            "error_message": "Subscribe and unsubscribe are only allowed or websocket.",
                                             "status": "error",
                                             "type": "response",
                                             "request": {
@@ -448,7 +513,7 @@ TEST_F(WebRPCExecutorTest, WsBadSyntax)
     static auto constexpr response = R"({
                                         "error": "badSyntax",
                                         "error_code": 1,
-                                        "error_message": "Syntax error.",
+                                        "error_message": "Method/Command is not specified or is not a string.",
                                         "status": "error",
                                         "type": "response",
                                         "id": 99,

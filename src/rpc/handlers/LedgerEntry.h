@@ -74,7 +74,7 @@ public:
     }
 
     RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         // Validator only works in this handler
         // The accounts array must have two different elements

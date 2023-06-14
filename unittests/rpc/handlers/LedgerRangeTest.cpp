@@ -36,25 +36,29 @@ class RPCLedgerRangeTest : public HandlerBaseTest
 
 TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
 {
-    mockBackendPtr->updateRange(RANGEMIN);
-    auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
-    auto const req = json::parse("{}");
-    auto const output = handler.process(req);
-    ASSERT_TRUE(output);
-    auto const json = output.value();
-    EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
-    EXPECT_EQ(json.at("ledger_index_max").as_uint64(), RANGEMIN);
+    runSpawn([this](auto& yield) {
+        mockBackendPtr->updateRange(RANGEMIN);
+        auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
+        auto const req = json::parse("{}");
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        auto const json = output.value();
+        EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
+        EXPECT_EQ(json.at("ledger_index_max").as_uint64(), RANGEMIN);
+    });
 }
 
 TEST_F(RPCLedgerRangeTest, LedgerRangeFullySet)
 {
-    mockBackendPtr->updateRange(RANGEMIN);
-    mockBackendPtr->updateRange(RANGEMAX);
-    auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
-    auto const req = json::parse("{}");
-    auto const output = handler.process(req);
-    ASSERT_TRUE(output);
-    auto const json = output.value();
-    EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
-    EXPECT_EQ(json.at("ledger_index_max").as_uint64(), RANGEMAX);
+    runSpawn([this](auto& yield) {
+        mockBackendPtr->updateRange(RANGEMIN);
+        mockBackendPtr->updateRange(RANGEMAX);
+        auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
+        auto const req = json::parse("{}");
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        auto const json = output.value();
+        EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
+        EXPECT_EQ(json.at("ledger_index_max").as_uint64(), RANGEMAX);
+    });
 }

@@ -20,35 +20,40 @@
 #pragma once
 
 #include <rpc/common/Types.h>
+#include <util/Expected.h>
 
-#include <boost/json/value.hpp>
+#include <boost/json.hpp>
 
 #include <string>
 
 namespace RPC {
 
 /**
- * @brief The random command provides a random number to be used as a source of entropy for random number generation by
- * clients.
- *
- * For more details see: https://xrpl.org/random.html
+ * @brief Default API version to use if no version is specified by clients
  */
-class RandomHandler
+static constexpr uint32_t API_VERSION_DEFAULT = 2u;
+
+/**
+ * @brief Minimum API version supported by this build
+ *
+ * Note: Clio does not support v1 and only supports v2 and newer.
+ */
+static constexpr uint32_t API_VERSION_MIN = 2u;
+
+/**
+ * @brief Maximum API version supported by this build
+ */
+static constexpr uint32_t API_VERSION_MAX = 2u;
+
+/**
+ * @brief A baseclass for API version helper
+ */
+class APIVersionParser
 {
 public:
-    struct Output
-    {
-        std::string random;
-    };
+    virtual ~APIVersionParser() = default;
 
-    using Result = HandlerReturnType<Output>;
-
-    Result
-    process(Context const& ctx) const;
-
-private:
-    friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
+    util::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
 };
 
 }  // namespace RPC

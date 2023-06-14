@@ -26,7 +26,7 @@
 namespace RPC {
 
 RandomHandler::Result
-RandomHandler::process() const
+RandomHandler::process([[maybe_unused]] Context const& ctx) const
 {
     ripple::uint256 rand;
     beast::rngfill(rand.begin(), rand.size(), ripple::crypto_prng());

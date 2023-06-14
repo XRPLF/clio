@@ -68,7 +68,7 @@ public:
     }
 
     RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         static auto const hotWalletValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {

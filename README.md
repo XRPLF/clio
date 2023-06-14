@@ -96,12 +96,12 @@ The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top l
 An example of how to specify `ssl_cert_file` and `ssl_key_file` in the config:
 
 ```json
-"server":{
+"server": {
     "ip": "0.0.0.0",
     "port": 51233
 },
-"ssl_cert_file" : "/full/path/to/cert.file",
-"ssl_key_file" : "/full/path/to/key.file"
+"ssl_cert_file": "/full/path/to/cert.file",
+"ssl_key_file": "/full/path/to/key.file"
 ```
 
 Once your config files are ready, start rippled and Clio. It doesn't matter which you
@@ -171,6 +171,20 @@ are doing this, be aware that database traffic will be flowing across regions,
 which can cause high latencies. A possible alternative to this is to just deploy
 a database in each region, and the Clio nodes in each region use their region's database.
 This is effectively two systems.
+
+Clio supports API versioning as [described here](https://xrpl.org/request-formatting.html#api-versioning).
+It's possible to configure `minimum`, `maximum` and `default` version like so: 
+```json
+"api_version": {
+    "min": 1,
+    "max": 2,
+    "default": 2 
+}
+```
+All of the above are optional. 
+Clio will fallback to hardcoded defaults when not specified in the config file or configured values are outside 
+of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVersion.h`.
+> **Note:** See `example-config.json` for more details. 
 
 ## Developing against `rippled` in standalone mode
 

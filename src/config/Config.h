@@ -266,6 +266,20 @@ public:
     [[nodiscard]] Config
     section(key_type key) const;
 
+    /**
+     * @brief Interface for fetching a sub section by key with a fallback object.
+     *
+     * Will attempt to fetch an entire section under the desired key and return
+     * it as a Config instance. If the section does not exist or another type is
+     * stored under the desired key - fallback object is used instead.
+     *
+     * @param key The key to check
+     * @param fallabkc The fallback object
+     * @return Config Section represented as a separate instance of Config
+     */
+    [[nodiscard]] Config
+    sectionOr(key_type key, boost::json::object fallback) const;
+
     //
     // Direct self-value access
     //

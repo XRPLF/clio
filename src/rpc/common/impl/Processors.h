@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <rpc/common/APIVersion.h>
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Types.h>
 
@@ -31,56 +32,35 @@ template <Handler HandlerType>
 struct DefaultProcessor final
 {
     [[nodiscard]] ReturnType
-    operator()(HandlerType const& handler, boost::json::value const& value, Context const* ctx = nullptr) const
+    operator()(HandlerType const& handler, boost::json::value const& value, Context const& ctx) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
         if constexpr (HandlerWithInput<HandlerType>)
         {
-            // first we run validation
-            auto const spec = handler.spec();
+            // first we run validation against specified API version
+            auto const spec = handler.spec(ctx.apiVersion);
             if (auto const ret = spec.validate(value); not ret)
                 return Error{ret.error()};  // forward Status
 
             auto const inData = value_to<typename HandlerType::Input>(value);
-            if constexpr (NonContextProcess<HandlerType>)
-            {
-                auto const ret = handler.process(inData);
-                // real handler is given expected Input, not json
-                if (!ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
+            auto const ret = handler.process(inData, ctx);
+
+            // real handler is given expected Input, not json
+            if (!ret)
+                return Error{ret.error()};  // forward Status
             else
-            {
-                auto const ret = handler.process(inData, *ctx);
-                // real handler is given expected Input, not json
-                if (!ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
+                return value_from(ret.value());
         }
         else if constexpr (HandlerWithoutInput<HandlerType>)
         {
             using OutType = HandlerReturnType<typename HandlerType::Output>;
 
             // no input to pass, ignore the value
-            if constexpr (ContextProcessWithoutInput<HandlerType>)
-            {
-                if (auto const ret = handler.process(*ctx); not ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
+            if (auto const ret = handler.process(ctx); not ret)
+                return Error{ret.error()};  // forward Status
             else
-            {
-                if (auto const ret = handler.process(); not ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
+                return value_from(ret.value());
         }
         else
         {

@@ -90,4 +90,9 @@
     //"finish_sequence": [integer] the ledger index to finish at,
     //"ssl_cert_file" : "/full/path/to/cert.file",
     //"ssl_key_file" : "/full/path/to/key.file"
+    "api_version": {
+        "min": 2,
+        "max": 2,
+        "default": 2 // Clio only supports API v2 and newer
+    }
 }

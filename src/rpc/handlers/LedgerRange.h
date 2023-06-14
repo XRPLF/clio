@@ -50,7 +50,7 @@ public:
     }
 
     Result
-    process() const;
+    process(Context const& ctx) const;
 
 private:
     friend void
