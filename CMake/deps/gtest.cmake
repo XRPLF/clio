@@ -17,4 +17,6 @@ enable_testing()
 
 include(GoogleTest)
 
-gtest_discover_tests(clio_tests)
+#increase timeout for tests discovery to 10 seconds, by default it is 5s. As more unittests added, we start to hit this issue
+#https://github.com/google/googletest/issues/3475
+gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 10)

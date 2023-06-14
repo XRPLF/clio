@@ -118,7 +118,7 @@ jobs:
       - name: Run Test
         run: |
           cd clio/build
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*"
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   test_clio:
     name: Test Clio
@@ -174,7 +174,7 @@ jobs:
         run: |
           export BOOST_ROOT=$(pwd)/boost
           cd clio
-          cmake -B build -DCODE_COVERAGE=on -DTEST_PARAMETER='--gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*"'
+          cmake -B build -DCODE_COVERAGE=on -DTEST_PARAMETER='--gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"'
           if ! cmake --build build -j$(nproc); then
             echo '# 🔥Ubuntu build🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
             exit 1

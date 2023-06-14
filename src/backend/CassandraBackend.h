@@ -63,7 +63,7 @@ public:
      *
      * @param settingsProvider
      */
-    BasicCassandraBackend(SettingsProviderType settingsProvider)
+    BasicCassandraBackend(SettingsProviderType settingsProvider, bool readOnly)
         : settingsProvider_{std::move(settingsProvider)}
         , schema_{settingsProvider_}
         , handle_{settingsProvider_.getSettings()}
@@ -72,18 +72,30 @@ public:
         if (auto const res = handle_.connect(); not res)
             throw std::runtime_error("Could not connect to Cassandra: " + res.error());
 
-        if (auto const res = handle_.execute(schema_.createKeyspace); not res)
+        if (not readOnly)
         {
-            // on datastax, creation of keyspaces can be configured to only be done thru the admin interface.
-            // this does not mean that the keyspace does not already exist tho.
-            if (res.error().code() != CASS_ERROR_SERVER_UNAUTHORIZED)
-                throw std::runtime_error("Could not create keyspace: " + res.error());
+            if (auto const res = handle_.execute(schema_.createKeyspace); not res)
+            {
+                // on datastax, creation of keyspaces can be configured to only be done thru the admin interface.
+                // this does not mean that the keyspace does not already exist tho.
+                if (res.error().code() != CASS_ERROR_SERVER_UNAUTHORIZED)
+                    throw std::runtime_error("Could not create keyspace: " + res.error());
+            }
+
+            if (auto const res = handle_.executeEach(schema_.createSchema); not res)
+                throw std::runtime_error("Could not create schema: " + res.error());
         }
 
-        if (auto const res = handle_.executeEach(schema_.createSchema); not res)
-            throw std::runtime_error("Could not create schema: " + res.error());
+        try
+        {
+            schema_.prepareStatements(handle_);
+        }
+        catch (std::runtime_error const& ex)
+        {
+            log_.error() << "Failed to prepare the statements: " << ex.what() << "; readOnly: " << readOnly;
+            throw;
+        }
 
-        schema_.prepareStatements(handle_);
         log_.info() << "Created (revamped) CassandraBackend";
     }
 
