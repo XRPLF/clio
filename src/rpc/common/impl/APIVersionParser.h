@@ -24,6 +24,9 @@
 #include <rpc/common/APIVersion.h>
 #include <util/Expected.h>
 
+#include <algorithm>
+#include <string>
+
 namespace RPC::detail {
 
 class ProductionAPIVersionParser : public APIVersionParser
@@ -35,10 +38,37 @@ class ProductionAPIVersionParser : public APIVersionParser
     uint32_t maxVersion_;
 
 public:
+    // Note: this constructor must remain in the header because of UNITTEST_BUILD definition below
     ProductionAPIVersionParser(
         uint32_t defaultVersion = API_VERSION_DEFAULT,
         uint32_t minVersion = API_VERSION_MIN,
-        uint32_t maxVersion = API_VERSION_MAX);
+        uint32_t maxVersion = API_VERSION_MAX)
+        : defaultVersion_{defaultVersion}, minVersion_{minVersion}, maxVersion_{maxVersion}
+    {
+#ifndef UNITTEST_BUILD
+        // in production, we don't want the ability to misconfigure clio with bogus versions
+        // that are not actually supported by the code itself. for testing it is desired however.
+        auto checkRange = [this](uint32_t version, std::string label) {
+            if (std::clamp(version, API_VERSION_MIN, API_VERSION_MAX) != version)
+            {
+                log_.error() << "API version settings issue detected: " << label << " version with value " << version
+                             << " is outside of supported range " << API_VERSION_MIN << "-" << API_VERSION_MAX
+                             << "; Falling back to hardcoded values.";
+
+                defaultVersion_ = API_VERSION_DEFAULT;
+                minVersion_ = API_VERSION_MIN;
+                maxVersion_ = API_VERSION_MAX;
+            }
+        };
+
+        checkRange(defaultVersion, "default");
+        checkRange(minVersion, "minimum");
+        checkRange(maxVersion, "maximum");
+#endif
+
+        log_.info() << "API version settings: [min = " << minVersion_ << "; max = " << maxVersion_
+                    << "; default = " << defaultVersion_ << "]";
+    }
 
     ProductionAPIVersionParser(clio::Config const& config);
 

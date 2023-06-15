@@ -22,43 +22,9 @@
 
 #include <fmt/core.h>
 
-#include <algorithm>
-#include <stdexcept>
-
 using namespace std;
 
 namespace RPC::detail {
-
-ProductionAPIVersionParser::ProductionAPIVersionParser(
-    uint32_t defaultVersion,
-    uint32_t minVersion,
-    uint32_t maxVersion)
-    : defaultVersion_{defaultVersion}, minVersion_{minVersion}, maxVersion_{maxVersion}
-{
-#ifndef DEBUG
-    // in production, we don't want the ability to misconfigure clio with bogus versions
-    // that are not actually supported by the code itself. for testing it is desired however.
-    auto checkRange = [this](uint32_t version, std::string label) {
-        if (clamp(version, API_VERSION_MIN, API_VERSION_MAX) != version)
-        {
-            log_.error() << "API version settings issue detected: " << label << " version with value " << version
-                         << " is outside of supported range " << API_VERSION_MIN << "-" << API_VERSION_MAX
-                         << "; Falling back to hardcoded values.";
-
-            defaultVersion_ = API_VERSION_DEFAULT;
-            minVersion_ = API_VERSION_MIN;
-            maxVersion_ = API_VERSION_MAX;
-        }
-    };
-
-    checkRange(defaultVersion, "default");
-    checkRange(minVersion, "minimum");
-    checkRange(maxVersion, "maximum");
-#endif
-
-    log_.info() << "API version settings: [min = " << minVersion_ << "; max = " << maxVersion_
-                << "; default = " << defaultVersion_ << "]";
-}
 
 ProductionAPIVersionParser::ProductionAPIVersionParser(clio::Config const& config)
     : ProductionAPIVersionParser(

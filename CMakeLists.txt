@@ -169,8 +169,10 @@ if(BUILD_TESTS)
     unittests/webserver/RPCExecutorTest.cpp)
   include(CMake/deps/gtest.cmake)
 
-  # test for dwarf5 bug on ci 
+  # fix for dwarf5 bug on ci 
   target_compile_options(clio PUBLIC -gdwarf-4)
+
+  target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
   if(CODE_COVERAGE)
