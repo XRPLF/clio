@@ -74,7 +74,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     else
     {
         if (input.forward)
-            cursor = {minIndex, 0};
+            cursor = {minIndex - 1, INT32_MAX};
         else
             cursor = {maxIndex, INT32_MAX};
     }
