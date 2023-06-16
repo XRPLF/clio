@@ -33,10 +33,10 @@ TEST(JsonUtils, RemoveSecrets)
                     .as_object();
 
     auto json2 = util::removeSecret(json);
-    EXPECT_FALSE(json2.contains("secret"));
-    EXPECT_FALSE(json2.contains("seed"));
-    EXPECT_FALSE(json2.contains("seed_hex"));
-    EXPECT_FALSE(json2.contains("passphrase"));
+    EXPECT_EQ(json2.at("secret").as_string(), "*");
+    EXPECT_EQ(json2.at("seed").as_string(), "*");
+    EXPECT_EQ(json2.at("seed_hex").as_string(), "*");
+    EXPECT_EQ(json2.at("passphrase").as_string(), "*");
 
     json = boost::json::parse(R"({
         "params": [
@@ -55,8 +55,8 @@ TEST(JsonUtils, RemoveSecrets)
     EXPECT_TRUE(json2.at("params").is_array());
     EXPECT_TRUE(json2.at("params").as_array().size() > 0);
     json2 = json2.at("params").as_array()[0].as_object();
-    EXPECT_FALSE(json2.contains("secret"));
-    EXPECT_FALSE(json2.contains("seed"));
-    EXPECT_FALSE(json2.contains("seed_hex"));
-    EXPECT_FALSE(json2.contains("passphrase"));
+    EXPECT_EQ(json2.at("secret").as_string(), "*");
+    EXPECT_EQ(json2.at("seed").as_string(), "*");
+    EXPECT_EQ(json2.at("seed_hex").as_string(), "*");
+    EXPECT_EQ(json2.at("passphrase").as_string(), "*");
 }

@@ -32,17 +32,19 @@ removeSecret(boost::json::object const& object)
     auto const secretFields = {"secret", "seed", "seed_hex", "passphrase"};
 
     if (newObject.contains("params") and newObject.at("params").is_array() and
-        newObject.at("params").as_array().size() > 0 and newObject.at("params").as_array()[0].is_object())
+        not newObject.at("params").as_array().empty() and newObject.at("params").as_array()[0].is_object())
     {
         for (auto const& secretField : secretFields)
         {
-            newObject.at("params").as_array()[0].as_object().erase(secretField);
+            if (newObject.at("params").as_array()[0].as_object().contains(secretField))
+                newObject.at("params").as_array()[0].as_object()[secretField] = "*";
         }
     }
     // for websocket requests
     for (auto const& secretField : secretFields)
     {
-        newObject.erase(secretField);
+        if (newObject.contains(secretField))
+            newObject[secretField] = "*";
     }
 
     return newObject;
