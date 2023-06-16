@@ -265,7 +265,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             testing::_,
             testing::_,
             true,
-            testing::Optional(testing::Eq(TransactionsCursor{MINSEQ + 1, 0})),
+            testing::Optional(testing::Eq(TransactionsCursor{MINSEQ, INT32_MAX})),
             testing::_))
         .Times(1);
 
@@ -344,7 +344,11 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
     EXPECT_CALL(
         *rawBackendPtr,
         fetchAccountTransactions(
-            testing::_, testing::_, true, testing::Optional(testing::Eq(TransactionsCursor{MINSEQ, 0})), testing::_))
+            testing::_,
+            testing::_,
+            true,
+            testing::Optional(testing::Eq(TransactionsCursor{MINSEQ - 1, INT32_MAX})),
+            testing::_))
         .Times(1);
 
     runSpawn([&, this](auto& yield) {
