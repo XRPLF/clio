@@ -19,41 +19,47 @@
 
 #pragma once
 
-#include <rpc/common/AnyHandler.h>
+#include <log/Logger.h>
 #include <rpc/common/Types.h>
+#include <webserver/Context.h>
 
 #include <memory>
-#include <optional>
 #include <string>
 
-namespace RPC {
+namespace RPC::detail {
 
-class HandlerTable
+class ForwardingProxy
 {
-    std::shared_ptr<HandlerProvider const> provider_;
+    clio::Logger log_{"RPC"};
+
+    std::shared_ptr<LoadBalancer> balancer_;
+    std::reference_wrapper<Counters> counters_;
+    std::shared_ptr<HandlerProvider const> handlerProvider_;
 
 public:
-    HandlerTable(std::shared_ptr<HandlerProvider const> const& provider) : provider_{provider}
-    {
-    }
+    ForwardingProxy(
+        std::shared_ptr<LoadBalancer> const& balancer,
+        Counters& counters,
+        std::shared_ptr<HandlerProvider const> const& handlerProvider);
 
     bool
-    contains(std::string const& method) const
-    {
-        return provider_->contains(method);
-    }
+    shouldForward(Web::Context const& ctx) const;
 
-    std::optional<AnyHandler>
-    getHandler(std::string const& command) const
-    {
-        return provider_->getHandler(command);
-    }
+    Result
+    forward(Web::Context const& ctx);
 
     bool
-    isClioOnly(std::string const& command) const
-    {
-        return provider_->isClioOnly(command);
-    }
+    isProxied(std::string const& method) const;
+
+private:
+    void
+    notifyForwarded(std::string const& method);
+
+    void
+    notifyFailedToForward(std::string const& method);
+
+    bool
+    validHandler(std::string const& method) const;
 };
 
-}  // namespace RPC
+}  // namespace RPC::detail
