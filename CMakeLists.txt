@@ -68,6 +68,7 @@ target_sources(clio PRIVATE
   src/rpc/WorkQueue.cpp
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
+  src/rpc/common/impl/APIVersionParser.cpp
   # RPC impl
   src/rpc/common/impl/HandlerProvider.cpp
   ## RPC handler
@@ -125,6 +126,7 @@ if(BUILD_TESTS)
     unittests/rpc/RPCHelpersTest.cpp
     unittests/rpc/CountersTest.cpp
     unittests/rpc/AdminVerificationTest.cpp
+    unittests/rpc/APIVersionTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
@@ -167,8 +169,10 @@ if(BUILD_TESTS)
     unittests/webserver/RPCExecutorTest.cpp)
   include(CMake/deps/gtest.cmake)
 
-  # test for dwarf5 bug on ci 
+  # fix for dwarf5 bug on ci 
   target_compile_options(clio PUBLIC -gdwarf-4)
+
+  target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
   if(CODE_COVERAGE)

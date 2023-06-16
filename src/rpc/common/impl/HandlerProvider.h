@@ -43,11 +43,7 @@ class ProductionHandlerProvider final : public HandlerProvider
     struct Handler
     {
         AnyHandler handler;
-        bool isClioOnly;
-
-        /* implicit */ Handler(AnyHandler handler, bool clioOnly = false) : handler{handler}, isClioOnly{clioOnly}
-        {
-        }
+        bool isClioOnly = false;
     };
 
     std::unordered_map<std::string, Handler> handlerMap_;

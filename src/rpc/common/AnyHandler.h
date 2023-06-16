@@ -69,18 +69,7 @@ public:
      * @brief Process incoming JSON by the stored handler
      *
      * @param value The JSON to process
-     * @return JSON result or @ref Status on error
-     */
-    [[nodiscard]] ReturnType
-    process(boost::json::value const& value) const
-    {
-        return pimpl_->process(value);
-    }
-
-    /**
-     * @brief Process incoming JSON by the stored handler in a provided coroutine
-     *
-     * @param value The JSON to process
+     * @param ctx Request context
      * @return JSON result or @ref Status on error
      */
     [[nodiscard]] ReturnType
@@ -97,9 +86,6 @@ private:
         [[nodiscard]] virtual ReturnType
         process(boost::json::value const& value, Context const& ctx) const = 0;
 
-        [[nodiscard]] virtual ReturnType
-        process(boost::json::value const& value) const = 0;
-
         [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
     };
@@ -115,15 +101,9 @@ private:
         }
 
         [[nodiscard]] ReturnType
-        process(boost::json::value const& value) const override
-        {
-            return processor(handler, value);
-        }
-
-        [[nodiscard]] ReturnType
         process(boost::json::value const& value, Context const& ctx) const override
         {
-            return processor(handler, value, &ctx);
+            return processor(handler, value, ctx);
         }
 
         [[nodiscard]] std::unique_ptr<Concept>

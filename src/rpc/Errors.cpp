@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <rpc/Errors.h>
+#include <rpc/JS.h>
 
 #include <algorithm>
 
@@ -77,7 +78,8 @@ getErrorInfo(ClioError code)
         {ClioError::rpcMALFORMED_REQUEST, "malformedRequest", "Malformed request."},
         {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
         {ClioError::rpcMALFORMED_ADDRESS, "malformedAddress", "Malformed address."},
-        {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."}};
+        {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."},
+        {ClioError::rpcINVALID_API_VERSION, JS(invalid_API_version), "Invalid API version."}};
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
     if (auto it = find_if(begin(infos), end(infos), matchByCode); it != end(infos))

@@ -23,15 +23,17 @@
 
 using namespace RPC;
 
-class RPCPingHandlerTest : public NoLoggerFixture
+class RPCPingHandlerTest : public HandlerBaseTest
 {
 };
 
 // example handler tests
 TEST_F(RPCPingHandlerTest, Default)
 {
-    auto const handler = AnyHandler{PingHandler{}};
-    auto const output = handler.process(boost::json::parse(R"({})"));
-    ASSERT_TRUE(output);
-    EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
+    runSpawn([](auto& yield) {
+        auto const handler = AnyHandler{PingHandler{}};
+        auto const output = handler.process(boost::json::parse(R"({})"), Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
+    });
 }

@@ -20,6 +20,9 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/Errors.h>
+#include <rpc/common/APIVersion.h>
+#include <util/Expected.h>
 #include <webserver/Context.h>
 #include <webserver/interface/ConnectionBase.h>
 
@@ -38,21 +41,23 @@
  */
 namespace RPC {
 
-std::optional<Web::Context>
+util::Expected<Web::Context, Status>
 make_WsContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     std::shared_ptr<Server::ConnectionBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
-    std::string const& clientIp);
+    std::string const& clientIp,
+    std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
-std::optional<Web::Context>
+util::Expected<Web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context& yc,
     boost::json::object const& request,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,
-    std::string const& clientIp);
+    std::string const& clientIp,
+    std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
 }  // namespace RPC

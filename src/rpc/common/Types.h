@@ -73,6 +73,7 @@ struct Context
     std::shared_ptr<Server::ConnectionBase> session;
     bool isAdmin = false;
     std::string clientIp;
+    uint32_t apiVersion = 0u;  // invalid by default
 };
 
 using Result = std::variant<Status, boost::json::object>;

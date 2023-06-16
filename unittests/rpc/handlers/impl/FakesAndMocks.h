@@ -73,7 +73,7 @@ public:
     using Result = RPC::HandlerReturnType<Output>;
 
     RPC::RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         using namespace RPC::validation;
 
@@ -86,35 +86,7 @@ public:
     }
 
     Result
-    process(Input input) const
-    {
-        return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
-    }
-};
-
-// example handler
-class CoroutineHandlerFake
-{
-public:
-    using Input = TestInput;
-    using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
-
-    RPC::RpcSpecConstRef
-    spec() const
-    {
-        using namespace RPC::validation;
-
-        static const auto rpcSpec = RPC::RpcSpec{
-            {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
-            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
-        };
-
-        return rpcSpec;
-    }
-
-    Result
-    process(Input input, RPC::Context const& ctx) const
+    process(Input input, [[maybe_unused]] RPC::Context const& ctx) const
     {
         return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
     }
@@ -127,7 +99,7 @@ public:
     using Result = RPC::HandlerReturnType<Output>;
 
     Result
-    process() const
+    process([[maybe_unused]] RPC::Context const& ctx) const
     {
         return Output{"test"};
     }
@@ -142,7 +114,7 @@ public:
     using Result = RPC::HandlerReturnType<Output>;
 
     RPC::RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         using namespace RPC::validation;
 
@@ -155,7 +127,7 @@ public:
     }
 
     Result
-    process([[maybe_unused]] Input input) const
+    process([[maybe_unused]] Input input, [[maybe_unused]] RPC::Context const& ctx) const
     {
         // always fail
         return RPC::Error{RPC::Status{"Very custom error"}};
@@ -191,8 +163,8 @@ struct HandlerMock
     using Output = InOutFake;
     using Result = RPC::HandlerReturnType<Output>;
 
-    MOCK_METHOD(RPC::RpcSpecConstRef, spec, (), (const));
-    MOCK_METHOD(Result, process, (Input), (const));
+    MOCK_METHOD(RPC::RpcSpecConstRef, spec, (uint32_t), (const));
+    MOCK_METHOD(Result, process, (Input, RPC::Context const&), (const));
 };
 
 struct HandlerWithoutInputMock
@@ -200,7 +172,7 @@ struct HandlerWithoutInputMock
     using Output = InOutFake;
     using Result = RPC::HandlerReturnType<Output>;
 
-    MOCK_METHOD(Result, process, (), (const));
+    MOCK_METHOD(Result, process, (RPC::Context const&), (const));
 };
 
 }  // namespace unittests::detail

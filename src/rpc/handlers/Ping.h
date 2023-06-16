@@ -35,7 +35,7 @@ public:
     using Result = HandlerReturnType<Output>;
 
     Result
-    process() const
+    process([[maybe_unused]] Context const& ctx) const
     {
         return Output{};
     }

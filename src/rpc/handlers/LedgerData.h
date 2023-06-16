@@ -76,7 +76,7 @@ public:
     }
 
     RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         static const auto rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
