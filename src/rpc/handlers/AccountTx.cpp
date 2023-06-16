@@ -73,6 +73,8 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     }
     else
     {
+        // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include the 0 transaction
+        // index of minIndex
         if (input.forward)
             cursor = {minIndex - 1, INT32_MAX};
         else
