@@ -23,6 +23,7 @@
 #include <rpc/Factories.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/impl/APIVersionParser.h>
+#include <util/JsonUtils.h>
 #include <util/Profiler.h>
 
 #include <boost/json/parse.hpp>
@@ -125,7 +126,8 @@ private:
         std::shared_ptr<Server::ConnectionBase> connection)
     {
         log_.info() << connection->tag() << (connection->upgraded ? "ws" : "http")
-                    << " received request from work queue: " << request << " ip = " << connection->clientIp;
+                    << " received request from work queue: " << util::removeSecret(request)
+                    << " ip = " << connection->clientIp;
 
         auto const id = request.contains("id") ? request.at("id") : nullptr;
 

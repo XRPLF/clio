@@ -33,6 +33,7 @@
 #include <webserver/Context.h>
 
 #include <fmt/core.h>
+#include <util/JsonUtils.h>
 
 namespace RPC {
 
@@ -231,8 +232,10 @@ logDuration(Web::Context const& ctx, T const& dur)
     static clio::Logger log{"RPC"};
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
-    auto const msg =
-        fmt::format("Request processing duration = {} milliseconds. request = {}", millis, serialize(ctx.params));
+    auto const msg = fmt::format(
+        "Request processing duration = {} milliseconds. request = {}",
+        millis,
+        serialize(util::removeSecret(ctx.params)));
 
     if (seconds > 10)
         log.error() << ctx.tag() << msg;

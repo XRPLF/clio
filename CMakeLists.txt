@@ -111,6 +111,7 @@ if(BUILD_TESTS)
     unittests/Logger.cpp
     unittests/Config.cpp
     unittests/ProfilerTest.cpp
+    unittests/JsonUtilTest.cpp
     unittests/DOSGuard.cpp
     unittests/SubscriptionTest.cpp
     unittests/SubscriptionManagerTest.cpp
