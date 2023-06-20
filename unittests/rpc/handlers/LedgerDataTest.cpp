@@ -87,6 +87,9 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "outOfOrderMarkerNotInt"},
         LedgerDataParamTestCaseBundle{"markerNotString", R"({"marker": 123})", "invalidParams", "markerNotString"},
+        LedgerDataParamTestCaseBundle{
+            "typeNotString", R"({"type": 123})", "invalidParams", "Invalid field 'type', not string."},
+        LedgerDataParamTestCaseBundle{"typeNotValid", R"({"type": "xxx"})", "invalidParams", "Invalid field 'type'."},
     };
 }
 
@@ -213,7 +216,6 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
     });
 }
 
-// no marker
 TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 {
     static auto const ledgerExpected = R"({
@@ -242,17 +244,25 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
-    auto limit = 10;
-    std::vector<Blob> bbs;
+    // when 'type' not specified, default to all the types
+    auto limitLine = 5;
+    auto limitTicket = 5;
 
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(limit);
+    std::vector<Blob> bbs;
+    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(limitLine + limitTicket);
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limit--)
+    while (limitLine--)
     {
         auto const line =
             CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
+    }
+
+    while (limitTicket--)
+    {
+        auto const ticket = CreateTicketLedgerObject(ACCOUNT, limitTicket);
+        bbs.push_back(ticket.getSerializer().peekData());
     }
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -269,6 +279,77 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
         EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
         EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
         EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
+        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+    });
+}
+
+TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
+{
+    static auto const ledgerExpected = R"({
+      "accepted":true,
+      "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
+      "close_flags":0,
+      "close_time":0,
+      "close_time_resolution":0,
+      "hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+      "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+      "ledger_index":"30",
+      "parent_close_time":0,
+      "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
+      "seqNum":"30",
+      "totalCoins":"0",
+      "total_coins":"0",
+      "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
+      "closed":true
+   })";
+
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);  // min
+    mockBackendPtr->updateRange(RANGEMAX);  // max
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto limitLine = 5;
+    auto limitTicket = 5;
+
+    std::vector<Blob> bbs;
+    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(limitLine + limitTicket);
+    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
+
+    while (limitLine--)
+    {
+        auto const line =
+            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        bbs.push_back(line.getSerializer().peekData());
+    }
+
+    while (limitTicket--)
+    {
+        auto const ticket = CreateTicketLedgerObject(ACCOUNT, limitTicket);
+        bbs.push_back(ticket.getSerializer().peekData());
+    }
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
+        auto const req = json::parse(R"({
+            "limit":10,
+            "type":"state"
+            })");
+
+        auto output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->as_object().contains("ledger"));
+        //"close_time_human" 's format depends on platform, might be sightly different
+        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
+        EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output->as_object().at("state").as_array().size(), 5);
         EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
         EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
