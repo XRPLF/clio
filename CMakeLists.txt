@@ -128,6 +128,7 @@ if(BUILD_TESTS)
     unittests/rpc/CountersTest.cpp
     unittests/rpc/AdminVerificationTest.cpp
     unittests/rpc/APIVersionTests.cpp
+    unittests/rpc/ForwardingProxyTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp

@@ -25,14 +25,6 @@
 
 namespace RPC::detail {
 
-ForwardingProxy ::ForwardingProxy(
-    std::shared_ptr<LoadBalancer> const& balancer,
-    Counters& counters,
-    std::shared_ptr<HandlerProvider const> const& handlerProvider)
-    : balancer_{balancer}, counters_{std::ref(counters)}, handlerProvider_{handlerProvider}
-{
-}
-
 bool
 ForwardingProxy ::shouldForward(Web::Context const& ctx) const
 {
