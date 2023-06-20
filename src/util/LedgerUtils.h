@@ -26,6 +26,13 @@
 
 namespace util {
 
+/**
+ * @brief Deserialize a ledger header from a byte array.
+ * @param data The byte array to deserialize.
+ * @return The deserialized ledger header.
+ * This function read the data from the byte array in order. Ideally, it would not throw any error,except the header
+ * format changed.
+ */
 inline ripple::LedgerInfo
 deserializeHeader(ripple::Slice data)
 {

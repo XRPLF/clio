@@ -607,21 +607,6 @@ traverseOwnedNodes(
     return AccountCursor({beast::zero, 0});
 }
 
-std::shared_ptr<ripple::SLE const>
-read(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
-    ripple::Keylet const& keylet,
-    ripple::LedgerInfo const& lgrInfo,
-    Web::Context const& context)
-{
-    if (auto const blob = backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
-    {
-        return std::make_shared<ripple::SLE const>(ripple::SerialIter{blob->data(), blob->size()}, keylet.key);
-    }
-
-    return nullptr;
-}
-
 std::optional<ripple::Seed>
 parseRippleLibSeed(boost::json::value const& value)
 {

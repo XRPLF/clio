@@ -564,7 +564,18 @@ public:
                 if (lastKey_.size())
                     backend.writeSuccessor(std::move(lastKey_), request_.ledger().sequence(), std::string{obj.key()});
                 lastKey_ = obj.key();
-                backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
+                std::vector<NFTsData> nfts;
+
+                try
+                {
+                    nfts = getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data());
+                }
+                catch (std::runtime_error const& e)
+                {
+                    log_.error() << "Failed to deserialize NFT data from object: " << e.what();
+                }
+
+                backend.writeNFTs(std::move(nfts));
                 backend.writeLedgerObject(
                     std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data()));
             }

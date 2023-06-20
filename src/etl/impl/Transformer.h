@@ -232,15 +232,23 @@ private:
                 auto checkBookBase = false;
                 auto const isDeleted = (blob->size() == 0);
 
-                if (isDeleted)
+                try
                 {
-                    auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
-                    assert(old);
-                    checkBookBase = isBookDir(*key, *old);
+                    if (isDeleted)
+                    {
+                        auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
+                        assert(old);
+                        checkBookBase = isBookDir(*key, *old);
+                    }
+                    else
+                    {
+                        checkBookBase = isBookDir(*key, *blob);
+                    }
                 }
-                else
+                catch (std::runtime_error const& e)
                 {
-                    checkBookBase = isBookDir(*key, *blob);
+                    log_.error() << "Failed to deserialize node: " << *key << " : " << e.what();
+                    continue;
                 }
 
                 if (checkBookBase)

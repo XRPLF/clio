@@ -94,20 +94,40 @@ public:
             std::string* raw = txn.mutable_transaction_blob();
 
             ripple::SerialIter it{raw->data(), raw->size()};
-            ripple::STTx sttx{it};
+            std::optional<ripple::STTx> sttxOp;
+            try
+            {
+                sttxOp.emplace(ripple::STTx{it});
+            }
+            catch (std::runtime_error& e)
+            {
+                log_.error() << "Failed to deserialize STTx for transaction : " << e.what();
+                continue;
+            }
 
-            log_.trace() << "Inserting transaction = " << sttx.getTransactionID();
+            log_.trace() << "Inserting transaction = " << sttxOp->getTransactionID();
 
-            ripple::TxMeta txMeta{sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
+            std::optional<ripple::TxMeta> txMetaOp;
 
-            auto const [nftTxs, maybeNFT] = getNFTDataFromTx(txMeta, sttx);
+            try
+            {
+                txMetaOp.emplace(ripple::TxMeta{sttxOp->getTransactionID(), ledger.seq, txn.metadata_blob()});
+            }
+            catch (std::runtime_error& e)
+            {
+                log_.error() << "Failed to deserializing TxMeta for transaction " << sttxOp->getTransactionID() << " : "
+                             << e.what();
+                continue;
+            }
+
+            auto const [nftTxs, maybeNFT] = getNFTDataFromTx(*txMetaOp, *sttxOp);
             result.nfTokenTxData.insert(result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
             if (maybeNFT)
                 result.nfTokensData.push_back(*maybeNFT);
 
             auto journal = ripple::debugLog();
-            result.accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
-            std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
+            result.accountTxData.emplace_back(*txMetaOp, sttxOp->getTransactionID(), journal);
+            std::string keyStr{(const char*)sttxOp->getTransactionID().data(), 32};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,
@@ -201,7 +221,19 @@ public:
                         if (prev == Backend::firstKey)
                             backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 
-                        if (isBookDir(cur->key, cur->blob))
+                        bool isBookDirFlag = false;
+
+                        try
+                        {
+                            isBookDirFlag = isBookDir(cur->key, cur->blob);
+                        }
+                        catch (std::runtime_error const& e)
+                        {
+                            log_.error() << "Failed to deserialize node: " << cur->key << " : " << e.what();
+                            continue;
+                        }
+
+                        if (isBookDirFlag)
                         {
                             auto base = getBookBase(cur->key);
                             // make sure the base is not an actual object

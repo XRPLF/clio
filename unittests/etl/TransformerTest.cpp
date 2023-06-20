@@ -149,3 +149,46 @@ TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
     transformer_ =
         std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
 }
+
+TEST_F(ETLTransformerTest, InvalidLedgerObject)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
+
+    auto const blob = hexStringToBinaryString(RAW_HEADER);
+    auto response = std::make_optional<FakeFetchResponse>(blob);
+    response->objectNeighborsIncluded = false;
+    FakeLedgerObject ledgerObject;
+    ledgerObject.mod = FakeLedgerObject::DELETED;
+    ledgerObject.mutable_key()->assign("01010101");
+    ledgerObject.mutable_data()->assign("01010101");
+    response->mutable_ledger_objects()->mutable_objects()->push_back(ledgerObject);
+
+    EXPECT_CALL(*rawBackendPtr, writeLedgerObject(std::string("01010101"), _, std::string("01010101")))
+        .Times(AtLeast(1));
+
+    ON_CALL(dataPipe_, popNext).WillByDefault([this, &response](auto) -> std::optional<FakeFetchResponse> {
+        if (state_.isStopping)
+            return std::nullopt;
+        return response;
+    });
+    ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(true));
+
+    EXPECT_CALL(dataPipe_, popNext).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, startWrites).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeLedger(_, _)).Times(AtLeast(1));
+    EXPECT_CALL(ledgerLoader_, insertTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeAccountTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeNFTs).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, writeNFTTransactions).Times(AtLeast(1));
+    EXPECT_CALL(*rawBackendPtr, doFinishWrites).Times(AtLeast(1));
+    EXPECT_CALL(ledgerPublisher_, publish(_)).Times(AtLeast(1));
+
+    transformer_ =
+        std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
+
+    // after 10ms we start spitting out empty responses which means the extractor is finishing up
+    // this is normally combined with stopping the entire thing by setting the isStopping flag.
+    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    state_.isStopping = true;
+}
