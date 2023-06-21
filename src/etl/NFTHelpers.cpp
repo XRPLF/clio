@@ -326,9 +326,9 @@ std::vector<NFTsData>
 getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob)
 {
     std::vector<NFTsData> nfts;
-
     ripple::STLedgerEntry const sle =
         ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
+
     if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE)
         return nfts;
 

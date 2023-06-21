@@ -186,7 +186,9 @@ private:
         }
         catch (std::runtime_error const& e)
         {
-            log_.error() << "Failed to build next ledger : " << e.what();
+            log_.fatal()
+                << "Failed to build next ledger : " << e.what()
+                << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
             return {ripple::LedgerInfo{}, false};
         }
 

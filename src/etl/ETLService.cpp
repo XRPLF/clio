@@ -113,7 +113,9 @@ ETLService::monitor()
         }
         catch (std::runtime_error const& e)
         {
-            log_.error() << "Failed to load initial ledger, Exiting monitor loop : " << e.what();
+            log_.fatal()
+                << "Failed to load initial ledger, Exiting monitor loop : " << e.what()
+                << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
             return;
         }
 
