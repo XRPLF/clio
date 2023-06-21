@@ -174,19 +174,28 @@ private:
         backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
 
         writeSuccessors(lgrInfo, rawData);
-        updateCache(lgrInfo, rawData);
+        std::optional<FormattedTransactionsData> insertTxResultOp;
+        try
+        {
+            updateCache(lgrInfo, rawData);
 
-        log_.debug() << "Inserted/modified/deleted all objects. Number of objects = "
-                     << rawData.ledger_objects().objects_size();
+            log_.debug() << "Inserted/modified/deleted all objects. Number of objects = "
+                         << rawData.ledger_objects().objects_size();
 
-        auto insertTxResult = loader_.get().insertTransactions(lgrInfo, rawData);
+            insertTxResultOp.emplace(loader_.get().insertTransactions(lgrInfo, rawData));
+        }
+        catch (std::runtime_error const& e)
+        {
+            log_.error() << "Failed to build next ledger : " << e.what();
+            return {ripple::LedgerInfo{}, false};
+        }
 
         log_.debug() << "Inserted all transactions. Number of transactions  = "
                      << rawData.transactions_list().transactions_size();
 
-        backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
-        backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
-        backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
+        backend_->writeAccountTransactions(std::move(insertTxResultOp->accountTxData));
+        backend_->writeNFTs(std::move(insertTxResultOp->nfTokensData));
+        backend_->writeNFTTransactions(std::move(insertTxResultOp->nfTokenTxData));
 
         auto [success, duration] =
             util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
