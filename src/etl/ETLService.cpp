@@ -83,30 +83,40 @@ ETLService::monitor()
                        "from the network.";
         std::optional<ripple::LedgerInfo> ledger;
 
-        if (startSequence_)
+        try
         {
-            log_.info() << "ledger sequence specified in config. "
-                        << "Will begin ETL process starting with ledger " << *startSequence_;
-            ledger = ledgerLoader_.loadInitialLedger(*startSequence_);
-        }
-        else
-        {
-            log_.info() << "Waiting for next ledger to be validated by network...";
-            std::optional<uint32_t> mostRecentValidated = networkValidatedLedgers_->getMostRecent();
-
-            if (mostRecentValidated)
+            if (startSequence_)
             {
-                log_.info() << "Ledger " << *mostRecentValidated << " has been validated. "
-                            << "Downloading...";
-                ledger = ledgerLoader_.loadInitialLedger(*mostRecentValidated);
+                log_.info() << "ledger sequence specified in config. "
+                            << "Will begin ETL process starting with ledger " << *startSequence_;
+                ledger = ledgerLoader_.loadInitialLedger(*startSequence_);
             }
             else
             {
-                log_.info() << "The wait for the next validated "
-                            << "ledger has been aborted. "
-                            << "Exiting monitor loop";
-                return;
+                log_.info() << "Waiting for next ledger to be validated by network...";
+                std::optional<uint32_t> mostRecentValidated = networkValidatedLedgers_->getMostRecent();
+
+                if (mostRecentValidated)
+                {
+                    log_.info() << "Ledger " << *mostRecentValidated << " has been validated. "
+                                << "Downloading...";
+                    ledger = ledgerLoader_.loadInitialLedger(*mostRecentValidated);
+                }
+                else
+                {
+                    log_.info() << "The wait for the next validated "
+                                << "ledger has been aborted. "
+                                << "Exiting monitor loop";
+                    return;
+                }
             }
+        }
+        catch (std::runtime_error const& e)
+        {
+            log_.fatal()
+                << "Failed to load initial ledger, Exiting monitor loop : " << e.what()
+                << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
+            return;
         }
 
         if (ledger)
