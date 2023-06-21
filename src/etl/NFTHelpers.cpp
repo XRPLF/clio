@@ -326,21 +326,15 @@ std::vector<NFTsData>
 getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob)
 {
     std::vector<NFTsData> nfts;
-    try
-    {
-        ripple::STLedgerEntry const sle =
-            ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
-        if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE)
-            return nfts;
 
-        auto const owner = ripple::AccountID::fromVoid(key.data());
-        for (ripple::STObject const& node : sle.getFieldArray(ripple::sfNFTokens))
-            nfts.emplace_back(node.getFieldH256(ripple::sfNFTokenID), seq, owner, node.getFieldVL(ripple::sfURI));
-    }
-    catch (std::runtime_error const& e)
-    {
+    ripple::STLedgerEntry const sle =
+        ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
+    if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE)
         return nfts;
-    }
+
+    auto const owner = ripple::AccountID::fromVoid(key.data());
+    for (ripple::STObject const& node : sle.getFieldArray(ripple::sfNFTokens))
+        nfts.emplace_back(node.getFieldH256(ripple::sfNFTokenID), seq, owner, node.getFieldVL(ripple::sfURI));
 
     return nfts;
 }
