@@ -70,19 +70,19 @@ class FakeLedgerObject
 {
 public:
     enum ModType : int { MODIFIED, DELETED };
-    ModType mod = MODIFIED;
 
 private:
     std::string key_;
     std::string data_;
     std::string predecessor_;
     std::string successor_;
+    ModType mod_ = MODIFIED;
 
 public:
     ModType
     mod_type() const
     {
-        return mod;
+        return mod_;
     }
 
     std::string
