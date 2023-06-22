@@ -17,13 +17,15 @@
 */
 //==============================================================================
 
-#include <ripple/basics/StringUtilities.h>
 #include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
 #include <log/Logger.h>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
 
+#include <ripple/basics/StringUtilities.h>
+#include <ripple/protocol/nftPageMask.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
@@ -406,6 +408,73 @@ getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID)
 }
 
 std::variant<Status, AccountCursor>
+traverseNFTObjects(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& accountID,
+    ripple::uint256 nextPage,
+    std::uint32_t limit,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE&&)> atOwnedNode)
+{
+    auto const firstNFTPage = ripple::keylet::nftpage_min(accountID);
+
+    // check if lastCursor is valid
+    if (nextPage != beast::zero and firstNFTPage.key != (nextPage & ~ripple::nft::pageMask))
+        return Status{RippledError::rpcINVALID_PARAMS, "invalidCursor"};
+
+    std::optional<ripple::uint256> currentPage(nextPage);
+
+    // no marker, start from the first page
+    if (nextPage == beast::zero)
+    {
+        currentPage = backend.fetchSuccessorKey(firstNFTPage.key, sequence, yield);
+        if (!currentPage)
+            return AccountCursor{beast::zero, 0};
+    }
+
+    // read the current page
+    auto page = backend.fetchLedgerObject(*currentPage, sequence, yield);
+
+    // page should not be null, because the key is in the db
+    if (!page)
+        throw std::runtime_error("Page should not be null" + uint256ToString(*currentPage));
+
+    auto const keylet = ripple::Keylet(ripple::ltNFTOKEN_PAGE, *currentPage);
+    auto it = ripple::SerialIter{page->data(), page->size()};
+    auto sle = ripple::SLE{it, keylet.key};
+    if (keylet.check(sle))
+    {
+        // if marker is empty, no page means no nft objects
+        // if marker is not empty but the page is not nftpage, means the marker is wrong type index
+        if (nextPage == beast::zero)
+            return AccountCursor{beast::zero, 0};
+        else
+            return Status{RippledError::rpcINVALID_PARAMS, "invalidCursor"};
+    }
+    auto count = 0;
+
+    // traverse the nft page linked list until the end or reach the limit
+    while (true)
+    {
+        auto const nftNextPage = sle[~ripple::sfNextPageMin];
+        atOwnedNode(std::move(sle));
+        count++;
+        // no more page or reach the limit
+        if (!nftNextPage or count == limit)
+        {
+            return AccountCursor{*nftNextPage, count};
+        }
+
+        page = backend.fetchLedgerObject(*nftNextPage, sequence, yield);
+        it = ripple::SerialIter{page->data(), page->size()};
+        sle = ripple::SLE{it, *nftNextPage};
+    }
+
+    return AccountCursor{beast::zero, 0};
+}
+
+std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::AccountID const& accountID,
@@ -423,10 +492,15 @@ traverseOwnedNodes(
     // we need to traverse nft objects first if this is the first request or the marker's page is max
     if (nftIncluded and (!jsonCursor or startHint == UINT32_MAX))
     {
-        auto const [lastNFT, objectsCount] = traverseNFTObjects();
+        auto const cursorMaybe = traverseNFTObjects(backend, sequence, accountID, hexCursor, limit, yield, atOwnedNode);
+        if (auto status = std::get_if<Status>(&cursorMaybe))
+            return *status;
+
+        auto const [nextNFTPage, objectsCount] = std::get<AccountCursor>(cursorMaybe);
+        // if limit reach , we return the next page and UINT32_MAX
         if (objectsCount >= limit)
-            return AccountCursor{lastNFT, UINT32_MAX};
-        // need to continue to traverse owned nodes
+            return AccountCursor{nextNFTPage, UINT32_MAX};
+        // adjust limit ,continue to traverse owned nodes
         limit -= objectsCount;
         hexCursor = beast::zero;
         startHint = 0;
@@ -442,12 +516,6 @@ traverseOwnedNodes(
         jsonCursor,
         yield,
         atOwnedNode);
-}
-
-std::variant<Status, AccountCursor>
-traverseNFTObjects()
-{
-    return AccountCursor{beast::zero, UINT32_MAX};
 }
 
 std::variant<Status, AccountCursor>
