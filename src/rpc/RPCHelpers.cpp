@@ -413,11 +413,24 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode)
+    std::function<void(ripple::SLE&&)> atOwnedNode,
+    bool nftIncluded)
 {
     auto const maybeCursor = parseAccountCursor(jsonCursor);
     // the format is checked in RPC framework level
-    auto const [hexCursor, startHint] = *maybeCursor;
+    auto [hexCursor, startHint] = *maybeCursor;
+
+    // we need to traverse nft objects first if this is the first request or the marker's page is max
+    if (nftIncluded and (!jsonCursor or startHint == UINT32_MAX))
+    {
+        auto const [lastNFT, objectsCount] = traverseNFTObjects();
+        if (objectsCount >= limit)
+            return AccountCursor{lastNFT, UINT32_MAX};
+        // need to continue to traverse owned nodes
+        limit -= objectsCount;
+        hexCursor = beast::zero;
+        startHint = 0;
+    }
 
     return traverseOwnedNodes(
         backend,
@@ -429,6 +442,12 @@ traverseOwnedNodes(
         jsonCursor,
         yield,
         atOwnedNode);
+}
+
+std::variant<Status, AccountCursor>
+traverseNFTObjects()
+{
+    return AccountCursor{beast::zero, UINT32_MAX};
 }
 
 std::variant<Status, AccountCursor>
