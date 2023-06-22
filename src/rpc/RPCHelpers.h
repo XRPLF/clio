@@ -135,13 +135,6 @@ ngTraverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode);
 
-std::shared_ptr<ripple::SLE const>
-read(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
-    ripple::Keylet const& keylet,
-    ripple::LedgerInfo const& lgrInfo,
-    Web::Context const& context);
-
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
 

@@ -181,16 +181,6 @@ isBookDir(T const& key, R const& object)
 
 template <class T>
 inline ripple::uint256
-getBook(T const& offer)
-{
-    ripple::SerialIter it{offer.data(), offer.size()};
-    ripple::SLE sle{it, {}};
-    ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
-    return book;
-}
-
-template <class T>
-inline ripple::uint256
 getBookBase(T const& key)
 {
     assert(key.size() == ripple::uint256::size());
