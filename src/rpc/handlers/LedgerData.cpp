@@ -93,8 +93,6 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
             header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
             header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
             header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
-            header[JS(seqNum)] = std::to_string(lgrInfo.seq);
-            header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
             header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
             header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
         }

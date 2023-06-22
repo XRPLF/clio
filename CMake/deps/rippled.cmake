@@ -1,20 +1,18 @@
-set(RIPPLED_REPO "https://github.com/ripple/rippled.git")
-set(RIPPLED_BRANCH "1.9.2")
-set(NIH_CACHE_ROOT "${CMAKE_CURRENT_BINARY_DIR}" CACHE INTERNAL "")
-set(patch_command ! grep operator!= src/ripple/protocol/Feature.h || git apply < ${CMAKE_CURRENT_SOURCE_DIR}/CMake/deps/Remove-bitset-operator.patch)
-message(STATUS "Cloning ${RIPPLED_REPO} branch ${RIPPLED_BRANCH}")
-FetchContent_Declare(rippled
-  GIT_REPOSITORY "${RIPPLED_REPO}"
-  GIT_TAG "${RIPPLED_BRANCH}"
-  GIT_SHALLOW ON
-  PATCH_COMMAND "${patch_command}"
+target_link_libraries(clio PUBLIC CONAN_PKG::clio-xrpl)
+target_link_libraries(clio PUBLIC CONAN_PKG::date)
+target_link_libraries(clio PUBLIC CONAN_PKG::abseil)
+target_link_libraries(clio PUBLIC CONAN_PKG::grpc) 
+target_link_libraries(clio PUBLIC CONAN_PKG::libuv) 
+target_link_libraries(clio PUBLIC CONAN_PKG::c-ares) 
+target_link_libraries(clio PUBLIC CONAN_PKG::zlib) 
+target_link_libraries(clio PUBLIC CONAN_PKG::re2) 
+
+find_package(OpenSSL 1.1.1 REQUIRED)
+set_target_properties(OpenSSL::SSL PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS OPENSSL_NO_SSL2
 )
 
-FetchContent_GetProperties(rippled)
-if(NOT rippled_POPULATED)
-  FetchContent_Populate(rippled)
-  add_subdirectory(${rippled_SOURCE_DIR} ${rippled_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
-target_link_libraries(clio PUBLIC xrpl_core grpc_pbufs)
-target_include_directories(clio PUBLIC ${rippled_SOURCE_DIR}/src ) # TODO: Seems like this shouldn't be needed?
+target_link_libraries(clio PUBLIC
+  OpenSSL::Crypto
+  OpenSSL::SSL
+)
