@@ -308,8 +308,9 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context&
     if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
         fees.base = sle.getFieldU64(ripple::sfBaseFee);
 
-    if (sle.getFieldIndex(ripple::sfReferenceFeeUnits) != -1)
-        fees.units = sle.getFieldU32(ripple::sfReferenceFeeUnits);
+    // deprecated?
+    // if (sle.getFieldIndex(ripple::sfReferenceFeeUnits) != -1)
+    //     fees.units = sle.getFieldU32(ripple::sfReferenceFeeUnits);
 
     if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
         fees.reserve = sle.getFieldU32(ripple::sfReserveBase);

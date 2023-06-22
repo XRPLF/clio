@@ -1,3 +1,75 @@
+# Temporary build instructions
+
+## prerequisites 
+1. make sure you have conan 1 installed and active (use brew on mac). conan may have been upgraded to v2 and that may not work
+2. you should already have conan profile after building rippled. here is what mine looks like:
+```
+[settings]
+os=Macos
+os_build=Macos
+arch=armv8
+arch_build=armv8
+compiler=apple-clang
+compiler.version=14
+compiler.libcxx=libc++
+build_type=Release
+compiler.cppstd=20
+[options]
+boost:extra_b2_flags=define=BOOST_ASIO_HAS_STD_INVOKE_RESULT
+[build_requires]
+[env]
+CFLAGS=-DBOOST_ASIO_HAS_STD_INVOKE_RESULT
+CXXFLAGS=-DBOOST_ASIO_HAS_STD_INVOKE_RESULT
+[conf]
+tools.build:cxxflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
+tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
+```
+
+## preparing local packages
+1. get rippled from [my branch](https://github.com/godexsoft/rippled/tree/feature/conan-for-clio)
+2. build rippled as per their instructions. pay attention to these commands:
+```sh
+conan export external/snappy snappy/1.1.9@
+conan export external/soci soci/4.0.3@
+mkdir .build && cd .build
+conan install .. --output-folder . --build missing --settings build_type=Release
+cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+cd - # to go back to root of rippled
+```
+3. perform this command at the root directory of rippled
+```sh
+conan export .
+```
+this will export a local package `xrpl/1.11.0-rc3`.
+
+4. navigate to clio root directory and perform
+```sh
+conan export external/cassandra # export our "custom" cassandra driver package
+mkdir .build && cd .build
+conan install .. --output-folder . --build=missing --settings build_type=Release
+cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --parallel 
+```
+if all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` built as well as `clio_unittests`.
+Please note that 3 unittests are currently failing. See below.
+
+## things to fix
+
+1. Figure out what to do with `ripple::Fees` that is now missing the `units` member. It was used in a few places and couple unittests are broken because of it.
+2. Fix build on CI (currently using old CMake. need to use conan instead)
+3. Make dependencies list smaller. Currently we are linking against just about every library possible
+4. Fix code coverage support (see 'coverage' option in conanfile)
+5. See if we can contribute/push our cassandra-driver to conan center so we don't need to export it before we able to use it
+6. See if it's better to use FindPackage instead of conan variables for all our deps (rippled does it this way)
+7. Tidy up conanfile and CMakeLists.txt. Remove anything unused, add notes/comments where needed
+8. Get clio build with old settings.cmake (-Werror being most important flag here)
+
+
+On rippled side:
+1. Export only actually needed headers for libxrpl and make sure we don't export any other files (like VERSION, README, c/cpp files)
+2. Look into separating pbufs to yet another package (talk to John)
+3. Make sure protobuf/grpc does not export the .cc (or any other cpp) files. Only headers.
+
 # Clio
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
 historical ledger and transaction data are stored in a more space-efficient format,

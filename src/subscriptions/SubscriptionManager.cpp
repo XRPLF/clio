@@ -53,7 +53,8 @@ getLedgerPubMessage(
     pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
     pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
 
-    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
+    // deprecated?
+    // pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
     pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
     pubMsg["reserve_base"] = RPC::toBoostJson(fees.reserve.jsonClipped());
     pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
