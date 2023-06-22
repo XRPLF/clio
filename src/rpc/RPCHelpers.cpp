@@ -415,37 +415,6 @@ traverseOwnedNodes(
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
-    if (!backend.fetchLedgerObject(ripple::keylet::account(accountID).key, sequence, yield))
-        return Status{RippledError::rpcACT_NOT_FOUND};
-
-    auto const maybeCursor = parseAccountCursor(jsonCursor);
-    if (!maybeCursor)
-        return Status(ripple::rpcINVALID_PARAMS, "Malformed cursor");
-
-    auto [hexCursor, startHint] = *maybeCursor;
-
-    return traverseOwnedNodes(
-        backend,
-        ripple::keylet::ownerDir(accountID),
-        hexCursor,
-        startHint,
-        sequence,
-        limit,
-        jsonCursor,
-        yield,
-        atOwnedNode);
-}
-
-std::variant<Status, AccountCursor>
-ngTraverseOwnedNodes(
-    BackendInterface const& backend,
-    ripple::AccountID const& accountID,
-    std::uint32_t sequence,
-    std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode)
-{
     auto const maybeCursor = parseAccountCursor(jsonCursor);
     // the format is checked in RPC framework level
     auto const [hexCursor, startHint] = *maybeCursor;

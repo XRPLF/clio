@@ -109,7 +109,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     };
 
     // traverse all owned nodes, limit->max, marker->empty
-    auto const ret = ngTraverseOwnedNodes(
+    auto const ret = traverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
         lgrInfo.seq,

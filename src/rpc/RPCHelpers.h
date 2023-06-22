@@ -104,16 +104,6 @@ getLedgerInfoFromHashOrSeq(
 std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
-    ripple::AccountID const& accountID,
-    std::uint32_t sequence,
-    std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode);
-
-std::variant<Status, AccountCursor>
-traverseOwnedNodes(
-    BackendInterface const& backend,
     ripple::Keylet const& owner,
     ripple::uint256 const& hexMarker,
     std::uint32_t const startHint,
@@ -126,7 +116,7 @@ traverseOwnedNodes(
 // Remove the account check from traverseOwnedNodes
 // Account check has been done by framework,remove it from internal function
 std::variant<Status, AccountCursor>
-ngTraverseOwnedNodes(
+traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::AccountID const& accountID,
     std::uint32_t sequence,

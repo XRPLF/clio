@@ -63,7 +63,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
     };
 
     // traverse all owned nodes, limit->max, marker->empty
-    ngTraverseOwnedNodes(
+    traverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
         lgrInfo.seq,
