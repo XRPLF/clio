@@ -119,7 +119,6 @@ traverseOwnedNodes(
     std::uint32_t const startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode);
 

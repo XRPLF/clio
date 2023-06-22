@@ -111,15 +111,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     }
 
     auto result = traverseOwnedNodes(
-        *sharedPtrBackend_,
-        directory,
-        cursor,
-        startHint,
-        lgrInfo.seq,
-        reserve,
-        {},
-        yield,
-        [&offers](ripple::SLE&& offer) {
+        *sharedPtrBackend_, directory, cursor, startHint, lgrInfo.seq, reserve, yield, [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER)
             {
                 offers.push_back(std::move(offer));

@@ -425,15 +425,7 @@ traverseOwnedNodes(
     auto [hexCursor, startHint] = *maybeCursor;
 
     return traverseOwnedNodes(
-        backend,
-        ripple::keylet::ownerDir(accountID),
-        hexCursor,
-        startHint,
-        sequence,
-        limit,
-        jsonCursor,
-        yield,
-        atOwnedNode);
+        backend, ripple::keylet::ownerDir(accountID), hexCursor, startHint, sequence, limit, yield, atOwnedNode);
 }
 
 std::variant<Status, AccountCursor>
@@ -451,15 +443,7 @@ ngTraverseOwnedNodes(
     auto const [hexCursor, startHint] = *maybeCursor;
 
     return traverseOwnedNodes(
-        backend,
-        ripple::keylet::ownerDir(accountID),
-        hexCursor,
-        startHint,
-        sequence,
-        limit,
-        jsonCursor,
-        yield,
-        atOwnedNode);
+        backend, ripple::keylet::ownerDir(accountID), hexCursor, startHint, sequence, limit, yield, atOwnedNode);
 }
 
 std::variant<Status, AccountCursor>
@@ -470,7 +454,6 @@ traverseOwnedNodes(
     std::uint32_t const startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
