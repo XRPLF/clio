@@ -82,7 +82,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     else
     {
         // Must specify 1 of the following fields to indicate what type
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "unknownOption"}};
+        return Error{Status{ClioError::rpcUNKNOWN_OPTION}};
     }
 
     // check ledger exists

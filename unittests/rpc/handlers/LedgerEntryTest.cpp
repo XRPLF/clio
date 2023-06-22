@@ -99,8 +99,8 @@ generateTestValuesForParametersTest()
             "UnknownOption",
             R"({
             })",
-            "invalidParams",
-            "unknownOption"},
+            "unknownOption",
+            "Unknown option."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthType",
