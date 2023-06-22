@@ -1,6 +1,8 @@
 *clio*.log
 build*/
+.build
 .vscode
 .python-version
+CMakeUserPresets.json
 config.json
 src/main/impl/Build.cpp

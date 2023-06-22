@@ -98,7 +98,7 @@ synchronous(F&& f)
      * ctx, and is used to pass a stream of data into the method.
      */
     boost::asio::io_context ctx;
-    boost::asio::io_context::strand strand(ctx);
+    boost::asio::strand<boost::asio::io_context::executor_type> strand(ctx.get_executor());
     std::optional<boost::asio::io_context::work> work;
 
     /*! @brief Place the ctx within the vector of serialized handlers. */

@@ -56,8 +56,6 @@ struct DefaultProcessor final
         }
         else if constexpr (HandlerWithoutInput<HandlerType>)
         {
-            using OutType = HandlerReturnType<typename HandlerType::Output>;
-
             // no input to pass, ignore the value
             if (auto const ret = handler.process(ctx); not ret)
                 return Error{ret.error()};  // forward Status
