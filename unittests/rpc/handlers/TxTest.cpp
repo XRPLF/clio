@@ -79,6 +79,48 @@ TEST_F(RPCTxTest, InvalidLgrRange)
     });
 }
 
+TEST_F(RPCTxTest, MaxLedgerNotInt)
+{
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "max_ledger": "xx",
+                "min_ledger": 10
+                }})",
+            TXNID));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidLgrRange");
+        EXPECT_EQ(err.at("error_message").as_string(), "Ledger range is invalid.");
+    });
+}
+
+TEST_F(RPCTxTest, MinLedgerNotInt)
+{
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "max_ledger": 10,
+                "min_ledger": "xx"
+                }})",
+            TXNID));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidLgrRange");
+        EXPECT_EQ(err.at("error_message").as_string(), "Ledger range is invalid.");
+    });
+}
+
 TEST_F(RPCTxTest, TxnNotFound)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());

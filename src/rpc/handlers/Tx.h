@@ -69,8 +69,14 @@ public:
         static const RpcSpec rpcSpec = {
             {JS(transaction), validation::Required{}, validation::Uint256HexStringValidator},
             {JS(binary), validation::Type<bool>{}},
-            {JS(min_ledger), validation::Type<uint32_t>{}},
-            {JS(max_ledger), validation::Type<uint32_t>{}},
+            // Usually , clio give "invalidParam" error when parameter type does not match
+            // but for tx method, doc specifies that:
+            // invalidLgrRange - The specified min_ledger is larger than the max_ledger, or one of those parameters is
+            // not a valid ledger index.
+            {JS(min_ledger),
+             validation::WithCustomError{validation::Type<uint32_t>{}, Status{RippledError::rpcINVALID_LGR_RANGE}}},
+            {JS(max_ledger),
+             validation::WithCustomError{validation::Type<uint32_t>{}, Status{RippledError::rpcINVALID_LGR_RANGE}}},
         };
 
         return rpcSpec;
