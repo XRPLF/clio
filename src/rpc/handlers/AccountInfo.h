@@ -65,6 +65,7 @@ public:
 
     // "queue" is not available in Reporting mode
     // "ident" is deprecated, keep it for now, in line with rippled
+    // TODO: We did not implement the "strict" field
     struct Input
     {
         std::optional<std::string> account;

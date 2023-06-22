@@ -58,7 +58,6 @@ public:
         bool validated = true;
     };
 
-    // TODO: We did not implement the "strict" field
     struct Input
     {
         std::string nftID;
