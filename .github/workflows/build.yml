@@ -45,7 +45,6 @@ jobs:
 
   code_coverage:
     name: Build on Linux and code coverage
-    needs: lint
     continue-on-error: false
     runs-on: ubuntu-22.04
 
