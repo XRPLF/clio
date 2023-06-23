@@ -22,7 +22,7 @@ class Clio(ConanFile):
         'clio-xrpl/1.11.0',
         'boost/1.77.0',
         'grpc/1.50.1',
-        'openssl/1.1.1m',
+        'openssl/1.1.1q',
         'protobuf/3.21.4',
         'cassandra-driver/2.16.2',
         'fmt/10.0.0',
