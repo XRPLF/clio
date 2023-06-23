@@ -20,7 +20,8 @@ jobs:
       - name: Checkout rippled repo
         uses: actions/checkout@v3
         with:
-          repository: XRPLF/rippled
+          repository: godexsoft/rippled
+          ref: feature/conan-for-clio
           path: rippled
 
       - name: Install dependencies
@@ -36,6 +37,8 @@ jobs:
       - name: Add rippled to local conan
         run: |
           cd rippled
+          conan export external/snappy snappy/1.1.9@
+          conan export external/soci soci/4.0.3@
           conan export .
 
       - name: Build Clio
