@@ -58,6 +58,11 @@ jobs:
           sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format gcovr
           sudo pip install conan==1.57.0
 
+      - name: test
+        env:
+          CONAN_KEY1: ${{ secrets.CONAN_ARTIFACTORY_KEY }}
+        run: echo "$CONAN_KEY1"
+
       - name: Setup conan artifactory
         env:
           CONAN_KEY: ${{ secrets.CONAN_ARTIFACTORY_KEY }}
@@ -67,11 +72,6 @@ jobs:
           echo "$CONAN_KEY"
           conan user -p "$CONAN_KEY" -r conan-non-prod jfrog-clio
           history -10
-
-      - name: test
-        env:
-          CONAN_KEY1: ${{ secrets.CONAN_ARTIFACTORY_KEY }}
-        run: echo "$CONAN_KEY1"
 
       - name: Build clio
         run: |
