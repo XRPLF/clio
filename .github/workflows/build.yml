@@ -17,7 +17,7 @@ jobs:
 
   build_clio:
     name: Build Clio
-    runs-on: [self-hosted, heavy]
+    runs-on: [self-hosted, x-heavy]
     needs: lint
     strategy:
       fail-fast: false
@@ -42,8 +42,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: clio-packages
-          repository: XRPLF/clio-packages
-          ref: main
+          repository: legleux/clio-packages
+          ref: update-pkging
 
       - name: Build
         shell: bash
