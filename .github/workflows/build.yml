@@ -17,7 +17,7 @@ jobs:
 
   build_clio:
     name: Build Clio
-    runs-on: [self-hosted, x-heavy]
+    runs-on: [self-hosted, heavy]
     needs: lint
     strategy:
       fail-fast: false
