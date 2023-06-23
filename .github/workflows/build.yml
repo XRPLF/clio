@@ -9,7 +9,6 @@ on:
 jobs:
   build_dev:
     name: Build on Mac/Clang14 and run tests
-    needs: lint
     continue-on-error: false
     runs-on: [self-hosted, macOS]
 
