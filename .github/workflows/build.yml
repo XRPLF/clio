@@ -22,8 +22,10 @@ jobs:
       - name: Add conan artifactory
         run: |
           conan search
-          conan remove clio-xrpl/1.11.0
-          conan remove cassandra-driver/2.16.2
+          echo "yes" | conan remove clio-xrpl/1.11.0
+          echo "yes" | conan remove cassandra-driver/2.16.2
+          echo 123
+          conan search
           conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
           conan user -p ${{ secrets.CONAN_ARTIFACTORY_KEY }} -r conan-non-prod jfrog-clio
 
