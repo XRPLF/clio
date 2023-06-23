@@ -37,3 +37,11 @@ jobs:
         run: |
           cd rippled
           conan export .
+
+      - name: Build Clio
+        run: |
+          pwd
+          cd ../clio
+          mkdir build
+          cd build
+          conan install .. --out-folder . --build=missing --settings build_type=Release
