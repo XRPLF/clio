@@ -57,7 +57,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
         boost::json::object tx;
         tx[JS(Sequence)] = accountSeq;
         tx[JS(Account)] = ripple::toBase58(accountID);
-        tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
+        // TODO: deprecated?
+        // tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
 
         return tx;
     };

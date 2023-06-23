@@ -30,7 +30,7 @@ using SessionPtrType = std::shared_ptr<Server::ConnectionBase>;
 
 class Subscription
 {
-    boost::asio::io_context::strand strand_;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_set<SessionPtrType> subscribers_ = {};
     std::atomic_uint64_t subCount_ = 0;
 
@@ -39,7 +39,7 @@ public:
     Subscription(Subscription&) = delete;
     Subscription(Subscription&&) = delete;
 
-    explicit Subscription(boost::asio::io_context& ioc) : strand_(ioc)
+    explicit Subscription(boost::asio::io_context& ioc) : strand_(ioc.get_executor())
     {
     }
 
@@ -72,7 +72,7 @@ class SubscriptionMap
 {
     using subscribers = std::set<SessionPtrType>;
 
-    boost::asio::io_context::strand strand_;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_map<Key, subscribers> subscribers_ = {};
     std::atomic_uint64_t subCount_ = 0;
 
@@ -81,7 +81,7 @@ public:
     SubscriptionMap(SubscriptionMap&) = delete;
     SubscriptionMap(SubscriptionMap&&) = delete;
 
-    explicit SubscriptionMap(boost::asio::io_context& ioc) : strand_(ioc)
+    explicit SubscriptionMap(boost::asio::io_context& ioc) : strand_(ioc.get_executor())
     {
     }
 

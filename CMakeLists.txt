@@ -6,18 +6,17 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
   message(FATAL_ERROR "GCC 11+ required for building clio")
 endif()
 
-option(BUILD_TESTS "Build tests" TRUE)
-
 option(VERBOSE "Verbose build" TRUE)
 if(VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
-  set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
 endif()
-
 
 if(PACKAGING)
   add_definitions(-DPKG=1)
 endif()
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
 #c++20 removed std::result_of but boost 1.75 is still using it.
 add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
@@ -26,8 +25,6 @@ add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
 target_include_directories(clio PUBLIC src)
 
-include(FetchContent)
-include(ExternalProject)
 include(CMake/settings.cmake)
 include(CMake/ClioVersion.cmake)
 include(CMake/deps/rippled.cmake)
@@ -104,14 +101,13 @@ target_sources(clio PRIVATE
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
-if(BUILD_TESTS)
+if(tests)
   set(TEST_TARGET clio_tests)
   add_executable(${TEST_TARGET}
     unittests/Playground.cpp
     unittests/Logger.cpp
     unittests/Config.cpp
     unittests/ProfilerTest.cpp
-    unittests/JsonUtilTest.cpp
     unittests/DOSGuard.cpp
     unittests/SubscriptionTest.cpp
     unittests/SubscriptionManagerTest.cpp
@@ -168,12 +164,14 @@ if(BUILD_TESTS)
     unittests/backend/cassandra/AsyncExecutorTests.cpp
     unittests/webserver/ServerTest.cpp
     unittests/webserver/RPCExecutorTest.cpp)
+  
   include(CMake/deps/gtest.cmake)
 
   # fix for dwarf5 bug on ci 
   target_compile_options(clio PUBLIC -gdwarf-4)
 
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
+  target_include_directories(${TEST_TARGET} PRIVATE unittests)
 
   # if CODE_COVERAGE enable, add clio_test-ccov
   if(CODE_COVERAGE)
