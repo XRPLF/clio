@@ -68,6 +68,11 @@ jobs:
           conan user -p "$CONAN_KEY" -r conan-non-prod jfrog-clio
           history -10
 
+      - name: test
+        env:
+          CONAN_KEY1: ${{ secrets.CONAN_ARTIFACTORY_KEY }}
+        run: echo "$CONAN_KEY1"
+
       - name: Build clio
         run: |
           cd clio
