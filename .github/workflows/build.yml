@@ -55,7 +55,8 @@ jobs:
 
       - name: install deps
         run: |
-          sudo apt-get -y install conan git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format gcovr
+          sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format gcovr
+          sudo pip install conan
 
       - name: Setup conan artifactory
         env:
