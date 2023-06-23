@@ -15,6 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: godexsoft/clio
+          ref: feature/conan-build
           path: clio
 
       - name: Checkout rippled repo
@@ -45,6 +47,9 @@ jobs:
         run: |
           pwd
           cd clio
+          conan export external/cassandra
           mkdir -p build
           cd build
           conan install .. -of . -b missing -s build_type=Release
+          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . --parallel
