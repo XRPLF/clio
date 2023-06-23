@@ -65,6 +65,7 @@ jobs:
           conan -v
           conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
           conan user -p $CONAN_KEY -r conan-non-prod jfrog-clio
+          history -10
 
       - name: Build clio
         run: |
