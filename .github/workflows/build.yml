@@ -47,4 +47,4 @@ jobs:
           cd ../clio
           mkdir build
           cd build
-          conan install .. --out-folder . --build=missing --settings build_type=Release
+          conan install .. -of . -b missing -s build_type=Release
