@@ -69,7 +69,6 @@ target_sources(clio PRIVATE
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
   src/rpc/common/impl/APIVersionParser.cpp
-  src/rpc/common/impl/ForwardingProxy.cpp
   # RPC impl
   src/rpc/common/impl/HandlerProvider.cpp
   ## RPC handler

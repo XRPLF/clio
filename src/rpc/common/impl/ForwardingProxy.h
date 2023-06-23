@@ -19,7 +19,11 @@
 
 #pragma once
 
+#include <etl/LoadBalancer.h>
+#include <etl/Source.h>
 #include <log/Logger.h>
+#include <rpc/Counters.h>
+#include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <webserver/Context.h>
 
@@ -28,42 +32,105 @@
 
 namespace RPC::detail {
 
-template <typename CountersType>
+template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
 class ForwardingProxy
 {
     clio::Logger log_{"RPC"};
 
-    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<LoadBalancerType> balancer_;
     std::reference_wrapper<CountersType> counters_;
-    std::shared_ptr<HandlerProvider const> handlerProvider_;
+    std::shared_ptr<HandlerProviderType const> handlerProvider_;
 
 public:
     ForwardingProxy(
-        std::shared_ptr<LoadBalancer> const& balancer,
+        std::shared_ptr<LoadBalancerType> const& balancer,
         CountersType& counters,
-        std::shared_ptr<HandlerProvider const> const& handlerProvider)
+        std::shared_ptr<HandlerProviderType const> const& handlerProvider)
         : balancer_{balancer}, counters_{std::ref(counters)}, handlerProvider_{handlerProvider}
     {
     }
 
     bool
-    shouldForward(Web::Context const& ctx) const;
+    shouldForward(Web::Context const& ctx) const
+    {
+        auto const& request = ctx.params;
+
+        if (handlerProvider_->isClioOnly(ctx.method))
+            return false;
+
+        if (isProxied(ctx.method))
+            return true;
+
+        if (specifiesCurrentOrClosedLedger(request))
+            return true;
+
+        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
+            request.at("queue").as_bool())
+            return true;
+
+        // TODO: if needed, make configurable with json config option
+        if (ctx.apiVersion == 1)
+            return true;
+
+        return false;
+    }
 
     Result
-    forward(Web::Context const& ctx);
+    forward(Web::Context const& ctx)
+    {
+        auto toForward = ctx.params;
+        toForward["command"] = ctx.method;
+
+        if (auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield); not res)
+        {
+            notifyFailedToForward(ctx.method);
+            return Status{RippledError::rpcFAILED_TO_FORWARD};
+        }
+        else
+        {
+            notifyForwarded(ctx.method);
+            return *res;
+        }
+    }
 
     bool
-    isProxied(std::string const& method) const;
+    isProxied(std::string const& method) const
+    {
+        static std::unordered_set<std::string> const proxiedCommands{
+            "submit",
+            "submit_multisigned",
+            "fee",
+            "ledger_closed",
+            "ledger_current",
+            "ripple_path_find",
+            "manifest",
+            "channel_authorize",
+            "channel_verify",
+        };
+
+        return proxiedCommands.contains(method);
+    }
 
 private:
     void
-    notifyForwarded(std::string const& method);
+    notifyForwarded(std::string const& method)
+    {
+        if (validHandler(method))
+            counters_.get().rpcForwarded(method);
+    }
 
     void
-    notifyFailedToForward(std::string const& method);
+    notifyFailedToForward(std::string const& method)
+    {
+        if (validHandler(method))
+            counters_.get().rpcFailedToForward(method);
+    }
 
     bool
-    validHandler(std::string const& method) const;
+    validHandler(std::string const& method) const
+    {
+        return handlerProvider_->contains(method) || isProxied(method);
+    }
 };
 
 }  // namespace RPC::detail

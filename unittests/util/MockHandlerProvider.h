@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
 
 #include <gmock/gmock.h>

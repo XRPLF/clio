@@ -68,7 +68,7 @@ class RPCEngineBase
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    detail::ForwardingProxy forwardingProxy_;
+    detail::ForwardingProxy<LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
     AdminVerificationStrategyType adminVerifier_;
 
 public:
