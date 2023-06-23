@@ -44,7 +44,9 @@ jobs:
       - name: Build Clio
         run: |
           pwd
-          cd ../clio
+          cd ..
+          ls
+          ls clio
           mkdir -p build
           cd build
           conan install .. -of . -b missing -s build_type=Release
