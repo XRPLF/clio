@@ -53,7 +53,12 @@ public:
     bool
     shouldForward(Web::Context const& ctx) const
     {
-        auto const& request = ctx.params;
+        if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
+            return false;
+
+        // TODO: if needed, make configurable with json config option
+        if (ctx.apiVersion == 1)
+            return true;
 
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
@@ -61,15 +66,13 @@ public:
         if (isProxied(ctx.method))
             return true;
 
+        auto const& request = ctx.params;
+
         if (specifiesCurrentOrClosedLedger(request))
             return true;
 
         if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
             request.at("queue").as_bool())
-            return true;
-
-        // TODO: if needed, make configurable with json config option
-        if (ctx.apiVersion == 1)
             return true;
 
         return false;

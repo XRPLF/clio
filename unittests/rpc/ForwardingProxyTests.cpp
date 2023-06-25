@@ -172,13 +172,9 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAccountInfoQueueIsFals
 
 TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAPIVersionIsV1)
 {
-    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
     auto const apiVersion = 1u;
     auto const method = "api_version_check";
     auto const params = boost::json::parse("{}");
-
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
-    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
@@ -199,6 +195,38 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAPIVersionIsV2)
 
     ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_FALSE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldNeverForwardSubscribe)
+{
+    auto const apiVersion = 1u;
+    auto const method = "subscribe";
+    auto const params = boost::json::parse("{}");
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_FALSE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldNeverForwardUnsubscribe)
+{
+    auto const apiVersion = 1u;
+    auto const method = "unsubscribe";
+    auto const params = boost::json::parse("{}");
 
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
