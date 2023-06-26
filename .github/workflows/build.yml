@@ -23,6 +23,8 @@ jobs:
           conan search
           #remove cache , trigger rebuild for CI
           conan remove cassandra-driver/2.16.2 --builds --force
+          echo "123"
+          conan search
 
       - name: Install dependencies
         run: |
@@ -40,6 +42,7 @@ jobs:
           cd clio
           mkdir -p build
           cd build
+          echo "$_OPENSSL_INCLUDEDIR"
           conan install .. -of . -b missing -s build_type=Release
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build . --parallel
