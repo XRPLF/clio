@@ -7,59 +7,118 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_dev:
-    name: Build on Mac/Clang14 and run tests
-    continue-on-error: false
-    runs-on: [self-hosted, macOS]
+  build_clio:
+    name: Build Clio
+    runs-on: [self-hosted, heavy]
+    strategy:
+      fail-fast: false
+      matrix:
+        type:
+          - suffix: deb
+            image: rippleci/clio-dpkg-builder:2022-09-17
+            script: dpkg
+          - suffix: rpm
+            image: rippleci/clio-rpm-builder:2022-09-17
+            script: rpm
 
+    container:
+      image: ${{ matrix.type.image }}
     steps:
       - uses: actions/checkout@v3
         with:
           path: clio
+          fetch-depth: 0
 
-      #our self-host mac has conan-non-prod configured
-      - name: List conan artifactory
+      - name: Clone Clio packaging repo
+        uses: actions/checkout@v3
+        with:
+          path: clio-packages
+          repository: cindyyan317/clio-packages
+          ref: test
+
+      - name: Build
+        shell: bash
         run: |
-          conan search
-          #remove cache , trigger rebuild for CI , keep it for debugging
-          #conan remove cassandra-driver/2.16.2 
-          # remove old cassandra-cpp-driver installed by brew
-          if [ -d /usr/local/opt/cassandra-cpp-driver ]
-          then
-            echo "remove cassandra-cpp-driver"
-            brew uninstall cassandra-cpp-driver
+          export CLIO_ROOT=$(realpath clio)
+          if [ ${{ matrix.type.suffix }} == "rpm" ]; then
+            source /opt/rh/devtoolset-11/enable
           fi
-          # remove old openssl installed by brew
-          if [ -d /usr/local/opt/openssl ]
-          then
-            echo "remove openssl"
-            brew uninstall openssl
-          fi
-
-      - name: Install dependencies
-        run: |
-          brew install llvm@14 pkg-config protobuf ninja bison cmake
-
-      - name: Setup environment for llvm-14
-        run: |
-          export PATH="/usr/local/opt/llvm@14/bin:$PATH"
-          export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
-          export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
-
-      - name: Build Clio
-        run: |
+          PATHTMP=$(pwd)
+          cd $CLIO_ROOT
           pwd
-          cd clio
           mkdir -p build
           cd build
           conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
-          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . --parallel
+          cd $PATHTMP
+          cmake -S clio-packages -B clio-packages/build -DCLIO_ROOT=$CLIO_ROOT
+          cmake --build clio-packages/build --parallel $(nproc)
+          cp ./clio-packages/build/clio-prefix/src/clio-build/clio_tests .
+          mv ./clio-packages/build/*.${{ matrix.type.suffix }} .
+      - name: Artifact packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_${{ matrix.type.suffix }}_packages
+          path: ${{ github.workspace }}/*.${{ matrix.type.suffix }}
 
-      - name: Run Test
-        run: |
-          cd clio/build/bin
-          .clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+      - name: Artifact clio_tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_tests-${{ matrix.type.suffix }}
+          path: ${{ github.workspace }}/clio_tests
+
+  # build_dev:
+  #   name: Build on Mac/Clang14 and run tests
+  #   continue-on-error: false
+  #   runs-on: [self-hosted, macOS]
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         path: clio
+
+  #     #our self-host mac has conan-non-prod configured
+  #     - name: List conan artifactory
+  #       run: |
+  #         conan search
+  #         #remove cache , trigger rebuild for CI , keep it for debugging
+  #         #conan remove cassandra-driver/2.16.2
+  #         # remove old cassandra-cpp-driver installed by brew
+  #         if [ -d /usr/local/opt/cassandra-cpp-driver ]
+  #         then
+  #           echo "remove cassandra-cpp-driver"
+  #           brew uninstall cassandra-cpp-driver
+  #         fi
+  #         # remove old openssl installed by brew
+  #         if [ -d /usr/local/opt/openssl ]
+  #         then
+  #           echo "remove openssl"
+  #           brew uninstall openssl
+  #         fi
+
+  #     - name: Install dependencies
+  #       run: |
+  #         brew install llvm@14 pkg-config protobuf ninja bison cmake
+
+  #     - name: Setup environment for llvm-14
+  #       run: |
+  #         export PATH="/usr/local/opt/llvm@14/bin:$PATH"
+  #         export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
+  #         export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
+
+  #     - name: Build Clio
+  #       run: |
+  #         pwd
+  #         cd clio
+  #         mkdir -p build
+  #         cd build
+  #         conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
+  #         cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+  #         cmake --build . --parallel
+
+  #     - name: Run Test
+  #       run: |
+  #         cd clio/build/bin
+  #         .clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   # code_coverage:
   #   name: Build on Linux and code coverage
