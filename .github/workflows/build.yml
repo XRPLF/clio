@@ -26,10 +26,12 @@ jobs:
           echo "123"
           conan search
           # maybe not exist
-          set +x
-          brew uninstall cassandra-cpp-driver 2>/dev/null
-          brew uninstall openssl 2>/dev/null
-          echo 1
+          if [ -d /usr/local/opt/openssl ]
+          then
+            echo "remove openssl"
+            brew uninstall cassandra-cpp-driver
+            brew uninstall openssl
+          fi
 
       - name: Install dependencies
         run: |
