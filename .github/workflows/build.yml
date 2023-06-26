@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install llvm@14 pkg-config protobuf ninja cassandra-cpp-driver bison cmake
+          brew install llvm@14 pkg-config protobuf ninja bison cmake
 
       - name: Setup environment for llvm-14
         run: |
