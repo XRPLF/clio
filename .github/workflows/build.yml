@@ -25,6 +25,8 @@ jobs:
           conan remove cassandra-driver/2.16.2  --force
           echo "123"
           conan search
+          brew uninstall openssl
+          ls /usr/local/opt/openssl
 
       - name: Install dependencies
         run: |
