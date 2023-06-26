@@ -22,13 +22,13 @@ jobs:
         run: |
           conan search
           #remove cache , trigger rebuild for CI
-          conan remove cassandra-driver/2.16.2 --builds --force
+          conan remove cassandra-driver/2.16.2  --force
           echo "123"
           conan search
 
       - name: Install dependencies
         run: |
-          brew install llvm@14 pkg-config protobuf openssl ninja cassandra-cpp-driver bison cmake
+          brew install llvm@14 pkg-config protobuf ninja cassandra-cpp-driver bison cmake
 
       - name: Setup environment for llvm-14
         run: |
@@ -42,7 +42,7 @@ jobs:
           cd clio
           mkdir -p build
           cd build
-          echo "$_OPENSSL_INCLUDEDIR"
+          ls /usr/local/opt/openssl
           conan install .. -of . -b missing -s build_type=Release
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build . --parallel
