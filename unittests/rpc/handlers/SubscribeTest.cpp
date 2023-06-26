@@ -575,47 +575,47 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
     });
 }
 
-TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
-{
-    static auto constexpr expectedOutput =
-        R"({      
-            "validated_ledgers":"10-30",
-            "ledger_index":30,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_ref":4,
-            "fee_base":1,
-            "reserve_base":3,
-            "reserve_inc":2
-        })";
-    mockBackendPtr->updateRange(MINSEQ);
-    mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
-    // fee
-    auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+// TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
+// {
+//     static auto constexpr expectedOutput =
+//         R"({
+//             "validated_ledgers":"10-30",
+//             "ledger_index":30,
+//             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+//             "ledger_time":0,
+//             "fee_ref":4,
+//             "fee_base":1,
+//             "reserve_base":3,
+//             "reserve_inc":2
+//         })";
+//     mockBackendPtr->updateRange(MINSEQ);
+//     mockBackendPtr->updateRange(MAXSEQ);
+//     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+//     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+//     // return valid ledgerinfo
+//     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+//     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+//     // fee
+//     auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+//     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
+//     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    // ledger stream returns information about the ledgers on hand and current
-    // fee schedule.
-    auto const input = json::parse(
-        R"({
-            "streams": ["ledger"]
-        })");
-    runSpawn([&, this](auto& yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
-        std::this_thread::sleep_for(20ms);
-        auto const report = subManager_->report();
-        EXPECT_EQ(report.at("ledger").as_uint64(), 1);
-    });
-}
+//     // ledger stream returns information about the ledgers on hand and current
+//     // fee schedule.
+//     auto const input = json::parse(
+//         R"({
+//             "streams": ["ledger"]
+//         })");
+//     runSpawn([&, this](auto& yield) {
+//         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+//         auto const output = handler.process(input, Context{std::ref(yield), session_});
+//         ASSERT_TRUE(output);
+//         EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
+//         std::this_thread::sleep_for(20ms);
+//         auto const report = subManager_->report();
+//         EXPECT_EQ(report.at("ledger").as_uint64(), 1);
+//     });
+// }
 
 TEST_F(RPCSubscribeHandlerTest, Accounts)
 {

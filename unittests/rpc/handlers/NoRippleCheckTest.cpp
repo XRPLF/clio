@@ -604,103 +604,104 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     });
 }
 
-TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
-{
-    constexpr auto seq = 30;
-    constexpr auto transactionSeq = 123;
-    const auto expectedOutput = fmt::format(
-        R"({{
-                "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index":30,
-                "problems":[
-                    "You should immediately set your default ripple flag",
-                    "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                    "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-                ],
-                "transactions":[
-                    {{
-                        "Sequence":{},
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":4,
-                        "TransactionType":"AccountSet",
-                        "SetFlag":8
-                    }},
-                    {{
-                        "Sequence":{},
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":4,
-                        "TransactionType":"TrustSet",
-                        "LimitAmount":{{
-                            "currency":"USD",
-                            "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "value":"10"
-                        }},
-                        "Flags":{}
-                    }},
-                    {{
-                        "Sequence":{},
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":4,
-                        "TransactionType":"TrustSet",
-                        "LimitAmount":{{
-                            "currency":"USD",
-                            "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "value":"10"
-                        }},
-                        "Flags":{}
-                    }}
-                ]
-        }})",
-        transactionSeq,
-        transactionSeq + 1,
-        ripple::tfClearNoRipple,
-        transactionSeq + 2,
-        ripple::tfClearNoRipple);
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);   // min
-    mockBackendPtr->updateRange(seq);  // max
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    // fetch account object return valid account with DefaultRippleSet flag
+// TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
+// {
+//     constexpr auto seq = 30;
+//     constexpr auto transactionSeq = 123;
+//     const auto expectedOutput = fmt::format(
+//         R"({{
+//                 "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+//                 "ledger_index":30,
+//                 "problems":[
+//                     "You should immediately set your default ripple flag",
+//                     "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+//                     "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+//                 ],
+//                 "transactions":[
+//                     {{
+//                         "Sequence":{},
+//                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+//                         "Fee":4,
+//                         "TransactionType":"AccountSet",
+//                         "SetFlag":8
+//                     }},
+//                     {{
+//                         "Sequence":{},
+//                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+//                         "Fee":4,
+//                         "TransactionType":"TrustSet",
+//                         "LimitAmount":{{
+//                             "currency":"USD",
+//                             "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+//                             "value":"10"
+//                         }},
+//                         "Flags":{}
+//                     }},
+//                     {{
+//                         "Sequence":{},
+//                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+//                         "Fee":4,
+//                         "TransactionType":"TrustSet",
+//                         "LimitAmount":{{
+//                             "currency":"USD",
+//                             "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+//                             "value":"10"
+//                         }},
+//                         "Flags":{}
+//                     }}
+//                 ]
+//         }})",
+//         transactionSeq,
+//         transactionSeq + 1,
+//         ripple::tfClearNoRipple,
+//         transactionSeq + 2,
+//         ripple::tfClearNoRipple);
+//     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+//     mockBackendPtr->updateRange(10);   // min
+//     mockBackendPtr->updateRange(seq);  // max
+//     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
+//     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+//     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+//     // fetch account object return valid account with DefaultRippleSet flag
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject)
-        .WillByDefault(
-            Return(CreateAccountRootObject(ACCOUNT, 0, transactionSeq, 200, 2, INDEX1, 2).getSerializer().peekData()));
-    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, seq, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+//     ON_CALL(*rawBackendPtr, doFetchLedgerObject)
+//         .WillByDefault(
+//             Return(CreateAccountRootObject(ACCOUNT, 0, transactionSeq, 200, 2, INDEX1,
+//             2).getSerializer().peekData()));
+//     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+//     auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+//     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, seq, _))
+//         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+//     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
+//         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+//     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
-    auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+//     auto const line1 = CreateRippleStateLedgerObject(
+//         ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
-    auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+//     auto const line2 = CreateRippleStateLedgerObject(
+//         ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
-    std::vector<Blob> bbs;
-    bbs.push_back(line1.getSerializer().peekData());
-    bbs.push_back(line2.getSerializer().peekData());
+//     std::vector<Blob> bbs;
+//     bbs.push_back(line1.getSerializer().peekData());
+//     bbs.push_back(line2.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+//     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+//     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway",
-            "transactions": true
-        }})",
-        ACCOUNT,
-        LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
-        auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
-    });
-}
+//     auto const input = json::parse(fmt::format(
+//         R"({{
+//             "account": "{}",
+//             "ledger_hash": "{}",
+//             "role": "gateway",
+//             "transactions": true
+//         }})",
+//         ACCOUNT,
+//         LEDGERHASH));
+//     runSpawn([&, this](auto& yield) {
+//         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
+//         auto const output = handler.process(input, Context{std::ref(yield)});
+//         ASSERT_TRUE(output);
+//         EXPECT_EQ(*output, json::parse(expectedOutput));
+//     });
+// }

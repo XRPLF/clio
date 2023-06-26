@@ -21,15 +21,18 @@ jobs:
       - name: List conan artifactory
         run: |
           conan search
-          #remove cache , trigger rebuild for CI
-          conan remove cassandra-driver/2.16.2  --force
-          echo "123"
-          conan search
-          # maybe not exist
+          #remove cache , trigger rebuild for CI , keep it for debugging
+          #conan remove cassandra-driver/2.16.2 
+          # remove old cassandra-cpp-driver installed by brew
+          if [ -d /usr/local/opt/cassandra-cpp-driver ]
+          then
+            echo "remove cassandra-cpp-driver"
+            brew uninstall cassandra-cpp-driver
+          fi
+          # remove old openssl installed by brew
           if [ -d /usr/local/opt/openssl ]
           then
             echo "remove openssl"
-            brew uninstall cassandra-cpp-driver
             brew uninstall openssl
           fi
 
@@ -49,9 +52,14 @@ jobs:
           cd clio
           mkdir -p build
           cd build
-          conan install .. -of . -b missing -s build_type=Release
+          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build . --parallel
+
+      - name: Run Test
+        run: |
+          cd clio/build
+          .bin/clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   # code_coverage:
   #   name: Build on Linux and code coverage
