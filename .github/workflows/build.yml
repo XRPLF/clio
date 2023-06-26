@@ -49,7 +49,6 @@ jobs:
           cd clio
           mkdir -p build
           cd build
-          ls /usr/local/opt/openssl
           conan install .. -of . -b missing -s build_type=Release
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build . --parallel
