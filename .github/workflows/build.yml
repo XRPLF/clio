@@ -27,8 +27,6 @@ jobs:
           conan search
           brew uninstall cassandra-cpp-driver
           brew uninstall openssl
-          ls /usr/local/opt/openssl
-          ls /usr/local/Cellar
 
       - name: Install dependencies
         run: |
