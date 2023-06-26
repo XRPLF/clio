@@ -25,8 +25,9 @@ jobs:
           conan remove cassandra-driver/2.16.2  --force
           echo "123"
           conan search
-          brew uninstall cassandra-cpp-driver
-          brew uninstall openssl
+          # maybe not exist
+          brew uninstall cassandra-cpp-driver 2>/dev/null
+          brew uninstall openssl 2>/dev/null
 
       - name: Install dependencies
         run: |
