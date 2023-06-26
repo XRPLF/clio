@@ -30,9 +30,13 @@
 namespace Server {
 struct ConnectionBase;
 }
+
+class LoadBalancer;
 class SubscriptionManager;
 
 namespace RPC {
+
+class Counters;
 
 /**
  * @brief Return type used for Validators that can return error but don't have

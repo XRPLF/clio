@@ -22,38 +22,12 @@
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
 
-#include <memory>
-#include <optional>
-#include <string>
+#include <gmock/gmock.h>
 
-namespace RPC {
-
-class HandlerTable
+struct MockHandlerProvider : public RPC::HandlerProvider
 {
-    std::shared_ptr<HandlerProvider const> provider_;
-
 public:
-    HandlerTable(std::shared_ptr<HandlerProvider const> const& provider) : provider_{provider}
-    {
-    }
-
-    bool
-    contains(std::string const& method) const
-    {
-        return provider_->contains(method);
-    }
-
-    std::optional<AnyHandler>
-    getHandler(std::string const& command) const
-    {
-        return provider_->getHandler(command);
-    }
-
-    bool
-    isClioOnly(std::string const& command) const
-    {
-        return provider_->isClioOnly(command);
-    }
+    MOCK_METHOD(bool, contains, (std::string const&), (const, override));
+    MOCK_METHOD(std::optional<RPC::AnyHandler>, getHandler, (std::string const&), (const, override));
+    MOCK_METHOD(bool, isClioOnly, (std::string const&), (const, override));
 };
-
-}  // namespace RPC

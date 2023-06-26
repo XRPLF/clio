@@ -155,21 +155,25 @@ private:
                     boost::beast::http::status::ok);
             }
 
-            auto context = connection->upgraded ? RPC::make_WsContext(
-                                                      yc,
-                                                      request,
-                                                      connection,
-                                                      tagFactory_.with(connection->tag()),
-                                                      *range,
-                                                      connection->clientIp,
-                                                      std::cref(apiVersionParser_))
-                                                : RPC::make_HttpContext(
-                                                      yc,
-                                                      request,
-                                                      tagFactory_.with(connection->tag()),
-                                                      *range,
-                                                      connection->clientIp,
-                                                      std::cref(apiVersionParser_));
+            auto const context = [&] {
+                if (connection->upgraded)
+                    return RPC::make_WsContext(
+                        yc,
+                        request,
+                        connection,
+                        tagFactory_.with(connection->tag()),
+                        *range,
+                        connection->clientIp,
+                        std::cref(apiVersionParser_));
+                else
+                    return RPC::make_HttpContext(
+                        yc,
+                        request,
+                        tagFactory_.with(connection->tag()),
+                        *range,
+                        connection->clientIp,
+                        std::cref(apiVersionParser_));
+            }();
 
             if (!context)
             {
@@ -217,8 +221,8 @@ private:
                     response["result"] = result;
                 }
 
-                // for ws , there is additional field "status" in response
-                // otherwise , the "status" is in the "result" field
+                // for ws there is an additional field "status" in the response,
+                // otherwise the "status" is in the "result" field
                 if (connection->upgraded)
                 {
                     if (!id.is_null())

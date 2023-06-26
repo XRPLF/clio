@@ -36,9 +36,10 @@ static constexpr uint32_t API_VERSION_DEFAULT = 2u;
 /**
  * @brief Minimum API version supported by this build
  *
- * Note: Clio does not support v1 and only supports v2 and newer.
+ * Note: Clio does not natively support v1 and only supports v2 or newer.
+ * However, Clio will forward all v1 requests to rippled for backward compatibility.
  */
-static constexpr uint32_t API_VERSION_MIN = 2u;
+static constexpr uint32_t API_VERSION_MIN = 1u;
 
 /**
  * @brief Maximum API version supported by this build

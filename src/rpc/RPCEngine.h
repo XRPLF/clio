@@ -25,11 +25,11 @@
 #include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
-#include <rpc/HandlerTable.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/impl/AdminVerificationStrategy.h>
+#include <rpc/common/impl/ForwardingProxy.h>
 #include <util/Taggable.h>
 #include <webserver/Context.h>
 #include <webserver/DOSGuard.h>
@@ -66,7 +66,9 @@ class RPCEngineBase
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
 
-    HandlerTable handlerTable_;
+    std::shared_ptr<HandlerProvider const> handlerProvider_;
+
+    detail::ForwardingProxy<LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
     AdminVerificationStrategyType adminVerifier_;
 
 public:
@@ -85,7 +87,8 @@ public:
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
         , counters_{std::ref(counters)}
-        , handlerTable_{handlerProvider}
+        , handlerProvider_{handlerProvider}
+        , forwardingProxy_{balancer, counters, handlerProvider}
     {
     }
 
@@ -112,22 +115,8 @@ public:
     Result
     buildResponse(Web::Context const& ctx)
     {
-        if (shouldForwardToRippled(ctx))
-        {
-            auto toForward = ctx.params;
-            toForward["command"] = ctx.method;
-
-            if (auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield); not res)
-            {
-                notifyFailedToForward(ctx.method);
-                return Status{RippledError::rpcFAILED_TO_FORWARD};
-            }
-            else
-            {
-                notifyForwarded(ctx.method);
-                return *res;
-            }
-        }
+        if (forwardingProxy_.shouldForward(ctx))
+            return forwardingProxy_.forward(ctx);
 
         if (backend_->isTooBusy())
         {
@@ -136,7 +125,7 @@ public:
             return Status{RippledError::rpcTOO_BUSY};
         }
 
-        auto const method = handlerTable_.getHandler(ctx.method);
+        auto const method = handlerProvider_->getHandler(ctx.method);
         if (!method)
         {
             notifyUnknownCommand();
@@ -212,6 +201,7 @@ public:
     void
     notifyFailed(std::string const& method)
     {
+        // FIXME: seems like this is not used?
         if (validHandler(method))
             counters_.get().rpcFailed(method);
     }
@@ -228,28 +218,6 @@ public:
     {
         if (validHandler(method))
             counters_.get().rpcErrored(method);
-    }
-
-    /**
-     * @brief Notify the system that specified method execution was forwarded to rippled
-     * @param method
-     */
-    void
-    notifyForwarded(std::string const& method)
-    {
-        if (validHandler(method))
-            counters_.get().rpcForwarded(method);
-    }
-
-    /**
-     * @brief Notify the system that specified method failed to be forwarded to rippled
-     * @param method
-     */
-    void
-    notifyFailedToForward(std::string const& method)
-    {
-        if (validHandler(method))
-            counters_.get().rpcFailedToForward(method);
     }
 
     /**
@@ -301,54 +269,9 @@ public:
 
 private:
     bool
-    shouldForwardToRippled(Web::Context const& ctx) const
-    {
-        auto const& request = ctx.params;
-
-        if (isClioOnly(ctx.method))
-            return false;
-
-        if (isForwardCommand(ctx.method))
-            return true;
-
-        if (specifiesCurrentOrClosedLedger(request))
-            return true;
-
-        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
-            request.at("queue").as_bool())
-            return true;
-
-        return false;
-    }
-
-    bool
-    isForwardCommand(std::string const& method) const
-    {
-        static std::unordered_set<std::string> const FORWARD_COMMANDS{
-            "submit",
-            "submit_multisigned",
-            "fee",
-            "ledger_closed",
-            "ledger_current",
-            "ripple_path_find",
-            "manifest",
-            "channel_authorize",
-            "channel_verify",
-        };
-
-        return FORWARD_COMMANDS.contains(method);
-    }
-
-    bool
-    isClioOnly(std::string const& method) const
-    {
-        return handlerTable_.isClioOnly(method);
-    }
-
-    bool
     validHandler(std::string const& method) const
     {
-        return handlerTable_.contains(method) || isForwardCommand(method);
+        return handlerProvider_->contains(method) || forwardingProxy_.isProxied(method);
     }
 };
 
