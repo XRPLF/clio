@@ -26,6 +26,7 @@ jobs:
           echo "123"
           conan search
           # maybe not exist
+          set +x
           brew uninstall cassandra-cpp-driver 2>/dev/null
           brew uninstall openssl 2>/dev/null
 
