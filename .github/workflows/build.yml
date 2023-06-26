@@ -58,8 +58,8 @@ jobs:
 
       - name: Run Test
         run: |
-          cd clio/build
-          .bin/clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          cd clio/build/bin
+          .clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   # code_coverage:
   #   name: Build on Linux and code coverage
