@@ -14,9 +14,9 @@ jobs:
       fail-fast: false
       matrix:
         type:
-          - suffix: deb
-            image: rippleci/clio-dpkg-builder:2022-09-17
-            script: dpkg
+          # - suffix: deb
+          #   image: rippleci/clio-dpkg-builder:2022-09-17
+          #   script: dpkg
           - suffix: rpm
             image: rippleci/clio-rpm-builder:2022-09-17
             script: rpm
@@ -39,6 +39,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
+          pip install conan
           export CLIO_ROOT=$(realpath clio)
           if [ ${{ matrix.type.suffix }} == "rpm" ]; then
             source /opt/rh/devtoolset-11/enable
