@@ -31,7 +31,7 @@
 #include <rpc/Counters.h>
 #include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
-#include <webserver/RPCExecutor.h>
+#include <webserver/RPCServerHandler.h>
 #include <webserver/Server.h>
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -206,11 +206,11 @@ try
         config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 
     // init the web server
-    auto executor =
-        std::make_shared<RPCExecutor<RPC::RPCEngine, ETLService>>(config, backend, rpcEngine, etl, subscriptions);
+    auto handler =
+        std::make_shared<RPCServerHandler<RPC::RPCEngine, ETLService>>(config, backend, rpcEngine, etl, subscriptions);
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
-    auto const httpServer = Server::make_HttpServer(config, ioc, ctxRef, dosGuard, executor);
+    auto const httpServer = Server::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope
