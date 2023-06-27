@@ -77,7 +77,7 @@ jobs:
           cd build
           conan install .. -of . --build boost -b missing -s build_type=Release -o clio:tests=True
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCODE_COVERAGE=on ..
-          cmake --build . --parallel
+          cmake --build . -j4
           make clio_tests-ccov
       - name: Code Coverage Summary Report
         uses: irongut/CodeCoverageSummary@v1.2.0
