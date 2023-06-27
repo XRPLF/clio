@@ -48,11 +48,11 @@ jobs:
           cd build
           conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . -j2
+          cmake --build . -j4
       - name: Run Test
         run: |
           cd clio/build/bin
-          .clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   # code_coverage:
   #   name: Build on Linux and code coverage
