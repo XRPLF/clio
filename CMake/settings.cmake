@@ -4,4 +4,5 @@ target_compile_options(clio
          -Wno-narrowing
          -Wno-deprecated-declarations 
          -Wno-dangling-else
-         -Wno-unused-but-set-variable)
+         -Wno-unused-but-set-variable
+         -Wno-sign-compare)
