@@ -82,6 +82,7 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountTx.cpp
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
+  src/rpc/handlers/DepositAuthorized.cpp
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp
@@ -140,6 +141,7 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/AccountChannelsTest.cpp
     unittests/rpc/handlers/AccountNFTsTest.cpp
     unittests/rpc/handlers/BookOffersTest.cpp
+    unittests/rpc/handlers/DepositAuthorizedTest.cpp
     unittests/rpc/handlers/GatewayBalancesTest.cpp
     unittests/rpc/handlers/TxTest.cpp
     unittests/rpc/handlers/TransactionEntryTest.cpp
