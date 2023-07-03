@@ -70,7 +70,7 @@ jobs:
       - name: Setup conan artifactory
         run: |
           conan -v
-          conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+          conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod --insert
       - name: Build clio
         run: |
           cd clio
