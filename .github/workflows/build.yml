@@ -30,7 +30,7 @@ jobs:
           if [ -d /usr/local/opt/openssl ]
           then
             echo "remove openssl"
-            brew uninstall openssl
+            brew uninstall openssl --ignore-dependencies
           fi
       - name: Install dependencies
         run: |
