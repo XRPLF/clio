@@ -21,17 +21,17 @@ jobs:
           #remove cache , trigger rebuild for CI , keep it for debugging
           #conan remove cassandra-driver/2.16.2 
           # remove old cassandra-cpp-driver installed by brew
-          if [ -d /usr/local/opt/cassandra-cpp-driver ]
-          then
-            echo "remove cassandra-cpp-driver"
-            brew uninstall cassandra-cpp-driver
-          fi
-          # remove old openssl installed by brew
-          if [ -d /usr/local/opt/openssl ]
-          then
-            echo "remove openssl"
-            brew uninstall openssl --ignore-dependencies
-          fi
+          # if [ -d /usr/local/opt/cassandra-cpp-driver ]
+          # then
+          #   echo "remove cassandra-cpp-driver"
+          #   brew uninstall cassandra-cpp-driver
+          # fi
+          # # remove old openssl installed by brew
+          # if [ -d /usr/local/opt/openssl ]
+          # then
+          #   echo "remove openssl"
+          #   brew uninstall openssl --ignore-dependencies
+          # fi
       - name: Install dependencies
         run: |
           brew install llvm@14 pkg-config protobuf ninja bison cmake
