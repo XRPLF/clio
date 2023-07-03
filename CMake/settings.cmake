@@ -5,4 +5,5 @@ target_compile_options(clio
          -Wno-deprecated-declarations 
          -Wno-dangling-else
          -Wno-unused-but-set-variable
-         -Wno-sign-compare)
+         -Wno-sign-compare
+         -Wno-maybe-uninitialized)
