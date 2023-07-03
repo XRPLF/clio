@@ -5,6 +5,7 @@ on:
   pull_request:
     branches: [master, release/*, develop, develop-next]
   workflow_dispatch:
+
 jobs:
   build_dev:
     name: Build on Mac/Clang14 and run tests
