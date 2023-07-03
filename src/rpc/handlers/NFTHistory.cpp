@@ -20,6 +20,8 @@
 #include <rpc/handlers/NFTHistory.h>
 #include <util/Profiler.h>
 
+#include <limits>
+
 namespace RPC {
 
 // TODO: this is currently very similar to account_tx but its own copy for time
@@ -76,7 +78,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         if (input.forward)
             cursor = {minIndex, 0};
         else
-            cursor = {maxIndex, INT32_MAX};
+            cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
     }
 
     static auto constexpr limitDefault = 50;

@@ -76,9 +76,9 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include the 0 transaction
         // index of minIndex
         if (input.forward)
-            cursor = {minIndex - 1, INT32_MAX};
+            cursor = {minIndex - 1, std::numeric_limits<int32_t>::max()};
         else
-            cursor = {maxIndex, INT32_MAX};
+            cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
     }
 
     static auto constexpr limitDefault = 200;
