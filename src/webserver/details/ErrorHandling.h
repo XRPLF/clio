@@ -79,6 +79,7 @@ public:
                         break;
 
                     // others are not applicable but we want a compilation error next time we add one
+                    case RPC::ClioError::rpcUNKNOWN_OPTION:
                     case RPC::ClioError::rpcMALFORMED_CURRENCY:
                     case RPC::ClioError::rpcMALFORMED_REQUEST:
                     case RPC::ClioError::rpcMALFORMED_OWNER:
@@ -113,15 +114,25 @@ public:
     void
     sendTooBusyError() const
     {
-        connection_->send(
-            boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok);
+        if (connection_->upgraded)
+            connection_->send(
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok);
+        else
+            connection_->send(
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY)),
+                boost::beast::http::status::service_unavailable);
     }
 
     void
-    sendBadSyntaxError() const
+    sendJsonParsingError(std::string_view reason) const
     {
-        connection_->send(
-            boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX)), boost::beast::http::status::ok);
+        if (connection_->upgraded)
+            connection_->send(
+                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX)),
+                boost::beast::http::status::ok);
+        else
+            connection_->send(
+                fmt::format("Unable to parse request: {}", reason), boost::beast::http::status::bad_request);
     }
 
     boost::json::object

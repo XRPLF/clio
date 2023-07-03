@@ -90,11 +90,17 @@ public:
                 Server::detail::ErrorHelper(connection).sendTooBusyError();
             }
         }
-        catch (boost::system::system_error const&)
+        catch (boost::system::system_error const& ex)
         {
             // system_error thrown when json parsing failed
             rpcEngine_->notifyBadSyntax();
-            Server::detail::ErrorHelper(connection).sendBadSyntaxError();
+            Server::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
+        }
+        catch (std::invalid_argument const& ex)
+        {
+            // thrown when json parses something that is not an object at top level
+            rpcEngine_->notifyBadSyntax();
+            Server::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
         }
         catch (std::exception const& ex)
         {
