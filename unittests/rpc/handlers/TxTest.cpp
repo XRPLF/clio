@@ -89,7 +89,7 @@ TEST_F(RPCTxTest, MaxLedgerNotInt)
                 "transaction": "{}",
                 "max_ledger": "xx",
                 "min_ledger": 10
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
