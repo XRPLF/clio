@@ -91,7 +91,7 @@ public:
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},
             {JS(forward), validation::Type<bool>{}},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, INT32_MAX}},
             {JS(marker),
              validation::WithCustomError{
                  validation::Type<boost::json::object>{},

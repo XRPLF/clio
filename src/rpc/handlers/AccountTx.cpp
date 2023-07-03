@@ -81,7 +81,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             cursor = {maxIndex, INT32_MAX};
     }
 
-    static auto constexpr limitDefault = 50;
+    static auto constexpr limitDefault = 200;
     auto const limit = input.limit.value_or(limitDefault);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
