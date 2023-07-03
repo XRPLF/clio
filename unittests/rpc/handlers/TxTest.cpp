@@ -47,7 +47,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
                 "transaction": "{}",
                 "min_ledger": 1,
                 "max_ledger":1002
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
@@ -68,7 +68,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
                 "transaction": "{}",
                 "max_ledger": 1,
                 "min_ledger": 10
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
@@ -110,7 +110,7 @@ TEST_F(RPCTxTest, MinLedgerNotInt)
                 "transaction": "{}",
                 "max_ledger": 10,
                 "min_ledger": "xx"
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
@@ -133,7 +133,7 @@ TEST_F(RPCTxTest, TxnNotFound)
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
@@ -160,7 +160,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
                 "transaction": "{}",
                 "min_ledger": 1,
                 "max_ledger":1000
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
@@ -188,7 +188,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
                 "transaction": "{}",
                 "min_ledger": 1,
                 "max_ledger":1000
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_FALSE(output);
@@ -253,7 +253,7 @@ TEST_F(RPCTxTest, DefaultParameter)
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
@@ -287,7 +287,7 @@ TEST_F(RPCTxTest, ReturnBinary)
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
