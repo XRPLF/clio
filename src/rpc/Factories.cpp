@@ -44,7 +44,7 @@ make_WsContext(
         commandValue = request.at("command");
 
     if (!commandValue.is_string())
-        return Error{{RippledError::rpcBAD_SYNTAX, "Method/Command is not specified or is not a string."}};
+        return Error{{ClioError::rpcCOMMAND_IS_MISSING, "Method/Command is not specified or is not a string."}};
 
     auto const apiVersion = apiVersionParser.get().parse(request);
     if (!apiVersion)
@@ -65,21 +65,27 @@ make_HttpContext(
 {
     using Error = util::Unexpected<Status>;
 
-    if (!request.contains("method") || !request.at("method").is_string())
-        return Error{{RippledError::rpcBAD_SYNTAX, "Method is not specified or is not a string."}};
+    if (!request.contains("method"))
+        return Error{{ClioError::rpcCOMMAND_IS_MISSING}};
 
-    string const& command = request.at("method").as_string().c_str();
+    if (!request.at("method").is_string())
+        return Error{{ClioError::rpcCOMMAND_NOT_STRING}};
+
+    if (request.at("method").as_string().empty())
+        return Error{{ClioError::rpcCOMMAND_IS_EMPTY}};
+
+    string command = request.at("method").as_string().c_str();
 
     if (command == "subscribe" || command == "unsubscribe")
         return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed or websocket."}};
 
     if (!request.at("params").is_array())
-        return Error{{RippledError::rpcBAD_SYNTAX, "Missing params array."}};
+        return Error{{ClioError::rpcPARAMS_UNPARSEABLE, "Missing params array."}};
 
     boost::json::array const& array = request.at("params").as_array();
 
     if (array.size() != 1 || !array.at(0).is_object())
-        return Error{{RippledError::rpcBAD_SYNTAX, "Params must be an array holding exactly one object."}};
+        return Error{{ClioError::rpcPARAMS_UNPARSEABLE}};
 
     auto const apiVersion = apiVersionParser.get().parse(request.at("params").as_array().at(0).as_object());
     if (!apiVersion)

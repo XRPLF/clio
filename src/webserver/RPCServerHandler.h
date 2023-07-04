@@ -25,14 +25,17 @@
 #include <rpc/common/impl/APIVersionParser.h>
 #include <util/JsonUtils.h>
 #include <util/Profiler.h>
+#include <webserver/details/ErrorHandling.h>
 
 #include <boost/json/parse.hpp>
 
 /**
- * @brief The executor for RPC requests called by web server
+ * @brief The server handler for RPC requests called by web server
+ *
+ * Note: see ServerHandler concept
  */
 template <class Engine, class ETL>
-class RPCExecutor
+class RPCServerHandler
 {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<Engine> const rpcEngine_;
@@ -46,7 +49,7 @@ class RPCExecutor
     clio::Logger perfLog_{"Performance"};
 
 public:
-    RPCExecutor(
+    RPCServerHandler(
         clio::Config const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<Engine> const& rpcEngine,
@@ -84,18 +87,20 @@ public:
                     connection->clientIp))
             {
                 rpcEngine_->notifyTooBusy();
-                connection->send(
-                    boost::json::serialize(RPC::makeError(RPC::RippledError::rpcTOO_BUSY)),
-                    boost::beast::http::status::ok);
+                Server::detail::ErrorHelper(connection).sendTooBusyError();
             }
         }
-        catch (boost::system::system_error const&)
+        catch (boost::system::system_error const& ex)
         {
             // system_error thrown when json parsing failed
             rpcEngine_->notifyBadSyntax();
-            connection->send(
-                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcBAD_SYNTAX)),
-                boost::beast::http::status::ok);
+            Server::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
+        }
+        catch (std::invalid_argument const& ex)
+        {
+            // thrown when json parses something that is not an object at top level
+            rpcEngine_->notifyBadSyntax();
+            Server::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
         }
         catch (std::exception const& ex)
         {
@@ -129,20 +134,6 @@ private:
                     << " received request from work queue: " << util::removeSecret(request)
                     << " ip = " << connection->clientIp;
 
-        auto const id = request.contains("id") ? request.at("id") : nullptr;
-
-        auto const composeError = [&](auto const& error) -> boost::json::object {
-            auto e = RPC::makeError(error);
-            if (!id.is_null())
-                e["id"] = id;
-            e["request"] = request;
-
-            if (connection->upgraded)
-                return e;
-            else
-                return {{"result", e}};
-        };
-
         try
         {
             auto const range = backend_->fetchLedgerRange();
@@ -150,9 +141,7 @@ private:
             {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
-                return connection->send(
-                    boost::json::serialize(composeError(RPC::RippledError::rpcNOT_READY)),
-                    boost::beast::http::status::ok);
+                return Server::detail::ErrorHelper(connection, request).sendNotReadyError();
             }
 
             auto const context = [&] {
@@ -181,8 +170,10 @@ private:
                 perfLog_.warn() << connection->tag() << "Could not create Web context: " << err;
                 log_.warn() << connection->tag() << "Could not create Web context: " << err;
 
+                // we count all those as BadSyntax - as the WS path would.
+                // Although over HTTP these will yield a 400 status with a plain text response (for most).
                 rpcEngine_->notifyBadSyntax();
-                return connection->send(boost::json::serialize(composeError(err)), boost::beast::http::status::ok);
+                return Server::detail::ErrorHelper(connection, request).sendError(err);
             }
 
             auto [v, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
@@ -194,7 +185,7 @@ private:
             if (auto const status = std::get_if<RPC::Status>(&v))
             {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = std::move(composeError(*status));
+                response = Server::detail::ErrorHelper(connection, request).composeError(*status);
                 auto const responseStr = boost::json::serialize(response);
 
                 perfLog_.debug() << context->tag() << "Encountered error: " << responseStr;
@@ -225,10 +216,14 @@ private:
                 // otherwise the "status" is in the "result" field
                 if (connection->upgraded)
                 {
-                    if (!id.is_null())
+                    auto const id = request.contains("id") ? request.at("id") : nullptr;
+
+                    if (not id.is_null())
                         response["id"] = id;
+
                     if (!response.contains("error"))
                         response["status"] = "success";
+
                     response["type"] = "response";
                 }
                 else
@@ -245,7 +240,7 @@ private:
                 warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
 
             response["warnings"] = warnings;
-            connection->send(boost::json::serialize(response), boost::beast::http::status::ok);
+            connection->send(boost::json::serialize(response));
         }
         catch (std::exception const& ex)
         {
@@ -255,10 +250,7 @@ private:
             log_.error() << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
-
-            return connection->send(
-                boost::json::serialize(composeError(RPC::RippledError::rpcINTERNAL)),
-                boost::beast::http::status::internal_server_error);
+            return Server::detail::ErrorHelper(connection, request).sendInternalError();
         }
     }
 };

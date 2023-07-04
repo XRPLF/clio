@@ -81,6 +81,10 @@ getErrorInfo(ClioError code)
         {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."},
         {ClioError::rpcUNKNOWN_OPTION, "unknownOption", "Unknown option."},
         {ClioError::rpcINVALID_API_VERSION, JS(invalid_API_version), "Invalid API version."},
+        {ClioError::rpcCOMMAND_IS_MISSING, JS(missingCommand), "Method is not specified or is not a string."},
+        {ClioError::rpcCOMMAND_NOT_STRING, "commandNotString", "Method is not a string."},
+        {ClioError::rpcCOMMAND_IS_EMPTY, "emptyCommand", "Method is an empty string."},
+        {ClioError::rpcPARAMS_UNPARSEABLE, "paramsUnparseable", "Params must be an array holding exactly one object."},
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };

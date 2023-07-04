@@ -223,6 +223,7 @@ public:
 
         auto sendError = [this](auto error, std::string&& requestStr) {
             auto e = RPC::makeError(error);
+
             try
             {
                 auto request = boost::json::parse(requestStr);
@@ -235,29 +236,26 @@ public:
                 e["request"] = std::move(requestStr);
             }
 
-            auto responseStr = boost::json::serialize(e);
-            log_.trace() << responseStr;
-            auto sharedMsg = std::make_shared<std::string>(std::move(responseStr));
-            send(std::move(sharedMsg));
+            this->send(std::make_shared<std::string>(boost::json::serialize(e)));
         };
 
-        std::string msg{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
+        std::string requestStr{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
 
         // dosGuard served request++ and check ip address
         if (!dosGuard_.get().request(clientIp))
         {
             // TODO: could be useful to count in counters in the future too
-            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(msg));
+            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(requestStr));
         }
         else
         {
             try
             {
-                (*handler_)(msg, shared_from_this());
+                (*handler_)(requestStr, shared_from_this());
             }
             catch (std::exception const&)
             {
-                sendError(RPC::RippledError::rpcINTERNAL, std::move(msg));
+                sendError(RPC::RippledError::rpcINTERNAL, std::move(requestStr));
             }
         }
 

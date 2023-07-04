@@ -44,6 +44,10 @@ enum class ClioError {
 
     // special system errors start with 6000
     rpcINVALID_API_VERSION = 6000,
+    rpcCOMMAND_IS_MISSING = 6001,
+    rpcCOMMAND_NOT_STRING = 6002,
+    rpcCOMMAND_IS_EMPTY = 6003,
+    rpcPARAMS_UNPARSEABLE = 6004,
 };
 
 /**
@@ -209,6 +213,15 @@ static Status OK;
  */
 WarningInfo const&
 getWarningInfo(WarningCode code);
+
+/**
+ * @brief Get the error info object from an clio-specific error code.
+ *
+ * @param code The error code
+ * @return ClioErrorInfo const& A reference to the static error info
+ */
+ClioErrorInfo const&
+getErrorInfo(ClioError code);
 
 /**
  * @brief Generate JSON from a warning code.
