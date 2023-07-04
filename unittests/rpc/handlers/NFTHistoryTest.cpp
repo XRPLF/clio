@@ -193,17 +193,6 @@ generateTestValuesForParametersTest()
             })",
             "invalidParams",
             "containsLedgerSpecifierAndRange"},
-        NFTHistoryParamTestCaseBundle{
-            "StrictFieldUnsupportedValue",
-            R"({
-                "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", 
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": 10,
-                "strict": false
-            })",
-            "notSupported",
-            "Not supported field 'strict's value 'false'"},
     };
 }
 
@@ -377,7 +366,6 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -412,84 +400,6 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
-    });
-}
-
-TEST_F(RPCNFTHistoryHandlerTest, StrictTrue)
-{
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(
-        *rawBackendPtr,
-        fetchNFTTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
-        .Times(1);
-
-    runSpawn([&, this](auto& yield) {
-        auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
-            R"({{
-                "nft_id":"{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false,
-                "strict": true
-            }})",
-            NFTID,
-            -1,
-            -1));
-
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-    });
-}
-
-TEST_F(RPCNFTHistoryHandlerTest, StrictInvalidTypeHasNoEffect)
-{
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(
-        *rawBackendPtr,
-        fetchNFTTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
-        .Times(1);
-
-    runSpawn([&, this](auto& yield) {
-        auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
-            R"({{
-                "nft_id":"{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false,
-                "strict": "test"
-            }})",
-            NFTID,
-            -1,
-            -1));
-
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
     });
 }
 
