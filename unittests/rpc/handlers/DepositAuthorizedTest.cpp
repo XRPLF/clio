@@ -303,7 +303,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "actNotFound");
+        EXPECT_EQ(err.at("error").as_string(), "srcActNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "source_accountNotFound");
     });
 }
@@ -343,7 +343,7 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "actNotFound");
+        EXPECT_EQ(err.at("error").as_string(), "dstActNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "destination_accountNotFound");
     });
 }

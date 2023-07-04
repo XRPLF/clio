@@ -40,13 +40,13 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield);
 
     if (!srcAccountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "source_accountNotFound"}};
+        return Error{Status{RippledError::rpcSRC_ACT_NOT_FOUND, "source_accountNotFound"}};
 
     auto const dstKeylet = ripple::keylet::account(*destinationAccountID).key;
     auto const dstAccountLedgerObject = sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
 
     if (!dstAccountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "destination_accountNotFound"}};
+        return Error{Status{RippledError::rpcDST_ACT_NOT_FOUND, "destination_accountNotFound"}};
 
     Output response;
 
