@@ -48,7 +48,6 @@ public:
         bool validated = true;
     };
 
-    // TODO: we did not implement the "strict" field
     struct Input
     {
         std::string transaction;

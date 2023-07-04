@@ -65,6 +65,7 @@ public:
 
     // "queue" is not available in Reporting mode
     // "ident" is deprecated, keep it for now, in line with rippled
+    // Note: clio only supports XRP Ledger addresses (i.e. `strict` is unsupported for `false`)
     struct Input
     {
         std::optional<std::string> account;
@@ -89,6 +90,7 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(signer_lists), validation::Type<bool>{}},
+            {JS(strict), validation::IfType<bool>{validation::NotSupported{false}}},
         };
 
         return rpcSpec;

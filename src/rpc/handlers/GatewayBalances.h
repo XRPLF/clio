@@ -51,7 +51,7 @@ public:
         bool validated = true;
     };
 
-    // TODO:we did not implement the "strict" field
+    // Note: clio only supports XRP Ledger addresses (i.e. `strict` is unsupported for `false`)
     struct Input
     {
         std::string account;
@@ -106,6 +106,7 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(hotwallet), hotWalletValidator},
+            {JS(strict), validation::IfType<bool>{validation::NotSupported{false}}},
         };
 
         return rpcSpec;

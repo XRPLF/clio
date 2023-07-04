@@ -40,7 +40,31 @@ class RPCAccountCurrenciesHandlerTest : public HandlerBaseTest
 {
 };
 
-TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExsit)
+TEST_F(RPCAccountCurrenciesHandlerTest, StrictSetToFalseUnsupported)
+{
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "strict": false
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "notSupported");
+        EXPECT_EQ(err.at("error_message").as_string(), "Not supported field 'strict's value 'false'");
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -280,6 +304,92 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
         R"({{
             "account":"{}",
             "ledger_index":{}
+        }})",
+        ACCOUNT,
+        ledgerSeq));
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output).as_object().at("ledger_index").as_uint64(), ledgerSeq);
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeqWithStrictTrue)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto const ledgerSeq = 29;
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(ledgerSeq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid account
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    std::vector<Blob> bbs;
+    auto const line1 =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "ledger_index": {},
+            "strict": true
+        }})",
+        ACCOUNT,
+        ledgerSeq));
+    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output).as_object().at("ledger_index").as_uint64(), ledgerSeq);
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeqWithStrictOfInvalidType)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto const ledgerSeq = 29;
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(ledgerSeq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid account
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    std::vector<Blob> bbs;
+    auto const line1 =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "ledger_index": {},
+            "strict": "test"
         }})",
         ACCOUNT,
         ledgerSeq));
