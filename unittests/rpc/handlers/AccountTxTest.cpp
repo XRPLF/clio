@@ -462,7 +462,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             "120000240000002061400000000000000168400000000000000173047465737481"
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3");
-        EXPECT_EQ(output->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
+        EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("date"));
 
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
