@@ -170,6 +170,18 @@ generateParameterTestBundles()
                 ACCOUNT),
             "invalidParams",
             "hotwalletMalformed"},
+        ParameterTestBundle{
+            "StrictFieldUnsupportedValue",
+            fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": "{}",
+                    "strict": false
+                }})",
+                ACCOUNT,
+                ACCOUNT2),
+            "notSupported",
+            "Not supported field 'strict's value 'false'"},
     };
 }
 
@@ -607,7 +619,84 @@ generateNormalPathTestBundles()
                 ACCOUNT3,
                 ACCOUNT2,
                 ACCOUNT),
-            fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)}};
+            fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)},
+        NormalTestBundle{
+            "StrictTrue",
+            CreateOwnerDirLedgerObject(
+                {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1),
+            std::vector{
+                CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
+                CreateRippleStateLedgerObject(ACCOUNT, "CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
+                CreateRippleStateLedgerObject(ACCOUNT, "EUR", ISSUER, -30, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123)
+
+            },
+            fmt::format(
+                R"({{
+                    "balances": {{
+                        "{}": [
+                            {{
+                                "currency": "EUR",
+                                "value": "30"
+                            }}
+                        ],
+                        "{}": [
+                            {{
+                                "currency": "USD",
+                                "value": "10"
+                            }},
+                            {{
+                                "currency": "CNY",
+                                "value": "20"
+                            }}
+                        ]
+                    }},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                }})",
+                ACCOUNT3,
+                ACCOUNT2,
+                ACCOUNT),
+            fmt::format(R"("hotwallet": ["{}", "{}"], "strict": true)", ACCOUNT2, ACCOUNT3)},
+        NormalTestBundle{
+            "StrictInvalidTypeHasNoEffect",
+            CreateOwnerDirLedgerObject(
+                {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1),
+            std::vector{
+                CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
+                CreateRippleStateLedgerObject(ACCOUNT, "CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
+                CreateRippleStateLedgerObject(ACCOUNT, "EUR", ISSUER, -30, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123)
+
+            },
+            fmt::format(
+                R"({{
+                    "balances": {{
+                        "{}": [
+                            {{
+                                "currency": "EUR",
+                                "value": "30"
+                            }}
+                        ],
+                        "{}": [
+                            {{
+                                "currency": "USD",
+                                "value": "10"
+                            }},
+                            {{
+                                "currency": "CNY",
+                                "value": "20"
+                            }}
+                        ]
+                    }},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                }})",
+                ACCOUNT3,
+                ACCOUNT2,
+                ACCOUNT),
+            fmt::format(R"("hotwallet": ["{}", "{}"], "strict": "test")", ACCOUNT2, ACCOUNT3)},
+    };
 }
 
 INSTANTIATE_TEST_SUITE_P(

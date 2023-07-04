@@ -91,6 +91,11 @@ generateTestValuesForParametersTest()
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
             "invalidParams",
             "ledgerIndexMalformed"},
+        AccountInfoParamTestCaseBundle{
+            "StrictFieldUnsupportedValue",
+            R"({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "strict": false})",
+            "notSupported",
+            "Not supported field 'strict's value 'false'"},
     };
 }
 
@@ -365,6 +370,72 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCAccountInfoHandlerTest, StrictTrue)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "strict": true
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
+
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+    });
+}
+
+TEST_F(RPCAccountInfoHandlerTest, StrictInvalidTypeHasNoEffect)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "strict": "test"
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
+
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
     });
 }
 

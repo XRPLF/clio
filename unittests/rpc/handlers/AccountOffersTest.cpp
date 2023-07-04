@@ -131,6 +131,12 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Malformed cursor",
         },
+        {
+            "StrictFieldUnsupportedValue",
+            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "strict": false})",
+            "notSupported",
+            "Not supported field 'strict's value 'false'",
+        },
     };
 }
 
@@ -334,6 +340,108 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCAccountOffersHandlerTest, DefaultParamsWithStrictTrue)
+{
+    auto constexpr ledgerSeq = 30;
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(10);         // min
+    mockBackendPtr->updateRange(ledgerSeq);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    std::vector<Blob> bbs;
+    auto offer = CreateOfferLedgerObject(
+        ACCOUNT,
+        10,
+        20,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+    offer.setFieldU32(ripple::sfExpiration, 123);
+    bbs.push_back(offer.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "strict": true
+        }})",
+        ACCOUNT));
+    auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+    });
+}
+
+TEST_F(RPCAccountOffersHandlerTest, DefaultParamsWithInvalidTypeStrict)
+{
+    auto constexpr ledgerSeq = 30;
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(10);         // min
+    mockBackendPtr->updateRange(ledgerSeq);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    std::vector<Blob> bbs;
+    auto offer = CreateOfferLedgerObject(
+        ACCOUNT,
+        10,
+        20,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+    offer.setFieldU32(ripple::sfExpiration, 123);
+    bbs.push_back(offer.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "strict": "test"
+        }})",
+        ACCOUNT));
+    auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
     });
 }
 
