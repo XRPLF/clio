@@ -25,6 +25,7 @@
 #include <rpc/common/Validators.h>
 
 #include <unordered_map>
+#include <unordered_set>
 
 namespace RPC {
 
@@ -46,7 +47,7 @@ class LedgerDataHandler
 
     static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
 
-    static const std::vector<std::string> TYPES_KEYS;
+    static const std::unordered_set<std::string> TYPES_KEYS;
 
 public:
     struct Output

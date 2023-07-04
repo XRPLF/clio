@@ -43,11 +43,11 @@ std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler
     {JS(nft_page), ripple::ltNFTOKEN_PAGE}};
 
 // TODO: should be std::views::keys when clang supports it
-std::vector<std::string> const LedgerDataHandler::TYPES_KEYS = [] {
-    std::vector<std::string> keys;
-    keys.reserve(TYPES_MAP.size());
-    std::transform(
-        TYPES_MAP.begin(), TYPES_MAP.end(), std::back_inserter(keys), [](auto const& pair) { return pair.first; });
+std::unordered_set<std::string> const LedgerDataHandler::TYPES_KEYS = [] {
+    std::unordered_set<std::string> keys;
+    std::transform(TYPES_MAP.begin(), TYPES_MAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
+        return pair.first;
+    });
     return keys;
 }();
 
