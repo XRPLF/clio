@@ -340,7 +340,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
         auto const req = json::parse(R"({
             "limit":10,
             "type":"state"
-            })");
+        })");
 
         auto output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
