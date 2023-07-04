@@ -25,6 +25,32 @@
 
 namespace RPC {
 
+std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler::TYPES_MAP{
+    {JS(account), ripple::ltACCOUNT_ROOT},
+    {JS(amendments), ripple::ltAMENDMENTS},
+    {JS(check), ripple::ltCHECK},
+    {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
+    {JS(directory), ripple::ltDIR_NODE},
+    {JS(escrow), ripple::ltESCROW},
+    {JS(fee), ripple::ltFEE_SETTINGS},
+    {JS(hashes), ripple::ltLEDGER_HASHES},
+    {JS(offer), ripple::ltOFFER},
+    {JS(payment_channel), ripple::ltPAYCHAN},
+    {JS(signer_list), ripple::ltSIGNER_LIST},
+    {JS(state), ripple::ltRIPPLE_STATE},
+    {JS(ticket), ripple::ltTICKET},
+    {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
+    {JS(nft_page), ripple::ltNFTOKEN_PAGE}};
+
+// TODO: should be std::views::keys when clang supports it
+std::unordered_set<std::string> const LedgerDataHandler::TYPES_KEYS = [] {
+    std::unordered_set<std::string> keys;
+    std::transform(TYPES_MAP.begin(), TYPES_MAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
+        return pair.first;
+    });
+    return keys;
+}();
+
 LedgerDataHandler::Result
 LedgerDataHandler::process(Input input, Context const& ctx) const
 {
@@ -137,16 +163,20 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     {
         ripple::STLedgerEntry const sle{ripple::SerialIter{object.data(), object.size()}, key};
 
-        if (input.binary)
+        // note the filter is after limit is applied, same as rippled
+        if (input.type == ripple::LedgerEntryType::ltANY || sle.getType() == input.type)
         {
-            boost::json::object entry;
-            entry[JS(data)] = ripple::serializeHex(sle);
-            entry[JS(index)] = ripple::to_string(sle.key());
-            output.states.push_back(std::move(entry));
-        }
-        else
-        {
-            output.states.push_back(toJson(sle));
+            if (input.binary)
+            {
+                boost::json::object entry;
+                entry[JS(data)] = ripple::serializeHex(sle);
+                entry[JS(index)] = ripple::to_string(sle.key());
+                output.states.push_back(std::move(entry));
+            }
+            else
+            {
+                output.states.push_back(toJson(sle));
+            }
         }
     }
 
@@ -212,15 +242,18 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     }
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
     }
+
+    if (jsonObject.contains(JS(type)))
+        input.type = LedgerDataHandler::TYPES_MAP.at(jsonObject.at(JS(type)).as_string().c_str());
 
     return input;
 }

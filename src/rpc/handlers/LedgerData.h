@@ -24,6 +24,9 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
+#include <unordered_map>
+#include <unordered_set>
+
 namespace RPC {
 
 /**
@@ -41,6 +44,10 @@ class LedgerDataHandler
     // constants
     static uint32_t constexpr LIMITBINARY = 2048;
     static uint32_t constexpr LIMITJSON = 256;
+
+    static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
+
+    static const std::unordered_set<std::string> TYPES_KEYS;
 
 public:
     struct Output
@@ -67,6 +74,7 @@ public:
         std::optional<ripple::uint256> marker;
         std::optional<uint32_t> diffMarker;
         bool outOfOrder = false;
+        ripple::LedgerEntryType type = ripple::LedgerEntryType::ltANY;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -87,6 +95,14 @@ public:
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
              validation::IfType<std::string>{validation::Uint256HexStringValidator}},
+            {JS(type),
+             validation::WithCustomError{
+                 validation::Type<std::string>{},
+                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
+             validation::WithCustomError{
+                 validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type'."}}},
+
         };
         return rpcSpec;
     }

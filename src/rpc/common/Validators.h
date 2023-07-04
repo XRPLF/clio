@@ -302,11 +302,21 @@ class OneOf final
 
 public:
     /**
-     * @brief Construct the validator with stored options
+     * @brief Construct the validator with stored options of initializer list
      *
      * @param options The list of allowed options
      */
     explicit OneOf(std::initializer_list<Type> options) : options_{options}
+    {
+    }
+
+    /**
+     * @brief Construct the validator with stored options of other container
+     *
+     * @param begin,end the range to copy the elements from
+     */
+    template <class InputIt>
+    explicit OneOf(InputIt begin, InputIt end) : options_{begin, end}
     {
     }
 
