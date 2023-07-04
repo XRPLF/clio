@@ -90,7 +90,10 @@ public:
                  {JS(issuer),
                   validation::WithCustomError{
                       validation::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)}}}},
-            {JS(taker), validation::AccountValidator},
+            // return INVALID_PARAMS if account format is wrong for "taker"
+            {JS(taker),
+             validation::WithCustomError{
+                 validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'")}},
             {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
