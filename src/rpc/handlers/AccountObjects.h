@@ -56,7 +56,6 @@ public:
         bool validated = true;
     };
 
-    // Clio does not implement deletion_blockers_only
     struct Input
     {
         std::string account;
@@ -65,6 +64,7 @@ public:
         uint32_t limit = 200;  // [10,400]
         std::optional<std::string> marker;
         std::optional<ripple::LedgerEntryType> type;
+        bool deletionBlockersOnly = false;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -97,6 +97,7 @@ public:
                  "nft_offer",
              }},
             {JS(marker), validation::AccountMarkerValidator},
+            {JS(deletion_blockers_only), validation::Type<bool>{}},
         };
 
         return rpcSpec;
