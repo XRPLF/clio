@@ -197,7 +197,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
     });
 }
 
-TEST_F(RPCAccountInfoHandlerTest, AccountNotExsit)
+TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min

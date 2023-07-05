@@ -123,6 +123,16 @@ generateTestValuesForParametersTest()
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"xxxx"})",
             "invalidParams",
             "Malformed cursor"},
+        AccountObjectsParamTestCaseBundle{
+            "DeletionBlockersOnlyInvalidString",
+            R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": "wrong"})",
+            "invalidParams",
+            "Invalid parameters."},
+        AccountObjectsParamTestCaseBundle{
+            "DeletionBlockersOnlyInvalidNull",
+            R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": null})",
+            "invalidParams",
+            "Invalid parameters."},
     };
 }
 
@@ -224,7 +234,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     });
 }
 
-TEST_F(RPCAccountObjectsHandlerTest, AccountNotExsit)
+TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
@@ -566,6 +576,232 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
         R"({{
             "account":"{}",
             "type": "check"
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const line =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    auto const offer = CreateOfferLedgerObject(
+        ACCOUNT,
+        10,
+        20,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+
+    std::vector<Blob> bbs;
+    bbs.push_back(line.getSerializer().peekData());
+    bbs.push_back(channel.getSerializer().peekData());
+    bbs.push_back(offer.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "deletion_blockers_only": true
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 2);
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const line =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+
+    std::vector<Blob> bbs;
+    bbs.push_back(line.getSerializer().peekData());
+    bbs.push_back(channel.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "deletion_blockers_only": true,
+            "type": "payment_channel"
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 1);
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const offer1 = CreateOfferLedgerObject(
+        ACCOUNT,
+        10,
+        20,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+    auto const offer2 = CreateOfferLedgerObject(
+        ACCOUNT,
+        20,
+        30,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+
+    std::vector<Blob> bbs;
+    bbs.push_back(offer1.getSerializer().peekData());
+    bbs.push_back(offer2.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "deletion_blockers_only": true
+        }})",
+        ACCOUNT));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleTypeYieldsEmptyResult)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const offer1 = CreateOfferLedgerObject(
+        ACCOUNT,
+        10,
+        20,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+    auto const offer2 = CreateOfferLedgerObject(
+        ACCOUNT,
+        20,
+        30,
+        ripple::to_string(ripple::to_currency("USD")),
+        ripple::to_string(ripple::xrpCurrency()),
+        ACCOUNT2,
+        toBase58(ripple::xrpAccount()),
+        INDEX1);
+
+    std::vector<Blob> bbs;
+    bbs.push_back(offer1.getSerializer().peekData());
+    bbs.push_back(offer2.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "deletion_blockers_only": true,
+            "type": "offer"
         }})",
         ACCOUNT));
 

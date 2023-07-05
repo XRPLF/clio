@@ -53,10 +53,43 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
+    auto typeFilter = std::optional<std::vector<ripple::LedgerEntryType>>{};
+
+    if (input.deletionBlockersOnly)
+    {
+        static constexpr ripple::LedgerEntryType deletionBlockers[] = {
+            ripple::ltCHECK,
+            ripple::ltESCROW,
+            ripple::ltNFTOKEN_PAGE,
+            ripple::ltPAYCHAN,
+            ripple::ltRIPPLE_STATE,
+        };
+
+        typeFilter.emplace();
+        typeFilter->reserve(std::size(deletionBlockers));
+
+        for (auto type : deletionBlockers)
+        {
+            if (input.type && input.type != type)
+                continue;
+
+            typeFilter->push_back(type);
+        }
+    }
+    else
+    {
+        if (input.type && input.type != ripple::ltANY)
+            typeFilter = {*input.type};
+    }
+
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (!input.type || sle.getType() == *(input.type))
+        if (not typeFilter or
+            std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()) !=
+                std::end(typeFilter.value()))
+        {
             response.accountObjects.push_back(std::move(sle));
+        }
         return true;
     };
 
@@ -129,6 +162,9 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
 
     if (jsonObject.contains(JS(marker)))
         input.marker = jv.at(JS(marker)).as_string().c_str();
+
+    if (jsonObject.contains(JS(deletion_blockers_only)))
+        input.deletionBlockersOnly = jsonObject.at(JS(deletion_blockers_only)).as_bool();
 
     return input;
 }
