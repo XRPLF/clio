@@ -255,8 +255,8 @@ generateParameterBookOffersTestBundles()
                 },
                 "taker": "123"
             })",
-            "actMalformed",
-            "takerMalformed"},
+            "invalidParams",
+            "Invalid field 'taker'"},
         ParameterTestBundle{
             "TakerNotString",
             R"({
@@ -272,7 +272,7 @@ generateParameterBookOffersTestBundles()
                 "taker": 123
             })",
             "invalidParams",
-            "takerNotString"},
+            "Invalid field 'taker'"},
         ParameterTestBundle{
             "LimitNotInt",
             R"({
