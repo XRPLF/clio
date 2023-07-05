@@ -53,7 +53,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    std::vector<ripple::LedgerEntryType> typeFilter;
+    auto typeFilter = std::optional<std::vector<ripple::LedgerEntryType>>{};
+
     if (input.deletionBlockersOnly)
     {
         static constexpr ripple::LedgerEntryType deletionBlockers[] = {
@@ -64,26 +65,28 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
             ripple::ltRIPPLE_STATE,
         };
 
-        typeFilter.reserve(std::size(deletionBlockers));
+        typeFilter.emplace();
+        typeFilter->reserve(std::size(deletionBlockers));
 
         for (auto type : deletionBlockers)
         {
             if (input.type && input.type != type)
                 continue;
 
-            typeFilter.push_back(type);
+            typeFilter->push_back(type);
         }
     }
     else
     {
         if (input.type && input.type != ripple::ltANY)
-            typeFilter.push_back(*input.type);
+            typeFilter = {*input.type};
     }
 
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (typeFilter.empty() ||
-            std::find(std::begin(typeFilter), std::end(typeFilter), sle.getType()) != std::end(typeFilter))
+        if (not typeFilter or
+            std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()) !=
+                std::end(typeFilter.value()))
         {
             response.accountObjects.push_back(std::move(sle));
         }
