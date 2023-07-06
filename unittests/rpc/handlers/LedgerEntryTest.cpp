@@ -100,8 +100,8 @@ generateTestValuesForParametersTest()
             R"({
                 "ledger_index": "wrong"
             })",
-            "malformedRequest",
-            "Malformed request."},
+            "invalidParams",
+            "ledgerIndexMalformed"},
 
         ParamTestCaseBundle{"UnknownOption", R"({})", "unknownOption", "Unknown option."},
 
@@ -177,8 +177,8 @@ generateTestValuesForParametersTest()
             R"({
                 "ticket": "invalid"
             })",
-            "invalidParams",
-            "ticketMalformed"},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidTicketEmptyJson",
@@ -220,8 +220,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 ACCOUNT),
-            "invalidParams",
-            "Invalid parameters."},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidOfferType",
@@ -236,8 +236,8 @@ generateTestValuesForParametersTest()
             R"({
                 "offer": "invalid"
             })",
-            "invalidParams",
-            "offerMalformed"},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidOfferEmptyJson",
@@ -279,8 +279,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 ACCOUNT),
-            "invalidParams",
-            "Invalid parameters."},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidEscrowType",
@@ -295,8 +295,8 @@ generateTestValuesForParametersTest()
             R"({
                 "escrow": "invalid"
             })",
-            "invalidParams",
-            "escrowMalformed"},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidEscrowEmptyJson",
@@ -338,8 +338,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 ACCOUNT),
-            "invalidParams",
-            "Invalid parameters."},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidRippleStateType",
@@ -460,8 +460,8 @@ generateTestValuesForParametersTest()
             R"({
                 "directory": "123"
             })",
-            "invalidParams",
-            "directoryMalformed"},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidDirectoryEmtpyJson",
@@ -535,22 +535,6 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 INDEX1),
-            "invalidParams",
-            "Invalid parameters."},
-
-        ParamTestCaseBundle{
-            "InvalidCheck",
-            R"({
-                "check": "wrong"
-            })",
-            "malformedRequest",
-            "Malformed request."},
-
-        ParamTestCaseBundle{
-            "InvalidPaymentChannel",
-            R"({
-                "payment_channel": "wrong"
-            })",
             "malformedRequest",
             "Malformed request."},
     };
@@ -592,8 +576,11 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
 };
 
 // content of index, payment_channel, nft_page and check fields is ledger index.
-// check and payment_channel are special tho and return malformedRequest
-INSTANTIATE_TEST_CASE_P(RPCLedgerEntryGroup3, IndexTest, Values("index", "nft_page"), IndexTest::NameGenerator{});
+INSTANTIATE_TEST_CASE_P(
+    RPCLedgerEntryGroup3,
+    IndexTest,
+    Values("index", "nft_page", "payment_channel", "check"),
+    IndexTest::NameGenerator{});
 
 TEST_P(IndexTest, InvalidIndexUint256)
 {
@@ -609,8 +596,8 @@ TEST_P(IndexTest, InvalidIndexUint256)
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), index + "Malformed");
+        EXPECT_EQ(err.at("error").as_string(), "malformedRequest");
+        EXPECT_EQ(err.at("error_message").as_string(), "Malformed request.");
     });
 }
 
@@ -628,8 +615,8 @@ TEST_P(IndexTest, InvalidIndexNotString)
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), index + "NotString");
+        EXPECT_EQ(err.at("error").as_string(), "malformedRequest");
+        EXPECT_EQ(err.at("error_message").as_string(), "Malformed request.");
     });
 }
 
@@ -652,7 +639,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
-            "account_root": "{}"
+                "account_root": "{}"
             }})",
             ACCOUNT));
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -828,7 +815,7 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "directory": {{
                         "owner": "{}"
-                        }}
+                    }}
                 }})",
                 ACCOUNT),
             // default sub_index is 0
@@ -842,7 +829,7 @@ generateTestValuesForNormalPathTest()
                     "escrow": {{
                         "owner": "{}",
                         "seq": 1
-                        }}
+                    }}
                 }})",
                 ACCOUNT),
             ripple::keylet::escrow(account1, 1).key,
@@ -855,7 +842,7 @@ generateTestValuesForNormalPathTest()
                     "deposit_preauth": {{
                         "owner": "{}",
                         "authorized": "{}"
-                        }}
+                    }}
                 }})",
                 ACCOUNT,
                 ACCOUNT2),
@@ -869,7 +856,7 @@ generateTestValuesForNormalPathTest()
                     "ripple_state": {{
                         "accounts": ["{}","{}"],
                         "currency": "USD"
-                        }}
+                    }}
                 }})",
                 ACCOUNT,
                 ACCOUNT2),
@@ -883,7 +870,7 @@ generateTestValuesForNormalPathTest()
                     "ticket": {{
                         "account": "{}",
                         "ticket_seq": 2
-                        }}
+                    }}
                 }})",
                 ACCOUNT),
             ripple::getTicketIndex(account1, 2),
@@ -896,7 +883,7 @@ generateTestValuesForNormalPathTest()
                     "offer": {{
                         "account": "{}",
                         "seq": 2
-                        }}
+                    }}
                 }})",
                 ACCOUNT),
             ripple::keylet::offer(account1, 2).key,
