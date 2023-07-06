@@ -17,13 +17,15 @@
 */
 //==============================================================================
 
-#include <ripple/basics/StringUtilities.h>
 #include <backend/BackendInterface.h>
+#include <backend/DBHelpers.h>
 #include <log/Logger.h>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
 
+#include <ripple/basics/StringUtilities.h>
+#include <ripple/protocol/nftPageMask.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
@@ -405,6 +407,66 @@ getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID)
     return sle.getFieldU64(ripple::sfOwnerNode);
 }
 
+// traverse account's nfts
+// return Status if error occurs
+// return [nextpage, count of nft already found] if success
+std::variant<Status, AccountCursor>
+traverseNFTObjects(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& accountID,
+    ripple::uint256 nextPage,
+    std::uint32_t limit,
+    boost::asio::yield_context& yield,
+    std::function<void(ripple::SLE&&)> atOwnedNode)
+{
+    auto const firstNFTPage = ripple::keylet::nftpage_min(accountID);
+    auto const lastNFTPage = ripple::keylet::nftpage_max(accountID);
+
+    // check if nextPage is valid
+    if (nextPage != beast::zero and firstNFTPage.key != (nextPage & ~ripple::nft::pageMask))
+        return Status{RippledError::rpcINVALID_PARAMS, "invalid Marker"};
+
+    // no marker, start from the last page
+    ripple::uint256 currentPage = nextPage == beast::zero ? lastNFTPage.key : nextPage;
+
+    // read the current page
+    auto page = backend.fetchLedgerObject(currentPage, sequence, yield);
+
+    if (!page)
+    {
+        if (nextPage == beast::zero)  // no nft objects in lastNFTPage
+            return AccountCursor{beast::zero, 0};
+        else  // marker is in the right range, but still invalid
+            return Status{RippledError::rpcINVALID_PARAMS, "invalid Marker"};
+    }
+
+    // the object exists and the key is in right range, must be nft page
+    ripple::SLE pageSLE{ripple::SLE{ripple::SerialIter{page->data(), page->size()}, currentPage}};
+
+    auto count = 0;
+    // traverse the nft page linked list until the start of the list or reach the limit
+    while (true)
+    {
+        auto const nftPreviousPage = pageSLE.getFieldH256(ripple::sfPreviousPageMin);
+        atOwnedNode(std::move(pageSLE));
+        count++;
+
+        if (count == limit or nftPreviousPage == beast::zero)
+        {
+            if (nftPreviousPage != beast::zero)
+                return AccountCursor{nftPreviousPage, count};
+            else
+                return AccountCursor{beast::zero, count};
+        }
+
+        page = backend.fetchLedgerObject(nftPreviousPage, sequence, yield);
+        pageSLE = ripple::SLE{ripple::SerialIter{page->data(), page->size()}, nftPreviousPage};
+    }
+
+    return AccountCursor{beast::zero, 0};
+}
+
 std::variant<Status, AccountCursor>
 traverseOwnedNodes(
     BackendInterface const& backend,
@@ -413,42 +475,33 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode)
-{
-    if (!backend.fetchLedgerObject(ripple::keylet::account(accountID).key, sequence, yield))
-        return Status{RippledError::rpcACT_NOT_FOUND};
-
-    auto const maybeCursor = parseAccountCursor(jsonCursor);
-    if (!maybeCursor)
-        return Status(ripple::rpcINVALID_PARAMS, "Malformed cursor");
-
-    auto [hexCursor, startHint] = *maybeCursor;
-
-    return traverseOwnedNodes(
-        backend,
-        ripple::keylet::ownerDir(accountID),
-        hexCursor,
-        startHint,
-        sequence,
-        limit,
-        jsonCursor,
-        yield,
-        atOwnedNode);
-}
-
-std::variant<Status, AccountCursor>
-ngTraverseOwnedNodes(
-    BackendInterface const& backend,
-    ripple::AccountID const& accountID,
-    std::uint32_t sequence,
-    std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode)
+    std::function<void(ripple::SLE&&)> atOwnedNode,
+    bool nftIncluded)
 {
     auto const maybeCursor = parseAccountCursor(jsonCursor);
     // the format is checked in RPC framework level
-    auto const [hexCursor, startHint] = *maybeCursor;
+    auto [hexCursor, startHint] = *maybeCursor;
+
+    // if we need to traverse nft objects and this is the first request -> traverse nft objects
+    // if we need to traverse nft objects and the marker is still in nft page -> traverse nft objects
+    // if we need to traverse nft objects and the marker is still in nft page but next page is zero -> owned nodes
+    // if we need to traverse nft objects and the marker is not in nft page -> traverse owned nodes
+    if (nftIncluded and
+        (!jsonCursor or (startHint == std::numeric_limits<uint32_t>::max() and hexCursor != beast::zero)))
+    {
+        auto const cursorMaybe = traverseNFTObjects(backend, sequence, accountID, hexCursor, limit, yield, atOwnedNode);
+        if (auto status = std::get_if<Status>(&cursorMaybe))
+            return *status;
+
+        auto const [nextNFTPage, objectsCount] = std::get<AccountCursor>(cursorMaybe);
+        // if limit reach , we return the next page and max as marker
+        if (objectsCount >= limit)
+            return AccountCursor{nextNFTPage, std::numeric_limits<uint32_t>::max()};
+        // adjust limit ,continue traversing owned nodes
+        limit -= objectsCount;
+        hexCursor = beast::zero;
+        startHint = 0;
+    }
 
     return traverseOwnedNodes(
         backend,
