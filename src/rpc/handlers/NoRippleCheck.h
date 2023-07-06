@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -73,7 +74,7 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(role),
              validation::Required{},
-             validation::WithCustomError{
+             meta::WithCustomError{
                  validation::OneOf{"gateway", "user"},
                  Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},

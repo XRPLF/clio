@@ -34,30 +34,29 @@ namespace RPC {
 struct FieldSpec final
 {
     /**
-     * @brief Construct a field specification out of a set of requirements
+     * @brief Construct a field specification out of a set of processors
      *
-     * @tparam Requirements The types of requirements @ref Requirement
+     * @tparam Processors The types of processors @ref Processor
      * @param key The key in a JSON object that the field validates
-     * @param requirements The requirements, each of them have to fulfil
-     * the @ref Requirement concept
+     * @param processors The processors, each of them have to fulfil the @ref Processor concept
      */
-    template <Requirement... Requirements>
-    FieldSpec(std::string const& key, Requirements&&... requirements)
-        : validator_{detail::makeFieldValidator<Requirements...>(key, std::forward<Requirements>(requirements)...)}
+    template <Processor... Processors>
+    FieldSpec(std::string const& key, Processors&&... processors)
+        : processor_{detail::makeFieldValidator<Processors...>(key, std::forward<Processors>(processors)...)}
     {
     }
 
     /**
-     * @brief Validates the passed JSON value using the stored requirements
+     * @brief Processos the passed JSON value using the stored processors
      *
-     * @param value The JSON value to validate
+     * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
-    validate(boost::json::value const& value) const;
+    process(boost::json::value& value) const;
 
 private:
-    std::function<MaybeError(boost::json::value const&)> validator_;
+    std::function<MaybeError(boost::json::value&)> processor_;
 };
 
 /**
@@ -78,13 +77,13 @@ struct RpcSpec final
     }
 
     /**
-     * @brief Validates the passed JSON value using the stored field specs
+     * @brief Processos the passed JSON value using the stored field specs
      *
-     * @param value The JSON value to validate
+     * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
-    validate(boost::json::value const& value) const;
+    process(boost::json::value& value) const;
 
 private:
     std::vector<FieldSpec> fields_;

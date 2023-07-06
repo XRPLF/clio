@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -94,12 +95,12 @@ public:
             {JS(limit), validation::Type<uint32_t>{}},
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator}},
+             meta::IfType<std::string>{validation::Uint256HexStringValidator}},
             {JS(type),
-             validation::WithCustomError{
+             meta::WithCustomError{
                  validation::Type<std::string>{},
                  Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
-             validation::WithCustomError{
+             meta::WithCustomError{
                  validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
                  Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type'."}}},
 

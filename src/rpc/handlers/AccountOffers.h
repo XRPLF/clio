@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -83,7 +84,7 @@ public:
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
             {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
-            {JS(strict), validation::IfType<bool>{validation::NotSupported{false}}},
+            {JS(strict), meta::IfType<bool>{validation::NotSupported{false}}},
         };
 
         return rpcSpec;

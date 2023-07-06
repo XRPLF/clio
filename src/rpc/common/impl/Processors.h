@@ -40,10 +40,12 @@ struct DefaultProcessor final
         {
             // first we run validation against specified API version
             auto const spec = handler.spec(ctx.apiVersion);
-            if (auto const ret = spec.validate(value); not ret)
+            auto input = value;  // copy here, spec require mutable data
+
+            if (auto const ret = spec.process(input); not ret)
                 return Error{ret.error()};  // forward Status
 
-            auto const inData = value_to<typename HandlerType::Input>(value);
+            auto const inData = value_to<typename HandlerType::Input>(input);
             auto const ret = handler.process(inData, ctx);
 
             // real handler is given expected Input, not json

@@ -24,16 +24,16 @@
 namespace RPC {
 
 [[nodiscard]] MaybeError
-FieldSpec::validate(boost::json::value const& value) const
+FieldSpec::process(boost::json::value& value) const
 {
-    return validator_(value);
+    return processor_(value);
 }
 
 [[nodiscard]] MaybeError
-RpcSpec::validate(boost::json::value const& value) const
+RpcSpec::process(boost::json::value& value) const
 {
     for (auto const& field : fields_)
-        if (auto ret = field.validate(value); not ret)
+        if (auto ret = field.process(value); not ret)
             return Error{ret.error()};
 
     return {};

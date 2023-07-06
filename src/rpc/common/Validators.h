@@ -73,34 +73,6 @@ template <typename Expected>
 }
 
 /**
- * @brief A meta-validator that acts as a spec for a sub-object/section
- */
-class Section final
-{
-    std::vector<FieldSpec> specs;
-
-public:
-    /**
-     * @brief Construct new section validator from a list of specs
-     *
-     * @param specs List of specs @ref FieldSpec
-     */
-    explicit Section(std::initializer_list<FieldSpec> specs) : specs{specs}
-    {
-    }
-
-    /**
-     * @brief Verify that the JSON value representing the section is valid
-     * according to the given specs
-     *
-     * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the section from the outer object
-     */
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const;
-};
-
-/**
  * @brief A validator that simply requires a field to be present
  */
 struct Required final
@@ -184,8 +156,7 @@ struct Type final
     verify(boost::json::value const& value, std::string_view key) const
     {
         if (not value.is_object() or not value.as_object().contains(key.data()))
-            return {};  // ignore. field does not exist, let 'required' fail
-                        // instead
+            return {};  // ignore. field does not exist, let 'required' fail instead
 
         auto const& res = value.as_object().at(key.data());
         auto const convertible = (checkType<Types>(res) || ...);
@@ -230,8 +201,7 @@ public:
         using boost::json::value_to;
 
         if (not value.is_object() or not value.as_object().contains(key.data()))
-            return {};  // ignore. field does not exist, let 'required' fail
-                        // instead
+            return {};  // ignore. field does not exist, let 'required' fail instead
 
         auto const res = value_to<Type>(value.as_object().at(key.data()));
 
@@ -275,8 +245,7 @@ public:
         using boost::json::value_to;
 
         if (not value.is_object() or not value.as_object().contains(key.data()))
-            return {};  // ignore. field does not exist, let 'required' fail
-                        // instead
+            return {};  // ignore. field does not exist, let 'required' fail instead
 
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (res != original_)
@@ -333,8 +302,7 @@ public:
         using boost::json::value_to;
 
         if (not value.is_object() or not value.as_object().contains(key.data()))
-            return {};  // ignore. field does not exist, let 'required' fail
-                        // instead
+            return {};  // ignore. field does not exist, let 'required' fail instead
 
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
@@ -349,129 +317,6 @@ public:
  * few "strings" without specifying the type.
  */
 OneOf(std::initializer_list<char const*>)->OneOf<std::string>;
-
-/**
- * @brief A meta-validator that specifies a list of specs to run against the
- * object at the given index in the array
- */
-class ValidateArrayAt final
-{
-    std::size_t idx_;
-    std::vector<FieldSpec> specs_;
-
-public:
-    /**
-     * @brief Constructs a validator that validates the specified element of a
-     * JSON array
-     *
-     * @param idx The index inside the array to validate
-     * @param specs The specifications to validate against
-     */
-    ValidateArrayAt(std::size_t idx, std::initializer_list<FieldSpec> specs) : idx_{idx}, specs_{specs}
-    {
-    }
-
-    /**
-     * @brief Verify that the JSON array element at given index is valid
-     * according the stored specs
-     *
-     * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the array from the outer object
-     */
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const;
-};
-
-/**
- * @brief A meta-validator that specifies a list of requirements to run against
- * when the type matches the template parameter
- */
-template <typename Type>
-class IfType final
-{
-public:
-    /**
-     * @brief Constructs a validator that validates the specs if the type
-     * matches
-     * @param requirements The requirements to validate against
-     */
-    template <Requirement... Requirements>
-    IfType(Requirements&&... requirements)
-    {
-        validator_ = [... r = std::forward<Requirements>(requirements)](
-                         boost::json::value const& j, std::string_view key) -> MaybeError {
-            std::optional<Status> firstFailure = std::nullopt;
-
-            // the check logic is the same as fieldspec
-            // clang-format off
-            ([&j, &key, &firstFailure, req = &r]() {
-                if (firstFailure)
-                    return;
-
-                if (auto const res = req->verify(j, key); not res)
-                    firstFailure = res.error();
-            }(), ...);
-            // clang-format on
-
-            if (firstFailure)
-                return Error{firstFailure.value()};
-
-            return {};
-        };
-    }
-
-    /**
-     * @brief Verify that the element is valid
-     * according the stored requirements when type matches
-     *
-     * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the element from the outer object
-     */
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const
-    {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
-            return {};  // ignore. field does not exist, let 'required' fail
-                        // instead
-
-        if (not checkType<Type>(value.as_object().at(key.data())))
-            return {};  // ignore if type does not match
-
-        return validator_(value, key);
-    }
-
-private:
-    std::function<MaybeError(boost::json::value const&, std::string_view)> validator_;
-};
-
-/**
- * @brief A meta-validator that wrapp other validator to send the customized
- * error
- */
-template <typename Requirement>
-class WithCustomError final
-{
-    Requirement requirement;
-    Status error;
-
-public:
-    /**
-     * @brief Constructs a validator that calls the given validator "req" and
-     * return customized error "err"
-     */
-    WithCustomError(Requirement req, Status err) : requirement{std::move(req)}, error{err}
-    {
-    }
-
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const
-    {
-        if (auto const res = requirement.verify(value, key); not res)
-            return Error{error};
-
-        return {};
-    }
-};
 
 /**
  * @brief A meta-validator that allows to specify a custom validation function
