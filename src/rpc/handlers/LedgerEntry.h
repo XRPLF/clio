@@ -100,13 +100,17 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_index),
+             validation::WithCustomError{validation::LedgerIndexValidator, Status(ClioError::rpcMALFORMED_REQUEST)}},
             {JS(index), validation::Uint256HexStringValidator},
             {JS(account_root), validation::AccountBase58Validator},
-            {JS(check), validation::Uint256HexStringValidator},
+            {JS(check),
+             validation::WithCustomError{
+                 validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)}},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{validation::WithCustomError{
+                 validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)}},
              validation::IfType<boost::json::object>{
                  validation::Section{
                      {JS(owner),
@@ -144,7 +148,9 @@ public:
                      {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
                  },
              }},
-            {JS(payment_channel), validation::Uint256HexStringValidator},
+            {JS(payment_channel),
+             validation::WithCustomError{
+                 validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)}},
             {JS(ripple_state),
              validation::Type<boost::json::object>{},
              validation::Section{

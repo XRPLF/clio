@@ -96,11 +96,14 @@ generateTestValuesForParametersTest()
             "account_rootNotString"},
 
         ParamTestCaseBundle{
-            "UnknownOption",
+            "InvalidLedgerIndex",
             R"({
+                "ledger_index": "wrong"
             })",
-            "unknownOption",
-            "Unknown option."},
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{"UnknownOption", R"({})", "unknownOption", "Unknown option."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthType",
@@ -115,14 +118,13 @@ generateTestValuesForParametersTest()
             R"({
                 "deposit_preauth": "invalid"
             })",
-            "invalidParams",
-            "deposit_preauthMalformed"},
+            "malformedRequest",
+            "Malformed request."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthEmtpyJson",
             R"({
-                "deposit_preauth": {
-                }
+                "deposit_preauth": {}
             })",
             "invalidParams",
             "Required field 'owner' missing"},
@@ -360,8 +362,7 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             "InvalidRippleStateEmtpyJson",
             R"({
-                "ripple_state": {
-                }
+                "ripple_state": {}
             })",
             "invalidParams",
             "Required field 'accounts' missing"},
@@ -439,7 +440,7 @@ generateTestValuesForParametersTest()
                     "ripple_state": {{
                         "accounts" : ["{}","{}"],
                         "currency": 123
-                        }}
+                    }}
                 }})",
                 ACCOUNT,
                 ACCOUNT2),
@@ -529,13 +530,30 @@ generateTestValuesForParametersTest()
             fmt::format(
                 R"({{
                     "directory": {{
-                    "dir_root": "{}",
-                    "sub_index": "not int"
-                        }}
+                        "dir_root": "{}",
+                        "sub_index": "not int"
+                    }}
                 }})",
                 INDEX1),
             "invalidParams",
-            "Invalid parameters."}};
+            "Invalid parameters."},
+
+        ParamTestCaseBundle{
+            "InvalidCheck",
+            R"({
+                "check": "wrong"
+            })",
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "InvalidPaymentChannel",
+            R"({
+                "payment_channel": "wrong"
+            })",
+            "malformedRequest",
+            "Malformed request."},
+    };
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -573,12 +591,9 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
     };
 };
 
-// content of index, payment_channel, check, nft_page fields is ledger index
-INSTANTIATE_TEST_CASE_P(
-    RPCLedgerEntryGroup3,
-    IndexTest,
-    Values("index", "payment_channel", "check", "nft_page"),
-    IndexTest::NameGenerator{});
+// content of index, payment_channel, nft_page and check fields is ledger index.
+// check and payment_channel are special tho and return malformedRequest
+INSTANTIATE_TEST_CASE_P(RPCLedgerEntryGroup3, IndexTest, Values("index", "nft_page"), IndexTest::NameGenerator{});
 
 TEST_P(IndexTest, InvalidIndexUint256)
 {
