@@ -479,6 +479,10 @@ traverseOwnedNodes(
     bool nftIncluded)
 {
     auto const maybeCursor = parseAccountCursor(jsonCursor);
+
+    if (!maybeCursor)
+        return Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor"};
+
     // the format is checked in RPC framework level
     auto [hexCursor, startHint] = *maybeCursor;
 
@@ -490,29 +494,24 @@ traverseOwnedNodes(
         (!jsonCursor or (startHint == std::numeric_limits<uint32_t>::max() and hexCursor != beast::zero)))
     {
         auto const cursorMaybe = traverseNFTObjects(backend, sequence, accountID, hexCursor, limit, yield, atOwnedNode);
-        if (auto status = std::get_if<Status>(&cursorMaybe))
+
+        if (auto const status = std::get_if<Status>(&cursorMaybe))
             return *status;
 
-        auto const [nextNFTPage, objectsCount] = std::get<AccountCursor>(cursorMaybe);
+        auto const [nextNFTPage, nftsCount] = std::get<AccountCursor>(cursorMaybe);
+
         // if limit reach , we return the next page and max as marker
-        if (objectsCount >= limit)
+        if (nftsCount >= limit)
             return AccountCursor{nextNFTPage, std::numeric_limits<uint32_t>::max()};
+
         // adjust limit ,continue traversing owned nodes
-        limit -= objectsCount;
+        limit -= nftsCount;
         hexCursor = beast::zero;
         startHint = 0;
     }
 
     return traverseOwnedNodes(
-        backend,
-        ripple::keylet::ownerDir(accountID),
-        hexCursor,
-        startHint,
-        sequence,
-        limit,
-        jsonCursor,
-        yield,
-        atOwnedNode);
+        backend, ripple::keylet::ownerDir(accountID), hexCursor, startHint, sequence, limit, yield, atOwnedNode);
 }
 
 std::variant<Status, AccountCursor>
@@ -523,7 +522,6 @@ traverseOwnedNodes(
     std::uint32_t const startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
-    std::optional<std::string> jsonCursor,
     boost::asio::yield_context& yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {

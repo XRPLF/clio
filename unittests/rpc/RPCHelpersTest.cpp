@@ -50,33 +50,8 @@ class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest
     }
 };
 
-TEST_F(RPCHelpersTest, TraverseOwnedNodesNotAccount)
-{
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    // fetch account object return emtpy
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto account = GetAccountIDWithString(ACCOUNT);
-        auto ret = traverseOwnedNodes(*mockBackendPtr, account, 9, 10, "", yield, [](auto) {
-
-        });
-        auto status = std::get_if<Status>(&ret);
-        EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, RippledError::rpcACT_NOT_FOUND);
-    });
-    ctx.run();
-}
-
 TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto account = GetAccountIDWithString(ACCOUNT);
         auto ret = traverseOwnedNodes(*mockBackendPtr, account, 9, 10, "nothex,10", yield, [](auto) {
@@ -92,12 +67,6 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 
 TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto account = GetAccountIDWithString(ACCOUNT);
         auto ret = traverseOwnedNodes(*mockBackendPtr, account, 9, 10, "nothex,abc", yield, [](auto) {
@@ -117,12 +86,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     // return owner index
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
@@ -157,12 +122,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     std::vector<Blob> bbs;
 
@@ -202,16 +163,12 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
     auto ownerDirKk = ripple::keylet::ownerDir(account).key;
     constexpr static auto nextPage = 99;
     constexpr static auto limit = 15;
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), nextPage).key;
 
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     std::vector<Blob> bbs;
 
@@ -262,14 +219,10 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
     constexpr static auto limit = 8;
     constexpr static auto pageNum = 99;
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     std::vector<Blob> bbs;
 
@@ -317,14 +270,10 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
     constexpr static auto limit = 8;
     constexpr static auto pageNum = 99;
-    // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     int objectsCount = 10;
     ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
