@@ -206,7 +206,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
-        EXPECT_EQ(err.at("error_message").as_string(), "accountMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
 }
 
@@ -223,8 +223,43 @@ TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "accountNotString");
+        EXPECT_EQ(err.at("error").as_string(), "actMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
+{
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "peer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
+            })");
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "actMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
+{
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "peer": 12
+            })");
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "actMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
 }
 
