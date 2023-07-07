@@ -97,16 +97,22 @@ public:
                 return MaybeError{};
             }};
 
+        static auto const malformedRequestHexStringValidator =
+            validation::WithCustomError{validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)};
+
+        static auto const malformedRequestIntValidator =
+            validation::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
+
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(index), validation::Uint256HexStringValidator},
+            {JS(index), malformedRequestHexStringValidator},
             {JS(account_root), validation::AccountBase58Validator},
-            {JS(check), validation::Uint256HexStringValidator},
+            {JS(check), malformedRequestHexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{malformedRequestHexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
                      {JS(owner),
@@ -118,33 +124,33 @@ public:
              }},
             {JS(directory),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{malformedRequestHexStringValidator},
              validation::IfType<boost::json::object>{validation::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
-                 {JS(sub_index), validation::Type<uint32_t>{}}}}},
+                 {JS(sub_index), malformedRequestIntValidator}}}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{malformedRequestHexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
                      {JS(owner),
                       validation::Required{},
                       validation::WithCustomError{
                           validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
-                     {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
+                     {JS(seq), validation::Required{}, malformedRequestIntValidator},
                  },
              }},
             {JS(offer),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{malformedRequestHexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
                      {JS(account), validation::Required{}, validation::AccountBase58Validator},
-                     {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
+                     {JS(seq), validation::Required{}, malformedRequestIntValidator},
                  },
              }},
-            {JS(payment_channel), validation::Uint256HexStringValidator},
+            {JS(payment_channel), malformedRequestHexStringValidator},
             {JS(ripple_state),
              validation::Type<boost::json::object>{},
              validation::Section{
@@ -153,14 +159,14 @@ public:
              }},
             {JS(ticket),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator},
+             validation::IfType<std::string>{malformedRequestHexStringValidator},
              validation::IfType<boost::json::object>{
                  validation::Section{
                      {JS(account), validation::Required{}, validation::AccountBase58Validator},
-                     {JS(ticket_seq), validation::Required{}, validation::Type<uint32_t>{}},
+                     {JS(ticket_seq), validation::Required{}, malformedRequestIntValidator},
                  },
              }},
-            {JS(nft_page), validation::Uint256HexStringValidator},
+            {JS(nft_page), malformedRequestHexStringValidator},
         };
 
         return rpcSpec;
