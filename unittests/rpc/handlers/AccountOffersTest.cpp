@@ -589,6 +589,6 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker.");
     });
 }

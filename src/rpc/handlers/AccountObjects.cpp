@@ -92,20 +92,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
         return true;
     };
 
-    auto const traverseNFT = (not typeFilter) or
-        std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), ripple::ltNFTOKEN_PAGE) !=
-            std::end(typeFilter.value());
-
     auto const next = traverseOwnedNodes(
-        *sharedPtrBackend_,
-        *accountID,
-        lgrInfo.seq,
-        input.limit,
-        input.marker,
-        ctx.yield,
-        addToResponse,
-        traverseNFT);  // when no filter or type is nft_page, we need to traverse
-                       // nft pages, otherwise skip nft pages to save time
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true);
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};

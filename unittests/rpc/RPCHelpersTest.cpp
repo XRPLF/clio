@@ -60,7 +60,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
         auto status = std::get_if<Status>(&ret);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
-        EXPECT_EQ(status->message, "Malformed cursor");
+        EXPECT_EQ(status->message, "Malformed cursor.");
     });
     ctx.run();
 }
@@ -75,7 +75,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
         auto status = std::get_if<Status>(&ret);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
-        EXPECT_EQ(status->message, "Malformed cursor");
+        EXPECT_EQ(status->message, "Malformed cursor.");
     });
     ctx.run();
 }
@@ -297,7 +297,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
         auto status = std::get_if<Status>(&ret);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
-        EXPECT_EQ(status->message, "Invalid marker");
+        EXPECT_EQ(status->message, "Invalid marker.");
     });
     ctx.run();
 }
