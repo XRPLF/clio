@@ -90,8 +90,11 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion) const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(peer), validation::Type<std::string>{}, validation::AccountValidator},
+            {JS(account),
+             validation::Required{},
+             validation::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+            {JS(peer),
+             validation::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
             {JS(ignore_default), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
