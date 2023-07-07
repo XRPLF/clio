@@ -137,12 +137,12 @@ private:
         try
         {
             auto const range = backend_->fetchLedgerRange();
-            // if (!range)
-            // {
-            //     // for error that happened before the handler, we don't attach any warnings
-            //     rpcEngine_->notifyNotReady();
-            //     return Server::detail::ErrorHelper(connection, request).sendNotReadyError();
-            // }
+            if (!range)
+            {
+                // for error that happened before the handler, we don't attach any warnings
+                rpcEngine_->notifyNotReady();
+                return Server::detail::ErrorHelper(connection, request).sendNotReadyError();
+            }
 
             auto const context = [&] {
                 if (connection->upgraded)
