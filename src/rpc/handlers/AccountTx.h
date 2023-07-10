@@ -23,6 +23,7 @@
 #include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/MetaProcessors.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -91,7 +92,9 @@ public:
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},
             {JS(forward), validation::Type<bool>{}},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, std::numeric_limits<int32_t>::max()}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             modifiers::Clamp<int32_t>{1, std::numeric_limits<int32_t>::max()}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},

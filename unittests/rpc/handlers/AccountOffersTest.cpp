@@ -108,18 +108,6 @@ generateTestValuesForParametersTest()
             "Invalid parameters.",
         },
         {
-            "LimitOverMax",
-            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 401})",
-            "invalidParams",
-            "Invalid parameters.",
-        },
-        {
-            "LimitLessThanMin",
-            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 9})",
-            "invalidParams",
-            "Invalid parameters.",
-        },
-        {
             "MarkerNotString",
             R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})",
             "invalidParams",

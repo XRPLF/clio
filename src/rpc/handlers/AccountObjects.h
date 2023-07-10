@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -81,7 +82,7 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between(10, 400)},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>(10, 400)},
             {JS(type),
              validation::Type<std::string>{},
              validation::OneOf<std::string>{

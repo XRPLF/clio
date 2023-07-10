@@ -106,15 +106,6 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Required field 'role' missing"},
         NoRippleParamTestCaseBundle{
-            "LimitNotInRange",
-            R"({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "role": "gateway",
-                "limit": 501
-             })",
-            "invalidParams",
-            "Invalid parameters."},
-        NoRippleParamTestCaseBundle{
             "LimitNotInt",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",

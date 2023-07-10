@@ -109,11 +109,6 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."},
         NFTHistoryParamTestCaseBundle{
-            "limitOverRange",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": 101})",
-            "invalidParams",
-            "Invalid parameters."},
-        NFTHistoryParamTestCaseBundle{
             "MarkerNotObject",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "marker": 101})",
             "invalidParams",

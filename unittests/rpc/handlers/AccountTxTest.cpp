@@ -107,11 +107,6 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."},
         AccountTxParamTestCaseBundle{
-            "limitNotInRange",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
             "MarkerNotObject",
             R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})",
             "invalidParams",

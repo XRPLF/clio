@@ -160,39 +160,6 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
     });
 }
 
-// the limit is between 10 400
-TEST_F(RPCAccountLinesHandlerTest, IncorrectLimit)
-{
-    runSpawn([this](auto& yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
-                "limit": 9
-            }})",
-            ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-    });
-    runSpawn([this](auto& yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
-                "limit": 401
-            }})",
-            ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-    });
-}
-
 // error case: account invalid format, length is incorrect
 TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
 {
@@ -510,7 +477,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(3);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -536,23 +503,48 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     ownerDir.setFieldU64(ripple::sfIndexNext, 99);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(7);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"({{ 
-            "account": "{}",
-            "limit": 20
-        }})",
-        ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(3);
+
+    runSpawn([this](auto& yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}",
+                "limit": 20
+            }})",
+            ACCOUNT));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
         EXPECT_THAT((*output).as_object().at("marker").as_string().c_str(), EndsWith(",0"));
+    });
+
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": 9
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);  // todo: check limit somehow?
+    });
+
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": 401
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);  // todo: check limit somehow?
     });
 }
 

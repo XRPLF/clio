@@ -107,16 +107,6 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."},
         AccountObjectsParamTestCaseBundle{
-            "LimitLargerThanMax",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":401})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountObjectsParamTestCaseBundle{
-            "LimitLessThanMin",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":9})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountObjectsParamTestCaseBundle{
             "MarkerNotString",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":9})",
             "invalidParams",

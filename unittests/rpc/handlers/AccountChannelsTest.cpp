@@ -36,11 +36,11 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountHandlerTest : public HandlerBaseTest
+class RPCAccountChannelsHandlerTest : public HandlerBaseTest
 {
 };
 
-TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
+TEST_F(RPCAccountChannelsHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -60,7 +60,7 @@ TEST_F(RPCAccountHandlerTest, NonHexLedgerHash)
     });
 }
 
-TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
+TEST_F(RPCAccountChannelsHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -80,7 +80,7 @@ TEST_F(RPCAccountHandlerTest, NonStringLedgerHash)
     });
 }
 
-TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
+TEST_F(RPCAccountChannelsHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -100,7 +100,7 @@ TEST_F(RPCAccountHandlerTest, InvalidLedgerIndexString)
     });
 }
 
-TEST_F(RPCAccountHandlerTest, MarkerNotString)
+TEST_F(RPCAccountChannelsHandlerTest, MarkerNotString)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -122,7 +122,7 @@ TEST_F(RPCAccountHandlerTest, MarkerNotString)
 // error case : invalid marker
 // marker format is composed of a comma separated index and start hint. The
 // former will be read as hex, and the latter using boost lexical cast.
-TEST_F(RPCAccountHandlerTest, InvalidMarker)
+TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -155,41 +155,8 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
     });
 }
 
-// the limit is between 10 400
-TEST_F(RPCAccountHandlerTest, IncorrectLimit)
-{
-    runSpawn([this](auto& yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
-                "limit": 9
-            }})",
-            ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-    });
-    runSpawn([this](auto& yield) {
-        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
-        auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
-                "limit": 401
-            }})",
-            ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-    });
-}
-
 // error case: account invalid format, length is incorrect
-TEST_F(RPCAccountHandlerTest, AccountInvalidFormat)
+TEST_F(RPCAccountChannelsHandlerTest, AccountInvalidFormat)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -205,7 +172,7 @@ TEST_F(RPCAccountHandlerTest, AccountInvalidFormat)
 }
 
 // error case: account invalid format
-TEST_F(RPCAccountHandlerTest, AccountNotString)
+TEST_F(RPCAccountChannelsHandlerTest, AccountNotString)
 {
     runSpawn([this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
@@ -222,7 +189,7 @@ TEST_F(RPCAccountHandlerTest, AccountNotString)
 }
 
 // error case ledger non exist via hash
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
+TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     // mock fetchLedgerByHash return empty
@@ -249,7 +216,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash)
 }
 
 // error case ledger non exist via index
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerStringIndex)
+TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -273,7 +240,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerStringIndex)
     });
 }
 
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIntIndex)
+TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -299,7 +266,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIntIndex)
 
 // error case ledger > max seq via hash
 // idk why this case will happen in reality
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
+TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -326,7 +293,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerHash2)
 }
 
 // error case ledger > max seq via index
-TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex2)
+TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -351,7 +318,7 @@ TEST_F(RPCAccountHandlerTest, NonExistLedgerViaLedgerIndex2)
 }
 
 // error case account not exist
-TEST_F(RPCAccountHandlerTest, NonExistAccount)
+TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -380,7 +347,7 @@ TEST_F(RPCAccountHandlerTest, NonExistAccount)
 }
 
 // normal case when only provide account
-TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
+TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 {
     constexpr static auto correctOutput = R"({
         "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -454,14 +421,14 @@ TEST_F(RPCAccountHandlerTest, DefaultParameterTest)
 }
 
 // normal case : limit is used
-TEST_F(RPCAccountHandlerTest, UseLimit)
+TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(3);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -486,28 +453,53 @@ TEST_F(RPCAccountHandlerTest, UseLimit)
     ownerDir.setFieldU64(ripple::sfIndexNext, 99);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(7);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"({{ 
-            "account": "{}",
-            "limit": 20
-        }})",
-        ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(3);
+
+    runSpawn([this](auto& yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}",
+                "limit": 20
+            }})",
+            ACCOUNT));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
         EXPECT_THAT((*output).as_object().at("marker").as_string().c_str(), EndsWith(",0"));
     });
+
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": 9
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);  // todo: check limit?
+    });
+
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": 401
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);  // todo: check limit?
+    });
 }
 
 // normal case : destination is used
-TEST_F(RPCAccountHandlerTest, UseDestination)
+TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -570,7 +562,7 @@ TEST_F(RPCAccountHandlerTest, UseDestination)
 }
 
 // normal case : but the lines is emtpy
-TEST_F(RPCAccountHandlerTest, EmptyChannel)
+TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -606,7 +598,7 @@ TEST_F(RPCAccountHandlerTest, EmptyChannel)
 }
 
 // Return expiration cancel_offer source_tag destination_tag when available
-TEST_F(RPCAccountHandlerTest, OptionalResponseField)
+TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 {
     constexpr static auto correctOutput = R"({
         "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -691,7 +683,7 @@ TEST_F(RPCAccountHandlerTest, OptionalResponseField)
 }
 
 // normal case : test marker output correct
-TEST_F(RPCAccountHandlerTest, MarkerOutput)
+TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
@@ -760,7 +752,7 @@ TEST_F(RPCAccountHandlerTest, MarkerOutput)
 }
 
 // normal case : handler marker correctly
-TEST_F(RPCAccountHandlerTest, MarkerInput)
+TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
