@@ -47,7 +47,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     }
 
     if (minIndex > maxIndex)
-        return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
+        return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {

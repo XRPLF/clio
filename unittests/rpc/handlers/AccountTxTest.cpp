@@ -179,8 +179,8 @@ generateTestValuesForParametersTest()
                 "ledger_index_max": 11,
                 "ledger_index_min": 20
             })",
-            "lgrIdxsInvalid",
-            "Ledger indexes invalid."},
+            "invalidLgrRange",
+            "Ledger range is invalid."},
         AccountTxParamTestCaseBundle{
             "LedgerIndexMaxMinAndLedgerIndex",
             R"({
