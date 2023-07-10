@@ -137,7 +137,7 @@ TEST_F(RPCAccountHandlerTest, InvalidMarker)
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor");
+        EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor.");
     });
     runSpawn([&, this](auto& yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};

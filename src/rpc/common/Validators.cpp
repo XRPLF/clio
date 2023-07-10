@@ -160,7 +160,7 @@ CustomValidator AccountMarkerValidator =
         if (!parseAccountCursor(value.as_string().c_str()))
         {
             // align with the current error message
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor"}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor."}};
         }
 
         return MaybeError{};

@@ -425,7 +425,7 @@ traverseNFTObjects(
 
     // check if nextPage is valid
     if (nextPage != beast::zero and firstNFTPage.key != (nextPage & ~ripple::nft::pageMask))
-        return Status{RippledError::rpcINVALID_PARAMS, "Invalid Marker."};
+        return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
 
     // no marker, start from the last page
     ripple::uint256 currentPage = nextPage == beast::zero ? lastNFTPage.key : nextPage;
@@ -438,7 +438,7 @@ traverseNFTObjects(
         if (nextPage == beast::zero)  // no nft objects in lastNFTPage
             return AccountCursor{beast::zero, 0};
         else  // marker is in the right range, but still invalid
-            return Status{RippledError::rpcINVALID_PARAMS, "Invalid Marker."};
+            return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
     }
 
     // the object exists and the key is in right range, must be nft page

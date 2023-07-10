@@ -129,7 +129,7 @@ generateTestValuesForParametersTest()
             "MarkerInvalid",
             R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})",
             "invalidParams",
-            "Malformed cursor",
+            "Malformed cursor.",
         },
         {
             "StrictFieldUnsupportedValue",
