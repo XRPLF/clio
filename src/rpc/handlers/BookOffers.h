@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/common/MetaProcessors.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -91,7 +92,7 @@ public:
             {JS(taker),
              meta::WithCustomError{
                  validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'")}},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{1, 100}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
         };

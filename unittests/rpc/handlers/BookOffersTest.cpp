@@ -290,38 +290,6 @@ generateParameterBookOffersTestBundles()
             "invalidParams",
             "Invalid parameters."},
         ParameterTestBundle{
-            "LimitLargerThanMax",
-            R"({
-                "taker_pays" : 
-                {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                },
-                "taker_gets" : 
-                {
-                    "currency" : "XRP"
-                },
-                "limit": 101
-            })",
-            "invalidParams",
-            "Invalid parameters."},
-        ParameterTestBundle{
-            "LimitSmallerThanMin",
-            R"({
-                "taker_pays" : 
-                {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-                },
-                "taker_gets" : 
-                {
-                    "currency" : "XRP"
-                },
-                "limit": 0
-            })",
-            "invalidParams",
-            "Invalid parameters."},
-        ParameterTestBundle{
             "LedgerIndexInvalid",
             R"({
                 "taker_pays" : 

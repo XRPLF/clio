@@ -22,6 +22,7 @@
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/MetaProcessors.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -79,7 +80,7 @@ public:
                  Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>(), validation::Between{1, 500}},
+            {JS(limit), validation::Type<uint32_t>(), modifiers::Clamp<int32_t>{1, 500}},
             {JS(transactions), validation::Type<bool>()},
         };
 

@@ -315,39 +315,6 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
     });
 }
 
-// the limit is between 50 500
-TEST_F(RPCNFTSellOffersHandlerTest, IncorrectLimit)
-{
-    runSpawn([this](auto& yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
-                "limit": 49
-            }})",
-            NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-    });
-    runSpawn([this](auto& yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
-                "limit": 501
-            }})",
-            NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-    });
-}
-
 // normal case when only provide nft_id
 TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
 {
@@ -525,7 +492,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(3);
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -553,20 +520,20 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     auto const secondKey = ripple::keylet::page(directory, startHint).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_)).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_)).Times(7);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "nft_id": "{}",
-            "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
-            "limit": 50
-        }})",
-        NFTID));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{
+                "nft_id": "{}",
+                "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
+                "limit": 50
+            }})",
+            NFTID));
         auto const output = handler.process(input, Context{std::ref(yield)});
 
         ASSERT_TRUE(output);
@@ -574,5 +541,29 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
         // no marker/limit to output - we read all items already
         EXPECT_FALSE(output->as_object().contains("limit"));
         EXPECT_FALSE(output->as_object().contains("marker"));
+    });
+
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": 49
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);  // todo: check limit?
+    });
+
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": 501
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);  // todo: check limit?
     });
 }
