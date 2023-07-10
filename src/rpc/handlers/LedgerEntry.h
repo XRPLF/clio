@@ -99,10 +99,10 @@ public:
             }};
 
         static auto const malformedRequestHexStringValidator =
-            validation::WithCustomError{validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)};
+            meta::WithCustomError{validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)};
 
         static auto const malformedRequestIntValidator =
-            validation::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
+            meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
 
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
