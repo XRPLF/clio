@@ -301,8 +301,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
                 "PreviousTxnLgrSeq":2,
                 "Sequence":2,
                 "TransferRate":0,
-                "index":"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
-                "signer_lists":
+                "index":"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+            }},
+            "signer_lists":
                 [
                     {{
                         "Flags":0,
@@ -331,8 +332,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
                         "SignerQuorum":2,
                         "index":"A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
                     }}
-                ]
-            }},
+                ],
             "account_flags": {{
                 "defaultRipple": false,
                 "depositAuth": false,
