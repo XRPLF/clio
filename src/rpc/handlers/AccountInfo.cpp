@@ -89,6 +89,30 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {JS(validated), output.validated},
     };
 
+    static constexpr std::array<std::pair<std::string_view, ripple::LedgerSpecificFlags>, 9> lsFlags{{
+        {"defaultRipple", ripple::lsfDefaultRipple},
+        {"depositAuth", ripple::lsfDepositAuth},
+        {"disableMasterKey", ripple::lsfDisableMaster},
+        {"disallowIncomingXRP", ripple::lsfDisallowXRP},
+        {"globalFreeze", ripple::lsfGlobalFreeze},
+        {"noFreeze", ripple::lsfNoFreeze},
+        {"passwordSpent", ripple::lsfPasswordSpent},
+        {"requireAuthorization", ripple::lsfRequireAuth},
+        {"requireDestinationTag", ripple::lsfRequireDestTag}
+        // TODO: wait for conan integration
+        //  {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
+        //  {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
+        //  {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
+        //  {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline}
+    }};
+
+    boost::json::object acctFlags;
+    for (auto const& lsf : lsFlags)
+        acctFlags[lsf.first.data()] = output.accountData.isFlag(lsf.second);
+
+    // wait for conan integration-> jss::account_flags
+    jv.as_object()["account_flags"] = std::move(acctFlags);
+
     if (output.signerLists)
     {
         auto signers = boost::json::array();
