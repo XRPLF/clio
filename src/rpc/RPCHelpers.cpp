@@ -453,12 +453,7 @@ traverseNFTObjects(
         count++;
 
         if (count == limit or nftPreviousPage == beast::zero)
-        {
-            if (nftPreviousPage != beast::zero)
-                return AccountCursor{nftPreviousPage, count};
-            else
-                return AccountCursor{beast::zero, count};
-        }
+            return AccountCursor{nftPreviousPage, count};
 
         page = backend.fetchLedgerObject(nftPreviousPage, sequence, yield);
         pageSLE = ripple::SLE{ripple::SerialIter{page->data(), page->size()}, nftPreviousPage};
