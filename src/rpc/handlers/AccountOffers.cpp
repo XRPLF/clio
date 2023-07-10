@@ -70,7 +70,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& 
         return true;
     };
 
-    auto const next = ngTraverseOwnedNodes(
+    auto const next = traverseOwnedNodes(
         *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
     if (auto const status = std::get_if<Status>(&next))

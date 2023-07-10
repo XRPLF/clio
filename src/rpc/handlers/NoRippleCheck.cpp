@@ -85,7 +85,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
 
     auto limit = input.limit;
 
-    ngTraverseOwnedNodes(
+    traverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
         lgrInfo.seq,

@@ -21,7 +21,6 @@
 
 namespace RPC {
 
-// document does not mention nft_page, we still support it tho
 std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPESMAP{
     {"state", ripple::ltRIPPLE_STATE},
     {"ticket", ripple::ltTICKET},
@@ -93,8 +92,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
         return true;
     };
 
-    auto const next = ngTraverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+    auto const next = traverseOwnedNodes(
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true);
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};
