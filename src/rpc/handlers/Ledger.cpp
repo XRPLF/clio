@@ -74,6 +74,32 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
                     boost::json::object entry;
+                    if (input.ownerFunds)
+                    {
+                        // need to check the type of tx
+                        auto const [tx, meta] = RPC::deserializeTxPlusMeta(obj);
+                        if (tx and tx->isFieldPresent(ripple::sfTransactionType) and
+                            tx->getTxnType() == ripple::ttOFFER_CREATE)
+                        {
+                            auto const account = tx->getAccountID(ripple::sfAccount);
+                            auto const amount = tx->getFieldAmount(ripple::sfTakerGets);
+
+                            // If the offer create is not self funded then add the
+                            // owner balance
+                            if (account != amount.getIssuer())
+                            {
+                                auto const ownerFunds = accountHolds(
+                                    *sharedPtrBackend_,
+                                    lgrInfo.seq,
+                                    account,
+                                    amount.getCurrency(),
+                                    amount.getIssuer(),
+                                    false,
+                                    ctx.yield);
+                                entry[JS(owner_funds)] = ownerFunds.getText();
+                            }
+                        }
+                    }
                     if (!input.binary)
                     {
                         auto [txn, meta] = toExpandedJson(obj);
@@ -172,6 +198,9 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
 
     if (jsonObject.contains(JS(expand)))
         input.expand = jv.at(JS(expand)).as_bool();
+
+    if (jsonObject.contains(JS(owner_funds)))
+        input.binary = jv.at(JS(owner_funds)).as_bool();
 
     if (jsonObject.contains("diff"))
         input.diff = jv.at("diff").as_bool();

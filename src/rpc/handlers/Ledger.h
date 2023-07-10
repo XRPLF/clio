@@ -54,6 +54,7 @@ public:
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
         bool expand = false;
+        bool ownerFunds = false;
         bool transactions = false;
         bool diff = false;
     };
@@ -70,7 +71,7 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(owner_funds), validation::Type<bool>{}, validation::NotSupported{true}},
+            {JS(owner_funds), validation::Type<bool>{}},
             {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
