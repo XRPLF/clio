@@ -20,6 +20,7 @@
 #pragma once
 
 #include <backend/BackendInterface.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -71,28 +72,24 @@ public:
             {JS(taker_gets),
              validation::Required{},
              validation::Type<boost::json::object>{},
-             validation::Section{
+             meta::Section{
                  {JS(currency),
                   validation::Required{},
-                  validation::WithCustomError{
-                      validation::CurrencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)}},
+                  meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)}},
                  {JS(issuer),
-                  validation::WithCustomError{
-                      validation::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)}}}},
+                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)}}}},
             {JS(taker_pays),
              validation::Required{},
              validation::Type<boost::json::object>{},
-             validation::Section{
+             meta::Section{
                  {JS(currency),
                   validation::Required{},
-                  validation::WithCustomError{
-                      validation::CurrencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)}},
+                  meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)}},
                  {JS(issuer),
-                  validation::WithCustomError{
-                      validation::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)}}}},
+                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)}}}},
             // return INVALID_PARAMS if account format is wrong for "taker"
             {JS(taker),
-             validation::WithCustomError{
+             meta::WithCustomError{
                  validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'")}},
             {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},

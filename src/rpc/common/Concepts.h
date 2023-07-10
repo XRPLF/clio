@@ -36,10 +36,20 @@ struct RpcSpec;
  */
 // clang-format off
 template <typename T>
-concept Requirement = requires(T a) {
-    { a.verify(boost::json::value{}, std::string{}) } -> std::same_as<MaybeError>;
+concept Requirement = requires(T a, boost::json::value lval) {
+    { a.verify(lval, std::string{}) } -> std::same_as<MaybeError>;
 };
 // clang-format on
+
+// clang-format off
+template <typename T>
+concept Modifier = requires(T a, boost::json::value lval) {
+    { a.modify(lval, std::string{}) } -> std::same_as<MaybeError>;
+};
+// clang-format on
+
+template <typename T>
+concept Processor = (Requirement<T> or Modifier<T>);
 
 /**
  * @brief A concept that specifies what a Handler type must provide

@@ -29,28 +29,6 @@
 namespace RPC::validation {
 
 [[nodiscard]] MaybeError
-Section::verify(boost::json::value const& value, std::string_view key) const
-{
-    if (not value.is_object() or not value.as_object().contains(key.data()))
-        return {};  // ignore. field does not exist, let 'required' fail
-                    // instead
-
-    auto const& res = value.at(key.data());
-
-    // if it is not a json object, let other validators fail
-    if (!res.is_object())
-        return {};
-
-    for (auto const& spec : specs)
-    {
-        if (auto const ret = spec.validate(res); not ret)
-            return Error{ret.error()};
-    }
-
-    return {};
-}
-
-[[nodiscard]] MaybeError
 Required::verify(boost::json::value const& value, std::string_view key) const
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
@@ -60,33 +38,10 @@ Required::verify(boost::json::value const& value, std::string_view key) const
 }
 
 [[nodiscard]] MaybeError
-ValidateArrayAt::verify(boost::json::value const& value, std::string_view key) const
-{
-    if (not value.is_object() or not value.as_object().contains(key.data()))
-        return {};  // ignore. field does not exist, let 'required' fail
-                    // instead
-
-    if (not value.as_object().at(key.data()).is_array())
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
-
-    auto const& arr = value.as_object().at(key.data()).as_array();
-    if (idx_ >= arr.size())
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
-
-    auto const& res = arr.at(idx_);
-    for (auto const& spec : specs_)
-        if (auto const ret = spec.validate(res); not ret)
-            return Error{ret.error()};
-
-    return {};
-}
-
-[[nodiscard]] MaybeError
 CustomValidator::verify(boost::json::value const& value, std::string_view key) const
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
-        return {};  // ignore. field does not exist, let 'required' fail
-                    // instead
+        return {};  // ignore. field does not exist, let 'required' fail instead
 
     return validator_(value.as_object().at(key.data()), key);
 }

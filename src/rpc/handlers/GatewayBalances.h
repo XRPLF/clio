@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -106,7 +107,7 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(hotwallet), hotWalletValidator},
-            {JS(strict), validation::IfType<bool>{validation::NotSupported{false}}},
+            {JS(strict), meta::IfType<bool>{validation::NotSupported{false}}},
         };
 
         return rpcSpec;

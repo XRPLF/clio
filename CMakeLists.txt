@@ -68,6 +68,7 @@ target_sources(clio PRIVATE
   src/rpc/WorkQueue.cpp
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
+  src/rpc/common/MetaProcessors.cpp
   src/rpc/common/impl/APIVersionParser.cpp
   # RPC impl
   src/rpc/common/impl/HandlerProvider.cpp

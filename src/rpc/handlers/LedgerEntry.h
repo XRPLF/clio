@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -98,10 +99,10 @@ public:
             }};
 
         static auto const malformedRequestHexStringValidator =
-            validation::WithCustomError{validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)};
+            meta::WithCustomError{validation::Uint256HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)};
 
         static auto const malformedRequestIntValidator =
-            validation::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
+            meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
 
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
@@ -112,40 +113,38 @@ public:
             {JS(check), malformedRequestHexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{malformedRequestHexStringValidator},
-             validation::IfType<boost::json::object>{
-                 validation::Section{
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
                      {JS(owner),
                       validation::Required{},
-                      validation::WithCustomError{
-                          validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
+                      meta::WithCustomError{validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
                      {JS(authorized), validation::Required{}, validation::AccountBase58Validator},
                  },
              }},
             {JS(directory),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{malformedRequestHexStringValidator},
-             validation::IfType<boost::json::object>{validation::Section{
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{meta::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
                  {JS(sub_index), malformedRequestIntValidator}}}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{malformedRequestHexStringValidator},
-             validation::IfType<boost::json::object>{
-                 validation::Section{
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
                      {JS(owner),
                       validation::Required{},
-                      validation::WithCustomError{
-                          validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
+                      meta::WithCustomError{validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)}},
                      {JS(seq), validation::Required{}, malformedRequestIntValidator},
                  },
              }},
             {JS(offer),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{malformedRequestHexStringValidator},
-             validation::IfType<boost::json::object>{
-                 validation::Section{
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
                      {JS(account), validation::Required{}, validation::AccountBase58Validator},
                      {JS(seq), validation::Required{}, malformedRequestIntValidator},
                  },
@@ -153,15 +152,15 @@ public:
             {JS(payment_channel), malformedRequestHexStringValidator},
             {JS(ripple_state),
              validation::Type<boost::json::object>{},
-             validation::Section{
+             meta::Section{
                  {JS(accounts), validation::Required{}, rippleStateAccountsCheck},
                  {JS(currency), validation::Required{}, validation::CurrencyValidator},
              }},
             {JS(ticket),
              validation::Type<std::string, boost::json::object>{},
-             validation::IfType<std::string>{malformedRequestHexStringValidator},
-             validation::IfType<boost::json::object>{
-                 validation::Section{
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
                      {JS(account), validation::Required{}, validation::AccountBase58Validator},
                      {JS(ticket_seq), validation::Required{}, malformedRequestIntValidator},
                  },
