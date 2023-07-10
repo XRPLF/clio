@@ -42,7 +42,7 @@ struct FieldSpec final
      */
     template <Processor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
-        : processor_{detail::makeFieldValidator<Processors...>(key, std::forward<Processors>(processors)...)}
+        : processor_{detail::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
     {
     }
 

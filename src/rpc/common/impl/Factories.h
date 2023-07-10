@@ -33,7 +33,7 @@ static constexpr bool unsupported_v = false;
 
 template <Processor... Processors>
 [[nodiscard]] auto
-makeFieldValidator(std::string const& key, Processors&&... procs)
+makeFieldProcessor(std::string const& key, Processors&&... procs)
 {
     return [key, ... proc = std::forward<Processors>(procs)](boost::json::value& j) -> MaybeError {
         std::optional<Status> firstFailure = std::nullopt;
