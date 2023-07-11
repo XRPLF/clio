@@ -94,7 +94,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                                     account,
                                     amount.getCurrency(),
                                     amount.getIssuer(),
-                                    false,
+                                    false,  // fhIGNORE_FREEZE from rippled
                                     ctx.yield);
                                 entry[JS(owner_funds)] = ownerFunds.getText();
                             }
