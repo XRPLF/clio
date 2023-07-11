@@ -90,6 +90,7 @@ CreateAccountRootObject(
 /*
  * Create a createoffer treansaction
  * Taker pay is XRP
+ * If reverse is true, taker gets is XRP
  */
 [[nodiscard]] ripple::STObject
 CreateCreateOfferTransactionObject(
@@ -99,7 +100,8 @@ CreateCreateOfferTransactionObject(
     std::string_view currency,
     std::string_view issuer,
     int takerGets,
-    int takerPays);
+    int takerPays,
+    bool reverse = false);
 
 /*
  * Return an issue object with given currency and issue account
@@ -122,6 +124,8 @@ CreateMetaDataForBookChange(
 
 /*
  * Meta data for adding a offer object
+ * finalTakerGets is XRP
+ * If reverse is true, finalTakerPays is XRP
  */
 [[nodiscard]] ripple::STObject
 CreateMetaDataForCreateOffer(
@@ -129,7 +133,8 @@ CreateMetaDataForCreateOffer(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int finalTakerPays);
+    int finalTakerPays,
+    bool reverse = false);
 
 /*
  * Meta data for removing a offer object

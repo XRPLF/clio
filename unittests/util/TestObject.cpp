@@ -161,7 +161,8 @@ CreateCreateOfferTransactionObject(
     std::string_view currency,
     std::string_view issuer,
     int takerGets,
-    int takerPays)
+    int takerPays,
+    bool reverse)
 {
     ripple::STObject obj(ripple::sfTransaction);
     obj.setFieldU16(ripple::sfTransactionType, ripple::ttOFFER_CREATE);
@@ -173,8 +174,16 @@ CreateCreateOfferTransactionObject(
     // add amount
     ripple::Issue issue1(
         ripple::Currency{currency}, ripple::parseBase58<ripple::AccountID>(std::string(issuer)).value());
-    obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
-    obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+    if (reverse)
+    {
+        obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, takerGets));
+        obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(takerPays, false));
+    }
+    else
+    {
+        obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
+        obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+    }
 
     auto key = "test";
     ripple::Slice slice(key, 4);
@@ -230,12 +239,21 @@ CreateMetaDataForCreateOffer(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int finalTakerPays)
+    int finalTakerPays,
+    bool reverse)
 {
     ripple::STObject finalFields(ripple::sfNewFields);
     ripple::Issue issue1 = GetIssue(currency, issueId);
-    finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
-    finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+    if (reverse)
+    {
+        finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, finalTakerPays));
+        finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(finalTakerGets, false));
+    }
+    else
+    {
+        finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
+        finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+    }
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     ripple::STArray metaArray{1};
     ripple::STObject node(ripple::sfCreatedNode);
