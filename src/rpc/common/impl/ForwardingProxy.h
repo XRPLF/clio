@@ -71,8 +71,12 @@ public:
         if (specifiesCurrentOrClosedLedger(request))
             return true;
 
-        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
-            request.at("queue").as_bool())
+        if ((ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
+             request.at("queue").as_bool()) or
+            (ctx.method == "ledger" &&
+             ((request.contains("queue") && request.at("queue").is_bool() && request.at("queue").as_bool()) or
+              (request.contains("full") && request.at("full").is_bool() && request.at("full").as_bool()) or
+              (request.contains("accounts") && request.at("accounts").is_bool() && request.at("accounts").as_bool()))))
             return true;
 
         return false;
