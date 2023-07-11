@@ -106,9 +106,7 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(hotwallet), hotWalletValidator},
-            {JS(strict), meta::IfType<bool>{validation::NotSupported{false}}},
-        };
+            {JS(hotwallet), hotWalletValidator}};
 
         return rpcSpec;
     }

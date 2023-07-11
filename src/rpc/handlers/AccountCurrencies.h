@@ -72,9 +72,7 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(strict), meta::IfType<bool>{validation::NotSupported{false}}},
-        };
+            {JS(ledger_index), validation::LedgerIndexValidator}};
 
         return rpcSpec;
     }

@@ -91,11 +91,6 @@ generateTestValuesForParametersTest()
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
             "invalidParams",
             "ledgerIndexMalformed"},
-        AccountInfoParamTestCaseBundle{
-            "StrictFieldUnsupportedValue",
-            R"({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "strict": false})",
-            "notSupported",
-            "Not supported field 'strict's value 'false'"},
     };
 }
 

@@ -170,18 +170,6 @@ generateParameterTestBundles()
                 ACCOUNT),
             "invalidParams",
             "hotwalletMalformed"},
-        ParameterTestBundle{
-            "StrictFieldUnsupportedValue",
-            fmt::format(
-                R"({{
-                    "account": "{}",
-                    "hotwallet": "{}",
-                    "strict": false
-                }})",
-                ACCOUNT,
-                ACCOUNT2),
-            "notSupported",
-            "Not supported field 'strict's value 'false'"},
     };
 }
 

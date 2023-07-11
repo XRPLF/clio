@@ -90,9 +90,7 @@ public:
             {JS(ident), validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(signer_lists), validation::Type<bool>{}},
-            {JS(strict), meta::IfType<bool>{validation::NotSupported{false}}},
-        };
+            {JS(signer_lists), validation::Type<bool>{}}};
 
         return rpcSpec;
     }

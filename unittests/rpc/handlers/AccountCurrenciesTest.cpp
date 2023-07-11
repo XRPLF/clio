@@ -40,30 +40,6 @@ class RPCAccountCurrenciesHandlerTest : public HandlerBaseTest
 {
 };
 
-TEST_F(RPCAccountCurrenciesHandlerTest, StrictSetToFalseUnsupported)
-{
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-
-    auto const static input = boost::json::parse(fmt::format(
-        R"({{
-            "account": "{}",
-            "strict": false
-        }})",
-        ACCOUNT));
-
-    auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
-
-    runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_FALSE(output);
-
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "notSupported");
-        EXPECT_EQ(err.at("error_message").as_string(), "Not supported field 'strict's value 'false'");
-    });
-}
-
 TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 {
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
