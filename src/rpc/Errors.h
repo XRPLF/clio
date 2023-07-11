@@ -41,6 +41,7 @@ enum class ClioError {
     rpcMALFORMED_ADDRESS = 5003,
     rpcINVALID_HOT_WALLET = 5004,
     rpcUNKNOWN_OPTION = 5005,
+    rpcFIELD_NOT_FOUND_TRANSACTION = 5006,
 
     // special system errors start with 6000
     rpcINVALID_API_VERSION = 6000,

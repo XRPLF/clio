@@ -45,8 +45,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
         auto const output = handler.process(json::parse("{}"), Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Required field 'tx_hash' missing");
+        EXPECT_EQ(err.at("error").as_string(), "fieldNotFoundTransaction");
+        EXPECT_EQ(err.at("error_message").as_string(), "Missing field.");
     });
 }
 

@@ -85,6 +85,7 @@ public:
                     case RPC::ClioError::rpcMALFORMED_OWNER:
                     case RPC::ClioError::rpcMALFORMED_ADDRESS:
                     case RPC::ClioError::rpcINVALID_HOT_WALLET:
+                    case RPC::ClioError::rpcFIELD_NOT_FOUND_TRANSACTION:
                         assert(false);  // this should never happen
                         break;
                 }

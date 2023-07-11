@@ -80,6 +80,8 @@ getErrorInfo(ClioError code)
         {ClioError::rpcMALFORMED_ADDRESS, "malformedAddress", "Malformed address."},
         {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."},
         {ClioError::rpcUNKNOWN_OPTION, "unknownOption", "Unknown option."},
+        {ClioError::rpcFIELD_NOT_FOUND_TRANSACTION, "fieldNotFoundTransaction", "Missing field."},
+        // special system errors
         {ClioError::rpcINVALID_API_VERSION, JS(invalid_API_version), "Invalid API version."},
         {ClioError::rpcCOMMAND_IS_MISSING, JS(missingCommand), "Method is not specified or is not a string."},
         {ClioError::rpcCOMMAND_NOT_STRING, "commandNotString", "Method is not a string."},
