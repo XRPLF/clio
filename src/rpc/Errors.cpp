@@ -85,6 +85,7 @@ getErrorInfo(ClioError code)
         {ClioError::rpcCOMMAND_NOT_STRING, "commandNotString", "Method is not a string."},
         {ClioError::rpcCOMMAND_IS_EMPTY, "emptyCommand", "Method is an empty string."},
         {ClioError::rpcPARAMS_UNPARSEABLE, "paramsUnparseable", "Params must be an array holding exactly one object."},
+        {ClioError::rpcFIELD_NOT_FOUND_TRANSACTION, "fieldNotFoundTransaction", "Missing field."},
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };

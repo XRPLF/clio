@@ -21,6 +21,7 @@
 
 #include <backend/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -65,7 +66,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion) const
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(tx_hash), validation::Required{}, validation::Uint256HexStringValidator},
+            {JS(tx_hash),
+             meta::WithCustomError{validation::Required{}, Status(ClioError::rpcFIELD_NOT_FOUND_TRANSACTION)},
+             validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
         };
