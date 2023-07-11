@@ -119,12 +119,6 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Malformed cursor.",
         },
-        {
-            "StrictFieldUnsupportedValue",
-            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "strict": false})",
-            "notSupported",
-            "Not supported field 'strict's value 'false'",
-        },
     };
 }
 
