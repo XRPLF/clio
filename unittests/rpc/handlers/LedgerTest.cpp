@@ -1039,3 +1039,121 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
         EXPECT_EQ(*output, json::parse(expectedOut));
     });
 }
+
+TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);
+    mockBackendPtr->updateRange(RANGEMAX);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+
+    // mock line
+    auto const line = CreateRippleStateLedgerObject(
+        ACCOUNT, CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
+    auto lineKey = ripple::keylet::line(
+                       GetAccountIDWithString(ACCOUNT),
+                       GetAccountIDWithString(ACCOUNT2),
+                       ripple::to_currency(std::string(CURRENCY)))
+                       .key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(lineKey, RANGEMAX, _))
+        .WillByDefault(Return(line.getSerializer().peekData()));
+
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT2, 100, 300, 200, true).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = RANGEMAX;
+
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
+    ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
+        auto const req = json::parse(
+            R"({
+                "binary": true,
+                "expand": true,
+                "transactions": true,
+                "owner_funds": true
+            })");
+        auto output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(
+            output->as_object()["ledger"]
+                .as_object()["transactions"]
+                .as_array()[0]
+                .as_object()["owner_funds"]
+                .as_string(),
+            "50");
+    });
+}
+
+TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);
+    mockBackendPtr->updateRange(RANGEMAX);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+
+    // mock line freeze
+    auto const line = CreateRippleStateLedgerObject(
+        ACCOUNT,
+        CURRENCY,
+        ACCOUNT2,
+        50 /*balance*/,
+        ACCOUNT,
+        10,
+        ACCOUNT2,
+        20,
+        INDEX1,
+        123,
+        ripple::lsfLowFreeze | ripple::lsfHighFreeze);
+    auto lineKey = ripple::keylet::line(
+                       GetAccountIDWithString(ACCOUNT),
+                       GetAccountIDWithString(ACCOUNT2),
+                       ripple::to_currency(std::string(CURRENCY)))
+                       .key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(lineKey, RANGEMAX, _))
+        .WillByDefault(Return(line.getSerializer().peekData()));
+
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT2, 100, 300, 200, true).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = RANGEMAX;
+
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
+    ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
+        auto const req = json::parse(
+            R"({
+                "binary": true,
+                "expand": true,
+                "transactions": true,
+                "owner_funds": true
+            })");
+        auto output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(
+            output->as_object()["ledger"]
+                .as_object()["transactions"]
+                .as_array()[0]
+                .as_object()["owner_funds"]
+                .as_string(),
+            "50");
+    });
+}

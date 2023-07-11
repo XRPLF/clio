@@ -124,6 +124,8 @@ CreateMetaDataForBookChange(
 
 /*
  * Meta data for adding a offer object
+ * finalTakerGets is XRP
+ * If reverse is true, finalTakerPays is XRP
  */
 [[nodiscard]] ripple::STObject
 CreateMetaDataForCreateOffer(
@@ -131,7 +133,8 @@ CreateMetaDataForCreateOffer(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int finalTakerPays);
+    int finalTakerPays,
+    bool reverse = false);
 
 /*
  * Meta data for removing a offer object

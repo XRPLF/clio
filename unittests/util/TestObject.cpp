@@ -239,12 +239,21 @@ CreateMetaDataForCreateOffer(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int finalTakerPays)
+    int finalTakerPays,
+    bool reverse)
 {
     ripple::STObject finalFields(ripple::sfNewFields);
     ripple::Issue issue1 = GetIssue(currency, issueId);
-    finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
-    finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+    if (reverse)
+    {
+        finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, finalTakerPays));
+        finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(finalTakerGets, false));
+    }
+    else
+    {
+        finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
+        finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+    }
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     ripple::STArray metaArray{1};
     ripple::STObject node(ripple::sfCreatedNode);
