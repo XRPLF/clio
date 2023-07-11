@@ -74,9 +74,21 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
                     boost::json::object entry;
+                    if (!input.binary)
+                    {
+                        auto [txn, meta] = toExpandedJson(obj);
+                        entry = std::move(txn);
+                        entry[JS(metaData)] = std::move(meta);
+                    }
+                    else
+                    {
+                        entry[JS(tx_blob)] = ripple::strHex(obj.transaction);
+                        entry[JS(meta)] = ripple::strHex(obj.metadata);
+                    }
+
                     if (input.ownerFunds)
                     {
-                        // need to check the type of tx
+                        // check the type of tx
                         auto const [tx, meta] = RPC::deserializeTxPlusMeta(obj);
                         if (tx and tx->isFieldPresent(ripple::sfTransactionType) and
                             tx->getTxnType() == ripple::ttOFFER_CREATE)
@@ -100,18 +112,6 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                             }
                         }
                     }
-                    if (!input.binary)
-                    {
-                        auto [txn, meta] = toExpandedJson(obj);
-                        entry = std::move(txn);
-                        entry[JS(metaData)] = std::move(meta);
-                    }
-                    else
-                    {
-                        entry[JS(tx_blob)] = ripple::strHex(obj.transaction);
-                        entry[JS(meta)] = ripple::strHex(obj.metadata);
-                    }
-
                     return entry;
                 });
         }
@@ -200,7 +200,7 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
         input.expand = jv.at(JS(expand)).as_bool();
 
     if (jsonObject.contains(JS(owner_funds)))
-        input.binary = jv.at(JS(owner_funds)).as_bool();
+        input.ownerFunds = jv.at(JS(owner_funds)).as_bool();
 
     if (jsonObject.contains("diff"))
         input.diff = jv.at("diff").as_bool();

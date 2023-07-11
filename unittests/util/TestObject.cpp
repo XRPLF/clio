@@ -161,7 +161,8 @@ CreateCreateOfferTransactionObject(
     std::string_view currency,
     std::string_view issuer,
     int takerGets,
-    int takerPays)
+    int takerPays,
+    bool reverse)
 {
     ripple::STObject obj(ripple::sfTransaction);
     obj.setFieldU16(ripple::sfTransactionType, ripple::ttOFFER_CREATE);
@@ -173,8 +174,16 @@ CreateCreateOfferTransactionObject(
     // add amount
     ripple::Issue issue1(
         ripple::Currency{currency}, ripple::parseBase58<ripple::AccountID>(std::string(issuer)).value());
-    obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
-    obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+    if (reverse)
+    {
+        obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, takerGets));
+        obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(takerPays, false));
+    }
+    else
+    {
+        obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
+        obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+    }
 
     auto key = "test";
     ripple::Slice slice(key, 4);

@@ -90,6 +90,7 @@ CreateAccountRootObject(
 /*
  * Create a createoffer treansaction
  * Taker pay is XRP
+ * If reverse is true, taker gets is XRP
  */
 [[nodiscard]] ripple::STObject
 CreateCreateOfferTransactionObject(
@@ -99,7 +100,8 @@ CreateCreateOfferTransactionObject(
     std::string_view currency,
     std::string_view issuer,
     int takerGets,
-    int takerPays);
+    int takerPays,
+    bool reverse = false);
 
 /*
  * Return an issue object with given currency and issue account
