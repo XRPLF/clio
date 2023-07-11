@@ -150,12 +150,132 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAccountInfoWithQueueSpe
     });
 }
 
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithQueueSpecified)
+{
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = boost::json::parse(R"({"queue": true})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_TRUE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithFullSpecified)
+{
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = boost::json::parse(R"({"full": true})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_TRUE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithAccountsSpecified)
+{
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = boost::json::parse(R"({"accounts": true})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_TRUE(res);
+    });
+}
+
 TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAccountInfoQueueIsFalse)
 {
     auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
     auto const apiVersion = 2u;
     auto const method = "account_info";
     auto const params = boost::json::parse(R"({"queue": false})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_FALSE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerQueueIsFalse)
+{
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = boost::json::parse(R"({"queue": false})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_FALSE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerFullIsFalse)
+{
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = boost::json::parse(R"({"full": false})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const ctx =
+            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_FALSE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerAccountsIsFalse)
+{
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = boost::json::parse(R"({"accounts": false})");
 
     ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);

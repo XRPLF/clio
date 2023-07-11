@@ -71,8 +71,20 @@ public:
         if (specifiesCurrentOrClosedLedger(request))
             return true;
 
-        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").is_bool() &&
-            request.at("queue").as_bool())
+        auto const checkAccountInfoForward = [&]() {
+            return ctx.method == "account_info" and request.contains("queue") and request.at("queue").is_bool() and
+                request.at("queue").as_bool();
+        };
+
+        auto const checkLedgerForward = [&]() {
+            return ctx.method == "ledger" and
+                ((request.contains("queue") and request.at("queue").is_bool() and request.at("queue").as_bool()) or
+                 (request.contains("full") and request.at("full").is_bool() and request.at("full").as_bool()) or
+                 (request.contains("accounts") and request.at("accounts").is_bool() and
+                  request.at("accounts").as_bool()));
+        };
+
+        if (checkAccountInfoForward() or checkLedgerForward())
             return true;
 
         return false;
