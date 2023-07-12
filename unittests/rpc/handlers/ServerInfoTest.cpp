@@ -115,6 +115,8 @@ protected:
         EXPECT_EQ(info.at("validation_quorum").as_int64(), 456);
         EXPECT_TRUE(info.contains("rippled_version"));
         EXPECT_STREQ(info.at("rippled_version").as_string().c_str(), "1234");
+        EXPECT_TRUE(info.contains("network_id"));
+        EXPECT_EQ(info.at("network_id").as_int64(), 2);
     }
 
     void
@@ -290,7 +292,8 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
             "info": {
                 "build_version": "1234",
                 "validation_quorum": 456,
-                "load_factor": 234
+                "load_factor": 234,
+                "network_id": 2
             }
         }
     })");
