@@ -89,6 +89,45 @@ TEST_F(SettingsProviderTest, SimpleConfig)
     EXPECT_EQ(provider.getTablePrefix(), "prefix");
 }
 
+TEST_F(SettingsProviderTest, DriverOptionCalculation)
+{
+    Config cfg{json::parse(R"({
+        "contact_points": "123.123.123.123",
+        "max_write_requests_outstanding": 100,
+        "max_read_requests_outstanding": 200
+    })")};
+    SettingsProvider provider{cfg};
+
+    auto const settings = provider.getSettings();
+    EXPECT_EQ(settings.maxReadRequestsOutstanding, 200);
+    EXPECT_EQ(settings.maxWriteRequestsOutstanding, 100);
+
+    EXPECT_EQ(settings.maxConnectionsPerHost, 2);
+    EXPECT_EQ(settings.coreConnectionsPerHost, 2);
+    EXPECT_EQ(settings.maxConcurrentRequestsThreshold, 150);  // calculated from above
+}
+
+TEST_F(SettingsProviderTest, DriverOptionSecified)
+{
+    Config cfg{json::parse(R"({
+        "contact_points": "123.123.123.123",
+        "max_write_requests_outstanding": 100,
+        "max_read_requests_outstanding": 200,
+        "max_connections_per_host": 5,
+        "core_connections_per_host": 4,
+        "max_concurrent_requests_threshold": 1234
+    })")};
+    SettingsProvider provider{cfg};
+
+    auto const settings = provider.getSettings();
+    EXPECT_EQ(settings.maxReadRequestsOutstanding, 200);
+    EXPECT_EQ(settings.maxWriteRequestsOutstanding, 100);
+
+    EXPECT_EQ(settings.maxConnectionsPerHost, 5);
+    EXPECT_EQ(settings.coreConnectionsPerHost, 4);
+    EXPECT_EQ(settings.maxConcurrentRequestsThreshold, 1234);
+}
+
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
     Config cfg{json::parse(R"({"secure_connect_bundle": "bundleData"})")};

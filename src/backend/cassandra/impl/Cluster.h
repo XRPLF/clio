@@ -53,6 +53,10 @@ struct Settings
     uint32_t threads = std::thread::hardware_concurrency();
     uint32_t maxWriteRequestsOutstanding = 10'000;
     uint32_t maxReadRequestsOutstanding = 100'000;
+    uint32_t maxConnectionsPerHost = 2u;
+    uint32_t coreConnectionsPerHost = 2u;
+    uint32_t maxConcurrentRequestsThreshold =
+        (maxWriteRequestsOutstanding + maxReadRequestsOutstanding) / coreConnectionsPerHost;
     std::optional<std::string> certificate;  // ssl context
     std::optional<std::string> username;
     std::optional<std::string> password;

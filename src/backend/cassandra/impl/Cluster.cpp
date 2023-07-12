@@ -62,8 +62,26 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     cass_cluster_set_connect_timeout(*this, settings.connectionTimeout.count());
     cass_cluster_set_request_timeout(*this, settings.requestTimeout.count());
 
+    if (auto const rc =
+            cass_cluster_set_max_concurrent_requests_threshold(*this, settings.maxConcurrentRequestsThreshold);
+        rc != CASS_OK)
+    {
+        throw std::runtime_error(
+            std::string{"Could not set max concurrent requests per host threshold: "} + cass_error_desc(rc));
+    }
+
+    if (auto const rc = cass_cluster_set_max_connections_per_host(*this, settings.maxConnectionsPerHost); rc != CASS_OK)
+    {
+        throw std::runtime_error(std::string{"Could not set max connections per host: "} + cass_error_desc(rc));
+    }
+
+    if (auto const rc = cass_cluster_set_core_connections_per_host(*this, settings.coreConnectionsPerHost);
+        rc != CASS_OK)
+    {
+        throw std::runtime_error(std::string{"Could not set core connections per host: "} + cass_error_desc(rc));
+    }
+
     // TODO: other options to experiment with and consider later:
-    // cass_cluster_set_max_concurrent_requests_threshold(*this, 10000);
     // cass_cluster_set_queue_size_event(*this, 100000);
     // cass_cluster_set_queue_size_io(*this, 100000);
     // cass_cluster_set_write_bytes_high_water_mark(*this, 16 * 1024 * 1024);  // 16mb
@@ -72,13 +90,10 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     // cass_cluster_set_pending_requests_low_water_mark(*this, 2500);  // half
     // cass_cluster_set_max_requests_per_flush(*this, 1000);
     // cass_cluster_set_max_concurrent_creation(*this, 8);
-    // cass_cluster_set_max_connections_per_host(*this, 6);
-    // cass_cluster_set_core_connections_per_host(*this, 4);
     // cass_cluster_set_constant_speculative_execution_policy(*this, 1000, 1024);
 
-    if (auto const rc = cass_cluster_set_queue_size_io(
-            *this, settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding);
-        rc != CASS_OK)
+    auto const queueSize = settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding;
+    if (auto const rc = cass_cluster_set_queue_size_io(*this, queueSize); rc != CASS_OK)
     {
         throw std::runtime_error(std::string{"Could not set queue size for IO per host: "} + cass_error_desc(rc));
     }
@@ -86,6 +101,12 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     setupConnection(settings);
     setupCertificate(settings);
     setupCredentials(settings);
+
+    log_.info() << "Threads: " << settings.threads;
+    log_.info() << "Max concurrent requests per host: " << settings.maxConcurrentRequestsThreshold;
+    log_.info() << "Max connections per host: " << settings.maxConnectionsPerHost;
+    log_.info() << "Core connections per host: " << settings.coreConnectionsPerHost;
+    log_.info() << "IO queue size: " << queueSize;
 }
 
 void
