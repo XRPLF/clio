@@ -189,6 +189,7 @@ private:
                 jv.as_object()[JS(load_factor)] = rippledInfo.at(JS(load_factor));
                 jv.as_object()[JS(validation_quorum)] = rippledInfo.at(JS(validation_quorum));
                 jv.as_object()["rippled_version"] = rippledInfo.at(JS(build_version));
+                jv.as_object()[JS(network_id)] = rippledInfo.at(JS(network_id));
             }
             catch (std::exception const&)
             {
