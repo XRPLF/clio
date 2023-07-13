@@ -40,9 +40,9 @@ class NFTHistoryHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static auto constexpr LIMIT_MIN = 1;
-    static auto constexpr LIMIT_MAX = 100;
-    static auto constexpr LIMIT_DEFAULT = 50;
+    constexpr static auto LIMIT_MIN = 1;
+    constexpr static auto LIMIT_MAX = 100;
+    constexpr static auto LIMIT_DEFAULT = 50;
 
     // TODO: this marker is same as account_tx, reuse in future
     struct Marker

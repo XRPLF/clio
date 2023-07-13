@@ -41,8 +41,8 @@ class AccountTxHandler
 
 public:
     // no max limit
-    static auto constexpr LIMIT_MIN = 1;
-    static auto constexpr LIMIT_DEFAULT = 200;
+    constexpr static auto LIMIT_MIN = 1;
+    constexpr static auto LIMIT_DEFAULT = 200;
 
     struct Marker
     {
