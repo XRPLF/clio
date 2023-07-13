@@ -1526,3 +1526,165 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
         EXPECT_EQ(output->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
     });
 }
+
+TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
+{
+    static auto const expectedOut = fmt::format(
+        R"({{
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index":30,
+            "validated":true,
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "limit": {},
+            "account_objects":[
+                {{
+                    "Balance":{{
+                        "currency":"USD",
+                        "issuer":"rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                        "value":"100"
+                    }},
+                    "Flags":0,
+                    "HighLimit":{{
+                        "currency":"USD",
+                        "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "value":"20"
+                    }},
+                    "LedgerEntryType":"RippleState",
+                    "LowLimit":{{
+                        "currency":"USD",
+                        "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "value":"10"
+                    }},
+                    "PreviousTxnID":"E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                    "PreviousTxnLgrSeq":123,
+                    "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                }}
+            ]
+        }})",
+        AccountObjectsHandler::LIMIT_MIN);
+
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+
+    // nft null
+    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    std::vector<Blob> bbs;
+    auto const line1 =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "limit": {}
+        }})",
+        ACCOUNT,
+        AccountObjectsHandler::LIMIT_MIN - 1));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOut));
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
+{
+    static auto const expectedOut = fmt::format(
+        R"({{
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index":30,
+            "validated":true,
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "limit": {},
+            "account_objects":[
+                {{
+                    "Balance":{{
+                        "currency":"USD",
+                        "issuer":"rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                        "value":"100"
+                    }},
+                    "Flags":0,
+                    "HighLimit":{{
+                        "currency":"USD",
+                        "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "value":"20"
+                    }},
+                    "LedgerEntryType":"RippleState",
+                    "LowLimit":{{
+                        "currency":"USD",
+                        "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "value":"10"
+                    }},
+                    "PreviousTxnID":"E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                    "PreviousTxnLgrSeq":123,
+                    "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                }}
+            ]
+        }})",
+        AccountObjectsHandler::LIMIT_MAX);
+
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+
+    // nft null
+    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    std::vector<Blob> bbs;
+    auto const line1 =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "limit": {}
+        }})",
+        ACCOUNT,
+        AccountObjectsHandler::LIMIT_MAX + 1));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOut));
+    });
+}

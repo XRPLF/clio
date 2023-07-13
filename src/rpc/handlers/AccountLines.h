@@ -42,6 +42,10 @@ class AccountLinesHandler
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
+    constexpr static auto LIMIT_MIN = 10;
+    constexpr static auto LIMIT_MAX = 400;
+    constexpr static auto LIMIT_DEFAULT = 200;
+
     struct LineResponse
     {
         std::string account;
@@ -78,7 +82,7 @@ public:
         std::optional<std::string> peer;
         bool ignoreDefault = false;  // TODO: document
                                      // https://github.com/XRPLF/xrpl-dev-portal/issues/1839
-        uint32_t limit = 200;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -98,7 +102,7 @@ public:
             {JS(peer), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
             {JS(ignore_default), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{10, 400}},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
         };

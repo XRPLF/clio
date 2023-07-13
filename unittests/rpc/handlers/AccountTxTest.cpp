@@ -763,3 +763,43 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
     });
 }
+
+TEST_F(RPCAccountTxHandlerTest, LimitLessThanMin)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchAccountTransactions(
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
+        .Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const static input = boost::json::parse(fmt::format(
+            R"({{
+                "account":"{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "limit": {},
+                "forward": false,
+                "marker": {{"ledger":10,"seq":11}}
+            }})",
+            ACCOUNT,
+            -1,
+            -1,
+            AccountTxHandler::LIMIT_MIN - 1));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
+        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output->at("limit").as_uint64(), AccountTxHandler::LIMIT_MIN);
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+    });
+}

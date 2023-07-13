@@ -41,6 +41,10 @@ class NoRippleCheckHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    constexpr static auto LIMIT_MIN = 1;
+    constexpr static auto LIMIT_MAX = 500;
+    constexpr static auto LIMIT_DEFAULT = 300;
+
     struct Output
     {
         std::string ledgerHash;
@@ -57,7 +61,7 @@ public:
         bool roleGateway = false;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 300;
+        uint32_t limit = LIMIT_DEFAULT;
         bool transactions = false;
     };
 
@@ -80,7 +84,7 @@ public:
                  Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>(), modifiers::Clamp<int32_t>{1, 500}},
+            {JS(limit), validation::Type<uint32_t>(), modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(transactions), validation::Type<bool>()},
         };
 

@@ -46,6 +46,10 @@ class AccountObjectsHandler
     static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
 
 public:
+    constexpr static auto LIMIT_MIN = 10;
+    constexpr static auto LIMIT_MAX = 400;
+    constexpr static auto LIMIT_DEFAULT = 200;
+
     struct Output
     {
         std::string account;
@@ -62,7 +66,7 @@ public:
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;  // [10,400]
+        uint32_t limit = LIMIT_DEFAULT;  // [10,400]
         std::optional<std::string> marker;
         std::optional<ripple::LedgerEntryType> type;
         bool deletionBlockersOnly = false;
@@ -82,7 +86,7 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>(10, 400)},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
              validation::OneOf<std::string>{

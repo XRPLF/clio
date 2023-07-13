@@ -40,6 +40,10 @@ class AccountTxHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    // no max limit
+    constexpr static auto LIMIT_MIN = 1;
+    constexpr static auto LIMIT_DEFAULT = 200;
+
     struct Marker
     {
         uint32_t ledger;
@@ -94,7 +98,7 @@ public:
             {JS(forward), validation::Type<bool>{}},
             {JS(limit),
              validation::Type<uint32_t>{},
-             modifiers::Clamp<int32_t>{1, std::numeric_limits<int32_t>::max()}},
+             modifiers::Clamp<int32_t>{LIMIT_MIN, std::numeric_limits<int32_t>::max()}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},
