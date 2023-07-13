@@ -32,9 +32,9 @@ class NFTOffersHandlerBase
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    constexpr static auto LIMIT_MIN = 50;
-    constexpr static auto LIMIT_MAX = 500;
-    constexpr static auto LIMIT_DEFAULT = 250;
+    static auto constexpr LIMIT_MIN = 50;
+    static auto constexpr LIMIT_MAX = 500;
+    static auto constexpr LIMIT_DEFAULT = 250;
 
     struct Output
     {

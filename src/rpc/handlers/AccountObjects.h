@@ -46,9 +46,9 @@ class AccountObjectsHandler
     static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
 
 public:
-    constexpr static auto LIMIT_MIN = 10;
-    constexpr static auto LIMIT_MAX = 400;
-    constexpr static auto LIMIT_DEFAULT = 200;
+    static auto constexpr LIMIT_MIN = 10;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 200;
 
     struct Output
     {

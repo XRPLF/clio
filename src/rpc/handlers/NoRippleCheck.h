@@ -41,9 +41,9 @@ class NoRippleCheckHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    constexpr static auto LIMIT_MIN = 1;
-    constexpr static auto LIMIT_MAX = 500;
-    constexpr static auto LIMIT_DEFAULT = 300;
+    static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 500;
+    static auto constexpr LIMIT_DEFAULT = 300;
 
     struct Output
     {
