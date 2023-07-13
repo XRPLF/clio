@@ -63,7 +63,6 @@ public:
         bool validated = true;
     };
 
-    // Note: clio only supports XRP Ledger addresses (i.e. `strict` is unsupported for `false`)
     struct Input
     {
         std::string account;
