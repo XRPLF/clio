@@ -37,9 +37,9 @@ class BookOffersHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    constexpr static auto LIMIT_MIN = 1;
-    constexpr static auto LIMIT_MAX = 100;
-    constexpr static auto LIMIT_DEFAULT = 60;
+    static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 100;
+    static auto constexpr LIMIT_DEFAULT = 60;
 
     struct Output
     {

@@ -42,9 +42,9 @@ class AccountLinesHandler
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
-    constexpr static auto LIMIT_MIN = 10;
-    constexpr static auto LIMIT_MAX = 400;
-    constexpr static auto LIMIT_DEFAULT = 200;
+    static auto constexpr LIMIT_MIN = 10;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 200;
 
     struct LineResponse
     {

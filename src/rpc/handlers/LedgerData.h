@@ -42,15 +42,15 @@ class LedgerDataHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     clio::Logger log_{"RPC"};
 
-    // constants
-    static uint32_t constexpr LIMITBINARY = 2048;
-    static uint32_t constexpr LIMITJSON = 256;
-
     static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
 
     static const std::unordered_set<std::string> TYPES_KEYS;
 
 public:
+    // constants
+    static uint32_t constexpr LIMITBINARY = 2048;
+    static uint32_t constexpr LIMITJSON = 256;
+
     struct Output
     {
         uint32_t ledgerIndex;

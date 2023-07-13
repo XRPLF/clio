@@ -24,7 +24,7 @@ namespace RPC {
 TxHandler::Result
 TxHandler::process(Input input, Context const& ctx) const
 {
-    constexpr static auto maxLedgerRange = 1000u;
+    static auto constexpr maxLedgerRange = 1000u;
     auto const rangeSupplied = input.minLedger && input.maxLedger;
 
     if (rangeSupplied)
