@@ -37,4 +37,5 @@ struct MockCounters
     MOCK_METHOD(void, onUnknownCommand, (), ());
     MOCK_METHOD(void, onInternalError, (), ());
     MOCK_METHOD(boost::json::object, report, (), (const));
+    MOCK_METHOD(std::chrono::seconds, uptime, (), (const));
 };
