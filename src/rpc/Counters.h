@@ -54,9 +54,10 @@ class Counters
     std::atomic_uint64_t internalErrorCounter_;
 
     std::reference_wrapper<const WorkQueue> workQueue_;
+    std::chrono::time_point<std::chrono::system_clock> startupTime_;
 
 public:
-    Counters(WorkQueue const& wq) : workQueue_(std::cref(wq)){};
+    Counters(WorkQueue const& wq) : workQueue_(std::cref(wq)), startupTime_{std::chrono::system_clock::now()} {};
 
     static Counters
     make_Counters(WorkQueue const& wq)
@@ -93,6 +94,9 @@ public:
 
     void
     onInternalError();
+
+    std::chrono::seconds
+    uptime() const;
 
     boost::json::object
     report() const;

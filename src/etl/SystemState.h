@@ -47,4 +47,9 @@ struct SystemState
      * @brief Whether a write conflict was detected
      */
     std::atomic_bool writeConflict = false;
+
+    /**
+     * @brief Whether we detected an amendment block
+     */
+    std::atomic_bool isAmendmentBlocked = false;
 };

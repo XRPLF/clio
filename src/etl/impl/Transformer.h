@@ -186,8 +186,10 @@ private:
         }
         catch (std::runtime_error const& e)
         {
+            setAmendmentBlocked();
+
             log_.fatal()
-                << "Failed to build next ledger : " << e.what()
+                << "Failed to build next ledger: " << e.what()
                 << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
             return {ripple::LedgerInfo{}, false};
         }
@@ -413,6 +415,12 @@ private:
     setWriteConflict(bool conflict)
     {
         state_.get().writeConflict = conflict;
+    }
+
+    void
+    setAmendmentBlocked()
+    {
+        state_.get().isAmendmentBlocked = true;
     }
 };
 

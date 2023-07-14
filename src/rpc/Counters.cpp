@@ -97,6 +97,12 @@ Counters::onInternalError()
     ++internalErrorCounter_;
 }
 
+std::chrono::seconds
+Counters::uptime() const
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - startupTime_);
+}
+
 boost::json::object
 Counters::report() const
 {

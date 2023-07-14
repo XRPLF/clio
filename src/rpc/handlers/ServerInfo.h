@@ -27,6 +27,9 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
+#include <ripple/basics/chrono.h>
+
+#include <chrono>
 #include <fmt/core.h>
 
 class SubscriptionManager;
@@ -78,10 +81,13 @@ public:
         std::optional<AdminSection> adminSection = std::nullopt;
         std::string completeLedgers = {};
         uint32_t loadFactor = 1u;
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        std::chrono::seconds uptime = {};
         std::string clioVersion = Build::getClioVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};
+        bool isAmendmentBlocked = false;
     };
 
     struct Output
@@ -155,6 +161,8 @@ public:
         output.info.cache.latestLedgerSeq = backend_->cache().latestLedgerSequence();
         output.info.cache.objectHitRate = backend_->cache().getObjectHitRate();
         output.info.cache.successorHitRate = backend_->cache().getSuccessorHitRate();
+        output.info.uptime = counters_.get().uptime();
+        output.info.isAmendmentBlocked = etl_->isAmendmentBlocked();
 
         return output;
     }
@@ -172,13 +180,20 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
     {
+        using ripple::to_string;
+
         jv = {
             {JS(complete_ledgers), info.completeLedgers},
             {JS(load_factor), info.loadFactor},
+            {JS(time), to_string(std::chrono::floor<std::chrono::microseconds>(info.time))},
+            {JS(uptime), info.uptime.count()},
             {"clio_version", info.clioVersion},
             {JS(validated_ledger), info.validatedLedger},
             {"cache", info.cache},
         };
+
+        if (info.isAmendmentBlocked)
+            jv.as_object()[JS(amendment_blocked)] = true;
 
         if (info.rippledInfo)
         {
