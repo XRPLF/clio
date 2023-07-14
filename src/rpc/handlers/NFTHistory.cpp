@@ -81,9 +81,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
             cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
     }
 
-    static auto constexpr limitDefault = 50;
-
-    auto const limit = input.limit.value_or(limitDefault);
+    auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
     auto const [txnsAndCursor, timeDiff] = util::timed(

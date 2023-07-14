@@ -389,3 +389,129 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
         EXPECT_EQ(output->as_object().at("account_nfts").as_array().size(), 1);
     });
 }
+
+TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
+{
+    static auto const expectedOutput = fmt::format(
+        R"({{
+            "ledger_hash":"{}",
+            "ledger_index":30,
+            "validated":true,
+            "account":"{}",
+            "account_nfts":[
+                {{
+                    "NFTokenID":"{}",
+                    "URI":"7777772E6F6B2E636F6D",
+                    "Flags":{},
+                    "Issuer":"{}",
+                    "NFTokenTaxon":{},
+                    "nft_serial":{},
+                    "TransferFee":10000
+                }}
+            ],
+            "limit":{}
+        }})",
+        LEDGERHASH,
+        ACCOUNT,
+        TOKENID,
+        FLAG,
+        ISSUER,
+        TAXON,
+        SERIAL,
+        AccountNFTsHandler::LIMIT_MIN);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(MINSEQ);
+    mockBackendPtr->updateRange(MAXSEQ);
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
+    auto const accountID = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    auto const firstPage = ripple::keylet::nftpage_max(accountID).key;
+    auto const pageObject =
+        CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(firstPage, 30, _))
+        .WillByDefault(Return(pageObject.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "limit":{}
+        }})",
+        ACCOUNT,
+        AccountNFTsHandler::LIMIT_MIN - 1));
+    auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
+{
+    static auto const expectedOutput = fmt::format(
+        R"({{
+            "ledger_hash":"{}",
+            "ledger_index":30,
+            "validated":true,
+            "account":"{}",
+            "account_nfts":[
+                {{
+                    "NFTokenID":"{}",
+                    "URI":"7777772E6F6B2E636F6D",
+                    "Flags":{},
+                    "Issuer":"{}",
+                    "NFTokenTaxon":{},
+                    "nft_serial":{},
+                    "TransferFee":10000
+                }}
+            ],
+            "limit":{}
+        }})",
+        LEDGERHASH,
+        ACCOUNT,
+        TOKENID,
+        FLAG,
+        ISSUER,
+        TAXON,
+        SERIAL,
+        AccountNFTsHandler::LIMIT_MAX);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(MINSEQ);
+    mockBackendPtr->updateRange(MAXSEQ);
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
+    auto const accountID = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    auto const firstPage = ripple::keylet::nftpage_max(accountID).key;
+    auto const pageObject =
+        CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(firstPage, 30, _))
+        .WillByDefault(Return(pageObject.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "limit":{}
+        }})",
+        ACCOUNT,
+        AccountNFTsHandler::LIMIT_MAX + 1));
+    auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
+    runSpawn([&](auto& yield) {
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOutput));
+    });
+}

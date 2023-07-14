@@ -153,6 +153,17 @@ public:
     }
 
     /**
+     * @brief Check for the amendment blocked state.
+     *
+     * @return true if currently amendment blocked; false otherwise
+     */
+    bool
+    isAmendmentBlocked() const
+    {
+        return state_.isAmendmentBlocked;
+    }
+
+    /**
      * @brief Get state of ETL as a JSON object
      */
     boost::json::object
@@ -236,4 +247,13 @@ private:
      */
     void
     doWork();
+
+    /**
+     * @brief Sets amendment blocked flag
+     */
+    void
+    setAmendmentBlocked()
+    {
+        state_.isAmendmentBlocked = true;
+    }
 };

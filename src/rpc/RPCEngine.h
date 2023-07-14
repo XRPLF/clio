@@ -43,7 +43,6 @@
 #include <unordered_map>
 #include <variant>
 
-class WsBase;
 class SubscriptionManager;
 class LoadBalancer;
 class ETLService;

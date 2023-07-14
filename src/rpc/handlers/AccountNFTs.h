@@ -37,6 +37,10 @@ class AccountNFTsHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 20;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 100;
+
     struct Output
     {
         std::string account;
@@ -54,7 +58,7 @@ public:
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 100;  // Limit the number of token pages to retrieve. [20,400]
+        uint32_t limit = LIMIT_DEFAULT;  // Limit the number of token pages to retrieve. [20,400]
         std::optional<std::string> marker;
     };
 
@@ -72,7 +76,7 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{20, 400}},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
         };
 
         return rpcSpec;

@@ -79,8 +79,7 @@ ETLService::monitor()
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
     if (!rng)
     {
-        log_.info() << "Database is empty. Will download a ledger "
-                       "from the network.";
+        log_.info() << "Database is empty. Will download a ledger from the network.";
         std::optional<ripple::LedgerInfo> ledger;
 
         try
@@ -98,23 +97,22 @@ ETLService::monitor()
 
                 if (mostRecentValidated)
                 {
-                    log_.info() << "Ledger " << *mostRecentValidated << " has been validated. "
-                                << "Downloading...";
+                    log_.info() << "Ledger " << *mostRecentValidated << " has been validated. Downloading...";
                     ledger = ledgerLoader_.loadInitialLedger(*mostRecentValidated);
                 }
                 else
                 {
-                    log_.info() << "The wait for the next validated "
-                                << "ledger has been aborted. "
-                                << "Exiting monitor loop";
+                    log_.info() << "The wait for the next validated ledger has been aborted. Exiting monitor loop";
                     return;
                 }
             }
         }
         catch (std::runtime_error const& e)
         {
+            setAmendmentBlocked();
+
             log_.fatal()
-                << "Failed to load initial ledger, Exiting monitor loop : " << e.what()
+                << "Failed to load initial ledger, Exiting monitor loop: " << e.what()
                 << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
             return;
         }

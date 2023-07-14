@@ -136,6 +136,11 @@ generateTestValuesForParametersTest()
             R"({"streams": ["consensus"]})",
             "reportingUnsupported",
             "Requested operation not supported by reporting mode server"},
+        SubscribeParamTestCaseBundle{
+            "StreamServerNotSupport",
+            R"({"streams": ["server"]})",
+            "reportingUnsupported",
+            "Requested operation not supported by reporting mode server"},
         SubscribeParamTestCaseBundle{"BooksNotArray", R"({"books": "1"})", "invalidParams", "booksNotArray"},
         SubscribeParamTestCaseBundle{
             "BooksItemNotObject", R"({"books": ["1"]})", "invalidParams", "booksItemNotObject"},

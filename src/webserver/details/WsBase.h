@@ -43,9 +43,9 @@ namespace Server {
  * @tparam Handler The handler type, will be called when a request is received.
  */
 template <template <class> class Derived, ServerHandler Handler>
-class WsSession : public ConnectionBase, public std::enable_shared_from_this<WsSession<Derived, Handler>>
+class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, Handler>>
 {
-    using std::enable_shared_from_this<WsSession<Derived, Handler>>::shared_from_this;
+    using std::enable_shared_from_this<WsBase<Derived, Handler>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<clio::DOSGuard> dosGuard_;
@@ -70,7 +70,7 @@ protected:
     }
 
 public:
-    explicit WsSession(
+    explicit WsBase(
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<clio::DOSGuard> dosGuard,
@@ -82,7 +82,7 @@ public:
         perfLog_.debug() << tag() << "session created";
     }
 
-    virtual ~WsSession()
+    virtual ~WsBase()
     {
         perfLog_.debug() << tag() << "session closed";
         dosGuard_.get().decrement(clientIp);
@@ -100,7 +100,7 @@ public:
         sending_ = true;
         derived().ws().async_write(
             boost::asio::buffer(messages_.front()->data(), messages_.front()->size()),
-            boost::beast::bind_front_handler(&WsSession::onWrite, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&WsBase::onWrite, derived().shared_from_this()));
     }
 
     void
@@ -184,7 +184,7 @@ public:
             res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async");
         }));
 
-        derived().ws().async_accept(req, bind_front_handler(&WsSession::onAccept, this->shared_from_this()));
+        derived().ws().async_accept(req, bind_front_handler(&WsBase::onAccept, this->shared_from_this()));
     }
 
     void
@@ -207,8 +207,7 @@ public:
         // Clear the buffer
         buffer_.consume(buffer_.size());
 
-        derived().ws().async_read(
-            buffer_, boost::beast::bind_front_handler(&WsSession::onRead, this->shared_from_this()));
+        derived().ws().async_read(buffer_, boost::beast::bind_front_handler(&WsBase::onRead, this->shared_from_this()));
     }
 
     void

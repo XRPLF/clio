@@ -28,7 +28,7 @@ namespace Server {
  * class.
  */
 template <ServerHandler Handler>
-class SslWsSession : public WsSession<SslWsSession, Handler>
+class SslWsSession : public WsBase<SslWsSession, Handler>
 {
     boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>> ws_;
 
@@ -40,7 +40,7 @@ public:
         std::reference_wrapper<clio::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& b)
-        : WsSession<SslWsSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(b)), ws_(std::move(stream))
+        : WsBase<SslWsSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(b)), ws_(std::move(stream))
     {
     }
 

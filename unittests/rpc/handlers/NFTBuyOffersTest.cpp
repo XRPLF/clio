@@ -567,3 +567,89 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
         ASSERT_TRUE(output);  // todo: check limit somehow?
     });
 }
+
+TEST_F(RPCNFTBuyOffersHandlerTest, LimitLessThanMin)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // return owner index containing 2 indexes
+    auto const directory = ripple::keylet::nft_buys(ripple::uint256{NFTID});
+    auto const ownerDir =
+        CreateOwnerDirLedgerObject(std::vector{NFTBuyOffersHandler::LIMIT_MIN + 1, ripple::uint256{INDEX1}}, INDEX1);
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
+
+    // return two nft buy offers
+    std::vector<Blob> bbs;
+    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
+    for (auto i = 0; i < NFTBuyOffersHandler::LIMIT_MIN + 1; i++)
+        bbs.push_back(offer.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_id": "{}",
+            "limit": {}
+        }})",
+        NFTID,
+        NFTBuyOffersHandler::LIMIT_MIN - 1));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield)});
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("offers").as_array().size(), NFTBuyOffersHandler::LIMIT_MIN);
+        EXPECT_EQ(output->at("limit").as_uint64(), NFTBuyOffersHandler::LIMIT_MIN);
+    });
+}
+
+TEST_F(RPCNFTBuyOffersHandlerTest, LimitMoreThanMax)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // return owner index containing 2 indexes
+    auto const directory = ripple::keylet::nft_buys(ripple::uint256{NFTID});
+    auto const ownerDir =
+        CreateOwnerDirLedgerObject(std::vector{NFTBuyOffersHandler::LIMIT_MAX + 1, ripple::uint256{INDEX1}}, INDEX1);
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
+
+    // return two nft buy offers
+    std::vector<Blob> bbs;
+    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
+    for (auto i = 0; i < NFTBuyOffersHandler::LIMIT_MAX + 1; i++)
+        bbs.push_back(offer.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_id": "{}",
+            "limit": {}
+        }})",
+        NFTID,
+        NFTBuyOffersHandler::LIMIT_MAX + 1));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield)});
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("offers").as_array().size(), NFTBuyOffersHandler::LIMIT_MAX);
+        EXPECT_EQ(output->at("limit").as_uint64(), NFTBuyOffersHandler::LIMIT_MAX);
+    });
+}

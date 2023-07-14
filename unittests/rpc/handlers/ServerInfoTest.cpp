@@ -72,6 +72,8 @@ protected:
         EXPECT_TRUE(info.contains("load_factor"));
         EXPECT_TRUE(info.contains("clio_version"));
         EXPECT_TRUE(info.contains("validated_ledger"));
+        EXPECT_TRUE(info.contains("time"));
+        EXPECT_TRUE(info.contains("uptime"));
 
         auto const& validated = info.at("validated_ledger").as_object();
         EXPECT_TRUE(validated.contains("age"));
@@ -188,6 +190,8 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
+    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
+    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -203,6 +207,12 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_)).Times(1);
 
+    ON_CALL(*rawCountersPtr, uptime).WillByDefault(Return(std::chrono::seconds{1234}));
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(1);
+
+    ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
+    EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
+
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
@@ -217,6 +227,48 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
         auto const& info = result.at("info").as_object();
         EXPECT_FALSE(info.contains("etl"));
         EXPECT_FALSE(info.contains("counters"));
+    });
+}
+
+TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
+    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
+    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_)).Times(1);
+
+    ON_CALL(*rawCountersPtr, uptime).WillByDefault(Return(std::chrono::seconds{1234}));
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(1);
+
+    ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(true));
+    EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
+
+    auto const handler = AnyHandler{TestServerInfoHandler{
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+
+    runSpawn([&](auto& yield) {
+        auto const req = json::parse("{}");
+        auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
+
+        validateNormalOutput(output);
+
+        auto const& info = output.value().as_object().at("info").as_object();
+        EXPECT_TRUE(info.contains("amendment_blocked"));
+        EXPECT_EQ(info.at("amendment_blocked").as_bool(), true);
     });
 }
 
@@ -243,6 +295,12 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 
     ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(empty));
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled).Times(1);
+
+    ON_CALL(*rawCountersPtr, uptime).WillByDefault(Return(std::chrono::seconds{1234}));
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(1);
+
+    ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
+    EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
 
     // admin calls
     ON_CALL(*rawCountersPtr, report).WillByDefault(Return(empty));
@@ -286,6 +344,12 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    ON_CALL(*rawCountersPtr, uptime).WillByDefault(Return(std::chrono::seconds{1234}));
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(1);
+
+    ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
+    EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
 
     auto const rippledObj = boost::json::parse(R"({
         "result": {
@@ -344,10 +408,15 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
+    ON_CALL(*rawCountersPtr, uptime).WillByDefault(Return(std::chrono::seconds{1234}));
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(1);
+
+    ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
+    EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
+
     auto const rippledObj = boost::json::parse(R"({
         "result": {
-            "info": {
-            }
+            "info": {}
         }
     })");
     ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(rippledObj.as_object()));

@@ -867,3 +867,169 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), limit - 1);
     });
 }
+
+TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // fetch account object return something
+    auto account = GetAccountIDWithString(ACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto fake = Blob{'f', 'a', 'k', 'e'};
+    // return a non empty account
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+
+    // return owner index containing 2 indexes
+    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    // return two trust lines
+    std::vector<Blob> bbs;
+    auto const line1 =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 =
+        CreateRippleStateLedgerObject(ACCOUNT2, "USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    bbs.push_back(line1.getSerializer().peekData());
+    bbs.push_back(line2.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    runSpawn([this](auto& yield) {
+        auto const input = json::parse(fmt::format(
+            R"({{
+                "account": "{}",
+                "limit": {}
+            }})",
+            ACCOUNT,
+            AccountLinesHandler::LIMIT_MIN - 1));
+        auto const correctOutput = fmt::format(
+            R"({{
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": {},
+                "lines": [
+                    {{
+                        "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "balance": "10",
+                        "currency": "USD",
+                        "limit": "100",
+                        "limit_peer": "200",
+                        "quality_in": 0,
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
+                    }},
+                    {{
+                        "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "balance": "-10",
+                        "currency": "USD",
+                        "limit": "200",
+                        "limit_peer": "100",
+                        "quality_in": 0,
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
+                    }}
+                ]
+            }})",
+            AccountLinesHandler::LIMIT_MIN);
+
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correctOutput), *output);
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // fetch account object return something
+    auto account = GetAccountIDWithString(ACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto fake = Blob{'f', 'a', 'k', 'e'};
+    // return a non empty account
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+
+    // return owner index containing 2 indexes
+    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    // return two trust lines
+    std::vector<Blob> bbs;
+    auto const line1 =
+        CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 =
+        CreateRippleStateLedgerObject(ACCOUNT2, "USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    bbs.push_back(line1.getSerializer().peekData());
+    bbs.push_back(line2.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    runSpawn([this](auto& yield) {
+        auto const input = json::parse(fmt::format(
+            R"({{
+                "account": "{}",
+                "limit": {}
+            }})",
+            ACCOUNT,
+            AccountLinesHandler::LIMIT_MAX + 1));
+        auto const correctOutput = fmt::format(
+            R"({{
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": {},
+                "lines": [
+                    {{
+                        "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "balance": "10",
+                        "currency": "USD",
+                        "limit": "100",
+                        "limit_peer": "200",
+                        "quality_in": 0,
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
+                    }},
+                    {{
+                        "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "balance": "-10",
+                        "currency": "USD",
+                        "limit": "200",
+                        "limit_peer": "100",
+                        "quality_in": 0,
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
+                    }}
+                ]
+            }})",
+            AccountLinesHandler::LIMIT_MAX);
+
+        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correctOutput), *output);
+    });
+}
