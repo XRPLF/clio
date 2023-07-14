@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
     Copyright (c) 2022, the clio developers.
@@ -98,12 +97,12 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
     // Find the first NFT ID that doesn't match.  We're looking for an
     // added NFT, so the one we want will be the mismatch in finalIDs.
-    auto const diff = std::mismatch(
-        finalIDs.begin(), finalIDs.end(), prevIDs.begin(), prevIDs.end());
+    auto const diff = std::mismatch(finalIDs.begin(), finalIDs.end(), prevIDs.begin(), prevIDs.end());
 
     // There should always be a difference so the returned finalIDs
     // iterator should never be end().  But better safe than sorry.
-    if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner){
+    if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner)
+    {
         std::stringstream msg;
         msg << " - unexpected NFTokenMint data in tx " << sttx.getTransactionID();
         throw std::runtime_error(msg.str());
