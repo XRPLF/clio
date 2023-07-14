@@ -163,7 +163,8 @@ CustomValidator SubscribeStreamValidator =
         static std::unordered_set<std::string> const validStreams = {
             "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"};
 
-        static std::unordered_set<std::string> const reportingNotSupportStreams = {"peer_status", "consensus"};
+        static std::unordered_set<std::string> const reportingNotSupportStreams = {
+            "peer_status", "consensus", "server"};
         for (auto const& v : value.as_array())
         {
             if (!v.is_string())
