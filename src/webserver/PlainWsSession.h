@@ -28,7 +28,7 @@ namespace Server {
  * class
  */
 template <ServerHandler Handler>
-class PlainWsSession : public WsSession<PlainWsSession, Handler>
+class PlainWsSession : public WsBase<PlainWsSession, Handler>
 {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
 
@@ -40,8 +40,7 @@ public:
         std::reference_wrapper<clio::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& callback,
         boost::beast::flat_buffer&& buffer)
-        : WsSession<PlainWsSession, Handler>(ip, tagFactory, dosGuard, callback, std::move(buffer))
-        , ws_(std::move(socket))
+        : WsBase<PlainWsSession, Handler>(ip, tagFactory, dosGuard, callback, std::move(buffer)), ws_(std::move(socket))
     {
     }
 
