@@ -95,21 +95,23 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
     std::sort(finalIDs.begin(), finalIDs.end());
     std::sort(prevIDs.begin(), prevIDs.end());
-    std::vector<ripple::uint256> tokenIDResult;
-    std::set_difference(
-        finalIDs.begin(),
-        finalIDs.end(),
-        prevIDs.begin(),
-        prevIDs.end(),
-        std::inserter(tokenIDResult, tokenIDResult.begin()));
-    if (tokenIDResult.size() == 1 && owner)
-        return {
-            {NFTTransactionsData(tokenIDResult.front(), txMeta, sttx.getTransactionID())},
-            NFTsData(tokenIDResult.front(), *owner, sttx.getFieldVL(ripple::sfURI), txMeta)};
 
-    std::stringstream msg;
-    msg << " - unexpected NFTokenMint data in tx " << sttx.getTransactionID();
-    throw std::runtime_error(msg.str());
+    // Find the first NFT ID that doesn't match.  We're looking for an
+    // added NFT, so the one we want will be the mismatch in finalIDs.
+    auto const diff = std::mismatch(
+        finalIDs.begin(), finalIDs.end(), prevIDs.begin(), prevIDs.end());
+
+    // There should always be a difference so the returned finalIDs
+    // iterator should never be end().  But better safe than sorry.
+    if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner){
+        std::stringstream msg;
+        msg << " - unexpected NFTokenMint data in tx " << sttx.getTransactionID();
+        throw std::runtime_error(msg.str());
+    }
+
+    return {
+        {NFTTransactionsData(*diff.first, txMeta, sttx.getTransactionID())},
+        NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)};
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
