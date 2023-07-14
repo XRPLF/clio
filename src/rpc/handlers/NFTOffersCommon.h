@@ -32,6 +32,10 @@ class NFTOffersHandlerBase
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 50;
+    static auto constexpr LIMIT_MAX = 500;
+    static auto constexpr LIMIT_DEFAULT = 250;
+
     struct Output
     {
         std::string nftID;
@@ -48,7 +52,7 @@ public:
         std::string nftID;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 250;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -66,7 +70,7 @@ public:
             {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{50, 500}},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker), validation::Uint256HexStringValidator},
         };
 

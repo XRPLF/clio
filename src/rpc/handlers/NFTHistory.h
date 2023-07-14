@@ -40,6 +40,10 @@ class NFTHistoryHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 100;
+    static auto constexpr LIMIT_DEFAULT = 50;
+
     // TODO: this marker is same as account_tx, reuse in future
     struct Marker
     {
@@ -92,7 +96,7 @@ public:
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},
             {JS(forward), validation::Type<bool>{}},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{1, 100}},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}},

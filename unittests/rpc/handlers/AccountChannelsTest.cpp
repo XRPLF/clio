@@ -810,3 +810,97 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), limit - 1);
     });
 }
+
+TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // fetch account object return something
+    auto account = GetAccountIDWithString(ACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto fake = Blob{'f', 'a', 'k', 'e'};
+    // return a non empty account
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+
+    // return owner index containing 2 indexes
+    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    // return two payment channel objects
+    std::vector<Blob> bbs;
+    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    bbs.push_back(channel1.getSerializer().peekData());
+    bbs.push_back(channel1.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "limit": {}
+        }})",
+        ACCOUNT,
+        AccountChannelsHandler::LIMIT_MIN - 1));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 2);
+        EXPECT_EQ((*output).as_object().at("limit").as_uint64(), AccountChannelsHandler::LIMIT_MIN);
+    });
+}
+
+TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
+{
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    // fetch account object return something
+    auto account = GetAccountIDWithString(ACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto fake = Blob{'f', 'a', 'k', 'e'};
+    // return a non empty account
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+
+    // return owner index containing 2 indexes
+    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    // return two payment channel objects
+    std::vector<Blob> bbs;
+    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    bbs.push_back(channel1.getSerializer().peekData());
+    bbs.push_back(channel1.getSerializer().peekData());
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "limit": {}
+        }})",
+        ACCOUNT,
+        AccountChannelsHandler::LIMIT_MAX + 1));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 2);
+        EXPECT_EQ((*output).as_object().at("limit").as_uint64(), AccountChannelsHandler::LIMIT_MAX);
+    });
+}

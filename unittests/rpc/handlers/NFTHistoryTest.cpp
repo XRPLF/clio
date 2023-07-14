@@ -709,3 +709,89 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
     });
 }
+
+TEST_F(RPCNFTHistoryHandlerTest, LimitLessThanMin)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchNFTTransactions(
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
+            testing::_))
+        .Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
+        auto const static input = boost::json::parse(fmt::format(
+            R"({{
+                "nft_id":"{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "forward": false,
+                "limit": {}
+            }})",
+            NFTID,
+            MINSEQ + 1,
+            MAXSEQ - 1,
+            NFTHistoryHandler::LIMIT_MIN - 1));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
+        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output->as_object().at("limit").as_uint64(), NFTHistoryHandler::LIMIT_MIN);
+    });
+}
+
+TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchNFTTransactions(
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
+            testing::_))
+        .Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
+        auto const static input = boost::json::parse(fmt::format(
+            R"({{
+                "nft_id":"{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "forward": false,
+                "limit": {}
+            }})",
+            NFTID,
+            MINSEQ + 1,
+            MAXSEQ - 1,
+            NFTHistoryHandler::LIMIT_MAX + 1));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
+        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output->as_object().at("limit").as_uint64(), NFTHistoryHandler::LIMIT_MAX);
+    });
+}

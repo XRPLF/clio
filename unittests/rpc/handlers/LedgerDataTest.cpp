@@ -556,3 +556,92 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
         EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
+
+TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);  // min
+    mockBackendPtr->updateRange(RANGEMAX);  // max
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto limit = LedgerDataHandler::LIMITBINARY + 1;
+    std::vector<Blob> bbs;
+
+    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(LedgerDataHandler::LIMITBINARY);
+    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
+
+    while (limit--)
+    {
+        auto const line =
+            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        bbs.push_back(line.getSerializer().peekData());
+    }
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "limit":{},
+                "binary": true
+            }})",
+            LedgerDataHandler::LIMITBINARY + 1));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
+        EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());
+        EXPECT_EQ(output->as_object().at("state").as_array().size(), LedgerDataHandler::LIMITBINARY);
+        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+    });
+}
+
+TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
+{
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(RANGEMIN);  // min
+    mockBackendPtr->updateRange(RANGEMAX);  // max
+
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto limit = LedgerDataHandler::LIMITJSON + 1;
+    std::vector<Blob> bbs;
+
+    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(LedgerDataHandler::LIMITJSON);
+    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
+
+    while (limit--)
+    {
+        auto const line =
+            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        bbs.push_back(line.getSerializer().peekData());
+    }
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    runSpawn([&, this](auto& yield) {
+        auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "limit":{},
+                "binary": false
+            }})",
+            LedgerDataHandler::LIMITJSON + 1));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());
+        EXPECT_EQ(output->as_object().at("state").as_array().size(), LedgerDataHandler::LIMITJSON);
+        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+    });
+}

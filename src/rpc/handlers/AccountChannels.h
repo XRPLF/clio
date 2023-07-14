@@ -42,6 +42,10 @@ class AccountChannelsHandler
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
+    static constexpr auto LIMIT_MIN = 10;
+    static constexpr auto LIMIT_MAX = 400;
+    static constexpr auto LIMIT_DEFAULT = 200;
+
     // type align with SField.h
     struct ChannelResponse
     {
@@ -77,7 +81,7 @@ public:
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -95,7 +99,7 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(destination_account), validation::Type<std::string>{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{10, 400}},
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
         };

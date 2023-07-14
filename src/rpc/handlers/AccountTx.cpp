@@ -81,8 +81,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
     }
 
-    static auto constexpr limitDefault = 200;
-    auto const limit = input.limit.value_or(limitDefault);
+    auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);

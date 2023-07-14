@@ -38,6 +38,10 @@ class AccountOffersHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 10;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 200;
+
     struct Offer
     {
         uint32_t flags;
@@ -59,13 +63,12 @@ public:
         bool validated = true;
     };
 
-    // Note: clio only supports XRP Ledger addresses (i.e. `strict` is unsupported for `false`)
     struct Input
     {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -84,7 +87,7 @@ public:
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{10, 400}}};
+            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}};
 
         return rpcSpec;
     }
