@@ -487,17 +487,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, ledgerSeq, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     auto const ownerDir =
         CreateOwnerDirLedgerObject(std::vector{AccountOffersHandler::LIMIT_MIN + 1, ripple::uint256{INDEX1}}, INDEX1);
-=======
-    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
->>>>>>> 794390d (add unittest for limit)
-=======
-    auto const ownerDir =
-        CreateOwnerDirLedgerObject(std::vector{AccountOffersHandler::LIMIT_MIN + 1, ripple::uint256{INDEX1}}, INDEX1);
->>>>>>> 7d15ea8 (add tests)
     auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -514,19 +505,9 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
         toBase58(ripple::xrpAccount()),
         INDEX1);
     offer.setFieldU32(ripple::sfExpiration, 123);
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     for (auto i = 0; i < AccountOffersHandler::LIMIT_MIN + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
-=======
-    bbs.push_back(offer.getSerializer().peekData());
->>>>>>> 794390d (add unittest for limit)
-=======
-
-    for (auto i = 0; i < AccountOffersHandler::LIMIT_MIN + 1; i++)
-        bbs.push_back(offer.getSerializer().peekData());
->>>>>>> 7d15ea8 (add tests)
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
@@ -542,8 +523,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     runSpawn([&](auto& yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 1);
-        EXPECT_EQ(output->at("limit").as_uint64(), AccountOffersHandler::LIMIT_MIN);
+        EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MIN);
     });
 }
 
@@ -597,15 +577,6 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     runSpawn([&](auto& yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
-<<<<<<< HEAD
-<<<<<<< HEAD
         EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
-=======
-        EXPECT_EQ(output->at("offers").as_array().size(), 1);
-        EXPECT_EQ(output->at("limit").as_uint64(), AccountOffersHandler::LIMIT_MAX);
->>>>>>> 794390d (add unittest for limit)
-=======
-        EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
->>>>>>> 7d15ea8 (add tests)
     });
 }
