@@ -105,7 +105,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     // iterator should never be end().  But better safe than sorry.
     if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner)
         throw std::runtime_error(fmt::format(" - unexpected NFTokenMint data in tx {}", sttx.getTransactionID()));
-    
+
     return {
         {NFTTransactionsData(*diff.first, txMeta, sttx.getTransactionID())},
         NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)};
