@@ -38,6 +38,8 @@
 
 namespace RPC {
 
+enum class NFTokenJSON { Enable, Disable };
+
 std::optional<ripple::AccountID>
 accountFromStringStrict(std::string const& account);
 
@@ -59,7 +61,7 @@ std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta co
 deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs);
+toExpandedJson(Backend::TransactionAndMetadata const& blobs, NFTokenJSON includeNFTIDs = NFTokenJSON::Disable);
 
 bool
 insertDeliveredAmount(
