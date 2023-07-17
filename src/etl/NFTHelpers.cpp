@@ -25,6 +25,7 @@
 #include <backend/BackendInterface.h>
 #include <backend/DBHelpers.h>
 #include <backend/Types.h>
+#include <fmt/core.h>
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
@@ -103,12 +104,9 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     // There should always be a difference so the returned finalIDs
     // iterator should never be end().  But better safe than sorry.
     if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner)
-    {
-        std::stringstream msg;
-        msg << " - unexpected NFTokenMint data in tx " << sttx.getTransactionID();
-        throw std::runtime_error(msg.str());
-    }
-
+        throw std::runtime_error(
+            fmt::format(" - unexpected NFTokenMint data in tx {}", sttx.getTransactionID()));
+    
     return {
         {NFTTransactionsData(*diff.first, txMeta, sttx.getTransactionID())},
         NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)};
