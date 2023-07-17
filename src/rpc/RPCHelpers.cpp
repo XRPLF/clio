@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -925,14 +925,18 @@ xrpLiquid(
     ripple::SLE sle{it, key};
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
-
     auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
-
     auto const balance = sle.getFieldAmount(ripple::sfBalance);
 
-    ripple::STAmount amount = balance - reserve;
-    if (balance < reserve)
-        amount.clear();
+    ripple::STAmount amount = [&]() {
+        // AMM doesn't require the reserves
+        if (sle.getFlags() & ripple::lsfAMM)
+            return balance;
+        ripple::STAmount amount = balance - reserve;
+        if (balance < reserve)
+            amount.clear();
+        return amount;
+    }();
 
     return amount.xrp();
 }
@@ -967,11 +971,9 @@ accountHolds(
 {
     ripple::STAmount amount;
     if (ripple::isXRP(currency))
-    {
         return {xrpLiquid(backend, sequence, account, yield)};
-    }
-    auto key = ripple::keylet::line(account, issuer, currency).key;
 
+    auto key = ripple::keylet::line(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
@@ -991,10 +993,8 @@ accountHolds(
     {
         amount = sle.getFieldAmount(ripple::sfBalance);
         if (account > issuer)
-        {
-            // Put balance in account terms.
-            amount.negate();
-        }
+            amount.negate();  // Put balance in account terms.
+
         amount.setIssuer(issuer);
     }
 
