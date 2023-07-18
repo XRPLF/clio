@@ -190,6 +190,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NoRippleCheckHan
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {"problems", output.problems},
+        {JS(validated), output.validated},
     };
 
     if (output.transactions)

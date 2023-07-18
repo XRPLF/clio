@@ -269,7 +269,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
             "problems":
             [
                 "You appear to have set your default ripple flag even though you are not a gateway. This is not recommended unless you are experimenting"
-            ]
+            ],
+            "validated":true
         })";
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
@@ -328,7 +329,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
             "problems":[
                 "You should probably set the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "You should probably set the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-            ]
+            ],
+            "validated":true
         })";
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
@@ -386,7 +388,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
             [
                 "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-            ]
+            ],
+            "validated":true
         })";
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
@@ -445,7 +448,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
             "problems":
             [
                 "You should immediately set your default ripple flag"
-            ]
+            ],
+            "validated":true
         })";
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
@@ -640,7 +644,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
                         }},
                         "Flags":{}
                     }}
-                ]
+                ],
+                "validated":true
         }})",
         transactionSeq,
         transactionSeq + 1,
