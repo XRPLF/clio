@@ -26,8 +26,13 @@ tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
 ```
 
 ## preparing local packages
-1. get rippled from [my branch](https://github.com/godexsoft/rippled/tree/feature/conan-for-clio)
-2. build rippled as per their instructions. pay attention to these commands:
+1. get rippled from [John's branch](https://github.com/thejohnfreeman/clio/tree/conan)
+2. remove old packages you may have cached: 
+```sh 
+conan remove -f xrpl/1.12.0-b1
+conan remove -f cassandra-cpp-driver/2.16.2
+```
+3. in a clone of rippled from step 1, build rippled as per their instructions. pay attention to these commands:
 ```sh
 conan export external/snappy snappy/1.1.9@
 conan export external/soci soci/4.0.3@
@@ -36,39 +41,39 @@ conan install .. --output-folder . --build missing --settings build_type=Release
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 cd - # to go back to root of rippled
 ```
-3. perform this command at the root directory of rippled
+4. perform this command at the root directory of rippled
 ```sh
 conan export .
 ```
-this will export a local package `xrpl/1.11.0-rc3`.
+this will export a local package `xrpl/1.12.0-b1`.
 
-4. navigate to clio root directory and perform
+5. navigate to clio's root directory and perform
 ```sh
 conan export external/cassandra # export our "custom" cassandra driver package
-mkdir .build && cd .build
-conan install .. --output-folder . --build=missing --settings build_type=Release
+mkdir build && cd build
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . --parallel 
+cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 ```
-if all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` built as well as `clio_unittests`.
-Please note that 3 unittests are currently failing. See below.
+if all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_unittests` in the `build` directory (the current directory).
+Please note that a few unittests are currently failing. See below.
+
+## using artifactory (not yet fully supported)
+```sh
+conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+```
+Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` and conan should be able to fetch it from artifactory instead.
+
+**Note: this is not yet working after merging John's fixes.**
 
 ## things to fix
 
 1. Figure out what to do with `ripple::Fees` that is now missing the `units` member. It was used in a few places and couple unittests are broken because of it.
 2. Fix build on CI (currently using old CMake. need to use conan instead)
-3. Make dependencies list smaller. Currently we are linking against just about every library possible
-4. Fix code coverage support (see 'coverage' option in conanfile)
-5. See if we can contribute/push our cassandra-driver to conan center so we don't need to export it before we able to use it
-6. See if it's better to use FindPackage instead of conan variables for all our deps (rippled does it this way)
-7. Tidy up conanfile and CMakeLists.txt. Remove anything unused, add notes/comments where needed
-8. Get clio build with old settings.cmake (-Werror being most important flag here)
+3. Fix code coverage support (see 'coverage' option in conanfile)
+4. See if we can contribute/push our cassandra-driver to conan center so we don't need to export it before we able to use it
+5. Tidy up conanfile and CMakeLists.txt. Remove anything unused, add notes/comments where needed
 
-
-On rippled side:
-1. Export only actually needed headers for libxrpl and make sure we don't export any other files (like VERSION, README, c/cpp files)
-2. Look into separating pbufs to yet another package (talk to John)
-3. Make sure protobuf/grpc does not export the .cc (or any other cpp) files. Only headers.
 
 # Clio
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
