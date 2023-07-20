@@ -23,8 +23,7 @@
 #include <etl/Source.h>
 #include <log/Logger.h>
 
-#include <ripple/ledger/ReadView.h>
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
+#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 
 #include <optional>

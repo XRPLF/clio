@@ -19,38 +19,26 @@
 
 #pragma once
 
+#include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
+#include <ripple/protocol/LedgerHeader.h>
 
 #include <sstream>
 #include <string>
 
 namespace util {
 
-inline ripple::LedgerInfo
+inline ripple::LedgerHeader
 deserializeHeader(ripple::Slice data)
 {
-    ripple::SerialIter sit(data.data(), data.size());
-    ripple::LedgerInfo info;
-
-    info.seq = sit.get32();
-    info.drops = sit.get64();
-    info.parentHash = sit.get256();
-    info.txHash = sit.get256();
-    info.accountHash = sit.get256();
-    info.parentCloseTime = ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
-    info.closeTime = ripple::NetClock::time_point{ripple::NetClock::duration{sit.get32()}};
-    info.closeTimeResolution = ripple::NetClock::duration{sit.get8()};
-    info.closeFlags = sit.get8();
-    info.hash = sit.get256();
-
-    return info;
+    return ripple::deserializeHeader(data, /*hasHash=*/true);
 }
 
 inline std::string
-toString(ripple::LedgerInfo const& info)
+toString(ripple::LedgerHeader const& info)
 {
     std::stringstream ss;
-    ss << "LedgerInfo { Sequence : " << info.seq << " Hash : " << ripple::strHex(info.hash)
+    ss << "LedgerHeader { Sequence : " << info.seq << " Hash : " << ripple::strHex(info.hash)
        << " TxHash : " << strHex(info.txHash) << " AccountHash : " << ripple::strHex(info.accountHash)
        << " ParentHash : " << strHex(info.parentHash) << " }";
     return ss.str();

@@ -24,6 +24,8 @@
 #include <log/Logger.h>
 #include <webserver/interface/ConnectionBase.h>
 
+#include <ripple/protocol/LedgerHeader.h>
+
 #include <memory>
 
 using SessionPtrType = std::shared_ptr<Server::ConnectionBase>;
@@ -253,13 +255,15 @@ public:
 
     void
     pubLedger(
-        ripple::LedgerInfo const& lgrInfo,
+        ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
         std::uint32_t txnCount);
 
     void
-    pubBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
+    pubBookChanges(
+        ripple::LedgerHeader const& lgrInfo,
+        std::vector<Backend::TransactionAndMetadata> const& transactions);
 
     void
     unsubLedger(SessionPtrType session);
@@ -271,7 +275,7 @@ public:
     unsubTransactions(SessionPtrType session);
 
     void
-    pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerInfo const& lgrInfo);
+    pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo);
 
     void
     subAccount(ripple::AccountID const& account, SessionPtrType const& session);

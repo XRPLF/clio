@@ -31,7 +31,7 @@ BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx)
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const transactions = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
     Output response;
@@ -79,7 +79,9 @@ tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::va
 }
 
 [[nodiscard]] boost::json::object const
-computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions)
+computeBookChanges(
+    ripple::LedgerHeader const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions)
 {
     using boost::json::value_from;
 

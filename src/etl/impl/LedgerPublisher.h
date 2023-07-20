@@ -25,7 +25,7 @@
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 
-#include <ripple/ledger/ReadView.h>
+#include <ripple/protocol/LedgerHeader.h>
 
 #include <chrono>
 
@@ -130,7 +130,7 @@ public:
      * @param lgrInfo the ledger to publish
      */
     void
-    publish(ripple::LedgerInfo const& lgrInfo)
+    publish(ripple::LedgerHeader const& lgrInfo)
     {
         boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
             log_.info() << "Publishing ledger " << std::to_string(lgrInfo.seq);

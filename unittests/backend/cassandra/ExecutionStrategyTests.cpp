@@ -45,19 +45,10 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineSuccessful)
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statement = FakeStatement{};
         strat.read(yield, statement);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnTimeoutFailure)
@@ -67,26 +58,17 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnTimeoutF
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([](auto const&, auto&& cb) {
-            cb({});  // notify that item is ready
-            return FakeFutureWithCallback{
-                FakeResultOrError{CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}}};
+            auto res = FakeResultOrError{CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}};
+            cb(res);  // notify that item is ready
+            return FakeFutureWithCallback{res};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statement = FakeStatement{};
         EXPECT_THROW(strat.read(yield, statement), DatabaseTimeout);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnInvalidQueryFailure)
@@ -96,26 +78,17 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnInvalidQ
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([](auto const&, auto&& cb) {
-            cb({});  // notify that item is ready
-            return FakeFutureWithCallback{
-                FakeResultOrError{CassandraError{"invalid", CASS_ERROR_SERVER_INVALID_QUERY}}};
+            auto res = FakeResultOrError{CassandraError{"invalid", CASS_ERROR_SERVER_INVALID_QUERY}};
+            cb(res);  // notify that item is ready
+            return FakeFutureWithCallback{res};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statement = FakeStatement{};
         EXPECT_THROW(strat.read(yield, statement), std::runtime_error);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineSuccessful)
@@ -134,19 +107,10 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineSuccessful)
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(3);
         strat.read(yield, statements);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnTimeoutFailure)
@@ -158,27 +122,18 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnTimeou
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([](auto const& statements, auto&& cb) {
             EXPECT_EQ(statements.size(), 3);
-            cb({});  // notify that item is ready
-            return FakeFutureWithCallback{
-                FakeResultOrError{CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}}};
+            auto res = FakeResultOrError{CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}};
+            cb(res);  // notify that item is ready
+            return FakeFutureWithCallback{res};
         });
     EXPECT_CALL(
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(3);
         EXPECT_THROW(strat.read(yield, statements), DatabaseTimeout);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnInvalidQueryFailure)
@@ -190,27 +145,18 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnInvali
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([](auto const& statements, auto&& cb) {
             EXPECT_EQ(statements.size(), 3);
-            cb({});  // notify that item is ready
-            return FakeFutureWithCallback{
-                FakeResultOrError{CassandraError{"invalid", CASS_ERROR_SERVER_INVALID_QUERY}}};
+            auto res = FakeResultOrError{CassandraError{"invalid", CASS_ERROR_SERVER_INVALID_QUERY}};
+            cb(res);  // notify that item is ready
+            return FakeFutureWithCallback{res};
         });
     EXPECT_CALL(
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(3);
         EXPECT_THROW(strat.read(yield, statements), std::runtime_error);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineMarksBusyIfRequestsOutstandingExceeded)
@@ -233,21 +179,12 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineMarksBusyIfReq
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         EXPECT_FALSE(strat.isTooBusy());  // 2 was the limit, 0 atm
         auto statements = std::vector<FakeStatement>(3);
         strat.read(yield, statements);
         EXPECT_FALSE(strat.isTooBusy());  // after read completes it's 0 again
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineSuccessful)
@@ -267,20 +204,11 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineSuccessful)
             An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);  // once per statement
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(3);
         auto res = strat.readEach(yield, statements);
         EXPECT_EQ(res.size(), statements.size());
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure)
@@ -305,19 +233,10 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
             An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);  // once per statement
 
-    auto called = std::atomic_bool{false};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-
-    boost::asio::spawn(ctx, [&work, &called, &strat](boost::asio::yield_context yield) {
+    runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(3);
         EXPECT_THROW(strat.readEach(yield, statements), DatabaseTimeout);
-
-        called = true;
-        work.reset();
     });
-
-    ctx.run();
-    ASSERT_TRUE(called);
 }
 
 TEST_F(BackendCassandraExecutionStrategyTest, WriteSyncFirstTrySuccessful)

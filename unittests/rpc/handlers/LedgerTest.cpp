@@ -267,8 +267,6 @@ TEST_F(RPCLedgerHandlerTest, Default)
                 "ledger_index":"30",
                 "parent_close_time":0,
                 "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "seqNum":"30",
-                "totalCoins":"0",
                 "total_coins":"0",
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000"
             }
@@ -457,8 +455,6 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 "ledger_index":"30",
                 "parent_close_time":0,
                 "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "seqNum":"30",
-                "totalCoins":"0",
                 "total_coins":"0",
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
                 "transactions":[
@@ -679,8 +675,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                 "ledger_index":"30",
                 "parent_close_time":0,
                 "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "seqNum":"30",
-                "totalCoins":"0",
                 "total_coins":"0",
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
                 "transactions":[
@@ -771,9 +765,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
                 "ledger_index": "30",
                 "parent_close_time": 0,
                 "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-                "seqNum": "30",
                 "total_coins": "0",
-                "totalCoins": "0",
                 "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
                 "transactions": [
                     {

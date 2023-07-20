@@ -25,7 +25,7 @@
 #include <log/Logger.h>
 #include <util/Expected.h>
 
-#include <boost/asio/async_result.hpp>
+#include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 
 #include <atomic>
@@ -75,11 +75,7 @@ public:
     using FutureType = typename HandleType::FutureType;
     using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
     using ResultType = typename HandleType::ResultType;
-
     using CompletionTokenType = boost::asio::yield_context;
-    using FunctionType = void(boost::system::error_code);
-    using AsyncResultType = boost::asio::async_result<CompletionTokenType, FunctionType>;
-    using HandlerType = typename AsyncResultType::completion_handler_type;
 
     DefaultExecutionStrategy(Settings settings, HandleType const& handle)
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
@@ -224,29 +220,28 @@ public:
     [[maybe_unused]] ResultOrErrorType
     read(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
-        auto handler = HandlerType{token};
-        auto result = AsyncResultType{handler};
         auto const numStatements = statements.size();
+        std::optional<FutureWithCallbackType> future;
 
         // todo: perhaps use policy instead
         while (true)
         {
             numReadRequestsOutstanding_ += numStatements;
+            auto init = [this, &statements, &future]<typename Self>(Self& self) {
+                future.emplace(handle_.get().asyncExecute(
+                    statements, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
+                        boost::asio::post(
+                            sself->get_io_executor(), [sself = std::move(sself), res = std::move(res)]() mutable {
+                                sself->complete(std::move(res));
+                                sself.reset();
+                            });
+                    }));
+            };
 
-            auto const future = handle_.get().asyncExecute(statements, [handler](auto&&) mutable {
-                boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
-                    handler(boost::system::error_code{});
-                });
-            });
-
-            // suspend coroutine until completion handler is called
-            result.get();
-
+            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(init, token);
             numReadRequestsOutstanding_ -= numStatements;
 
-            // it's safe to call blocking get on future here as we already
-            // waited for the coroutine to resume above.
-            if (auto res = future.get(); res)
+            if (res)
             {
                 return res;
             }
@@ -271,28 +266,27 @@ public:
     [[maybe_unused]] ResultOrErrorType
     read(CompletionTokenType token, StatementType const& statement)
     {
-        auto handler = HandlerType{token};
-        auto result = AsyncResultType{handler};
+        std::optional<FutureWithCallbackType> future;
 
         // todo: perhaps use policy instead
         while (true)
         {
             ++numReadRequestsOutstanding_;
+            auto init = [this, &statement, &future]<typename Self>(Self& self) {
+                future.emplace(handle_.get().asyncExecute(
+                    statement, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
+                        boost::asio::post(
+                            sself->get_io_executor(), [sself = std::move(sself), res = std::move(res)]() mutable {
+                                sself->complete(std::move(res));
+                                sself.reset();
+                            });
+                    }));
+            };
 
-            auto const future = handle_.get().asyncExecute(statement, [handler](auto const&) mutable {
-                boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
-                    handler(boost::system::error_code{});
-                });
-            });
-
-            // suspend coroutine until completion handler is called
-            result.get();
-
+            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(init, token);
             --numReadRequestsOutstanding_;
 
-            // it's safe to call blocking get on future here as we already
-            // waited for the coroutine to resume above.
-            if (auto res = future.get(); res)
+            if (res)
             {
                 return res;
             }
@@ -318,9 +312,6 @@ public:
     std::vector<ResultType>
     readEach(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
-        auto handler = HandlerType{token};
-        auto result = AsyncResultType{handler};
-
         std::atomic_bool hadError = false;
         std::atomic_int numOutstanding = statements.size();
         numReadRequestsOutstanding_ += statements.size();
@@ -328,28 +319,30 @@ public:
         auto futures = std::vector<FutureWithCallbackType>{};
         futures.reserve(numOutstanding);
 
-        // used as the handler for each async statement individually
-        auto executionHandler = [handler, &hadError, &numOutstanding](auto const& res) mutable {
-            if (not res)
-                hadError = true;
+        auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
+            auto sself = std::make_shared<Self>(std::move(self));
+            auto executionHandler = [&hadError, &numOutstanding, sself = std::move(sself)](auto const& res) mutable {
+                if (not res)
+                    hadError = true;
 
-            // when all async operations complete unblock the result
-            if (--numOutstanding == 0)
-                boost::asio::post(boost::asio::get_associated_executor(handler), [handler]() mutable {
-                    handler(boost::system::error_code{});
+                // when all async operations complete unblock the result
+                if (--numOutstanding == 0)
+                    boost::asio::post(sself->get_io_executor(), [sself = std::move(sself)]() mutable {
+                        sself->complete();
+                        sself.reset();
+                    });
+            };
+
+            std::transform(
+                std::cbegin(statements),
+                std::cend(statements),
+                std::back_inserter(futures),
+                [this, &executionHandler](auto const& statement) {
+                    return handle_.get().asyncExecute(statement, executionHandler);
                 });
         };
 
-        std::transform(
-            std::cbegin(statements),
-            std::cend(statements),
-            std::back_inserter(futures),
-            [this, &executionHandler](auto const& statement) {
-                return handle_.get().asyncExecute(statement, executionHandler);
-            });
-
-        // suspend coroutine until completion handler is called
-        result.get();
+        boost::asio::async_compose<CompletionTokenType, void()>(init, token);
 
         numReadRequestsOutstanding_ -= statements.size();
 
@@ -359,8 +352,7 @@ public:
         std::vector<ResultType> results;
         results.reserve(futures.size());
 
-        // it's safe to call blocking get on futures here as we already
-        // waited for the coroutine to resume above.
+        // it's safe to call blocking get on futures here as we already waited for the coroutine to resume above.
         std::transform(
             std::make_move_iterator(std::begin(futures)),
             std::make_move_iterator(std::end(futures)),

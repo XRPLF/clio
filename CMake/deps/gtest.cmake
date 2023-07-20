@@ -1,5 +1,5 @@
-target_link_libraries(clio_tests PUBLIC clio)
-target_link_libraries(clio_tests PRIVATE CONAN_PKG::gtest) 
+find_package(gtest REQUIRED)
+target_link_libraries(clio_tests PUBLIC clio gtest::gtest)
 
 enable_testing()
 include(GoogleTest)

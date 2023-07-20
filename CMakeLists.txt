@@ -2,35 +2,81 @@ cmake_minimum_required(VERSION 3.16.3)
 
 project(clio)
 
+# Only GCC is supported.
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
   message(FATAL_ERROR "GCC 11+ required for building clio")
 endif()
 
-option(VERBOSE "Verbose build" TRUE)
-if(VERBOSE)
+option(verbose "Verbose build" TRUE)
+if(verbose)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
 endif()
 
+# REVIEW: Who is setting this variable?
 if(PACKAGING)
   add_definitions(-DPKG=1)
 endif()
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
-
 #c++20 removed std::result_of but boost 1.75 is still using it.
 add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
 
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+find_package(Boost 1.82 REQUIRED
+  COMPONENTS
+    program_options
+    coroutine
+    system
+    log
+    log_setup
+)
+
+find_package(OpenSSL 1.1.1 REQUIRED)
+find_package(cassandra-cpp-driver REQUIRED)
+find_package(fmt REQUIRED)
+find_package(xrpl REQUIRED)
+
+set_target_properties(OpenSSL::SSL PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS OPENSSL_NO_SSL2
+)
+
 add_library(clio)
 target_compile_features(clio PUBLIC cxx_std_20)
+# TODO: Include directory will be wrong when installed.
 target_include_directories(clio PUBLIC src)
+target_compile_definitions(clio PUBLIC 
+  BOOST_ASIO_DISABLE_HANDLER_TYPE_REQUIREMENTS 
+  BOOST_ASIO_HAS_STD_INVOKE_RESULT 
+  BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT
+  BOOST_BEAST_ALLOW_DEPRECATED
+  BOOST_CONTAINER_FWD_BAD_DEQUE
+  BOOST_COROUTINES_NO_DEPRECATION_WARNING)
+target_compile_options(clio PUBLIC
+  -Wall
+  -Werror
+  -Wno-narrowing
+  -Wno-deprecated-declarations 
+  -Wno-dangling-else
+  -Wno-unused-but-set-variable)
+target_link_libraries(clio PUBLIC
+  Boost::boost
+  Boost::coroutine
+  Boost::program_options
+  Boost::system
+  Boost::log
+  Boost::log_setup
+  cassandra-cpp-driver::cassandra-cpp-driver
+  fmt::fmt
+  OpenSSL::Crypto
+  OpenSSL::SSL
+  xrpl::libxrpl
+)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads)
+target_link_libraries(clio INTERFACE Threads::Threads)
 
-include(CMake/settings.cmake)
 include(CMake/ClioVersion.cmake)
-include(CMake/deps/rippled.cmake)
-include(CMake/deps/libfmt.cmake)
-include(CMake/deps/Boost.cmake)
-include(CMake/deps/cassandra.cmake)
 include(CMake/deps/SourceLocation.cmake)
 
 target_sources(clio PRIVATE
@@ -103,6 +149,7 @@ target_sources(clio PRIVATE
 add_executable(clio_server src/main/main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
+option(tests "Build tests" FALSE)
 if(tests)
   set(TEST_TARGET clio_tests)
   add_executable(${TEST_TARGET}
@@ -178,10 +225,12 @@ if(tests)
 
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
+  # REVIEW: No link to clio library?
 
   # if CODE_COVERAGE enable, add clio_test-ccov
   if(CODE_COVERAGE)
     include(CMake/coverage.cmake)
+    # REVIEW: Misspelled "coverage"?
     add_converage(${TEST_TARGET})
   endif()
 endif()

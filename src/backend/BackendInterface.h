@@ -19,13 +19,14 @@
 
 #pragma once
 
-#include <ripple/ledger/ReadView.h>
 #include <backend/DBHelpers.h>
 #include <backend/LedgerCache.h>
 #include <backend/Types.h>
 #include <config/Config.h>
 #include <log/Logger.h>
 
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/LedgerHeader.h>
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 
@@ -203,11 +204,11 @@ public:
     }
 
     /*! @brief Fetches a specific ledger by sequence number. */
-    virtual std::optional<ripple::LedgerInfo>
+    virtual std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context& yield) const = 0;
 
     /*! @brief Fetches a specific ledger by hash. */
-    virtual std::optional<ripple::LedgerInfo>
+    virtual std::optional<ripple::LedgerHeader>
     fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context& yield) const = 0;
 
     /*! @brief Fetches the latest ledger sequence. */
@@ -475,11 +476,11 @@ public:
     /**
      * @brief Writes to a specific ledger.
      *
-     * @param ledgerInfo Const on ledger information.
-     * @param ledgerHeader r-value string representing ledger header.
+     * @param ledgerHeader Ledger header.
+     * @param blob r-value string serialization of ledger header.
      */
     virtual void
-    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& ledgerHeader) = 0;
+    writeLedger(ripple::LedgerHeader const& ledgerHeader, std::string&& blob) = 0;
 
     /**
      * @brief Writes a new ledger object.

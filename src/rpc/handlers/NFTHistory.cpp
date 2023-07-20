@@ -63,7 +63,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
             return Error{*status};
 
-        maxIndex = minIndex = std::get<ripple::LedgerInfo>(lgrInfoOrStatus).seq;
+        maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
     }
 
     std::optional<Backend::TransactionsCursor> cursor;

@@ -65,7 +65,7 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
@@ -139,13 +139,15 @@ tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsHandler::Output const& output)
 {
+    using boost::json::value_from;
+
     auto obj = boost::json::object{
         {JS(account), output.account},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
         {JS(limit), output.limit},
-        {JS(channels), output.channels},
+        {JS(channels), value_from(output.channels)},
     };
 
     if (output.marker)

@@ -21,7 +21,6 @@
 
 #include <ripple/basics/Log.h>
 #include <ripple/basics/StringUtilities.h>
-#include <ripple/ledger/ReadView.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAccount.h>
 #include <ripple/protocol/TxMeta.h>

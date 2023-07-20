@@ -19,7 +19,8 @@
 
 #include <rpc/handlers/AccountNFTs.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/nft.h>
 
 namespace RPC {
 
@@ -33,7 +34,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);

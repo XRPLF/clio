@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/LedgerData.h>
 
-#include <ripple/app/ledger/LedgerToJson.h>
+#include <ripple/protocol/serialize.h>
 
 #include <algorithm>
 
@@ -68,7 +68,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
 
     // no marker -> first call, return header information
     auto header = boost::json::object();

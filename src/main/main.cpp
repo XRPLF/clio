@@ -39,6 +39,7 @@
 #include <boost/json.hpp>
 #include <boost/program_options.hpp>
 
+#include <fstream>
 #include <main/Build.h>
 #include <memory>
 #include <sstream>

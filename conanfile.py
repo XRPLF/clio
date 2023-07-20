@@ -5,37 +5,34 @@ import re
 class Clio(ConanFile):
     name = 'clio'
     license = 'ISC'
-    author = 'Alex Kremer <akremer@ripple.com>'
+    author = 'Alex Kremer <akremer@ripple.com>, John Freeman <jfreeman@ripple.com>'
     url = 'https://github.com/xrplf/clio'
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
-        'assertions': [True, False],
         'coverage': [True, False],
         'fPIC': [True, False],
         'shared': [True, False],
-        'static': [True, False],
         'tests': [True, False],
+        'verbose': [True, False],
     }
 
     requires = [
-        'clio-xrpl/1.11.0',
-        'boost/1.77.0',
-        'grpc/1.50.1',
-        'openssl/1.1.1m',
-        'protobuf/3.21.4',
-        'cassandra-driver/2.16.2',
+        'boost/1.82.0',
+        'cassandra-cpp-driver/2.16.2',
         'fmt/10.0.0',
-        'gtest/1.13.0'
+        'grpc/1.50.1',
+        'gtest/1.13.0',
+        'openssl/1.1.1u',
+        'xrpl/1.12.0-b1',
     ]
 
     default_options = {
-        'assertions': False,
         'coverage': False,
         'fPIC': True,
         'shared': False,
-        'static': True,
         'tests': False,
+        'verbose': True,
 
         'cassandra-driver/*:shared': False,
         'date/*:header_only': True,
@@ -47,11 +44,9 @@ class Clio(ConanFile):
         'protobuf/*:shared': False,
         'protobuf/*:with_zlib': True,
         'snappy/*:shared': False,
-        'gtest/*:build_gmock': True,
-        'gtest/*:no_main': True, # Enabling this does not seem to produce test_main symbol
+        'gtest/*:no_main': True,
     }
-        
-    generators = ('cmake') # this may have to be done differently
+
     exports_sources = (
         'CMakeLists.txt', 'CMake/*', 'src/*'
     )
@@ -62,27 +57,24 @@ class Clio(ConanFile):
 
     def layout(self):
         cmake_layout(self)
-        # Fix this setting to follow the default introduced in Conan 1.48
+        # Fix this setting to follow the default introduced in Conan 1.48 
         # to align with our build instructions.
         self.folders.generators = 'build/generators'
 
-    # generators = 'CMakeDeps'
+    generators = 'CMakeDeps'
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables['tests'] = self.options.tests
-        tc.variables['assert'] = self.options.assertions
         tc.variables['coverage'] = self.options.coverage
         tc.variables['BUILD_SHARED_LIBS'] = self.options.shared
-        tc.variables['static'] = self.options.static
+        tc.variables['verbose'] = self.options.verbose
         tc.generate()
 
     def build(self):
         cmake = CMake(self)
-        cmake.verbose = True
         cmake.configure()
         cmake.build()
 
     def package(self):
         cmake = CMake(self)
-        cmake.verbose = True
         cmake.install()

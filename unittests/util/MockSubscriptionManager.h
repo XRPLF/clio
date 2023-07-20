@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <ripple/ledger/ReadView.h>
 #include <webserver/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>

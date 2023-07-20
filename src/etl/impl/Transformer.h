@@ -27,7 +27,7 @@
 #include <util/Profiler.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
-#include "org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h"
+#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 
 #include <chrono>
@@ -163,11 +163,11 @@ private:
      * @param rawData data extracted from an ETL source
      * @return the newly built ledger and data to write to the database
      */
-    std::pair<ripple::LedgerInfo, bool>
+    std::pair<ripple::LedgerHeader, bool>
     buildNextLedger(GetLedgerResponseType& rawData)
     {
         log_.debug() << "Beginning ledger update";
-        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
+        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
         log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
         backend_->startWrites();
@@ -191,7 +191,7 @@ private:
             log_.fatal()
                 << "Failed to build next ledger: " << e.what()
                 << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
-            return {ripple::LedgerInfo{}, false};
+            return {ripple::LedgerHeader{}, false};
         }
 
         log_.debug() << "Inserted all transactions. Number of transactions  = "
@@ -217,7 +217,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    updateCache(ripple::LedgerInfo const& lgrInfo, GetLedgerResponseType& rawData)
+    updateCache(ripple::LedgerHeader const& lgrInfo, GetLedgerResponseType& rawData)
     {
         std::vector<Backend::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(rawData.ledger_objects().objects_size());
@@ -348,7 +348,7 @@ private:
      * @param rawData Ledger data from GRPC
      */
     void
-    writeSuccessors(ripple::LedgerInfo const& lgrInfo, GetLedgerResponseType& rawData)
+    writeSuccessors(ripple::LedgerHeader const& lgrInfo, GetLedgerResponseType& rawData)
     {
         // Write successor info, if included from rippled
         if (rawData.object_neighbors_included())

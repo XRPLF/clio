@@ -23,17 +23,18 @@
  * This file contains a variety of utility functions used when executing the handlers.
  */
 
-#include <ripple/app/ledger/Ledger.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/STTx.h>
 #include <backend/BackendInterface.h>
 #include <rpc/JS.h>
 #include <rpc/common/Types.h>
+#include <util/JsonUtils.h>
 #include <webserver/Context.h>
 
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/Rate.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/STTx.h>
+
 #include <fmt/core.h>
-#include <util/JsonUtils.h>
 
 namespace RPC {
 
@@ -74,7 +75,7 @@ boost::json::object
 toJson(ripple::SLE const& sle);
 
 boost::json::object
-toJson(ripple::LedgerInfo const& info);
+toJson(ripple::LedgerHeader const& info);
 
 boost::json::object
 toJson(ripple::TxMeta const& meta);
@@ -85,15 +86,15 @@ toBoostJson(RippledJson const& value);
 
 boost::json::object
 generatePubLedgerMessage(
-    ripple::LedgerInfo const& lgrInfo,
+    ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t txnCount);
 
-std::variant<Status, ripple::LedgerInfo>
+std::variant<Status, ripple::LedgerHeader>
 ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx);
 
-std::variant<Status, ripple::LedgerInfo>
+std::variant<Status, ripple::LedgerHeader>
 getLedgerInfoFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context& yield,
@@ -129,7 +130,7 @@ std::shared_ptr<ripple::SLE const>
 read(
     std::shared_ptr<Backend::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
-    ripple::LedgerInfo const& lgrInfo,
+    ripple::LedgerHeader const& lgrInfo,
     Web::Context const& context);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
@@ -139,7 +140,7 @@ std::vector<ripple::AccountID>
 getAccountsFromTransaction(boost::json::object const& transaction);
 
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info, bool includeHash = false);
+ledgerInfoToBlob(ripple::LedgerHeader const& info, bool includeHash = false);
 
 bool
 isGlobalFrozen(
