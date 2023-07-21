@@ -52,7 +52,7 @@ target_link_libraries(clio
   PUBLIC fmt::fmt
   PUBLIC OpenSSL::Crypto
   PUBLIC OpenSSL::SSL
-  PUBLIC xrpl::libxrpl
+  PUBLIC clio-xrpl::libxrpl
 
   INTERFACE Threads::Threads
 )

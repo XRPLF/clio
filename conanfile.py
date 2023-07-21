@@ -25,15 +25,16 @@ class Clio(ConanFile):
         'grpc/1.50.1',
         'gtest/1.13.0',
         'openssl/1.1.1u',
-        'xrpl/1.12.0-b1',
+        'clio-xrpl/1.12.0-b1', # this will be just xrpl later on
     ]
 
     default_options = {
-        'coverage': False,
         'fPIC': True,
         'shared': False,
-        'tests': False,
         'verbose': True,
+        'tests': False,
+        'packaging': False,
+        'coverage': False,
 
         'cassandra-driver/*:shared': False,
         'date/*:header_only': True,
