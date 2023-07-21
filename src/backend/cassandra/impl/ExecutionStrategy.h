@@ -343,7 +343,6 @@ public:
         };
 
         boost::asio::async_compose<CompletionTokenType, void()>(init, token);
-
         numReadRequestsOutstanding_ -= statements.size();
 
         if (hadError)

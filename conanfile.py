@@ -10,11 +10,12 @@ class Clio(ConanFile):
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
-        'coverage': [True, False],
         'fPIC': [True, False],
         'shared': [True, False],
-        'tests': [True, False],
-        'verbose': [True, False],
+        'verbose': [True, False],   
+        'tests': [True, False],     # build unit tests
+        'packaging': [True, False], # create distribution packages
+        'coverage': [True, False],  # build for test coverage report
     }
 
     requires = [

@@ -1,50 +1,62 @@
 cmake_minimum_required(VERSION 3.16.3)
-
 project(clio)
 
-# Only GCC is supported.
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
-  message(FATAL_ERROR "GCC 11+ required for building clio")
-endif()
+# ==================================================== #
+#                       Options                        #
+# ==================================================== #
+option(verbose   "Verbose build"                FALSE) 
+option(tests     "Build tests"                  FALSE)
+option(coverage  "Build test coverage report"   FALSE)
+option(packaging "Create distribution packages" FALSE)
+# ==================================================== #
 
-option(verbose "Verbose build" TRUE)
 if(verbose)
-  set(CMAKE_VERBOSE_MAKEFILE TRUE)
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
 endif()
 
-# REVIEW: Who is setting this variable?
-if(PACKAGING)
-  add_definitions(-DPKG=1)
+if(packaging)
+add_definitions(-DPKG=1)
 endif()
 
 #c++20 removed std::result_of but boost 1.75 is still using it.
 add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
 
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
-
-find_package(Boost 1.82 REQUIRED
-  COMPONENTS
-    program_options
-    coroutine
-    system
-    log
-    log_setup
-)
-
-find_package(OpenSSL 1.1.1 REQUIRED)
-find_package(cassandra-cpp-driver REQUIRED)
-find_package(fmt REQUIRED)
-find_package(xrpl REQUIRED)
-
-set_target_properties(OpenSSL::SSL PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS OPENSSL_NO_SSL2
-)
-
 add_library(clio)
-target_compile_features(clio PUBLIC cxx_std_20)
+
+# Clio tweaks and checks
+include(CMake/CheckCompiler.cmake)
+include(CMake/Settings.cmake)
+include(CMake/ClioVersion.cmake)
+include(CMake/SourceLocation.cmake)
+
+# Clio deps
+include(CMake/deps/libxrpl.cmake)
+include(CMake/deps/Boost.cmake)
+include(CMake/deps/OpenSSL.cmake)
+include(CMake/deps/Threads.cmake)
+include(CMake/deps/libfmt.cmake)
+include(CMake/deps/cassandra.cmake)
+
 # TODO: Include directory will be wrong when installed.
 target_include_directories(clio PUBLIC src)
+target_compile_features(clio PUBLIC cxx_std_20)
+
+target_link_libraries(clio
+  PUBLIC Boost::boost
+  PUBLIC Boost::coroutine
+  PUBLIC Boost::program_options
+  PUBLIC Boost::system
+  PUBLIC Boost::log
+  PUBLIC Boost::log_setup
+  PUBLIC cassandra-cpp-driver::cassandra-cpp-driver
+  PUBLIC fmt::fmt
+  PUBLIC OpenSSL::Crypto
+  PUBLIC OpenSSL::SSL
+  PUBLIC xrpl::libxrpl
+
+  INTERFACE Threads::Threads
+)
+
 target_compile_definitions(clio PUBLIC 
   BOOST_ASIO_DISABLE_HANDLER_TYPE_REQUIREMENTS 
   BOOST_ASIO_HAS_STD_INVOKE_RESULT 
@@ -52,32 +64,6 @@ target_compile_definitions(clio PUBLIC
   BOOST_BEAST_ALLOW_DEPRECATED
   BOOST_CONTAINER_FWD_BAD_DEQUE
   BOOST_COROUTINES_NO_DEPRECATION_WARNING)
-target_compile_options(clio PUBLIC
-  -Wall
-  -Werror
-  -Wno-narrowing
-  -Wno-deprecated-declarations 
-  -Wno-dangling-else
-  -Wno-unused-but-set-variable)
-target_link_libraries(clio PUBLIC
-  Boost::boost
-  Boost::coroutine
-  Boost::program_options
-  Boost::system
-  Boost::log
-  Boost::log_setup
-  cassandra-cpp-driver::cassandra-cpp-driver
-  fmt::fmt
-  OpenSSL::Crypto
-  OpenSSL::SSL
-  xrpl::libxrpl
-)
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads)
-target_link_libraries(clio INTERFACE Threads::Threads)
-
-include(CMake/ClioVersion.cmake)
-include(CMake/deps/SourceLocation.cmake)
 
 target_sources(clio PRIVATE
   ## Main
@@ -85,7 +71,6 @@ target_sources(clio PRIVATE
   ## Backend
   src/backend/BackendInterface.cpp
   src/backend/LedgerCache.cpp
-  ## NextGen Backend
   src/backend/cassandra/impl/Future.cpp
   src/backend/cassandra/impl/Cluster.cpp
   src/backend/cassandra/impl/Batch.cpp
@@ -113,9 +98,8 @@ target_sources(clio PRIVATE
   src/rpc/common/Validators.cpp
   src/rpc/common/MetaProcessors.cpp
   src/rpc/common/impl/APIVersionParser.cpp
-  # RPC impl
   src/rpc/common/impl/HandlerProvider.cpp
-  ## RPC handler
+  ## RPC handlers
   src/rpc/handlers/AccountChannels.cpp
   src/rpc/handlers/AccountCurrencies.cpp
   src/rpc/handlers/AccountInfo.cpp
@@ -146,13 +130,15 @@ target_sources(clio PRIVATE
   src/log/Logger.cpp
   src/util/Taggable.cpp)
 
-add_executable(clio_server src/main/main.cpp)
+# Clio server
+add_executable(clio_server src/main/Main.cpp)
 target_link_libraries(clio_server PUBLIC clio)
 
-option(tests "Build tests" FALSE)
+# Unittesting
 if(tests)
   set(TEST_TARGET clio_tests)
   add_executable(${TEST_TARGET}
+    # Common
     unittests/Main.cpp
     unittests/Playground.cpp
     unittests/Logger.cpp
@@ -215,27 +201,30 @@ if(tests)
     unittests/backend/cassandra/SettingsProviderTests.cpp
     unittests/backend/cassandra/ExecutionStrategyTests.cpp
     unittests/backend/cassandra/AsyncExecutorTests.cpp
+    # Webserver
     unittests/webserver/ServerTest.cpp
     unittests/webserver/RPCServerHandlerTest.cpp)
 
   include(CMake/deps/gtest.cmake)
 
-  # fix for dwarf5 bug on ci 
+  # See https://github.com/google/googletest/issues/3475
+  gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 10)
+
+  # Fix for dwarf5 bug on ci 
   target_compile_options(clio PUBLIC -gdwarf-4)
 
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
-  # REVIEW: No link to clio library?
+  target_link_libraries(${TEST_TARGET} PUBLIC clio gtest::gtest)
 
-  # if CODE_COVERAGE enable, add clio_test-ccov
-  if(CODE_COVERAGE)
-    include(CMake/coverage.cmake)
-    # REVIEW: Misspelled "coverage"?
-    add_converage(${TEST_TARGET})
+  # If 'coverage' enable, add clio_test-ccov
+  if(coverage)
+    include(CMake/Coverage.cmake)
+    add_coverage(${TEST_TARGET})
   endif()
 endif()
 
 include(CMake/install/install.cmake)
-if(PACKAGING)
-    include(CMake/packaging.cmake)
+if(packaging)
+    include(CMake/Packaging.cmake) # TODO: file is actually missing?
 endif()

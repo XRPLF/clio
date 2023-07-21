@@ -1,5 +1,5 @@
-# call add_converage(module_name) to add coverage targets for the given module
-function(add_converage module)
+# call add_coverage(module_name) to add coverage targets for the given module
+function(add_coverage module)
   if("${CMAKE_C_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang"
      OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang")
     message("[Coverage] Building with llvm Code Coverage Tools")
@@ -10,15 +10,21 @@ function(add_converage module)
     endif()
 
     # set Flags
-    target_compile_options(${module} PRIVATE -fprofile-instr-generate
-                                             -fcoverage-mapping)
-    target_link_options(${module} PUBLIC -fprofile-instr-generate
-                        -fcoverage-mapping)
+    target_compile_options(${module} PRIVATE 
+      -fprofile-instr-generate
+      -fcoverage-mapping)
+    
+    target_link_options(${module} PUBLIC 
+      -fprofile-instr-generate
+      -fcoverage-mapping)
 
-    target_compile_options(clio PRIVATE -fprofile-instr-generate
-                                        -fcoverage-mapping)
-    target_link_options(clio PUBLIC -fprofile-instr-generate
-                        -fcoverage-mapping)
+    target_compile_options(clio PRIVATE 
+      -fprofile-instr-generate
+      -fcoverage-mapping)
+    
+    target_link_options(clio PUBLIC 
+      -fprofile-instr-generate
+      -fcoverage-mapping)
 
     # llvm-cov
     add_custom_target(
@@ -60,8 +66,7 @@ function(add_converage module)
       COMMENT
         "Open ${module}-llvm-cov/index.html in your browser to view the coverage report."
     )
-  elseif("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}"
-                                                   MATCHES "GNU")
+  elseif("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     message("[Coverage] Building with Gcc Code Coverage Tools")
 
     find_program(GCOV_PATH gcov)
