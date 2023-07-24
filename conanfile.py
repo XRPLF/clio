@@ -11,7 +11,6 @@ class Clio(ConanFile):
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
         'fPIC': [True, False],
-        'shared': [True, False],
         'verbose': [True, False],   
         'tests': [True, False],     # build unit tests
         'packaging': [True, False], # create distribution packages
@@ -25,13 +24,12 @@ class Clio(ConanFile):
         'grpc/1.50.1',
         'gtest/1.13.0',
         'openssl/1.1.1u',
-        'clio-xrpl/1.12.0-b1', # this will be just xrpl later on
+        'xrpl/1.12.0-b2',
     ]
 
     default_options = {
         'fPIC': True,
-        'shared': False,
-        'verbose': True,
+        'verbose': False,
         'tests': False,
         'packaging': False,
         'coverage': False,
@@ -66,10 +64,9 @@ class Clio(ConanFile):
     generators = 'CMakeDeps'
     def generate(self):
         tc = CMakeToolchain(self)
+        tc.variables['verbose'] = self.options.verbose
         tc.variables['tests'] = self.options.tests
         tc.variables['coverage'] = self.options.coverage
-        tc.variables['BUILD_SHARED_LIBS'] = self.options.shared
-        tc.variables['verbose'] = self.options.verbose
         tc.generate()
 
     def build(self):

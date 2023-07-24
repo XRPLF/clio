@@ -1,8 +1,8 @@
 # Temporary build instructions
 
-## prerequisites 
-1. make sure you have conan 1 installed and active (use brew on mac). conan may have been upgraded to v2 and that may not work
-2. you should already have conan profile after building rippled. here is what mine looks like:
+## Prerequisites 
+1. Make sure you have conan 1.x installed and active (use brew on mac). Conan may have been upgraded to v2 and that may not work.
+2. You should already have a Conan profile after building rippled. Example:
 ```
 [settings]
 os=Macos
@@ -25,26 +25,20 @@ tools.build:cxxflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
 tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
 ```
 
-## using artifactory (temporary package)
+## Using artifactory (temporary packages)
 ```sh
 conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 ```
-Now you should be able to download prebuilt `clio-xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
+Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
 
-## preparing local packages
-1. get rippled from [John's branch](https://github.com/thejohnfreeman/clio/tree/conan)
-2. remove old packages you may have cached: 
+## Preparing local packages (alternative to artifactory)
+1. Get rippled from [this branch](https://github.com/thejohnfreeman/clio/tree/conan)
+2. Remove old packages you may have cached: 
 ```sh 
-conan remove -f clio-xrpl/1.12.0-b1
-conan remove -f xrpl/1.12.0-b1
+conan remove -f xrpl/1.12.0-b2
 conan remove -f cassandra-cpp-driver/2.16.2
 ```
-3. in `conanfile.py` update the name of the package from `xrpl` to `clio-xrpl`:
-```python
-class Xrpl(ConanFile):
-    name = 'clio-xrpl'
-```
-4. in a clone of rippled from step 1, build rippled as per their instructions. pay attention to these commands:
+3. In a clone of rippled from step 1, build rippled as per their instructions. pay attention to these commands:
 ```sh
 conan export external/snappy snappy/1.1.9@
 conan export external/soci soci/4.0.3@
@@ -54,13 +48,13 @@ cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DC
 cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 cd - # to go back to root of rippled
 ```
-5. perform this command at the root directory of rippled
+4. Perform this command at the root directory of rippled
 ```sh
 conan export .
 ```
-this will export a local package `clio-xrpl/1.12.0-b1`.
+this will export a local package `xrpl/1.12.0-b2`.
 
-6. navigate to clio's root directory and perform
+5. Navigate to clio's root directory and perform
 ```sh
 conan export external/cassandra # export our "custom" cassandra driver package
 mkdir build && cd build
@@ -68,15 +62,16 @@ conan install .. --output-folder . --build missing --settings build_type=Release
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 ```
-if all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_unittests` in the `build` directory (the current directory).
+If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_unittests` in the `build` directory (the current directory).
 Please note that a few unittests are currently failing. See below.
 
-## things to fix
+## Things to fix
 
 1. Figure out what to do with `ripple::Fees` that is now missing the `units` member. It was used in a few places and couple unittests are broken because of it.
-2. Fix build on CI (currently using old CMake. need to use conan instead)
-3. Fix code coverage support (see 'coverage' option in conanfile)
-4. See if we can contribute/push our cassandra-driver to conan center so we don't need to export it before we able to use it
+2. Fix build on CI (currently using old CMake. need to use conan instead).
+3. Fix code coverage support (see 'coverage' option in conanfile).
+4. See if we can contribute/push our cassandra-cpp-driver to conan center so we don't need to export it before we able to use it.
+5. Try to improve the new asio code that is using `async_compose` and potentially the `FutureWithCallback` way of accepting the callback.
 
 # Clio
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated

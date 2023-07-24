@@ -227,6 +227,7 @@ public:
         while (true)
         {
             numReadRequestsOutstanding_ += numStatements;
+            // TODO: see if we can avoid using shared_ptr for self here
             auto init = [this, &statements, &future]<typename Self>(Self& self) {
                 future.emplace(handle_.get().asyncExecute(
                     statements, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
@@ -272,6 +273,7 @@ public:
         while (true)
         {
             ++numReadRequestsOutstanding_;
+            // TODO: see if we can avoid using shared_ptr for self here
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
                 future.emplace(handle_.get().asyncExecute(
                     statement, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
@@ -320,7 +322,7 @@ public:
         futures.reserve(numOutstanding);
 
         auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
-            auto sself = std::make_shared<Self>(std::move(self));
+            auto sself = std::make_shared<Self>(std::move(self));  // TODO: see if we can avoid this
             auto executionHandler = [&hadError, &numOutstanding, sself = std::move(sself)](auto const& res) mutable {
                 if (not res)
                     hadError = true;

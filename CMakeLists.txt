@@ -11,11 +11,11 @@ option(packaging "Create distribution packages" FALSE)
 # ==================================================== #
 
 if(verbose)
-set(CMAKE_VERBOSE_MAKEFILE TRUE)
+  set(CMAKE_VERBOSE_MAKEFILE TRUE)
 endif()
 
 if(packaging)
-add_definitions(-DPKG=1)
+  add_definitions(-DPKG=1)
 endif()
 
 #c++20 removed std::result_of but boost 1.75 is still using it.
@@ -52,7 +52,7 @@ target_link_libraries(clio
   PUBLIC fmt::fmt
   PUBLIC OpenSSL::Crypto
   PUBLIC OpenSSL::SSL
-  PUBLIC clio-xrpl::libxrpl
+  PUBLIC xrpl::libxrpl
 
   INTERFACE Threads::Threads
 )
@@ -217,7 +217,7 @@ if(tests)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
   target_link_libraries(${TEST_TARGET} PUBLIC clio gtest::gtest)
 
-  # If 'coverage' enable, add clio_test-ccov
+  # Generate `clio_test-ccov` if coverage is enabled
   if(coverage)
     include(CMake/Coverage.cmake)
     add_coverage(${TEST_TARGET})
@@ -226,5 +226,5 @@ endif()
 
 include(CMake/install/install.cmake)
 if(packaging)
-    include(CMake/Packaging.cmake) # TODO: file is actually missing?
+    include(CMake/packaging.cmake) # TODO: file is actually missing?
 endif()

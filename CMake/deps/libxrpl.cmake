@@ -1,1 +1,1 @@
-find_package(clio-xrpl REQUIRED)
+find_package(xrpl REQUIRED)
