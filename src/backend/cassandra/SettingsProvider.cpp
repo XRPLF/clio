@@ -24,6 +24,7 @@
 
 #include <boost/json.hpp>
 
+#include <fstream>
 #include <string>
 #include <thread>
 

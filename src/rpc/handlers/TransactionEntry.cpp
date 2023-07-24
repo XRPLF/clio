@@ -31,7 +31,7 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For

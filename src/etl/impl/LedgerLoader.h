@@ -28,7 +28,6 @@
 #include <util/Profiler.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
-#include <ripple/ledger/ReadView.h>
 
 #include <memory>
 
@@ -85,7 +84,7 @@ public:
      * nft_token_transactions tables (mostly transaction hashes, corresponding nodestore hashes and affected accounts)
      */
     FormattedTransactionsData
-    insertTransactions(ripple::LedgerInfo const& ledger, GetLedgerResponseType& data)
+    insertTransactions(ripple::LedgerHeader const& ledger, GetLedgerResponseType& data)
     {
         FormattedTransactionsData result;
 
@@ -140,7 +139,7 @@ public:
      * @param sequence the sequence of the ledger to download
      * @return The ledger downloaded, with a full transaction and account state map
      */
-    std::optional<ripple::LedgerInfo>
+    std::optional<ripple::LedgerHeader>
     loadInitialLedger(uint32_t sequence)
     {
         // check that database is actually empty
@@ -158,7 +157,7 @@ public:
         if (!ledgerData)
             return {};
 
-        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
+        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
         log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
 

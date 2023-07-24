@@ -19,6 +19,8 @@
 
 #include <etl/ETLService.h>
 
+#include <ripple/protocol/LedgerHeader.h>
+
 using namespace clio;
 
 // Database must be populated when this starts
@@ -80,7 +82,7 @@ ETLService::monitor()
     if (!rng)
     {
         log_.info() << "Database is empty. Will download a ledger from the network.";
-        std::optional<ripple::LedgerInfo> ledger;
+        std::optional<ripple::LedgerHeader> ledger;
 
         try
         {

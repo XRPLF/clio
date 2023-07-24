@@ -20,7 +20,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTBuyOffers.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
 
 using namespace ripple;

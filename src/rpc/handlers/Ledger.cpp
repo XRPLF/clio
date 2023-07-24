@@ -30,7 +30,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     Output output;
 
     if (input.binary)
@@ -51,8 +51,6 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
         output.header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
         output.header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
         output.header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
-        output.header[JS(seqNum)] = std::to_string(lgrInfo.seq);
-        output.header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
         output.header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
         output.header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
     }

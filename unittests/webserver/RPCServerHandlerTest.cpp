@@ -788,12 +788,12 @@ TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPRequestNotJson)
 {
     static auto constexpr request = "not json";
-    static auto constexpr response = "Unable to parse request: syntax error";
+    static auto constexpr responsePrefix = "Unable to parse request: syntax error";
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    EXPECT_EQ(session->message, response);
+    EXPECT_THAT(session->message, testing::StartsWith(responsePrefix));
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 

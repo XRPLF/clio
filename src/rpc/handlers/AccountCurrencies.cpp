@@ -30,7 +30,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
 
     auto const accountLedgerObject =
@@ -81,12 +81,14 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountCurrenciesHandler::Output const& output)
 {
+    using boost::json::value_from;
+
     jv = {
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
-        {JS(receive_currencies), output.receiveCurrencies},
-        {JS(send_currencies), output.sendCurrencies},
+        {JS(receive_currencies), value_from(output.receiveCurrencies)},
+        {JS(send_currencies), value_from(output.sendCurrencies)},
     };
 }
 

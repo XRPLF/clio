@@ -171,8 +171,10 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
+        using boost::json::value_from;
+
         jv = {
-            {JS(info), output.info},
+            {JS(info), value_from(output.info)},
             {JS(validated), output.validated},
         };
     }
@@ -180,6 +182,7 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
     {
+        using boost::json::value_from;
         using ripple::to_string;
 
         jv = {
@@ -188,8 +191,8 @@ private:
             {JS(time), to_string(std::chrono::floor<std::chrono::microseconds>(info.time))},
             {JS(uptime), info.uptime.count()},
             {"clio_version", info.clioVersion},
-            {JS(validated_ledger), info.validatedLedger},
-            {"cache", info.cache},
+            {JS(validated_ledger), value_from(info.validatedLedger)},
+            {"cache", value_from(info.cache)},
         };
 
         if (info.isAmendmentBlocked)

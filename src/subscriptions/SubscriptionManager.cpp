@@ -41,7 +41,7 @@ Subscription::publish(std::shared_ptr<std::string> const& message)
 
 boost::json::object
 getLedgerPubMessage(
-    ripple::LedgerInfo const& lgrInfo,
+    ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t txnCount)
@@ -53,7 +53,8 @@ getLedgerPubMessage(
     pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
     pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
 
-    pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
+    // deprecated?
+    // pubMsg["fee_ref"] = RPC::toBoostJson(fees.units.jsonClipped());
     pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
     pubMsg["reserve_base"] = RPC::toBoostJson(fees.reserve.jsonClipped());
     pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
@@ -144,7 +145,7 @@ SubscriptionManager::unsubBookChanges(SessionPtrType session)
 
 void
 SubscriptionManager::pubLedger(
-    ripple::LedgerInfo const& lgrInfo,
+    ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t txnCount)
@@ -156,7 +157,7 @@ SubscriptionManager::pubLedger(
 }
 
 void
-SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerInfo const& lgrInfo)
+SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo)
 {
     auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
@@ -244,7 +245,7 @@ SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs
 
 void
 SubscriptionManager::pubBookChanges(
-    ripple::LedgerInfo const& lgrInfo,
+    ripple::LedgerHeader const& lgrInfo,
     std::vector<Backend::TransactionAndMetadata> const& transactions)
 {
     auto const json = RPC::computeBookChanges(lgrInfo, transactions);

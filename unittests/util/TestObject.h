@@ -21,7 +21,11 @@
 
 #include <backend/Types.h>
 
-#include <ripple/ledger/ReadView.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/Protocol.h>
+#include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/TxMeta.h>
 
 #include <optional>
 #include <string_view>

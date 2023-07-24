@@ -26,6 +26,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_from.hpp>
 
 namespace Server {
 struct ConnectionBase;

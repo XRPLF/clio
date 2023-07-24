@@ -20,7 +20,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTOffersCommon.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
 
 using namespace ripple;
@@ -68,7 +67,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
 
     // TODO: just check for existence without pulling
     if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
@@ -139,10 +138,12 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandlerBase::Output const& output)
 {
+    using boost::json::value_from;
+
     auto object = boost::json::object{
         {JS(nft_id), output.nftID},
         {JS(validated), output.validated},
-        {JS(offers), output.offers},
+        {JS(offers), value_from(output.offers)},
     };
 
     if (output.marker)

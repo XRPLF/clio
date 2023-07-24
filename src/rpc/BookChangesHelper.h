@@ -230,6 +230,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
 }
 
 [[nodiscard]] boost::json::object const
-computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
+computeBookChanges(
+    ripple::LedgerHeader const& lgrInfo,
+    std::vector<Backend::TransactionAndMetadata> const& transactions);
 
 }  // namespace RPC

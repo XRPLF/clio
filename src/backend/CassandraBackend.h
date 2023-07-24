@@ -29,7 +29,8 @@
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/nft.h>
 #include <boost/asio/spawn.hpp>
 
 namespace Backend::Cassandra {
@@ -199,9 +200,9 @@ public:
     }
 
     void
-    writeLedger(ripple::LedgerInfo const& ledgerInfo, std::string&& header) override
+    writeLedger(ripple::LedgerHeader const& ledgerInfo, std::string&& blob) override
     {
-        executor_.write(schema_->insertLedgerHeader, ledgerInfo.seq, std::move(header));
+        executor_.write(schema_->insertLedgerHeader, ledgerInfo.seq, std::move(blob));
 
         executor_.write(schema_->insertLedgerHash, ledgerInfo.hash, ledgerInfo.seq);
 
@@ -232,7 +233,7 @@ public:
         return std::nullopt;
     }
 
-    std::optional<ripple::LedgerInfo>
+    std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call for seq " << sequence;
@@ -261,7 +262,7 @@ public:
         return std::nullopt;
     }
 
-    std::optional<ripple::LedgerInfo>
+    std::optional<ripple::LedgerHeader>
     fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context& yield) const override
     {
         log_.trace() << __func__ << " call";

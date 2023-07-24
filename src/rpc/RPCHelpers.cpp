@@ -251,7 +251,7 @@ toJson(ripple::SLE const& sle)
 }
 
 boost::json::object
-toJson(ripple::LedgerInfo const& lgrInfo)
+toJson(ripple::LedgerHeader const& lgrInfo)
 {
     boost::json::object header;
     header["ledger_sequence"] = lgrInfo.seq;
@@ -284,7 +284,7 @@ parseStringAsUInt(std::string const& value)
     return index;
 }
 
-std::variant<Status, ripple::LedgerInfo>
+std::variant<Status, ripple::LedgerHeader>
 ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx)
 {
     auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
@@ -339,7 +339,7 @@ ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& ba
 }
 
 // extract ledgerInfoFromRequest's parameter from context
-std::variant<Status, ripple::LedgerInfo>
+std::variant<Status, ripple::LedgerHeader>
 getLedgerInfoFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context& yield,
@@ -347,7 +347,7 @@ getLedgerInfoFromHashOrSeq(
     std::optional<uint32_t> ledgerIndex,
     uint32_t maxSeq)
 {
-    std::optional<ripple::LedgerInfo> lgrInfo;
+    std::optional<ripple::LedgerHeader> lgrInfo;
     auto const err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash)
     {
@@ -373,7 +373,7 @@ getLedgerInfoFromHashOrSeq(
 }
 
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerInfo const& info, bool includeHash)
+ledgerInfoToBlob(ripple::LedgerHeader const& info, bool includeHash)
 {
     ripple::Serializer s;
     s.add32(info.seq);
@@ -664,7 +664,7 @@ std::shared_ptr<ripple::SLE const>
 read(
     std::shared_ptr<Backend::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
-    ripple::LedgerInfo const& lgrInfo,
+    ripple::LedgerHeader const& lgrInfo,
     Web::Context const& context)
 {
     if (auto const blob = backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)

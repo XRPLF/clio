@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/LedgerData.h>
 
-#include <ripple/app/ledger/LedgerToJson.h>
+#include <ripple/protocol/serialize.h>
 
 #include <algorithm>
 
@@ -68,7 +68,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
 
     // no marker -> first call, return header information
     auto header = boost::json::object();
@@ -93,8 +93,6 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
             header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
             header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
             header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
-            header[JS(seqNum)] = std::to_string(lgrInfo.seq);
-            header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
             header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
             header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
         }

@@ -34,7 +34,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
     auto const keylet = ripple::keylet::account(*accountID).key;
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
@@ -46,7 +46,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     auto sle = ripple::SLE{it, keylet};
     auto accountSeq = sle.getFieldU32(ripple::sfSequence);
     bool const bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
-    auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
+    // TODO: remove if no longer needed
+    // auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
     auto output = NoRippleCheckHandler::Output();
 
@@ -57,7 +58,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
         boost::json::object tx;
         tx[JS(Sequence)] = accountSeq;
         tx[JS(Account)] = ripple::toBase58(accountID);
-        tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
+        // TODO: deprecated?
+        // tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
 
         return tx;
     };
@@ -186,10 +188,12 @@ tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NoRippleCheckHandler::Output const& output)
 {
+    using boost::json::value_from;
+
     auto obj = boost::json::object{
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
-        {"problems", output.problems},
+        {"problems", value_from(output.problems)},
         {JS(validated), output.validated},
     };
 

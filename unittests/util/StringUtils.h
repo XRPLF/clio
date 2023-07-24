@@ -20,7 +20,8 @@
 #pragma once
 
 #include <ripple/basics/base_uint.h>
-#include <ripple/ledger/ReadView.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/Protocol.h>
 
 #include <string>
 

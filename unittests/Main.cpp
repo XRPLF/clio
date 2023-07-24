@@ -17,31 +17,11 @@
 */
 //==============================================================================
 
-#pragma once
+#include <gtest/gtest.h>
 
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/protocol/LedgerHeader.h>
-
-#include <sstream>
-#include <string>
-
-namespace util {
-
-inline ripple::LedgerHeader
-deserializeHeader(ripple::Slice data)
+int
+main(int argc, char** argv)
 {
-    return ripple::deserializeHeader(data, /*hasHash=*/true);
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
-
-inline std::string
-toString(ripple::LedgerHeader const& info)
-{
-    std::stringstream ss;
-    ss << "LedgerHeader { Sequence : " << info.seq << " Hash : " << ripple::strHex(info.hash)
-       << " TxHash : " << strHex(info.txHash) << " AccountHash : " << ripple::strHex(info.accountHash)
-       << " ParentHash : " << strHex(info.parentHash) << " }";
-    return ss.str();
-}
-
-}  // namespace util

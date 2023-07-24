@@ -229,8 +229,6 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
       "ledger_index":"30",
       "parent_close_time":0,
       "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "seqNum":"30",
-      "totalCoins":"0",
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
@@ -297,8 +295,6 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
       "ledger_index":"30",
       "parent_close_time":0,
       "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "seqNum":"30",
-      "totalCoins":"0",
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
@@ -368,8 +364,6 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
       "ledger_index":"30",
       "parent_close_time":0,
       "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "seqNum":"30",
-      "totalCoins":"0",
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true

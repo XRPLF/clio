@@ -90,6 +90,7 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
     }
 }
 
+// TODO: cb_ can be deleted before cassandra-driver calls it if the user fails to hold onto the future object
 /* implicit */ FutureWithCallback::FutureWithCallback(CassFuture* ptr, fn_t&& cb)
     : Future{ptr}, cb_{std::make_unique<fn_t>(std::move(cb))}
 {

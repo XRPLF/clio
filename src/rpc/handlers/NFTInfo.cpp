@@ -20,8 +20,8 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTInfo.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/nft.h>
 
 using namespace ripple;
 using namespace ::RPC;
@@ -39,7 +39,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
     auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
 
     if (not maybeNft.has_value())

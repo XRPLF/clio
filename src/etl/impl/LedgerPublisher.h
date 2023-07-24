@@ -25,7 +25,7 @@
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 
-#include <ripple/ledger/ReadView.h>
+#include <ripple/protocol/LedgerHeader.h>
 
 #include <chrono>
 
@@ -47,7 +47,7 @@ class LedgerPublisher
 {
     clio::Logger log_{"ETL"};
 
-    boost::asio::io_context::strand publishStrand_;
+    boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
@@ -71,7 +71,7 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         SystemState const& state)
-        : publishStrand_{ioc}, backend_{backend}, subscriptions_{subscriptions}, state_{std::cref(state)}
+        : publishStrand_{ioc.get_executor()}, backend_{backend}, subscriptions_{subscriptions}, state_{std::cref(state)}
     {
     }
 
@@ -130,7 +130,7 @@ public:
      * @param lgrInfo the ledger to publish
      */
     void
-    publish(ripple::LedgerInfo const& lgrInfo)
+    publish(ripple::LedgerHeader const& lgrInfo)
     {
         boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
             log_.info() << "Publishing ledger " << std::to_string(lgrInfo.seq);
