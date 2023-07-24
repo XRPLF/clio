@@ -51,6 +51,7 @@ conan export external/soci soci/4.0.3@
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 cd - # to go back to root of rippled
 ```
 5. perform this command at the root directory of rippled
