@@ -54,7 +54,8 @@ public:
         std::shared_ptr<SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<LoadBalancer> const& balancer,
         std::shared_ptr<ETLService const> const& etl,
-        Counters const& counters);
+        Counters const& counters,
+        clio::Config const& config);
 
     bool
     contains(std::string const& method) const override;
