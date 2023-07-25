@@ -200,18 +200,16 @@ private:
 
         if (info.rippledInfo)
         {
-            try
-            {
-                auto const& rippledInfo = info.rippledInfo.value();
+            auto const& rippledInfo = info.rippledInfo.value();
 
+            if (rippledInfo.contains(JS(load_factor)))
                 jv.as_object()[JS(load_factor)] = rippledInfo.at(JS(load_factor));
+            if (rippledInfo.contains(JS(validation_quorum)))
                 jv.as_object()[JS(validation_quorum)] = rippledInfo.at(JS(validation_quorum));
+            if (rippledInfo.contains(JS(build_version)))
                 jv.as_object()["rippled_version"] = rippledInfo.at(JS(build_version));
+            if (rippledInfo.contains(JS(network_id)))
                 jv.as_object()[JS(network_id)] = rippledInfo.at(JS(network_id));
-            }
-            catch (std::exception const&)
-            {
-            }
         }
 
         if (info.adminSection)
