@@ -158,6 +158,7 @@ if(tests)
     unittests/rpc/APIVersionTests.cpp
     unittests/rpc/ForwardingProxyTests.cpp
     unittests/rpc/WorkQueueTest.cpp
+    unittests/rpc/AmendmentsTest.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp

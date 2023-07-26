@@ -258,3 +258,6 @@ CreateCreateNFTOfferTxWithMetadata(
     std::string_view nftId,
     std::uint32_t offerPrice,
     std::string_view offerId);
+
+[[nodiscard]] ripple::STObject
+CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments);

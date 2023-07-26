@@ -729,3 +729,14 @@ CreateCreateNFTOfferTxWithMetadata(
     ret.metadata = metaObj.getSerializer().peekData();
     return ret;
 }
+
+ripple::STObject
+CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments)
+{
+    auto amendments = ripple::STObject(ripple::sfLedgerEntry);
+    amendments.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMENDMENTS);
+    amendments.setFieldU32(ripple::sfFlags, 0);
+    ripple::STVector256 list(enabledAmendments);
+    amendments.setFieldV256(ripple::sfAmendments, list);
+    return amendments;
+}
