@@ -75,7 +75,8 @@ private:
                  {"first", output.minVersion},
                  {"last", output.maxVersion},
                  {"good", output.currVersion},
-             }}};
+             }},
+        };
     }
 };
 
