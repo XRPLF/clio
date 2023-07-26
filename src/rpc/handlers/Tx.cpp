@@ -58,7 +58,7 @@ TxHandler::process(Input input, Context const& ctx) const
     // clio does not implement 'inLedger' which is a deprecated field
     if (!input.binary)
     {
-        auto const [txn, meta] = toExpandedJson(*dbResponse);
+        auto const [txn, meta] = toExpandedJson(*dbResponse, NFTokenjson::ENABLE);
         output.tx = txn;
         output.meta = meta;
     }

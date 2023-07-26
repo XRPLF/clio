@@ -25,6 +25,7 @@
 #include <util/Profiler.h>
 
 #include <ripple/basics/StringUtilities.h>
+#include <ripple/protocol/NFTSyntheticSerializer.h>
 #include <ripple/protocol/nftPageMask.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -190,12 +191,26 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs)
+toExpandedJson(Backend::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
+
+    if (nftEnabled == NFTokenjson::ENABLE)
+    {
+        Json::Value nftJson;
+        ripple::insertNFTSyntheticInJson(nftJson, txn, *meta);
+        // if there is no nft fields, the nftJson will be {"meta":null}
+        auto const nftBoostJson = toBoostJson(nftJson).as_object();
+        if (nftBoostJson.contains(JS(meta)) and nftBoostJson.at(JS(meta)).is_object())
+        {
+            for (auto const& [k, v] : nftBoostJson.at(JS(meta)).as_object())
+                metaJson.insert_or_assign(k, v);
+        }
+    }
+
     return {txnJson, metaJson};
 }
 
