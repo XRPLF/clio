@@ -59,11 +59,10 @@ Please note that a few unittests are currently failing. See below.
 
 ## Things to fix
 
-1. Figure out what to do with `ripple::Fees` that is now missing the `units` member. It was used in a few places and couple unittests are broken because of it.
-2. Fix build on CI (currently using old CMake. need to use conan instead).
-3. Fix code coverage support (see 'coverage' option in conanfile).
-4. See if we can contribute/push our cassandra-cpp-driver to conan center so we don't need to export it before we able to use it.
-5. Try to improve the new asio code that is using `async_compose` and potentially the `FutureWithCallback` way of accepting the callback.
+1. Fix build on CI (currently using old CMake. need to use conan instead).
+2. Fix code coverage support (see 'coverage' option in conanfile).
+3. See if we can contribute/push our cassandra-cpp-driver to conan center so we don't need to export it before we able to use it.
+4. Try to improve the new asio code that is using `async_compose` and potentially the `FutureWithCallback` way of accepting the callback.
 
 # Clio
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
