@@ -228,3 +228,33 @@ CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers);
 CreateNFTTokenPage(
     std::vector<std::pair<std::string, std::string>> const& tokens,
     std::optional<ripple::uint256> previousPage);
+
+[[nodiscard]] Backend::TransactionAndMetadata
+CreateMintNFTTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    uint32_t nfTokenTaxon,
+    std::string_view nftID);
+
+[[nodiscard]] Backend::TransactionAndMetadata
+CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
+
+[[nodiscard]] Backend::TransactionAndMetadata
+CreateCancelNFTOffersTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::vector<std::string> const& nftIds);
+
+[[nodiscard]] Backend::TransactionAndMetadata
+CreateCreateNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
+
+[[nodiscard]] Backend::TransactionAndMetadata
+CreateCreateNFTOfferTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::string_view nftId,
+    std::uint32_t offerPrice,
+    std::string_view offerId);

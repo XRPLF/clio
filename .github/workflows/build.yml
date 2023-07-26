@@ -15,90 +15,30 @@ jobs:
       - name: Run clang-format
         uses: ./.github/actions/lint
 
-  build_clio:
-    name: Build Clio
-    runs-on: [self-hosted, heavy]
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        type:
-          - suffix: deb
-            image: rippleci/clio-dpkg-builder:2022-09-17
-            script: dpkg
-          - suffix: rpm
-            image: rippleci/clio-rpm-builder:2022-09-17
-            script: rpm
-
-    container:
-      image: ${{ matrix.type.image }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          path: clio
-          fetch-depth: 0
-
-      - name: Clone Clio packaging repo
-        uses: actions/checkout@v3
-        with:
-          path: clio-packages
-          repository: XRPLF/clio-packages
-          ref: main
-
-      - name: Build
-        shell: bash
-        run: |
-          export CLIO_ROOT=$(realpath clio)
-          if [ ${{ matrix.type.suffix }} == "rpm" ]; then
-            source /opt/rh/devtoolset-11/enable
-          fi
-          cmake -S clio-packages -B clio-packages/build -DCLIO_ROOT=$CLIO_ROOT
-          cmake --build clio-packages/build --parallel $(nproc)
-          cp ./clio-packages/build/clio-prefix/src/clio-build/clio_tests .
-          mv ./clio-packages/build/*.${{ matrix.type.suffix }} .
-      - name: Artifact packages
-        uses: actions/upload-artifact@v3
-        with:
-          name: clio_${{ matrix.type.suffix }}_packages
-          path: ${{ github.workspace }}/*.${{ matrix.type.suffix }}
-
-      - name: Artifact clio_tests
-        uses: actions/upload-artifact@v3
-        with:
-          name: clio_tests-${{ matrix.type.suffix }}
-          path: ${{ github.workspace }}/clio_tests
-
   build_dev:
     name: Build on Mac/Clang14 and run tests
-    needs: lint
     continue-on-error: false
     runs-on: [self-hosted, macOS]
-
+    needs: lint
     steps:
       - uses: actions/checkout@v3
         with:
           path: clio
 
-      - name: Check Boost cache
-        id: boost
-        uses: actions/cache@v3
-        with:
-          path: boost_1_77_0
-          key: ${{ runner.os }}-boost
-
-      - name: Build Boost
-        if: ${{ steps.boost.outputs.cache-hit != 'true' }}
+      - name: List conan artifactory
         run: |
-          rm -rf boost_1_77_0.tar.gz boost_1_77_0 # cleanup if needed first
-          curl -s -fOJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
-          tar zxf boost_1_77_0.tar.gz
-          cd boost_1_77_0
-          ./bootstrap.sh
-          ./b2 define=BOOST_ASIO_HAS_STD_INVOKE_RESULT cxxflags="-std=c++20"
+          conan search
+          conan remote list
+          if [[ $(conan remote list |grep conan-non-prod| wc -c) -ne 0 ]]; then
+              echo "conan-non-prod is available"
+          else
+              echo "adding conan-non-prod"
+              conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+          fi
 
       - name: Install dependencies
         run: |
-          brew install llvm@14 pkg-config protobuf openssl ninja cassandra-cpp-driver bison cmake
+          brew install llvm@14 pkg-config ninja bison cmake
 
       - name: Setup environment for llvm-14
         run: |
@@ -106,107 +46,16 @@ jobs:
           export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
           export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
 
-      - name: Build clio
+      - name: Build Clio
         run: |
-          export BOOST_ROOT=$(pwd)/boost_1_77_0
           cd clio
-          cmake -B build -DCMAKE_C_COMPILER='/usr/local/opt/llvm@14/bin/clang' -DCMAKE_CXX_COMPILER='/usr/local/opt/llvm@14/bin/clang++'
-          if ! cmake --build build -j; then
-            echo '# 🔥🔥 MacOS AppleClang build failed!💥' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
+          mkdir -p build
+          cd build
+          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
+          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . -j4
+
       - name: Run Test
         run: |
           cd clio/build
           ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
-
-  test_clio:
-    name: Test Clio
-    runs-on: [self-hosted, Linux]
-    needs: build_clio
-    strategy:
-      fail-fast: false
-      matrix:
-        suffix: [rpm, deb]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Get clio_tests artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: clio_tests-${{ matrix.suffix }}
-
-      - name: Run tests
-        timeout-minutes: 10
-        uses: ./.github/actions/test
-
-  code_coverage:
-    name: Build on Linux and code coverage
-    needs: lint
-    continue-on-error: false
-    runs-on: ubuntu-22.04
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          path: clio
-
-      - name: Check Boost cache
-        id: boost
-        uses: actions/cache@v3
-        with:
-          path: boost
-          key: ${{ runner.os }}-boost
-
-      - name: Build boost
-        if: steps.boost.outputs.cache-hit != 'true'
-        run: |
-          curl -s -OJL "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz"
-          tar zxf boost_1_77_0.tar.gz
-          mv boost_1_77_0 boost
-          cd boost
-          ./bootstrap.sh
-          ./b2
-      - name: install deps
-        run: |
-          sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential doxygen bison flex autoconf clang-format gcovr
-      - name: Build clio
-        run: |
-          export BOOST_ROOT=$(pwd)/boost
-          cd clio
-          cmake -B build -DCODE_COVERAGE=on -DTEST_PARAMETER='--gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"'
-          if ! cmake --build build -j$(nproc); then
-            echo '# 🔥Ubuntu build🔥 failed!💥' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-          cd build
-          make clio_tests-ccov
-      - name: Code Coverage Summary Report
-        uses: irongut/CodeCoverageSummary@v1.2.0
-        with:
-          filename: clio/build/clio_tests-gcc-cov/out.xml
-          badge: true
-          output: both
-          format: markdown
-
-      - name: Save PR number and ccov report
-        run: |
-          mkdir -p ./UnitTestCoverage
-          echo ${{ github.event.number }} > ./UnitTestCoverage/NR
-          cp clio/build/clio_tests-gcc-cov/report.html ./UnitTestCoverage/report.html
-          cp code-coverage-results.md ./UnitTestCoverage/out.md
-          cat code-coverage-results.md > $GITHUB_STEP_SUMMARY
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: clio/build/clio_tests-gcc-cov/out.xml
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: UnitTestCoverage
-          path: UnitTestCoverage/
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: code_coverage_report
-          path: clio/build/clio_tests-gcc-cov/out.xml

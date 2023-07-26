@@ -113,7 +113,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         boost::json::object obj;
         if (!input.binary)
         {
-            auto [txn, meta] = toExpandedJson(txnPlusMeta);
+            auto [txn, meta] = toExpandedJson(txnPlusMeta, NFTokenjson::ENABLE);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
             obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;

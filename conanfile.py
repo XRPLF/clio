@@ -33,8 +33,9 @@ class Clio(ConanFile):
         'tests': False,
         'packaging': False,
         'coverage': False,
-
-        'cassandra-driver/*:shared': False,
+        
+        'xrpl/*:tests': False,
+        'cassandra-cpp-driver/*:shared': False,
         'date/*:header_only': True,
         'grpc/*:shared': False,
         'grpc/*:secure': True,

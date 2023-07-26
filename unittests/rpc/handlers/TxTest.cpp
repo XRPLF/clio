@@ -29,6 +29,8 @@ namespace json = boost::json;
 using namespace testing;
 
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr static auto NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
+constexpr static auto NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
@@ -250,5 +252,157 @@ TEST_F(RPCTxTest, ReturnBinary)
         auto const output = handler.process(req, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
+TEST_F(RPCTxTest, MintNFT)
+{
+    auto const static OUT = fmt::format(
+        R"({{
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee": "50",
+            "NFTokenTaxon": 123,
+            "Sequence": 1,
+            "SigningPubKey": "74657374",
+            "TransactionType": "NFTokenMint",
+            "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
+            "meta": {{
+                "AffectedNodes": [
+                {{
+                    "ModifiedNode": {{
+                    "FinalFields": {{
+                        "NFTokens": [
+                        {{
+                            "NFToken": 
+                            {{
+                                "NFTokenID": "{}",
+                                "URI": "7465737475726C"
+                            }}
+                        }},
+                        {{
+                            "NFToken": 
+                            {{
+                                "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                "URI": "7465737475726C"
+                            }}
+                        }}
+                        ]
+                    }},
+                    "LedgerEntryType": "NFTokenPage",
+                    "PreviousFields": {{
+                        "NFTokens": [
+                        {{
+                            "NFToken": 
+                            {{
+                                "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                "URI": "7465737475726C"
+                            }}
+                        }}
+                        ]
+                    }}
+                    }}
+                }}
+                ],
+                "TransactionIndex": 0,
+                "TransactionResult": "tesSUCCESS",
+                "nftoken_id": "{}"
+            }},
+            "validated": true,
+            "date": 123456,
+            "ledger_index": 100
+        }})",
+        NFTID,
+        NFTID);
+    TransactionAndMetadata tx = CreateMintNFTTxWithMetadata(ACCOUNT, 1, 50, 123, NFTID);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
+TEST_F(RPCTxTest, NFTAcceptOffer)
+{
+    TransactionAndMetadata tx = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("meta").at("nftoken_id").as_string(), NFTID);
+    });
+}
+
+TEST_F(RPCTxTest, NFTCancelOffer)
+{
+    std::vector<std::string> ids{NFTID, NFTID2};
+    TransactionAndMetadata tx = CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 50, ids);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    runSpawn([this, &ids](auto& yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+
+        for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
+        {
+            auto const idStr = id.as_string();
+            ids.erase(std::find(ids.begin(), ids.end(), std::string{idStr.c_str(), idStr.size()}));
+        }
+
+        EXPECT_TRUE(ids.empty());
+    });
+}
+
+TEST_F(RPCTxTest, NFTCreateOffer)
+{
+    TransactionAndMetadata tx = CreateCreateNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID, 123, NFTID2);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    runSpawn([this](auto& yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID));
+        auto const output = handler.process(req, Context{std::ref(yield)});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->at("meta").at("offer_id").as_string() == NFTID2);
     });
 }
