@@ -79,12 +79,13 @@ SourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     {
         err = std::string(" (") + boost::lexical_cast<std::string>(ERR_GET_LIB(ec.value())) + "," +
             boost::lexical_cast<std::string>(ERR_GET_REASON(ec.value())) + ") ";
+
         // ERR_PACK /* crypto/err/err.h */
         char buf[128];
         ::ERR_error_string_n(ec.value(), buf, sizeof(buf));
         err += buf;
 
-        std::cout << err << std::endl;
+        log_.error() << err;
     }
 
     if (ec != boost::asio::error::operation_aborted && ec != boost::asio::error::connection_refused)
@@ -361,9 +362,7 @@ SourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
     }
     else
     {
-        handleMessage();
-        boost::beast::flat_buffer buffer;
-        swap(readBuffer_, buffer);
+        handleMessage(size);
 
         log_.trace() << "calling async_read - " << toString();
         derived().ws().async_read(readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
@@ -372,7 +371,7 @@ SourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
 
 template <class Derived>
 bool
-SourceImpl<Derived>::handleMessage()
+SourceImpl<Derived>::handleMessage(size_t size)
 {
     log_.trace() << toString();
 
@@ -380,41 +379,40 @@ SourceImpl<Derived>::handleMessage()
     connected_ = true;
     try
     {
-        std::string msg{static_cast<char const*>(readBuffer_.data().data()), readBuffer_.size()};
-        log_.trace() << msg;
-        boost::json::value raw = boost::json::parse(msg);
-        log_.trace() << "parsed";
-        boost::json::object response = raw.as_object();
+        auto const msg = boost::beast::buffers_to_string(readBuffer_.data());
+        readBuffer_.consume(size);
+
+        auto const raw = boost::json::parse(msg);
+        auto const response = raw.as_object();
 
         uint32_t ledgerIndex = 0;
         if (response.contains("result"))
         {
-            boost::json::object result = response["result"].as_object();
+            auto const& result = response.at("result").as_object();
             if (result.contains("ledger_index"))
-            {
-                ledgerIndex = result["ledger_index"].as_int64();
-            }
+                ledgerIndex = result.at("ledger_index").as_int64();
+
             if (result.contains("validated_ledgers"))
             {
-                boost::json::string const& validatedLedgers = result["validated_ledgers"].as_string();
-
-                setValidatedRange({validatedLedgers.c_str(), validatedLedgers.size()});
+                auto const& validatedLedgers = result.at("validated_ledgers").as_string();
+                setValidatedRange({validatedLedgers.data(), validatedLedgers.size()});
             }
+
             log_.info() << "Received a message on ledger "
                         << " subscription stream. Message : " << response << " - " << toString();
         }
-        else if (response.contains("type") && response["type"] == "ledgerClosed")
+        else if (response.contains("type") && response.at("type") == "ledgerClosed")
         {
             log_.info() << "Received a message on ledger "
                         << " subscription stream. Message : " << response << " - " << toString();
             if (response.contains("ledger_index"))
             {
-                ledgerIndex = response["ledger_index"].as_int64();
+                ledgerIndex = response.at("ledger_index").as_int64();
             }
             if (response.contains("validated_ledgers"))
             {
-                boost::json::string const& validatedLedgers = response["validated_ledgers"].as_string();
-                setValidatedRange({validatedLedgers.c_str(), validatedLedgers.size()});
+                auto const& validatedLedgers = response.at("validated_ledgers").as_string();
+                setValidatedRange({validatedLedgers.data(), validatedLedgers.size()});
             }
         }
         else
@@ -426,11 +424,11 @@ SourceImpl<Derived>::handleMessage()
                     forwardCache_.freshen();
                     subscriptions_->forwardProposedTransaction(response);
                 }
-                else if (response.contains("type") && response["type"] == "validationReceived")
+                else if (response.contains("type") && response.at("type") == "validationReceived")
                 {
                     subscriptions_->forwardValidation(response);
                 }
-                else if (response.contains("type") && response["type"] == "manifestReceived")
+                else if (response.contains("type") && response.at("type") == "manifestReceived")
                 {
                     subscriptions_->forwardManifest(response);
                 }

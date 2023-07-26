@@ -251,7 +251,7 @@ class IntervalSweepHandler
     std::reference_wrapper<boost::asio::io_context> ctx_;
     BaseDOSGuard* dosGuard_ = nullptr;
 
-    boost::asio::steady_timer timer_{ctx_.get()};
+    boost::asio::steady_timer timer_{boost::asio::make_strand(ctx_.get())};
 
 public:
     /**

@@ -93,49 +93,27 @@ template <class F>
 auto
 synchronous(F&& f)
 {
-    /** @brief Serialized handlers and their execution.
-     *
-     * The ctx class is converted into a serialized handler, also named
-     * ctx, and is used to pass a stream of data into the method.
-     */
     boost::asio::io_context ctx;
     boost::asio::strand<boost::asio::io_context::executor_type> strand(ctx.get_executor());
-    std::optional<boost::asio::io_context::work> work;
 
-    /*! @brief Place the ctx within the vector of serialized handlers. */
-    work.emplace(ctx);
-
-    /**
-     * @brief If/else statements regarding coroutine type matching.
-     *
-     * R is the currently executing coroutine that is about to get passed.
-     * If corountine types do not match, the current one's type is stored.
-     */
     using R = typename boost::result_of<F(boost::asio::yield_context&)>::type;
     if constexpr (!std::is_same<R, void>::value)
     {
-        /**
-         * @brief When the coroutine type is the same
-         *
-         * The spawn function enables programs to implement asynchronous logic
-         * in a synchronous manner. res stores the instance of the currently
-         * executing coroutine, yield. The different type is returned.
-         */
         R res;
-        boost::asio::spawn(strand, [&f, &work, &res](boost::asio::yield_context yield) {
-            res = f(yield);
-            work.reset();
-        });
+        boost::asio::spawn(
+            strand, [&f, &res, _ = boost::asio::make_work_guard(strand)](boost::asio::yield_context yield) {
+                res = f(yield);
+                ;
+            });
 
         ctx.run();
         return res;
     }
     else
     {
-        /*! @brief When the corutine type is different, run as normal. */
-        boost::asio::spawn(strand, [&f, &work](boost::asio::yield_context yield) {
+        boost::asio::spawn(strand, [&f, _ = boost::asio::make_work_guard(strand)](boost::asio::yield_context yield) {
             f(yield);
-            work.reset();
+            ;
         });
 
         ctx.run();

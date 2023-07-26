@@ -232,14 +232,16 @@ public:
                 future.emplace(handle_.get().asyncExecute(
                     statements, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
                         boost::asio::post(
-                            sself->get_io_executor(), [sself = std::move(sself), res = std::move(res)]() mutable {
+                            boost::asio::get_associated_executor(*sself),
+                            [sself = std::move(sself), res = std::move(res)]() mutable {
                                 sself->complete(std::move(res));
                                 sself.reset();
                             });
                     }));
             };
 
-            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(init, token);
+            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
+                init, token, boost::asio::get_associated_executor(token));
             numReadRequestsOutstanding_ -= numStatements;
 
             if (res)
@@ -276,19 +278,20 @@ public:
             // TODO: see if we can avoid using shared_ptr for self here
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
                 future.emplace(handle_.get().asyncExecute(
-                    statement, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
+                    statement, [sself = std::make_shared<Self>(std::move(self))](auto&&) mutable {
                         boost::asio::post(
-                            sself->get_io_executor(), [sself = std::move(sself), res = std::move(res)]() mutable {
-                                sself->complete(std::move(res));
+                            boost::asio::get_associated_executor(*sself), [sself = std::move(sself)]() mutable {
+                                sself->complete();
                                 sself.reset();
                             });
                     }));
             };
 
-            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(init, token);
+            boost::asio::async_compose<CompletionTokenType, void()>(
+                init, token, boost::asio::get_associated_executor(token));
             --numReadRequestsOutstanding_;
 
-            if (res)
+            if (auto res = future->get(); res)
             {
                 return res;
             }
@@ -329,10 +332,11 @@ public:
 
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
-                    boost::asio::post(sself->get_io_executor(), [sself = std::move(sself)]() mutable {
-                        sself->complete();
-                        sself.reset();
-                    });
+                    boost::asio::post(
+                        boost::asio::get_associated_executor(*sself), [sself = std::move(sself)]() mutable {
+                            sself->complete();
+                            sself.reset();
+                        });
             };
 
             std::transform(
@@ -344,7 +348,8 @@ public:
                 });
         };
 
-        boost::asio::async_compose<CompletionTokenType, void()>(init, token);
+        boost::asio::async_compose<CompletionTokenType, void()>(
+            init, token, boost::asio::get_associated_executor(token));
         numReadRequestsOutstanding_ -= statements.size();
 
         if (hadError)

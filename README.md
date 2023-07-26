@@ -38,23 +38,15 @@ Now you should be able to download prebuilt `xrpl` package on some platforms. At
 conan remove -f xrpl/1.12.0-b2
 conan remove -f cassandra-cpp-driver/2.16.2
 ```
-3. In a clone of rippled from step 1, build rippled as per their instructions. pay attention to these commands:
+3. In a clone of rippled from step 1, setup rippled as per their instructions. Note that there is no need to build rippled, only make it available to Conan. Pay attention to these commands:
 ```sh
-conan export external/snappy snappy/1.1.9@
-conan export external/soci soci/4.0.3@
-mkdir build && cd build
-conan install .. --output-folder . --build missing --settings build_type=Release
-cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . --parallel 8 # or without the number if you feel extra adventurous
-cd - # to go back to root of rippled
-```
-4. Perform this command at the root directory of rippled
-```sh
+conan export external/snappy
+conan export external/soci
 conan export .
 ```
 this will export a local package `xrpl/1.12.0-b2`.
 
-5. Navigate to clio's root directory and perform
+4. Navigate to clio's root directory and perform
 ```sh
 conan export external/cassandra # export our "custom" cassandra driver package
 mkdir build && cd build
