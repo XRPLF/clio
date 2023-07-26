@@ -46,8 +46,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     auto sle = ripple::SLE{it, keylet};
     auto accountSeq = sle.getFieldU32(ripple::sfSequence);
     bool const bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
-    // TODO: remove if no longer needed
-    // auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
+    auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
     auto output = NoRippleCheckHandler::Output();
 
@@ -58,8 +57,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
         boost::json::object tx;
         tx[JS(Sequence)] = accountSeq;
         tx[JS(Account)] = ripple::toBase58(accountID);
-        // TODO: deprecated?
-        // tx[JS(Fee)] = toBoostJson(fees->units.jsonClipped());
+        tx[JS(Fee)] = toBoostJson(fees->base.jsonClipped());
 
         return tx;
     };

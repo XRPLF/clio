@@ -302,7 +302,6 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedger)
         "ledger_index":30,
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_time":0,
-        "fee_ref":4,
         "fee_base":1,
         "reserve_base":3,
         "reserve_inc":2
@@ -323,7 +322,6 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedger)
         "ledger_index":31,
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_time":0,
-        "fee_ref":0,
         "fee_base":0,
         "reserve_base":10,
         "reserve_inc":0,
