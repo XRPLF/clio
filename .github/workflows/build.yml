@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install llvm@14 pkg-config protobuf ninja bison cmake
+          brew install llvm@14 pkg-config ninja bison cmake
 
       - name: Setup environment for llvm-14
         run: |
