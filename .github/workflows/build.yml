@@ -29,39 +29,26 @@ jobs:
         run: |
           conan search
 
-          #remove cache , trigger rebuild for CI , keep it for debugging
-          #conan remove cassandra-driver/2.16.2 
-          # remove old cassandra-cpp-driver installed by brew
-          # if [ -d /usr/local/opt/cassandra-cpp-driver ]
-          # then
-          #   echo "remove cassandra-cpp-driver"
-          #   brew uninstall cassandra-cpp-driver
-          # fi
-          # # remove old openssl installed by brew
-          # if [ -d /usr/local/opt/openssl ]
-          # then
-          #   echo "remove openssl"
-          #   brew uninstall openssl --ignore-dependencies
-          # fi
       - name: Install dependencies
         run: |
           brew install llvm@14 pkg-config protobuf ninja bison cmake
+
       - name: Setup environment for llvm-14
         run: |
           export PATH="/usr/local/opt/llvm@14/bin:$PATH"
           export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
           export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
+
       - name: Build Clio
         run: |
-          pwd
           cd clio
           mkdir -p build
           cd build
           conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build . -j4
+
       - name: Run Test
         run: |
           cd clio/build
-          ls
           ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
