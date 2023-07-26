@@ -24,12 +24,17 @@ jobs:
       - uses: actions/checkout@v3
         with:
           path: clio
-      #our self-host mac has conan-non-prod configured
+
       - name: List conan artifactory
         run: |
           conan search
-          conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod 2> /dev/null
           conan remote list
+          if [[ $(conan remote list |grep conan-non-prod| wc -c) -ne 0 ]]; then
+              echo "conan-non-prod is available"
+          else
+              echo "adding conan-non-prod"
+              conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+          fi
 
       - name: Install dependencies
         run: |
