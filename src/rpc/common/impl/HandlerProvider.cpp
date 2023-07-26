@@ -51,6 +51,7 @@
 #include <rpc/handlers/TransactionEntry.h>
 #include <rpc/handlers/Tx.h>
 #include <rpc/handlers/Unsubscribe.h>
+#include <rpc/handlers/VersionHandler.h>
 
 namespace RPC::detail {
 
@@ -59,7 +60,8 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<SubscriptionManager> const& subscriptionManager,
     std::shared_ptr<LoadBalancer> const& balancer,
     std::shared_ptr<ETLService const> const& etl,
-    Counters const& counters)
+    Counters const& counters,
+    clio::Config const& config)
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},
           {"account_currencies", {AccountCurrenciesHandler{backend}}},
@@ -89,6 +91,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"tx", {TxHandler{backend}}},
           {"subscribe", {SubscribeHandler{backend, subscriptionManager}}},
           {"unsubscribe", {UnsubscribeHandler{backend, subscriptionManager}}},
+          {"version", {VersionHandler{config}}},
       }
 {
 }

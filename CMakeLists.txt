@@ -193,6 +193,7 @@ if(tests)
     unittests/rpc/handlers/AccountObjectsTest.cpp
     unittests/rpc/handlers/BookChangesTest.cpp
     unittests/rpc/handlers/LedgerTest.cpp
+    unittests/rpc/handlers/VersionHandlerTest.cpp
     # Backend
     unittests/backend/BackendFactoryTest.cpp
     unittests/backend/cassandra/BaseTests.cpp
