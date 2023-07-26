@@ -17,10 +17,12 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/VersionHandler.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
+
+#include <rpc/common/AnyHandler.h>
+#include <rpc/handlers/VersionHandler.h>
+
 
 constexpr static auto DEFAULT_API_VERSION = 3u;
 constexpr static auto MIN_API_VERSION = 2u;
@@ -47,7 +49,7 @@ TEST_F(RPCVersionHandlerTest, Default)
 
     runSpawn([&](auto& yield) {
         auto const handler = AnyHandler{VersionHandler{cfg}};
-        RPC::ReturnType const output = handler.process(static_cast<json::value>(cfg), Context{std::ref(yield)});
+        auto const output = handler.process(static_cast<json::value>(cfg), Context{std::ref(yield)});
         ASSERT_TRUE(output);
 
         // check all against all the correct values

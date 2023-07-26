@@ -27,10 +27,6 @@
 #include <algorithm>
 #include <string>
 
-namespace RPC {
-class VersionHandler;
-};
-
 namespace RPC::detail {
 
 class ProductionAPIVersionParser : public APIVersionParser
@@ -79,7 +75,23 @@ public:
     util::Expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
-    friend class RPC::VersionHandler;
+    inline int
+    getDefaultVersion() const
+    {
+        return defaultVersion_;
+    }
+
+    inline int
+    getMinVersion() const
+    {
+        return minVersion_;
+    }
+
+    inline int
+    getMaxVersion() const
+    {
+        return maxVersion_;
+    }
 };
 
 }  // namespace RPC::detail

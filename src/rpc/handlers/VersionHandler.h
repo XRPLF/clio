@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <cassert>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/APIVersion.h>
@@ -37,16 +36,11 @@ class VersionHandler
     RPC::detail::ProductionAPIVersionParser apiVersionParser_;
 
 public:
-    struct InfoSection
+    struct Output
     {
         uint32_t minVersion;
         uint32_t maxVersion;
         uint32_t currVersion;
-    };
-
-    struct Output
-    {
-        InfoSection info;
     };
 
     explicit VersionHandler(clio::Config const& config)
@@ -65,9 +59,9 @@ public:
         using namespace RPC;
 
         auto output = Output{};
-        output.info.currVersion = apiVersionParser_.defaultVersion_;
-        output.info.minVersion = apiVersionParser_.minVersion_;
-        output.info.maxVersion = apiVersionParser_.maxVersion_;
+        output.currVersion = apiVersionParser_.getDefaultVersion();
+        output.minVersion = apiVersionParser_.getMinVersion();
+        output.maxVersion = apiVersionParser_.getMaxVersion();
         return output;
     }
 
@@ -75,19 +69,13 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
-        using boost::json::value_from;
-
-        jv = {{"version", value_from(output.info)}};
-    }
-
-    friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
-    {
         jv = {
-            {"first", info.minVersion},
-            {"last", info.maxVersion},
-            {"good", info.currVersion},
-        };
+            {"version",
+             {
+                 {"first", output.minVersion},
+                 {"last", output.maxVersion},
+                 {"good", output.currVersion},
+             }}};
     }
 };
 
