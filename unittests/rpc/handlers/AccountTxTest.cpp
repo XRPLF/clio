@@ -225,7 +225,9 @@ TEST_P(AccountTxParameterTest, InvalidParams)
     });
 }
 
-static std::vector<TransactionAndMetadata>
+namespace {
+
+std::vector<TransactionAndMetadata>
 genTransactions(uint32_t seq1, uint32_t seq2)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
@@ -249,7 +251,7 @@ genTransactions(uint32_t seq1, uint32_t seq2)
     return transactions;
 }
 
-static std::vector<TransactionAndMetadata>
+std::vector<TransactionAndMetadata>
 genNFTTransactions(uint32_t seq)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
@@ -275,6 +277,7 @@ genNFTTransactions(uint32_t seq)
     transactions.push_back(trans4);
     return transactions;
 }
+}  // namespace
 
 TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 {
@@ -1044,11 +1047,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false,
-                "marker": {{"ledger":10,"seq":11}}
+                "marker": {{"ledger": 10, "seq": 11}}
             }})",
             ACCOUNT,
             -1,

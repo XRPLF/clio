@@ -191,14 +191,14 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs, NFTokenJSON NFTEnabled)
+toExpandedJson(Backend::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
 
-    if (NFTEnabled == NFTokenJSON::Enable)
+    if (nftEnabled == NFTokenjson::ENABLE)
     {
         Json::Value nftJson;
         ripple::insertNFTSyntheticInJson(nftJson, txn, *meta);
