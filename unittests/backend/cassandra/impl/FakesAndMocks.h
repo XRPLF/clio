@@ -74,6 +74,12 @@ struct FakeFuture
     {
         return data;
     }
+
+    FakeMaybeError
+    await() const
+    {
+        return {};
+    }
 };
 
 struct FakeFutureWithCallback : public FakeFuture

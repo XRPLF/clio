@@ -190,7 +190,7 @@ public:
         , balancer_(balancer)
         , forwardCache_(config, ioContext, *this)
         , ioc_(ioContext)
-        , timer_(ioContext)
+        , timer_(boost::asio::make_strand(ioContext))
         , hooks_(hooks)
     {
         static boost::uuids::random_generator uuidGenerator;
@@ -446,7 +446,7 @@ public:
      * @return true if the message was handled successfully. false on error
      */
     bool
-    handleMessage();
+    handleMessage(size_t size);
 
     /**
      * @brief Forward a request to rippled

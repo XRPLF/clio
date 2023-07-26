@@ -23,7 +23,6 @@
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/VersionHandler.h>
 
-
 constexpr static auto DEFAULT_API_VERSION = 3u;
 constexpr static auto MIN_API_VERSION = 2u;
 constexpr static auto MAX_API_VERSION = 10u;

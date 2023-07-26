@@ -150,7 +150,7 @@ public:
         , tagFactory_(std::move(tagFactory))
         , dosGuard_(std::ref(dosGuard))
         , handler_(callback)
-        , acceptor_(boost::asio::make_strand(ioc))
+        , acceptor_(boost::asio::make_strand(ioc.get_executor()))
     {
         boost::beast::error_code ec;
 
@@ -190,7 +190,7 @@ private:
     doAccept()
     {
         acceptor_.async_accept(
-            boost::asio::make_strand(ioc_.get()),
+            boost::asio::make_strand(ioc_.get().get_executor()),
             boost::beast::bind_front_handler(&Server::onAccept, shared_from_this()));
     }
 

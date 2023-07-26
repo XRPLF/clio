@@ -56,12 +56,12 @@
 namespace RPC::detail {
 
 ProductionHandlerProvider::ProductionHandlerProvider(
+    clio::Config const& config,
     std::shared_ptr<BackendInterface> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptionManager,
     std::shared_ptr<LoadBalancer> const& balancer,
     std::shared_ptr<ETLService const> const& etl,
-    Counters const& counters,
-    clio::Config const& config)
+    Counters const& counters)
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},
           {"account_currencies", {AccountCurrenciesHandler{backend}}},

@@ -46,7 +46,7 @@ public:
     /**
      * @brief Create a new retry policy instance with the io_context provided
      */
-    ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc) : timer_{ioc}
+    ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc) : timer_{boost::asio::make_strand(ioc)}
     {
     }
 

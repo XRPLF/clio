@@ -202,7 +202,7 @@ try
     auto workQueue = WorkQueue::make_WorkQueue(config);
     auto counters = RPC::Counters::make_Counters(workQueue);
     auto const handlerProvider = std::make_shared<RPC::detail::ProductionHandlerProvider const>(
-        backend, subscriptions, balancer, etl, counters, config);
+        config, backend, subscriptions, balancer, etl, counters);
     auto const rpcEngine = RPC::RPCEngine::make_RPCEngine(
         config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 

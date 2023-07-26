@@ -50,12 +50,12 @@ class ProductionHandlerProvider final : public HandlerProvider
 
 public:
     ProductionHandlerProvider(
+        clio::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<LoadBalancer> const& balancer,
         std::shared_ptr<ETLService const> const& etl,
-        Counters const& counters,
-        clio::Config const& config);
+        Counters const& counters);
 
     bool
     contains(std::string const& method) const override;

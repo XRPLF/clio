@@ -32,6 +32,7 @@ using namespace Backend::Cassandra;
 
 namespace json = boost::json;
 
+// TODO: get rid of cout and use expectations instead to verify output
 class BackendCassandraBaseTest : public NoLoggerFixture
 {
 protected:
