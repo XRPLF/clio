@@ -616,14 +616,14 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
                     {{
                         "Sequence":{},
                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":4,
+                        "Fee":1,
                         "TransactionType":"AccountSet",
                         "SetFlag":8
                     }},
                     {{
                         "Sequence":{},
                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":4,
+                        "Fee":1,
                         "TransactionType":"TrustSet",
                         "LimitAmount":{{
                             "currency":"USD",
@@ -635,7 +635,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
                     {{
                         "Sequence":{},
                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":4,
+                        "Fee":1,
                         "TransactionType":"TrustSet",
                         "LimitAmount":{{
                             "currency":"USD",
