@@ -28,6 +28,7 @@ jobs:
       - name: List conan artifactory
         run: |
           conan search
+          conan remote list 
           conan remove -f xrpl
 
       - name: Install dependencies
