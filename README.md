@@ -32,7 +32,7 @@ conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan
 Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
 
 ## Preparing local packages (alternative to artifactory)
-1. Get rippled from [this branch](https://github.com/thejohnfreeman/clio/tree/conan)
+1. Get rippled from [this branch](https://github.com/thejohnfreeman/rippled/tree/clio)
 2. Remove old packages you may have cached: 
 ```sh 
 conan remove -f xrpl/1.12.0-b2
