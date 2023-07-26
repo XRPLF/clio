@@ -28,8 +28,8 @@ jobs:
       - name: List conan artifactory
         run: |
           conan search
-          conan remote list 
-          conan remove -f xrpl
+          conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod 2> /dev/null
+          conan remote list
 
       - name: Install dependencies
         run: |
