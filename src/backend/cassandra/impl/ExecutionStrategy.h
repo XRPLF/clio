@@ -77,7 +77,7 @@ public:
     using ResultType = typename HandleType::ResultType;
     using CompletionTokenType = boost::asio::yield_context;
 
-    DefaultExecutionStrategy(Settings settings, HandleType const& handle)
+    DefaultExecutionStrategy(Settings const& settings, HandleType const& handle)
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , work_{ioc_}

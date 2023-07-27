@@ -114,7 +114,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -149,7 +148,6 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -189,7 +187,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -232,7 +229,6 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -279,7 +275,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(std::move(requestJSON), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -320,7 +315,6 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(std::move(requestJSON), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -348,7 +342,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPNotReady)
     EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -377,7 +370,6 @@ TEST_F(WebRPCServerHandlerTest, WsNotReady)
     EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -398,7 +390,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPInvalidAPIVersion)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(session->message, response);
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
@@ -429,7 +420,6 @@ TEST_F(WebRPCServerHandlerTest, WSInvalidAPIVersion)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -457,7 +447,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPBadSyntaxWhenRequestSubscribe)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -473,7 +462,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPMissingCommand)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(session->message, response);
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
@@ -490,7 +478,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPCommandNotString)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(session->message, response);
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
@@ -507,7 +494,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPCommandIsEmpty)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(session->message, response);
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
@@ -539,7 +525,6 @@ TEST_F(WebRPCServerHandlerTest, WsMissingCommand)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -558,7 +543,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(requestJSON), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(session->message, response);
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
@@ -578,7 +562,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableEmptyArray)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(requestJSON), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(session->message, response);
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
@@ -611,7 +594,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPInternalError)
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*handler)(std::move(requestJSON), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -644,7 +626,6 @@ TEST_F(WebRPCServerHandlerTest, WsInternalError)
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*handler)(std::move(requestJSON), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -681,7 +662,6 @@ TEST_F(WebRPCServerHandlerTest, HTTPOutDated)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(61));
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
@@ -721,7 +701,6 @@ TEST_F(WebRPCServerHandlerTest, WsOutdated)
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(61));
 
     (*handler)(std::move(request), session);
-    std::this_thread::sleep_for(200ms);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 

@@ -124,6 +124,14 @@ SettingsProvider::parseSettings() const
         "max_concurrent_requests_threshold",
         (settings.maxReadRequestsOutstanding + settings.maxWriteRequestsOutstanding) / settings.coreConnectionsPerHost);
 
+    auto const connectTimeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
+    if (connectTimeoutSecond)
+        settings.connectionTimeout = std::chrono::milliseconds{*connectTimeoutSecond * 1000};
+
+    auto const requestTimeoutSecond = config_.maybeValue<uint32_t>("request_timeout");
+    if (requestTimeoutSecond)
+        settings.requestTimeout = std::chrono::milliseconds{*requestTimeoutSecond * 1000};
+
     settings.certificate = parseOptionalCertificate();
     settings.username = config_.maybeValue<std::string>("username");
     settings.password = config_.maybeValue<std::string>("password");
