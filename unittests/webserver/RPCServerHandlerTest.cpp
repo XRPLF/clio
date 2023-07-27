@@ -493,8 +493,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPCommandNotString)
 
     (*handler)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
+    rpcEngine->post(
+        [this](auto& yield) { EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request); }, "");
     EXPECT_EQ(session->message, response);
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
 TEST_F(WebRPCServerHandlerTest, HTTPCommandIsEmpty)
@@ -510,8 +511,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPCommandIsEmpty)
 
     (*handler)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
+    rpcEngine->post(
+        [this](auto& yield) { EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request); }, "");
     EXPECT_EQ(session->message, response);
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
 TEST_F(WebRPCServerHandlerTest, WsMissingCommand)
@@ -561,8 +563,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
 
     (*handler)(std::move(requestJSON), session);
     std::this_thread::sleep_for(200ms);
+    rpcEngine->post(
+        [this](auto& yield) { EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request); }, "");
     EXPECT_EQ(session->message, response);
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
 TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableEmptyArray)
@@ -581,8 +584,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableEmptyArray)
 
     (*handler)(std::move(requestJSON), session);
     std::this_thread::sleep_for(200ms);
+    rpcEngine->post(
+        [this](auto& yield) { EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request); }, "");
     EXPECT_EQ(session->message, response);
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
 TEST_F(WebRPCServerHandlerTest, HTTPInternalError)
@@ -795,8 +799,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPRequestNotJson)
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(std::move(request), session);
+    rpcEngine->post(
+        [this](auto& yield) { EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request); }, "");
     EXPECT_THAT(session->message, testing::StartsWith(responsePrefix));
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
 TEST_F(WebRPCServerHandlerTest, WsRequestNotJson)
