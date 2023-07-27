@@ -28,26 +28,18 @@
 
 struct MockAsyncRPCEngine
 {
-public:
-    MockAsyncRPCEngine()
-    {
-        work_.emplace(ioc_);  // make sure ctx does not stop on its own
-        runner_.emplace([this] { ioc_.run(); });
-    }
-
-    ~MockAsyncRPCEngine()
-    {
-        work_.reset();
-        ioc_.stop();
-        if (runner_->joinable())
-            runner_->join();
-    }
-
     template <typename Fn>
     bool
-    post(Fn&& func, std::string const& ip)
+    post(Fn&& func, [[maybe_unused]] std::string const& ip = "")
     {
-        boost::asio::spawn(ioc_, [handler = std::move(func)](auto yield) mutable { handler(yield); });
+        using namespace boost::asio;
+        io_context ioc;
+
+        spawn(ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc.get_executor())](auto yield) mutable {
+            handler(yield);
+        });
+
+        ioc.run();
         return true;
     }
 
@@ -62,16 +54,10 @@ public:
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
     MOCK_METHOD(RPC::Result, buildResponse, (Web::Context const&), ());
-
-private:
-    boost::asio::io_context ioc_;
-    std::optional<boost::asio::io_service::work> work_;
-    std::optional<std::thread> runner_;
 };
 
 struct MockRPCEngine
 {
-public:
     MOCK_METHOD(bool, post, (std::function<void(boost::asio::yield_context)>&&, std::string const&), ());
     MOCK_METHOD(void, notifyComplete, (std::string const&, std::chrono::microseconds const&), ());
     MOCK_METHOD(void, notifyErrored, (std::string const&), ());
