@@ -123,6 +123,7 @@ SettingsProvider::parseSettings() const
     settings.maxConcurrentRequestsThreshold = config_.valueOr<uint32_t>(
         "max_concurrent_requests_threshold",
         (settings.maxReadRequestsOutstanding + settings.maxWriteRequestsOutstanding) / settings.coreConnectionsPerHost);
+
     auto const timeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
     if (timeoutSecond)
         settings.connectionTimeout = std::chrono::milliseconds{*timeoutSecond * 1000};
