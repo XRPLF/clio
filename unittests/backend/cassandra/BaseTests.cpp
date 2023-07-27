@@ -21,6 +21,7 @@
 
 #include <backend/cassandra/Handle.h>
 
+#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include <semaphore>
@@ -32,7 +33,6 @@ using namespace Backend::Cassandra;
 
 namespace json = boost::json;
 
-// TODO: get rid of cout and use expectations instead to verify output
 class BackendCassandraBaseTest : public NoLoggerFixture
 {
 protected:
@@ -41,11 +41,13 @@ protected:
     {
         Handle handle{contactPoints};
         EXPECT_TRUE(handle.connect());
-        std::string query = "CREATE KEYSPACE IF NOT EXISTS " + std::string{keyspace} +
-            " WITH replication = {'class': "
-            "'SimpleStrategy', 'replication_factor': '1'} AND "
-            "durable_writes = "
-            "true";
+        auto const query = fmt::format(
+            R"(
+                CREATE KEYSPACE IF NOT EXISTS {} 
+                  WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
+                   AND durable_writes = true
+            )",
+            keyspace);
         EXPECT_TRUE(handle.execute(query));
         EXPECT_TRUE(handle.reconnect(keyspace));
         return handle;
@@ -69,17 +71,19 @@ protected:
             "fifth",
         };
 
-        std::string q1 =
-            "CREATE TABLE IF NOT EXISTS strings "
-            "(hash blob PRIMARY KEY, sequence bigint) "
-            "WITH default_time_to_live = " +
-            to_string(5000);
-        auto f1 = handle.asyncExecute(q1);
-        if (auto const rc = f1.await(); not rc)
-            std::cout << "oops: " << rc.error() << '\n';
+        auto const q1 = fmt::format(
+            R"(
+                CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
+                  WITH default_time_to_live = {}
+            )",
+            to_string(5000));
+
+        auto const f1 = handle.asyncExecute(q1);
+        auto const rc = f1.await();
+        ASSERT_TRUE(rc) << rc.error();
 
         std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
-        auto insert = handle.prepare(q2);
+        auto const insert = handle.prepare(q2);
 
         std::vector<Statement> statements;
         int64_t idx = 1000;
@@ -95,16 +99,18 @@ protected:
 TEST_F(BackendCassandraBaseTest, ConnectionSuccess)
 {
     Handle handle{"127.0.0.1"};
-    auto f = handle.asyncConnect();
-    auto res = f.await();
+    auto const f = handle.asyncConnect();
+    auto const res = f.await();
+
     ASSERT_TRUE(res);
 }
 
 TEST_F(BackendCassandraBaseTest, ConnectionFailFormat)
 {
     Handle handle{"127.0.0."};
-    auto f = handle.asyncConnect();
-    auto res = f.await();
+    auto const f = handle.asyncConnect();
+    auto const res = f.await();
+
     ASSERT_FALSE(res);
     EXPECT_EQ(res.error(), "No hosts available: Unable to connect to any contact points");
     EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_NO_HOSTS_AVAILABLE);
@@ -117,9 +123,11 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailTimeout)
     settings.connectionInfo = Settings::ContactPoints{"127.0.0.2"};
 
     Handle handle{settings};
-    auto f = handle.asyncConnect();
-    auto res = f.await();
+    auto const f = handle.asyncConnect();
+    auto const res = f.await();
+
     ASSERT_FALSE(res);
+
     // scylla and cassandra produce different text
     EXPECT_TRUE(res.error().message().starts_with("No hosts available: Underlying connection error:"));
     EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_NO_HOSTS_AVAILABLE);
@@ -133,12 +141,12 @@ TEST_F(BackendCassandraBaseTest, FutureCallback)
     auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
 
     bool complete = false;
-    auto f = handle.asyncExecute(statement, [&complete](auto const res) {
+    auto const f = handle.asyncExecute(statement, [&complete](auto const res) {
         complete = true;
         EXPECT_TRUE(res.value().hasRows());
 
         for (auto [ks] : extract<std::string>(res.value()))
-            std::cout << "keyspace: " << ks << '\n';
+            EXPECT_TRUE(not ks.empty());  // keyspace got some name
     });
 
     auto const res = f.await();  // callback should still be called
@@ -162,7 +170,7 @@ TEST_F(BackendCassandraBaseTest, FutureCallbackSurviveMove)
         EXPECT_TRUE(res.value().hasRows());
 
         for (auto [ks] : extract<std::string>(res.value()))
-            std::cout << "keyspace: " << ks << '\n';
+            EXPECT_TRUE(not ks.empty());  // keyspace got some name
 
         sem.release();
     }));
@@ -189,10 +197,13 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
         ASSERT_TRUE(rc);  // expect that we can still connect without keyspace
     }
     {
-        std::string query = "CREATE KEYSPACE " + keyspace +
-            " WITH replication = {'class': "
-            "'SimpleStrategy', 'replication_factor': '1'} AND durable_writes = "
-            "true";
+        const auto query = fmt::format(
+            R"(
+                CREATE KEYSPACE {} 
+                  WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
+                   AND durable_writes = true
+            )",
+            keyspace);
         auto const f = handle.asyncExecute(query);
         auto const rc = f.await();
         ASSERT_TRUE(rc);  // keyspace created
@@ -215,7 +226,6 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
 
 TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
 {
-    using std::to_string;
     auto const entries = std::vector<std::string>{
         "first",
         "second",
@@ -225,14 +235,16 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
     };
 
     auto handle = createHandle("127.0.0.1", "test");
-    std::string q1 =
-        "CREATE TABLE IF NOT EXISTS strings "
-        "(hash blob PRIMARY KEY, sequence bigint) "
-        "WITH default_time_to_live = " +
-        to_string(5000);
-    auto f1 = handle.asyncExecute(q1);
-    if (auto const rc = f1.await(); not rc)
-        std::cout << "oops: " << rc.error() << '\n';
+    auto q1 = fmt::format(
+        R"(
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+            WITH default_time_to_live = {}
+        )",
+        5000);
+
+    auto const f1 = handle.asyncExecute(q1);
+    auto const rc = f1.await();
+    ASSERT_TRUE(rc) << rc.error();
 
     std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
     auto insert = handle.prepare(q2);
@@ -249,44 +261,33 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         for (auto const& f : futures)
         {
             auto const rc = f.await();
-            if (not rc)
-                std::cout << rc.error() << '\n';
-            ASSERT_TRUE(rc);
+            ASSERT_TRUE(rc) << rc.error();
         }
     }
 
     // read data back
     {
         auto const res = handle.execute("SELECT hash, sequence FROM strings");
-        ASSERT_TRUE(res);
+        ASSERT_TRUE(res) << res.error();
 
-        if (not res)
-            std::cout << "oops: " << res.error() << '\n';
-        else
-        {
-            auto const& results = res.value();
-            auto const totalRows = results.numRows();
-            std::cout << "total rows: " << totalRows << '\n';
+        auto const& results = res.value();
+        auto const totalRows = results.numRows();
+        EXPECT_EQ(totalRows, entries.size());
 
-            for (auto [hash, seq] : extract<std::string, int64_t>(results))
-                std::cout << "row: " << seq << ":" << hash << '\n';
-        }
+        for (auto [hash, seq] : extract<std::string, int64_t>(results))
+            EXPECT_TRUE(std::find(std::begin(entries), std::end(entries), hash) != std::end(entries));
     }
 
     // delete everything
     {
         auto const res = handle.execute("DROP TABLE strings");
-        ASSERT_TRUE(res);
-
-        if (not res)
-            std::cout << "oops: " << res.error() << '\n';
+        ASSERT_TRUE(res) << res.error();
         dropKeyspace(handle, "test");
     }
 }
 
 TEST_F(BackendCassandraBaseTest, BatchInsert)
 {
-    using std::to_string;
     auto const entries = std::vector<std::string>{
         "first",
         "second",
@@ -296,17 +297,18 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
     };
 
     auto handle = createHandle("127.0.0.1", "test");
-    std::string q1 =
-        "CREATE TABLE IF NOT EXISTS strings "
-        "(hash blob PRIMARY KEY, sequence bigint) "
-        "WITH default_time_to_live = " +
-        to_string(5000);
-    auto f1 = handle.asyncExecute(q1);
-    if (auto const rc = f1.await(); not rc)
-        std::cout << "oops: " << rc.error() << '\n';
+    auto const q1 = fmt::format(
+        R"(
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+              WITH default_time_to_live = {}
+        )",
+        5000);
+    auto const f1 = handle.asyncExecute(q1);
+    auto const rc = f1.await();
+    ASSERT_TRUE(rc) << rc.error();
 
     std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
-    auto insert = handle.prepare(q2);
+    auto const insert = handle.prepare(q2);
 
     // write data in bulk
     {
@@ -317,28 +319,22 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
             statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
 
         ASSERT_EQ(statements.size(), entries.size());
-        auto rc = handle.execute(statements);
-        if (not rc)
-            std::cout << rc.error() << '\n';
-        ASSERT_TRUE(rc);
+
+        auto const rc = handle.execute(statements);
+        ASSERT_TRUE(rc) << rc.error();
     }
 
     // read data back
     {
         auto const res = handle.execute("SELECT hash, sequence FROM strings");
-        ASSERT_TRUE(res);
+        ASSERT_TRUE(res) << res.error();
 
-        if (not res)
-            std::cout << "oops: " << res.error() << '\n';
-        else
-        {
-            auto const& results = res.value();
-            auto const totalRows = results.numRows();
-            std::cout << "total rows: " << totalRows << '\n';
+        auto const& results = res.value();
+        auto const totalRows = results.numRows();
+        EXPECT_EQ(totalRows, entries.size());
 
-            for (auto [hash, seq] : extract<std::string, int64_t>(results))
-                std::cout << "row: " << seq << ":" << hash << '\n';
-        }
+        for (auto [hash, seq] : extract<std::string, int64_t>(results))
+            EXPECT_TRUE(std::find(std::begin(entries), std::end(entries), hash) != std::end(entries));
     }
 
     dropKeyspace(handle, "test");
@@ -356,17 +352,18 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
     };
 
     auto handle = createHandle("127.0.0.1", "test");
-    std::string q1 =
-        "CREATE TABLE IF NOT EXISTS strings "
-        "(hash blob PRIMARY KEY, sequence bigint) "
-        "WITH default_time_to_live = " +
-        to_string(5000);
-    auto f1 = handle.asyncExecute(q1);
-    if (auto const rc = f1.await(); not rc)
-        std::cout << "oops: " << rc.error() << '\n';
+    auto const q1 = fmt::format(
+        R"(
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+              WITH default_time_to_live = {}
+        )",
+        5000);
+    auto const f1 = handle.asyncExecute(q1);
+    auto const rc = f1.await();
+    ASSERT_TRUE(rc) << rc.error();
 
     std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
-    auto insert = handle.prepare(q2);
+    auto const insert = handle.prepare(q2);
 
     // write data in bulk
     {
@@ -399,11 +396,12 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
 TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
 {
     auto handle = createHandle("127.0.0.1", "test");
-    std::string q1 =
-        "CREATE TABLE IF NOT EXISTS strings "
-        "(hash blob PRIMARY KEY, sequence bigint) "
-        "WITH default_time_to_live = " +
-        to_string(5000);
+    auto const q1 = fmt::format(
+        R"(
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+              WITH default_time_to_live = {}
+        )",
+        5000);
     ASSERT_TRUE(handle.execute(q1));
 
     std::string update = "ALTER TABLE strings ADD tmp blob";
@@ -417,11 +415,12 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     auto handle = createHandle("127.0.0.1", "test");
     prepStringsTable(handle);
 
-    std::string newTable =
-        "CREATE TABLE IF NOT EXISTS strings_v2 "
-        "(hash blob PRIMARY KEY, sequence bigint, tmp bigint) "
-        "WITH default_time_to_live = " +
-        to_string(5000);
+    auto const newTable = fmt::format(
+        R"(
+            CREATE TABLE IF NOT EXISTS strings_v2 (hash blob PRIMARY KEY, sequence bigint, tmp bigint) 
+              WITH default_time_to_live = {}
+        )",
+        5000);
     ASSERT_TRUE(handle.execute(newTable));
 
     // now migrate data; tmp column will just get the sequence number + 1 stored

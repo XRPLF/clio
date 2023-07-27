@@ -113,25 +113,29 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         }})",
         contactPoints,
         keyspace))};
-    // FIXME: this currently throws runtime_error (Could not create keyspace). no idea why
-    auto backend = make_Backend(ctx, cfg);
-    EXPECT_TRUE(backend);
 
-    // empty db does not have ledger range
-    EXPECT_FALSE(backend->fetchLedgerRange());
+    {
+        auto backend = make_Backend(ctx, cfg);
+        EXPECT_TRUE(backend);
 
-    // insert range table
-    Backend::Cassandra::Handle handle{contactPoints};
-    EXPECT_TRUE(handle.connect());
-    handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", keyspace));
-    handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", keyspace));
+        // empty db does not have ledger range
+        EXPECT_FALSE(backend->fetchLedgerRange());
 
-    backend = make_Backend(ctx, cfg);
-    EXPECT_TRUE(backend);
+        // insert range table
+        Backend::Cassandra::Handle handle{contactPoints};
+        EXPECT_TRUE(handle.connect());
+        handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", keyspace));
+        handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", keyspace));
+    }
 
-    auto const range = backend->fetchLedgerRange();
-    EXPECT_EQ(range->minSequence, 100);
-    EXPECT_EQ(range->maxSequence, 500);
+    {
+        auto backend = make_Backend(ctx, cfg);
+        EXPECT_TRUE(backend);
+
+        auto const range = backend->fetchLedgerRange();
+        EXPECT_EQ(range->minSequence, 100);
+        EXPECT_EQ(range->maxSequence, 500);
+    }
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
