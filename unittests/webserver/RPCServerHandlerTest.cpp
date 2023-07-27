@@ -399,8 +399,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPInvalidAPIVersion)
 
     (*handler)(std::move(request), session);
     std::this_thread::sleep_for(200ms);
+    rpcEngine->post(
+        [this](auto& yield) { EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request); }, "");
     EXPECT_EQ(session->message, response);
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
 TEST_F(WebRPCServerHandlerTest, WSInvalidAPIVersion)
