@@ -46,7 +46,7 @@ public:
 private:
     clio::Logger log_{"ETL"};
 
-    mutable std::mutex mtx_;
+    std::mutex mtx_;
     boost::asio::ssl::context sslCtx_;
     std::shared_ptr<Source> sslSrc_;
     std::shared_ptr<Source> plainSrc_;
