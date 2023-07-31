@@ -71,6 +71,8 @@ SourceImpl<Derived>::reconnect(boost::beast::error_code ec)
         hooks_.onDisconnected(ec);
 
     connected_ = false;
+    readBuffer_ = {};
+
     // These are somewhat normal errors. operation_aborted occurs on shutdown,
     // when the timer is cancelled. connection_refused will occur repeatedly
     std::string err = ec.message();
@@ -103,7 +105,6 @@ SourceImpl<Derived>::reconnect(boost::beast::error_code ec)
     timer_.expires_after(boost::asio::chrono::seconds(waitTime));
     timer_.async_wait([this](auto ec) {
         bool startAgain = (ec != boost::asio::error::operation_aborted);
-        log_.trace() << "async_wait : ec = " << ec;
         derived().close(startAgain);
     });
 }
@@ -112,7 +113,7 @@ void
 PlainSource::close(bool startAgain)
 {
     timer_.cancel();
-    ioc_.post([this, startAgain]() {
+    boost::asio::post(strand_, [this, startAgain]() {
         if (closing_)
             return;
 
@@ -131,18 +132,14 @@ PlainSource::close(bool startAgain)
                 closing_ = false;
                 if (startAgain)
                 {
-                    ws_ = std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(
-                        boost::asio::make_strand(ioc_));
-
+                    ws_ = std::make_unique<StreamType>(strand_);
                     run();
                 }
             });
         }
         else if (startAgain)
         {
-            ws_ = std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(
-                boost::asio::make_strand(ioc_));
-
+            ws_ = std::make_unique<StreamType>(strand_);
             run();
         }
     });
@@ -152,15 +149,14 @@ void
 SslSource::close(bool startAgain)
 {
     timer_.cancel();
-    ioc_.post([this, startAgain]() {
+    boost::asio::post(strand_, [this, startAgain]() {
         if (closing_)
             return;
 
         if (derived().ws().is_open())
         {
-            // onStop() also calls close(). If the async_close is called twice,
-            // an assertion fails. Using closing_ makes sure async_close is only
-            // called once
+            // onStop() also calls close(). If the async_close is called twice, an assertion fails. Using closing_ makes
+            // sure async_close is only called once
             closing_ = true;
             derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
                 if (ec)
@@ -171,19 +167,14 @@ SslSource::close(bool startAgain)
                 closing_ = false;
                 if (startAgain)
                 {
-                    ws_ = std::make_unique<
-                        boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
-                        boost::asio::make_strand(ioc_), *sslCtx_);
-
+                    ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
                     run();
                 }
             });
         }
         else if (startAgain)
         {
-            ws_ = std::make_unique<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
-                boost::asio::make_strand(ioc_), *sslCtx_);
-
+            ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
             run();
         }
     });
@@ -193,7 +184,6 @@ template <class Derived>
 void
 SourceImpl<Derived>::onResolve(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type results)
 {
-    log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
     {
         // try again
@@ -213,7 +203,6 @@ PlainSource::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
-    log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
     {
         // start over
@@ -222,18 +211,14 @@ PlainSource::onConnect(
     else
     {
         numFailures_ = 0;
-        // Turn off timeout on the tcp stream, because websocket stream has it's
-        // own timeout system
+
+        // Websocket stream has it's own timeout system
         boost::beast::get_lowest_layer(derived().ws()).expires_never();
 
-        // Set a desired timeout for the websocket stream
         derived().ws().set_option(make_TimeoutOption());
-
-        // Set a decorator to change the User-Agent of the handshake
         derived().ws().set_option(
             boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
                 req.set(boost::beast::http::field::user_agent, "clio-client");
-
                 req.set("X-User", "clio-client");
             }));
 
@@ -241,7 +226,6 @@ PlainSource::onConnect(
         // Host HTTP header during the WebSocket handshake.
         // See https://tools.ietf.org/html/rfc7230#section-5.4
         auto host = ip_ + ':' + std::to_string(endpoint.port());
-        // Perform the websocket handshake
         derived().ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
 }
@@ -249,7 +233,6 @@ PlainSource::onConnect(
 void
 SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
-    log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
     {
         // start over
@@ -258,18 +241,14 @@ SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver
     else
     {
         numFailures_ = 0;
-        // Turn off timeout on the tcp stream, because websocket stream has it's
-        // own timeout system
+
+        // Websocket stream has it's own timeout system
         boost::beast::get_lowest_layer(derived().ws()).expires_never();
 
-        // Set a desired timeout for the websocket stream
         derived().ws().set_option(make_TimeoutOption());
-
-        // Set a decorator to change the User-Agent of the handshake
         derived().ws().set_option(
             boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
                 req.set(boost::beast::http::field::user_agent, "clio-client");
-
                 req.set("X-User", "clio-client");
             }));
 
@@ -277,7 +256,6 @@ SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver
         // Host HTTP header during the WebSocket handshake.
         // See https://tools.ietf.org/html/rfc7230#section-5.4
         auto host = ip_ + ':' + std::to_string(endpoint.port());
-        // Perform the websocket handshake
         ws().next_layer().async_handshake(
             boost::asio::ssl::stream_base::client, [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
     }
@@ -294,9 +272,7 @@ SslSource::onSslHandshake(
     }
     else
     {
-        // Perform the websocket handshake
         auto host = ip_ + ':' + std::to_string(endpoint.port());
-        // Perform the websocket handshake
         ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
 }
@@ -305,7 +281,6 @@ template <class Derived>
 void
 SourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
 {
-    log_.trace() << "ec = " << ec << " - " << toString();
     if (auto action = hooks_.onConnected(ec); action == SourceHooks::Action::STOP)
         return;
 
@@ -317,7 +292,9 @@ SourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
     else
     {
         boost::json::object jv{
-            {"command", "subscribe"}, {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}}};
+            {"command", "subscribe"},
+            {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}},
+        };
         std::string s = boost::json::serialize(jv);
         log_.trace() << "Sending subscribe stream message";
 
@@ -325,11 +302,10 @@ SourceImpl<Derived>::onHandshake(boost::beast::error_code ec)
             boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
                 req.set(
                     boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " clio-client");
-
                 req.set("X-User", "coro-client");
             }));
 
-        // Send the message
+        // Send subscription message
         derived().ws().async_write(boost::asio::buffer(s), [this](auto ec, size_t size) { onWrite(ec, size); });
     }
 }
@@ -338,24 +314,16 @@ template <class Derived>
 void
 SourceImpl<Derived>::onWrite(boost::beast::error_code ec, size_t bytesWritten)
 {
-    log_.trace() << "ec = " << ec << " - " << toString();
     if (ec)
-    {
-        // start over
         reconnect(ec);
-    }
     else
-    {
         derived().ws().async_read(readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
-    }
 }
 
 template <class Derived>
 void
 SourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
 {
-    log_.trace() << "ec = " << ec << " - " << toString();
-    // if error or error reading message, start over
     if (ec)
     {
         reconnect(ec);
@@ -363,8 +331,6 @@ SourceImpl<Derived>::onRead(boost::beast::error_code ec, size_t size)
     else
     {
         handleMessage(size);
-
-        log_.trace() << "calling async_read - " << toString();
         derived().ws().async_read(readBuffer_, [this](auto ec, size_t size) { onRead(ec, size); });
     }
 }
@@ -373,10 +339,9 @@ template <class Derived>
 bool
 SourceImpl<Derived>::handleMessage(size_t size)
 {
-    log_.trace() << toString();
-
     setLastMsgTime();
     connected_ = true;
+
     try
     {
         auto const msg = boost::beast::buffers_to_string(readBuffer_.data());
@@ -384,8 +349,8 @@ SourceImpl<Derived>::handleMessage(size_t size)
 
         auto const raw = boost::json::parse(msg);
         auto const response = raw.as_object();
-
         uint32_t ledgerIndex = 0;
+
         if (response.contains("result"))
         {
             auto const& result = response.at("result").as_object();
@@ -440,6 +405,7 @@ SourceImpl<Derived>::handleMessage(size_t size)
             log_.trace() << "Pushing ledger sequence = " << ledgerIndex << " - " << toString();
             networkValidatedLedgers_->push(ledgerIndex);
         }
+
         return true;
     }
     catch (std::exception const& e)
@@ -653,7 +619,7 @@ SourceImpl<Derived>::loadInitialLedger(uint32_t sequence, uint32_t numMarkers, b
             auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
             if (result != AsyncCallData::CallStatus::MORE)
             {
-                numFinished++;
+                ++numFinished;
                 log_.debug() << "Finished a marker. "
                              << "Current number of finished = " << numFinished;
 
@@ -686,23 +652,25 @@ SourceImpl<Derived>::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool 
     if (!stub_)
         return {{grpc::StatusCode::INTERNAL, "No Stub"}, response};
 
-    // ledger header with txns and metadata
+    // Ledger header with txns and metadata
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
+
     request.mutable_ledger()->set_sequence(ledgerSequence);
     request.set_transactions(true);
     request.set_expand(true);
     request.set_get_objects(getObjects);
     request.set_get_object_neighbors(getObjectNeighbors);
     request.set_user("ETL");
+
     grpc::Status status = stub_->GetLedger(&context, request, &response);
+
     if (status.ok() && !response.is_unlimited())
     {
-        log_.warn() << "SourceImpl::fetchLedger - is_unlimited is "
-                       "false. Make sure secure_gateway is set "
-                       "correctly on the ETL source. source = "
-                    << toString() << " status = " << status.error_message();
+        log_.warn() << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. source = "
+                    << toString() << "; status = " << status.error_message();
     }
+
     return {status, std::move(response)};
 }
 
@@ -738,52 +706,41 @@ SourceImpl<Derived>::requestFromRippled(
         log_.error() << "Attempted to proxy but failed to connect to tx";
         return {};
     }
-    namespace beast = boost::beast;          // from <boost/beast.hpp>
-    namespace http = beast::http;            // from <boost/beast/http.hpp>
-    namespace websocket = beast::websocket;  // from
-    namespace net = boost::asio;             // from
-    using tcp = boost::asio::ip::tcp;        // from
+
+    namespace beast = boost::beast;
+    namespace http = beast::http;
+    namespace websocket = beast::websocket;
+    namespace net = boost::asio;
+    using tcp = boost::asio::ip::tcp;
+
     try
     {
+        auto executor = boost::asio::get_associated_executor(yield);
         boost::beast::error_code ec;
-        // These objects perform our I/O
-        tcp::resolver resolver{ioc_};
+        tcp::resolver resolver{executor};
 
-        log_.trace() << "Creating websocket";
-        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioc_);
+        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(executor);
 
-        // Look up the domain name
         auto const results = resolver.async_resolve(ip_, wsPort_, yield[ec]);
         if (ec)
             return {};
 
         ws->next_layer().expires_after(std::chrono::seconds(3));
-
-        log_.trace() << "Connecting websocket";
-        // Make the connection on the IP address we get from a lookup
         ws->next_layer().async_connect(results, yield[ec]);
         if (ec)
             return {};
 
-        // Set a decorator to change the User-Agent of the handshake
-        // and to tell rippled to charge the client IP for RPC
-        // resources. See "secure_gateway" in
-        //
-        // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
+        // Set a decorator to change the User-Agent of the handshake and to tell rippled to charge the client IP for RPC
+        // resources. See "secure_gateway" in https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
         ws->set_option(websocket::stream_base::decorator([&clientIp](websocket::request_type& req) {
             req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
             req.set(http::field::forwarded, "for=" + clientIp);
         }));
-        log_.trace() << "client ip: " << clientIp;
 
-        log_.trace() << "Performing websocket handshake";
-        // Perform the websocket handshake
         ws->async_handshake(ip_, "/", yield[ec]);
         if (ec)
             return {};
 
-        log_.trace() << "Sending request";
-        // Send the message
         ws->async_write(net::buffer(boost::json::serialize(request)), yield[ec]);
         if (ec)
             return {};
@@ -802,11 +759,10 @@ SourceImpl<Derived>::requestFromRippled(
             log_.error() << "Error parsing response: " << std::string{begin, end};
             return {};
         }
-        log_.trace() << "Successfully forward request";
 
         response = parsed.as_object();
-
         response["forwarded"] = true;
+
         return response;
     }
     catch (std::exception const& e)

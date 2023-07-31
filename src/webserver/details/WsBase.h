@@ -162,7 +162,7 @@ public:
             else
                 jsonResponse["warnings"] = boost::json::array{RPC::makeWarning(RPC::warnRPC_RATE_LIMIT)};
 
-            // reserialize when we need to include this warning
+            // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);
         }
         auto sharedMsg = std::make_shared<std::string>(std::move(msg));

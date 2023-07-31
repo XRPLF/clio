@@ -53,7 +53,6 @@ BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, 
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow(boost::asio::yield_context& yield) const
 {
-    gLog.trace() << "called";
     while (true)
     {
         try
@@ -70,7 +69,6 @@ BackendInterface::hardFetchLedgerRangeNoThrow(boost::asio::yield_context& yield)
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    gLog.trace() << "called";
     return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
 }
 

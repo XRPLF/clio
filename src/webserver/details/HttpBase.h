@@ -52,6 +52,7 @@ class HttpBase : public ConnectionBase
         return static_cast<Derived<Handler>&>(*this);
     }
 
+    // TODO: this should be rewritten using http::message_generator instead
     struct SendLambda
     {
         HttpBase& self_;
@@ -154,8 +155,8 @@ public:
     {
         if (dead())
             return;
-        // Make the request empty before reading,
-        // otherwise the operation behavior is undefined.
+
+        // Make the request empty before reading, otherwise the operation behavior is undefined.
         req_ = {};
 
         // Set the timeout.
@@ -169,10 +170,8 @@ public:
     }
 
     void
-    onRead(boost::beast::error_code ec, std::size_t bytes_transferred)
+    onRead(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred)
     {
-        boost::ignore_unused(bytes_transferred);
-
         if (ec == http::error::end_of_stream)
             return derived().doClose();
 
@@ -236,7 +235,8 @@ public:
                 jsonResponse["warnings"].as_array().push_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
             else
                 jsonResponse["warnings"] = boost::json::array{RPC::makeWarning(RPC::warnRPC_RATE_LIMIT)};
-            // reserialize when we need to include this warning
+
+            // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);
         }
         sender_(httpResponse(status, "application/json", std::move(msg)));
@@ -255,9 +255,7 @@ public:
         if (close)
             return derived().doClose();
 
-        // We're done with the response so delete it
         res_ = nullptr;
-
         doRead();
     }
 

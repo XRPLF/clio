@@ -130,10 +130,6 @@ class SourceImpl : public Source
     std::string wsPort_;
     std::string grpcPort_;
 
-    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
-    boost::asio::ip::tcp::resolver resolver_;
-    boost::beast::flat_buffer readBuffer_;
-
     std::vector<std::pair<uint32_t, uint32_t>> validatedLedgers_;
     std::string validatedLedgersRaw_{"N/A"};
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
@@ -160,8 +156,12 @@ protected:
     std::string ip_;
     size_t numFailures_ = 0;
 
-    boost::asio::io_context& ioc_;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     boost::asio::steady_timer timer_;
+    boost::asio::ip::tcp::resolver resolver_;
+    boost::beast::flat_buffer readBuffer_;
+
+    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
 
     std::atomic_bool closing_{false};
     std::atomic_bool paused_{false};
@@ -183,14 +183,14 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
         LoadBalancer& balancer,
         SourceHooks hooks)
-        : resolver_(boost::asio::make_strand(ioContext))
-        , networkValidatedLedgers_(networkValidatedLedgers)
+        : networkValidatedLedgers_(networkValidatedLedgers)
         , backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , forwardCache_(config, ioContext, *this)
-        , ioc_(ioContext)
-        , timer_(boost::asio::make_strand(ioContext))
+        , strand_(boost::asio::make_strand(ioContext))
+        , timer_(strand_)
+        , resolver_(strand_)
         , hooks_(hooks)
     {
         static boost::uuids::random_generator uuidGenerator;
@@ -466,18 +466,14 @@ protected:
     void
     run() override
     {
-        log_.trace() << toString();
-
-        auto const host = ip_;
-        auto const port = wsPort_;
-
-        resolver_.async_resolve(host, port, [this](auto ec, auto results) { onResolve(ec, results); });
+        resolver_.async_resolve(ip_, wsPort_, [this](auto ec, auto results) { onResolve(ec, results); });
     }
 };
 
 class PlainSource : public SourceImpl<PlainSource>
 {
-    std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>> ws_;
+    using StreamType = boost::beast::websocket::stream<boost::beast::tcp_stream>;
+    std::unique_ptr<StreamType> ws_;
 
 public:
     PlainSource(
@@ -489,8 +485,7 @@ public:
         LoadBalancer& balancer,
         SourceHooks hooks)
         : SourceImpl(config, ioc, backend, subscriptions, nwvl, balancer, std::move(hooks))
-        , ws_(std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(
-              boost::asio::make_strand(ioc)))
+        , ws_(std::make_unique<StreamType>(strand_))
     {
     }
 
@@ -517,9 +512,9 @@ public:
 
 class SslSource : public SourceImpl<SslSource>
 {
+    using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx_;
-
-    std::unique_ptr<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>> ws_;
+    std::unique_ptr<StreamType> ws_;
 
 public:
     SslSource(
@@ -533,9 +528,7 @@ public:
         SourceHooks hooks)
         : SourceImpl(config, ioc, backend, subscriptions, nwvl, balancer, std::move(hooks))
         , sslCtx_(sslCtx)
-        , ws_(std::make_unique<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
-              boost::asio::make_strand(ioc_),
-              *sslCtx_))
+        , ws_(std::make_unique<StreamType>(strand_, *sslCtx_))
     {
     }
 
@@ -559,7 +552,7 @@ public:
     void
     close(bool startAgain);
 
-    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+    StreamType&
     ws()
     {
         return *ws_;

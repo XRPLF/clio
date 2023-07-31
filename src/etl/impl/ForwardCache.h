@@ -55,7 +55,7 @@ class ForwardCache
 
 public:
     ForwardCache(clio::Config const& config, boost::asio::io_context& ioc, Source const& source)
-        : strand_(ioc.get_executor()), source_(source)
+        : strand_(boost::asio::make_strand(ioc)), source_(source)
     {
         if (config.contains("cache"))
         {

@@ -35,8 +35,9 @@ struct MockAsyncRPCEngine
         using namespace boost::asio;
         io_context ioc;
 
-        spawn(ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc.get_executor())](auto yield) mutable {
+        spawn(ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc)](auto yield) mutable {
             handler(yield);
+            ;
         });
 
         ioc.run();

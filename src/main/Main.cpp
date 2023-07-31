@@ -168,7 +168,7 @@ try
     auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
     {
-        LogService::fatal() << "io_threads is less than 0";
+        LogService::fatal() << "io_threads is less than 1";
         return EXIT_FAILURE;
     }
     LogService::info() << "Number of io threads = " << threads;

@@ -41,7 +41,7 @@ public:
     Subscription(Subscription&) = delete;
     Subscription(Subscription&&) = delete;
 
-    explicit Subscription(boost::asio::io_context& ioc) : strand_(ioc.get_executor())
+    explicit Subscription(boost::asio::io_context& ioc) : strand_(boost::asio::make_strand(ioc))
     {
     }
 
@@ -83,7 +83,7 @@ public:
     SubscriptionMap(SubscriptionMap&) = delete;
     SubscriptionMap(SubscriptionMap&&) = delete;
 
-    explicit SubscriptionMap(boost::asio::io_context& ioc) : strand_(ioc.get_executor())
+    explicit SubscriptionMap(boost::asio::io_context& ioc) : strand_(boost::asio::make_strand(ioc))
     {
     }
 

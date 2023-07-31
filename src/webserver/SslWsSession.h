@@ -30,7 +30,8 @@ namespace Server {
 template <ServerHandler Handler>
 class SslWsSession : public WsBase<SslWsSession, Handler>
 {
-    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>> ws_;
+    using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
+    StreamType ws_;
 
 public:
     explicit SslWsSession(
@@ -44,7 +45,7 @@ public:
     {
     }
 
-    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>&
+    StreamType&
     ws()
     {
         return ws_;

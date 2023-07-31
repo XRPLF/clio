@@ -27,7 +27,7 @@ tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
 
 ## Using artifactory (temporary packages)
 ```sh
-conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 ```
 Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
 
@@ -57,9 +57,11 @@ cmake --build . --parallel 8 # or without the number if you feel extra adventuro
 If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_unittests` in the `build` directory (the current directory).
 Please note that a few unittests are currently failing. See below.
 
+> **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_unittests`.
+
 ## Things to fix
 
-1. Fix build on CI (currently using old CMake. need to use conan instead).
+1. Fix build on CI (currently only building for MacOS)
 2. Fix code coverage support (see 'coverage' option in conanfile).
 3. See if we can contribute/push our cassandra-cpp-driver to conan center so we don't need to export it before we able to use it.
 4. Try to improve the new asio code that is using `async_compose` and potentially the `FutureWithCallback` way of accepting the callback.

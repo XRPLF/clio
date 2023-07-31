@@ -94,24 +94,22 @@ auto
 synchronous(F&& f)
 {
     boost::asio::io_context ctx;
-    boost::asio::strand<boost::asio::io_context::executor_type> strand(ctx.get_executor());
 
     using R = typename boost::result_of<F(boost::asio::yield_context&)>::type;
     if constexpr (!std::is_same<R, void>::value)
     {
         R res;
-        boost::asio::spawn(
-            strand, [&f, &res, _ = boost::asio::make_work_guard(strand)](boost::asio::yield_context yield) {
-                res = f(yield);
-                ;
-            });
+        boost::asio::spawn(ctx, [&f, &res, _ = boost::asio::make_work_guard(ctx)](boost::asio::yield_context yield) {
+            res = f(yield);
+            ;
+        });
 
         ctx.run();
         return res;
     }
     else
     {
-        boost::asio::spawn(strand, [&f, _ = boost::asio::make_work_guard(strand)](boost::asio::yield_context yield) {
+        boost::asio::spawn(ctx, [&f, _ = boost::asio::make_work_guard(ctx)](boost::asio::yield_context yield) {
             f(yield);
             ;
         });
