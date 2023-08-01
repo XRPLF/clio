@@ -96,7 +96,6 @@ TEST_F(DOSGuardTest, Whitelisting)
     EXPECT_FALSE(guard.isWhiteListed(IP));
 }
 
-
 TEST_F(DOSGuardTest, CIDRWhitelistTest)
 {
     EXPECT_TRUE(guard.isWhiteListed("192.168.1.10"));
