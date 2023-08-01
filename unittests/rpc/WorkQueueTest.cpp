@@ -21,26 +21,30 @@
 
 #include <rpc/WorkQueue.h>
 
+#include <boost/json.hpp>
+
 #include <mutex>
 #include <semaphore>
 
 using namespace clio;
 
+namespace {
+constexpr static auto JSONConfig = R"JSON({
+        "server": { "max_queue_size" : 2 },
+        "workers": 4
+    })JSON";
+}
+
 class RPCWorkQueueTest : public NoLoggerFixture
 {
 protected:
-    std::unique_ptr<WorkQueue> queue;
-
-    void
-    SetUp() override
-    {
-        NoLoggerFixture::SetUp();
-        queue = std::make_unique<WorkQueue>(4u, 2u);
-    }
+    Config cfg = Config{boost::json::parse(JSONConfig)};
 };
 
 TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
+    WorkQueue queue = WorkQueue::make_WorkQueue(cfg);
+
     auto constexpr static TOTAL = 512u;
     uint32_t executeCount = 0u;
 
@@ -49,17 +53,21 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
 
     for (auto i = 0u; i < TOTAL; ++i)
     {
-        queue->postCoro(
+        queue.postCoro(
             [&sem, &executeCount, &mtx](auto& yield) {
                 std::lock_guard lk(mtx);
                 if (++executeCount; executeCount == TOTAL)
-                    sem.release();
+                    sem.release();  // 1) note we are still in user function
             },
             true);
     }
 
     sem.acquire();
-    auto const report = queue->report();
+
+    // 2) so we have to allow the size of queue to decrease by one asynchronously
+    std::this_thread::sleep_for(std::chrono::milliseconds{1});
+
+    auto const report = queue.report();
 
     EXPECT_EQ(executeCount, TOTAL);
     EXPECT_EQ(report.at("queued"), TOTAL);
@@ -69,6 +77,8 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
 
 TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 {
+    auto queue = WorkQueue::make_WorkQueue(cfg);
+
     auto constexpr static TOTAL = 3u;
     auto expectedCount = 2u;
     auto unblocked = false;
@@ -79,7 +89,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 
     for (auto i = 0u; i < TOTAL; ++i)
     {
-        auto res = queue->postCoro(
+        auto res = queue.postCoro(
             [&](auto& yield) {
                 std::unique_lock lk{mtx};
                 cv.wait(lk, [&] { return unblocked == true; });
