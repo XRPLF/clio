@@ -38,7 +38,12 @@ constexpr static auto JSONData = R"JSON(
             "sweep_interval": 1,
             "max_connections": 2,
             "max_requests": 3,
-            "whitelist": ["127.0.0.1"]
+            "whitelist": [
+                "127.0.0.1",
+                "192.168.0.1/22", 
+                "10.0.0.1",
+                "2001:0db8:85a3:0000:0000:8a2e:0000:0000/22"
+            ]
         }
     }
 )JSON";
@@ -59,7 +64,7 @@ constexpr static auto IP = "127.0.0.2";
 class FakeSweepHandler
 {
 private:
-    using guard_type = BasicDOSGuard<FakeSweepHandler>;
+    using guard_type = BasicDOSGuard<WhitelistHandler, FakeSweepHandler>;
     guard_type* dosGuard_;
 
 public:
@@ -82,12 +87,24 @@ class DOSGuardTest : public NoLoggerFixture
 protected:
     Config cfg{json::parse(JSONData)};
     FakeSweepHandler sweepHandler;
-    BasicDOSGuard<FakeSweepHandler> guard{cfg, sweepHandler};
+    BasicDOSGuard<WhitelistHandler, FakeSweepHandler> guard{cfg, sweepHandler};
 };
 
 TEST_F(DOSGuardTest, Whitelisting)
 {
     EXPECT_TRUE(guard.isWhiteListed("127.0.0.1"));
+    EXPECT_FALSE(guard.isWhiteListed(IP));
+}
+
+
+TEST_F(DOSGuardTest, CIDRWhitelistTest)
+{
+    EXPECT_TRUE(guard.isWhiteListed("192.168.1.10"));
+    EXPECT_FALSE(guard.isWhiteListed("193.168.0.123"));
+    EXPECT_TRUE(guard.isWhiteListed("10.0.0.1"));
+    EXPECT_FALSE(guard.isWhiteListed("10.0.0.2"));
+    EXPECT_TRUE(guard.isWhiteListed("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
+    EXPECT_FALSE(guard.isWhiteListed("2002:1db8:85a3:0000:0000:8a2e:0370:7334"));
     EXPECT_FALSE(guard.isWhiteListed(IP));
 }
 

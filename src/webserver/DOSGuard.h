@@ -19,15 +19,25 @@
 
 #pragma once
 
+#include <config/Config.h>
+
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/system/error_code.hpp>
 
+#include <algorithm>
+#include <cassert>
 #include <chrono>
+#include <ctime>
+#include <memory>
+#include <optional>
+#include <random>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-#include <config/Config.h>
+using namespace boost::asio;
 
 namespace clio {
 
@@ -40,12 +50,110 @@ public:
     clear() noexcept = 0;
 };
 
+class Whitelist
+{
+    std::vector<ip::network_v4> subnetsV4_;
+    std::vector<ip::network_v6> subnetsV6_;
+    std::vector<ip::address> ips_;
+
+    static bool
+    isInV4Subnet(ip::address const& addr, ip::network_v4 const& subnet)
+    {
+        auto const range = subnet.hosts();
+        return range.find(addr.to_v4()) != range.end();
+    }
+
+    static bool
+    isInV6Subnet(ip::address const& addr, ip::network_v6 const& subnet)
+    {
+        auto const range = subnet.hosts();
+        return range.find(addr.to_v6()) != range.end();
+    }
+
+public:
+    // could throw, handle with care
+    void
+    add(std::string_view net)
+    {
+        if (not isMask(net))
+        {
+            ips_.push_back(ip::make_address(net));
+            return;
+        }
+
+        if (isV4(net))
+            subnetsV4_.push_back(ip::make_network_v4(net));
+        else if (isV6(net))
+            subnetsV6_.push_back(ip::make_network_v6(net));
+        else
+            throw std::runtime_error(std::string{"malformed network: "} + net.data());
+    }
+
+    // could throw, handle with care
+    bool
+    isWhiteListed(std::string_view ip) const
+    {
+        auto const addr = ip::make_address(ip);
+        if (std::find(std::begin(ips_), std::end(ips_), addr) != std::end(ips_))
+            return true;
+
+        if (addr.is_v4())
+            return std::find_if(
+                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))) !=
+                std::end(subnetsV4_);
+
+        if (addr.is_v6())
+            return std::find_if(
+                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))) !=
+                std::end(subnetsV6_);
+
+        return false;
+    }
+
+private:
+    bool
+    isV4(std::string_view net) const
+    {
+        static const std::regex ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
+        return std::regex_match(std::string(net), ipv4CidrRegex);
+    }
+    bool
+    isV6(std::string_view net) const
+    {
+        static const std::regex ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
+        return std::regex_match(std::string(net), ipv6CidrRegex);
+    }
+    bool
+    isMask(std::string_view net) const
+    {
+        return net.find('/') != std::string_view::npos;
+    }
+};
+
+class WhitelistHandler
+{
+    Whitelist whitelist_;
+
+public:
+    WhitelistHandler(std::unordered_set<std::string> const& arr)
+    {
+        for (auto const& net : arr)
+            whitelist_.add(net);
+    }
+
+    bool
+    isWhiteListed(std::string_view ip) const
+    {
+        return whitelist_.isWhiteListed(ip);
+    }
+};
+
 /**
  * @brief A simple denial of service guard used for rate limiting.
  *
  * @tparam SweepHandler Type of the sweep handler
  */
-template <typename SweepHandler>
+template <typename WhitelistHandlerType, typename SweepHandler>
 class BasicDOSGuard : public BaseDOSGuard
 {
     // Accumulated state per IP, state will be reset accordingly
@@ -61,7 +169,7 @@ class BasicDOSGuard : public BaseDOSGuard
     // accumulated states map
     std::unordered_map<std::string, ClientState> ipState_;
     std::unordered_map<std::string, std::uint32_t> ipConnCount_;
-    std::unordered_set<std::string> const whitelist_;
+    WhitelistHandlerType whitelistHandler_;
 
     std::uint32_t const maxFetches_;
     std::uint32_t const maxConnCount_;
@@ -76,7 +184,7 @@ public:
      * @param sweepHandler Sweep handler that implements the sweeping behaviour
      */
     BasicDOSGuard(clio::Config const& config, SweepHandler& sweepHandler)
-        : whitelist_{getWhitelist(config)}
+        : whitelistHandler_{getWhitelist(config)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", 1000000u)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", 20u)}
         , maxRequestCount_{config.valueOr("dos_guard.max_requests", 20u)}
@@ -92,9 +200,9 @@ public:
      * @return false
      */
     [[nodiscard]] bool
-    isWhiteListed(std::string const& ip) const noexcept
+    isWhiteListed(std::string_view const& ip) const noexcept
     {
-        return whitelist_.contains(ip);
+        return whitelistHandler_.isWhiteListed(ip);
     }
 
     /**
@@ -107,7 +215,7 @@ public:
     [[nodiscard]] bool
     isOk(std::string const& ip) const noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.isWhiteListed(ip))
             return true;
 
         {
@@ -144,7 +252,7 @@ public:
     void
     increment(std::string const& ip) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.isWhiteListed(ip))
             return;
         std::scoped_lock lck{mtx_};
         ipConnCount_[ip]++;
@@ -158,7 +266,7 @@ public:
     void
     decrement(std::string const& ip) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.isWhiteListed(ip))
             return;
         std::scoped_lock lck{mtx_};
         assert(ipConnCount_[ip] > 0);
@@ -182,7 +290,7 @@ public:
     [[maybe_unused]] bool
     add(std::string const& ip, uint32_t numObjects) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.isWhiteListed(ip))
             return true;
 
         {
@@ -207,7 +315,7 @@ public:
     [[maybe_unused]] bool
     request(std::string const& ip) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.isWhiteListed(ip))
             return true;
 
         {
@@ -302,6 +410,6 @@ private:
     }
 };
 
-using DOSGuard = BasicDOSGuard<IntervalSweepHandler>;
+using DOSGuard = BasicDOSGuard<WhitelistHandler, IntervalSweepHandler>;
 
 }  // namespace clio
