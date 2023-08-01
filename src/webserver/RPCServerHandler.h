@@ -126,7 +126,7 @@ public:
 private:
     void
     handleRequest(
-        boost::asio::yield_context& yield,
+        boost::asio::yield_context yield,
         boost::json::object&& request,
         std::shared_ptr<Server::ConnectionBase> const& connection)
     {

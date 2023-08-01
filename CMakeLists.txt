@@ -18,9 +18,6 @@ if(packaging)
   add_definitions(-DPKG=1)
 endif()
 
-#c++20 removed std::result_of but boost 1.75 is still using it.
-add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
-
 add_library(clio)
 
 # Clio tweaks and checks
@@ -58,11 +55,12 @@ target_link_libraries(clio
 )
 
 target_compile_definitions(clio PUBLIC 
-  BOOST_ASIO_DISABLE_HANDLER_TYPE_REQUIREMENTS 
+  # BOOST_ASIO_DISABLE_HANDLER_TYPE_REQUIREMENTS 
   BOOST_ASIO_HAS_STD_INVOKE_RESULT 
-  BOOST_BEAST_ALLOW_DEPRECATED
-  BOOST_CONTAINER_FWD_BAD_DEQUE
-  BOOST_COROUTINES_NO_DEPRECATION_WARNING)
+  # BOOST_BEAST_ALLOW_DEPRECATED
+  # BOOST_CONTAINER_FWD_BAD_DEQUE
+  # BOOST_COROUTINES_NO_DEPRECATION_WARNING
+)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # FIXME: needed on gcc for now

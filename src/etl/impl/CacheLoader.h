@@ -183,7 +183,7 @@ private:
         uint32_t ledgerIndex,
         std::string const& ip,
         std::string const& port,
-        boost::asio::yield_context& yield)
+        boost::asio::yield_context yield)
     {
         log_.info() << "Loading cache from peer. ip = " << ip << " . port = " << port;
         namespace beast = boost::beast;          // from <boost/beast.hpp>

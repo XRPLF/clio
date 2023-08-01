@@ -99,7 +99,7 @@ ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& ba
 std::variant<Status, ripple::LedgerHeader>
 getLedgerInfoFromHashOrSeq(
     BackendInterface const& backend,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
     std::optional<uint32_t> ledgerIndex,
     uint32_t maxSeq);
@@ -112,7 +112,7 @@ traverseOwnedNodes(
     std::uint32_t const startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode);
 
 // Remove the account check from traverseOwnedNodes
@@ -124,7 +124,7 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode,
     bool nftIncluded = false);
 
@@ -149,7 +149,7 @@ isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t seq,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 bool
 isFrozen(
@@ -158,7 +158,7 @@ isFrozen(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 ripple::STAmount
 accountFunds(
@@ -166,7 +166,7 @@ accountFunds(
     std::uint32_t sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 ripple::STAmount
 accountHolds(
@@ -176,21 +176,21 @@ accountHolds(
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
     bool zeroIfFrozen,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 ripple::Rate
 transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& id,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 boost::json::array
 postProcessOrderBook(
@@ -199,7 +199,7 @@ postProcessOrderBook(
     ripple::AccountID const& takerID,
     Backend::BackendInterface const& backend,
     std::uint32_t ledgerSequence,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 std::variant<Status, ripple::Book>
 parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency gets, ripple::AccountID getIssuer);

@@ -63,7 +63,7 @@ getLedgerPubMessage(
 }
 
 boost::json::object
-SubscriptionManager::subLedger(boost::asio::yield_context& yield, SessionPtrType session)
+SubscriptionManager::subLedger(boost::asio::yield_context yield, SessionPtrType session)
 {
     subscribeHelper(session, ledgerSubscribers_, [this](SessionPtrType session) { unsubLedger(session); });
 
@@ -184,7 +184,7 @@ SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs
         {
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
-                Backend::synchronous([&](boost::asio::yield_context& yield) {
+                Backend::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = RPC::accountFunds(*backend_, lgrInfo.seq, amount, account, yield);
                 });
             };

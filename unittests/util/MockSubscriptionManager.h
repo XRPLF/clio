@@ -33,7 +33,7 @@ public:
     {
     }
 
-    MOCK_METHOD(boost::json::object, subLedger, (boost::asio::yield_context&, session_ptr), ());
+    MOCK_METHOD(boost::json::object, subLedger, (boost::asio::yield_context, session_ptr), ());
 
     MOCK_METHOD(
         void,

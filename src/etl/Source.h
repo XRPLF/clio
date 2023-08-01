@@ -82,7 +82,7 @@ public:
     loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false) = 0;
 
     virtual std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
         const = 0;
 
     virtual boost::uuids::uuid
@@ -107,7 +107,7 @@ private:
     requestFromRippled(
         boost::json::object const& request,
         std::string const& clientIp,
-        boost::asio::yield_context& yield) const = 0;
+        boost::asio::yield_context yield) const = 0;
 };
 
 /**
@@ -255,7 +255,7 @@ public:
     requestFromRippled(
         boost::json::object const& request,
         std::string const& clientIp,
-        boost::asio::yield_context& yield) const override
+        boost::asio::yield_context yield) const override
     {
         log_.trace() << "Attempting to forward request to tx. "
                      << "request = " << boost::json::serialize(request);
@@ -804,7 +804,7 @@ public:
      * @return response wrapped in an optional on success; nullopt otherwise
      */
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
         const override
     {
         if (auto resp = forwardCache_.get(request); resp)

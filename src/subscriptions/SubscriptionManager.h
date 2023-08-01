@@ -251,7 +251,7 @@ public:
     }
 
     boost::json::object
-    subLedger(boost::asio::yield_context& yield, SessionPtrType session);
+    subLedger(boost::asio::yield_context yield, SessionPtrType session);
 
     void
     pubLedger(

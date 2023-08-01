@@ -43,7 +43,7 @@ struct Context : util::Taggable
     std::string clientIp;
 
     Context(
-        boost::asio::yield_context& yield,
+        boost::asio::yield_context yield,
         std::string const& command,
         std::uint32_t apiVersion,
         boost::json::object params,
