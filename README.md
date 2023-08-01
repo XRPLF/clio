@@ -29,7 +29,7 @@ tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
 ```sh
 conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 ```
-Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
+Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip steps 1 - 3 and jump to step 4 of the local package instructions for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
 
 ## Preparing local packages (alternative to artifactory)
 1. Get rippled from [this branch](https://github.com/thejohnfreeman/rippled/tree/clio)
