@@ -88,8 +88,7 @@ LogService::init(Config const& config)
         boost::log::add_console_log(std::cout, keywords::format = format);
     }
 
-    auto logDir = config.maybeValue<std::string>("log_directory");
-    if (logDir)
+    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir)
     {
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
@@ -111,8 +110,7 @@ LogService::init(Config const& config)
         fileSink->locked_backend()->scan_for_files();
     }
 
-    // get default severity, can be overridden per channel using
-    // the `log_channels` array
+    // get default severity, can be overridden per channel using the `log_channels` array
     auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
     static constexpr std::array<const char*, 7> channels = {
         "General",

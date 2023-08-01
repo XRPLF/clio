@@ -34,7 +34,7 @@ namespace Web {
 
 struct Context : util::Taggable
 {
-    std::reference_wrapper<boost::asio::yield_context> yield;
+    boost::asio::yield_context yield;
     std::string method;
     std::uint32_t apiVersion;
     boost::json::object params;
@@ -52,7 +52,7 @@ struct Context : util::Taggable
         Backend::LedgerRange const& range,
         std::string const& clientIp)
         : Taggable(tagFactory)
-        , yield(std::ref(yield))
+        , yield(yield)
         , method(command)
         , apiVersion(apiVersion)
         , params(std::move(params))
