@@ -131,7 +131,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(AccountOfferParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -160,7 +160,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
         ACCOUNT,
         LEDGERHASH));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -187,7 +187,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
         ACCOUNT,
         seq));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -214,7 +214,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
         ACCOUNT,
         seq));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -241,7 +241,7 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -318,7 +318,7 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
@@ -369,7 +369,7 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 10);
@@ -426,7 +426,7 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
         INDEX1,
         startPage));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 19);
@@ -464,7 +464,7 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
         INDEX1,
         startPage));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -520,7 +520,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
         ACCOUNT,
         AccountOffersHandler::LIMIT_MIN - 1));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MIN);
@@ -574,7 +574,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
         ACCOUNT,
         AccountOffersHandler::LIMIT_MAX + 1));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);

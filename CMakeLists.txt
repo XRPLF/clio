@@ -209,11 +209,17 @@ if(tests)
   # Fix for dwarf5 bug on ci 
   target_compile_options(clio PUBLIC -gdwarf-4)
 
+  # TODO: support sanitizers properly
+  # Tmp: uncomment for TSAN
+  # target_compile_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+  # target_link_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
   target_link_libraries(${TEST_TARGET} PUBLIC clio gtest::gtest)
 
   # Generate `clio_test-ccov` if coverage is enabled
+  # Note: use `make clio_test-ccov` to generate report
   if(coverage)
     include(CMake/Coverage.cmake)
     add_coverage(${TEST_TARGET})

@@ -318,7 +318,7 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
             "nft_id": "{}"
         }})",
         NFTID));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
@@ -360,7 +360,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
             "nft_id": "{}"
         }})",
         NFTID));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
@@ -401,7 +401,7 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
             "nft_id": "{}"
         }})",
         NFTID));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
@@ -442,7 +442,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
             "nft_id": "{}"
         }})",
         NFTID2));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);

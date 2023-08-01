@@ -148,7 +148,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield)});
 
@@ -175,7 +175,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield)});
 
@@ -216,7 +216,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
 
@@ -260,7 +260,7 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
 
@@ -315,7 +315,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield), {}, true});
 
@@ -377,7 +377,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield), {}, true});
 
@@ -435,7 +435,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{std::ref(yield), {}, true});
 

@@ -41,7 +41,7 @@ class RPCTxTest : public HandlerBaseTest
 
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -62,7 +62,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
 
 TEST_F(RPCTxTest, InvalidLgrRange)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -87,7 +87,7 @@ TEST_F(RPCTxTest, TxnNotFound)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -112,7 +112,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -140,7 +140,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -207,7 +207,7 @@ TEST_F(RPCTxTest, DefaultParameter)
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -240,7 +240,7 @@ TEST_F(RPCTxTest, ReturnBinary)
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -319,7 +319,7 @@ TEST_F(RPCTxTest, MintNFT)
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -341,7 +341,7 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -364,7 +364,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this, &ids](auto& yield) {
+    runSpawn([this, &ids](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -393,7 +393,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 

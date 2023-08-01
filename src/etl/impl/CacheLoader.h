@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <backend/BackendInterface.h>
 #include <log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>

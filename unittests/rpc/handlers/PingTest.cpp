@@ -30,7 +30,7 @@ class RPCPingHandlerTest : public HandlerBaseTest
 // example handler tests
 TEST_F(RPCPingHandlerTest, Default)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         auto const handler = AnyHandler{PingHandler{}};
         auto const output = handler.process(boost::json::parse(R"({})"), Context{std::ref(yield)});
         ASSERT_TRUE(output);

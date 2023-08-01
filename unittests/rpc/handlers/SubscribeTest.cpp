@@ -537,7 +537,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(SubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -550,7 +550,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 
 TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
 {
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(json::parse(R"({})"), Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -565,7 +565,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         R"({
             "streams": ["transactions_proposed","transactions","validations","manifests","book_changes"]
         })");
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -610,7 +610,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         R"({
             "streams": ["ledger"]
         })");
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -630,7 +630,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         ACCOUNT,
         ACCOUNT2,
         ACCOUNT2));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -651,7 +651,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         ACCOUNT,
         ACCOUNT2,
         ACCOUNT2));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -683,7 +683,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
             ]
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -715,7 +715,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
             ]
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -878,7 +878,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ACCOUNT,
         PAYS20XRPGETS10USDBOOKDIR,
         ACCOUNT);
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);
@@ -1018,7 +1018,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         PAYS20USDGETS10XRPBOOKDIR,
         ACCOUNT);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{std::ref(yield), session_});
         ASSERT_TRUE(output);

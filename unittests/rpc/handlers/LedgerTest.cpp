@@ -165,7 +165,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(LedgerParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -185,7 +185,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -209,7 +209,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -233,7 +233,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -279,7 +279,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse("{}");
         auto output = handler.process(req, Context{std::ref(yield)});
@@ -301,7 +301,7 @@ TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -324,7 +324,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(15, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(R"({"ledger_index": 15})");
         auto output = handler.process(req, Context{std::ref(yield)});
@@ -343,7 +343,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{INDEX1}, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(R"({{"ledger_hash": "{}" }})", INDEX1));
         auto output = handler.process(req, Context{std::ref(yield)});
@@ -372,7 +372,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -422,7 +422,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{t1, t1}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -512,7 +512,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{t1}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -542,7 +542,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
     ON_CALL(*rawBackendPtr, fetchAllTransactionHashesInLedger(RANGEMAX, _))
         .WillByDefault(Return(std::vector{ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -599,7 +599,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -643,7 +643,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -732,7 +732,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{t1}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -842,7 +842,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -912,7 +912,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -948,7 +948,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -1017,7 +1017,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -1065,7 +1065,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
@@ -1129,7 +1129,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
     EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillByDefault(Return(std::vector{tx}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({

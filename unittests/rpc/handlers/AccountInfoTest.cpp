@@ -103,7 +103,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(AccountInfoParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -131,7 +131,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -156,7 +156,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -183,7 +183,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
         ACCOUNT,
         LEDGERHASH));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -210,7 +210,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -238,7 +238,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -273,7 +273,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -372,7 +372,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
@@ -442,7 +442,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
@@ -471,7 +471,7 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("signer_lists"));

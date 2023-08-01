@@ -202,7 +202,7 @@ TEST_P(NFTHistoryParameterTest, InvalidParams)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -256,7 +256,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -297,7 +297,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalse)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -334,7 +334,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
             testing::_, testing::_, true, testing::Optional(testing::Eq(TransactionsCursor{MINSEQ, 0})), testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -375,7 +375,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -416,7 +416,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrue)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -465,7 +465,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -513,7 +513,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -542,7 +542,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -568,7 +568,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -608,7 +608,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -646,7 +646,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -687,7 +687,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -728,7 +728,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitLessThanMin)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
@@ -771,7 +771,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
             testing::_))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{

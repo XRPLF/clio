@@ -46,7 +46,7 @@ TEST_F(RPCVersionHandlerTest, Default)
         MAX_API_VERSION,
         DEFAULT_API_VERSION))};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const handler = AnyHandler{VersionHandler{cfg}};
         auto const output = handler.process(static_cast<json::value>(cfg), Context{std::ref(yield)});
         ASSERT_TRUE(output);

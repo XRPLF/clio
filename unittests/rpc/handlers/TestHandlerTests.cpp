@@ -38,7 +38,7 @@ class RPCTestHandlerTest : public HandlerBaseTest
 // example handler tests
 TEST_F(RPCTestHandlerTest, HandlerSuccess)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         auto const handler = AnyHandler{HandlerFake{}};
         auto const input = json::parse(R"({ 
             "hello": "world", 
@@ -55,7 +55,7 @@ TEST_F(RPCTestHandlerTest, HandlerSuccess)
 
 TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         auto const handler = AnyHandler{NoInputHandlerFake{}};
         auto const output = handler.process(json::parse(R"({})"), Context{std::ref(yield)});
         ASSERT_TRUE(output);
@@ -67,7 +67,7 @@ TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
 
 TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         auto const handler = AnyHandler{HandlerFake{}};
         auto const input = json::parse(R"({ 
             "hello": "not world", 
@@ -86,7 +86,7 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 
 TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         auto const handler = AnyHandler{FailingHandlerFake{}};
         auto const input = json::parse(R"({ 
             "hello": "world", 

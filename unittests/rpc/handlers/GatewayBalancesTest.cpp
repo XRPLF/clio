@@ -67,7 +67,7 @@ TEST_P(ParameterTest, CheckError)
 {
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(json::parse(bundle.testJson), Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -190,7 +190,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -218,7 +218,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -246,7 +246,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -280,7 +280,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -325,7 +325,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{
@@ -397,7 +397,7 @@ TEST_P(NormalPathTest, CheckOutput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
                 R"({{

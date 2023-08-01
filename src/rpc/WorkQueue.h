@@ -42,9 +42,7 @@ class WorkQueue
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
     clio::Logger log_{"RPC"};
-    std::vector<std::thread> threads_ = {};
-    boost::asio::io_context ioc_;
-    std::optional<boost::asio::io_context::work> work_;
+    boost::asio::thread_pool ioc_;
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);

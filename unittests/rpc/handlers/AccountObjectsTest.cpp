@@ -145,7 +145,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(AccountObjectsParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -173,7 +173,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -198,7 +198,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -225,7 +225,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
         ACCOUNT,
         LEDGERHASH));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -252,7 +252,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -331,7 +331,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -384,7 +384,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
         limit));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), limit);
@@ -434,7 +434,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
         page));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), limit - 1);
@@ -495,7 +495,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
         2 * count));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), count * 2);
@@ -553,7 +553,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 1);
@@ -609,7 +609,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
@@ -672,7 +672,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 2);
@@ -724,7 +724,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 1);
@@ -791,7 +791,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
@@ -857,7 +857,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
@@ -975,7 +975,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -1021,7 +1021,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
         10));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 10);
@@ -1074,7 +1074,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
         11));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 11);
@@ -1157,7 +1157,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
         std::numeric_limits<uint32_t>::max()));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 11 + 3);
@@ -1218,7 +1218,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
         std::numeric_limits<uint32_t>::max()));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 3);
@@ -1250,7 +1250,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
         std::numeric_limits<std::uint32_t>::max()));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -1287,7 +1287,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
         std::numeric_limits<std::uint32_t>::max()));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -1368,7 +1368,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
         std::numeric_limits<uint32_t>::max()));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 12);
@@ -1467,7 +1467,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
         ACCOUNT));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -1519,7 +1519,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
         std::numeric_limits<uint32_t>::max()));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), limit);
@@ -1601,7 +1601,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
         AccountObjectsHandler::LIMIT_MIN - 1));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -1682,7 +1682,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
         AccountObjectsHandler::LIMIT_MAX + 1));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
