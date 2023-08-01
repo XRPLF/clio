@@ -1,8 +1,9 @@
 # Temporary build instructions
 
 ## Prerequisites 
-1. Make sure you have conan 1.x installed and active (use brew on mac). Conan may have been upgraded to v2 and that may not work.
-2. You should already have a Conan profile after building rippled. Example:
+1. Make sure you have conan 1.x installed and active. Note that Conan may have been upgraded to v2 and that does not work with Clio and rippled atm.
+2. You should already have a Conan profile after building rippled and may have extra options and flags in there. Clio does not require anything but default settings. It's best to have no extra flags specified. 
+> Mac example:
 ```
 [settings]
 os=Macos
@@ -14,15 +15,19 @@ compiler.version=14
 compiler.libcxx=libc++
 build_type=Release
 compiler.cppstd=20
-[options]
-boost:extra_b2_flags=define=BOOST_ASIO_HAS_STD_INVOKE_RESULT
-[build_requires]
-[env]
-CFLAGS=-DBOOST_ASIO_HAS_STD_INVOKE_RESULT
-CXXFLAGS=-DBOOST_ASIO_HAS_STD_INVOKE_RESULT
-[conf]
-tools.build:cxxflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
-tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
+```
+> Linux example:
+```
+[settings]
+os=Linux
+os_build=Linux
+arch=x86_64
+arch_build=x86_64
+compiler=gcc
+compiler.version=11
+compiler.libcxx=libstdc++11
+build_type=Release
+compiler.cppstd=20
 ```
 
 ## Using artifactory (temporary packages)
