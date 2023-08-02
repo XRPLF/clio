@@ -87,8 +87,8 @@ struct TransactionAndMetadata
 
 struct TransactionsCursor
 {
-    std::uint32_t ledgerSequence;
-    std::uint32_t transactionIndex;
+    std::uint32_t ledgerSequence = 0;
+    std::uint32_t transactionIndex = 0;
 
     TransactionsCursor() = default;
     TransactionsCursor(std::uint32_t ledgerSequence, std::uint32_t transactionIndex)
@@ -155,8 +155,8 @@ struct NFT
 
 struct LedgerRange
 {
-    std::uint32_t minSequence;
-    std::uint32_t maxSequence;
+    std::uint32_t minSequence = 0;
+    std::uint32_t maxSequence = 0;
 };
 constexpr ripple::uint256 firstKey{"0000000000000000000000000000000000000000000000000000000000000000"};
 constexpr ripple::uint256 lastKey{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};

@@ -36,11 +36,11 @@ class RPCLedgerRangeTest : public HandlerBaseTest
 
 TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         mockBackendPtr->updateRange(RANGEMIN);
         auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         auto const json = output.value();
         EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
@@ -50,12 +50,12 @@ TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
 
 TEST_F(RPCLedgerRangeTest, LedgerRangeFullySet)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         mockBackendPtr->updateRange(RANGEMIN);
         mockBackendPtr->updateRange(RANGEMAX);
         auto const handler = AnyHandler{LedgerRangeHandler{mockBackendPtr}};
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         auto const json = output.value();
         EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);

@@ -59,12 +59,6 @@ public:
         return stream_;
     }
 
-    boost::beast::tcp_stream
-    releaseStream()
-    {
-        return std::move(stream_);
-    }
-
     void
     run()
     {
@@ -76,10 +70,8 @@ public:
     void
     doClose()
     {
-        // Send a TCP shutdown
         boost::beast::error_code ec;
         stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
-        // At this point the connection is closed gracefully
     }
 
     void

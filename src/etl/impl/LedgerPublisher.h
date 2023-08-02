@@ -71,7 +71,10 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
         SystemState const& state)
-        : publishStrand_{ioc.get_executor()}, backend_{backend}, subscriptions_{subscriptions}, state_{std::cref(state)}
+        : publishStrand_{boost::asio::make_strand(ioc)}
+        , backend_{backend}
+        , subscriptions_{subscriptions}
+        , state_{std::cref(state)}
     {
     }
 

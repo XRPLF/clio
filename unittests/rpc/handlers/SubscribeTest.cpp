@@ -537,10 +537,10 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(SubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
@@ -550,9 +550,9 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 
 TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
 {
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(json::parse(R"({})"), Context{std::ref(yield), session_});
+        auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });
@@ -565,9 +565,9 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         R"({
             "streams": ["transactions_proposed","transactions","validations","manifests","book_changes"]
         })");
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
         std::this_thread::sleep_for(20ms);
@@ -610,9 +610,9 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         R"({
             "streams": ["ledger"]
         })");
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
         std::this_thread::sleep_for(20ms);
@@ -630,9 +630,9 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         ACCOUNT,
         ACCOUNT2,
         ACCOUNT2));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
         std::this_thread::sleep_for(20ms);
@@ -651,9 +651,9 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         ACCOUNT,
         ACCOUNT2,
         ACCOUNT2));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
         std::this_thread::sleep_for(20ms);
@@ -683,9 +683,9 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
             ]
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
         std::this_thread::sleep_for(20ms);
@@ -715,9 +715,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
             ]
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
         std::this_thread::sleep_for(20ms);
@@ -878,9 +878,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ACCOUNT,
         PAYS20XRPGETS10USDBOOKDIR,
         ACCOUNT);
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("bids").as_array().size(), 10);
         EXPECT_EQ(output->as_object().at("asks").as_array().size(), 10);
@@ -1018,9 +1018,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         PAYS20USDGETS10XRPBOOKDIR,
         ACCOUNT);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);
         EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));

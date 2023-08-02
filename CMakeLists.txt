@@ -18,9 +18,6 @@ if(packaging)
   add_definitions(-DPKG=1)
 endif()
 
-#c++20 removed std::result_of but boost 1.75 is still using it.
-add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
-
 add_library(clio)
 
 # Clio tweaks and checks
@@ -57,13 +54,10 @@ target_link_libraries(clio
   INTERFACE Threads::Threads
 )
 
-target_compile_definitions(clio PUBLIC 
-  BOOST_ASIO_DISABLE_HANDLER_TYPE_REQUIREMENTS 
-  BOOST_ASIO_HAS_STD_INVOKE_RESULT 
-  BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT
-  BOOST_BEAST_ALLOW_DEPRECATED
-  BOOST_CONTAINER_FWD_BAD_DEQUE
-  BOOST_COROUTINES_NO_DEPRECATION_WARNING)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # FIXME: needed on gcc for now
+  target_compile_definitions(clio PUBLIC BOOST_ASIO_DISABLE_CONCEPTS)
+endif()
 
 target_sources(clio PRIVATE
   ## Main
@@ -162,6 +156,7 @@ if(tests)
     unittests/rpc/AdminVerificationTest.cpp
     unittests/rpc/APIVersionTests.cpp
     unittests/rpc/ForwardingProxyTests.cpp
+    unittests/rpc/WorkQueueTest.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
@@ -214,11 +209,17 @@ if(tests)
   # Fix for dwarf5 bug on ci 
   target_compile_options(clio PUBLIC -gdwarf-4)
 
+  # TODO: support sanitizers properly
+  # Tmp: uncomment for TSAN
+  # target_compile_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+  # target_link_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
   target_link_libraries(${TEST_TARGET} PUBLIC clio gtest::gtest)
 
   # Generate `clio_test-ccov` if coverage is enabled
+  # Note: use `make clio_test-ccov` to generate report
   if(coverage)
     include(CMake/Coverage.cmake)
     add_coverage(${TEST_TARGET})
@@ -227,5 +228,5 @@ endif()
 
 include(CMake/install/install.cmake)
 if(packaging)
-    include(CMake/packaging.cmake) # TODO: file is actually missing?
+    include(CMake/packaging.cmake) # This file exists only in build runner
 endif()

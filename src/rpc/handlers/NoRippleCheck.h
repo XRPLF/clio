@@ -84,7 +84,10 @@ public:
                  Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>(), modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
+            {JS(limit),
+             validation::Type<uint32_t>(),
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(transactions), validation::Type<bool>()},
         };
 

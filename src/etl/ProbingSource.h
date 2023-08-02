@@ -103,7 +103,7 @@ public:
     fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) override;
 
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
         const override;
 
     boost::uuids::uuid
@@ -114,7 +114,7 @@ private:
     requestFromRippled(
         boost::json::object const& request,
         std::string const& clientIp,
-        boost::asio::yield_context& yield) const override;
+        boost::asio::yield_context yield) const override;
 
     SourceHooks
     make_SSLHooks() noexcept;

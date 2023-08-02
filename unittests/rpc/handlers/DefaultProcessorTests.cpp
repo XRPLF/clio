@@ -39,7 +39,7 @@ class RPCDefaultProcessorTest : public HandlerBaseTest
 
 TEST_F(RPCDefaultProcessorTest, ValidInput)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         HandlerMock handler;
         RPC::detail::DefaultProcessor<HandlerMock> processor;
 
@@ -49,14 +49,14 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
         EXPECT_CALL(handler, spec(_)).WillOnce(ReturnRef(spec));
         EXPECT_CALL(handler, process(Eq(data), _)).WillOnce(Return(data));
 
-        auto const ret = processor(handler, input, Context{std::ref(yield)});
+        auto const ret = processor(handler, input, Context{yield});
         ASSERT_TRUE(ret);  // no error
     });
 }
 
 TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         HandlerWithoutInputMock handler;
         RPC::detail::DefaultProcessor<HandlerWithoutInputMock> processor;
 
@@ -64,14 +64,14 @@ TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
         auto const input = json::parse(R"({})");
         EXPECT_CALL(handler, process(_)).WillOnce(Return(data));
 
-        auto const ret = processor(handler, input, Context{std::ref(yield)});
+        auto const ret = processor(handler, input, Context{yield});
         ASSERT_TRUE(ret);  // no error
     });
 }
 
 TEST_F(RPCDefaultProcessorTest, InvalidInput)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         HandlerMock handler;
         RPC::detail::DefaultProcessor<HandlerMock> processor;
 
@@ -79,7 +79,7 @@ TEST_F(RPCDefaultProcessorTest, InvalidInput)
         auto const spec = RpcSpec{{"something", Required{}}};
         EXPECT_CALL(handler, spec(_)).WillOnce(ReturnRef(spec));
 
-        auto const ret = processor(handler, input, Context{std::ref(yield)});
+        auto const ret = processor(handler, input, Context{yield});
         ASSERT_FALSE(ret);  // returns error
     });
 }

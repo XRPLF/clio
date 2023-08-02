@@ -27,7 +27,7 @@ namespace RPC {
 
 util::Expected<Web::Context, Status>
 make_WsContext(
-    boost::asio::yield_context& yc,
+    boost::asio::yield_context yc,
     boost::json::object const& request,
     shared_ptr<Server::ConnectionBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
@@ -56,7 +56,7 @@ make_WsContext(
 
 util::Expected<Web::Context, Status>
 make_HttpContext(
-    boost::asio::yield_context& yc,
+    boost::asio::yield_context yc,
     boost::json::object const& request,
     util::TagDecoratorFactory const& tagFactory,
     Backend::LedgerRange const& range,

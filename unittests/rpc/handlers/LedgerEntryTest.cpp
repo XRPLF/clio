@@ -549,10 +549,10 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(LedgerEntryParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -585,14 +585,14 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(IndexTest, InvalidIndexUint256)
 {
     auto const index = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "{}": "invalid"
             }})",
             index));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -604,14 +604,14 @@ TEST_P(IndexTest, InvalidIndexUint256)
 TEST_P(IndexTest, InvalidIndexNotString)
 {
     auto const index = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "{}": 123
             }})",
             index));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -635,14 +635,14 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(key, RANGEMAX, _)).WillByDefault(Return(std::optional<Blob>{}));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "account_root": "{}"
             }})",
             ACCOUNT));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
@@ -914,10 +914,10 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
         .WillByDefault(Return(testBundle.mockedEntity.getSerializer().peekData()));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().at("ledger_hash").as_string(), LEDGERHASH);
         EXPECT_EQ(output.value().at("ledger_index").as_uint64(), RANGEMAX);
@@ -965,14 +965,14 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "payment_channel": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
@@ -994,14 +994,14 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "check": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "unexpectedLedgerType");
@@ -1017,7 +1017,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -1026,7 +1026,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
             }})",
             INDEX1,
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1043,7 +1043,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -1052,7 +1052,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
             }})",
             INDEX1,
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1069,7 +1069,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -1078,7 +1078,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
             }})",
             INDEX1,
             LEDGERHASH));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");

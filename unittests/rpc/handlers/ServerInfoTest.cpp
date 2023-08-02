@@ -148,9 +148,9 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -175,9 +175,9 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -216,9 +216,9 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
 
         validateNormalOutput(output);
 
@@ -260,9 +260,9 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
 
         validateNormalOutput(output);
 
@@ -315,9 +315,9 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, true});
+        auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
         validateAdminOutput(output);
@@ -377,9 +377,9 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, true});
+        auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
         validateAdminOutput(output);
@@ -435,9 +435,9 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     auto const handler = AnyHandler{TestServerInfoHandler{
         mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
 
-    runSpawn([&](auto& yield) {
+    runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, true});
+        auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
         validateAdminOutput(output);

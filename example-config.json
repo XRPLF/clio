@@ -48,9 +48,8 @@
     "server": {
         "ip": "0.0.0.0",
         "port": 51233,
-        /* Max number of requests to queue up before rejecting further requests.
-        * Defaults to 0, which disables the limit
-        */
+        // Max number of requests to queue up before rejecting further requests.
+        // Defaults to 0, which disables the limit.
         "max_queue_size": 500
     },
     "log_channels": [
@@ -80,9 +79,11 @@
         }
     ],
     "log_level": "info",
-    "log_format": "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%", // This is the default format
+    // Log format (this is the default format)
+    "log_format": "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%",
     "log_to_console": true,
-    "log_directory": "./clio_log",
+    // Clio logs to file in the specified directory only if "log_directory" is set
+    // "log_directory": "./clio_log",
     "log_rotation_size": 2048,
     "log_directory_max_size": 51200,
     "log_rotation_hour_interval": 12,

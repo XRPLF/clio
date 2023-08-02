@@ -1,8 +1,9 @@
 # Temporary build instructions
 
 ## Prerequisites 
-1. Make sure you have conan 1.x installed and active (use brew on mac). Conan may have been upgraded to v2 and that may not work.
-2. You should already have a Conan profile after building rippled. Example:
+1. Make sure you have conan 1.x installed and active. Note that Conan may have been upgraded to v2 and that does not work with Clio and rippled atm.
+2. You should already have a Conan profile after building rippled and may have extra options and flags in there. Clio does not require anything but default settings. It's best to have no extra flags specified. 
+> Mac example:
 ```
 [settings]
 os=Macos
@@ -14,22 +15,26 @@ compiler.version=14
 compiler.libcxx=libc++
 build_type=Release
 compiler.cppstd=20
-[options]
-boost:extra_b2_flags=define=BOOST_ASIO_HAS_STD_INVOKE_RESULT
-[build_requires]
-[env]
-CFLAGS=-DBOOST_ASIO_HAS_STD_INVOKE_RESULT
-CXXFLAGS=-DBOOST_ASIO_HAS_STD_INVOKE_RESULT
-[conf]
-tools.build:cxxflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
-tools.build:cflags=['-DBOOST_ASIO_HAS_STD_INVOKE_RESULT']
+```
+> Linux example:
+```
+[settings]
+os=Linux
+os_build=Linux
+arch=x86_64
+arch_build=x86_64
+compiler=gcc
+compiler.version=11
+compiler.libcxx=libstdc++11
+build_type=Release
+compiler.cppstd=20
 ```
 
 ## Using artifactory (temporary packages)
 ```sh
-conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 ```
-Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip the local package step for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
+Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip steps 1 - 3 and jump to step 4 of the local package instructions for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
 
 ## Preparing local packages (alternative to artifactory)
 1. Get rippled from [this branch](https://github.com/thejohnfreeman/rippled/tree/clio)
@@ -54,12 +59,14 @@ conan install .. --output-folder . --build missing --settings build_type=Release
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 ```
-If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_unittests` in the `build` directory (the current directory).
+If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_tests` in the `build` directory (the current directory).
 Please note that a few unittests are currently failing. See below.
+
+> **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_tests`.
 
 ## Things to fix
 
-1. Fix build on CI (currently using old CMake. need to use conan instead).
+1. Fix build on CI (currently only building for MacOS)
 2. Fix code coverage support (see 'coverage' option in conanfile).
 3. See if we can contribute/push our cassandra-cpp-driver to conan center so we don't need to export it before we able to use it.
 4. Try to improve the new asio code that is using `async_compose` and potentially the `FutureWithCallback` way of accepting the callback.

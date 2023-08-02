@@ -40,9 +40,9 @@ class RPCTransactionEntryHandlerTest : public HandlerBaseTest
 
 TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
-        auto const output = handler.process(json::parse("{}"), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse("{}"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "fieldNotFoundTransaction");
@@ -52,9 +52,9 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 
 TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
-        auto const output = handler.process(json::parse(R"({"tx_hash":"123"})"), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse(R"({"tx_hash":"123"})"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -77,9 +77,9 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
         }})",
         INDEX,
         TXNID));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -102,9 +102,9 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
             "tx_hash": "{}"
         }})",
         TXNID));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -122,14 +122,14 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}"
             }})",
             TXNID));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "transactionNotFound");
@@ -154,7 +154,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -162,7 +162,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
                 "ledger_index": "30"
             }})",
             TXNID));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "transactionNotFound");
@@ -231,7 +231,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
@@ -240,7 +240,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
             }})",
             TXNID,
             tx.ledgerSequence));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(OUTPUT), *output);
     });

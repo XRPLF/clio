@@ -77,6 +77,8 @@ generateTestValuesForParametersTest()
             "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"},
         LedgerDataParamTestCaseBundle{"binaryNotBool", R"({"binary": 123})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"limitNotInt", R"({"limit": "xxx"})", "invalidParams", "Invalid parameters."},
+        LedgerDataParamTestCaseBundle{"limitNagetive", R"({"limit": -1})", "invalidParams", "Invalid parameters."},
+        LedgerDataParamTestCaseBundle{"limitZero", R"({"limit": 0})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"markerInvalid", R"({"marker": "xxx"})", "invalidParams", "markerMalformed"},
         LedgerDataParamTestCaseBundle{
             "markerOutOfOrder",
@@ -104,10 +106,10 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
@@ -124,14 +126,14 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "ledger_index": {}
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -148,14 +150,14 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "ledger_index": "{}"
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -172,14 +174,14 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "ledger_hash": "{}"
             }})",
             LEDGERHASH));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -201,14 +203,14 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "marker": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -266,10 +268,10 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(R"({"limit":10})");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         //"close_time_human" 's format depends on platform, might be sightly different
@@ -331,14 +333,14 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(R"({
             "limit":10,
             "type":"state"
         })");
 
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         //"close_time_human" 's format depends on platform, might be sightly different
@@ -392,10 +394,10 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(R"({"limit":10, "out_of_order":true})");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -442,7 +444,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -450,7 +452,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
                 "marker": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
@@ -488,7 +490,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -497,7 +499,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
                 "out_of_order": true
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
@@ -533,14 +535,14 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(
             R"({
                 "limit":10,
                 "binary": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
@@ -577,7 +579,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -585,7 +587,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
                 "binary": true
             }})",
             LedgerDataHandler::LIMITBINARY + 1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
@@ -622,7 +624,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -630,7 +632,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
                 "binary": false
             }})",
             LedgerDataHandler::LIMITJSON + 1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());

@@ -96,7 +96,10 @@ public:
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},
             {JS(forward), validation::Type<bool>{}},
-            {JS(limit), validation::Type<uint32_t>{}, modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}},

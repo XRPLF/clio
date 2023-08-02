@@ -115,6 +115,24 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."},
         NoRippleParamTestCaseBundle{
+            "LimitNegative",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "role": "gateway",
+                "limit": -1
+             })",
+            "invalidParams",
+            "Invalid parameters."},
+        NoRippleParamTestCaseBundle{
+            "LimitZero",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "role": "gateway",
+                "limit": 0
+             })",
+            "invalidParams",
+            "Invalid parameters."},
+        NoRippleParamTestCaseBundle{
             "TransactionsNotBool",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -135,10 +153,10 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(NoRippleCheckParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -165,8 +183,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
         ACCOUNT,
         LEDGERHASH));
     auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -193,8 +211,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
         ACCOUNT,
         seq));
     auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -221,8 +239,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
         ACCOUNT,
         seq));
     auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-    runSpawn([&](auto& yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -249,9 +267,9 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -311,9 +329,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -369,9 +387,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -430,9 +448,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -488,9 +506,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -539,9 +557,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("transactions").as_array().size(), 1);
         EXPECT_EQ(output->as_object().at("problems").as_array().size(), 1);
@@ -591,9 +609,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("problems").as_array().size(), 1);
     });
@@ -693,63 +711,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
-    });
-}
-
-TEST_F(RPCNoRippleCheckTest, LimitLessThanMin)
-{
-    constexpr auto seq = 30;
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    // fetch account object return valid account with DefaultRippleSet flag
-
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject)
-        .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, ripple::lsfDefaultRipple, 2, 200, 2, INDEX1, 2)
-                                  .getSerializer()
-                                  .peekData()));
-    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, seq, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
-
-    auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
-
-    auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
-
-    std::vector<Blob> bbs;
-    bbs.push_back(line1.getSerializer().peekData());
-    bbs.push_back(line2.getSerializer().peekData());
-
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-
-    auto const input = json::parse(fmt::format(
-        R"({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway",
-            "limit": {}
-        }})",
-        ACCOUNT,
-        LEDGERHASH,
-        NoRippleCheckHandler::LIMIT_MIN - 1));
-    runSpawn([&, this](auto& yield) {
-        auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("problems").as_array().size(), NoRippleCheckHandler::LIMIT_MIN);
     });
 }
 
@@ -797,9 +763,9 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
         ACCOUNT,
         LEDGERHASH,
         NoRippleCheckHandler::LIMIT_MAX + 1));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("problems").as_array().size(), NoRippleCheckHandler::LIMIT_MAX);
     });

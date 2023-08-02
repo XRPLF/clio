@@ -81,8 +81,8 @@ public:
                 req["params"] = boost::json::array({boost::json::object{}});
 
             if (!rpcEngine_->post(
-                    [request = std::move(req), connection, this](boost::asio::yield_context yc) mutable {
-                        handleRequest(yc, std::move(request), connection);
+                    [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
+                        handleRequest(yield, std::move(request), connection);
                     },
                     connection->clientIp))
             {
@@ -126,9 +126,9 @@ public:
 private:
     void
     handleRequest(
-        boost::asio::yield_context& yc,
+        boost::asio::yield_context yield,
         boost::json::object&& request,
-        std::shared_ptr<Server::ConnectionBase> connection)
+        std::shared_ptr<Server::ConnectionBase> const& connection)
     {
         log_.info() << connection->tag() << (connection->upgraded ? "ws" : "http")
                     << " received request from work queue: " << util::removeSecret(request)
@@ -147,7 +147,7 @@ private:
             auto const context = [&] {
                 if (connection->upgraded)
                     return RPC::make_WsContext(
-                        yc,
+                        yield,
                         request,
                         connection,
                         tagFactory_.with(connection->tag()),
@@ -156,7 +156,7 @@ private:
                         std::cref(apiVersionParser_));
                 else
                     return RPC::make_HttpContext(
-                        yc,
+                        yield,
                         request,
                         tagFactory_.with(connection->tag()),
                         *range,

@@ -140,11 +140,11 @@ std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::string const& clientIp,
-    boost::asio::yield_context& yield) const
+    boost::asio::yield_context yield) const
 {
     srand((unsigned)time(0));
     auto sourceIdx = rand() % sources_.size();
-    auto numAttempts = 0;
+    auto numAttempts = 0u;
 
     while (numAttempts < sources_.size())
     {

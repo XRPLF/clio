@@ -47,7 +47,7 @@ class RPCAccountLinesHandlerTest : public HandlerBaseTest
 
 TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -56,7 +56,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
                 "ledger_hash": "xxx"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -67,7 +67,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
 
 TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{
@@ -76,7 +76,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
                 "ledger_hash": 123
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -87,7 +87,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
 
 TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -96,7 +96,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
                 "ledger_index": "notvalidated"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -107,7 +107,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
 
 TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -115,7 +115,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
                 "marker": 9
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -129,7 +129,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
 // former will be read as hex, and the latter using boost lexical cast.
 TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -137,14 +137,14 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
                 "marker": "123invalid"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor.");
     });
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -152,7 +152,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
                 "marker": 401
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -163,13 +163,13 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
 // error case: account invalid format, length is incorrect
 TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
             })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
@@ -180,13 +180,13 @@ TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
 // error case: account invalid format
 TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(
             R"({ 
                 "account": 12
             })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -197,14 +197,14 @@ TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
 
 TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "peer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
             })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
@@ -214,19 +214,70 @@ TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
 
 TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
 {
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "peer": 12
             })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "limit": "t"
+            })");
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "limit": -1
+            })");
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, LimitZero)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "limit": 0
+            })");
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
 
@@ -246,9 +297,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -272,9 +323,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
             "ledger_index": "4"
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -296,9 +347,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
             "ledger_index": 4
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -324,9 +375,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -349,9 +400,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
             "ledger_index": "31"
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -378,9 +429,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
         }})",
         ACCOUNT,
         LEDGERHASH));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -423,7 +474,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const input = json::parse(fmt::format(
             R"({{
                 "account": "{}"
@@ -463,7 +514,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
             })";
 
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
@@ -508,7 +559,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(3);
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -516,14 +567,14 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
                 "limit": 20
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
         EXPECT_THAT((*output).as_object().at("marker").as_string().c_str(), EndsWith(",0"));
     });
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -531,11 +582,11 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
                 "limit": 9
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit somehow?
     });
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
@@ -543,7 +594,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
                 "limit": 401
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit somehow?
     });
 }
@@ -605,9 +656,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
         }})",
         ACCOUNT,
         ACCOUNT3));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
     });
@@ -641,9 +692,9 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
             "account": "{}"
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 0);
     });
@@ -729,9 +780,9 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
             "account": "{}"
         }})",
         ACCOUNT));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
@@ -798,9 +849,9 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
         }})",
         ACCOUNT,
         limit));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("marker").as_string().c_str(), fmt::format("{},{}", INDEX1, nextPage));
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 15);
@@ -857,9 +908,9 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
         limit,
         INDEX1,
         nextPage));
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
@@ -902,7 +953,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -945,7 +996,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
             AccountLinesHandler::LIMIT_MIN);
 
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });
@@ -985,7 +1036,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    runSpawn([this](auto& yield) {
+    runSpawn([this](auto yield) {
         auto const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1028,7 +1079,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
             AccountLinesHandler::LIMIT_MAX);
 
         auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
     });

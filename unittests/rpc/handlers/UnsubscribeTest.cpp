@@ -492,10 +492,10 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(UnsubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
@@ -505,9 +505,9 @@ TEST_P(UnsubscribeParameterTest, InvalidParams)
 
 TEST_F(RPCUnsubscribeTest, EmptyResponse)
 {
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
-        auto const output = handler.process(json::parse(R"({})"), Context{std::ref(yield), session_});
+        auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });
@@ -529,9 +529,9 @@ TEST_F(RPCUnsubscribeTest, Streams)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBookChanges).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedTransactions).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });
@@ -551,9 +551,9 @@ TEST_F(RPCUnsubscribeTest, Accounts)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(RPC::accountFromStringStrict(ACCOUNT).value(), _)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(RPC::accountFromStringStrict(ACCOUNT2).value(), _)).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });
@@ -575,9 +575,9 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(RPC::accountFromStringStrict(ACCOUNT2).value(), _))
         .Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });
@@ -610,9 +610,9 @@ TEST_F(RPCUnsubscribeTest, Books)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(ripple::reversed(book), _)).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });
@@ -643,9 +643,9 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
         static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield), session_});
+        auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
     });

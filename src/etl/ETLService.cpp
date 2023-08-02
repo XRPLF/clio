@@ -25,7 +25,7 @@ using namespace clio;
 
 // Database must be populated when this starts
 std::optional<uint32_t>
-ETLService::runETLPipeline(uint32_t startSequence, int numExtractors)
+ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
 {
     if (finishSequence_ && startSequence > *finishSequence_)
         return {};
