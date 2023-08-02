@@ -150,7 +150,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -177,7 +177,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
@@ -218,7 +218,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
 
         validateNormalOutput(output);
 
@@ -262,7 +262,7 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, false, CLIENTIP});
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
 
         validateNormalOutput(output);
 
@@ -317,7 +317,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, true});
+        auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
         validateAdminOutput(output);
@@ -379,7 +379,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, true});
+        auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
         validateAdminOutput(output);
@@ -437,7 +437,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
-        auto const output = handler.process(req, Context{std::ref(yield), {}, true});
+        auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
         validateAdminOutput(output);

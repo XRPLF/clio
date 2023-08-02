@@ -48,7 +48,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
                 "limit": "xxx"
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -66,7 +66,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
                 "limit": -1
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -84,7 +84,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
                 "limit": 0
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -102,7 +102,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
                 "ledger_hash": "xxx"
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -121,7 +121,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
                 "ledger_hash": 123
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -140,7 +140,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
                 "ledger_index": "notvalidated"
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -157,7 +157,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
         auto const input = json::parse(R"({ 
             "nft_id": "00080000B4F4AFC5FBCBD76873F18006173D2193467D3EE7"
         })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -173,7 +173,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
         auto const input = json::parse(R"({ 
             "nft_id": 12
         })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -200,7 +200,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
         LEDGERHASH));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -226,7 +226,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
         NFTID));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -254,7 +254,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
         LEDGERHASH));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -279,7 +279,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
         NFTID));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -307,7 +307,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
         LEDGERHASH));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
@@ -325,7 +325,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
                 "marker": 9
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -346,7 +346,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
                 "marker": "123invalid"
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -361,7 +361,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
                 "marker": 250
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -420,7 +420,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
         NFTID));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
@@ -464,7 +464,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         NFTID));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
@@ -525,7 +525,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         NFTID));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
@@ -588,7 +588,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
                 "limit": 50
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
@@ -605,7 +605,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
                 "limit": 49
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
 
@@ -617,7 +617,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
                 "limit": 501
             }})",
             NFTID));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
 }
@@ -657,7 +657,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
         NFTSellOffersHandler::LIMIT_MIN - 1));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), NFTSellOffersHandler::LIMIT_MIN);
@@ -700,7 +700,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
         NFTSellOffersHandler::LIMIT_MAX + 1));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), NFTSellOffersHandler::LIMIT_MAX);

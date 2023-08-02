@@ -109,7 +109,7 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
@@ -133,7 +133,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
                 "ledger_index": {}
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -157,7 +157,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
                 "ledger_index": "{}"
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -181,7 +181,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
                 "ledger_hash": "{}"
             }})",
             LEDGERHASH));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -210,7 +210,7 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
                 "marker": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -271,7 +271,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(R"({"limit":10})");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         //"close_time_human" 's format depends on platform, might be sightly different
@@ -340,7 +340,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
             "type":"state"
         })");
 
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         //"close_time_human" 's format depends on platform, might be sightly different
@@ -397,7 +397,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{mockBackendPtr}};
         auto const req = json::parse(R"({"limit":10, "out_of_order":true})");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -452,7 +452,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
                 "marker": "{}"
             }})",
             INDEX1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
@@ -499,7 +499,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
                 "out_of_order": true
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
@@ -542,7 +542,7 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
                 "limit":10,
                 "binary": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
@@ -587,7 +587,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
                 "binary": true
             }})",
             LedgerDataHandler::LIMITBINARY + 1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
@@ -632,7 +632,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
                 "binary": false
             }})",
             LedgerDataHandler::LIMITJSON + 1));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());

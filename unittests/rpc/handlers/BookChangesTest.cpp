@@ -89,7 +89,7 @@ TEST_P(BookChangesParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
@@ -110,7 +110,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
     auto const static input = boost::json::parse(R"({"ledger_index":30})");
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -130,7 +130,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
     auto const static input = boost::json::parse(R"({"ledger_index":"30"})");
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -155,7 +155,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
         LEDGERHASH));
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -206,7 +206,7 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
 
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(json::parse("{}"), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse("{}"), Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
     });

@@ -48,7 +48,7 @@ TEST_F(RPCVersionHandlerTest, Default)
 
     runSpawn([&](auto yield) {
         auto const handler = AnyHandler{VersionHandler{cfg}};
-        auto const output = handler.process(static_cast<json::value>(cfg), Context{std::ref(yield)});
+        auto const output = handler.process(static_cast<json::value>(cfg), Context{yield});
         ASSERT_TRUE(output);
 
         // check all against all the correct values

@@ -156,7 +156,7 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -184,7 +184,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
         LEDGERHASH));
     auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -212,7 +212,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
         seq));
     auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -240,7 +240,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
         seq));
     auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -269,7 +269,7 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -331,7 +331,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -389,7 +389,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -450,7 +450,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -508,7 +508,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -559,7 +559,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("transactions").as_array().size(), 1);
         EXPECT_EQ(output->as_object().at("problems").as_array().size(), 1);
@@ -611,7 +611,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("problems").as_array().size(), 1);
     });
@@ -713,7 +713,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         LEDGERHASH));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });
@@ -765,7 +765,7 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
         NoRippleCheckHandler::LIMIT_MAX + 1));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("problems").as_array().size(), NoRippleCheckHandler::LIMIT_MAX);
     });
