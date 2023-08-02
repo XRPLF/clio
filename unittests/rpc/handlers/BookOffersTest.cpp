@@ -73,7 +73,7 @@ TEST_P(RPCBookOffersParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(json::parse(bundle.testJson), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -290,6 +290,38 @@ generateParameterBookOffersTestBundles()
             "invalidParams",
             "Invalid parameters."},
         ParameterTestBundle{
+            "LimitNagetive",
+            R"({
+                "taker_pays" : 
+                {
+                    "currency" : "CNY",
+                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                },
+                "taker_gets" : 
+                {
+                    "currency" : "XRP"
+                },
+                "limit": -1
+            })",
+            "invalidParams",
+            "Invalid parameters."},
+        ParameterTestBundle{
+            "LimitZero",
+            R"({
+                "taker_pays" : 
+                {
+                    "currency" : "CNY",
+                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                },
+                "taker_gets" : 
+                {
+                    "currency" : "XRP"
+                },
+                "limit": 0
+            })",
+            "invalidParams",
+            "Invalid parameters."},
+        ParameterTestBundle{
             "LedgerIndexInvalid",
             R"({
                 "taker_pays" : 
@@ -486,7 +518,7 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(json::parse(bundle.inputJson), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse(bundle.inputJson), Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
     });
@@ -1091,7 +1123,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1124,7 +1156,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1159,7 +1191,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -1232,81 +1264,9 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         ACCOUNT));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("offers").as_array().size(), 5);
-    });
-}
-
-TEST_F(RPCBookOffersHandlerTest, LimitLessThanMin)
-{
-    auto const seq = 300;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);   // min
-    mockBackendPtr->updateRange(seq);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
-
-    auto const issuer = GetAccountIDWithString(ACCOUNT);
-    // return valid book dir
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
-
-    auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
-        .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(5);
-    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{INDEX2});
-
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, seq, _))
-        .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes, INDEX1).getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, seq, _))
-        .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
-
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
-
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
-        .WillByDefault(Return(
-            CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData()));
-
-    auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
-        ACCOUNT2,
-        10,
-        20,
-        ripple::to_string(ripple::xrpCurrency()),
-        ripple::to_string(ripple::to_currency("USD")),
-        toBase58(ripple::xrpAccount()),
-        ACCOUNT,
-        PAYS20USDGETS10XRPBOOKDIR);
-
-    std::vector<Blob> bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-
-    auto const static input = boost::json::parse(fmt::format(
-        R"({{
-            "taker_gets": 
-            {{
-                "currency": "XRP"
-            }},
-            "taker_pays": 
-            {{
-                "currency": "USD",
-                "issuer": "{}"
-            }},
-            "limit": {}
-        }})",
-        ACCOUNT,
-        BookOffersHandler::LIMIT_MIN - 1));
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
-    runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("offers").as_array().size(), BookOffersHandler::LIMIT_MIN);
     });
 }
 
@@ -1376,7 +1336,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         BookOffersHandler::LIMIT_MAX + 1));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value().as_object().at("offers").as_array().size(), BookOffersHandler::LIMIT_MAX);
     });

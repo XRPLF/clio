@@ -68,7 +68,7 @@ TEST_P(ParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(json::parse(bundle.testJson), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -199,7 +199,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
                 }})",
                 ACCOUNT,
                 seq)),
-            Context{std::ref(yield)});
+            Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -227,7 +227,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
                 }})",
                 ACCOUNT,
                 seq)),
-            Context{std::ref(yield)});
+            Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -255,7 +255,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
                 }})",
                 ACCOUNT,
                 LEDGERHASH)),
-            Context{std::ref(yield)});
+            Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -287,7 +287,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
                     "account": "{}"
                 }})",
                 ACCOUNT)),
-            Context{std::ref(yield)});
+            Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -334,7 +334,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
                 }})",
                 ACCOUNT,
                 ACCOUNT2)),
-            Context{std::ref(yield)});
+            Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidHotWallet");
@@ -406,7 +406,7 @@ TEST_P(NormalPathTest, CheckOutput)
                 }})",
                 ACCOUNT,
                 bundle.hotwallet)),
-            Context{std::ref(yield)});
+            Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
     });

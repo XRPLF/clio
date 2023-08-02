@@ -457,7 +457,7 @@ traverseNFTObjects(
     }
 
     // the object exists and the key is in right range, must be nft page
-    ripple::SLE pageSLE{ripple::SLE{ripple::SerialIter{page->data(), page->size()}, currentPage}};
+    ripple::SLE pageSLE{ripple::SerialIter{page->data(), page->size()}, currentPage};
 
     auto count = 0u;
     // traverse the nft page linked list until the start of the list or reach the limit

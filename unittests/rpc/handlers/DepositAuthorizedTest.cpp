@@ -172,7 +172,7 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
 
@@ -203,7 +203,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
             ACCOUNT2,
             RANGEMAX));
 
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -233,7 +233,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
             ACCOUNT2,
             RANGEMAX));
 
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -263,7 +263,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
             ACCOUNT2,
             LEDGERHASH));
 
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -298,7 +298,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_FALSE(output);
 
@@ -338,7 +338,7 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_FALSE(output);
 
@@ -385,7 +385,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -434,7 +434,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -484,7 +484,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -534,7 +534,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));

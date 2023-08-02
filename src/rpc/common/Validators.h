@@ -67,6 +67,12 @@ template <typename Expected>
     {
         if (not value.is_int64() && not value.is_uint64())
             hasError = true;
+        // specify the type is unsigened, it can not be negative
+        if constexpr (std::is_unsigned_v<Expected>)
+        {
+            if (value.is_int64() and value.as_int64() < 0)
+                hasError = true;
+        }
     }
 
     return not hasError;
@@ -208,6 +214,89 @@ public:
         // TODO: may want a way to make this code more generic (e.g. use a free
         // function that can be overridden for this comparison)
         if (res < min_ || res > max_)
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+        return {};
+    }
+};
+
+/**
+ * @brief Validate that value is equal or greater than the specified min
+ */
+template <typename Type>
+class Min final
+{
+    Type min_;
+
+public:
+    /**
+     * @brief Construct the validator storing min value
+     *
+     * @param min
+     */
+    explicit Min(Type min) : min_{min}
+    {
+    }
+
+    /**
+     * @brief Verify that the JSON value is not smaller than min
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        using boost::json::value_to;
+
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        auto const res = value_to<Type>(value.as_object().at(key.data()));
+
+        if (res < min_)
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+        return {};
+    }
+};
+
+/**
+ * @brief Validate that value is not greater than max
+ */
+template <typename Type>
+class Max final
+{
+    Type max_;
+
+public:
+    /**
+     * @brief Construct the validator storing max value
+     *
+     * @param max
+     */
+    explicit Max(Type max) : max_{max}
+    {
+    }
+
+    /**
+     * @brief Verify that the JSON value is not greater than max
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        using boost::json::value_to;
+
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        auto const res = value_to<Type>(value.as_object().at(key.data()));
+
+        if (res > max_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
         return {};

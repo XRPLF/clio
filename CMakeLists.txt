@@ -148,6 +148,7 @@ if(tests)
     unittests/etl/ExtractionDataPipeTest.cpp
     unittests/etl/ExtractorTest.cpp
     unittests/etl/TransformerTest.cpp
+    unittests/etl/CacheLoaderTest.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
@@ -211,8 +212,8 @@ if(tests)
 
   # TODO: support sanitizers properly
   # Tmp: uncomment for TSAN
-  # target_compile_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
-  # target_link_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+   target_compile_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+   target_link_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
 
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)

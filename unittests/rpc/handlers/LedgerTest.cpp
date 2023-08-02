@@ -168,7 +168,7 @@ TEST_P(LedgerParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
@@ -192,7 +192,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
                 "ledger_index": {}
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -216,7 +216,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
                 "ledger_index": "{}"
             }})",
             RANGEMAX));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -240,7 +240,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
                 "ledger_hash": "{}"
             }})",
             LEDGERHASH));
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -282,7 +282,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse("{}");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -309,7 +309,7 @@ TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
                 "accounts": false,
                 "queue": false
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
     });
 }
@@ -327,7 +327,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(R"({"ledger_index": 15})");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
     });
@@ -346,7 +346,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(R"({{"ledger_hash": "{}" }})", INDEX1));
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
     });
@@ -378,7 +378,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
             R"({
                 "binary": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
     });
@@ -430,7 +430,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
                 "expand": true,
                 "transactions": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
     });
@@ -520,7 +520,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 "expand": true,
                 "transactions": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -548,7 +548,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
             R"({
                 "transactions": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output->as_object().at("ledger").at("transactions"),
@@ -605,7 +605,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
             R"({
                 "diff": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
     });
@@ -650,7 +650,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
                 "diff": true,
                 "binary": true
             })");
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
     });
@@ -741,7 +741,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -851,7 +851,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -921,7 +921,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
     });
@@ -957,7 +957,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains(
             "owner_funds"));
@@ -1026,7 +1026,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
     });
@@ -1074,7 +1074,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output->as_object()["ledger"]
@@ -1138,7 +1138,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
                 "transactions": true,
                 "owner_funds": true
             })");
-        auto output = handler.process(req, Context{std::ref(yield)});
+        auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output->as_object()["ledger"]

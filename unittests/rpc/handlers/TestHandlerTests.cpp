@@ -45,7 +45,7 @@ TEST_F(RPCTestHandlerTest, HandlerSuccess)
             "limit": 10
         })");
 
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
         auto const val = output.value();
@@ -57,7 +57,7 @@ TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{NoInputHandlerFake{}};
-        auto const output = handler.process(json::parse(R"({})"), Context{std::ref(yield)});
+        auto const output = handler.process(json::parse(R"({})"), Context{yield});
         ASSERT_TRUE(output);
 
         auto const val = output.value();
@@ -74,7 +74,7 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
             "limit": 10
         })");
 
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -94,7 +94,7 @@ TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
         })");
 
         // validation succeeds but handler itself returns error
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());

@@ -17,24 +17,45 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/Random.h>
-#include <util/Fixtures.h>
+#pragma once
 
-using namespace RPC;
+#include <backend/Types.h>
 
-class RPCRandomHandlerTest : public HandlerBaseTest
+#include <gmock/gmock.h>
+
+struct MockCache
 {
+private:
+    std::atomic_bool full_ = false;
+
+public:
+    MOCK_METHOD(void, update, (std::vector<Backend::LedgerObject> const& a, uint32_t b, bool c), ());
+
+    MOCK_METHOD(std::optional<Backend::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const));
+
+    MOCK_METHOD(std::optional<Backend::LedgerObject>, getSuccessor, (ripple::uint256 const& a, uint32_t b), (const));
+
+    MOCK_METHOD(std::optional<Backend::LedgerObject>, getPredecessor, (ripple::uint256 const& a, uint32_t b), (const));
+
+    MOCK_METHOD(void, setDisabled, (), ());
+
+    void
+    setFull()
+    {
+        full_ = true;
+    }
+
+    MOCK_METHOD(uint32_t, latestLedgerSequence, (), (const));
+
+    bool
+    isFull() const
+    {
+        return full_;
+    }
+
+    MOCK_METHOD(size_t, size, (), (const));
+
+    MOCK_METHOD(float, getObjectHitRate, (), (const));
+
+    MOCK_METHOD(float, getSuccessorHitRate, (), (const));
 };
-
-TEST_F(RPCRandomHandlerTest, Default)
-{
-    runSpawn([](auto yield) {
-        auto const handler = AnyHandler{RandomHandler{}};
-        auto const output = handler.process(boost::json::parse(R"({})"), Context{yield});
-        ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains(JS(random)));
-        EXPECT_EQ(output->as_object().at(JS(random)).as_string().size(), 64u);
-    });
-}
