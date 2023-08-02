@@ -281,11 +281,10 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value is within a certain range
+     * @brief Verify that the JSON value is not greater than max
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
