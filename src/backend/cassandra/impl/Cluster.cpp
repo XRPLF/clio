@@ -22,6 +22,8 @@
 #include <backend/cassandra/impl/Statement.h>
 #include <util/Expected.h>
 
+#include <fmt/core.h>
+
 #include <exception>
 #include <vector>
 
@@ -48,14 +50,14 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     cass_cluster_set_token_aware_routing(*this, cass_true);
     if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK)
     {
-        throw std::runtime_error(std::string{"Error setting cassandra protocol version to v4: "} + cass_error_desc(rc));
+        throw std::runtime_error(
+            fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc)));
     }
 
     if (auto const rc = cass_cluster_set_num_threads_io(*this, settings.threads); rc != CASS_OK)
     {
         throw std::runtime_error(
-            std::string{"Error setting cassandra io threads to "} + to_string(settings.threads) + ": " +
-            cass_error_desc(rc));
+            fmt::format("Error setting cassandra io threads to {}: {}", settings.threads, cass_error_desc(rc)));
     }
 
     cass_log_set_level(settings.enableLog ? CASS_LOG_TRACE : CASS_LOG_DISABLED);
@@ -67,46 +69,92 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
         rc != CASS_OK)
     {
         throw std::runtime_error(
-            std::string{"Could not set max concurrent requests per host threshold: "} + cass_error_desc(rc));
+            fmt::format("Could not set max concurrent requests per host threshold: {}", cass_error_desc(rc)));
     }
 
     if (auto const rc = cass_cluster_set_max_connections_per_host(*this, settings.maxConnectionsPerHost); rc != CASS_OK)
     {
-        throw std::runtime_error(std::string{"Could not set max connections per host: "} + cass_error_desc(rc));
+        throw std::runtime_error(fmt::format("Could not set max connections per host: {}", cass_error_desc(rc)));
     }
 
     if (auto const rc = cass_cluster_set_core_connections_per_host(*this, settings.coreConnectionsPerHost);
         rc != CASS_OK)
     {
-        throw std::runtime_error(std::string{"Could not set core connections per host: "} + cass_error_desc(rc));
+        throw std::runtime_error(fmt::format("Could not set core connections per host: {}", cass_error_desc(rc)));
     }
 
-    // TODO: other options to experiment with and consider later:
-    // cass_cluster_set_queue_size_event(*this, 100000);
-    // cass_cluster_set_queue_size_io(*this, 100000);
-    // cass_cluster_set_write_bytes_high_water_mark(*this, 16 * 1024 * 1024);  // 16mb
-    // cass_cluster_set_write_bytes_low_water_mark(*this, 8 * 1024 * 1024);  // half of allowance
-    // cass_cluster_set_pending_requests_high_water_mark(*this, 5000);
-    // cass_cluster_set_pending_requests_low_water_mark(*this, 2500);  // half
-    // cass_cluster_set_max_requests_per_flush(*this, 1000);
-    // cass_cluster_set_max_concurrent_creation(*this, 8);
-    // cass_cluster_set_constant_speculative_execution_policy(*this, 1000, 1024);
-
-    auto const queueSize = settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding;
+    auto const queueSize =
+        settings.queueSizeIO.value_or(settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding);
     if (auto const rc = cass_cluster_set_queue_size_io(*this, queueSize); rc != CASS_OK)
     {
-        throw std::runtime_error(std::string{"Could not set queue size for IO per host: "} + cass_error_desc(rc));
+        throw std::runtime_error(fmt::format("Could not set queue size for IO per host: {}", cass_error_desc(rc)));
     }
+
+    auto apply = []<typename ValueType, typename Fn>(
+        std::optional<ValueType> const& maybeValue, Fn&& fn) requires std::is_object_v<Fn>
+    {
+        if (maybeValue)
+            std::invoke(fn, maybeValue.value());
+    };
+
+    apply(settings.queueSizeEvent, [this](auto value) {
+        if (auto const rc = cass_cluster_set_queue_size_event(*this, value); rc != CASS_OK)
+            throw std::runtime_error(
+                fmt::format("Could not set queue size for events per host: {}", cass_error_desc(rc)));
+    });
+
+    apply(settings.writeBytesHighWatermark, [this](auto value) {
+        if (auto const rc = cass_cluster_set_write_bytes_high_water_mark(*this, value); rc != CASS_OK)
+            throw std::runtime_error(fmt::format("Could not set write bytes high water_mark: {}", cass_error_desc(rc)));
+    });
+
+    apply(settings.writeBytesLowWatermark, [this](auto value) {
+        if (auto const rc = cass_cluster_set_write_bytes_low_water_mark(*this, value); rc != CASS_OK)
+            throw std::runtime_error(fmt::format("Could not set write bytes low water mark: {}", cass_error_desc(rc)));
+    });
+
+    apply(settings.pendingRequestsHighWatermark, [this](auto value) {
+        if (auto const rc = cass_cluster_set_pending_requests_high_water_mark(*this, value); rc != CASS_OK)
+            throw std::runtime_error(
+                fmt::format("Could not set pending requests high water mark: {}", cass_error_desc(rc)));
+    });
+
+    apply(settings.pendingRequestsLowWatermark, [this](auto value) {
+        if (auto const rc = cass_cluster_set_pending_requests_low_water_mark(*this, value); rc != CASS_OK)
+            throw std::runtime_error(
+                fmt::format("Could not set pending requests low water mark: {}", cass_error_desc(rc)));
+    });
+
+    apply(settings.maxRequestsPerFlush, [this](auto value) {
+        if (auto const rc = cass_cluster_set_max_requests_per_flush(*this, value); rc != CASS_OK)
+            throw std::runtime_error(fmt::format("Could not set max requests per flush: {}", cass_error_desc(rc)));
+    });
+
+    apply(settings.maxConcurrentCreation, [this](auto value) {
+        if (auto const rc = cass_cluster_set_max_concurrent_creation(*this, value); rc != CASS_OK)
+            throw std::runtime_error(fmt::format("Could not set max concurrent creation: {}", cass_error_desc(rc)));
+    });
 
     setupConnection(settings);
     setupCertificate(settings);
     setupCredentials(settings);
+
+    auto valueOrDefault = []<typename T>(std::optional<T> const& maybeValue) -> std::string {
+        return maybeValue ? to_string(*maybeValue) : "default";
+    };
 
     log_.info() << "Threads: " << settings.threads;
     log_.info() << "Max concurrent requests per host: " << settings.maxConcurrentRequestsThreshold;
     log_.info() << "Max connections per host: " << settings.maxConnectionsPerHost;
     log_.info() << "Core connections per host: " << settings.coreConnectionsPerHost;
     log_.info() << "IO queue size: " << queueSize;
+    log_.info() << "Event queue size: " << valueOrDefault(settings.queueSizeEvent);
+    log_.info() << "Write bytes high watermark: " << valueOrDefault(settings.writeBytesHighWatermark);
+    log_.info() << "Write bytes low watermark: " << valueOrDefault(settings.writeBytesLowWatermark);
+    log_.info() << "Pending requests high watermark: " << valueOrDefault(settings.pendingRequestsHighWatermark);
+    log_.info() << "Pending requests low watermark: " << valueOrDefault(settings.pendingRequestsLowWatermark);
+    log_.info() << "Max requests per flush: " << valueOrDefault(settings.maxRequestsPerFlush);
+    log_.info() << "Max concurrent creation: " << valueOrDefault(settings.maxConcurrentCreation);
 }
 
 void
@@ -125,7 +173,8 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
     using std::to_string;
     auto throwErrorIfNeeded = [](CassError rc, std::string const& label, std::string const& value) {
         if (rc != CASS_OK)
-            throw std::runtime_error("Cassandra: Error setting " + label + " [" + value + "]: " + cass_error_desc(rc));
+            throw std::runtime_error(
+                fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)));
     };
 
     {
@@ -147,7 +196,7 @@ Cluster::setupSecureBundle(Settings::SecureConnectionBundle const& bundle)
     log_.debug() << "Attempt connection using secure bundle";
     if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK)
     {
-        throw std::runtime_error("Failed to connect using secure connection bundle" + bundle.bundle);
+        throw std::runtime_error("Failed to connect using secure connection bundle " + bundle.bundle);
     }
 }
 

@@ -1,3 +1,6 @@
+/*
+ * This is an example configuration file. Please do not use without modifying to suit your needs.
+ */
 {
     "database": {
         "type": "cassandra",
@@ -9,10 +12,27 @@
             "table_prefix": "",
             "max_write_requests_outstanding": 25000,
             "max_read_requests_outstanding": 30000,
-            "max_connections_per_host": 1, // defaults to 2
-            "core_connections_per_host": 1, // defaults to 2
-            "max_concurrent_requests_threshold": 55000, // defaults to max_read + max_write / core_connections_per_host
-            "threads": 8
+            "threads": 8,
+            //
+            // Advanced options. USE AT OWN RISK:
+            // ---
+            "max_connections_per_host": 1, // Defaults to 2
+            "core_connections_per_host": 1, // Defaults to 2
+            "max_concurrent_requests_threshold": 55000, // Defaults to ((max_read + max_write) / core_connections_per_host)
+            //
+            // Below options will use defaults from cassandra driver if left unspecified.
+            // See https://docs.datastax.com/en/developer/cpp-driver/2.0/api/struct.CassCluster/ for details.
+            // 
+            // "queue_size_event": 1,
+            // "queue_size_io": 2,
+            // "write_bytes_high_water_mark": 3,
+            // "write_bytes_low_water_mark": 4,
+            // "pending_requests_high_water_mark": 5,
+            // "pending_requests_low_water_mark": 6,
+            // "max_requests_per_flush": 7,
+            // "max_concurrent_creation": 8
+            //
+            // ---
         }
     },
     "etl_sources": [
@@ -23,21 +43,24 @@
         }
     ],
     "dos_guard": {
+        // Comma-separated list of IPs to exclude from rate limiting
         "whitelist": [
             "127.0.0.1"
-        ], // comma-separated list of ips to exclude from rate limiting
-        /* The below values are the default values and are only specified here
-         * for documentation purposes. The rate limiter currently limits
-         * connections and bandwidth per ip. The rate limiter looks at the raw
-         * ip of a client connection, and so requests routed through a load
-         * balancer will all have the same ip and be treated as a single client
-         */
-        "max_fetches": 1000000, // max bytes per ip per sweep interval
-        "max_connections": 20, // max connections per ip
-        "max_requests": 20, // max connections per ip
-        "sweep_interval": 1 // time in seconds before resetting bytes per ip count
+        ],
+        //
+        // The below values are the default values and are only specified here
+        // for documentation purposes. The rate limiter currently limits
+        // connections and bandwidth per IP. The rate limiter looks at the raw
+        // IP of a client connection, and so requests routed through a load
+        // balancer will all have the same IP and be treated as a single client.
+        //
+        "max_fetches": 1000000, // Max bytes per IP per sweep interval
+        "max_connections": 20, // Max connections per IP
+        "max_requests": 20, // Max connections per IP per sweep interval
+        "sweep_interval": 1 // Time in seconds before resetting max_fetches and max_requests
     },
     "cache": {
+        // Comma-separated list of peer nodes that Clio can use to download cache from at startup
         "peers": [
             {
                 "ip": "127.0.0.1",
@@ -52,6 +75,8 @@
         // Defaults to 0, which disables the limit.
         "max_queue_size": 500
     },
+    // Overrides log level on a per logging channel.
+    // Defaults to global "log_level" for each unspecified channel.
     "log_channels": [
         {
             "channel": "Backend",
@@ -90,10 +115,10 @@
     "log_tag_style": "uint",
     "extractor_threads": 8,
     "read_only": false,
-    //"start_sequence": [integer] the ledger index to start from,
-    //"finish_sequence": [integer] the ledger index to finish at,
-    //"ssl_cert_file" : "/full/path/to/cert.file",
-    //"ssl_key_file" : "/full/path/to/key.file"
+    // "start_sequence": [integer] the ledger index to start from,
+    // "finish_sequence": [integer] the ledger index to finish at,
+    // "ssl_cert_file" : "/full/path/to/cert.file",
+    // "ssl_key_file" : "/full/path/to/key.file"
     "api_version": {
         "min": 2,
         "max": 2,
