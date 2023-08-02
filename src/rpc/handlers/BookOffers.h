@@ -98,7 +98,7 @@ public:
                  validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'")}},
             {JS(limit),
              validation::Type<uint32_t>{},
-             validation::Between(1u, std::numeric_limits<uint32_t>::max()),
+             validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},

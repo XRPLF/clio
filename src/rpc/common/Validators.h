@@ -221,6 +221,90 @@ public:
 };
 
 /**
+ * @brief Validate that value is equal or greater than the specified min
+ */
+template <typename Type>
+class Min final
+{
+    Type min_;
+
+public:
+    /**
+     * @brief Construct the validator storing min value
+     *
+     * @param min
+     */
+    explicit Min(Type min) : min_{min}
+    {
+    }
+
+    /**
+     * @brief Verify that the JSON value is not smaller than min
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        using boost::json::value_to;
+
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        auto const res = value_to<Type>(value.as_object().at(key.data()));
+
+        if (res < min_)
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+        return {};
+    }
+};
+
+/**
+ * @brief Validate that value is not greater than max
+ */
+template <typename Type>
+class Max final
+{
+    Type max_;
+
+public:
+    /**
+     * @brief Construct the validator storing max value
+     *
+     * @param max
+     */
+    explicit Max(Type max) : max_{max}
+    {
+    }
+
+    /**
+     * @brief Verify that the JSON value is within a certain range
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer
+     * object
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const
+    {
+        using boost::json::value_to;
+
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        auto const res = value_to<Type>(value.as_object().at(key.data()));
+
+        if (res > max_)
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+        return {};
+    }
+};
+
+/**
  * @brief Validates that the value is equal to the one passed in
  */
 template <typename Type>

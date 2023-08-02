@@ -98,7 +98,7 @@ public:
             {JS(forward), validation::Type<bool>{}},
             {JS(limit),
              validation::Type<uint32_t>{},
-             validation::Between(1u, std::numeric_limits<uint32_t>::max()),
+             validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, std::numeric_limits<int32_t>::max()}},
             {JS(marker),
              meta::WithCustomError{

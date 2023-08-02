@@ -88,7 +88,7 @@ public:
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
-             validation::Between(1u, std::numeric_limits<uint32_t>::max()),
+             validation::Min(1u),
              modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
