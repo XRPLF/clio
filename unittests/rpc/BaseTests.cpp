@@ -58,9 +58,14 @@ TEST_F(RPCBaseTest, CheckType)
     ASSERT_TRUE(checkType<int32_t>(juint));
     ASSERT_FALSE(checkType<bool>(juint));
 
-    auto const jint = json::value(123);
+    auto jint = json::value(123);
     ASSERT_TRUE(checkType<int32_t>(jint));
     ASSERT_TRUE(checkType<uint32_t>(jint));
+    ASSERT_FALSE(checkType<bool>(jint));
+
+    jint = json::value(-123);
+    ASSERT_TRUE(checkType<int32_t>(jint));
+    ASSERT_FALSE(checkType<uint32_t>(jint));
     ASSERT_FALSE(checkType<bool>(jint));
 
     auto const jbool = json::value(true);
@@ -177,6 +182,38 @@ TEST_F(RPCBaseTest, BetweenValidator)
 
     auto failingInput2 = json::parse(R"({ "amount": 21 })");
     ASSERT_FALSE(spec.process(failingInput2));
+}
+
+TEST_F(RPCBaseTest, MinValidator)
+{
+    auto spec = RpcSpec{
+        {"amount", Min{6}},
+    };
+
+    auto passingInput = json::parse(R"({ "amount": 7 })");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    auto passingInput2 = json::parse(R"({ "amount": 6 })");
+    ASSERT_TRUE(spec.process(passingInput2));
+
+    auto failingInput = json::parse(R"({ "amount": 5 })");
+    ASSERT_FALSE(spec.process(failingInput));
+}
+
+TEST_F(RPCBaseTest, MaxValidator)
+{
+    auto spec = RpcSpec{
+        {"amount", Max{6}},
+    };
+
+    auto passingInput = json::parse(R"({ "amount": 5 })");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    auto passingInput2 = json::parse(R"({ "amount": 6 })");
+    ASSERT_TRUE(spec.process(passingInput2));
+
+    auto failingInput = json::parse(R"({ "amount": 7 })");
+    ASSERT_FALSE(spec.process(failingInput));
 }
 
 TEST_F(RPCBaseTest, OneOfValidator)

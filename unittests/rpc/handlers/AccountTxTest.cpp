@@ -110,6 +110,16 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."},
         AccountTxParamTestCaseBundle{
+            "limitNegative",
+            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
+            "invalidParams",
+            "Invalid parameters."},
+        AccountTxParamTestCaseBundle{
+            "limitZero",
+            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
+            "invalidParams",
+            "Invalid parameters."},
+        AccountTxParamTestCaseBundle{
             "MarkerNotObject",
             R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})",
             "invalidParams",
@@ -216,7 +226,7 @@ TEST_P(AccountTxParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{std::ref(yield)});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = RPC::makeError(output.error());
@@ -309,7 +319,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             ACCOUNT,
             MINSEQ + 1,
             MAXSEQ - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
@@ -350,7 +360,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             ACCOUNT,
             MINSEQ + 1,
             MAXSEQ - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
@@ -391,7 +401,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -432,7 +442,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -473,7 +483,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -524,7 +534,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
@@ -567,7 +577,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
             }})",
             ACCOUNT,
             MAXSEQ - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
@@ -596,7 +606,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
             }})",
             ACCOUNT,
             MAXSEQ - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -622,7 +632,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
             }})",
             ACCOUNT,
             MAXSEQ - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = RPC::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -662,7 +672,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
             }})",
             ACCOUNT,
             LEDGERHASH));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
@@ -704,7 +714,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
                 "ledger_index":"validated"
             }})",
             ACCOUNT));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ);
@@ -745,7 +755,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             ACCOUNT,
             MINSEQ + 2,
             MAXSEQ - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 2);
@@ -786,7 +796,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             ACCOUNT,
             MINSEQ + 1,
             MAXSEQ - 2));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
@@ -794,46 +804,6 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output->as_object().contains("limit"));
         EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-    });
-}
-
-TEST_F(RPCAccountTxHandlerTest, LimitLessThanMin)
-{
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(
-        *rawBackendPtr,
-        fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
-        .Times(1);
-
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
-            R"({{
-                "account":"{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "limit": {},
-                "forward": false,
-                "marker": {{"ledger":10,"seq":11}}
-            }})",
-            ACCOUNT,
-            -1,
-            -1,
-            AccountTxHandler::LIMIT_MIN - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("limit").as_uint64(), AccountTxHandler::LIMIT_MIN);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
     });
 }
 
@@ -1056,7 +1026,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, boost::json::parse(OUT));
     });
