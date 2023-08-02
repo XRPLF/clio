@@ -59,10 +59,10 @@ conan install .. --output-folder . --build missing --settings build_type=Release
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 ```
-If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_unittests` in the `build` directory (the current directory).
+If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_tests` in the `build` directory (the current directory).
 Please note that a few unittests are currently failing. See below.
 
-> **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_unittests`.
+> **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_tests`.
 
 ## Things to fix
 
