@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <backend/LedgerCache.h>
 #include <etl/impl/CacheLoader.h>
 #include <util/Fixtures.h>
 #include <util/MockCache.h>

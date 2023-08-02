@@ -212,8 +212,8 @@ if(tests)
 
   # TODO: support sanitizers properly
   # Tmp: uncomment for TSAN
-   target_compile_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
-   target_link_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+  # target_compile_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
+  # target_link_options(${TEST_TARGET} PRIVATE -fsanitize=thread)
 
   target_compile_definitions(${TEST_TARGET} PUBLIC UNITTEST_BUILD)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
