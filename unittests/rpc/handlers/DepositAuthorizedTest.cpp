@@ -169,7 +169,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{std::ref(yield)});
@@ -191,7 +191,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -221,7 +221,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -251,7 +251,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{
@@ -296,7 +296,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
         ACCOUNT2,
         LEDGERHASH));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
 
@@ -336,7 +336,7 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
         ACCOUNT2,
         LEDGERHASH));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
 
@@ -383,7 +383,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
         ACCOUNT,
         LEDGERHASH));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
 
@@ -432,7 +432,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
         ACCOUNT2,
         LEDGERHASH));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
 
@@ -482,7 +482,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
         ACCOUNT2,
         LEDGERHASH));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
 
@@ -532,7 +532,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
         ACCOUNT2,
         LEDGERHASH));
 
-    runSpawn([&, this](auto& yield) {
+    runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
 

@@ -117,8 +117,8 @@ public:
                 auto [transferedByte, requests] = ipState_.at(ip);
                 if (transferedByte > maxFetches_ || requests > maxRequestCount_)
                 {
-                    log_.warn() << "Dosguard:Client surpassed the rate limit. ip = " << ip
-                                << " Transfered Byte:" << transferedByte << " Requests:" << requests;
+                    log_.warn() << "Dosguard: Client surpassed the rate limit. ip = " << ip
+                                << " Transfered Byte: " << transferedByte << "; Requests: " << requests;
                     return false;
                 }
             }
@@ -127,8 +127,8 @@ public:
             {
                 if (it->second > maxConnCount_)
                 {
-                    log_.warn() << "Dosguard:Client surpassed the rate limit. ip = " << ip
-                                << " Concurrent connection:" << it->second;
+                    log_.warn() << "Dosguard: Client surpassed the rate limit. ip = " << ip
+                                << " Concurrent connection: " << it->second;
                     return false;
                 }
             }
@@ -249,9 +249,9 @@ class IntervalSweepHandler
 {
     std::chrono::milliseconds sweepInterval_;
     std::reference_wrapper<boost::asio::io_context> ctx_;
-    BaseDOSGuard* dosGuard_ = nullptr;
+    boost::asio::steady_timer timer_;
 
-    boost::asio::steady_timer timer_{boost::asio::make_strand(ctx_.get())};
+    BaseDOSGuard* dosGuard_ = nullptr;
 
 public:
     /**
@@ -263,6 +263,7 @@ public:
     IntervalSweepHandler(clio::Config const& config, boost::asio::io_context& ctx)
         : sweepInterval_{std::max(1u, static_cast<uint32_t>(config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
         , ctx_{std::ref(ctx)}
+        , timer_{ctx.get_executor()}
     {
     }
 
@@ -297,7 +298,7 @@ private:
                 return;
 
             dosGuard_->clear();
-            createTimer();
+            boost::asio::post(ctx_.get().get_executor(), [this] { createTimer(); });
         });
     }
 };

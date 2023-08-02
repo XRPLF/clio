@@ -125,7 +125,7 @@ std::optional<boost::json::object>
 ProbingSource::forwardToRippled(
     boost::json::object const& request,
     std::string const& clientIp,
-    boost::asio::yield_context& yield) const
+    boost::asio::yield_context yield) const
 {
     if (!currentSrc_)
         return {};
@@ -136,7 +136,7 @@ std::optional<boost::json::object>
 ProbingSource::requestFromRippled(
     boost::json::object const& request,
     std::string const& clientIp,
-    boost::asio::yield_context& yield) const
+    boost::asio::yield_context yield) const
 {
     if (!currentSrc_)
         return {};

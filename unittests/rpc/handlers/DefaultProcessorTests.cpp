@@ -39,7 +39,7 @@ class RPCDefaultProcessorTest : public HandlerBaseTest
 
 TEST_F(RPCDefaultProcessorTest, ValidInput)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         HandlerMock handler;
         RPC::detail::DefaultProcessor<HandlerMock> processor;
 
@@ -56,7 +56,7 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
 
 TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         HandlerWithoutInputMock handler;
         RPC::detail::DefaultProcessor<HandlerWithoutInputMock> processor;
 
@@ -71,7 +71,7 @@ TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 
 TEST_F(RPCDefaultProcessorTest, InvalidInput)
 {
-    runSpawn([](auto& yield) {
+    runSpawn([](auto yield) {
         HandlerMock handler;
         RPC::detail::DefaultProcessor<HandlerMock> processor;
 

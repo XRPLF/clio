@@ -357,7 +357,7 @@ ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& ba
 std::variant<Status, ripple::LedgerHeader>
 getLedgerInfoFromHashOrSeq(
     BackendInterface const& backend,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
     std::optional<uint32_t> ledgerIndex,
     uint32_t maxSeq)
@@ -432,7 +432,7 @@ traverseNFTObjects(
     ripple::AccountID const& accountID,
     ripple::uint256 nextPage,
     std::uint32_t limit,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
     auto const firstNFTPage = ripple::keylet::nftpage_min(accountID);
@@ -459,7 +459,7 @@ traverseNFTObjects(
     // the object exists and the key is in right range, must be nft page
     ripple::SLE pageSLE{ripple::SLE{ripple::SerialIter{page->data(), page->size()}, currentPage}};
 
-    auto count = 0;
+    auto count = 0u;
     // traverse the nft page linked list until the start of the list or reach the limit
     while (true)
     {
@@ -484,7 +484,7 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode,
     bool nftIncluded)
 {
@@ -539,7 +539,7 @@ traverseOwnedNodes(
     std::uint32_t const startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
-    boost::asio::yield_context& yield,
+    boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode)
 {
     auto cursor = AccountCursor({beast::zero, 0});
@@ -663,7 +663,7 @@ traverseOwnedNodes(
 
     gLog.debug() << "Time loading owned entries: " << timeDiff << " milliseconds";
 
-    for (auto i = 0; i < objects.size(); ++i)
+    for (auto i = 0u; i < objects.size(); ++i)
     {
         ripple::SerialIter it{objects[i].data(), objects[i].size()};
         atOwnedNode(ripple::SLE{it, keys[i]});
@@ -847,7 +847,7 @@ isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     if (ripple::isXRP(issuer))
         return false;
@@ -871,7 +871,7 @@ isFrozen(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     if (ripple::isXRP(currency))
         return false;
@@ -913,7 +913,7 @@ xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& id,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     auto key = ripple::keylet::account(id).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
@@ -943,7 +943,7 @@ accountFunds(
     std::uint32_t const sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     if (!amount.native() && amount.getIssuer() == id)
     {
@@ -963,7 +963,7 @@ accountHolds(
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
     bool const zeroIfFrozen,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     ripple::STAmount amount;
     if (ripple::isXRP(currency))
@@ -1006,7 +1006,7 @@ transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     auto key = ripple::keylet::account(issuer).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
@@ -1030,7 +1030,7 @@ postProcessOrderBook(
     ripple::AccountID const& takerID,
     Backend::BackendInterface const& backend,
     std::uint32_t const ledgerSequence,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     boost::json::array jsonOffers;
 

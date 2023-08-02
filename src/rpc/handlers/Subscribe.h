@@ -141,7 +141,7 @@ public:
 private:
     boost::json::object
     subscribeToStreams(
-        boost::asio::yield_context& yield,
+        boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
         std::shared_ptr<Server::ConnectionBase> const& session) const
     {
@@ -194,7 +194,7 @@ private:
     subscribeToBooks(
         std::vector<OrderBook> const& books,
         std::shared_ptr<Server::ConnectionBase> const& session,
-        boost::asio::yield_context& yield,
+        boost::asio::yield_context yield,
         Output& output) const
     {
         static auto constexpr fetchLimit = 200;

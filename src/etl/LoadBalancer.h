@@ -139,7 +139,7 @@ public:
      * @return response received from rippled node
      */
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context& yield)
+    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
         const;
 
 private:

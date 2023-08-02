@@ -40,11 +40,9 @@ class WorkQueue
 
     std::atomic_uint64_t curSize_ = 0;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
-    clio::Logger log_{"RPC"};
 
-    std::vector<std::thread> threads_ = {};
-    boost::asio::io_context ioc_ = {};
-    std::optional<boost::asio::io_context::work> work_{ioc_};
+    clio::Logger log_{"RPC"};
+    boost::asio::thread_pool ioc_;
 
 public:
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
@@ -68,28 +66,26 @@ public:
     {
         if (curSize_ >= maxSize_ && !isWhiteListed)
         {
-            log_.warn() << "Queue is full. rejecting job. current size = " << curSize_ << " max size = " << maxSize_;
+            log_.warn() << "Queue is full. rejecting job. current size = " << curSize_ << "; max size = " << maxSize_;
             return false;
         }
 
         ++curSize_;
-        auto start = std::chrono::system_clock::now();
 
         // Each time we enqueue a job, we want to post a symmetrical job that will dequeue and run the job at the front
         // of the job queue.
-        boost::asio::spawn(ioc_, [this, f = std::move(f), start](auto yield) mutable {
-            auto const run = std::chrono::system_clock::now();
-            auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
+        boost::asio::spawn(
+            ioc_, [this, f = std::forward<F>(f), start = std::chrono::system_clock::now()](auto yield) mutable {
+                auto const run = std::chrono::system_clock::now();
+                auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
 
-            // increment queued_ here, in the same place we implement durationUs_
-            ++queued_;
-            durationUs_ += wait;
-            log_.info() << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
+                ++queued_;
+                durationUs_ += wait;
+                log_.info() << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
 
-            f(yield);
-
-            --curSize_;
-        });
+                f(yield);
+                --curSize_;
+            });
 
         return true;
     }

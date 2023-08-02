@@ -170,9 +170,7 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture
         using namespace boost::asio;
 
         auto called = false;
-        auto strand = make_strand(ctx.get_executor());
-
-        spawn(strand, [&, _ = make_work_guard(strand)](yield_context yield) {
+        spawn(ctx, [&, _ = make_work_guard(ctx)](yield_context yield) {
             f(yield);
             called = true;
         });

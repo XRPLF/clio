@@ -41,7 +41,6 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
     using std::enable_shared_from_this<Detector<PlainSession, SslSession, Handler>>::shared_from_this;
 
     clio::Logger log_{"WebServer"};
-    std::reference_wrapper<boost::asio::io_context> ioc_;
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
@@ -51,14 +50,12 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
 
 public:
     Detector(
-        std::reference_wrapper<boost::asio::io_context> ioc,
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<clio::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler)
-        : ioc_(ioc)
-        , stream_(std::move(socket))
+        : stream_(std::move(socket))
         , ctx_(ctx)
         , tagFactory_(std::cref(tagFactory))
         , dosGuard_(dosGuard)
@@ -79,7 +76,6 @@ public:
     run()
     {
         boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
-        // Detect a TLS handshake
         async_detect_ssl(stream_, buffer_, boost::beast::bind_front_handler(&Detector::onDetect, shared_from_this()));
     }
 
@@ -89,7 +85,6 @@ public:
         if (ec)
             return fail(ec, "detect");
 
-        // would not create session if can not get ip
         std::string ip;
         try
         {
@@ -103,14 +98,14 @@ public:
         if (result)
         {
             if (!ctx_)
-                return fail(ec, "ssl not supported by this server");
-            // Launch SSL session
+                return fail(ec, "SSL is not supported by this server");
+
             std::make_shared<SslSession<Handler>>(
                 stream_.release_socket(), ip, *ctx_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
                 ->run();
             return;
         }
-        // Launch plain session
+
         std::make_shared<PlainSession<Handler>>(
             stream_.release_socket(), ip, tagFactory_, dosGuard_, handler_, std::move(buffer_))
             ->run();
@@ -130,11 +125,11 @@ class Server : public std::enable_shared_from_this<Server<PlainSession, SslSessi
     using std::enable_shared_from_this<Server<PlainSession, SslSession, Handler>>::shared_from_this;
 
     clio::Logger log_{"WebServer"};
-    std::reference_wrapper<boost::asio::io_context> const ioc_;
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> const ctx_;
-    util::TagDecoratorFactory const tagFactory_;
-    std::reference_wrapper<clio::DOSGuard> const dosGuard_;
-    std::shared_ptr<Handler> const handler_;
+    std::reference_wrapper<boost::asio::io_context> ioc_;
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
+    util::TagDecoratorFactory tagFactory_;
+    std::reference_wrapper<clio::DOSGuard> dosGuard_;
+    std::shared_ptr<Handler> handler_;
     tcp::acceptor acceptor_;
 
 public:
@@ -150,7 +145,7 @@ public:
         , tagFactory_(std::move(tagFactory))
         , dosGuard_(std::ref(dosGuard))
         , handler_(callback)
-        , acceptor_(boost::asio::make_strand(ioc.get_executor()))
+        , acceptor_(boost::asio::make_strand(ioc))
     {
         boost::beast::error_code ec;
 
@@ -190,7 +185,7 @@ private:
     doAccept()
     {
         acceptor_.async_accept(
-            boost::asio::make_strand(ioc_.get().get_executor()),
+            boost::asio::make_strand(ioc_.get()),
             boost::beast::bind_front_handler(&Server::onAccept, shared_from_this()));
     }
 
@@ -201,9 +196,9 @@ private:
         {
             auto ctxRef =
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
-            // Create the detector session and run it
+
             std::make_shared<Detector<PlainSession, SslSession, Handler>>(
-                ioc_, std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_)
+                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_)
                 ->run();
         }
 

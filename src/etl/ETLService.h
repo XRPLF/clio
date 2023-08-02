@@ -188,10 +188,11 @@ private:
      * @note database must already be populated when this function is called
      *
      * @param startSequence the first ledger to extract
+     * @param numExtractors number of extractors to use
      * @return the last ledger written to the database, if any
      */
     std::optional<uint32_t>
-    runETLPipeline(uint32_t startSequence, int offset);
+    runETLPipeline(uint32_t startSequence, uint32_t numExtractors);
 
     /**
      * @brief Monitor the network for newly validated ledgers.

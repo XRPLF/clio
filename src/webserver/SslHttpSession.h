@@ -61,12 +61,6 @@ public:
         return stream_;
     }
 
-    boost::beast::ssl_stream<boost::beast::tcp_stream>
-    releaseStream()
-    {
-        return std::move(stream_);
-    }
-
     void
     run()
     {

@@ -106,7 +106,7 @@ public:
         std::uint32_t const limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context& yield) const override
+        boost::asio::yield_context yield) const override
     {
         auto rng = fetchLedgerRange();
         if (!rng)
@@ -210,7 +210,7 @@ public:
     }
 
     std::optional<std::uint32_t>
-    fetchLatestLedgerSequence(boost::asio::yield_context& yield) const override
+    fetchLatestLedgerSequence(boost::asio::yield_context yield) const override
     {
         if (auto const res = executor_.read(yield, schema_->selectLatestLedger); res)
         {
@@ -234,10 +234,8 @@ public:
     }
 
     std::optional<ripple::LedgerHeader>
-    fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context& yield) const override
+    fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call for seq " << sequence;
-
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res)
         {
@@ -263,10 +261,8 @@ public:
     }
 
     std::optional<ripple::LedgerHeader>
-    fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context& yield) const override
+    fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         if (auto const res = executor_.read(yield, schema_->selectLedgerByHash, hash); res)
         {
             if (auto const& result = res.value(); result)
@@ -289,10 +285,8 @@ public:
     }
 
     std::optional<LedgerRange>
-    hardFetchLedgerRange(boost::asio::yield_context& yield) const override
+    hardFetchLedgerRange(boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         if (auto const res = executor_.read(yield, schema_->selectLedgerRange); res)
         {
             auto const& results = res.value();
@@ -332,18 +326,16 @@ public:
     }
 
     std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const override
+    fetchAllTransactionsInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
         auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
         return fetchTransactions(hashes, yield);
     }
 
     std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+    fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
         const override
     {
-        log_.trace() << __func__ << " call";
         auto start = std::chrono::system_clock::now();
         auto const res = executor_.read(yield, schema_->selectAllTransactionHashesInLedger, ledgerSequence);
 
@@ -373,11 +365,9 @@ public:
     }
 
     std::optional<NFT>
-    fetchNFT(ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+    fetchNFT(ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
         const override
     {
-        log_.trace() << __func__ << " call";
-
         auto const res = executor_.read(yield, schema_->selectNFT, tokenID, ledgerSequence);
         if (not res)
             return std::nullopt;
@@ -418,10 +408,8 @@ public:
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context& yield) const override
+        boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         auto rng = fetchLedgerRange();
         if (!rng)
             return {{}, {}};
@@ -491,7 +479,7 @@ public:
     }
 
     std::optional<Blob>
-    doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context& yield)
+    doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
     {
         log_.debug() << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
@@ -516,10 +504,8 @@ public:
     }
 
     std::optional<TransactionAndMetadata>
-    fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context& yield) const override
+    fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         if (auto const res = executor_.read(yield, schema_->selectTransaction, hash); res)
         {
             if (auto const maybeValue = res->template get<Blob, Blob, uint32_t, uint32_t>(); maybeValue)
@@ -541,11 +527,9 @@ public:
     }
 
     std::optional<ripple::uint256>
-    doFetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context& yield)
+    doFetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
         const override
     {
-        log_.trace() << __func__ << " call";
-
         if (auto const res = executor_.read(yield, schema_->selectSuccessor, key, ledgerSequence); res)
         {
             if (auto const result = res->template get<ripple::uint256>(); result)
@@ -568,10 +552,8 @@ public:
     }
 
     std::vector<TransactionAndMetadata>
-    fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context& yield) const override
+    fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         if (hashes.size() == 0)
             return {};
 
@@ -611,10 +593,8 @@ public:
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         std::uint32_t const sequence,
-        boost::asio::yield_context& yield) const override
+        boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         if (keys.size() == 0)
             return {};
 
@@ -647,10 +627,8 @@ public:
     }
 
     std::vector<LedgerObject>
-    fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context& yield) const override
+    fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const override
     {
-        log_.trace() << __func__ << " call";
-
         auto const [keys, timeDiff] = util::timed([this, &ledgerSequence, &yield]() -> std::vector<ripple::uint256> {
             auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
             if (not res)
