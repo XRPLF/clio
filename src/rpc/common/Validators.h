@@ -67,6 +67,12 @@ template <typename Expected>
     {
         if (not value.is_int64() && not value.is_uint64())
             hasError = true;
+        // specify the type is unsigened, it can not be negative
+        if constexpr (std::is_unsigned_v<Expected>)
+        {
+            if (value.is_int64() and value.as_int64() < 0)
+                hasError = true;
+        }
     }
 
     return not hasError;

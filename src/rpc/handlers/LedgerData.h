@@ -92,7 +92,11 @@ public:
             {"out_of_order", validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}},
+            {
+                JS(limit),
+                validation::Type<uint32_t>{},
+                validation::Between(1u, std::numeric_limits<uint32_t>::max()),
+            },
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
              meta::IfType<std::string>{validation::Uint256HexStringValidator}},

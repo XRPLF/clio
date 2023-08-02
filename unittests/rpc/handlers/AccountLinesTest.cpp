@@ -230,6 +230,57 @@ TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
     });
 }
 
+TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "limit": "t"
+            })");
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "limit": -1
+            })");
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, LimitZero)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const input = json::parse(
+            R"({ 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "limit": 0
+            })");
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
 // error case ledger non exist via hash
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
 {

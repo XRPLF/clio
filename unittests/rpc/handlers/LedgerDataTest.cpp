@@ -77,6 +77,8 @@ generateTestValuesForParametersTest()
             "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"},
         LedgerDataParamTestCaseBundle{"binaryNotBool", R"({"binary": 123})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"limitNotInt", R"({"limit": "xxx"})", "invalidParams", "Invalid parameters."},
+        LedgerDataParamTestCaseBundle{"limitNagetive", R"({"limit": -1})", "invalidParams", "Invalid parameters."},
+        LedgerDataParamTestCaseBundle{"limitZero", R"({"limit": 0})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"markerInvalid", R"({"marker": "xxx"})", "invalidParams", "markerMalformed"},
         LedgerDataParamTestCaseBundle{
             "markerOutOfOrder",

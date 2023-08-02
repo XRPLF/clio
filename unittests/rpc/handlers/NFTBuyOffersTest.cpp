@@ -57,6 +57,60 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonHexLedgerHash)
     });
 }
 
+TEST_F(RPCNFTBuyOffersHandlerTest, LimitNotInt)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": "xxx"
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCNFTBuyOffersHandlerTest, LimitNegative)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": -1
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCNFTBuyOffersHandlerTest, LimitZero)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": 0
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
 TEST_F(RPCNFTBuyOffersHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {

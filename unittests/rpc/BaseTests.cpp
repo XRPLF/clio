@@ -58,9 +58,14 @@ TEST_F(RPCBaseTest, CheckType)
     ASSERT_TRUE(checkType<int32_t>(juint));
     ASSERT_FALSE(checkType<bool>(juint));
 
-    auto const jint = json::value(123);
+    auto jint = json::value(123);
     ASSERT_TRUE(checkType<int32_t>(jint));
     ASSERT_TRUE(checkType<uint32_t>(jint));
+    ASSERT_FALSE(checkType<bool>(jint));
+
+    jint = json::value(-123);
+    ASSERT_TRUE(checkType<int32_t>(jint));
+    ASSERT_FALSE(checkType<uint32_t>(jint));
     ASSERT_FALSE(checkType<bool>(jint));
 
     auto const jbool = json::value(true);

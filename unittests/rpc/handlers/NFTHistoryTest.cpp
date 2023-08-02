@@ -109,6 +109,16 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."},
         NFTHistoryParamTestCaseBundle{
+            "limitNagetive",
+            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": -1})",
+            "invalidParams",
+            "Invalid parameters."},
+        NFTHistoryParamTestCaseBundle{
+            "limitZero",
+            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": 0})",
+            "invalidParams",
+            "Invalid parameters."},
+        NFTHistoryParamTestCaseBundle{
             "MarkerNotObject",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "marker": 101})",
             "invalidParams",
@@ -707,49 +717,6 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output->as_object().contains("limit"));
         EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-    });
-}
-
-TEST_F(RPCNFTHistoryHandlerTest, LimitLessThanMin)
-{
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchNFTTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(
-        *rawBackendPtr,
-        fetchNFTTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
-            testing::_))
-        .Times(1);
-
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{NFTHistoryHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
-            R"({{
-                "nft_id":"{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false,
-                "limit": {}
-            }})",
-            NFTID,
-            MINSEQ + 1,
-            MAXSEQ - 1,
-            NFTHistoryHandler::LIMIT_MIN - 1));
-        auto const output = handler.process(input, Context{std::ref(yield)});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
-        EXPECT_EQ(output->as_object().at("limit").as_uint64(), NFTHistoryHandler::LIMIT_MIN);
     });
 }
 

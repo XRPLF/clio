@@ -38,6 +38,60 @@ class RPCNFTSellOffersHandlerTest : public HandlerBaseTest
 {
 };
 
+TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": "xxx"
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": -1
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "nft_id": "{}", 
+                "limit": 0
+            }})",
+            NFTID));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
 TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {

@@ -40,6 +40,60 @@ class RPCAccountChannelsHandlerTest : public HandlerBaseTest
 {
 };
 
+TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": "t"
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountChannelsHandlerTest, LimitNagetive)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": -1
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountChannelsHandlerTest, LimitZero)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
+        auto const input = json::parse(fmt::format(
+            R"({{ 
+                "account": "{}", 
+                "limit": 0
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+
+        auto const err = RPC::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+    });
+}
+
 TEST_F(RPCAccountChannelsHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](auto yield) {
