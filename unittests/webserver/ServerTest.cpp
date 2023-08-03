@@ -192,8 +192,21 @@ TEST_F(WebServerTest, Http)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
@@ -202,8 +215,21 @@ TEST_F(WebServerTest, Ws)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"Hello":1})");
@@ -215,8 +241,21 @@ TEST_F(WebServerTest, HttpInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<ExceptionExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(
         res,
@@ -227,8 +266,21 @@ TEST_F(WebServerTest, WsInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<ExceptionExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"id":"id1"})");
@@ -242,8 +294,21 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
     auto e = std::make_shared<ExceptionExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<ExceptionExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost("not json");
@@ -259,8 +324,21 @@ TEST_F(WebServerTest, Https)
     auto sslCtx = parseCertsForTest();
     auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, ctxSslRef, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, ctxSslRef, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     auto const res = HttpsSyncClient::syncPost("localhost", "8888", R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
@@ -272,8 +350,21 @@ TEST_F(WebServerTest, Wss)
     auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
 
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
-    boost::asio::dispatch(
-        ctx.get_executor(), [&]() mutable { server = Server::make_HttpServer(cfg, ctx, ctxSslRef, dosGuard, e); });
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(cfg, ctx, ctxSslRef, dosGuard, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     WebServerSslSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"Hello":1})");
@@ -285,9 +376,21 @@ TEST_F(WebServerTest, HttpRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
     boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
         server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
     });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     auto res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(res, "{}");
     res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
@@ -300,9 +403,21 @@ TEST_F(WebServerTest, WsRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
     boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
         server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
     });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto res = wsClient.syncPost(R"({})");
@@ -322,9 +437,21 @@ TEST_F(WebServerTest, HttpPayloadOverload)
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
     boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
         server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
     });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     auto const res = HttpSyncClient::syncPost("localhost", "8888", fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
@@ -336,9 +463,21 @@ TEST_F(WebServerTest, WsPayloadOverload)
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
     auto server = std::shared_ptr<Server::HttpServer<EchoExecutor>>();
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
     boost::asio::dispatch(ctx.get_executor(), [&]() mutable {
         server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
     });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(fmt::format(R"({{"payload":"{}"}})", s100));

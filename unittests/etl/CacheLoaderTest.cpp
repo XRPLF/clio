@@ -97,14 +97,14 @@ TEST_F(CacheLoaderTest, FromCache)
 
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
-    std::mutex g_pages_mutex;
+    std::mutex keysMutex;
 
     std::map<std::thread::id, uint32_t> threadKeysMap;
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, SEQ, _))
         .WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
             // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
             // for each thread, the last 2 items must be end flag and nullopt, otherwise it will loop forever
-            std::lock_guard<std::mutex> guard(g_pages_mutex);
+            std::lock_guard<std::mutex> guard(keysMutex);
             threadKeysMap[std::this_thread::get_id()]++;
 
             if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1)
@@ -129,13 +129,25 @@ TEST_F(CacheLoaderTest, FromCache)
 
     EXPECT_CALL(cache, size).Times(AtLeast(1));
     EXPECT_CALL(cache, update).Times(loops);
+    EXPECT_CALL(cache, isFull).Times(1);
+
+    std::mutex m;
+    std::condition_variable cv;
+    bool cacheReady = false;
+    ON_CALL(cache, setFull).WillByDefault(Invoke([&]() {
+        {
+            std::lock_guard lk(m);
+            cacheReady = true;
+        }
+        cv.notify_one();
+    }));
+    // cache is successfully loaded
+    EXPECT_CALL(cache, setFull).Times(1);
 
     loader.load(SEQ);
-    // Cache loader start a new thread to load the cache, so we need to wait for it to finish
-    auto maxWait = 100;
-    while (maxWait-- != 0 and !cache.isFull())
+
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::unique_lock lk(m);
+        cv.wait_for(lk, std::chrono::milliseconds(300), [&] { return cacheReady; });
     }
-    EXPECT_TRUE(cache.isFull());
 }

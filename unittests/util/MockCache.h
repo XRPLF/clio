@@ -25,10 +25,6 @@
 
 struct MockCache
 {
-private:
-    std::atomic_bool full_ = false;
-
-public:
     MOCK_METHOD(void, update, (std::vector<Backend::LedgerObject> const& a, uint32_t b, bool c), ());
 
     MOCK_METHOD(std::optional<Backend::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const));
@@ -39,19 +35,11 @@ public:
 
     MOCK_METHOD(void, setDisabled, (), ());
 
-    void
-    setFull()
-    {
-        full_ = true;
-    }
+    MOCK_METHOD(void, setFull, (), ());
+
+    MOCK_METHOD(bool, isFull, (), (const));
 
     MOCK_METHOD(uint32_t, latestLedgerSequence, (), (const));
-
-    bool
-    isFull() const
-    {
-        return full_;
-    }
 
     MOCK_METHOD(size_t, size, (), (const));
 
