@@ -1,14 +1,22 @@
+/*
+ * This is an example configuration file. Please do not use without modifying to suit your needs.
+ */
 {
     "database": {
         "type": "cassandra",
         "cassandra": {
+            // This option can be used to setup a secure connect bundle connection
             "secure_connect_bundle": "[path/to/zip. ignore if using contact_points]",
+            // The following options are used only if using contact_points
             "contact_points": "[ip. ignore if using secure_connect_bundle]",
             "port": "[port. ignore if using_secure_connect_bundle]",
-            "keyspace": "clio",
+            // Authentication settings
             "username": "[username, if any]",
             "password": "[password, if any]",
-            "max_requests_outstanding": 25000,
+            // Other common settings
+            "keyspace": "clio",
+            "max_write_requests_outstanding": 25000,
+            "max_read_requests_outstanding": 30000,
             "threads": 8
         }
     },
