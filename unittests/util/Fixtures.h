@@ -123,13 +123,14 @@ struct AsyncAsioContextTest : virtual public NoLoggerFixture
     AsyncAsioContextTest()
     {
         work.emplace(ctx);  // make sure ctx does not stop on its own
+        runner.emplace([&] { ctx.run(); });
     }
 
     ~AsyncAsioContextTest()
     {
         work.reset();
-        if (runner.joinable())
-            runner.join();
+        if (runner->joinable())
+            runner->join();
         ctx.stop();
     }
 
@@ -137,9 +138,9 @@ struct AsyncAsioContextTest : virtual public NoLoggerFixture
     stop()
     {
         work.reset();
+        if (runner->joinable())
+            runner->join();
         ctx.stop();
-        if (runner.joinable())
-            runner.join();
     }
 
 protected:
@@ -147,7 +148,7 @@ protected:
 
 private:
     std::optional<boost::asio::io_service::work> work;
-    std::thread runner{[this] { ctx.run(); }};
+    std::optional<std::thread> runner;
 };
 
 /**

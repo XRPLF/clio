@@ -148,6 +148,7 @@ if(tests)
     unittests/etl/ExtractionDataPipeTest.cpp
     unittests/etl/ExtractorTest.cpp
     unittests/etl/TransformerTest.cpp
+    unittests/etl/CacheLoaderTest.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
