@@ -18,7 +18,7 @@
             // ---
             "max_connections_per_host": 1, // Defaults to 2
             "core_connections_per_host": 1, // Defaults to 2
-            "max_concurrent_requests_threshold": 55000, // Defaults to ((max_read + max_write) / core_connections_per_host)
+            "max_concurrent_requests_threshold": 55000 // Defaults to ((max_read + max_write) / core_connections_per_host)
             //
             // Below options will use defaults from cassandra driver if left unspecified.
             // See https://docs.datastax.com/en/developer/cpp-driver/2.0/api/struct.CassCluster/ for details.
