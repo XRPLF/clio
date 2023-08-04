@@ -57,6 +57,14 @@ struct Settings
     uint32_t coreConnectionsPerHost = 2u;
     uint32_t maxConcurrentRequestsThreshold =
         (maxWriteRequestsOutstanding + maxReadRequestsOutstanding) / coreConnectionsPerHost;
+    std::optional<uint32_t> queueSizeEvent;
+    std::optional<uint32_t> queueSizeIO;
+    std::optional<uint32_t> writeBytesHighWatermark;
+    std::optional<uint32_t> writeBytesLowWatermark;
+    std::optional<uint32_t> pendingRequestsHighWatermark;
+    std::optional<uint32_t> pendingRequestsLowWatermark;
+    std::optional<uint32_t> maxRequestsPerFlush;
+    std::optional<uint32_t> maxConcurrentCreation;
     std::optional<std::string> certificate;  // ssl context
     std::optional<std::string> username;
     std::optional<std::string> password;
