@@ -1,0 +1,166 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include <boost/asio.hpp>
+
+#include <regex>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+
+namespace clio {
+
+/**
+ * @brief A whitelist to check for
+ *
+ */
+class Whitelist
+{
+    std::vector<boost::asio::ip::network_v4> subnetsV4_;
+    std::vector<boost::asio::ip::network_v6> subnetsV6_;
+    std::vector<boost::asio::ip::address> ips_;
+
+public:
+    /**
+     * @brief add network address to whitelist
+     *
+     * @param net network part of the ip address
+     * @throws std::runtime::error when the network address is not valid
+     */
+    void
+    add(std::string_view net)
+    {
+        using namespace boost::asio;
+
+        if (not isMask(net))
+        {
+            ips_.push_back(ip::make_address(net));
+            return;
+        }
+
+        if (isV4(net))
+            subnetsV4_.push_back(ip::make_network_v4(net));
+        else if (isV6(net))
+            subnetsV6_.push_back(ip::make_network_v6(net));
+        else
+            throw std::runtime_error(std::string{"malformed network: "} + net.data());
+    }
+
+    /**
+     * @brief checks to see if ip address is whitelisted
+     *
+     * @param ip ip adress
+     * @throws std::runtime::error when the network address is not valid
+     */
+    bool
+    isWhiteListed(std::string_view ip) const
+    {
+        using namespace boost::asio;
+
+        auto const addr = ip::make_address(ip);
+        if (std::find(std::begin(ips_), std::end(ips_), addr) != std::end(ips_))
+            return true;
+
+        if (addr.is_v4())
+            return std::find_if(
+                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))) !=
+                std::end(subnetsV4_);
+
+        if (addr.is_v6())
+            return std::find_if(
+                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))) !=
+                std::end(subnetsV6_);
+
+        return false;
+    }
+
+private:
+    static bool
+    isInV4Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v4 const& subnet)
+    {
+        auto const range = subnet.hosts();
+        return range.find(addr.to_v4()) != range.end();
+    }
+
+    static bool
+    isInV6Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v6 const& subnet)
+    {
+        auto const range = subnet.hosts();
+        return range.find(addr.to_v6()) != range.end();
+    }
+
+    bool
+    isV4(std::string_view net) const
+    {
+        static const std::regex ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
+        return std::regex_match(std::string(net), ipv4CidrRegex);
+    }
+
+    bool
+    isV6(std::string_view net) const
+    {
+        static const std::regex ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
+        return std::regex_match(std::string(net), ipv6CidrRegex);
+    }
+
+    bool
+    isMask(std::string_view net) const
+    {
+        return net.find('/') != std::string_view::npos;
+    }
+};
+
+/**
+ * @brief A simple handler to add/check elements in a whitelist
+ *
+ * @param arr map of net addresses to add to whitelist
+ */
+class WhitelistHandler
+{
+    Whitelist whitelist_;
+
+public:
+    WhitelistHandler(clio::Config const& config)
+    {
+        std::unordered_set<std::string> arr = getWhitelist(config);
+        for (auto const& net : arr)
+            whitelist_.add(net);
+    }
+
+    bool
+    isWhiteListed(std::string_view ip) const
+    {
+        return whitelist_.isWhiteListed(ip);
+    }
+
+private:
+    [[nodiscard]] std::unordered_set<std::string> const
+    getWhitelist(clio::Config const& config) const
+    {
+        using T = std::unordered_set<std::string> const;
+        auto whitelist = config.arrayOr("dos_guard.whitelist", {});
+        auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
+        return T{
+            boost::transform_iterator(std::begin(whitelist), transform),
+            boost::transform_iterator(std::end(whitelist), transform)};
+    }
+};
+}  // namespace clio

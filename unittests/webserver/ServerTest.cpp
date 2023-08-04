@@ -145,11 +145,13 @@ protected:
     boost::asio::io_context ctxSync;
     clio::Config cfg{boost::json::parse(JSONData)};
     clio::IntervalSweepHandler sweepHandler = clio::IntervalSweepHandler{cfg, ctxSync};
-    clio::DOSGuard dosGuard = clio::DOSGuard{cfg, sweepHandler};
+    clio::WhitelistHandler whitelistHandler = clio::WhitelistHandler{cfg};
+    clio::DOSGuard dosGuard = clio::DOSGuard{cfg, whitelistHandler, sweepHandler};
 
     clio::Config cfgOverload{boost::json::parse(JSONDataOverload)};
     clio::IntervalSweepHandler sweepHandlerOverload = clio::IntervalSweepHandler{cfgOverload, ctxSync};
-    clio::DOSGuard dosGuardOverload = clio::DOSGuard{cfgOverload, sweepHandlerOverload};
+    clio::WhitelistHandler whitelistHandlerOverload = clio::WhitelistHandler{cfgOverload};
+    clio::DOSGuard dosGuardOverload = clio::DOSGuard{cfgOverload, whitelistHandlerOverload, sweepHandlerOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
 
