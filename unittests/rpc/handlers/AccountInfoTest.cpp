@@ -22,6 +22,7 @@
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
+#include <ripple/protocol/digest.h>
 #include <fmt/core.h>
 
 using namespace RPC;
@@ -126,8 +127,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}",
-            "ledger_index":30
+            "account": "{}",
+            "ledger_index": 30
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -151,8 +152,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}",
-            "ledger_index":"30"
+            "account": "{}",
+            "ledger_index": "30"
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -177,8 +178,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}",
-            "ledger_hash":"{}"
+            "account": "{}",
+            "ledger_hash": "{}"
         }})",
         ACCOUNT,
         LEDGERHASH));
@@ -206,7 +207,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}"
+            "account": "{}"
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -234,7 +235,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}"
+            "account": "{}"
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -264,12 +265,14 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     auto signersKey = ripple::keylet::signers(account).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}",
-            "signer_lists":true
+            "account": "{}",
+            "signer_lists": true
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -286,46 +289,46 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
 {
     auto const expectedOutput = fmt::format(
         R"({{
-            "account_data":{{
-                "Account":"{}",
-                "Balance":"200",
-                "Flags":0,
-                "LedgerEntryType":"AccountRoot",
-                "OwnerCount":2,
-                "PreviousTxnID":"{}",
-                "PreviousTxnLgrSeq":2,
-                "Sequence":2,
-                "TransferRate":0,
-                "index":"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+            "account_data": {{
+                "Account": "{}",
+                "Balance": "200",
+                "Flags": 0,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "{}",
+                "PreviousTxnLgrSeq": 2,
+                "Sequence": 2,
+                "TransferRate": 0,
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
             }},
             "signer_lists":
                 [
                     {{
-                        "Flags":0,
-                        "LedgerEntryType":"SignerList",
-                        "OwnerNode":"0",
-                        "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                        "PreviousTxnLgrSeq":0,
+                        "Flags": 0,
+                        "LedgerEntryType": "SignerList",
+                        "OwnerNode": "0",
+                        "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                        "PreviousTxnLgrSeq": 0,
                         "SignerEntries":
                         [
                             {{
                                 "SignerEntry":
                                 {{
-                                    "Account":"{}",
-                                    "SignerWeight":1
+                                    "Account": "{}",
+                                    "SignerWeight": 1
                                 }}
                             }},
                             {{
                                 "SignerEntry":
                                 {{
-                                    "Account":"{}",
-                                    "SignerWeight":1
+                                    "Account": "{}",
+                                    "SignerWeight": 1
                                 }}
                             }}
                         ],
-                        "SignerListID":0,
-                        "SignerQuorum":2,
-                        "index":"A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
+                        "SignerListID": 0,
+                        "SignerQuorum": 2,
+                        "index": "A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
                     }}
                 ],
             "account_flags": {{
@@ -339,9 +342,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
                 "requireAuthorization": false,
                 "requireDestinationTag": false
             }},
-            "ledger_hash":"{}",
-            "ledger_index":30,
-            "validated":true
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true
         }})",
         ACCOUNT,
         INDEX1,
@@ -363,12 +366,14 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
     auto signersKey = ripple::keylet::signers(account).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(CreateSignerLists({{ACCOUNT1, 1}, {ACCOUNT2, 1}}).getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}",
-            "signer_lists":true
+            "account": "{}",
+            "signer_lists": true
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -383,17 +388,17 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
 {
     auto const expectedOutput = fmt::format(
         R"({{
-            "account_data":{{
-                "Account":"{}",
-                "Balance":"200",
-                "Flags":33488896,
-                "LedgerEntryType":"AccountRoot",
-                "OwnerCount":2,
-                "PreviousTxnID":"{}",
-                "PreviousTxnLgrSeq":2,
-                "Sequence":2,
-                "TransferRate":0,
-                "index":"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+            "account_data": {{
+                "Account": "{}",
+                "Balance": "200",
+                "Flags": 33488896,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "{}",
+                "PreviousTxnLgrSeq": 2,
+                "Sequence": 2,
+                "TransferRate": 0,
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
             }},
             "account_flags": {{
                 "defaultRipple": true,
@@ -406,9 +411,9 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
                 "requireAuthorization": true,
                 "requireDestinationTag": true
             }},
-            "ledger_hash":"{}",
-            "ledger_index":30,
-            "validated":true
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true
         }})",
         ACCOUNT,
         INDEX1,
@@ -434,11 +439,13 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         2);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "account":"{}"
+            "account": "{}"
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -463,11 +470,13 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const static input = boost::json::parse(fmt::format(
         R"({{
-            "ident":"{}"
+            "ident": "{}"
         }})",
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -475,5 +484,155 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("signer_lists"));
+    });
+}
+
+TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
+{
+    auto const expectedOutput = fmt::format(
+        R"({{
+            "account_data": {{
+                "Account": "{}",
+                "Balance": "200",
+                "Flags": 1040121856,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "{}",
+                "PreviousTxnLgrSeq": 2,
+                "Sequence": 2,
+                "TransferRate": 0,
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+            }},
+            "account_flags": {{
+                "defaultRipple": true,
+                "depositAuth": true,
+                "disableMasterKey": true,
+                "disallowIncomingXRP": true,
+                "globalFreeze": true,
+                "noFreeze": true,
+                "passwordSpent": true,
+                "requireAuthorization": true,
+                "requireDestinationTag": true,
+                "disallowIncomingCheck": true,
+                "disallowIncomingNFTokenOffer": true,
+                "disallowIncomingPayChan": true,
+                "disallowIncomingTrustline": true
+            }},
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true
+        }})",
+        ACCOUNT,
+        INDEX1,
+        LEDGERHASH);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountRoot = CreateAccountRootObject(
+        ACCOUNT,
+        ripple::lsfDefaultRipple | ripple::lsfGlobalFreeze | ripple::lsfRequireDestTag | ripple::lsfRequireAuth |
+            ripple::lsfDepositAuth | ripple::lsfDisableMaster | ripple::lsfDisallowXRP | ripple::lsfNoFreeze |
+            ripple::lsfPasswordSpent | ripple::lsfDisallowIncomingNFTokenOffer | ripple::lsfDisallowIncomingCheck |
+            ripple::lsfDisallowIncomingPayChan | ripple::lsfDisallowIncomingTrustline,
+        2,
+        200,
+        2,
+        INDEX1,
+        2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({RPC::Amendments::DisallowIncoming}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}"
+        }})",
+        ACCOUNT));
+    auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCAccountInfoHandlerTest, Clawback)
+{
+    auto const expectedOutput = fmt::format(
+        R"({{
+            "account_data": {{
+                "Account": "{}",
+                "Balance": "200",
+                "Flags": 2180972544,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "{}",
+                "PreviousTxnLgrSeq": 2,
+                "Sequence": 2,
+                "TransferRate": 0,
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+            }},
+            "account_flags": {{
+                "defaultRipple": true,
+                "depositAuth": true,
+                "disableMasterKey": true,
+                "disallowIncomingXRP": true,
+                "globalFreeze": true,
+                "noFreeze": true,
+                "passwordSpent": true,
+                "requireAuthorization": true,
+                "requireDestinationTag": true,
+                "allowTrustLineClawback": true
+            }},
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true
+        }})",
+        ACCOUNT,
+        INDEX1,
+        LEDGERHASH);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountRoot = CreateAccountRootObject(
+        ACCOUNT,
+        ripple::lsfDefaultRipple | ripple::lsfGlobalFreeze | ripple::lsfRequireDestTag | ripple::lsfRequireAuth |
+            ripple::lsfDepositAuth | ripple::lsfDisableMaster | ripple::lsfDisallowXRP | ripple::lsfNoFreeze |
+            ripple::lsfPasswordSpent | ripple::lsfAllowTrustLineClawback,
+        2,
+        200,
+        2,
+        INDEX1,
+        2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({RPC::Amendments::Clawback}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+
+    auto const static input = boost::json::parse(fmt::format(
+        R"({{
+            "account": "{}"
+        }})",
+        ACCOUNT));
+    auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOutput));
     });
 }

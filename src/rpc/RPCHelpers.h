@@ -24,6 +24,7 @@
  */
 
 #include <backend/BackendInterface.h>
+#include <rpc/Amendments.h>
 #include <rpc/JS.h>
 #include <rpc/common/Types.h>
 #include <util/JsonUtils.h>
@@ -215,6 +216,13 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request);
 
 std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request);
+
+bool
+isAmendmentEnabled(
+    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    boost::asio::yield_context yield,
+    uint32_t seq,
+    ripple::uint256 amendmentId);
 
 template <class T>
 void
