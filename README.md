@@ -87,7 +87,6 @@ conan remove -f cassandra-cpp-driver
 
 Navigate to Clio's root directory and perform
 ```sh
-conan export external/cassandra # export our "custom" cassandra driver package
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
