@@ -1,9 +1,9 @@
 name: Build Clio
 on:
   push:
-    branches: [master, release/*, develop, develop-next]
+    branches: [master, release/*, develop]
   pull_request:
-    branches: [master, release/*, develop, develop-next]
+    branches: [master, release/*, develop]
   workflow_dispatch:
 
 jobs:
@@ -15,11 +15,11 @@ jobs:
       - name: Run clang-format
         uses: ./.github/actions/lint
 
-  build_dev:
-    name: Build on Mac/Clang14 and run tests
-    continue-on-error: false
-    runs-on: [self-hosted, macOS]
+  build_mac:
+    name: Build macOS
     needs: lint
+    continue-on-error: true
+    runs-on: [self-hosted, macOS]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -53,9 +53,63 @@ jobs:
           cd build
           conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
           cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . -j4
+          cmake --build . --parallel $(($(sysctl -n hw.logicalcpu) - 2))
 
-      - name: Run Test
+      - name: Upload clio_tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_tests_mac
+          path: ./clio/build/clio_tests
+
+  build_linux:
+    name: Build linux
+    needs: lint
+    continue-on-error: true
+    runs-on: [self-hosted, Linux]
+    container:
+      image: conanio/gcc11:1.60.2
+      options: --user root
+    steps:
+      - name: Get Clio
+        uses: actions/checkout@v3
+
+      - name: Get rippled
+        uses: actions/checkout@v3
+        with:
+          repository: thejohnfreeman/rippled
+          ref: clio
+          path: rippled
+
+      - name: Build Clio
         run: |
-          cd clio/build
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          ./.github/actions/linux_build/build.sh
+
+      - name: Upload clio_tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_tests_linux
+          path: ./build_clio/clio_tests
+
+  test_mac:
+    needs: build_mac
+    runs-on: [self-hosted, macOS]
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: clio_tests_mac
+    - name: Run clio_tests
+      run: |
+        chmod +x ./clio_tests
+        ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+
+  test_linux:
+    needs: build_linux
+    runs-on: [self-hosted, x-heavy]
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: clio_tests_linux
+    - name: Run clio_tests
+      run: |
+        chmod +x ./clio_tests
+        ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
