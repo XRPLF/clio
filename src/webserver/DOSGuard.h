@@ -98,7 +98,7 @@ public:
      * @return false
      */
     [[nodiscard]] bool
-    isWhiteListed(std::string_view const& ip) const noexcept
+    isWhiteListed(std::string_view const ip) const noexcept
     {
         return whitelistHandler_.get().isWhiteListed(ip);
     }

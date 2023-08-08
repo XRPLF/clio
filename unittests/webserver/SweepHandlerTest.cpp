@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,9 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #include <config/Config.h>
+#include <rpc/handlers/impl/FakesAndMocks.h>
 #include <util/Fixtures.h>
 #include <webserver/DOSGuard.h>
 
@@ -37,23 +39,12 @@ constexpr static auto JSONData = R"JSON(
     }
 )JSON";
 
-template <typename SweepHandler>
-struct BasicDOSGuardMock : public BaseDOSGuard
-{
-    BasicDOSGuardMock(SweepHandler& handler)
-    {
-        handler.setup(this);
-    }
-
-    MOCK_METHOD(void, clear, (), (noexcept, override));
-};
-
 class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest
 {
 protected:
     Config cfg{boost::json::parse(JSONData)};
     IntervalSweepHandler sweepHandler{cfg, ctx};
-    BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
+    unittests::detail::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
 };
 
 TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)

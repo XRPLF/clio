@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -52,7 +52,7 @@ class WhitelistHandlerTest : public NoLoggerFixture
 {
 };
 
-TEST_F(WhitelistHandlerTest, testWhiteListIPV4)
+TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 {
     Config cfg{boost::json::parse(JSONDataIPV4)};
     WhitelistHandler whitelistHandler{cfg};
@@ -63,7 +63,7 @@ TEST_F(WhitelistHandlerTest, testWhiteListIPV4)
     EXPECT_FALSE(whitelistHandler.isWhiteListed("10.0.0.2"));
 }
 
-TEST_F(WhitelistHandlerTest, testWhiteListIPV6)
+TEST_F(WhitelistHandlerTest, TestWhiteListIPV6)
 {
     Config cfg{boost::json::parse(JSONDataIPV6)};
     WhitelistHandler whitelistHandler{cfg};

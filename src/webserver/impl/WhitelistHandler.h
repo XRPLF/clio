@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <fmt/core.h>
 
 #include <regex>
 #include <string>
@@ -29,7 +30,7 @@
 namespace clio {
 
 /**
- * @brief A whitelist to check for
+ * @brief A whitelist to remove rate limits of certain IP addresses
  *
  */
 class Whitelist
@@ -40,9 +41,9 @@ class Whitelist
 
 public:
     /**
-     * @brief add network address to whitelist
+     * @brief Add network address to whitelist
      *
-     * @param net network part of the ip address
+     * @param net Network part of the ip address
      * @throws std::runtime::error when the network address is not valid
      */
     void
@@ -61,13 +62,13 @@ public:
         else if (isV6(net))
             subnetsV6_.push_back(ip::make_network_v6(net));
         else
-            throw std::runtime_error(std::string{"malformed network: "} + net.data());
+            throw std::runtime_error(fmt::format("malformed network: {}", net.data()));
     }
 
     /**
-     * @brief checks to see if ip address is whitelisted
+     * @brief Checks to see if ip address is whitelisted
      *
-     * @param ip ip adress
+     * @param ip IP address
      * @throws std::runtime::error when the network address is not valid
      */
     bool
