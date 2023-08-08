@@ -1,8 +1,47 @@
-# Temporary build instructions
+# Clio
+Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
+historical ledger and transaction data are stored in a more space-efficient format,
+using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
+allowing for scalable read throughput. Multiple Clio nodes can share
+access to the same dataset, allowing for a highly available cluster of Clio nodes,
+without the need for redundant data storage or computation.
+
+Clio offers the full rippled API, with the caveat that Clio by default only returns validated data.
+This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
+Other non-validated data is also not returned, such as information about queued transactions.
+For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
+
+Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
+from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
+
+## Requirements
+1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
+2. Access to one or more rippled nodes. Can be local or remote.
+
+## Building
+
+Clio is built with CMake and uses Conan for managing dependencies. 
+It is written in C++20 and therefore requires a modern compiler.
 
 ## Prerequisites 
-1. Make sure you have conan 1.x installed and active. Note that Conan may have been upgraded to v2 and that does not work with Clio and rippled atm.
-2. You should already have a Conan profile after building rippled and may have extra options and flags in there. Clio does not require anything but default settings. It's best to have no extra flags specified. 
+
+
+### Minimum Requirements
+
+- [Python 3.7](https://www.python.org/downloads/)
+- [Conan 1.55](https://conan.io/downloads.html)
+- [CMake 3.16](https://cmake.org/download/)
+- [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html) (needed for code coverage generation)
+
+| Compiler    | Version |
+|-------------|---------|
+| GCC         | 11      |
+| Clang       | 14      |
+| Apple Clang | 14.0.3  |
+
+### Conan configuration
+
+Clio does not require anything but default settings in your (`~/.conan/profiles/default`) Conan profile. It's best to have no extra flags specified. 
 > Mac example:
 ```
 [settings]
@@ -30,95 +69,32 @@ build_type=Release
 compiler.cppstd=20
 ```
 
-## Using artifactory (temporary packages)
+### Artifactory
+
+1. Make sure artifactory is setup with Conan
 ```sh
 conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 ```
-Now you should be able to download prebuilt `xrpl` package on some platforms. At the very least you should be able to skip steps 1 - 3 and jump to step 4 of the local package instructions for `rippled` (as described below) and conan should be able to fetch it from artifactory instead.
+Now you should be able to download prebuilt `xrpl` package on some platforms.
 
-## Preparing local packages (alternative to artifactory)
-1. Get rippled from [this branch](https://github.com/thejohnfreeman/rippled/tree/clio)
 2. Remove old packages you may have cached: 
 ```sh 
-conan remove -f xrpl/1.12.0-b2
-conan remove -f cassandra-cpp-driver/2.16.2
+conan remove -f xrpl
+conan remove -f cassandra-cpp-driver
 ```
-3. In a clone of rippled from step 1, setup rippled as per their instructions. Note that there is no need to build rippled, only make it available to Conan. Pay attention to these commands:
-```sh
-conan export external/snappy
-conan export external/soci
-conan export .
-```
-this will export a local package `xrpl/1.12.0-b2`.
 
-4. Navigate to clio's root directory and perform
+## Building Clio
+
+Navigate to Clio's root directory and perform
 ```sh
-conan export external/cassandra # export our "custom" cassandra driver package
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 ```
 If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_tests` in the `build` directory (the current directory).
-Please note that a few unittests are currently failing. See below.
 
 > **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_tests`.
-
-## Things to fix
-
-1. Fix build on CI (currently only building for MacOS)
-2. Fix code coverage support (see 'coverage' option in conanfile).
-3. See if we can contribute/push our cassandra-cpp-driver to conan center so we don't need to export it before we able to use it.
-4. Try to improve the new asio code that is using `async_compose` and potentially the `FutureWithCallback` way of accepting the callback.
-
-# Clio
-Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
-historical ledger and transaction data are stored in a more space-efficient format,
-using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
-allowing for scalable read throughput. Multiple Clio nodes can share
-access to the same dataset, allowing for a highly available cluster of Clio nodes,
-without the need for redundant data storage or computation.
-
-Clio offers the full rippled API, with the caveat that Clio by default only returns validated data.
-This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
-Other non-validated data is also not returned, such as information about queued transactions.
-For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
-
-Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
-from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
-
-
-## Requirements
-1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
-
-2. Access to one or more rippled nodes. Can be local or remote.
-
-## Building
-
-Clio is built with CMake. Clio requires at least GCC-11/clang-14.0.0 (C++20), and Boost 1.75.0.
-
-Use these instructions to build a Clio executable from the source. These instructions were tested on Ubuntu 20.04 LTS.
-
-```sh
-# Install dependencies
-  sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake clang-format
-# Install gcovr to run code coverage
-  sudo apt-get -y install gcovr
-
-# Compile Boost
-  wget -O $HOME/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
-  tar xvzf $HOME/boost_1_75_0.tar.gz
-  cd $HOME/boost_1_75_0
-  ./bootstrap.sh
-  ./b2 -j$(nproc)
-  echo "export BOOST_ROOT=$HOME/boost_1_75_0" >> $HOME/.profile && source $HOME/.profile
-
-# Clone the Clio Git repository & build Clio
-  cd $HOME
-  git clone https://github.com/XRPLF/clio.git
-  cd $HOME/clio
-  cmake -B build && cmake --build build --parallel $(nproc)
-```
 
 ## Running
 ```sh
