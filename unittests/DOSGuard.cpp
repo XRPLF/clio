@@ -24,6 +24,7 @@
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using namespace testing;
 using namespace clio;
@@ -38,28 +39,26 @@ constexpr static auto JSONData = R"JSON(
             "sweep_interval": 1,
             "max_connections": 2,
             "max_requests": 3,
-            "whitelist": ["127.0.0.1"]
-        }
-    }
-)JSON";
-
-constexpr static auto JSONData2 = R"JSON(
-    {
-        "dos_guard": {
-            "max_fetches": 100,
-            "sweep_interval": 0.1,
-            "max_connections": 2,
-            "whitelist": ["127.0.0.1"]
+            "whitelist": [
+                "127.0.0.1"
+            ]
         }
     }
 )JSON";
 
 constexpr static auto IP = "127.0.0.2";
 
+struct MockWhitelistHandler
+{
+    MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
+};
+
+using MockWhitelistHandlerType = NiceMock<MockWhitelistHandler>;
+
 class FakeSweepHandler
 {
 private:
-    using guard_type = BasicDOSGuard<FakeSweepHandler>;
+    using guard_type = BasicDOSGuard<MockWhitelistHandlerType, FakeSweepHandler>;
     guard_type* dosGuard_;
 
 public:
@@ -82,13 +81,16 @@ class DOSGuardTest : public NoLoggerFixture
 protected:
     Config cfg{json::parse(JSONData)};
     FakeSweepHandler sweepHandler;
-    BasicDOSGuard<FakeSweepHandler> guard{cfg, sweepHandler};
+    MockWhitelistHandlerType whitelistHandler;
+    BasicDOSGuard<MockWhitelistHandlerType, FakeSweepHandler> guard{cfg, whitelistHandler, sweepHandler};
 };
 
 TEST_F(DOSGuardTest, Whitelisting)
 {
+    EXPECT_CALL(whitelistHandler, isWhiteListed("127.0.0.1")).Times(1).WillOnce(Return(false));
+    EXPECT_FALSE(guard.isWhiteListed("127.0.0.1"));
+    EXPECT_CALL(whitelistHandler, isWhiteListed("127.0.0.1")).Times(1).WillOnce(Return(true));
     EXPECT_TRUE(guard.isWhiteListed("127.0.0.1"));
-    EXPECT_FALSE(guard.isWhiteListed(IP));
 }
 
 TEST_F(DOSGuardTest, ConnectionCount)
@@ -149,29 +151,4 @@ TEST_F(DOSGuardTest, RequestLimitOnTimer)
     EXPECT_FALSE(guard.isOk(IP));
     sweepHandler.sweep();
     EXPECT_TRUE(guard.isOk(IP));  // can request again
-}
-
-template <typename SweepHandler>
-struct BasicDOSGuardMock : public BaseDOSGuard
-{
-    BasicDOSGuardMock(SweepHandler& handler)
-    {
-        handler.setup(this);
-    }
-
-    MOCK_METHOD(void, clear, (), (noexcept, override));
-};
-
-class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest
-{
-protected:
-    Config cfg{json::parse(JSONData2)};
-    IntervalSweepHandler sweepHandler{cfg, ctx};
-    BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
-};
-
-TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
-{
-    EXPECT_CALL(guard, clear()).Times(AtLeast(2));
-    ctx.run_for(std::chrono::milliseconds(400));
 }

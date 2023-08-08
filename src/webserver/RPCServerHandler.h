@@ -25,7 +25,7 @@
 #include <rpc/common/impl/APIVersionParser.h>
 #include <util/JsonUtils.h>
 #include <util/Profiler.h>
-#include <webserver/details/ErrorHandling.h>
+#include <webserver/impl/ErrorHandling.h>
 
 #include <boost/json/parse.hpp>
 

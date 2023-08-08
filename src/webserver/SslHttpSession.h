@@ -20,7 +20,7 @@
 #pragma once
 
 #include <webserver/SslWsSession.h>
-#include <webserver/details/HttpBase.h>
+#include <webserver/impl/HttpBase.h>
 
 namespace Server {
 

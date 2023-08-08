@@ -179,7 +179,8 @@ try
 
     // Rate limiter, to prevent abuse
     auto sweepHandler = IntervalSweepHandler{config, ioc};
-    auto dosGuard = DOSGuard{config, sweepHandler};
+    auto whitelistHandler = WhitelistHandler{config};
+    auto dosGuard = DOSGuard{config, whitelistHandler, sweepHandler};
 
     // Interface to the database
     auto backend = Backend::make_Backend(ioc, config);

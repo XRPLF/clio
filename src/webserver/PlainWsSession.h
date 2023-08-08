@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <webserver/details/WsBase.h>
+#include <webserver/impl/WsBase.h>
 
 namespace Server {
 

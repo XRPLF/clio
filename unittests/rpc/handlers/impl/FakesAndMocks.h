@@ -22,6 +22,7 @@
 #include <rpc/Factories.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Validators.h>
+#include <webserver/DOSGuard.h>
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
@@ -175,4 +176,15 @@ struct HandlerWithoutInputMock
     MOCK_METHOD(Result, process, (RPC::Context const&), (const));
 };
 
+// testing sweep handler by mocking dos guard
+template <typename SweepHandler>
+struct BasicDOSGuardMock : public clio::BaseDOSGuard
+{
+    BasicDOSGuardMock(SweepHandler& handler)
+    {
+        handler.setup(this);
+    }
+
+    MOCK_METHOD(void, clear, (), (noexcept, override));
+};
 }  // namespace unittests::detail

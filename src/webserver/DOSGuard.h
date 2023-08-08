@@ -19,15 +19,16 @@
 
 #pragma once
 
+#include <config/Config.h>
+#include <webserver/impl/WhitelistHandler.h>
+
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/system/error_code.hpp>
 
+#include <algorithm>
 #include <chrono>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-
-#include <config/Config.h>
+#include <ctime>
 
 namespace clio {
 
@@ -43,9 +44,10 @@ public:
 /**
  * @brief A simple denial of service guard used for rate limiting.
  *
- * @tparam SweepHandler Type of the sweep handler
+ * @tparam Type of the Whitelist Handler
+ * @tparam Type of the Sweep Handler
  */
-template <typename SweepHandler>
+template <typename WhitelistHandlerType, typename SweepHandlerType>
 class BasicDOSGuard : public BaseDOSGuard
 {
     // Accumulated state per IP, state will be reset accordingly
@@ -61,7 +63,7 @@ class BasicDOSGuard : public BaseDOSGuard
     // accumulated states map
     std::unordered_map<std::string, ClientState> ipState_;
     std::unordered_map<std::string, std::uint32_t> ipConnCount_;
-    std::unordered_set<std::string> const whitelist_;
+    std::reference_wrapper<WhitelistHandlerType const> whitelistHandler_;
 
     std::uint32_t const maxFetches_;
     std::uint32_t const maxConnCount_;
@@ -73,10 +75,14 @@ public:
      * @brief Constructs a new DOS guard.
      *
      * @param config Clio config
-     * @param sweepHandler Sweep handler that implements the sweeping behaviour
+     * @param WhitelistHandlerType Whitelist handler that checks whitelist for ip addresses
+     * @param SweepHandlerType Sweep handler that implements the sweeping behaviour
      */
-    BasicDOSGuard(clio::Config const& config, SweepHandler& sweepHandler)
-        : whitelist_{getWhitelist(config)}
+    BasicDOSGuard(
+        clio::Config const& config,
+        WhitelistHandlerType const& whitelistHandler,
+        SweepHandlerType& sweepHandler)
+        : whitelistHandler_{std::cref(whitelistHandler)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", 1000000u)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", 20u)}
         , maxRequestCount_{config.valueOr("dos_guard.max_requests", 20u)}
@@ -92,9 +98,9 @@ public:
      * @return false
      */
     [[nodiscard]] bool
-    isWhiteListed(std::string const& ip) const noexcept
+    isWhiteListed(std::string_view const ip) const noexcept
     {
-        return whitelist_.contains(ip);
+        return whitelistHandler_.get().isWhiteListed(ip);
     }
 
     /**
@@ -107,7 +113,7 @@ public:
     [[nodiscard]] bool
     isOk(std::string const& ip) const noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.get().isWhiteListed(ip))
             return true;
 
         {
@@ -144,7 +150,7 @@ public:
     void
     increment(std::string const& ip) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.get().isWhiteListed(ip))
             return;
         std::scoped_lock lck{mtx_};
         ipConnCount_[ip]++;
@@ -158,7 +164,7 @@ public:
     void
     decrement(std::string const& ip) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.get().isWhiteListed(ip))
             return;
         std::scoped_lock lck{mtx_};
         assert(ipConnCount_[ip] > 0);
@@ -182,7 +188,7 @@ public:
     [[maybe_unused]] bool
     add(std::string const& ip, uint32_t numObjects) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.get().isWhiteListed(ip))
             return true;
 
         {
@@ -207,7 +213,7 @@ public:
     [[maybe_unused]] bool
     request(std::string const& ip) noexcept
     {
-        if (whitelist_.contains(ip))
+        if (whitelistHandler_.get().isWhiteListed(ip))
             return true;
 
         {
@@ -303,6 +309,6 @@ private:
     }
 };
 
-using DOSGuard = BasicDOSGuard<IntervalSweepHandler>;
+using DOSGuard = BasicDOSGuard<WhitelistHandler, IntervalSweepHandler>;
 
 }  // namespace clio
