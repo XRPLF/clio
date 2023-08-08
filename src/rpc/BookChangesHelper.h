@@ -164,14 +164,13 @@ private:
             }
             else
             {
-                // TODO: use paranthesized initialization when clang catches up
                 tally_[key] = {
-                    first,   // sideAVolume
-                    second,  // sideBVolume
-                    rate,    // highRate
-                    rate,    // lowRate
-                    rate,    // openRate
-                    rate,    // closeRate
+                    .sideAVolume = first,
+                    .sideBVolume = second,
+                    .highRate = rate,
+                    .lowRate = rate,
+                    .openRate = rate,
+                    .closeRate = rate,
                 };
             }
         }

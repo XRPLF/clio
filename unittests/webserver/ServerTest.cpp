@@ -190,10 +190,42 @@ public:
     }
 };
 
+namespace {
+
+template <class Executor>
+static std::shared_ptr<Server::HttpServer<Executor>>
+makeServerSync(
+    clio::Config const& config,
+    boost::asio::io_context& ioc,
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
+    clio::DOSGuard& dosGuard,
+    std::shared_ptr<Executor> const& handler)
+{
+    auto server = std::shared_ptr<Server::HttpServer<Executor>>();
+    std::mutex m;
+    std::condition_variable cv;
+    bool ready = false;
+    boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
+        server = Server::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
+        {
+            std::lock_guard lk(m);
+            ready = true;
+        }
+        cv.notify_one();
+    });
+    {
+        std::unique_lock lk(m);
+        cv.wait(lk, [&] { return ready; });
+    }
+    return server;
+}
+
+}  // namespace
+
 TEST_F(WebServerTest, Http)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
@@ -201,7 +233,7 @@ TEST_F(WebServerTest, Http)
 TEST_F(WebServerTest, Ws)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"Hello":1})");
@@ -212,7 +244,7 @@ TEST_F(WebServerTest, Ws)
 TEST_F(WebServerTest, HttpInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(
         res,
@@ -222,7 +254,7 @@ TEST_F(WebServerTest, HttpInternalError)
 TEST_F(WebServerTest, WsInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"id":"id1"})");
@@ -235,7 +267,7 @@ TEST_F(WebServerTest, WsInternalError)
 TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
     auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost("not json");
@@ -250,8 +282,7 @@ TEST_F(WebServerTest, Https)
     auto e = std::make_shared<EchoExecutor>();
     auto sslCtx = parseCertsForTest();
     auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
-
-    auto const server = Server::make_HttpServer(cfg, ctx, ctxSslRef, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, ctxSslRef, dosGuard, e);
     auto const res = HttpsSyncClient::syncPost("localhost", "8888", R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
@@ -262,7 +293,7 @@ TEST_F(WebServerTest, Wss)
     auto sslCtx = parseCertsForTest();
     auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
 
-    auto const server = Server::make_HttpServer(cfg, ctx, ctxSslRef, dosGuard, e);
+    auto server = makeServerSync(cfg, ctx, ctxSslRef, dosGuard, e);
     WebServerSslSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(R"({"Hello":1})");
@@ -273,7 +304,7 @@ TEST_F(WebServerTest, Wss)
 TEST_F(WebServerTest, HttpRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     auto res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(res, "{}");
     res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
@@ -285,7 +316,7 @@ TEST_F(WebServerTest, HttpRequestOverload)
 TEST_F(WebServerTest, WsRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto res = wsClient.syncPost(R"({})");
@@ -304,7 +335,7 @@ TEST_F(WebServerTest, HttpPayloadOverload)
 {
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     auto const res = HttpSyncClient::syncPost("localhost", "8888", fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
@@ -315,7 +346,7 @@ TEST_F(WebServerTest, WsPayloadOverload)
 {
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = Server::make_HttpServer(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888");
     auto const res = wsClient.syncPost(fmt::format(R"({{"payload":"{}"}})", s100));
