@@ -221,12 +221,10 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 {
     static auto const ledgerExpected = R"({
-      "accepted":true,
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
       "close_time_resolution":0,
-      "hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
       "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
       "ledger_index":"30",
       "parent_close_time":0,
@@ -287,12 +285,10 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 {
     static auto const ledgerExpected = R"({
-      "accepted":true,
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
       "close_time_resolution":0,
-      "hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
       "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
       "ledger_index":"30",
       "parent_close_time":0,
@@ -356,12 +352,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 {
     static auto const ledgerExpected = R"({
-      "accepted":true,
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
       "close_time_resolution":0,
-      "hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
       "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
       "ledger_index":"30",
       "parent_close_time":0,

@@ -39,14 +39,12 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     }
     else
     {
-        output.header[JS(accepted)] = true;
         output.header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
         output.header[JS(close_flags)] = lgrInfo.closeFlags;
         output.header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
         output.header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
         output.header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
         output.header[JS(closed)] = true;
-        output.header[JS(hash)] = ripple::strHex(lgrInfo.hash);
         output.header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
         output.header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
         output.header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();

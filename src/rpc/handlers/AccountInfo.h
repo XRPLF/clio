@@ -42,6 +42,8 @@ public:
         uint32_t ledgerIndex;
         std::string ledgerHash;
         ripple::STLedgerEntry accountData;
+        bool isDisallowIncomingEnabled = false;
+        bool isClawbackEnabled = false;
         std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
         // validated should be sent via framework
         bool validated = true;
@@ -50,16 +52,15 @@ public:
             uint32_t ledgerId,
             std::string ledgerHash,
             ripple::STLedgerEntry sle,
-            std::vector<ripple::STLedgerEntry> signerLists)
+            bool isDisallowIncomingEnabled,
+            bool isClawbackEnabled,
+            std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt)
             : ledgerIndex(ledgerId)
             , ledgerHash(std::move(ledgerHash))
             , accountData(std::move(sle))
+            , isDisallowIncomingEnabled(isDisallowIncomingEnabled)
+            , isClawbackEnabled(isClawbackEnabled)
             , signerLists(std::move(signerLists))
-        {
-        }
-
-        Output(uint32_t ledgerId, std::string ledgerHash, ripple::STLedgerEntry sle)
-            : ledgerIndex(ledgerId), ledgerHash(std::move(ledgerHash)), accountData(std::move(sle))
         {
         }
     };

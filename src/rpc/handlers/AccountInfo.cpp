@@ -50,6 +50,12 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
+    auto const isDisallowIncomingEnabled =
+        RPC::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, RPC::Amendments::DisallowIncoming);
+
+    auto const isClawbackEnabled =
+        RPC::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, RPC::Amendments::Clawback);
+
     // Return SignerList(s) if that is requested.
     if (input.signerLists)
     {
@@ -73,10 +79,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
             signerList.push_back(sleSigners);
         }
 
-        return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, signerList);
+        return Output(
+            lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, signerList);
     }
 
-    return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle);
+    return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled);
 }
 
 void
@@ -89,7 +96,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {JS(validated), output.validated},
     };
 
-    static constexpr std::array<std::pair<std::string_view, ripple::LedgerSpecificFlags>, 9> lsFlags{{
+    std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> lsFlags{{
         {"defaultRipple", ripple::lsfDefaultRipple},
         {"depositAuth", ripple::lsfDepositAuth},
         {"disableMasterKey", ripple::lsfDisableMaster},
@@ -98,13 +105,24 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {"noFreeze", ripple::lsfNoFreeze},
         {"passwordSpent", ripple::lsfPasswordSpent},
         {"requireAuthorization", ripple::lsfRequireAuth},
-        {"requireDestinationTag", ripple::lsfRequireDestTag}
-        // TODO: wait for conan integration
-        //  {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
-        //  {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
-        //  {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
-        //  {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline}
+        {"requireDestinationTag", ripple::lsfRequireDestTag},
     }};
+
+    if (output.isDisallowIncomingEnabled)
+    {
+        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const disallowIncomingFlags = {
+            {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
+            {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
+            {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
+            {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
+        };
+        lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
+    }
+
+    if (output.isClawbackEnabled)
+    {
+        lsFlags.push_back({"allowTrustLineClawback", ripple::lsfAllowTrustLineClawback});
+    }
 
     boost::json::object acctFlags;
     for (auto const& lsf : lsFlags)
