@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace clio {
+namespace web::detail {
 
 /**
  * @brief A whitelist to remove rate limits of certain IP addresses
@@ -139,7 +139,7 @@ class WhitelistHandler
     Whitelist whitelist_;
 
 public:
-    WhitelistHandler(clio::Config const& config)
+    WhitelistHandler(clio::util::Config const& config)
     {
         std::unordered_set<std::string> arr = getWhitelist(config);
         for (auto const& net : arr)
@@ -154,7 +154,7 @@ public:
 
 private:
     [[nodiscard]] std::unordered_set<std::string> const
-    getWhitelist(clio::Config const& config) const
+    getWhitelist(clio::util::Config const& config) const
     {
         using T = std::unordered_set<std::string> const;
         auto whitelist = config.arrayOr("dos_guard.whitelist", {});
@@ -164,4 +164,4 @@ private:
             boost::transform_iterator(std::end(whitelist), transform)};
     }
 };
-}  // namespace clio
+}  // namespace web::detail

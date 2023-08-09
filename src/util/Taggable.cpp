@@ -27,7 +27,7 @@
 #include <mutex>
 #include <string>
 
-namespace util::detail {
+namespace clio::util::detail {
 
 UIntTagGenerator::tag_t
 UIntTagGenerator::next()
@@ -46,9 +46,9 @@ UUIDTagGenerator::next()
     return gen();
 }
 
-}  // namespace util::detail
+}  // namespace clio::util::detail
 
-namespace util {
+namespace clio::util {
 
 std::unique_ptr<BaseTagDecorator>
 TagDecoratorFactory::make() const
@@ -71,4 +71,4 @@ TagDecoratorFactory::with(parent_t parent) const noexcept
     return TagDecoratorFactory(type_, parent);
 }
 
-}  // namespace util
+}  // namespace clio::util

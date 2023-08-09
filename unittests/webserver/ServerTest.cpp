@@ -27,6 +27,10 @@
 
 #include <optional>
 
+using namespace clio::util;
+using namespace web::detail;
+using namespace web;
+
 constexpr static auto JSONData = R"JSON(
     {
         "server":{
@@ -143,15 +147,15 @@ protected:
 
     // this ctx is for dos timer
     boost::asio::io_context ctxSync;
-    clio::Config cfg{boost::json::parse(JSONData)};
-    clio::IntervalSweepHandler sweepHandler = clio::IntervalSweepHandler{cfg, ctxSync};
-    clio::WhitelistHandler whitelistHandler = clio::WhitelistHandler{cfg};
-    clio::DOSGuard dosGuard = clio::DOSGuard{cfg, whitelistHandler, sweepHandler};
+    Config cfg{boost::json::parse(JSONData)};
+    IntervalSweepHandler sweepHandler = web::IntervalSweepHandler{cfg, ctxSync};
+    WhitelistHandler whitelistHandler = web::detail::WhitelistHandler{cfg};
+    DOSGuard dosGuard = web::DOSGuard{cfg, whitelistHandler, sweepHandler};
 
-    clio::Config cfgOverload{boost::json::parse(JSONDataOverload)};
-    clio::IntervalSweepHandler sweepHandlerOverload = clio::IntervalSweepHandler{cfgOverload, ctxSync};
-    clio::WhitelistHandler whitelistHandlerOverload = clio::WhitelistHandler{cfgOverload};
-    clio::DOSGuard dosGuardOverload = clio::DOSGuard{cfgOverload, whitelistHandlerOverload, sweepHandlerOverload};
+    Config cfgOverload{boost::json::parse(JSONDataOverload)};
+    IntervalSweepHandler sweepHandlerOverload = web::IntervalSweepHandler{cfgOverload, ctxSync};
+    WhitelistHandler whitelistHandlerOverload = web::detail::WhitelistHandler{cfgOverload};
+    DOSGuard dosGuardOverload = web::DOSGuard{cfgOverload, whitelistHandlerOverload, sweepHandlerOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
 
@@ -164,13 +168,13 @@ class EchoExecutor
 {
 public:
     void
-    operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
     {
         ws->send(std::string(reqStr), http::status::ok);
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
     {
     }
 };
@@ -179,13 +183,13 @@ class ExceptionExecutor
 {
 public:
     void
-    operator()(std::string const& req, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(std::string const& req, std::shared_ptr<web::ConnectionBase> const& ws)
     {
         throw std::runtime_error("MyError");
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<Server::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
     {
     }
 };
@@ -193,20 +197,20 @@ public:
 namespace {
 
 template <class Executor>
-static std::shared_ptr<Server::HttpServer<Executor>>
+static std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
-    clio::Config const& config,
+    clio::util::Config const& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
-    clio::DOSGuard& dosGuard,
+    web::DOSGuard& dosGuard,
     std::shared_ptr<Executor> const& handler)
 {
-    auto server = std::shared_ptr<Server::HttpServer<Executor>>();
+    auto server = std::shared_ptr<web::HttpServer<Executor>>();
     std::mutex m;
     std::condition_variable cv;
     bool ready = false;
     boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
-        server = Server::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
+        server = web::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
         {
             std::lock_guard lk(m);
             ready = true;

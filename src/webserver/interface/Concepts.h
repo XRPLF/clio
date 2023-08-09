@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace Server {
+namespace web {
 
 /**
  * @brief Each executor fulfills this interface
@@ -40,4 +40,4 @@ concept ServerHandler = requires(T handler, std::string const& req, std::shared_
 };
 // clang-format on
 
-}  // namespace Server
+}  // namespace web

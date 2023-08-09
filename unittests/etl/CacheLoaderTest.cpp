@@ -26,9 +26,9 @@
 #include <gtest/gtest.h>
 
 namespace json = boost::json;
-using namespace clio::detail;
-using namespace clio;
-using namespace Backend;
+using namespace clio::etl::detail;
+using namespace clio::util;
+using namespace data;
 using namespace testing;
 
 constexpr static auto SEQ = 30;

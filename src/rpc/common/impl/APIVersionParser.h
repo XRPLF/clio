@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <config/Config.h>
-#include <log/Logger.h>
 #include <rpc/common/APIVersion.h>
 #include <util/Expected.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <algorithm>
 #include <string>
@@ -31,7 +31,7 @@ namespace RPC::detail {
 
 class ProductionAPIVersionParser : public APIVersionParser
 {
-    clio::Logger log_{"RPC"};
+    clio::util::Logger log_{"RPC"};
 
     uint32_t defaultVersion_;
     uint32_t minVersion_;
@@ -70,9 +70,9 @@ public:
                     << "; default = " << defaultVersion_ << "]";
     }
 
-    ProductionAPIVersionParser(clio::Config const& config);
+    ProductionAPIVersionParser(clio::util::Config const& config);
 
-    util::Expected<uint32_t, std::string>
+    clio::util::Expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
     inline uint32_t

@@ -19,14 +19,14 @@
 
 #pragma once
 
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 #include <webserver/HttpSession.h>
 #include <webserver/SslHttpSession.h>
 #include <webserver/interface/Concepts.h>
 
 #include <fmt/core.h>
 
-namespace Server {
+namespace web {
 
 /**
  * @brief The Detector class to detect if the connection is a ssl or not.
@@ -40,11 +40,11 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslS
 {
     using std::enable_shared_from_this<Detector<PlainSession, SslSession, Handler>>::shared_from_this;
 
-    clio::Logger log_{"WebServer"};
+    clio::util::Logger log_{"WebServer"};
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
-    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<clio::DOSGuard> const dosGuard_;
+    std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory_;
+    std::reference_wrapper<web::DOSGuard> const dosGuard_;
     std::shared_ptr<Handler> const handler_;
     boost::beast::flat_buffer buffer_;
 
@@ -52,8 +52,8 @@ public:
     Detector(
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
-        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler)
         : stream_(std::move(socket))
         , ctx_(ctx)
@@ -124,11 +124,11 @@ class Server : public std::enable_shared_from_this<Server<PlainSession, SslSessi
 {
     using std::enable_shared_from_this<Server<PlainSession, SslSession, Handler>>::shared_from_this;
 
-    clio::Logger log_{"WebServer"};
+    clio::util::Logger log_{"WebServer"};
     std::reference_wrapper<boost::asio::io_context> ioc_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
-    util::TagDecoratorFactory tagFactory_;
-    std::reference_wrapper<clio::DOSGuard> dosGuard_;
+    clio::util::TagDecoratorFactory tagFactory_;
+    std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<Handler> handler_;
     tcp::acceptor acceptor_;
 
@@ -137,8 +137,8 @@ public:
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         tcp::endpoint endpoint,
-        util::TagDecoratorFactory tagFactory,
-        clio::DOSGuard& dosGuard,
+        clio::util::TagDecoratorFactory tagFactory,
+        web::DOSGuard& dosGuard,
         std::shared_ptr<Handler> const& callback)
         : ioc_(std::ref(ioc))
         , ctx_(ctx)
@@ -221,13 +221,13 @@ using HttpServer = Server<HttpSession, SslHttpSession, Executor>;
 template <class Executor>
 static std::shared_ptr<HttpServer<Executor>>
 make_HttpServer(
-    clio::Config const& config,
+    clio::util::Config const& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
-    clio::DOSGuard& dosGuard,
+    web::DOSGuard& dosGuard,
     std::shared_ptr<Executor> const& handler)
 {
-    static clio::Logger log{"WebServer"};
+    static clio::util::Logger log{"WebServer"};
     if (!config.contains("server"))
         return nullptr;
 
@@ -239,7 +239,7 @@ make_HttpServer(
         ioc,
         sslCtx,
         boost::asio::ip::tcp::endpoint{address, port},
-        util::TagDecoratorFactory(config),
+        clio::util::TagDecoratorFactory(config),
         dosGuard,
         handler);
 
@@ -247,4 +247,4 @@ make_HttpServer(
     return server;
 }
 
-}  // namespace Server
+}  // namespace web

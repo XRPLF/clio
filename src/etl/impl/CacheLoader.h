@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
+#include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <boost/algorithm/string.hpp>
@@ -34,7 +34,7 @@
 #include <mutex>
 #include <thread>
 
-namespace clio::detail {
+namespace clio::etl::detail {
 
 /**
  * @brief Cache loading interface
@@ -44,7 +44,7 @@ class CacheLoader
 {
     enum class LoadStyle { ASYNC, SYNC, NOT_AT_ALL };
 
-    clio::Logger log_{"ETL"};
+    clio::util::Logger log_{"ETL"};
 
     std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<BackendInterface> backend_;
@@ -73,7 +73,7 @@ class CacheLoader
 
 public:
     CacheLoader(
-        clio::Config const& config,
+        clio::util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> const& backend,
         CacheType& ledgerCache)
@@ -300,13 +300,13 @@ private:
 
                 auto const& state = response.at("state").as_array();
 
-                std::vector<Backend::LedgerObject> objects;
+                std::vector<data::LedgerObject> objects;
                 objects.reserve(state.size());
                 for (auto const& ledgerObject : state)
                 {
                     auto const& obj = ledgerObject.as_object();
 
-                    Backend::LedgerObject stateObject = {};
+                    data::LedgerObject stateObject = {};
 
                     if (!stateObject.key.parseHex(obj.at("index").as_string().c_str()))
                     {
@@ -337,14 +337,14 @@ private:
     void
     loadCacheFromDb(uint32_t seq)
     {
-        std::vector<Backend::LedgerObject> diff;
+        std::vector<data::LedgerObject> diff;
         std::vector<std::optional<ripple::uint256>> cursors;
 
         auto append = [](auto&& a, auto&& b) { a.insert(std::end(a), std::begin(b), std::end(b)); };
 
         for (size_t i = 0; i < numCacheDiffs_; ++i)
         {
-            append(diff, Backend::synchronousAndRetryOnTimeout([&](auto yield) {
+            append(diff, data::synchronousAndRetryOnTimeout([&](auto yield) {
                        return backend_->fetchLedgerDiff(seq - i, yield);
                    }));
         }
@@ -387,12 +387,12 @@ private:
                     [this, seq, start, end, numRemaining, startTime, markers](boost::asio::yield_context yield) {
                         std::optional<ripple::uint256> cursor = start;
                         std::string cursorStr =
-                            cursor.has_value() ? ripple::strHex(cursor.value()) : ripple::strHex(Backend::firstKey);
+                            cursor.has_value() ? ripple::strHex(cursor.value()) : ripple::strHex(data::firstKey);
                         log_.debug() << "Starting a cursor: " << cursorStr << " markers = " << *markers;
 
                         while (not stopping_)
                         {
-                            auto res = Backend::retryOnTimeout([this, seq, &cursor, &yield]() {
+                            auto res = data::retryOnTimeout([this, seq, &cursor, &yield]() {
                                 return backend_->fetchLedgerPage(cursor, seq, cachePageFetchSize_, false, yield);
                             });
 
@@ -431,4 +431,4 @@ private:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace clio::etl::detail

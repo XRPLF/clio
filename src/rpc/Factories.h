@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/Errors.h>
 #include <rpc/common/APIVersion.h>
 #include <util/Expected.h>
@@ -41,22 +41,22 @@
  */
 namespace RPC {
 
-util::Expected<Web::Context, Status>
+clio::util::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    std::shared_ptr<Server::ConnectionBase> const& session,
-    util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    std::shared_ptr<web::ConnectionBase> const& session,
+    clio::util::TagDecoratorFactory const& tagFactory,
+    data::LedgerRange const& range,
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
-util::Expected<Web::Context, Status>
+clio::util::Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    clio::util::TagDecoratorFactory const& tagFactory,
+    data::LedgerRange const& range,
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);
 

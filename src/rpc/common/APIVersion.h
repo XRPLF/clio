@@ -54,7 +54,7 @@ class APIVersionParser
 public:
     virtual ~APIVersionParser() = default;
 
-    util::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
+    clio::util::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
 };
 
 }  // namespace RPC

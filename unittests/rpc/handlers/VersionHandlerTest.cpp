@@ -36,7 +36,7 @@ class RPCVersionHandlerTest : public HandlerBaseTest
 
 TEST_F(RPCVersionHandlerTest, Default)
 {
-    clio::Config cfg{json::parse(fmt::format(
+    clio::util::Config cfg{json::parse(fmt::format(
         R"({{
             "min": {},
             "max": {},

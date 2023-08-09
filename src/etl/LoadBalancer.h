@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
-#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <boost/asio.hpp>
@@ -48,7 +48,7 @@ public:
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
-    clio::Logger log_{"ETL"};
+    clio::util::Logger log_{"ETL"};
     std::vector<std::unique_ptr<Source>> sources_;
     std::uint32_t downloadRanges_ = 16;
 
@@ -63,7 +63,7 @@ public:
      * @param nwvl The network validated ledgers datastructure
      */
     LoadBalancer(
-        clio::Config const& config,
+        clio::util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -71,7 +71,7 @@ public:
 
     static std::shared_ptr<LoadBalancer>
     make_LoadBalancer(
-        clio::Config const& config,
+        clio::util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -79,7 +79,7 @@ public:
 
     static std::unique_ptr<Source>
     make_Source(
-        clio::Config const& config,
+        clio::util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,

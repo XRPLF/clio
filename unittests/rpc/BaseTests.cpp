@@ -33,7 +33,6 @@
 #include <optional>
 #include <string>
 
-using namespace clio;
 using namespace std;
 
 using namespace RPC;

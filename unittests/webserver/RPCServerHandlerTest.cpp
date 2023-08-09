@@ -29,7 +29,7 @@ using namespace std::chrono_literals;
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
 
-struct MockWsBase : public Server::ConnectionBase
+struct MockWsBase : public web::ConnectionBase
 {
     std::string message;
     boost::beast::http::status lastStatus = boost::beast::http::status::unknown;
@@ -48,7 +48,7 @@ struct MockWsBase : public Server::ConnectionBase
         lastStatus = status;
     }
 
-    MockWsBase(util::TagDecoratorFactory const& factory) : Server::ConnectionBase(factory, "localhost.fake.ip")
+    MockWsBase(clio::util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "localhost.fake.ip")
     {
     }
 };
@@ -63,7 +63,7 @@ protected:
 
         etl = std::make_shared<MockETLService>();
         rpcEngine = std::make_shared<MockAsyncRPCEngine>();
-        tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
+        tagFactory = std::make_shared<clio::util::TagDecoratorFactory>(cfg);
         subManager = std::make_shared<SubscriptionManager>(cfg, mockBackendPtr);
         session = std::make_shared<MockWsBase>(*tagFactory);
         handler = std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(
@@ -79,10 +79,10 @@ protected:
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine;
     std::shared_ptr<MockETLService> etl;
     std::shared_ptr<SubscriptionManager> subManager;
-    std::shared_ptr<util::TagDecoratorFactory> tagFactory;
+    std::shared_ptr<clio::util::TagDecoratorFactory> tagFactory;
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler;
     std::shared_ptr<MockWsBase> session;
-    clio::Config cfg;
+    clio::util::Config  cfg;
 };
 
 TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)

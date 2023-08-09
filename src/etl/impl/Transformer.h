@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/SystemState.h>
 #include <etl/impl/LedgerLoader.h>
-#include <log/Logger.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
@@ -34,7 +34,7 @@
 #include <memory>
 #include <thread>
 
-namespace clio::detail {
+namespace clio::etl::detail {
 
 /*
  * TODO:
@@ -53,7 +53,7 @@ class Transformer
     using GetLedgerResponseType = typename LedgerLoaderType::GetLedgerResponseType;
     using RawLedgerObjectType = typename LedgerLoaderType::RawLedgerObjectType;
 
-    clio::Logger log_{"ETL"};
+    clio::util::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
     std::shared_ptr<BackendInterface> backend_;
@@ -167,9 +167,9 @@ private:
     buildNextLedger(GetLedgerResponseType& rawData)
     {
         log_.debug() << "Beginning ledger update";
-        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
+        ripple::LedgerHeader lgrInfo = ::clio::util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
-        log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
+        log_.debug() << "Deserialized ledger header. " << ::clio::util::toString(lgrInfo);
         backend_->startWrites();
         backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
 
@@ -202,10 +202,10 @@ private:
         backend_->writeNFTTransactions(std::move(insertTxResultOp->nfTokenTxData));
 
         auto [success, duration] =
-            util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
+            ::clio::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
 
         log_.debug() << "Finished writes. Total time: " << std::to_string(duration);
-        log_.debug() << "Finished ledger update: " << util::toString(lgrInfo);
+        log_.debug() << "Finished ledger update: " << ::clio::util::toString(lgrInfo);
 
         return {lgrInfo, success};
     }
@@ -219,7 +219,7 @@ private:
     void
     updateCache(ripple::LedgerHeader const& lgrInfo, GetLedgerResponseType& rawData)
     {
-        std::vector<Backend::LedgerObject> cacheUpdates;
+        std::vector<data::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(rawData.ledger_objects().objects_size());
 
         // TODO change these to unordered_set
@@ -297,11 +297,11 @@ private:
 
                 auto lb = backend_->cache().getPredecessor(obj.key, lgrInfo.seq);
                 if (!lb)
-                    lb = {Backend::firstKey, {}};
+                    lb = {data::firstKey, {}};
 
                 auto ub = backend_->cache().getSuccessor(obj.key, lgrInfo.seq);
                 if (!ub)
-                    ub = {Backend::lastKey, {}};
+                    ub = {data::lastKey, {}};
 
                 if (obj.blob.size() == 0)
                 {
@@ -332,10 +332,10 @@ private:
                 }
                 else
                 {
-                    backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(Backend::lastKey));
+                    backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(data::lastKey));
 
                     log_.debug() << "Updating book successor " << ripple::strHex(base) << " - "
-                                 << ripple::strHex(Backend::lastKey);
+                                 << ripple::strHex(data::lastKey);
                 }
             }
         }
@@ -359,7 +359,7 @@ private:
             {
                 auto firstBook = std::move(*obj.mutable_first_book());
                 if (!firstBook.size())
-                    firstBook = uint256ToString(Backend::lastKey);
+                    firstBook = uint256ToString(data::lastKey);
                 log_.debug() << "writing book successor " << ripple::strHex(obj.book_base()) << " - "
                              << ripple::strHex(firstBook);
 
@@ -372,10 +372,10 @@ private:
                 {
                     std::string* predPtr = obj.mutable_predecessor();
                     if (!predPtr->size())
-                        *predPtr = uint256ToString(Backend::firstKey);
+                        *predPtr = uint256ToString(data::firstKey);
                     std::string* succPtr = obj.mutable_successor();
                     if (!succPtr->size())
-                        *succPtr = uint256ToString(Backend::lastKey);
+                        *succPtr = uint256ToString(data::lastKey);
 
                     if (obj.mod_type() == RawLedgerObjectType::DELETED)
                     {
@@ -424,4 +424,4 @@ private:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace clio::etl::detail

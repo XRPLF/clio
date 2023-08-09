@@ -24,7 +24,7 @@
 #include "MockETLService.h"
 #include "MockLoadBalancer.h"
 #include "MockSubscriptionManager.h"
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 #include <boost/asio.hpp>
 #include <gtest/gtest.h>
@@ -34,7 +34,7 @@
 #include <thread>
 
 /**
- * @brief Fixture with LogService support.
+ * @brief Fixture with util::Logger support.
  */
 class LoggerFixture : virtual public ::testing::Test
 {
@@ -58,14 +58,14 @@ class LoggerFixture : virtual public ::testing::Test
     std::ostream stream_ = std::ostream{&buffer_};
 
 protected:
-    // Simulates the `LogService::init(config)` call
+    // Simulates the `util::Logger::init(config)` call
     void
     SetUp() override
     {
         static std::once_flag once_;
         std::call_once(once_, [] {
             boost::log::add_common_attributes();
-            boost::log::register_simple_formatter_factory<clio::Severity, char>("Severity");
+            boost::log::register_simple_formatter_factory<clio::util::Severity, char>("Severity");
         });
 
         namespace src = boost::log::sources;
@@ -76,9 +76,9 @@ protected:
 
         core->remove_all_sinks();
         boost::log::add_console_log(stream_, keywords::format = "%Channel%:%Severity% %Message%");
-        auto min_severity = expr::channel_severity_filter(clio::log_channel, clio::log_severity);
-        min_severity["General"] = clio::Severity::DBG;
-        min_severity["Trace"] = clio::Severity::TRC;
+        auto min_severity = expr::channel_severity_filter(clio::util::log_channel, clio::util::log_severity);
+        min_severity["General"] = clio::util::Severity::DBG;
+        min_severity["Trace"] = clio::util::Severity::TRC;
         core->set_filter(min_severity);
         core->set_logging_enabled(true);
     }
@@ -98,7 +98,7 @@ protected:
 };
 
 /**
- * @brief Fixture with LogService support but completely disabled logging.
+ * @brief Fixture with util::Logger support but completely disabled logging.
  *
  * This is meant to be used as a base for other fixtures.
  */
@@ -194,7 +194,7 @@ struct MockBackendTest : virtual public NoLoggerFixture
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        clio::Config cfg;
+        clio::util::Config cfg;
         mockBackendPtr = std::make_shared<MockBackend>(cfg);
     }
     void

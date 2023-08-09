@@ -66,7 +66,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
     }
 
-    std::optional<Backend::TransactionsCursor> cursor;
+    std::optional<data::TransactionsCursor> cursor;
 
     // if marker exists
     if (input.marker)
@@ -84,7 +84,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
-    auto const [txnsAndCursor, timeDiff] = util::timed(
+    auto const [txnsAndCursor, timeDiff] = clio::util::timed(
         [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
     log_.info() << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 

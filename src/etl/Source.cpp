@@ -17,12 +17,11 @@
 */
 //==============================================================================
 
-#include <backend/DBHelpers.h>
+#include <data/DBHelpers.h>
 #include <etl/ETLService.h>
 #include <etl/LoadBalancer.h>
 #include <etl/ProbingSource.h>
 #include <etl/Source.h>
-#include <log/Logger.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
 
@@ -34,8 +33,6 @@
 #include <boost/json.hpp>
 
 #include <thread>
-
-using namespace clio;
 
 static boost::beast::websocket::stream_base::timeout
 make_TimeoutOption()

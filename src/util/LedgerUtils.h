@@ -26,7 +26,7 @@
 #include <sstream>
 #include <string>
 
-namespace util {
+namespace clio::util {
 
 inline ripple::LedgerHeader
 deserializeHeader(ripple::Slice data)
@@ -44,4 +44,4 @@ toString(ripple::LedgerHeader const& info)
     return ss.str();
 }
 
-}  // namespace util
+}  // namespace clio::util

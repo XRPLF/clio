@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace util {
+namespace clio::util {
 
 inline boost::json::object
 removeSecret(boost::json::object const& object)
@@ -50,4 +50,4 @@ removeSecret(boost::json::object const& object)
     return newObject;
 }
 
-}  // namespace util
+}  // namespace clio::util

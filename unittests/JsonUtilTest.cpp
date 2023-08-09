@@ -32,7 +32,7 @@ TEST(JsonUtils, RemoveSecrets)
     })")
                     .as_object();
 
-    auto json2 = util::removeSecret(json);
+    auto json2 = clio::util::removeSecret(json);
     EXPECT_EQ(json2.at("secret").as_string(), "*");
     EXPECT_EQ(json2.at("seed").as_string(), "*");
     EXPECT_EQ(json2.at("seed_hex").as_string(), "*");
@@ -50,7 +50,7 @@ TEST(JsonUtils, RemoveSecrets)
     })")
                .as_object();
 
-    json2 = util::removeSecret(json);
+    json2 = clio::util::removeSecret(json);
     EXPECT_TRUE(json2.contains("params"));
     EXPECT_TRUE(json2.at("params").is_array());
     EXPECT_TRUE(json2.at("params").as_array().size() > 0);

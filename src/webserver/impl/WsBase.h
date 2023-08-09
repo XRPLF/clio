@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <log/Logger.h>
 #include <rpc/common/Types.h>
+#include <util/log/Logger.h>
 #include <webserver/DOSGuard.h>
 #include <webserver/interface/Concepts.h>
 #include <webserver/interface/ConnectionBase.h>
@@ -31,7 +31,7 @@
 #include <iostream>
 #include <memory>
 
-namespace Server {
+namespace web::detail {
 
 /**
  * @brief Web socket implementation. This class is the base class of the web socket session, it will handle the read and
@@ -48,14 +48,14 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     using std::enable_shared_from_this<WsBase<Derived, Handler>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
-    std::reference_wrapper<clio::DOSGuard> dosGuard_;
+    std::reference_wrapper<web::DOSGuard> dosGuard_;
     bool sending_ = false;
     std::queue<std::shared_ptr<std::string>> messages_;
     std::shared_ptr<Handler> const handler_;
 
 protected:
-    clio::Logger log_{"WebServer"};
-    clio::Logger perfLog_{"Performance"};
+    clio::util::Logger log_{"WebServer"};
+    clio::util::Logger perfLog_{"Performance"};
 
     void
     wsFail(boost::beast::error_code ec, char const* what)
@@ -72,8 +72,8 @@ protected:
 public:
     explicit WsBase(
         std::string ip,
-        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& buffer)
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
@@ -261,4 +261,4 @@ public:
         doRead();
     }
 };
-}  // namespace Server
+}  // namespace web::detail

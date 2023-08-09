@@ -23,7 +23,7 @@
  * This file contains a variety of utility functions used when executing the handlers.
  */
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/Amendments.h>
 #include <rpc/JS.h>
 #include <rpc/common/Types.h>
@@ -55,14 +55,14 @@ parseAccountCursor(std::optional<std::string> jsonCursor);
 
 // TODO this function should probably be in a different file and namespace
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs);
+deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs);
 
 // TODO this function should probably be in a different file and namespace
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq);
+deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs, NFTokenjson includeNFTIDs = NFTokenjson::DISABLE);
+toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson includeNFTIDs = NFTokenjson::DISABLE);
 
 bool
 insertDeliveredAmount(
@@ -95,7 +95,7 @@ generatePubLedgerMessage(
     std::uint32_t txnCount);
 
 std::variant<Status, ripple::LedgerHeader>
-ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx);
+ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
 
 std::variant<Status, ripple::LedgerHeader>
 getLedgerInfoFromHashOrSeq(
@@ -131,10 +131,10 @@ traverseOwnedNodes(
 
 std::shared_ptr<ripple::SLE const>
 read(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    std::shared_ptr<data::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
     ripple::LedgerHeader const& lgrInfo,
-    Web::Context const& context);
+    web::Context const& context);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -195,10 +195,10 @@ xrpLiquid(
 
 boost::json::array
 postProcessOrderBook(
-    std::vector<Backend::LedgerObject> const& offers,
+    std::vector<data::LedgerObject> const& offers,
     ripple::Book const& book,
     ripple::AccountID const& takerID,
-    Backend::BackendInterface const& backend,
+    data::BackendInterface const& backend,
     std::uint32_t ledgerSequence,
     boost::asio::yield_context yield);
 
@@ -219,24 +219,24 @@ getNFTID(boost::json::object const& request);
 
 bool
 isAmendmentEnabled(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    std::shared_ptr<data::BackendInterface const> const& backend,
     boost::asio::yield_context yield,
     uint32_t seq,
     ripple::uint256 amendmentId);
 
 template <class T>
 void
-logDuration(Web::Context const& ctx, T const& dur)
+logDuration(web::Context const& ctx, T const& dur)
 {
     using boost::json::serialize;
 
-    static clio::Logger log{"RPC"};
+    static clio::util::Logger log{"RPC"};
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
         "Request processing duration = {} milliseconds. request = {}",
         millis,
-        serialize(util::removeSecret(ctx.params)));
+        serialize(clio::util::removeSecret(ctx.params)));
 
     if (seconds > 10)
         log.error() << ctx.tag() << msg;

@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/NFTSyntheticSerializer.h>
@@ -30,11 +30,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
-using namespace clio;
-
 // local to compilation unit loggers
 namespace {
-clio::Logger gLog{"RPC"};
+clio::util::Logger gLog{"RPC"};
 }  // namespace
 
 namespace RPC {
@@ -144,7 +142,7 @@ accountFromStringStrict(std::string const& account)
         return {};
 }
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
+deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
 {
     try
     {
@@ -173,7 +171,7 @@ deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs)
 }
 
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta const>>
-deserializeTxPlusMeta(Backend::TransactionAndMetadata const& blobs, std::uint32_t seq)
+deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t seq)
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
@@ -191,7 +189,7 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(Backend::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled)
+toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
@@ -300,7 +298,7 @@ parseStringAsUInt(std::string const& value)
 }
 
 std::variant<Status, ripple::LedgerHeader>
-ledgerInfoFromRequest(std::shared_ptr<Backend::BackendInterface const> const& backend, Web::Context const& ctx)
+ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx)
 {
     auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
@@ -659,7 +657,7 @@ traverseOwnedNodes(
     gLog.debug() << "Time loading owned directories: "
                  << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
 
-    auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
+    auto [objects, timeDiff] = clio::util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
     gLog.debug() << "Time loading owned entries: " << timeDiff << " milliseconds";
 
@@ -677,10 +675,10 @@ traverseOwnedNodes(
 
 std::shared_ptr<ripple::SLE const>
 read(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    std::shared_ptr<data::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
     ripple::LedgerHeader const& lgrInfo,
-    Web::Context const& context)
+    web::Context const& context)
 {
     if (auto const blob = backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
     {
@@ -1025,10 +1023,10 @@ transferRate(
 
 boost::json::array
 postProcessOrderBook(
-    std::vector<Backend::LedgerObject> const& offers,
+    std::vector<data::LedgerObject> const& offers,
     ripple::Book const& book,
     ripple::AccountID const& takerID,
-    Backend::BackendInterface const& backend,
+    data::BackendInterface const& backend,
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context yield)
 {
@@ -1327,7 +1325,7 @@ getNFTID(boost::json::object const& request)
 
 bool
 isAmendmentEnabled(
-    std::shared_ptr<Backend::BackendInterface const> const& backend,
+    std::shared_ptr<data::BackendInterface const> const& backend,
     boost::asio::yield_context yield,
     uint32_t seq,
     ripple::uint256 amendmentId)

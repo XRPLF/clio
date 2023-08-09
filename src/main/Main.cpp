@@ -25,12 +25,12 @@
 #undef GRPC_ASAN_ENABLED
 #endif
 
-#include <backend/BackendFactory.h>
-#include <config/Config.h>
+#include <data/BackendFactory.h>
 #include <etl/ETLService.h>
 #include <rpc/Counters.h>
 #include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
+#include <util/config/Config.h>
 #include <webserver/RPCServerHandler.h>
 #include <webserver/Server.h>
 
@@ -47,8 +47,9 @@
 #include <thread>
 #include <vector>
 
-using namespace clio;
+using namespace clio::util;
 using namespace boost::asio;
+
 namespace po = boost::program_options;
 
 /**
@@ -178,12 +179,12 @@ try
     io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    auto sweepHandler = IntervalSweepHandler{config, ioc};
-    auto whitelistHandler = WhitelistHandler{config};
-    auto dosGuard = DOSGuard{config, whitelistHandler, sweepHandler};
+    auto sweepHandler = web::IntervalSweepHandler{config, ioc};
+    auto whitelistHandler = web::detail::WhitelistHandler{config};
+    auto dosGuard = web::DOSGuard{config, whitelistHandler, sweepHandler};
 
     // Interface to the database
-    auto backend = Backend::make_Backend(ioc, config);
+    auto backend = data::make_Backend(ioc, config);
 
     // Manages clients subscribed to streams
     auto subscriptions = SubscriptionManager::make_SubscriptionManager(config, backend);
@@ -212,7 +213,7 @@ try
         std::make_shared<RPCServerHandler<RPC::RPCEngine, ETLService>>(config, backend, rpcEngine, etl, subscriptions);
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
-    auto const httpServer = Server::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);
+    auto const httpServer = web::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

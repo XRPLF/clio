@@ -22,13 +22,12 @@
 #include <util/MockHandlerProvider.h>
 #include <util/MockLoadBalancer.h>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 #include <rpc/common/impl/ForwardingProxy.h>
 
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
 
-using namespace clio;
 using namespace RPC;
 using namespace testing;
 
@@ -41,8 +40,8 @@ protected:
     std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();
     MockCounters counters;
 
-    clio::Config config;
-    util::TagDecoratorFactory tagFactory{config};
+    clio::util::Config config;
+    clio::util::TagDecoratorFactory tagFactory{config};
 
     RPC::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
         loadBalancer,
@@ -63,7 +62,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfClioOnly)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -83,7 +82,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfProxied)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -103,7 +102,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfCurrentLedgerSpecified)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -123,7 +122,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfClosedLedgerSpecified)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -143,7 +142,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAccountInfoWithQueueSpe
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -163,7 +162,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithQueueSpecifie
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -183,7 +182,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithFullSpecified
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -203,7 +202,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithAccountsSpeci
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -223,7 +222,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAccountInfoQueueIsFals
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -243,7 +242,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerQueueIsFalse)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -263,7 +262,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerFullIsFalse)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -283,7 +282,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerAccountsIsFalse)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -299,7 +298,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAPIVersionIsV1)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_TRUE(res);
@@ -319,7 +318,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAPIVersionIsV2)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -335,7 +334,7 @@ TEST_F(RPCForwardingProxyTest, ShouldNeverForwardSubscribe)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -351,7 +350,7 @@ TEST_F(RPCForwardingProxyTest, ShouldNeverForwardUnsubscribe)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
         ASSERT_FALSE(res);
@@ -379,7 +378,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.forward(ctx);
 
@@ -409,7 +408,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
-            Web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.forward(ctx);
 

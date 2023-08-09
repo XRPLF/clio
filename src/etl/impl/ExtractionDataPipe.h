@@ -20,12 +20,12 @@
 #pragma once
 
 #include <etl/ETLHelpers.h>
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 #include <memory>
 #include <vector>
 
-namespace clio::detail {
+namespace clio::etl::detail {
 
 /**
  * @brief A collection of thread safe async queues used by Extractor and Transformer to communicate
@@ -40,7 +40,7 @@ public:
     constexpr static auto TOTAL_MAX_IN_QUEUE = 1000u;
 
 private:
-    clio::Logger log_{"ETL"};
+    clio::util::Logger log_{"ETL"};
 
     uint32_t stride_;
     uint32_t startSequence_;
@@ -131,4 +131,4 @@ private:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace clio::etl::detail

@@ -28,7 +28,7 @@
 struct MockSubscriptionManager
 {
 public:
-    using session_ptr = std::shared_ptr<Server::ConnectionBase>;
+    using session_ptr = std::shared_ptr<web::ConnectionBase>;
     MockSubscriptionManager()
     {
     }
@@ -44,7 +44,7 @@ public:
     MOCK_METHOD(
         void,
         pubBookChanges,
-        (ripple::LedgerInfo const&, std::vector<Backend::TransactionAndMetadata> const&),
+        (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
         ());
 
     MOCK_METHOD(void, unsubLedger, (session_ptr), ());
@@ -53,7 +53,7 @@ public:
 
     MOCK_METHOD(void, unsubTransactions, (session_ptr), ());
 
-    MOCK_METHOD(void, pubTransaction, (Backend::TransactionAndMetadata const&, ripple::LedgerInfo const&), ());
+    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerInfo const&), ());
 
     MOCK_METHOD(void, subAccount, (ripple::AccountID const&, session_ptr&), ());
 

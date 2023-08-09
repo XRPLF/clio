@@ -28,7 +28,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 
-namespace Server {
+namespace web {
 struct ConnectionBase;
 }
 
@@ -43,23 +43,23 @@ class Counters;
  * @brief Return type used for Validators that can return error but don't have
  * specific value to return
  */
-using MaybeError = util::Expected<void, Status>;
+using MaybeError = clio::util::Expected<void, Status>;
 
 /**
  * @brief The type that represents just the error part of @ref MaybeError
  */
-using Error = util::Unexpected<Status>;
+using Error = clio::util::Unexpected<Status>;
 
 /**
  * @brief Return type for each individual handler
  */
 template <typename OutputType>
-using HandlerReturnType = util::Expected<OutputType, Status>;
+using HandlerReturnType = clio::util::Expected<OutputType, Status>;
 
 /**
  * @brief The final return type out of RPC engine
  */
-using ReturnType = util::Expected<boost::json::value, Status>;
+using ReturnType = clio::util::Expected<boost::json::value, Status>;
 
 struct RpcSpec;
 struct FieldSpec;
@@ -73,7 +73,7 @@ struct VoidOutput
 struct Context
 {
     boost::asio::yield_context yield;
-    std::shared_ptr<Server::ConnectionBase> session;
+    std::shared_ptr<web::ConnectionBase> session;
     bool isAdmin = false;
     std::string clientIp;
     uint32_t apiVersion = 0u;  // invalid by default

@@ -21,14 +21,14 @@
 
 #include <webserver/impl/WsBase.h>
 
-namespace Server {
+namespace web {
 
 /**
  * @brief The plain WebSocket session class, just to hold the plain stream. Other operations will be handled by the base
  * class
  */
 template <ServerHandler Handler>
-class PlainWsSession : public WsBase<PlainWsSession, Handler>
+class PlainWsSession : public detail::WsBase<PlainWsSession, Handler>
 {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
 
@@ -36,11 +36,12 @@ public:
     explicit PlainWsSession(
         boost::asio::ip::tcp::socket&& socket,
         std::string ip,
-        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& callback,
         boost::beast::flat_buffer&& buffer)
-        : WsBase<PlainWsSession, Handler>(ip, tagFactory, dosGuard, callback, std::move(buffer)), ws_(std::move(socket))
+        : detail::WsBase<PlainWsSession, Handler>(ip, tagFactory, dosGuard, callback, std::move(buffer))
+        , ws_(std::move(socket))
     {
     }
 
@@ -63,8 +64,8 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<Handler>>
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<clio::DOSGuard> dosGuard_;
+    std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory_;
+    std::reference_wrapper<web::DOSGuard> dosGuard_;
     http::request<http::string_body> req_;
     std::string ip_;
     std::shared_ptr<Handler> const handler_;
@@ -73,8 +74,8 @@ public:
     WsUpgrader(
         boost::beast::tcp_stream&& stream,
         std::string ip,
-        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& b,
         http::request<http::string_body> req)
@@ -127,4 +128,4 @@ private:
     }
 };
 
-}  // namespace Server
+}  // namespace web

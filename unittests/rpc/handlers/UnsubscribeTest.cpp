@@ -43,8 +43,8 @@ protected:
     {
         HandlerBaseTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        clio::Config cfg;
-        util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        clio::util::Config cfg;
+        clio::util::TagDecoratorFactory tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void
@@ -55,7 +55,7 @@ protected:
     }
 
     std::shared_ptr<SubscriptionManager> subManager_;
-    std::shared_ptr<Server::ConnectionBase> session_;
+    std::shared_ptr<web::ConnectionBase> session_;
 };
 
 struct UnsubscribeParamTestCaseBundle

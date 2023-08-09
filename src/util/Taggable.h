@@ -29,9 +29,9 @@
 #include <ostream>
 #include <string>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 
-namespace util {
+namespace clio::util {
 namespace detail {
 
 /**
@@ -189,7 +189,8 @@ public:
      * @brief Instantiates a tag decorator factory from `clio` configuration.
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(clio::Config const& config) : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
+    explicit TagDecoratorFactory(clio::util::Config const& config)
+        : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
     {
     }
 
@@ -203,7 +204,7 @@ public:
      * @brief Instantiates the TagDecorator specified by `type_` with parent
      * bound from `parent_`.
      *
-     * @return std::unique_ptr<BaseTagDecorator> An instance of the requested
+     * @return std::unique_ptr<clio::BaseTagDecorator> An instance of the requested
      * decorator
      */
     std::unique_ptr<BaseTagDecorator>
@@ -245,7 +246,7 @@ private:
  */
 class Taggable
 {
-    using decorator_t = std::unique_ptr<util::BaseTagDecorator>;
+    using decorator_t = std::unique_ptr<BaseTagDecorator>;
     decorator_t tagDecorator_;
 
 protected:
@@ -253,7 +254,7 @@ protected:
      * @brief New Taggable from a specified factory
      * @param tagFactory The factory to use
      */
-    explicit Taggable(util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
+    explicit Taggable(clio::util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
     {
     }
 
@@ -265,13 +266,13 @@ public:
 
     /**
      * @brief Getter for tag decorator.
-     * @return util::BaseTagDecorator const& Reference to the tag decorator
+     * @return BaseTagDecorator const& Reference to the tag decorator
      */
-    util::BaseTagDecorator const&
+    BaseTagDecorator const&
     tag() const
     {
         return *tagDecorator_;
     }
 };
 
-}  // namespace util
+}  // namespace clio::util

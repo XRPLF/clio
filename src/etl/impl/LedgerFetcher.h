@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/Source.h>
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 
 #include <optional>
 
-namespace clio::detail {
+namespace clio::etl::detail {
 
 /**
  * @brief GRPC Ledger data fetcher
@@ -40,7 +40,7 @@ public:
     using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
 
 private:
-    clio::Logger log_{"ETL"};
+    clio::util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
@@ -98,4 +98,4 @@ public:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace clio::etl::detail

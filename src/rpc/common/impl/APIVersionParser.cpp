@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <log/Logger.h>
 #include <rpc/common/impl/APIVersionParser.h>
+#include <util/log/Logger.h>
 
 #include <fmt/core.h>
 
@@ -26,7 +26,7 @@ using namespace std;
 
 namespace RPC::detail {
 
-ProductionAPIVersionParser::ProductionAPIVersionParser(clio::Config const& config)
+ProductionAPIVersionParser::ProductionAPIVersionParser(clio::util::Config const& config)
     : ProductionAPIVersionParser(
           config.valueOr("default", API_VERSION_DEFAULT),
           config.valueOr("min", API_VERSION_MIN),
@@ -34,10 +34,10 @@ ProductionAPIVersionParser::ProductionAPIVersionParser(clio::Config const& confi
 {
 }
 
-util::Expected<uint32_t, std::string>
+clio::util::Expected<uint32_t, std::string>
 ProductionAPIVersionParser::parse(boost::json::object const& request) const
 {
-    using Error = util::Unexpected<std::string>;
+    using Error = clio::util::Unexpected<std::string>;
 
     if (request.contains("api_version"))
     {

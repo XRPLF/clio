@@ -50,9 +50,9 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        clio::Config cfg;
+        clio::util::Config cfg;
         subManager_ = SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
-        util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        clio::util::TagDecoratorFactory tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void
@@ -62,7 +62,7 @@ protected:
     }
 
     std::shared_ptr<SubscriptionManager> subManager_;
-    std::shared_ptr<Server::ConnectionBase> session_;
+    std::shared_ptr<web::ConnectionBase> session_;
 };
 
 struct SubscribeParamTestCaseBundle

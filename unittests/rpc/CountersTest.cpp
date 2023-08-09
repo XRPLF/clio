@@ -25,7 +25,6 @@
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
 
-using namespace clio;
 using namespace RPC;
 
 class RPCCountersTest : public NoLoggerFixture

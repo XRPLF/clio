@@ -46,7 +46,7 @@ protected:
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerLoaderType = MockLedgerLoader;
     using LedgerPublisherType = MockLedgerPublisher;
-    using TransformerType = clio::detail::Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType>;
+    using TransformerType = clio::etl::detail::Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType>;
 
     ExtractionDataPipeType dataPipe_;
     LedgerLoaderType ledgerLoader_;

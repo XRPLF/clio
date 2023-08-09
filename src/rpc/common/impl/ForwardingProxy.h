@@ -21,10 +21,10 @@
 
 #include <etl/LoadBalancer.h>
 #include <etl/Source.h>
-#include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
+#include <util/log/Logger.h>
 #include <webserver/Context.h>
 
 #include <memory>
@@ -35,7 +35,7 @@ namespace RPC::detail {
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
 class ForwardingProxy
 {
-    clio::Logger log_{"RPC"};
+    clio::util::Logger log_{"RPC"};
 
     std::shared_ptr<LoadBalancerType> balancer_;
     std::reference_wrapper<CountersType> counters_;
@@ -51,7 +51,7 @@ public:
     }
 
     bool
-    shouldForward(Web::Context const& ctx) const
+    shouldForward(web::Context const& ctx) const
     {
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
@@ -91,7 +91,7 @@ public:
     }
 
     Result
-    forward(Web::Context const& ctx)
+    forward(web::Context const& ctx)
     {
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;

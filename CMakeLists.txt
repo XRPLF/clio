@@ -63,16 +63,16 @@ target_sources(clio PRIVATE
   ## Main
   src/main/impl/Build.cpp
   ## Backend
-  src/backend/BackendInterface.cpp
-  src/backend/LedgerCache.cpp
-  src/backend/cassandra/impl/Future.cpp
-  src/backend/cassandra/impl/Cluster.cpp
-  src/backend/cassandra/impl/Batch.cpp
-  src/backend/cassandra/impl/Result.cpp
-  src/backend/cassandra/impl/Tuple.cpp
-  src/backend/cassandra/impl/SslContext.cpp
-  src/backend/cassandra/Handle.cpp
-  src/backend/cassandra/SettingsProvider.cpp
+  src/data/BackendInterface.cpp
+  src/data/LedgerCache.cpp
+  src/data/cassandra/impl/Future.cpp
+  src/data/cassandra/impl/Cluster.cpp
+  src/data/cassandra/impl/Batch.cpp
+  src/data/cassandra/impl/Result.cpp
+  src/data/cassandra/impl/Tuple.cpp
+  src/data/cassandra/impl/SslContext.cpp
+  src/data/cassandra/Handle.cpp
+  src/data/cassandra/SettingsProvider.cpp
   ## ETL
   src/etl/Source.cpp
   src/etl/ProbingSource.cpp
@@ -120,8 +120,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/TransactionEntry.cpp
   src/rpc/handlers/Tx.cpp
   ## Util
-  src/config/Config.cpp
-  src/log/Logger.cpp
+  src/util/config/Config.cpp
+  src/util/log/Logger.cpp
   src/util/Taggable.cpp)
 
 # Clio server
@@ -134,12 +134,12 @@ if(tests)
   add_executable(${TEST_TARGET}
     # Common
     unittests/Main.cpp
-    unittests/Playground.cpp
-    unittests/Logger.cpp
-    unittests/Config.cpp
+    unittests/PlaygroundTest.cpp
+    unittests/LoggerTest.cpp
+    unittests/ConfigTest.cpp
     unittests/ProfilerTest.cpp
     unittests/JsonUtilTest.cpp
-    unittests/DOSGuard.cpp
+    unittests/DOSGuardTest.cpp
     unittests/SubscriptionTest.cpp
     unittests/SubscriptionManagerTest.cpp
     unittests/util/TestObject.cpp
@@ -192,13 +192,13 @@ if(tests)
     unittests/rpc/handlers/LedgerTest.cpp
     unittests/rpc/handlers/VersionHandlerTest.cpp
     # Backend
-    unittests/backend/BackendFactoryTest.cpp
-    unittests/backend/cassandra/BaseTests.cpp
-    unittests/backend/cassandra/BackendTests.cpp
-    unittests/backend/cassandra/RetryPolicyTests.cpp
-    unittests/backend/cassandra/SettingsProviderTests.cpp
-    unittests/backend/cassandra/ExecutionStrategyTests.cpp
-    unittests/backend/cassandra/AsyncExecutorTests.cpp
+    unittests/data/BackendFactoryTest.cpp
+    unittests/data/cassandra/BaseTests.cpp
+    unittests/data/cassandra/BackendTests.cpp
+    unittests/data/cassandra/RetryPolicyTests.cpp
+    unittests/data/cassandra/SettingsProviderTests.cpp
+    unittests/data/cassandra/ExecutionStrategyTests.cpp
+    unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
     unittests/webserver/ServerTest.cpp
     unittests/webserver/RPCServerHandlerTest.cpp

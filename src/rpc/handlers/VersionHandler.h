@@ -43,7 +43,7 @@ public:
         uint32_t currVersion;
     };
 
-    explicit VersionHandler(clio::Config const& config)
+    explicit VersionHandler(clio::util::Config const& config)
         : apiVersionParser_(
               config.valueOr("default", API_VERSION_DEFAULT),
               config.valueOr("min", API_VERSION_MIN),

@@ -23,7 +23,7 @@
 
 #include <boost/beast/http.hpp>
 
-namespace Server {
+namespace web {
 
 namespace http = boost::beast::http;
 
@@ -31,7 +31,7 @@ namespace http = boost::beast::http;
  * @brief Base class for all connections
  * This class is used to represent a connection in RPC executor and subscription manager
  */
-struct ConnectionBase : public util::Taggable
+struct ConnectionBase : public clio::util::Taggable
 {
 protected:
     boost::system::error_code ec_;
@@ -40,7 +40,8 @@ public:
     std::string const clientIp;
     bool upgraded = false;
 
-    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
+    ConnectionBase(clio::util::TagDecoratorFactory const& tagFactory, std::string ip)
+        : Taggable(tagFactory), clientIp(ip)
     {
     }
 
@@ -76,4 +77,4 @@ public:
 
     virtual ~ConnectionBase() = default;
 };
-}  // namespace Server
+}  // namespace web

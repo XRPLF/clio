@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 #include <rpc/handlers/impl/FakesAndMocks.h>
 #include <util/Fixtures.h>
 #include <webserver/DOSGuard.h>
@@ -25,7 +25,8 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
-using namespace clio;
+using namespace clio::util;
+using namespace web;
 using namespace testing;
 
 constexpr static auto JSONData = R"JSON(

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 #include <main/Build.h>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>

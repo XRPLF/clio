@@ -16,14 +16,15 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <config/Config.h>
+#include <util/config/Config.h>
 #include <util/Fixtures.h>
 #include <webserver/DOSGuard.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
-using namespace clio;
+using namespace clio::util;
+using namespace web::detail;
 
 constexpr static auto JSONDataIPV4 = R"JSON(
     {
