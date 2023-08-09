@@ -231,7 +231,8 @@ if(tests)
   endif()
 endif()
 
-# Docs
+# Generate `docs` target for doxygen documentation if enabled
+# Note: use `make docs` to generate the documentation
 if(docs)
   include(CMake/Docs.cmake)
 endif()
