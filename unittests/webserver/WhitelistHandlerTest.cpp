@@ -16,8 +16,8 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <util/config/Config.h>
 #include <util/Fixtures.h>
+#include <util/config/Config.h>
 #include <webserver/DOSGuard.h>
 
 #include <boost/json/parse.hpp>

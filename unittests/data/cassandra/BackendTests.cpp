@@ -21,9 +21,9 @@
 #include <util/StringUtils.h>
 
 #include <data/CassandraBackend.h>
-#include <util/config/Config.h>
 #include <etl/NFTHelpers.h>
 #include <rpc/RPCHelpers.h>
+#include <util/config/Config.h>
 
 #include <boost/json/parse.hpp>
 #include <fmt/compile.h>
@@ -482,8 +482,7 @@ TEST_F(BackendCassandraTest, Basic)
 
             backend->writeLedger(lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{});
-            backend->writeSuccessor(
-                uint256ToString(data::firstKey), lgrInfoNext.seq, uint256ToString(data::lastKey));
+            backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfoNext.seq, uint256ToString(data::lastKey));
 
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
@@ -621,8 +620,7 @@ TEST_F(BackendCassandraTest, Basic)
                     backend->writeSuccessor(
                         std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
                 else
-                    backend->writeSuccessor(
-                        uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
+                    backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
             }
 
             backend->writeAccountTransactions(std::move(accountTx));
@@ -1041,8 +1039,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             auto key = ripple::uint256::fromVoidChecked(accountIndexBlob);
             backend->cache().update({{*key, {}}}, lgrInfoNext.seq);
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{});
-            backend->writeSuccessor(
-                uint256ToString(data::firstKey), lgrInfoNext.seq, uint256ToString(data::lastKey));
+            backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfoNext.seq, uint256ToString(data::lastKey));
 
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
@@ -1128,8 +1125,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     backend->writeSuccessor(
                         std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
                 else
-                    backend->writeSuccessor(
-                        uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
+                    backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
             }
 
             ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));

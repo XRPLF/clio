@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <util/config/Config.h>
 #include <util/Fixtures.h>
+#include <util/config/Config.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/json/parse.hpp>

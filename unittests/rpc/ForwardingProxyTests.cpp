@@ -22,8 +22,8 @@
 #include <util/MockHandlerProvider.h>
 #include <util/MockLoadBalancer.h>
 
-#include <util/config/Config.h>
 #include <rpc/common/impl/ForwardingProxy.h>
+#include <util/config/Config.h>
 
 #include <boost/json.hpp>
 #include <gtest/gtest.h>

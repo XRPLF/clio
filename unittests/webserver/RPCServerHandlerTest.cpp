@@ -82,7 +82,7 @@ protected:
     std::shared_ptr<clio::util::TagDecoratorFactory> tagFactory;
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler;
     std::shared_ptr<MockWsBase> session;
-    clio::util::Config  cfg;
+    clio::util::Config cfg;
 };
 
 TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
