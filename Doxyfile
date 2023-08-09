@@ -1,3 +1,6 @@
 PROJECT_NAME           = "Clio"
-INPUT                  = src
+INPUT                  = ../src
 RECURSIVE              = YES
+
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES

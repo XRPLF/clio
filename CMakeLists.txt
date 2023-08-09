@@ -6,6 +6,7 @@ project(clio)
 # ==================================================== #
 option(verbose   "Verbose build"                FALSE) 
 option(tests     "Build tests"                  FALSE)
+option(docs      "Generate doxygen docs"        FALSE)
 option(coverage  "Build test coverage report"   FALSE)
 option(packaging "Create distribution packages" FALSE)
 # ==================================================== #
@@ -222,15 +223,20 @@ if(tests)
   target_include_directories(${TEST_TARGET} PRIVATE unittests)
   target_link_libraries(${TEST_TARGET} PUBLIC clio gtest::gtest)
 
-  # Generate `clio_test-ccov` if coverage is enabled
-  # Note: use `make clio_test-ccov` to generate report
+  # Generate `clio_tests-ccov` if coverage is enabled
+  # Note: use `make clio_tests-ccov` to generate report
   if(coverage)
     include(CMake/Coverage.cmake)
     add_coverage(${TEST_TARGET})
   endif()
 endif()
 
+# Docs
+if(docs)
+  include(CMake/Docs.cmake)
+endif()
+
 include(CMake/install/install.cmake)
 if(packaging)
-    include(CMake/packaging.cmake) # This file exists only in build runner
+  include(CMake/packaging.cmake) # This file exists only in build runner
 endif()
