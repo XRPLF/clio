@@ -549,5 +549,4 @@ private:
 };
 
 }  // namespace data
-
 using BackendInterface = data::BackendInterface;
