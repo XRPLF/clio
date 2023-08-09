@@ -90,8 +90,8 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
         throw std::runtime_error(fmt::format("Could not set queue size for IO per host: {}", cass_error_desc(rc)));
     }
 
-    auto apply = []<typename ValueType, typename Fn>(std::optional<ValueType> const& maybeValue, Fn&& fn)
-        requires std::is_object_v<Fn>
+    auto apply = []<typename ValueType, typename Fn>(
+        std::optional<ValueType> const& maybeValue, Fn&& fn) requires std::is_object_v<Fn>
     {
         if (maybeValue)
             std::invoke(fn, maybeValue.value());

@@ -41,16 +41,14 @@ public:
 
     template <typename T>
     friend std::string
-    operator+(T const& lhs, CassandraError const& rhs)
-        requires std::is_convertible_v<T, std::string>
+    operator+(T const& lhs, CassandraError const& rhs) requires std::is_convertible_v<T, std::string>
     {
         return lhs + rhs.message();
     }
 
     template <typename T>
     friend bool
-    operator==(T const& lhs, CassandraError const& rhs)
-        requires std::is_convertible_v<T, std::string>
+    operator==(T const& lhs, CassandraError const& rhs) requires std::is_convertible_v<T, std::string>
     {
         return lhs == rhs.message();
     }

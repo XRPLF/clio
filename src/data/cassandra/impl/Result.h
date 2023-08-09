@@ -128,8 +128,7 @@ struct Result : public ManagedObject<CassResult const>
 
     template <typename... RowTypes>
     std::optional<std::tuple<RowTypes...>>
-    get() const
-        requires(std::tuple_size<std::tuple<RowTypes...>>{} > 1)
+    get() const requires(std::tuple_size<std::tuple<RowTypes...>>{} > 1)
     {
         // row managed internally by cassandra driver, hence no ManagedObject.
         auto const* row = cass_result_first_row(*this);
