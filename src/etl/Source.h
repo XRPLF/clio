@@ -135,7 +135,6 @@ class SourceImpl : public Source
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
 
     mutable std::mutex mtx_;
-    std::atomic_bool connected_{false};
 
     // true if this ETL source is forwarding transactions received on the transactions_proposed stream. There are
     // usually multiple ETL sources, so to avoid forwarding the same transaction multiple times, we only forward from
@@ -165,6 +164,7 @@ protected:
 
     std::atomic_bool closing_{false};
     std::atomic_bool paused_{false};
+    std::atomic_bool connected_{false};
 
     SourceHooks hooks_;
 
@@ -261,7 +261,7 @@ public:
                      << "request = " << boost::json::serialize(request);
 
         boost::json::object response;
-        if (!connected_)
+        if (!isConnected())
         {
             log_.error() << "Attempted to proxy but failed to connect to tx";
             return {};
@@ -724,7 +724,6 @@ public:
     handleMessage(size_t size)
     {
         setLastMsgTime();
-        connected_ = true;
 
         try
         {

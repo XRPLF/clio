@@ -40,23 +40,7 @@ using namespace clio;
 static boost::beast::websocket::stream_base::timeout
 make_TimeoutOption()
 {
-    // See #289 for details.
-    // TODO: investigate the issue and find if there is a solution other than
-    // introducing artificial timeouts.
-    if (true)
-    {
-        // The only difference between this and the suggested client role is
-        // that idle_timeout is set to 20 instead of none()
-        auto opt = boost::beast::websocket::stream_base::timeout{};
-        opt.handshake_timeout = std::chrono::seconds(30);
-        opt.idle_timeout = std::chrono::seconds(20);
-        opt.keep_alive_pings = false;
-        return opt;
-    }
-    else
-    {
-        return boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client);
-    }
+    return boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client);
 }
 
 void
@@ -142,6 +126,7 @@ PlainSource::onConnect(
     }
     else
     {
+        connected_ = true;
         numFailures_ = 0;
 
         // Websocket stream has it's own timeout system
@@ -172,6 +157,7 @@ SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver
     }
     else
     {
+        connected_ = true;
         numFailures_ = 0;
 
         // Websocket stream has it's own timeout system
