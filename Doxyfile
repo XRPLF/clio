@@ -1,5 +1,6 @@
 PROJECT_NAME           = "Clio"
-INPUT                  = ../src
+INPUT                  = ../src ../unittests
+EXCLUDE_PATTERNS       = *Test*.cpp *Test*.h
 RECURSIVE              = YES
 
 GENERATE_LATEX         = NO

@@ -1,3 +1,5 @@
+# ETL subsystem
+
 A single clio node has one or more ETL sources, specified in the config
 file. clio will subscribe to the `ledgers` stream of each of the ETL
 sources. This stream sends a message whenever a new ledger is validated. Upon

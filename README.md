@@ -1,15 +1,16 @@
 # Clio
-Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
-historical ledger and transaction data are stored in a more space-efficient format,
+
+Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. 
+Validated historical ledger and transaction data are stored in a more space-efficient format,
 using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
-allowing for scalable read throughput. Multiple Clio nodes can share
-access to the same dataset, allowing for a highly available cluster of Clio nodes,
-without the need for redundant data storage or computation.
+allowing for scalable read throughput. Multiple Clio nodes can share access to the same dataset, 
+allowing for a highly available cluster of Clio nodes, without the need for redundant data storage or computation.
 
 Clio offers the full rippled API, with the caveat that Clio by default only returns validated data.
 This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
 Other non-validated data is also not returned, such as information about queued transactions.
-For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
+For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. 
+To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
 
 Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
 from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
@@ -24,7 +25,6 @@ Clio is built with CMake and uses Conan for managing dependencies.
 It is written in C++20 and therefore requires a modern compiler.
 
 ## Prerequisites 
-
 
 ### Minimum Requirements
 
