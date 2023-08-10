@@ -31,8 +31,7 @@ namespace RPC {
 struct RpcSpec;
 
 /**
- * @brief A concept that specifies what a requirement used with @ref FieldSpec
- * must provide
+ * @brief A concept that specifies what a requirement used with @ref FieldSpec must provide.
  */
 // clang-format off
 template <typename T>
@@ -41,6 +40,9 @@ concept Requirement = requires(T a, boost::json::value lval) {
 };
 // clang-format on
 
+/**
+ * @brief A concept that specifies what a modifier used with @ref FieldSpec must provide.
+ */
 // clang-format off
 template <typename T>
 concept Modifier = requires(T a, boost::json::value lval) {
@@ -48,36 +50,56 @@ concept Modifier = requires(T a, boost::json::value lval) {
 };
 // clang-format on
 
+/**
+ * @brief The requirements of a processor to be used with @ref FieldSpec.
+ */
 template <typename T>
 concept Processor = (Requirement<T> or Modifier<T>);
 
 /**
- * @brief A concept that specifies what a Handler type must provide
- *
- * Note that value_from and value_to should be implemented using tag_invoke
- * as per boost::json documentation for these functions.
+ * @brief A process function that expects both some Input and a Context.
  */
 // clang-format off
 template <typename T>
 concept ContextProcessWithInput = requires(T a, typename T::Input in, typename T::Output out, Context const& ctx) {
     { a.process(in, ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>; 
 };
+// clang-format on
 
+/**
+ * @brief A process function that expects no Input but does take a Context.
+ */
+// clang-format off
 template <typename T>
 concept ContextProcessWithoutInput = requires(T a, typename T::Output out, Context const& ctx) {
     { a.process(ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>; 
 };
+// clang-format on
 
+/**
+ * @brief A concept that specifies what a Handler with Input must provide.
+ */
+// clang-format off
 template <typename T>
 concept HandlerWithInput = requires(T a, uint32_t version) {
     { a.spec(version) } -> std::same_as<RpcSpecConstRef>; 
 }
 and ContextProcessWithInput<T>
 and boost::json::has_value_to<typename T::Input>::value;
+// clang-format on
 
+/**
+ * @brief A concept that specifies what a Handler without Input must provide.
+ */
+// clang-format off
 template <typename T>
 concept HandlerWithoutInput = ContextProcessWithoutInput<T>;
+// clang-format on
 
+/**
+ * @brief A concept that specifies what a Handler type must provide.
+ */
+// clang-format off
 template <typename T>
 concept Handler = 
 (

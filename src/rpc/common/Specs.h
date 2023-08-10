@@ -29,12 +29,12 @@
 namespace RPC {
 
 /**
- * @brief Represents a Specification for one field of an RPC command
+ * @brief Represents a Specification for one field of an RPC command.
  */
 struct FieldSpec final
 {
     /**
-     * @brief Construct a field specification out of a set of processors
+     * @brief Construct a field specification out of a set of processors.
      *
      * @tparam Processors The types of processors @ref Processor
      * @param key The key in a JSON object that the field validates
@@ -47,7 +47,7 @@ struct FieldSpec final
     }
 
     /**
-     * @brief Processos the passed JSON value using the stored processors
+     * @brief Processos the passed JSON value using the stored processors.
      *
      * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
@@ -60,7 +60,7 @@ private:
 };
 
 /**
- * @brief Represents a Specification of an entire RPC command
+ * @brief Represents a Specification of an entire RPC command.
  *
  * Note: this should really be all constexpr and handlers would expose
  * static constexpr RpcSpec spec instead. Maybe some day in the future.
@@ -68,7 +68,7 @@ private:
 struct RpcSpec final
 {
     /**
-     * @brief Construct a full RPC request specification
+     * @brief Construct a full RPC request specification.
      *
      * @param fields The fields of the RPC specification @ref FieldSpec
      */
@@ -77,7 +77,7 @@ struct RpcSpec final
     }
 
     /**
-     * @brief Processos the passed JSON value using the stored field specs
+     * @brief Processos the passed JSON value using the stored field specs.
      *
      * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error

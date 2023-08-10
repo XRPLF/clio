@@ -28,7 +28,7 @@
 namespace RPC::validation {
 
 /**
- * @brief Check that the type is the same as what was expected
+ * @brief Check that the type is the same as what was expected.
  *
  * @tparam Expected The expected type that value should be convertible to
  * @param value The json value to check the type of
@@ -79,7 +79,7 @@ template <typename Expected>
 }
 
 /**
- * @brief A validator that simply requires a field to be present
+ * @brief A validator that simply requires a field to be present.
  */
 struct Required final
 {
@@ -88,15 +88,16 @@ struct Required final
 };
 
 /**
- * @brief A validator that forbids a field to be present
- * If there is a value provided, it will forbid the field only when the value equals
- * If there is no value provided, it will forbid the field when the field shows up
+ * @brief A validator that forbids a field to be present.
+ *
+ * If there is a value provided, it will forbid the field only when the value equals.
+ * If there is no value provided, it will forbid the field when the field shows up.
  */
 template <typename... T>
 class NotSupported;
 
 /**
- * @brief A specialized NotSupported validator that forbids a field to be present when the value equals the given value
+ * @brief A specialized NotSupported validator that forbids a field to be present when the value equals the given value.
  */
 template <typename T>
 class NotSupported<T> final
@@ -104,6 +105,22 @@ class NotSupported<T> final
     T value_;
 
 public:
+    /**
+     * @brief Constructs a new NotSupported validator.
+     *
+     * @param val The value to store and verify against
+     */
+    NotSupported(T val) : value_(val)
+    {
+    }
+
+    /**
+     * @brief Verify whether the field is supported or not.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcNOT_SUPPORTED` if the value matched; otherwise no error is returned
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
@@ -118,19 +135,22 @@ public:
         }
         return {};
     }
-
-    NotSupported(T val) : value_(val)
-    {
-    }
 };
 
 /**
- * @brief A specialized NotSupported validator that forbids a field to be present
+ * @brief A specialized NotSupported validator that forbids a field to be present.
  */
 template <>
 class NotSupported<> final
 {
 public:
+    /**
+     * @brief Verify whether the field is supported or not.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcNOT_SUPPORTED` if the field is found; otherwise no error is returned
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
@@ -141,22 +161,24 @@ public:
     }
 };
 
-// deduction guide to avoid having to specify the template arguments
+/**
+ * @brief Deduction guide to avoid having to specify the template arguments.
+ */
 template <typename... T>
 NotSupported(T&&... t) -> NotSupported<T...>;
 
 /**
- * @brief Validates that the type of the value is one of the given types
+ * @brief Validates that the type of the value is one of the given types.
  */
 template <typename... Types>
 struct Type final
 {
     /**
-     * @brief Verify that the JSON value is (one) of specified type(s)
+     * @brief Verify that the JSON value is (one) of specified type(s).
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -175,7 +197,7 @@ struct Type final
 };
 
 /**
- * @brief Validate that value is between specified min and max
+ * @brief Validate that value is between specified min and max.
  */
 template <typename Type>
 class Between final
@@ -185,7 +207,7 @@ class Between final
 
 public:
     /**
-     * @brief Construct the validator storing min and max values
+     * @brief Construct the validator storing min and max values.
      *
      * @param min
      * @param max
@@ -195,11 +217,11 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value is within a certain range
+     * @brief Verify that the JSON value is within a certain range.
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -221,7 +243,7 @@ public:
 };
 
 /**
- * @brief Validate that value is equal or greater than the specified min
+ * @brief Validate that value is equal or greater than the specified min.
  */
 template <typename Type>
 class Min final
@@ -230,7 +252,7 @@ class Min final
 
 public:
     /**
-     * @brief Construct the validator storing min value
+     * @brief Construct the validator storing min value.
      *
      * @param min
      */
@@ -242,8 +264,8 @@ public:
      * @brief Verify that the JSON value is not smaller than min
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -263,7 +285,7 @@ public:
 };
 
 /**
- * @brief Validate that value is not greater than max
+ * @brief Validate that value is not greater than max.
  */
 template <typename Type>
 class Max final
@@ -272,7 +294,7 @@ class Max final
 
 public:
     /**
-     * @brief Construct the validator storing max value
+     * @brief Construct the validator storing max value.
      *
      * @param max
      */
@@ -281,10 +303,11 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value is not greater than max
+     * @brief Verify that the JSON value is not greater than max.
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -304,7 +327,7 @@ public:
 };
 
 /**
- * @brief Validates that the value is equal to the one passed in
+ * @brief Validates that the value is equal to the one passed in.
  */
 template <typename Type>
 class EqualTo final
@@ -313,7 +336,7 @@ class EqualTo final
 
 public:
     /**
-     * @brief Construct the validator with stored original value
+     * @brief Construct the validator with stored original value.
      *
      * @param original The original value to store
      */
@@ -322,11 +345,11 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value is equal to the stored original
+     * @brief Verify that the JSON value is equal to the stored original.
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -345,13 +368,12 @@ public:
 };
 
 /**
- * @brief Deduction guide to help disambiguate what it means to EqualTo a
- * "string" without specifying the type.
+ * @brief Deduction guide to help disambiguate what it means to EqualTo a "string" without specifying the type.
  */
 EqualTo(char const*)->EqualTo<std::string>;
 
 /**
- * @brief Validates that the value is one of the values passed in
+ * @brief Validates that the value is one of the values passed in.
  */
 template <typename Type>
 class OneOf final
@@ -360,7 +382,7 @@ class OneOf final
 
 public:
     /**
-     * @brief Construct the validator with stored options of initializer list
+     * @brief Construct the validator with stored options of initializer list.
      *
      * @param options The list of allowed options
      */
@@ -369,7 +391,7 @@ public:
     }
 
     /**
-     * @brief Construct the validator with stored options of other container
+     * @brief Construct the validator with stored options of other container.
      *
      * @param begin,end the range to copy the elements from
      */
@@ -379,11 +401,11 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value is one of the stored options
+     * @brief Verify that the JSON value is one of the stored options.
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -402,13 +424,12 @@ public:
 };
 
 /**
- * @brief Deduction guide to help disambiguate what it means to OneOf a
- * few "strings" without specifying the type.
+ * @brief Deduction guide to help disambiguate what it means to OneOf a few "strings" without specifying the type.
  */
 OneOf(std::initializer_list<char const*>)->OneOf<std::string>;
 
 /**
- * @brief A meta-validator that allows to specify a custom validation function
+ * @brief A meta-validator that allows to specify a custom validation function.
  */
 class CustomValidator final
 {
@@ -416,7 +437,7 @@ class CustomValidator final
 
 public:
     /**
-     * @brief Constructs a custom validator from any supported callable
+     * @brief Constructs a custom validator from any supported callable.
      *
      * @tparam Fn The type of callable
      * @param fn The callable/function object
@@ -427,78 +448,82 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value is valid according to the custom
-     * validation function stored
+     * @brief Verify that the JSON value is valid according to the custom validation function stored.
      *
      * @param value The JSON value representing the outer object
-     * @param key The key used to retrieve the tested value from the outer
-     * object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return Any compatible user-provided error if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
 };
 
 /**
- * @brief Helper function to check if sv is an uint32 number or not
+ * @brief Helper function to check if input value is an uint32 number or not.
+ *
+ * @param sv The input value as a string_view
+ * @return true if the string can be converted to a uint32; false otherwise
  */
 [[nodiscard]] bool
 checkIsU32Numeric(std::string_view sv);
 
 /**
- * @brief Provide a common used validator for ledger index
- * LedgerIndex must be a string or int
- * If the specified LedgerIndex is a string, it's value must be either
+ * @brief Provides a commonly used validator for ledger index.
+ *
+ * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
  * "validated" or a valid integer value represented as a string.
  */
 extern CustomValidator LedgerIndexValidator;
 
 /**
- * @brief Provide a common used validator for account
- * Account must be a string and the converted public key is valid
+ * @brief Provides a commonly used validator for accounts.
+ *
+ * Account must be a string and the converted public key is valid.
  */
 extern CustomValidator AccountValidator;
 
 /**
- * @brief Provide a common used validator for account
- * Account must be a string and can convert to base58
+ * @brief Provides a commonly used validator for accounts.
+ *
+ * Account must be a string and can convert to base58.
  */
 extern CustomValidator AccountBase58Validator;
 
 /**
- * @brief Provide a common used validator for marker
- *  Marker is composed of a comma separated index and start hint. The
- *   former will be read as hex, and the latter can cast to uint64.
+ * @brief Provides a commonly used validator for markers.
+ *
+ * A marker is composed of a comma-separated index and a start hint.
+ * The former will be read as hex, and the latter can be cast to uint64.
  */
 extern CustomValidator AccountMarkerValidator;
 
 /**
- * @brief Provide a common used validator for uint256 hex string
- * It must be a string and hex
- * Transaction index, ledger hash all use this validator
+ * @brief Provides a commonly used validator for uint256 hex string.
+ *
+ * It must be a string and also a decodable hex.
+ * Transaction index, ledger hash all use this validator.
  */
 extern CustomValidator Uint256HexStringValidator;
 
 /**
- * @brief Provide a common used validator for currency
- * including standard currency code and token code
+ * @brief Provides a commonly used validator for currency, including standard currency code and token code.
  */
 extern CustomValidator CurrencyValidator;
 
 /**
- * @brief Provide a common used validator for issuer type
- * It must be a hex string or base58 string
+ * @brief Provides a commonly used validator for issuer type.
+ *
+ * It must be a hex string or base58 string.
  */
 extern CustomValidator IssuerValidator;
 
 /**
- * @brief Provide a validator for validating valid streams used in
- * subscribe/unsubscribe
+ * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
  */
 extern CustomValidator SubscribeStreamValidator;
 
 /**
- * @brief Provide a validator for validating valid accounts used in
- * subscribe/unsubscribe
+ * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
  */
 extern CustomValidator SubscribeAccountsValidator;
 

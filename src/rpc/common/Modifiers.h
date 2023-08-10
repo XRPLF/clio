@@ -36,7 +36,7 @@ class Clamp final
 
 public:
     /**
-     * @brief Construct the modifier storing min and max values
+     * @brief Construct the modifier storing min and max values.
      *
      * @param min
      * @param max
@@ -50,6 +50,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the modified value from the outer object
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeError
     modify(boost::json::value& value, std::string_view key) const

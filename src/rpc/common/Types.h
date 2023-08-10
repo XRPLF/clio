@@ -39,6 +39,9 @@ class SubscriptionManager;
 namespace RPC {
 
 class Counters;
+struct RpcSpec;
+struct FieldSpec;
+class AnyHandler;
 
 /**
  * @brief Return type used for Validators that can return error but don't have
@@ -62,15 +65,21 @@ using HandlerReturnType = util::Expected<OutputType, Status>;
  */
 using ReturnType = util::Expected<boost::json::value, Status>;
 
-struct RpcSpec;
-struct FieldSpec;
-
+/**
+ * @brief An alias for a const reference to @ref RpcSpec.
+ */
 using RpcSpecConstRef = RpcSpec const&;
 
+/**
+ * @brief An empty type used as Output for handlers than don't actually produce output.
+ */
 struct VoidOutput
 {
 };
 
+/**
+ * @brief Context of an RPC call.
+ */
 struct Context
 {
     boost::asio::yield_context yield;
@@ -80,8 +89,14 @@ struct Context
     uint32_t apiVersion = 0u;  // invalid by default
 };
 
+/**
+ * @brief Result type used to return responses or error statuses to the Webserver subsystem.
+ */
 using Result = std::variant<Status, boost::json::object>;
 
+/**
+ * @brief A cursor object used to traverse nodes owned by an account.
+ */
 struct AccountCursor
 {
     ripple::uint256 index;
@@ -100,8 +115,9 @@ struct AccountCursor
     }
 };
 
-class AnyHandler;
-
+/**
+ * @brief Interface for the provider of RPC handlers.
+ */
 class HandlerProvider
 {
 public:

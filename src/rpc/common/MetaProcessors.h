@@ -29,7 +29,7 @@
 namespace RPC::meta {
 
 /**
- * @brief A meta-processor that acts as a spec for a sub-object/section
+ * @brief A meta-processor that acts as a spec for a sub-object/section.
  */
 class Section final
 {
@@ -37,7 +37,7 @@ class Section final
 
 public:
     /**
-     * @brief Construct new section validator from a list of specs
+     * @brief Construct new section validator from a list of specs.
      *
      * @param specs List of specs @ref FieldSpec
      */
@@ -46,17 +46,18 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON value representing the section is valid according to the given specs
+     * @brief Verify that the JSON value representing the section is valid according to the given specs.
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the section from the outer object
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const;
 };
 
 /**
- * @brief A meta-processor that specifies a list of specs to run against the object at the given index in the array
+ * @brief A meta-processor that specifies a list of specs to run against the object at the given index in the array.
  */
 class ValidateArrayAt final
 {
@@ -65,7 +66,7 @@ class ValidateArrayAt final
 
 public:
     /**
-     * @brief Constructs a processor that validates the specified element of a JSON array
+     * @brief Constructs a processor that validates the specified element of a JSON array.
      *
      * @param idx The index inside the array to validate
      * @param specs The specifications to validate against
@@ -75,10 +76,11 @@ public:
     }
 
     /**
-     * @brief Verify that the JSON array element at given index is valid according the stored specs
+     * @brief Verify that the JSON array element at given index is valid according the stored specs.
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the array from the outer object
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const;
@@ -86,14 +88,14 @@ public:
 
 /**
  * @brief A meta-processor that specifies a list of requirements to run against when the type matches the template
- * parameter
+ * parameter.
  */
 template <typename Type>
 class IfType final
 {
 public:
     /**
-     * @brief Constructs a validator that validates the specs if the type matches
+     * @brief Constructs a validator that validates the specs if the type matches.
      * @param requirements The requirements to validate against
      */
     template <Requirement... Requirements>
@@ -122,11 +124,11 @@ public:
     }
 
     /**
-     * @brief Verify that the element is valid
-     * according the stored requirements when type matches
+     * @brief Verify that the element is valid according to the stored requirements when type matches.
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the element from the outer object
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const
@@ -145,7 +147,7 @@ private:
 };
 
 /**
- * @brief A meta-processor that wraps another validator and produces a custom error in case the wrapped validator fails
+ * @brief A meta-processor that wraps a validator and produces a custom error in case the wrapped validator fails.
  */
 template <typename Requirement>
 class WithCustomError final
@@ -156,12 +158,19 @@ class WithCustomError final
 public:
     /**
      * @brief Constructs a validator that calls the given validator `req` and returns a custom error `err` in case `req`
-     * fails
+     * fails.
      */
     WithCustomError(Requirement req, Status err) : requirement{std::move(req)}, error{err}
     {
     }
 
+    /**
+     * @brief Runs the stored validator and produces a custom error if the wrapped validator fails.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the element from the outer object
+     * @return Possibly an error
+     */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {

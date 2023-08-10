@@ -54,6 +54,12 @@ class APIVersionParser
 public:
     virtual ~APIVersionParser() = default;
 
+    /**
+     * @brief Extracts API version information from a JSON object.
+     *
+     * @param request A JSON object representing the request
+     * @return The specified API version if contained in the JSON object; error string otherwise
+     */
     util::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
 };
 
