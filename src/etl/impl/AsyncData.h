@@ -20,16 +20,16 @@
 #pragma once
 
 #include <etl/NFTHelpers.h>
-#include <log/Logger.h>
+#include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 
-namespace clio::detail {
+namespace etl::detail {
 
 class AsyncCallData
 {
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> cur_;
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> next_;
@@ -120,7 +120,7 @@ public:
         auto const numObjects = cur_->ledger_objects().objects_size();
         log_.debug() << "Writing " << numObjects << " objects";
 
-        std::vector<Backend::LedgerObject> cacheUpdates;
+        std::vector<data::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(numObjects);
 
         for (int i = 0; i < numObjects; ++i)
@@ -179,4 +179,4 @@ public:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace etl::detail

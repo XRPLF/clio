@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/JS.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>

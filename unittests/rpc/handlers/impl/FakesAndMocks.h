@@ -178,7 +178,7 @@ struct HandlerWithoutInputMock
 
 // testing sweep handler by mocking dos guard
 template <typename SweepHandler>
-struct BasicDOSGuardMock : public clio::BaseDOSGuard
+struct BasicDOSGuardMock : public web::BaseDOSGuard
 {
     BasicDOSGuardMock(SweepHandler& handler)
     {

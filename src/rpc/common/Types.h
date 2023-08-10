@@ -28,7 +28,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 
-namespace Server {
+namespace web {
 struct ConnectionBase;
 }
 
@@ -73,7 +73,7 @@ struct VoidOutput
 struct Context
 {
     boost::asio::yield_context yield;
-    std::shared_ptr<Server::ConnectionBase> session;
+    std::shared_ptr<web::ConnectionBase> session;
     bool isAdmin = false;
     std::string clientIp;
     uint32_t apiVersion = 0u;  // invalid by default

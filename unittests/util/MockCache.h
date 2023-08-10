@@ -19,19 +19,19 @@
 
 #pragma once
 
-#include <backend/Types.h>
+#include <data/Types.h>
 
 #include <gmock/gmock.h>
 
 struct MockCache
 {
-    MOCK_METHOD(void, update, (std::vector<Backend::LedgerObject> const& a, uint32_t b, bool c), ());
+    MOCK_METHOD(void, update, (std::vector<data::LedgerObject> const& a, uint32_t b, bool c), ());
 
-    MOCK_METHOD(std::optional<Backend::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const));
+    MOCK_METHOD(std::optional<data::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const));
 
-    MOCK_METHOD(std::optional<Backend::LedgerObject>, getSuccessor, (ripple::uint256 const& a, uint32_t b), (const));
+    MOCK_METHOD(std::optional<data::LedgerObject>, getSuccessor, (ripple::uint256 const& a, uint32_t b), (const));
 
-    MOCK_METHOD(std::optional<Backend::LedgerObject>, getPredecessor, (ripple::uint256 const& a, uint32_t b), (const));
+    MOCK_METHOD(std::optional<data::LedgerObject>, getPredecessor, (ripple::uint256 const& a, uint32_t b), (const));
 
     MOCK_METHOD(void, setDisabled, (), ());
 

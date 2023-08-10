@@ -63,16 +63,16 @@ target_sources(clio PRIVATE
   ## Main
   src/main/impl/Build.cpp
   ## Backend
-  src/backend/BackendInterface.cpp
-  src/backend/LedgerCache.cpp
-  src/backend/cassandra/impl/Future.cpp
-  src/backend/cassandra/impl/Cluster.cpp
-  src/backend/cassandra/impl/Batch.cpp
-  src/backend/cassandra/impl/Result.cpp
-  src/backend/cassandra/impl/Tuple.cpp
-  src/backend/cassandra/impl/SslContext.cpp
-  src/backend/cassandra/Handle.cpp
-  src/backend/cassandra/SettingsProvider.cpp
+  src/data/BackendInterface.cpp
+  src/data/LedgerCache.cpp
+  src/data/cassandra/impl/Future.cpp
+  src/data/cassandra/impl/Cluster.cpp
+  src/data/cassandra/impl/Batch.cpp
+  src/data/cassandra/impl/Result.cpp
+  src/data/cassandra/impl/Tuple.cpp
+  src/data/cassandra/impl/SslContext.cpp
+  src/data/cassandra/Handle.cpp
+  src/data/cassandra/SettingsProvider.cpp
   ## ETL
   src/etl/Source.cpp
   src/etl/ProbingSource.cpp
@@ -120,8 +120,8 @@ target_sources(clio PRIVATE
   src/rpc/handlers/TransactionEntry.cpp
   src/rpc/handlers/Tx.cpp
   ## Util
-  src/config/Config.cpp
-  src/log/Logger.cpp
+  src/util/config/Config.cpp
+  src/util/log/Logger.cpp
   src/util/Taggable.cpp)
 
 # Clio server
@@ -135,75 +135,75 @@ if(tests)
     # Common
     unittests/Main.cpp
     unittests/Playground.cpp
-    unittests/Logger.cpp
-    unittests/Config.cpp
-    unittests/ProfilerTest.cpp
-    unittests/JsonUtilTest.cpp
-    unittests/DOSGuard.cpp
-    unittests/SubscriptionTest.cpp
-    unittests/SubscriptionManagerTest.cpp
+    unittests/LoggerTests.cpp
+    unittests/ConfigTests.cpp
+    unittests/ProfilerTests.cpp
+    unittests/JsonUtilTests.cpp
+    unittests/DOSGuardTests.cpp
+    unittests/SubscriptionTests.cpp
+    unittests/SubscriptionManagerTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     # ETL
-    unittests/etl/ExtractionDataPipeTest.cpp
-    unittests/etl/ExtractorTest.cpp
-    unittests/etl/TransformerTest.cpp
-    unittests/etl/CacheLoaderTest.cpp
+    unittests/etl/ExtractionDataPipeTests.cpp
+    unittests/etl/ExtractorTests.cpp
+    unittests/etl/TransformerTests.cpp
+    unittests/etl/CacheLoaderTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
-    unittests/rpc/RPCHelpersTest.cpp
-    unittests/rpc/CountersTest.cpp
-    unittests/rpc/AdminVerificationTest.cpp
+    unittests/rpc/RPCHelpersTests.cpp
+    unittests/rpc/CountersTests.cpp
+    unittests/rpc/AdminVerificationTests.cpp
     unittests/rpc/APIVersionTests.cpp
     unittests/rpc/ForwardingProxyTests.cpp
-    unittests/rpc/WorkQueueTest.cpp
-    unittests/rpc/AmendmentsTest.cpp
+    unittests/rpc/WorkQueueTests.cpp
+    unittests/rpc/AmendmentsTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
-    unittests/rpc/handlers/AccountCurrenciesTest.cpp
-    unittests/rpc/handlers/AccountLinesTest.cpp
-    unittests/rpc/handlers/AccountTxTest.cpp
-    unittests/rpc/handlers/AccountOffersTest.cpp
-    unittests/rpc/handlers/AccountInfoTest.cpp
-    unittests/rpc/handlers/AccountChannelsTest.cpp
-    unittests/rpc/handlers/AccountNFTsTest.cpp
-    unittests/rpc/handlers/BookOffersTest.cpp
-    unittests/rpc/handlers/DepositAuthorizedTest.cpp
-    unittests/rpc/handlers/GatewayBalancesTest.cpp
-    unittests/rpc/handlers/TxTest.cpp
-    unittests/rpc/handlers/TransactionEntryTest.cpp
-    unittests/rpc/handlers/LedgerEntryTest.cpp
-    unittests/rpc/handlers/LedgerRangeTest.cpp
-    unittests/rpc/handlers/NoRippleCheckTest.cpp
-    unittests/rpc/handlers/ServerInfoTest.cpp
-    unittests/rpc/handlers/PingTest.cpp
-    unittests/rpc/handlers/RandomTest.cpp
-    unittests/rpc/handlers/NFTInfoTest.cpp
-    unittests/rpc/handlers/NFTBuyOffersTest.cpp
-    unittests/rpc/handlers/NFTSellOffersTest.cpp
-    unittests/rpc/handlers/NFTHistoryTest.cpp
-    unittests/rpc/handlers/SubscribeTest.cpp
-    unittests/rpc/handlers/UnsubscribeTest.cpp
-    unittests/rpc/handlers/LedgerDataTest.cpp
-    unittests/rpc/handlers/AccountObjectsTest.cpp
-    unittests/rpc/handlers/BookChangesTest.cpp
-    unittests/rpc/handlers/LedgerTest.cpp
-    unittests/rpc/handlers/VersionHandlerTest.cpp
+    unittests/rpc/handlers/AccountCurrenciesTests.cpp
+    unittests/rpc/handlers/AccountLinesTests.cpp
+    unittests/rpc/handlers/AccountTxTests.cpp
+    unittests/rpc/handlers/AccountOffersTests.cpp
+    unittests/rpc/handlers/AccountInfoTests.cpp
+    unittests/rpc/handlers/AccountChannelsTests.cpp
+    unittests/rpc/handlers/AccountNFTsTests.cpp
+    unittests/rpc/handlers/BookOffersTests.cpp
+    unittests/rpc/handlers/DepositAuthorizedTests.cpp
+    unittests/rpc/handlers/GatewayBalancesTests.cpp
+    unittests/rpc/handlers/TxTests.cpp
+    unittests/rpc/handlers/TransactionEntryTests.cpp
+    unittests/rpc/handlers/LedgerEntryTests.cpp
+    unittests/rpc/handlers/LedgerRangeTests.cpp
+    unittests/rpc/handlers/NoRippleCheckTests.cpp
+    unittests/rpc/handlers/ServerInfoTests.cpp
+    unittests/rpc/handlers/PingTests.cpp
+    unittests/rpc/handlers/RandomTests.cpp
+    unittests/rpc/handlers/NFTInfoTests.cpp
+    unittests/rpc/handlers/NFTBuyOffersTests.cpp
+    unittests/rpc/handlers/NFTSellOffersTests.cpp
+    unittests/rpc/handlers/NFTHistoryTests.cpp
+    unittests/rpc/handlers/SubscribeTests.cpp
+    unittests/rpc/handlers/UnsubscribeTests.cpp
+    unittests/rpc/handlers/LedgerDataTests.cpp
+    unittests/rpc/handlers/AccountObjectsTests.cpp
+    unittests/rpc/handlers/BookChangesTests.cpp
+    unittests/rpc/handlers/LedgerTests.cpp
+    unittests/rpc/handlers/VersionHandlerTests.cpp
     # Backend
-    unittests/backend/BackendFactoryTest.cpp
-    unittests/backend/cassandra/BaseTests.cpp
-    unittests/backend/cassandra/BackendTests.cpp
-    unittests/backend/cassandra/RetryPolicyTests.cpp
-    unittests/backend/cassandra/SettingsProviderTests.cpp
-    unittests/backend/cassandra/ExecutionStrategyTests.cpp
-    unittests/backend/cassandra/AsyncExecutorTests.cpp
+    unittests/data/BackendFactoryTests.cpp
+    unittests/data/cassandra/BaseTests.cpp
+    unittests/data/cassandra/BackendTests.cpp
+    unittests/data/cassandra/RetryPolicyTests.cpp
+    unittests/data/cassandra/SettingsProviderTests.cpp
+    unittests/data/cassandra/ExecutionStrategyTests.cpp
+    unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
-    unittests/webserver/ServerTest.cpp
-    unittests/webserver/RPCServerHandlerTest.cpp
-    unittests/webserver/WhitelistHandlerTest.cpp
-    unittests/webserver/SweepHandlerTest.cpp)
+    unittests/webserver/ServerTests.cpp
+    unittests/webserver/RPCServerHandlerTests.cpp
+    unittests/webserver/WhitelistHandlerTests.cpp
+    unittests/webserver/SweepHandlerTests.cpp)
 
   include(CMake/deps/gtest.cmake)
 

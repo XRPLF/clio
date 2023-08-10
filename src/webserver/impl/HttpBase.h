@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <log/Logger.h>
 #include <main/Build.h>
+#include <util/log/Logger.h>
 #include <webserver/DOSGuard.h>
 #include <webserver/interface/Concepts.h>
 #include <webserver/interface/ConnectionBase.h>
@@ -33,7 +33,7 @@
 #include <memory>
 #include <string>
 
-namespace Server {
+namespace web::detail {
 
 using tcp = boost::asio::ip::tcp;
 
@@ -90,10 +90,10 @@ class HttpBase : public ConnectionBase
 protected:
     boost::beast::flat_buffer buffer_;
     http::request<http::string_body> req_;
-    std::reference_wrapper<clio::DOSGuard> dosGuard_;
+    std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<Handler> const handler_;
-    clio::Logger log_{"WebServer"};
-    clio::Logger perfLog_{"Performance"};
+    util::Logger log_{"WebServer"};
+    util::Logger perfLog_{"Performance"};
 
     inline void
     httpFail(boost::beast::error_code ec, char const* what)
@@ -130,7 +130,7 @@ public:
     HttpBase(
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer buffer)
         : ConnectionBase(tagFactory, ip)
@@ -273,4 +273,4 @@ private:
     };
 };
 
-}  // namespace Server
+}  // namespace web::detail

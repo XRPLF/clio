@@ -23,7 +23,7 @@
 
 #include <boost/beast/http.hpp>
 
-namespace Server {
+namespace web {
 
 namespace http = boost::beast::http;
 
@@ -76,4 +76,4 @@ public:
 
     virtual ~ConnectionBase() = default;
 };
-}  // namespace Server
+}  // namespace web

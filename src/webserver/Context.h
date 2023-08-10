@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
 #include <util/Taggable.h>
+#include <util/log/Logger.h>
 #include <webserver/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
@@ -30,7 +30,7 @@
 #include <memory>
 #include <string>
 
-namespace Web {
+namespace web {
 
 struct Context : util::Taggable
 {
@@ -38,8 +38,8 @@ struct Context : util::Taggable
     std::string method;
     std::uint32_t apiVersion;
     boost::json::object params;
-    std::shared_ptr<Server::ConnectionBase> session;
-    Backend::LedgerRange range;
+    std::shared_ptr<web::ConnectionBase> session;
+    data::LedgerRange range;
     std::string clientIp;
 
     Context(
@@ -47,9 +47,9 @@ struct Context : util::Taggable
         std::string const& command,
         std::uint32_t apiVersion,
         boost::json::object params,
-        std::shared_ptr<Server::ConnectionBase> const& session,
+        std::shared_ptr<web::ConnectionBase> const& session,
         util::TagDecoratorFactory const& tagFactory,
-        Backend::LedgerRange const& range,
+        data::LedgerRange const& range,
         std::string const& clientIp)
         : Taggable(tagFactory)
         , yield(yield)
@@ -60,7 +60,7 @@ struct Context : util::Taggable
         , range(range)
         , clientIp(clientIp)
     {
-        static clio::Logger perfLog{"Performance"};
+        static util::Logger perfLog{"Performance"};
         perfLog.debug() << tag() << "new Context created";
     }
 
@@ -69,4 +69,4 @@ struct Context : util::Taggable
     operator=(Context&&) = default;
 };
 
-}  // namespace Web
+}  // namespace web

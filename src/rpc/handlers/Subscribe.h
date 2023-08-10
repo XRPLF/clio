@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
@@ -143,7 +143,7 @@ private:
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
-        std::shared_ptr<Server::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session) const
     {
         auto response = boost::json::object{};
 
@@ -167,9 +167,8 @@ private:
     }
 
     void
-    subscribeToAccounts(
-        std::vector<std::string> const& accounts,
-        std::shared_ptr<Server::ConnectionBase> const& session) const
+    subscribeToAccounts(std::vector<std::string> const& accounts, std::shared_ptr<web::ConnectionBase> const& session)
+        const
     {
         for (auto const& account : accounts)
         {
@@ -181,7 +180,7 @@ private:
     void
     subscribeToAccountsProposed(
         std::vector<std::string> const& accounts,
-        std::shared_ptr<Server::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session) const
     {
         for (auto const& account : accounts)
         {
@@ -193,13 +192,13 @@ private:
     void
     subscribeToBooks(
         std::vector<OrderBook> const& books,
-        std::shared_ptr<Server::ConnectionBase> const& session,
+        std::shared_ptr<web::ConnectionBase> const& session,
         boost::asio::yield_context yield,
         Output& output) const
     {
         static auto constexpr fetchLimit = 200;
 
-        std::optional<Backend::LedgerRange> rng;
+        std::optional<data::LedgerRange> rng;
 
         for (auto const& internalBook : books)
         {

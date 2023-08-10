@@ -22,7 +22,7 @@
 #include <webserver/SslWsSession.h>
 #include <webserver/impl/HttpBase.h>
 
-namespace Server {
+namespace web {
 
 using tcp = boost::asio::ip::tcp;
 
@@ -32,7 +32,7 @@ using tcp = boost::asio::ip::tcp;
  * It will also handle the session upgrade to WebSocket.
  */
 template <ServerHandler Handler>
-class SslHttpSession : public HttpBase<SslHttpSession, Handler>,
+class SslHttpSession : public detail::HttpBase<SslHttpSession, Handler>,
                        public std::enable_shared_from_this<SslHttpSession<Handler>>
 {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
@@ -44,10 +44,10 @@ public:
         std::string const& ip,
         boost::asio::ssl::context& ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer buffer)
-        : HttpBase<SslHttpSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        : detail::HttpBase<SslHttpSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , stream_(std::move(socket), ctx)
         , tagFactory_(tagFactory)
     {
@@ -120,4 +120,4 @@ public:
             ->run();
     }
 };
-}  // namespace Server
+}  // namespace web

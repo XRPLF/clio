@@ -64,7 +64,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
     }
 
-    std::optional<Backend::TransactionsCursor> cursor;
+    std::optional<data::TransactionsCursor> cursor;
 
     // if marker exists
     if (input.marker)

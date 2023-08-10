@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 #include <webserver/impl/WhitelistHandler.h>
 
 #include <boost/asio.hpp>
@@ -30,7 +30,7 @@
 #include <chrono>
 #include <ctime>
 
-namespace clio {
+namespace web {
 
 class BaseDOSGuard
 {
@@ -68,7 +68,7 @@ class BasicDOSGuard : public BaseDOSGuard
     std::uint32_t const maxFetches_;
     std::uint32_t const maxConnCount_;
     std::uint32_t const maxRequestCount_;
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
 public:
     /**
@@ -79,7 +79,7 @@ public:
      * @param SweepHandlerType Sweep handler that implements the sweeping behaviour
      */
     BasicDOSGuard(
-        clio::Config const& config,
+        util::Config const& config,
         WhitelistHandlerType const& whitelistHandler,
         SweepHandlerType& sweepHandler)
         : whitelistHandler_{std::cref(whitelistHandler)}
@@ -237,7 +237,7 @@ public:
 
 private:
     [[nodiscard]] std::unordered_set<std::string> const
-    getWhitelist(clio::Config const& config) const
+    getWhitelist(util::Config const& config) const
     {
         using T = std::unordered_set<std::string> const;
         auto whitelist = config.arrayOr("dos_guard.whitelist", {});
@@ -266,7 +266,7 @@ public:
      * @param config Clio config
      * @param ctx The boost::asio::io_context
      */
-    IntervalSweepHandler(clio::Config const& config, boost::asio::io_context& ctx)
+    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx)
         : sweepInterval_{std::max(1u, static_cast<uint32_t>(config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
         , ctx_{std::ref(ctx)}
         , timer_{ctx.get_executor()}
@@ -309,6 +309,6 @@ private:
     }
 };
 
-using DOSGuard = BasicDOSGuard<WhitelistHandler, IntervalSweepHandler>;
+using DOSGuard = BasicDOSGuard<web::WhitelistHandler, IntervalSweepHandler>;
 
-}  // namespace clio
+}  // namespace web

@@ -19,7 +19,7 @@
 
 #include <util/Fixtures.h>
 
-using namespace clio;
+using namespace util;
 
 /*
  * Use this file for temporary tests and implementations.

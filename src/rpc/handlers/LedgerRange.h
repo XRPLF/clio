@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/common/Types.h>
 
 #include <boost/json.hpp>
@@ -40,7 +40,7 @@ class LedgerRangeHandler
 public:
     struct Output
     {
-        Backend::LedgerRange range;
+        data::LedgerRange range;
     };
 
     using Result = HandlerReturnType<Output>;

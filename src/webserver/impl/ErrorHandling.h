@@ -29,19 +29,19 @@
 #include <optional>
 #include <string>
 
-namespace Server::detail {
+namespace web::detail {
 
 /**
  * @brief A helper that attempts to match rippled reporting mode HTTP errors as close as possible.
  */
 class ErrorHelper
 {
-    std::shared_ptr<Server::ConnectionBase> connection_;
+    std::shared_ptr<web::ConnectionBase> connection_;
     std::optional<boost::json::object> request_;
 
 public:
     ErrorHelper(
-        std::shared_ptr<Server::ConnectionBase> const& connection,
+        std::shared_ptr<web::ConnectionBase> const& connection,
         std::optional<boost::json::object> request = std::nullopt)
         : connection_{connection}, request_{std::move(request)}
     {
@@ -158,4 +158,4 @@ public:
     }
 };
 
-}  // namespace Server::detail
+}  // namespace web::detail

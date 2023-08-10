@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
@@ -111,9 +111,8 @@ public:
 
 private:
     void
-    unsubscribeFromStreams(
-        std::vector<std::string> const& streams,
-        std::shared_ptr<Server::ConnectionBase> const& session) const
+    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<web::ConnectionBase> const& session)
+        const
     {
         for (auto const& stream : streams)
         {
@@ -135,7 +134,7 @@ private:
     }
 
     void
-    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<Server::ConnectionBase> const& session)
+    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<web::ConnectionBase> const& session)
         const
     {
         for (auto const& account : accounts)
@@ -148,7 +147,7 @@ private:
     void
     unsubscribeFromProposedAccounts(
         std::vector<std::string> accountsProposed,
-        std::shared_ptr<Server::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session) const
     {
         for (auto const& account : accountsProposed)
         {
@@ -158,8 +157,7 @@ private:
     }
 
     void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<Server::ConnectionBase> const& session)
-        const
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<web::ConnectionBase> const& session) const
     {
         for (auto const& orderBook : books)
         {

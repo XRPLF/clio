@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/Types.h>
+#include <data/Types.h>
 
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/Protocol.h>
@@ -207,7 +207,7 @@ CreateCheckLedgerObject(std::string_view account, std::string_view dest);
 [[nodiscard]] ripple::STObject
 CreateDepositPreauthLedgerObject(std::string_view account, std::string_view auth);
 
-[[nodiscard]] Backend::NFT
+[[nodiscard]] data::NFT
 CreateNFT(
     std::string_view tokenID,
     std::string_view account,
@@ -229,7 +229,7 @@ CreateNFTTokenPage(
     std::vector<std::pair<std::string, std::string>> const& tokens,
     std::optional<ripple::uint256> previousPage);
 
-[[nodiscard]] Backend::TransactionAndMetadata
+[[nodiscard]] data::TransactionAndMetadata
 CreateMintNFTTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,
@@ -237,20 +237,20 @@ CreateMintNFTTxWithMetadata(
     uint32_t nfTokenTaxon,
     std::string_view nftID);
 
-[[nodiscard]] Backend::TransactionAndMetadata
+[[nodiscard]] data::TransactionAndMetadata
 CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
 
-[[nodiscard]] Backend::TransactionAndMetadata
+[[nodiscard]] data::TransactionAndMetadata
 CreateCancelNFTOffersTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,
     uint32_t fee,
     std::vector<std::string> const& nftIds);
 
-[[nodiscard]] Backend::TransactionAndMetadata
+[[nodiscard]] data::TransactionAndMetadata
 CreateCreateNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
 
-[[nodiscard]] Backend::TransactionAndMetadata
+[[nodiscard]] data::TransactionAndMetadata
 CreateCreateNFTOfferTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,

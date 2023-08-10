@@ -18,12 +18,9 @@
 //==============================================================================
 
 #include <etl/ProbingSource.h>
-#include <log/Logger.h>
-
-using namespace clio;
 
 ProbingSource::ProbingSource(
-    clio::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManager> subscriptions,
@@ -199,4 +196,4 @@ ProbingSource::make_PlainHooks() noexcept
                 }
                 return SourceHooks::Action::STOP;
             }};
-}
+};

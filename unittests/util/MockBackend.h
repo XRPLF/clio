@@ -19,14 +19,14 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <gmock/gmock.h>
 
-using namespace Backend;
+using namespace data;
 
 struct MockBackend : public BackendInterface
 {
-    MockBackend(clio::Config)
+    MockBackend(util::Config)
     {
     }
 

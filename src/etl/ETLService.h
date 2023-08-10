@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <backend/LedgerCache.h>
+#include <data/BackendInterface.h>
+#include <data/LedgerCache.h>
 #include <etl/LoadBalancer.h>
 #include <etl/Source.h>
 #include <etl/SystemState.h>
@@ -31,8 +31,8 @@
 #include <etl/impl/LedgerLoader.h>
 #include <etl/impl/LedgerPublisher.h>
 #include <etl/impl/Transformer.h>
-#include <log/Logger.h>
 #include <subscriptions/SubscriptionManager.h>
+#include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
@@ -63,15 +63,15 @@ class ETLService
     using SubscriptionManagerType = SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
-    using DataPipeType = clio::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using CacheLoaderType = clio::detail::CacheLoader<Backend::LedgerCache>;
-    using LedgerFetcherType = clio::detail::LedgerFetcher<LoadBalancerType>;
-    using ExtractorType = clio::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
-    using LedgerLoaderType = clio::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = clio::detail::LedgerPublisher<SubscriptionManagerType>;
-    using TransformerType = clio::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType>;
+    using DataPipeType = etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
+    using CacheLoaderType = etl::detail::CacheLoader<data::LedgerCache>;
+    using LedgerFetcherType = etl::detail::LedgerFetcher<LoadBalancerType>;
+    using ExtractorType = etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
+    using LedgerLoaderType = etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
+    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType>;
+    using TransformerType = etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType>;
 
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
@@ -104,7 +104,7 @@ public:
      * @param ledgers The network validated ledgers datastructure
      */
     ETLService(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
@@ -113,7 +113,7 @@ public:
 
     static std::shared_ptr<ETLService>
     make_ETLService(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,

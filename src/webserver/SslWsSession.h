@@ -21,14 +21,14 @@
 
 #include <webserver/impl/WsBase.h>
 
-namespace Server {
+namespace web {
 
 /**
  * @brief The SSL WebSocket session class, just to hold the ssl stream. Other operations will be handled by the base
  * class.
  */
 template <ServerHandler Handler>
-class SslWsSession : public WsBase<SslWsSession, Handler>
+class SslWsSession : public detail::WsBase<SslWsSession, Handler>
 {
     using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
     StreamType ws_;
@@ -38,10 +38,10 @@ public:
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& b)
-        : WsBase<SslWsSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(b)), ws_(std::move(stream))
+        : detail::WsBase<SslWsSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(b)), ws_(std::move(stream))
     {
     }
 
@@ -63,7 +63,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<Handler>
     boost::beast::flat_buffer buffer_;
     std::string ip_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<clio::DOSGuard> dosGuard_;
+    std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<Handler> const handler_;
     http::request<http::string_body> req_;
 
@@ -72,7 +72,7 @@ public:
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& buf,
         http::request<http::string_body> req)
@@ -134,4 +134,4 @@ private:
             ->run(std::move(req_));
     }
 };
-}  // namespace Server
+}  // namespace web

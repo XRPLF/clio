@@ -56,7 +56,7 @@
 namespace RPC::detail {
 
 ProductionHandlerProvider::ProductionHandlerProvider(
-    clio::Config const& config,
+    util::Config const& config,
     std::shared_ptr<BackendInterface> const& backend,
     std::shared_ptr<SubscriptionManager> const& subscriptionManager,
     std::shared_ptr<LoadBalancer> const& balancer,

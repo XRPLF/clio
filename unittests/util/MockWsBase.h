@@ -21,7 +21,7 @@
 
 #include <webserver/interface/ConnectionBase.h>
 
-struct MockSession : public Server::ConnectionBase
+struct MockSession : public web::ConnectionBase
 {
     std::string message;
     void
@@ -36,12 +36,12 @@ struct MockSession : public Server::ConnectionBase
         message += msg;
     }
 
-    MockSession(util::TagDecoratorFactory const& factory) : Server::ConnectionBase(factory, "")
+    MockSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
     {
     }
 };
 
-struct MockDeadSession : public Server::ConnectionBase
+struct MockDeadSession : public web::ConnectionBase
 {
     void
     send(std::shared_ptr<std::string> _) override
@@ -55,7 +55,7 @@ struct MockDeadSession : public Server::ConnectionBase
     {
     }
 
-    MockDeadSession(util::TagDecoratorFactory const& factory) : Server::ConnectionBase(factory, "")
+    MockDeadSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
     {
     }
 };

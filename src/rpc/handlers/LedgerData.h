@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
@@ -40,7 +40,7 @@ class LedgerDataHandler
 {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
     static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
 

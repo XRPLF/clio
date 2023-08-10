@@ -19,10 +19,8 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
+#include <data/BackendInterface.h>
 #include <etl/Source.h>
-#include <log/Logger.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>
@@ -31,6 +29,8 @@
 #include <rpc/common/impl/AdminVerificationStrategy.h>
 #include <rpc/common/impl/ForwardingProxy.h>
 #include <util/Taggable.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 #include <webserver/Context.h>
 #include <webserver/DOSGuard.h>
 
@@ -55,13 +55,13 @@ namespace RPC {
 template <typename AdminVerificationStrategyType>
 class RPCEngineBase
 {
-    clio::Logger perfLog_{"Performance"};
-    clio::Logger log_{"RPC"};
+    util::Logger perfLog_{"Performance"};
+    util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
     std::shared_ptr<LoadBalancer> balancer_;
-    std::reference_wrapper<clio::DOSGuard const> dosGuard_;
+    std::reference_wrapper<web::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
 
@@ -76,7 +76,7 @@ public:
         std::shared_ptr<SubscriptionManager> const& subscriptions,
         std::shared_ptr<LoadBalancer> const& balancer,
         std::shared_ptr<ETLService> const& etl,
-        clio::DOSGuard const& dosGuard,
+        web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider)
@@ -93,12 +93,12 @@ public:
 
     static std::shared_ptr<RPCEngineBase>
     make_RPCEngine(
-        clio::Config const& config,
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptions,
         std::shared_ptr<LoadBalancer> const& balancer,
         std::shared_ptr<ETLService> const& etl,
-        clio::DOSGuard const& dosGuard,
+        web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider)
@@ -112,7 +112,7 @@ public:
      * @param ctx The @ref Context of the request
      */
     Result
-    buildResponse(Web::Context const& ctx)
+    buildResponse(web::Context const& ctx)
     {
         if (forwardingProxy_.shouldForward(ctx))
             return forwardingProxy_.forward(ctx);
@@ -149,7 +149,7 @@ public:
                 return Status{v.error()};
             }
         }
-        catch (Backend::DatabaseTimeout const& t)
+        catch (data::DatabaseTimeout const& t)
         {
             log_.error() << "Database timeout";
             notifyTooBusy();

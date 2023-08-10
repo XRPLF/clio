@@ -53,7 +53,7 @@ public:
      * @return std::vector<BookChange> Book changes
      */
     [[nodiscard]] static std::vector<BookChange>
-    compute(std::vector<Backend::TransactionAndMetadata> const& transactions)
+    compute(std::vector<data::TransactionAndMetadata> const& transactions)
     {
         return HandlerImpl{}(transactions);
     }
@@ -66,7 +66,7 @@ private:
 
     public:
         [[nodiscard]] std::vector<BookChange>
-        operator()(std::vector<Backend::TransactionAndMetadata> const& transactions)
+        operator()(std::vector<data::TransactionAndMetadata> const& transactions)
         {
             for (auto const& tx : transactions)
                 handleBookChange(tx);
@@ -176,7 +176,7 @@ private:
         }
 
         void
-        handleBookChange(Backend::TransactionAndMetadata const& blob)
+        handleBookChange(data::TransactionAndMetadata const& blob)
         {
             auto const [tx, meta] = RPC::deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
@@ -229,8 +229,6 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
 }
 
 [[nodiscard]] boost::json::object const
-computeBookChanges(
-    ripple::LedgerHeader const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions);
+computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
 
 }  // namespace RPC

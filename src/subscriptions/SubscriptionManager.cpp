@@ -155,7 +155,7 @@ SubscriptionManager::pubLedger(
 }
 
 void
-SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo)
+SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo)
 {
     auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
@@ -184,12 +184,12 @@ SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs
         {
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
-                Backend::synchronous([&](boost::asio::yield_context yield) {
+                data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = RPC::accountFunds(*backend_, lgrInfo.seq, amount, account, yield);
                 });
             };
 
-            Backend::retryOnTimeout(fetchFundsSynchronous);
+            data::retryOnTimeout(fetchFundsSynchronous);
 
             pubObj["transaction"].as_object()["owner_funds"] = ownerFunds.getText();
         }
@@ -244,7 +244,7 @@ SubscriptionManager::pubTransaction(Backend::TransactionAndMetadata const& blobs
 void
 SubscriptionManager::pubBookChanges(
     ripple::LedgerHeader const& lgrInfo,
-    std::vector<Backend::TransactionAndMetadata> const& transactions)
+    std::vector<data::TransactionAndMetadata> const& transactions)
 {
     auto const json = RPC::computeBookChanges(lgrInfo, transactions);
     auto const bookChangesMsg = std::make_shared<std::string>(boost::json::serialize(json));

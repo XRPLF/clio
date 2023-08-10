@@ -108,7 +108,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     output.ledgerIndex = lgrInfo.seq;
 
     auto const start = std::chrono::system_clock::now();
-    std::vector<Backend::LedgerObject> results;
+    std::vector<data::LedgerObject> results;
 
     if (input.diffMarker)
     {

@@ -54,7 +54,7 @@ struct MockAsyncRPCEngine
     MOCK_METHOD(void, notifyTooBusy, (), ());
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
-    MOCK_METHOD(RPC::Result, buildResponse, (Web::Context const&), ());
+    MOCK_METHOD(RPC::Result, buildResponse, (web::Context const&), ());
 };
 
 struct MockRPCEngine
@@ -69,5 +69,5 @@ struct MockRPCEngine
     MOCK_METHOD(void, notifyTooBusy, (), ());
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
-    MOCK_METHOD(RPC::Result, buildResponse, (Web::Context const&), ());
+    MOCK_METHOD(RPC::Result, buildResponse, (web::Context const&), ());
 };

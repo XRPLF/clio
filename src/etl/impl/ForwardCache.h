@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
+#include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/json.hpp>
@@ -33,7 +33,7 @@
 
 class Source;
 
-namespace clio::detail {
+namespace etl::detail {
 
 /**
  * @brief Cache for rippled responses
@@ -42,19 +42,19 @@ class ForwardCache
 {
     using ResponseType = std::optional<boost::json::object>;
 
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     mutable std::shared_mutex mtx_;
     std::unordered_map<std::string, ResponseType> latestForwarded_;
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    Source const& source_;
+    ::Source const& source_;
     std::uint32_t duration_ = 10;
 
     void
     clear();
 
 public:
-    ForwardCache(clio::Config const& config, boost::asio::io_context& ioc, Source const& source)
+    ForwardCache(util::Config const& config, boost::asio::io_context& ioc, Source const& source)
         : strand_(boost::asio::make_strand(ioc)), source_(source)
     {
         if (config.contains("cache"))
@@ -79,4 +79,4 @@ public:
     get(boost::json::object const& command) const;
 };
 
-}  // namespace clio::detail
+}  // namespace etl::detail

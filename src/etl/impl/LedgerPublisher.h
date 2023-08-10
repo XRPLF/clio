@@ -19,17 +19,17 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/SystemState.h>
-#include <log/Logger.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <chrono>
 
-namespace clio::detail {
+namespace etl::detail {
 
 /**
  * @brief Publishes ledgers in a synchronized fashion.
@@ -45,7 +45,7 @@ namespace clio::detail {
 template <typename SubscriptionManagerType>
 class LedgerPublisher
 {
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
 
@@ -113,7 +113,7 @@ public:
             }
             else
             {
-                auto lgr = Backend::synchronousAndRetryOnTimeout(
+                auto lgr = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
 
                 assert(lgr);
@@ -142,7 +142,7 @@ public:
             {
                 log_.info() << "Updating cache";
 
-                std::vector<Backend::LedgerObject> diff = Backend::synchronousAndRetryOnTimeout(
+                std::vector<data::LedgerObject> diff = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
 
                 backend_->cache().update(diff, lgrInfo.seq);  // todo: inject cache to update, don't use backend cache
@@ -156,10 +156,10 @@ public:
             // TODO: this probably should be a strategy
             if (age < 600)
             {
-                std::optional<ripple::Fees> fees = Backend::synchronousAndRetryOnTimeout(
+                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
 
-                std::vector<Backend::TransactionAndMetadata> transactions = Backend::synchronousAndRetryOnTimeout(
+                std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
 
                 auto ledgerRange = backend_->fetchLedgerRange();
@@ -252,4 +252,4 @@ private:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace etl::detail

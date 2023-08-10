@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
 #include <subscriptions/SubscriptionManager.h>
@@ -50,7 +50,7 @@ class ProductionHandlerProvider final : public HandlerProvider
 
 public:
     ProductionHandlerProvider(
-        clio::Config const& config,
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<LoadBalancer> const& balancer,

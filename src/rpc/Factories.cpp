@@ -21,21 +21,21 @@
 #include <rpc/common/Types.h>
 
 using namespace std;
-using namespace clio;
+using namespace util;
 
 namespace RPC {
 
-util::Expected<Web::Context, Status>
+util::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    shared_ptr<Server::ConnectionBase> const& session,
-    util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    shared_ptr<web::ConnectionBase> const& session,
+    TagDecoratorFactory const& tagFactory,
+    data::LedgerRange const& range,
     string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser)
 {
-    using Error = util::Unexpected<Status>;
+    using Error = Unexpected<Status>;
 
     boost::json::value commandValue = nullptr;
     if (!request.contains("command") && request.contains("method"))
@@ -51,19 +51,19 @@ make_WsContext(
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
     string command = commandValue.as_string().c_str();
-    return Web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp);
+    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp);
 }
 
-util::Expected<Web::Context, Status>
+Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
+    TagDecoratorFactory const& tagFactory,
+    data::LedgerRange const& range,
     string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser)
 {
-    using Error = util::Unexpected<Status>;
+    using Error = Unexpected<Status>;
 
     if (!request.contains("method"))
         return Error{{ClioError::rpcCOMMAND_IS_MISSING}};
@@ -91,7 +91,7 @@ make_HttpContext(
     if (!apiVersion)
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
-    return Web::Context(yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
+    return web::Context(yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
 }
 
 }  // namespace RPC

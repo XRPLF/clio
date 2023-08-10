@@ -45,12 +45,12 @@ class RPCServerHandler
     util::TagDecoratorFactory const tagFactory_;
     RPC::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
-    clio::Logger log_{"RPC"};
-    clio::Logger perfLog_{"Performance"};
+    util::Logger log_{"RPC"};
+    util::Logger perfLog_{"Performance"};
 
 public:
     RPCServerHandler(
-        clio::Config const& config,
+        util::Config const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<Engine> const& rpcEngine,
         std::shared_ptr<ETL const> const& etl,
@@ -70,7 +70,7 @@ public:
      * @param connection The connection
      */
     void
-    operator()(std::string const& reqStr, std::shared_ptr<Server::ConnectionBase> const& connection)
+    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& connection)
     {
         try
         {
@@ -87,20 +87,20 @@ public:
                     connection->clientIp))
             {
                 rpcEngine_->notifyTooBusy();
-                Server::detail::ErrorHelper(connection).sendTooBusyError();
+                web::detail::ErrorHelper(connection).sendTooBusyError();
             }
         }
         catch (boost::system::system_error const& ex)
         {
             // system_error thrown when json parsing failed
             rpcEngine_->notifyBadSyntax();
-            Server::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
+            web::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
         }
         catch (std::invalid_argument const& ex)
         {
             // thrown when json parses something that is not an object at top level
             rpcEngine_->notifyBadSyntax();
-            Server::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
+            web::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
         }
         catch (std::exception const& ex)
         {
@@ -117,7 +117,7 @@ public:
      * @param connection The connection
      */
     void
-    operator()(boost::beast::error_code _, std::shared_ptr<Server::ConnectionBase> const& connection)
+    operator()(boost::beast::error_code _, std::shared_ptr<web::ConnectionBase> const& connection)
     {
         if (auto manager = subscriptions_.lock(); manager)
             manager->cleanup(connection);
@@ -128,7 +128,7 @@ private:
     handleRequest(
         boost::asio::yield_context yield,
         boost::json::object&& request,
-        std::shared_ptr<Server::ConnectionBase> const& connection)
+        std::shared_ptr<web::ConnectionBase> const& connection)
     {
         log_.info() << connection->tag() << (connection->upgraded ? "ws" : "http")
                     << " received request from work queue: " << util::removeSecret(request)
@@ -141,7 +141,7 @@ private:
             {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
-                return Server::detail::ErrorHelper(connection, request).sendNotReadyError();
+                return web::detail::ErrorHelper(connection, request).sendNotReadyError();
             }
 
             auto const context = [&] {
@@ -173,7 +173,7 @@ private:
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
                 rpcEngine_->notifyBadSyntax();
-                return Server::detail::ErrorHelper(connection, request).sendError(err);
+                return web::detail::ErrorHelper(connection, request).sendError(err);
             }
 
             auto [v, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
@@ -185,7 +185,7 @@ private:
             if (auto const status = std::get_if<RPC::Status>(&v))
             {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = Server::detail::ErrorHelper(connection, request).composeError(*status);
+                response = web::detail::ErrorHelper(connection, request).composeError(*status);
                 auto const responseStr = boost::json::serialize(response);
 
                 perfLog_.debug() << context->tag() << "Encountered error: " << responseStr;
@@ -250,7 +250,7 @@ private:
             log_.error() << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
-            return Server::detail::ErrorHelper(connection, request).sendInternalError();
+            return web::detail::ErrorHelper(connection, request).sendInternalError();
         }
     }
 };

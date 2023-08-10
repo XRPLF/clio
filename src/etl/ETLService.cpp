@@ -21,8 +21,6 @@
 
 #include <ripple/protocol/LedgerHeader.h>
 
-using namespace clio;
-
 // Database must be populated when this starts
 std::optional<uint32_t>
 ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
@@ -247,7 +245,7 @@ ETLService::doWork()
 }
 
 ETLService::ETLService(
-    clio::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManagerType> subscriptions,

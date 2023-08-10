@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+#include <util/log/Logger.h>
 
 namespace RPC {
 
@@ -36,7 +36,7 @@ namespace RPC {
  */
 class AccountTxHandler
 {
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

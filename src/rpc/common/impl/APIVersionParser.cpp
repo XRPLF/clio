@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <log/Logger.h>
 #include <rpc/common/impl/APIVersionParser.h>
+#include <util/log/Logger.h>
 
 #include <fmt/core.h>
 
@@ -26,7 +26,7 @@ using namespace std;
 
 namespace RPC::detail {
 
-ProductionAPIVersionParser::ProductionAPIVersionParser(clio::Config const& config)
+ProductionAPIVersionParser::ProductionAPIVersionParser(util::Config const& config)
     : ProductionAPIVersionParser(
           config.valueOr("default", API_VERSION_DEFAULT),
           config.valueOr("min", API_VERSION_MIN),

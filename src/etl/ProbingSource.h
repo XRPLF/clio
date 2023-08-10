@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <config/Config.h>
 #include <etl/Source.h>
-#include <log/Logger.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
@@ -44,7 +44,7 @@ public:
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
 
 private:
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::mutex mtx_;
     boost::asio::ssl::context sslCtx_;
@@ -65,7 +65,7 @@ public:
      * @param sslCtx The SSL context to use; defaults to tlsv12
      */
     ProbingSource(
-        clio::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,

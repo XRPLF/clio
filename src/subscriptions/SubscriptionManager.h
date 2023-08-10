@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
 #include <webserver/interface/ConnectionBase.h>
 
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <memory>
 
-using SessionPtrType = std::shared_ptr<Server::ConnectionBase>;
+using SessionPtrType = std::shared_ptr<web::ConnectionBase>;
 
 class Subscription
 {
@@ -190,7 +190,7 @@ SubscriptionMap<Key>::publish(std::shared_ptr<std::string> const& message, Key c
 
 class SubscriptionManager
 {
-    clio::Logger log_{"Subscriptions"};
+    util::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
@@ -207,17 +207,17 @@ class SubscriptionManager
     SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
     SubscriptionMap<ripple::Book> bookSubscribers_;
 
-    std::shared_ptr<Backend::BackendInterface const> backend_;
+    std::shared_ptr<data::BackendInterface const> backend_;
 
 public:
     static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(clio::Config const& config, std::shared_ptr<Backend::BackendInterface const> const& b)
+    make_SubscriptionManager(util::Config const& config, std::shared_ptr<data::BackendInterface const> const& b)
     {
         auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
         return std::make_shared<SubscriptionManager>(numThreads, b);
     }
 
-    SubscriptionManager(std::uint64_t numThreads, std::shared_ptr<Backend::BackendInterface const> const& b)
+    SubscriptionManager(std::uint64_t numThreads, std::shared_ptr<data::BackendInterface const> const& b)
         : ledgerSubscribers_(ioc_)
         , txSubscribers_(ioc_)
         , txProposedSubscribers_(ioc_)
@@ -261,9 +261,7 @@ public:
         std::uint32_t txnCount);
 
     void
-    pubBookChanges(
-        ripple::LedgerHeader const& lgrInfo,
-        std::vector<Backend::TransactionAndMetadata> const& transactions);
+    pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
 
     void
     unsubLedger(SessionPtrType session);
@@ -275,7 +273,7 @@ public:
     unsubTransactions(SessionPtrType session);
 
     void
-    pubTransaction(Backend::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo);
+    pubTransaction(data::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo);
 
     void
     subAccount(ripple::AccountID const& account, SessionPtrType const& session);

@@ -22,7 +22,7 @@
 #include <webserver/PlainWsSession.h>
 #include <webserver/impl/HttpBase.h>
 
-namespace Server {
+namespace web {
 
 using tcp = boost::asio::ip::tcp;
 
@@ -32,7 +32,8 @@ using tcp = boost::asio::ip::tcp;
  * Otherwise, it will pass control to the base class.
  */
 template <ServerHandler Handler>
-class HttpSession : public HttpBase<HttpSession, Handler>, public std::enable_shared_from_this<HttpSession<Handler>>
+class HttpSession : public detail::HttpBase<HttpSession, Handler>,
+                    public std::enable_shared_from_this<HttpSession<Handler>>
 {
     boost::beast::tcp_stream stream_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
@@ -42,10 +43,10 @@ public:
         tcp::socket&& socket,
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<clio::DOSGuard> dosGuard,
+        std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer buffer)
-        : HttpBase<HttpSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        : detail::HttpBase<HttpSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , stream_(std::move(socket))
         , tagFactory_(tagFactory)
     {
@@ -64,7 +65,8 @@ public:
     {
         boost::asio::dispatch(
             stream_.get_executor(),
-            boost::beast::bind_front_handler(&HttpBase<HttpSession, Handler>::doRead, this->shared_from_this()));
+            boost::beast::bind_front_handler(
+                &detail::HttpBase<HttpSession, Handler>::doRead, this->shared_from_this()));
     }
 
     void
@@ -88,4 +90,4 @@ public:
             ->run();
     }
 };
-}  // namespace Server
+}  // namespace web

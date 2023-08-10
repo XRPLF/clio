@@ -29,7 +29,7 @@
 #include <ostream>
 #include <string>
 
-#include <config/Config.h>
+#include <util/config/Config.h>
 
 namespace util {
 namespace detail {
@@ -189,7 +189,7 @@ public:
      * @brief Instantiates a tag decorator factory from `clio` configuration.
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(clio::Config const& config) : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
+    explicit TagDecoratorFactory(util::Config const& config) : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
     {
     }
 
@@ -245,7 +245,7 @@ private:
  */
 class Taggable
 {
-    using decorator_t = std::unique_ptr<util::BaseTagDecorator>;
+    using decorator_t = std::unique_ptr<BaseTagDecorator>;
     decorator_t tagDecorator_;
 
 protected:
@@ -265,9 +265,9 @@ public:
 
     /**
      * @brief Getter for tag decorator.
-     * @return util::BaseTagDecorator const& Reference to the tag decorator
+     * @return BaseTagDecorator const& Reference to the tag decorator
      */
-    util::BaseTagDecorator const&
+    BaseTagDecorator const&
     tag() const
     {
         return *tagDecorator_;

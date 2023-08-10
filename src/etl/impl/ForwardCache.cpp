@@ -24,7 +24,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 
-namespace clio::detail {
+namespace etl::detail {
 
 void
 ForwardCache::freshen()
@@ -80,4 +80,4 @@ ForwardCache::get(boost::json::object const& request) const
     return {latestForwarded_.at(*command)};
 }
 
-}  // namespace clio::detail
+}  // namespace etl::detail

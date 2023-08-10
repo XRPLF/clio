@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <etl/NFTHelpers.h>
 #include <etl/SystemState.h>
 #include <etl/impl/LedgerFetcher.h>
-#include <log/Logger.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
+#include <util/log/Logger.h>
 
 #include <ripple/beast/core/CurrentThreadName.h>
 
@@ -38,7 +38,7 @@ struct FormattedTransactionsData
     std::vector<NFTsData> nfTokensData;
 };
 
-namespace clio::detail {
+namespace etl::detail {
 
 /**
  * @brief Loads ledger data into the DB
@@ -52,7 +52,7 @@ public:
     using RawLedgerObjectType = typename LoadBalancerType::RawLedgerObjectType;
 
 private:
-    clio::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
@@ -157,11 +157,11 @@ public:
         if (!ledgerData)
             return {};
 
-        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
+        ripple::LedgerHeader lgrInfo = ::util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
-        log_.debug() << "Deserialized ledger header. " << util::toString(lgrInfo);
+        log_.debug() << "Deserialized ledger header. " << ::util::toString(lgrInfo);
 
-        auto timeDiff = util::timed<std::chrono::duration<double>>([this, sequence, &lgrInfo, &ledgerData]() {
+        auto timeDiff = ::util::timed<std::chrono::duration<double>>([this, sequence, &lgrInfo, &ledgerData]() {
             backend_->startWrites();
 
             log_.debug() << "Started writes";
@@ -184,51 +184,53 @@ public:
                 size_t numWrites = 0;
                 backend_->cache().setFull();
 
-                auto seconds = util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
-                    for (auto& key : *edgeKeys)
-                    {
-                        log_.debug() << "Writing edge key = " << ripple::strHex(key);
-                        auto succ = backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
-                        if (succ)
-                            backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
-                    }
-
-                    ripple::uint256 prev = Backend::firstKey;
-                    while (auto cur = backend_->cache().getSuccessor(prev, sequence))
-                    {
-                        assert(cur);
-                        if (prev == Backend::firstKey)
-                            backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
-
-                        if (isBookDir(cur->key, cur->blob))
+                auto seconds =
+                    ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
+                        for (auto& key : *edgeKeys)
                         {
-                            auto base = getBookBase(cur->key);
-                            // make sure the base is not an actual object
-                            if (!backend_->cache().get(cur->key, sequence))
-                            {
-                                auto succ = backend_->cache().getSuccessor(base, sequence);
-                                assert(succ);
-                                if (succ->key == cur->key)
-                                {
-                                    log_.debug() << "Writing book successor = " << ripple::strHex(base) << " - "
-                                                 << ripple::strHex(cur->key);
-
-                                    backend_->writeSuccessor(
-                                        uint256ToString(base), sequence, uint256ToString(cur->key));
-                                }
-                            }
-
-                            ++numWrites;
+                            log_.debug() << "Writing edge key = " << ripple::strHex(key);
+                            auto succ =
+                                backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
+                            if (succ)
+                                backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
                         }
 
-                        prev = std::move(cur->key);
-                        if (numWrites % 100000 == 0 && numWrites != 0)
-                            log_.info() << "Wrote " << numWrites << " book successors";
-                    }
+                        ripple::uint256 prev = data::firstKey;
+                        while (auto cur = backend_->cache().getSuccessor(prev, sequence))
+                        {
+                            assert(cur);
+                            if (prev == data::firstKey)
+                                backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 
-                    backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(Backend::lastKey));
-                    ++numWrites;
-                });
+                            if (isBookDir(cur->key, cur->blob))
+                            {
+                                auto base = getBookBase(cur->key);
+                                // make sure the base is not an actual object
+                                if (!backend_->cache().get(cur->key, sequence))
+                                {
+                                    auto succ = backend_->cache().getSuccessor(base, sequence);
+                                    assert(succ);
+                                    if (succ->key == cur->key)
+                                    {
+                                        log_.debug() << "Writing book successor = " << ripple::strHex(base) << " - "
+                                                     << ripple::strHex(cur->key);
+
+                                        backend_->writeSuccessor(
+                                            uint256ToString(base), sequence, uint256ToString(cur->key));
+                                    }
+                                }
+
+                                ++numWrites;
+                            }
+
+                            prev = std::move(cur->key);
+                            if (numWrites % 100000 == 0 && numWrites != 0)
+                                log_.info() << "Wrote " << numWrites << " book successors";
+                        }
+
+                        backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(data::lastKey));
+                        ++numWrites;
+                    });
 
                 log_.info() << "Looping through cache and submitting all writes took " << seconds
                             << " seconds. numWrites = " << std::to_string(numWrites);
@@ -251,4 +253,4 @@ public:
     }
 };
 
-}  // namespace clio::detail
+}  // namespace etl::detail

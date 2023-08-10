@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "TestObject.h"
-#include <backend/DBHelpers.h>
+#include <data/DBHelpers.h>
 #include <rpc/RPCHelpers.h>
 
 #include <ripple/protocol/STArray.h>
@@ -446,10 +446,10 @@ CreateDepositPreauthLedgerObject(std::string_view account, std::string_view auth
     return depositPreauth;
 }
 
-Backend::NFT
+data::NFT
 CreateNFT(std::string_view tokenID, std::string_view account, ripple::LedgerIndex seq, ripple::Blob uri, bool isBurned)
 {
-    return Backend::NFT{ripple::uint256(tokenID), seq, GetAccountIDWithString(account), uri, isBurned};
+    return data::NFT{ripple::uint256(tokenID), seq, GetAccountIDWithString(account), uri, isBurned};
 }
 
 ripple::STObject
@@ -533,7 +533,7 @@ CreateNFTTokenPage(
     return tokenPage;
 }
 
-Backend::TransactionAndMetadata
+data::TransactionAndMetadata
 CreateMintNFTTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,
@@ -589,13 +589,13 @@ CreateMintNFTTxWithMetadata(
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
     metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
 
-    Backend::TransactionAndMetadata ret;
+    data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
     ret.metadata = metaObj.getSerializer().peekData();
     return ret;
 }
 
-Backend::TransactionAndMetadata
+data::TransactionAndMetadata
 CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view nftId)
 {
     // tx
@@ -627,14 +627,14 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
     metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
 
-    Backend::TransactionAndMetadata ret;
+    data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
     ret.metadata = metaObj.getSerializer().peekData();
     return ret;
 }
 
 // NFTokenCancelOffer can be used to cancel multiple offers
-Backend::TransactionAndMetadata
+data::TransactionAndMetadata
 CreateCancelNFTOffersTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,
@@ -680,13 +680,13 @@ CreateCancelNFTOffersTxWithMetadata(
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
     metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
 
-    Backend::TransactionAndMetadata ret;
+    data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
     ret.metadata = metaObj.getSerializer().peekData();
     return ret;
 }
 
-Backend::TransactionAndMetadata
+data::TransactionAndMetadata
 CreateCreateNFTOfferTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,
@@ -724,7 +724,7 @@ CreateCreateNFTOfferTxWithMetadata(
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
     metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
 
-    Backend::TransactionAndMetadata ret;
+    data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
     ret.metadata = metaObj.getSerializer().peekData();
     return ret;
