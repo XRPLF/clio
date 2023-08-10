@@ -3,5 +3,13 @@ INPUT                  = ../src ../unittests
 EXCLUDE_PATTERNS       = *Test*.cpp *Test*.h
 RECURSIVE              = YES
 
+QUIET                  = YES
+WARNINGS               = NO
+WARN_NO_PARAMDOC       = NO
+WARN_IF_INCOMPLETE_DOC = NO
+WARN_IF_UNDOCUMENTED   = NO
+
 GENERATE_LATEX         = NO
 GENERATE_HTML          = YES
+
+SORT_MEMBERS_CTORS_1ST = YES

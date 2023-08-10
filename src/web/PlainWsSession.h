@@ -31,7 +31,8 @@ namespace web {
 template <SomeServerHandler HandlerType>
 class PlainWsSession : public detail::WsBase<PlainWsSession, HandlerType>
 {
-    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    using StreamType = boost::beast::websocket::stream<boost::beast::tcp_stream>;
+    StreamType ws_;
 
 public:
     /**
@@ -59,7 +60,7 @@ public:
     ~PlainWsSession() = default;
 
     /*! @return The websocket stream. */
-    boost::beast::websocket::stream<boost::beast::tcp_stream>&
+    StreamType&
     ws()
     {
         return ws_;

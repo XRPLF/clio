@@ -51,11 +51,11 @@ extractColumn(CassRow const* row, std::size_t idx)
         }
     };
 
-    using decayed_t = std::decay_t<Type>;
-    using uint_tuple_t = std::tuple<uint32_t, uint32_t>;
-    using uchar_vector_t = std::vector<unsigned char>;
+    using DecayedType = std::decay_t<Type>;
+    using UintTupleType = std::tuple<uint32_t, uint32_t>;
+    using UCharVectorType = std::vector<unsigned char>;
 
-    if constexpr (std::is_same_v<decayed_t, ripple::uint256>)
+    if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
     {
         cass_byte_t const* buf;
         std::size_t bufSize;
@@ -63,7 +63,7 @@ extractColumn(CassRow const* row, std::size_t idx)
         throwErrorIfNeeded(rc, "Extract ripple::uint256");
         output = ripple::uint256::fromVoid(buf);
     }
-    else if constexpr (std::is_same_v<decayed_t, ripple::AccountID>)
+    else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>)
     {
         cass_byte_t const* buf;
         std::size_t bufSize;
@@ -71,20 +71,20 @@ extractColumn(CassRow const* row, std::size_t idx)
         throwErrorIfNeeded(rc, "Extract ripple::AccountID");
         output = ripple::AccountID::fromVoid(buf);
     }
-    else if constexpr (std::is_same_v<decayed_t, uchar_vector_t>)
+    else if constexpr (std::is_same_v<DecayedType, UCharVectorType>)
     {
         cass_byte_t const* buf;
         std::size_t bufSize;
         auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract vector<unsigned char>");
-        output = uchar_vector_t{buf, buf + bufSize};
+        output = UCharVectorType{buf, buf + bufSize};
     }
-    else if constexpr (std::is_same_v<decayed_t, uint_tuple_t>)
+    else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
     {
         auto const* tuple = cass_row_get_column(row, idx);
         output = TupleIterator::fromTuple(tuple).extract<uint32_t, uint32_t>();
     }
-    else if constexpr (std::is_convertible_v<decayed_t, std::string>)
+    else if constexpr (std::is_convertible_v<DecayedType, std::string>)
     {
         char const* value;
         std::size_t len;
@@ -92,7 +92,7 @@ extractColumn(CassRow const* row, std::size_t idx)
         throwErrorIfNeeded(rc, "Extract string");
         output = std::string{value, len};
     }
-    else if constexpr (std::is_same_v<decayed_t, bool>)
+    else if constexpr (std::is_same_v<DecayedType, bool>)
     {
         cass_bool_t flag;
         auto const rc = cass_value_get_bool(cass_row_get_column(row, idx), &flag);
@@ -100,17 +100,17 @@ extractColumn(CassRow const* row, std::size_t idx)
         output = flag ? true : false;
     }
     // clio only uses bigint (int64_t) so we convert any incoming type
-    else if constexpr (std::is_convertible_v<decayed_t, int64_t>)
+    else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
     {
         int64_t out;
         auto const rc = cass_value_get_int64(cass_row_get_column(row, idx), &out);
         throwErrorIfNeeded(rc, "Extract int64");
-        output = static_cast<decayed_t>(out);
+        output = static_cast<DecayedType>(out);
     }
     else
     {
         // type not supported for extraction
-        static_assert(unsupported_v<decayed_t>);
+        static_assert(unsupported_v<DecayedType>);
     }
 
     return output;
