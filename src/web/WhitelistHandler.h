@@ -156,10 +156,12 @@ private:
     [[nodiscard]] std::unordered_set<std::string> const
     getWhitelist(util::Config const& config) const
     {
-        using T = std::unordered_set<std::string> const;
+        using SetType = std::unordered_set<std::string> const;
+
         auto whitelist = config.arrayOr("dos_guard.whitelist", {});
         auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
-        return T{
+
+        return SetType{
             boost::transform_iterator(std::begin(whitelist), transform),
             boost::transform_iterator(std::end(whitelist), transform)};
     }

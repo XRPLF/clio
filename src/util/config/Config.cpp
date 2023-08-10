@@ -37,20 +37,20 @@ Config::operator bool() const noexcept
 }
 
 bool
-Config::contains(key_type key) const
+Config::contains(KeyType key) const
 {
     return lookup(key).has_value();
 }
 
 std::optional<boost::json::value>
-Config::lookup(key_type key) const
+Config::lookup(KeyType key) const
 {
     if (store_.is_null())
         return std::nullopt;
 
     std::reference_wrapper<boost::json::value const> cur = std::cref(store_);
     auto hasBrokenPath = false;
-    auto tokenized = detail::Tokenizer<key_type, Separator>{key};
+    auto tokenized = detail::Tokenizer<KeyType, Separator>{key};
     std::string subkey{};
 
     auto maybeSection = tokenized.next();
@@ -78,8 +78,8 @@ Config::lookup(key_type key) const
     return std::make_optional(cur);
 }
 
-std::optional<Config::array_type>
-Config::maybeArray(key_type key) const
+std::optional<Config::ArrayType>
+Config::maybeArray(KeyType key) const
 {
     try
     {
@@ -87,13 +87,13 @@ Config::maybeArray(key_type key) const
         if (maybe_arr && maybe_arr->is_array())
         {
             auto& arr = maybe_arr->as_array();
-            array_type out;
+            ArrayType out;
             out.reserve(arr.size());
 
             std::transform(std::begin(arr), std::end(arr), std::back_inserter(out), [](auto&& element) {
                 return Config{std::move(element)};
             });
-            return std::make_optional<array_type>(std::move(out));
+            return std::make_optional<ArrayType>(std::move(out));
         }
     }
     catch (detail::StoreException const&)
@@ -104,24 +104,24 @@ Config::maybeArray(key_type key) const
     return std::nullopt;
 }
 
-Config::array_type
-Config::array(key_type key) const
+Config::ArrayType
+Config::array(KeyType key) const
 {
     if (auto maybe_arr = maybeArray(key); maybe_arr)
         return maybe_arr.value();
     throw std::logic_error("No array found at '" + key + "'");
 }
 
-Config::array_type
-Config::arrayOr(key_type key, array_type fallback) const
+Config::ArrayType
+Config::arrayOr(KeyType key, ArrayType fallback) const
 {
     if (auto maybe_arr = maybeArray(key); maybe_arr)
         return maybe_arr.value();
     return fallback;
 }
 
-Config::array_type
-Config::arrayOrThrow(key_type key, std::string_view err) const
+Config::ArrayType
+Config::arrayOrThrow(KeyType key, std::string_view err) const
 {
     try
     {
@@ -134,7 +134,7 @@ Config::arrayOrThrow(key_type key, std::string_view err) const
 }
 
 Config
-Config::section(key_type key) const
+Config::section(KeyType key) const
 {
     auto maybe_element = lookup(key);
     if (maybe_element && maybe_element->is_object())
@@ -143,7 +143,7 @@ Config::section(key_type key) const
 }
 
 Config
-Config::sectionOr(key_type key, boost::json::object fallback) const
+Config::sectionOr(KeyType key, boost::json::object fallback) const
 {
     auto maybe_element = lookup(key);
     if (maybe_element && maybe_element->is_object())
@@ -151,13 +151,13 @@ Config::sectionOr(key_type key, boost::json::object fallback) const
     return Config{std::move(fallback)};
 }
 
-Config::array_type
+Config::ArrayType
 Config::array() const
 {
     if (not store_.is_array())
         throw std::logic_error("_self_ is not an array");
 
-    array_type out;
+    ArrayType out;
     auto const& arr = store_.as_array();
     out.reserve(arr.size());
 

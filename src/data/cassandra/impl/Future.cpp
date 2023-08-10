@@ -73,7 +73,7 @@ void
 invokeHelper(CassFuture* ptr, void* cbPtr)
 {
     // Note: can't use Future{ptr}.get() because double free will occur :/
-    auto* cb = static_cast<FutureWithCallback::fn_t*>(cbPtr);
+    auto* cb = static_cast<FutureWithCallback::FnType*>(cbPtr);
     if (auto const rc = cass_future_error_code(ptr); rc)
     {
         auto const errMsg = [&ptr](std::string const& label) {
@@ -91,8 +91,8 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
 }
 
 // TODO: cb_ can be deleted before cassandra-driver calls it if the user fails to hold onto the future object
-/* implicit */ FutureWithCallback::FutureWithCallback(CassFuture* ptr, fn_t&& cb)
-    : Future{ptr}, cb_{std::make_unique<fn_t>(std::move(cb))}
+/* implicit */ FutureWithCallback::FutureWithCallback(CassFuture* ptr, FnType&& cb)
+    : Future{ptr}, cb_{std::make_unique<FnType>(std::move(cb))}
 {
     // Instead of passing `this` as the userdata void*, we pass the address of
     // the callback itself which will survive std::move of the

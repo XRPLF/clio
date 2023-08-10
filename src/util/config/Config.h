@@ -41,9 +41,9 @@ class Config final
     static constexpr char Separator = '.';
 
 public:
-    using key_type = std::string;           /*! The type of key used */
-    using array_type = std::vector<Config>; /*! The type of array used */
-    using write_cursor_type = std::pair<std::optional<std::reference_wrapper<boost::json::value>>, key_type>;
+    using KeyType = std::string;           /*! The type of key used */
+    using ArrayType = std::vector<Config>; /*! The type of array used */
+    using WriteCursorType = std::pair<std::optional<std::reference_wrapper<boost::json::value>>, KeyType>;
 
     /**
      * @brief Construct a new Config object.
@@ -72,7 +72,7 @@ public:
      * @throws std::logic_error If the key is of invalid format
      */
     [[nodiscard]] bool
-    contains(key_type key) const;
+    contains(KeyType key) const;
 
     //
     // Key value access
@@ -95,7 +95,7 @@ public:
      */
     template <typename Result>
     [[nodiscard]] std::optional<Result>
-    maybeValue(key_type key) const
+    maybeValue(KeyType key) const
     {
         auto maybe_element = lookup(key);
         if (maybe_element)
@@ -121,7 +121,7 @@ public:
      */
     template <typename Result>
     [[nodiscard]] Result
-    value(key_type key) const
+    value(KeyType key) const
     {
         return maybeValue<Result>(key).value();
     }
@@ -145,7 +145,7 @@ public:
      */
     template <typename Result>
     [[nodiscard]] Result
-    valueOr(key_type key, Result fallback) const
+    valueOr(KeyType key, Result fallback) const
     {
         try
         {
@@ -175,7 +175,7 @@ public:
      */
     template <typename Result>
     [[nodiscard]] Result
-    valueOrThrow(key_type key, std::string_view err) const
+    valueOrThrow(KeyType key, std::string_view err) const
     {
         try
         {
@@ -196,11 +196,11 @@ public:
      * specified key - std::nullopt is returned.
      *
      * @param key The key to check
-     * @return std::optional<array_type> Optional array
+     * @return std::optional<ArrayType> Optional array
      * @throws std::logic_error Thrown if the key is of invalid format
      */
-    [[nodiscard]] std::optional<array_type>
-    maybeArray(key_type key) const;
+    [[nodiscard]] std::optional<ArrayType>
+    maybeArray(KeyType key) const;
 
     /**
      * @brief Interface for fetching an array by key.
@@ -211,12 +211,12 @@ public:
      * specified key an std::logic_error is thrown.
      *
      * @param key The key to check
-     * @return array_type The array
+     * @return ArrayType The array
      * @throws std::logic_error Thrown if there is no array under the desired
      * key or the key is of invalid format
      */
-    [[nodiscard]] array_type
-    array(key_type key) const;
+    [[nodiscard]] ArrayType
+    array(KeyType key) const;
 
     /**
      * @brief Interface for fetching an array by key with fallback.
@@ -228,11 +228,11 @@ public:
      *
      * @param key The key to check
      * @param fallback The fallback array
-     * @return array_type The array
+     * @return ArrayType The array
      * @throws std::logic_error Thrown if the key is of invalid format
      */
-    [[nodiscard]] array_type
-    arrayOr(key_type key, array_type fallback) const;
+    [[nodiscard]] ArrayType
+    arrayOr(KeyType key, ArrayType fallback) const;
 
     /**
      * @brief Interface for fetching an array by key with custom error handling.
@@ -244,12 +244,12 @@ public:
      *
      * @param key The key to check
      * @param err The custom error message
-     * @return array_type The array
+     * @return ArrayType The array
      * @throws std::runtime_error Thrown if there is no array under the desired
      * key
      */
-    [[nodiscard]] array_type
-    arrayOrThrow(key_type key, std::string_view err) const;
+    [[nodiscard]] ArrayType
+    arrayOrThrow(KeyType key, std::string_view err) const;
 
     /**
      * @brief Interface for fetching a sub section by key.
@@ -264,7 +264,7 @@ public:
      * desired key or the key is of invalid format
      */
     [[nodiscard]] Config
-    section(key_type key) const;
+    section(KeyType key) const;
 
     /**
      * @brief Interface for fetching a sub section by key with a fallback object.
@@ -278,7 +278,7 @@ public:
      * @return Config Section represented as a separate instance of Config
      */
     [[nodiscard]] Config
-    sectionOr(key_type key, boost::json::object fallback) const;
+    sectionOr(KeyType key, boost::json::object fallback) const;
 
     //
     // Direct self-value access
@@ -288,7 +288,7 @@ public:
      * @brief Interface for reading the value directly referred to by the
      * instance. Wraps as std::optional.
      *
-     * See @ref maybeValue(key_type) const for how this works.
+     * See @ref maybeValue(KeyType) const for how this works.
      */
     template <typename Result>
     [[nodiscard]] std::optional<Result>
@@ -303,7 +303,7 @@ public:
      * @brief Interface for reading the value directly referred to by the
      * instance.
      *
-     * See @ref value(key_type) const for how this works.
+     * See @ref value(KeyType) const for how this works.
      */
     template <typename Result>
     [[nodiscard]] Result
@@ -316,7 +316,7 @@ public:
      * @brief Interface for reading the value directly referred to by the
      * instance with user-specified fallback.
      *
-     * See @ref valueOr(key_type, Result) const for how this works.
+     * See @ref valueOr(KeyType, Result) const for how this works.
      */
     template <typename Result>
     [[nodiscard]] Result
@@ -329,7 +329,7 @@ public:
      * @brief Interface for reading the value directly referred to by the
      * instance with user-specified error message.
      *
-     * See @ref valueOrThrow(key_type, std::string_view) const for how this
+     * See @ref valueOrThrow(KeyType, std::string_view) const for how this
      * works.
      */
     template <typename Result>
@@ -350,15 +350,15 @@ public:
      * @brief Interface for reading the array directly referred to by the
      * instance.
      *
-     * See @ref array(key_type) const for how this works.
+     * See @ref array(KeyType) const for how this works.
      */
-    [[nodiscard]] array_type
+    [[nodiscard]] ArrayType
     array() const;
 
 private:
     template <typename Return>
     [[nodiscard]] Return
-    checkedAs(key_type key, boost::json::value const& value) const
+    checkedAs(KeyType key, boost::json::value const& value) const
     {
         using boost::json::value_to;
 
@@ -393,10 +393,10 @@ private:
     }
 
     std::optional<boost::json::value>
-    lookup(key_type key) const;
+    lookup(KeyType key) const;
 
-    write_cursor_type
-    lookupForWrite(key_type key);
+    WriteCursorType
+    lookupForWrite(KeyType key);
 };
 
 /**

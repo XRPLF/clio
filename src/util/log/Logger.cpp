@@ -143,38 +143,38 @@ LogService::init(util::Config const& config)
 }
 
 Logger::Pump
-Logger::trace(source_location_t const& loc) const
+Logger::trace(SourceLocationType const& loc) const
 {
     return {logger_, Severity::TRC, loc};
 };
 Logger::Pump
-Logger::debug(source_location_t const& loc) const
+Logger::debug(SourceLocationType const& loc) const
 {
     return {logger_, Severity::DBG, loc};
 };
 Logger::Pump
-Logger::info(source_location_t const& loc) const
+Logger::info(SourceLocationType const& loc) const
 {
     return {logger_, Severity::NFO, loc};
 };
 Logger::Pump
-Logger::warn(source_location_t const& loc) const
+Logger::warn(SourceLocationType const& loc) const
 {
     return {logger_, Severity::WRN, loc};
 };
 Logger::Pump
-Logger::error(source_location_t const& loc) const
+Logger::error(SourceLocationType const& loc) const
 {
     return {logger_, Severity::ERR, loc};
 };
 Logger::Pump
-Logger::fatal(source_location_t const& loc) const
+Logger::fatal(SourceLocationType const& loc) const
 {
     return {logger_, Severity::FTL, loc};
 };
 
 std::string
-Logger::Pump::pretty_path(source_location_t const& loc, size_t max_depth) const
+Logger::Pump::pretty_path(SourceLocationType const& loc, size_t max_depth) const
 {
     auto const file_path = std::string{loc.file_name()};
     auto idx = file_path.size();

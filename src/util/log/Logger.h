@@ -52,12 +52,12 @@ namespace util {
 class Config;
 
 #if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
-using source_location_t = std::source_location;
-#define CURRENT_SRC_LOCATION source_location_t::current()
+using SourceLocationType = std::source_location;
+#define CURRENT_SRC_LOCATION SourceLocationType::current()
 
 #elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
-using source_location_t = std::experimental::source_location;
-#define CURRENT_SRC_LOCATION source_location_t::current()
+using SourceLocationType = std::experimental::source_location;
+#define CURRENT_SRC_LOCATION SourceLocationType::current()
 
 #else
 // A workaround for AppleClang that is lacking source_location atm.
@@ -82,8 +82,8 @@ public:
         return line_;
     }
 };
-using source_location_t = SourceLocation;
-#define CURRENT_SRC_LOCATION source_location_t(__builtin_FILE(), __builtin_LINE())
+using SourceLocationType = SourceLocation;
+#define CURRENT_SRC_LOCATION SourceLocationType(__builtin_FILE(), __builtin_LINE())
 #endif
 
 /**
@@ -121,8 +121,8 @@ operator<<(std::ostream& stream, Severity sev);
  */
 class Logger final
 {
-    using logger_t = boost::log::sources::severity_channel_logger_mt<Severity, std::string>;
-    mutable logger_t logger_;
+    using LoggerType = boost::log::sources::severity_channel_logger_mt<Severity, std::string>;
+    mutable LoggerType logger_;
 
     friend class LogService;  // to expose the Pump interface
 
@@ -131,14 +131,14 @@ class Logger final
      */
     class Pump final
     {
-        using pump_opt_t = std::optional<boost::log::aux::record_pump<logger_t>>;
+        using PumpOptType = std::optional<boost::log::aux::record_pump<LoggerType>>;
 
         boost::log::record rec_;
-        pump_opt_t pump_ = std::nullopt;
+        PumpOptType pump_ = std::nullopt;
 
     public:
         ~Pump() = default;
-        Pump(logger_t& logger, Severity sev, source_location_t const& loc)
+        Pump(LoggerType& logger, Severity sev, SourceLocationType const& loc)
             : rec_{logger.open_record(boost::log::keywords::severity = sev)}
         {
             if (rec_)
@@ -174,7 +174,7 @@ class Logger final
 
     private:
         [[nodiscard]] std::string
-        pretty_path(source_location_t const& loc, size_t max_depth = 3) const;
+        pretty_path(SourceLocationType const& loc, size_t max_depth = 3) const;
 
         /**
          * @brief Custom JSON parser for @ref Severity.
@@ -210,27 +210,27 @@ public:
 
     /*! Interface for logging at @ref Severity::TRC severity */
     [[nodiscard]] Pump
-    trace(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
+    trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
     /*! Interface for logging at @ref Severity::DBG severity */
     [[nodiscard]] Pump
-    debug(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
+    debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
     /*! Interface for logging at @ref Severity::INFO severity */
     [[nodiscard]] Pump
-    info(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
+    info(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
     /*! Interface for logging at @ref Severity::WRN severity */
     [[nodiscard]] Pump
-    warn(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
+    warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
     /*! Interface for logging at @ref Severity::ERR severity */
     [[nodiscard]] Pump
-    error(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
+    error(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
     /*! Interface for logging at @ref Severity::FTL severity */
     [[nodiscard]] Pump
-    fatal(source_location_t const& loc = CURRENT_SRC_LOCATION) const;
+    fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 };
 
 /**
@@ -255,49 +255,49 @@ public:
 
     /*! Globally accesible General logger at @ref Severity::TRC severity */
     [[nodiscard]] static Logger::Pump
-    trace(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.trace(loc);
     }
 
     /*! Globally accesible General logger at @ref Severity::DBG severity */
     [[nodiscard]] static Logger::Pump
-    debug(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.debug(loc);
     }
 
     /*! Globally accesible General logger at @ref Severity::NFO severity */
     [[nodiscard]] static Logger::Pump
-    info(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    info(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.info(loc);
     }
 
     /*! Globally accesible General logger at @ref Severity::WRN severity */
     [[nodiscard]] static Logger::Pump
-    warn(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.warn(loc);
     }
 
     /*! Globally accesible General logger at @ref Severity::ERR severity */
     [[nodiscard]] static Logger::Pump
-    error(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    error(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.error(loc);
     }
 
     /*! Globally accesible General logger at @ref Severity::FTL severity */
     [[nodiscard]] static Logger::Pump
-    fatal(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.fatal(loc);
     }
 
     /*! Globally accesible Alert logger */
     [[nodiscard]] static Logger::Pump
-    alert(source_location_t const& loc = CURRENT_SRC_LOCATION)
+    alert(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return alert_log_.warn(loc);
     }
