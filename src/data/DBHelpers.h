@@ -30,7 +30,7 @@
 #include <data/Types.h>
 
 /**
- * @brief Struct used to keep track of what to write to account_transactions/account_tx tables
+ * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
  */
 struct AccountTransactionsData
 {
@@ -51,7 +51,7 @@ struct AccountTransactionsData
 };
 
 /**
- * @brief Represents a link from a tx to an NFT that was targeted/modified/created by it
+ * @brief Represents a link from a tx to an NFT that was targeted/modified/created by it.
  *
  * Gets written to nf_token_transactions table and the like.
  */
@@ -138,6 +138,12 @@ struct NFTsData
     }
 };
 
+/**
+ * @brief Check whether the supplied object is an offer.
+ *
+ * @param object The object to check
+ * @return true if the object is an offer; false otherwise
+ */
 template <class T>
 inline bool
 isOffer(T const& object)
@@ -146,19 +152,28 @@ isOffer(T const& object)
     return offer_bytes == 0x006f;
 }
 
+/**
+ * @brief Check whether the supplied hex represents an offer object.
+ *
+ * @param object The object to check
+ * @return true if the object is an offer; false otherwise
+ */
 template <class T>
 inline bool
 isOfferHex(T const& object)
 {
     auto blob = ripple::strUnHex(4, object.begin(), object.begin() + 4);
     if (blob)
-    {
-        short offer_bytes = ((*blob)[1] << 8) | (*blob)[2];
-        return offer_bytes == 0x006f;
-    }
+        return isOffer(*blob);
     return false;
 }
 
+/**
+ * @brief Check whether the supplied object is a dir node.
+ *
+ * @param object The object to check
+ * @return true if the object is a dir node; false otherwise
+ */
 template <class T>
 inline bool
 isDirNode(T const& object)
@@ -167,6 +182,13 @@ isDirNode(T const& object)
     return spaceKey == 0x0064;
 }
 
+/**
+ * @brief Check whether the supplied object is a book dir.
+ *
+ * @param key The key into the object
+ * @param object The object to check
+ * @return true if the object is a book dir; false otherwise
+ */
 template <class T, class R>
 inline bool
 isBookDir(T const& key, R const& object)
@@ -178,6 +200,12 @@ isBookDir(T const& key, R const& object)
     return !sle[~ripple::sfOwner].has_value();
 }
 
+/**
+ * @brief Get the book out of an offer object.
+ *
+ * @param offer The offer to get the book for
+ * @return Book as ripple::uint256
+ */
 template <class T>
 inline ripple::uint256
 getBook(T const& offer)
@@ -185,26 +213,40 @@ getBook(T const& offer)
     ripple::SerialIter it{offer.data(), offer.size()};
     ripple::SLE sle{it, {}};
     ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
+
     return book;
 }
 
+/**
+ * @brief Get the book base.
+ *
+ * @param key The key to get the book base out of
+ * @return Book base as ripple::uint256
+ */
 template <class T>
 inline ripple::uint256
 getBookBase(T const& key)
 {
     assert(key.size() == ripple::uint256::size());
+
     ripple::uint256 ret;
     for (size_t i = 0; i < 24; ++i)
-    {
         ret.data()[i] = key.data()[i];
-    }
+
     return ret;
 }
 
+/**
+ * @brief Stringify a ripple::uint256.
+ *
+ * @param input The input value
+ * @return The input value as a string
+ */
 inline std::string
-uint256ToString(ripple::uint256 const& uint)
+uint256ToString(ripple::uint256 const& input)
 {
-    return {reinterpret_cast<const char*>(uint.data()), uint.size()};
+    return {reinterpret_cast<const char*>(input.data()), input.size()};
 }
 
+/*! @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */
 static constexpr std::uint32_t rippleEpochStart = 946684800;

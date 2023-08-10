@@ -31,8 +31,7 @@ static constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); 
 
 namespace data::cassandra::detail {
 
-// todo: use an appropritae value instead of CASS_BATCH_TYPE_LOGGED for
-// different use cases
+// TODO: Use an appropritae value instead of CASS_BATCH_TYPE_LOGGED for different use cases
 Batch::Batch(std::vector<Statement> const& statements)
     : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_LOGGED), batchDeleter}
 {

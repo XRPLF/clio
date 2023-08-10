@@ -44,7 +44,7 @@ class Statement : public ManagedObject<CassStatement>
 
 public:
     /**
-     * @brief Construct a new statement with optionally provided arguments
+     * @brief Construct a new statement with optionally provided arguments.
      *
      * Note: it's up to the user to make sure the bound parameters match
      * the format of the query (e.g. amount of '?' matches count of args).
@@ -66,6 +66,11 @@ public:
 
     Statement(Statement&&) = default;
 
+    /**
+     * @brief Binds the given arguments to the statement.
+     *
+     * @param args Arguments to bind
+     */
     template <typename... Args>
     void
     bind(Args&&... args) const
@@ -74,6 +79,12 @@ public:
         (this->bindAt<Args>(idx++, std::forward<Args>(args)), ...);
     }
 
+    /**
+     * @brief Binds an argument to a specific index.
+     *
+     * @param idx The index of the argument
+     * @param value The value to bind it to
+     */
     template <typename Type>
     void
     bindAt(std::size_t const idx, Type&& value) const
@@ -142,6 +153,11 @@ public:
     }
 };
 
+/**
+ * @brief Represents a prepared statement on the DB side.
+ *
+ * This is used to produce Statement objects that can be executed.
+ */
 class PreparedStatement : public ManagedObject<CassPrepared const>
 {
     static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
@@ -151,6 +167,12 @@ public:
     {
     }
 
+    /**
+     * @brief Bind the given arguments and produce a ready to execute Statement.
+     *
+     * @param args The arguments to bind
+     * @return A bound and ready to execute Statement object
+     */
     template <typename... Args>
     Statement
     bind(Args&&... args) const

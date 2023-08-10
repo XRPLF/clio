@@ -49,22 +49,6 @@ BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, 
 }
 
 std::optional<LedgerRange>
-BackendInterface::hardFetchLedgerRangeNoThrow(boost::asio::yield_context yield) const
-{
-    while (true)
-    {
-        try
-        {
-            return hardFetchLedgerRange(yield);
-        }
-        catch (DatabaseTimeout& t)
-        {
-            ;
-        }
-    }
-}
-
-std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
     return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
@@ -236,6 +220,30 @@ BackendInterface::fetchBookOffers(
                  << " book = " << ripple::strHex(book);
 
     return page;
+}
+
+std::optional<LedgerRange>
+BackendInterface::hardFetchLedgerRange() const
+{
+    return synchronous([this](auto yield) { return hardFetchLedgerRange(yield); });
+}
+
+std::optional<LedgerRange>
+BackendInterface::fetchLedgerRange() const
+{
+    std::shared_lock lck(rngMtx_);
+    return range;
+}
+
+void
+BackendInterface::updateRange(uint32_t newMax)
+{
+    std::scoped_lock lck(rngMtx_);
+    assert(!range || newMax >= range->maxSequence);
+    if (!range)
+        range = {newMax, newMax};
+    else
+        range->maxSequence = newMax;
 }
 
 LedgerPage

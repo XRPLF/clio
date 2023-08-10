@@ -36,15 +36,14 @@
 namespace data::cassandra {
 
 /**
- * @brief Implements @ref BackendInterface for Cassandra/Scylladb
+ * @brief Implements @ref BackendInterface for Cassandra/ScyllaDB.
  *
- * Note: this is a safer and more correct rewrite of the original implementation
- * of the backend. We deliberately did not change the interface for now so that
- * other parts such as ETL do not have to change at all.
- * Eventually we should change the interface so that it does not have to know
- * about yield_context.
+ * Note: This is a safer and more correct rewrite of the original implementation of the backend.
+ *
+ * @tparam SettingsProviderType The settings provider type to use
+ * @tparam ExecutionStrategyType The execution strategy type to use
  */
-template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategy>
+template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategyType>
 class BasicCassandraBackend : public BackendInterface
 {
     util::Logger log_{"Backend"};
@@ -54,7 +53,7 @@ class BasicCassandraBackend : public BackendInterface
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
-    mutable ExecutionStrategy executor_;
+    mutable ExecutionStrategyType executor_;
 
     std::atomic_uint32_t ledgerSequence_ = 0u;
 
@@ -62,7 +61,8 @@ public:
     /**
      * @brief Create a new cassandra/scylla backend instance.
      *
-     * @param settingsProvider
+     * @param settingsProvider The settings provider to use
+     * @param readOnly Whether the database should be in readonly mode
      */
     BasicCassandraBackend(SettingsProviderType settingsProvider, bool readOnly)
         : settingsProvider_{std::move(settingsProvider)}

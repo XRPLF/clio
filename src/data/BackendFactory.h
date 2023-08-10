@@ -27,6 +27,14 @@
 #include <boost/algorithm/string.hpp>
 
 namespace data {
+
+/**
+ * @brief A factory function that creates the backend based on a config.
+ *
+ * @param ioc The boost::asio::io_context to use
+ * @param config The clio config to use
+ * @return A shared_ptr<BackendInterface> with the selected implementation
+ */
 std::shared_ptr<BackendInterface>
 make_Backend(boost::asio::io_context& ioc, util::Config const& config)
 {

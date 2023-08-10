@@ -36,10 +36,7 @@
 namespace data {
 
 /**
- * @brief Throws an error when database read time limit is exceeded.
- *
- * This class is throws an error when read time limit is exceeded but
- * is also paired with a separate class to retry the connection.
+ * @brief Represents a database timeout error.
  */
 class DatabaseTimeout : public std::exception
 {
@@ -52,16 +49,16 @@ public:
 };
 
 /**
- * @brief Separate class that reattempts connection after time limit.
+ * @brief A helper function that catches DatabaseTimout exceptions and retries indefinitely.
  *
- * @tparam F Represents a class of handlers for Cassandra database.
- * @param func Instance of Cassandra database handler class.
- * @param waitMs Is the arbitrary time limit of 500ms.
- * @return auto
+ * @tparam FnType The type of function object to execute
+ * @param func The function object to execute
+ * @param waitMs Delay between retry attempts
+ * @return auto The same as the return type of func
  */
-template <class F>
+template <class FnType>
 auto
-retryOnTimeout(F func, size_t waitMs = 500)
+retryOnTimeout(FnType func, size_t waitMs = 500)
 {
     static util::Logger log{"Backend"};
 
@@ -71,7 +68,7 @@ retryOnTimeout(F func, size_t waitMs = 500)
         {
             return func();
         }
-        catch (DatabaseTimeout& t)
+        catch (DatabaseTimeout const&)
         {
             log.error() << "Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
@@ -80,80 +77,64 @@ retryOnTimeout(F func, size_t waitMs = 500)
 }
 
 /**
- * @brief Passes in serialized handlers in an asynchronous fashion.
+ * @brief Synchronously executes the given function object inside a coroutine.
  *
- * Note that the synchronous auto passes handlers critical to supporting
- * the Clio backend. The coroutine types are checked if same/different.
- *
- * @tparam F Represents a class of handlers for Cassandra database.
- * @param f R-value instance of Cassandra handler class.
- * @return auto
+ * @tparam FnType The type of function object to execute
+ * @param func The function object to execute
+ * @return auto The same as the return type of func
  */
-template <class F>
+template <class FnType>
 auto
-synchronous(F&& f)
+synchronous(FnType&& func)
 {
     boost::asio::io_context ctx;
 
-    using R = typename boost::result_of<F(boost::asio::yield_context)>::type;
+    using R = typename boost::result_of<FnType(boost::asio::yield_context)>::type;
     if constexpr (!std::is_same<R, void>::value)
     {
         R res;
-        boost::asio::spawn(ctx, [&f, &res](boost::asio::yield_context yield) { res = f(yield); });
+        boost::asio::spawn(ctx, [&func, &res](auto yield) { res = func(yield); });
 
         ctx.run();
         return res;
     }
     else
     {
-        boost::asio::spawn(ctx, [&f](boost::asio::yield_context yield) { f(yield); });
+        boost::asio::spawn(ctx, [&func](auto yield) { func(yield); });
         ctx.run();
     }
 }
 
 /**
- * @brief Reestablishes synchronous connection on timeout.
+ * @brief Synchronously execute the given function object and retry until no DatabaseTimeout is thrown.
  *
- * @tparam Represents a class of handlers for Cassandra database.
- * @param f R-value instance of Cassandra database handler class.
- * @return auto
+ * @tparam FnType The type of function object to execute
+ * @param func The function object to execute
+ * @return auto The same as the return type of func
  */
-template <class F>
+template <class FnType>
 auto
-synchronousAndRetryOnTimeout(F&& f)
+synchronousAndRetryOnTimeout(FnType&& func)
 {
-    return retryOnTimeout([&]() { return synchronous(f); });
+    return retryOnTimeout([&]() { return synchronous(func); });
 }
 
-/*! @brief Handles ledger and transaction backend data. */
+/**
+ * @brief The interface to the database used by Clio.
+ */
 class BackendInterface
 {
-    /**
-     * @brief Shared mutexes and a cache for the interface.
-     *
-     * rngMutex is a shared mutex. Shared mutexes prevent shared data
-     * from being accessed by multiple threads and has two levels of
-     * access: shared and exclusive.
-     */
 protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
     LedgerCache cache_;
 
-    /**
-     * @brief Public read methods
-     *
-     * All of these reads methods can throw DatabaseTimeout. When writing
-     * code in an RPC handler, this exception does not need to be caught:
-     * when an RPC results in a timeout, an error is returned to the client.
-     */
-
 public:
     BackendInterface() = default;
     virtual ~BackendInterface() = default;
 
+    // TODO: Remove this hack. Cache should not be exposed thru BackendInterface
     /**
-     * @brief Cache that holds states of the ledger
      * @return Immutable cache
      */
     LedgerCache const&
@@ -163,7 +144,6 @@ public:
     }
 
     /**
-     * @brief Cache that holds states of the ledger
      * @return Mutable cache
      */
     LedgerCache&
@@ -172,62 +152,67 @@ public:
         return cache_;
     }
 
-    /*! @brief Fetches a specific ledger by sequence number. */
+    /**
+     * @brief Fetches a specific ledger by sequence number.
+     *
+     * @param sequence The sequence number to fetch for
+     * @param yield The coroutine context
+     * @return The ripple::LedgerHeader if found; nullopt otherwise
+     */
     virtual std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const = 0;
 
-    /*! @brief Fetches a specific ledger by hash. */
+    /**
+     * @brief Fetches a specific ledger by hash.
+     *
+     * @param hash The hash to fetch for
+     * @param yield The coroutine context
+     * @return The ripple::LedgerHeader if found; nullopt otherwise
+     */
     virtual std::optional<ripple::LedgerHeader>
     fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context yield) const = 0;
 
-    /*! @brief Fetches the latest ledger sequence. */
+    /**
+     * @brief Fetches the latest ledger sequence.
+     *
+     * @param yield The coroutine context
+     * @return Latest sequence wrapped in an optional if found; nullopt otherwise
+     */
     virtual std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context yield) const = 0;
 
-    /*! @brief Fetches the current ledger range while locking that process */
+    /**
+     * @brief Fetch the current ledger range.
+     *
+     * @return The current ledger range if populated; nullopt otherwise
+     */
     std::optional<LedgerRange>
-    fetchLedgerRange() const
-    {
-        std::shared_lock lck(rngMtx_);
-        return range;
-    }
+    fetchLedgerRange() const;
 
     /**
-     * @brief Updates the range of sequences to be tracked.
+     * @brief Updates the range of sequences that are stored in the DB.
      *
-     * Function that continues updating the range sliding window or creates
-     * a new sliding window once the maxSequence limit has been reached.
-     *
-     * @param newMax Unsigned 32-bit integer representing new max of range.
+     * @param newMax The new maximum sequence available
      */
     void
-    updateRange(uint32_t newMax)
-    {
-        std::scoped_lock lck(rngMtx_);
-        assert(!range || newMax >= range->maxSequence);
-        if (!range)
-            range = {newMax, newMax};
-        else
-            range->maxSequence = newMax;
-    }
+    updateRange(uint32_t newMax);
 
     /**
-     * @brief Returns the fees for specific transactions.
+     * @brief Fetch the fees from a specific ledger sequence.
      *
-     * @param seq Unsigned 32-bit integer reprsenting sequence.
-     * @param yield The currently executing coroutine.
-     * @return std::optional<ripple::Fees>
+     * @param seq The sequence to fetch for
+     * @param yield The coroutine context
+     * @return ripple::Fees if fees are found; nullopt otherwise
      */
     std::optional<ripple::Fees>
     fetchFees(std::uint32_t const seq, boost::asio::yield_context yield) const;
 
-    /*! @brief TRANSACTION METHODS */
     /**
      * @brief Fetches a specific transaction.
      *
-     * @param hash Unsigned 256-bit integer representing hash.
-     * @param yield The currently executing coroutine.
-     * @return std::optional<TransactionAndMetadata>
+     * @param hash The hash of the transaction to fetch
+     * @param yield The coroutine context
+     * @return TransactionAndMetadata if transaction is found; nullopt otherwise
      */
     virtual std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const = 0;
@@ -235,24 +220,22 @@ public:
     /**
      * @brief Fetches multiple transactions.
      *
-     * @param hashes Unsigned integer value representing a hash.
-     * @param yield The currently executing coroutine.
-     * @return std::vector<TransactionAndMetadata>
+     * @param hashes A vector of hashes to fetch transactions for
+     * @param yield The coroutine context
+     * @return A vector of TransactionAndMetadata matching the given hashes
      */
     virtual std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches all transactions for a specific account
+     * @brief Fetches all transactions for a specific account.
      *
-     * @param account A specific XRPL Account, speciifed by unique type
-     * accountID.
-     * @param limit Paging limit for how many transactions can be returned per
-     * page.
-     * @param forward Boolean whether paging happens forwards or backwards.
-     * @param cursor Important metadata returned every time paging occurs.
-     * @param yield Currently executing coroutine.
-     * @return TransactionsAndCursor
+     * @param account The account to fetch transactions for
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursor The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
      */
     virtual TransactionsAndCursor
     fetchAccountTransactions(
@@ -265,10 +248,9 @@ public:
     /**
      * @brief Fetches all transactions from a specific ledger.
      *
-     * @param ledgerSequence Unsigned 32-bit integer for latest total
-     * transactions.
-     * @param yield Currently executing coroutine.
-     * @return std::vector<TransactionAndMetadata>
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return Results as a vector of TransactionAndMetadata
      */
     virtual std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const = 0;
@@ -276,21 +258,20 @@ public:
     /**
      * @brief Fetches all transaction hashes from a specific ledger.
      *
-     * @param ledgerSequence Standard unsigned integer.
-     * @param yield Currently executing coroutine.
-     * @return std::vector<ripple::uint256>
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return Hashes as ripple::uint256 in a vector
      */
     virtual std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const = 0;
 
-    /*! @brief NFT methods */
     /**
-     * @brief Fetches a specific NFT
+     * @brief Fetches a specific NFT.
      *
-     * @param tokenID Unsigned 256-bit integer.
-     * @param ledgerSequence Standard unsigned integer.
-     * @param yield Currently executing coroutine.
-     * @return std::optional<NFT>
+     * @param tokenID The ID of the NFT
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return NFT object on success; nullopt otherwise
      */
     virtual std::optional<NFT>
     fetchNFT(ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
@@ -299,12 +280,12 @@ public:
     /**
      * @brief Fetches all transactions for a specific NFT.
      *
-     * @param tokenID Unsigned 256-bit integer.
-     * @param limit Paging limit as to how many transactions return per page.
-     * @param forward Boolean whether paging happens forwards or backwards.
-     * @param cursorIn Represents transaction number and ledger sequence.
-     * @param yield Currently executing coroutine is passed in as input.
-     * @return TransactionsAndCursor
+     * @param tokenID The ID of the NFT
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
      */
     virtual TransactionsAndCursor
     fetchNFTTransactions(
@@ -314,25 +295,30 @@ public:
         std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context yield) const = 0;
 
-    /*! @brief STATE DATA METHODS */
     /**
-     * @brief Fetches a specific ledger object: vector of unsigned chars
+     * @brief Fetches a specific ledger object.
      *
-     * @param key Unsigned 256-bit integer.
-     * @param sequence Unsigned 32-bit integer.
-     * @param yield Currently executing coroutine.
-     * @return std::optional<Blob>
+     * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
+     * and only calls out to the real DB if a cache miss ocurred.
+     *
+     * @param key The key of the object
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The object as a Blob on success; nullopt otherwise
      */
     std::optional<Blob>
     fetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield) const;
 
     /**
-     * @brief Fetches all ledger objects: a vector of vectors of unsigned chars.
+     * @brief Fetches all ledger objects by their keys.
      *
-     * @param keys Unsigned 256-bit integer.
-     * @param sequence Unsigned 32-bit integer.
-     * @param yield Currently executing coroutine.
-     * @return std::vector<Blob>
+     * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to fetch from Cache
+     * first and only calls out to the real DB for each of the keys that was not found in the cache.
+     *
+     * @param keys A vector with the keys of the objects to fetch
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return A vector of ledger objects as Blobs
      */
     std::vector<Blob>
     fetchLedgerObjects(
@@ -340,12 +326,26 @@ public:
         std::uint32_t const sequence,
         boost::asio::yield_context yield) const;
 
-    /*! @brief Virtual function version of fetchLedgerObject */
+    /**
+     * @brief The database-specific implementation for fetching a ledger object.
+     *
+     * @param key The key to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The object as a Blob on success; nullopt otherwise
+     */
     virtual std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const = 0;
 
-    /*! @brief Virtual function version of fetchLedgerObjects */
+    /**
+     * @brief The database-specific implementation for fetching ledger objects.
+     *
+     * @param keys The keys to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return A vector of Blobs representing each fetched object
+     */
     virtual std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
@@ -353,14 +353,11 @@ public:
         boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Returns the difference between ledgers: vector of objects
+     * @brief Returns the difference between ledgers.
      *
-     * Objects are made of a key value, vector of unsigned chars (blob),
-     * and a boolean detailing whether keys and blob match.
-     *
-     * @param ledgerSequence Standard unsigned integer.
-     * @param yield Currently executing coroutine.
-     * @return std::vector<LedgerObject>
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return A vector of LedgerObject representing the diff
      */
     virtual std::vector<LedgerObject>
     fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const = 0;
@@ -368,12 +365,12 @@ public:
     /**
      * @brief Fetches a page of ledger objects, ordered by key/index.
      *
-     * @param cursor Important metadata returned every time paging occurs.
-     * @param ledgerSequence Standard unsigned integer.
-     * @param limit Paging limit as to how many transactions returned per page.
-     * @param outOfOrder Boolean on whether ledger page is out of order.
-     * @param yield Currently executing coroutine.
-     * @return LedgerPage
+     * @param cursor The cursor to resume fetching from
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param limit The maximum number of transactions per result page
+     * @param outOfOrder If set to true max available sequence is used instead of ledgerSequence
+     * @param yield The coroutine context
+     * @return The ledger page
      */
     LedgerPage
     fetchLedgerPage(
@@ -383,16 +380,40 @@ public:
         bool outOfOrder,
         boost::asio::yield_context yield) const;
 
-    /*! @brief Fetches successor object from key/index. */
+    /**
+     * @brief Fetches the successor object.
+     *
+     * @param key The key to fetch for
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The sucessor on success; nullopt otherwise
+     */
     std::optional<LedgerObject>
     fetchSuccessorObject(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
         const;
 
-    /*! @brief Fetches successor key from key/index. */
+    /**
+     * @brief Fetches the successor key.
+     *
+     * Thea real fetch happens in doFetchSuccessorKey. This function will attempt to lookup the successor in the cache
+     * first and only if it's not found in the cache will it fetch from the actual DB.
+     *
+     * @param key The key to fetch for
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The sucessor key on success; nullopt otherwise
+     */
     std::optional<ripple::uint256>
     fetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const;
 
-    /*! @brief Virtual function version of fetchSuccessorKey. */
+    /**
+     * @brief Database-specific implementation of fetching the successor key
+     *
+     * @param key The key to fetch for
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The sucessor on success; nullopt otherwise
+     */
     virtual std::optional<ripple::uint256>
     doFetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
         const = 0;
@@ -401,10 +422,10 @@ public:
      * @brief Fetches book offers.
      *
      * @param book Unsigned 256-bit integer.
-     * @param ledgerSequence Standard unsigned integer.
+     * @param ledgerSequence The ledger sequence to fetch for
      * @param limit Pagaing limit as to how many transactions returned per page.
      * @param cursor Important metadata returned every time paging occurs.
-     * @param yield Currently executing coroutine.
+     * @param yield The coroutine context
      * @return BookOffersPage
      */
     BookOffersPage
@@ -415,31 +436,31 @@ public:
         boost::asio::yield_context yield) const;
 
     /**
-     * @brief Returns a ledger range
+     * @brief Synchronously fetches the ledger range from DB.
      *
-     * Ledger range is a struct of min and max sequence numbers). Due to
-     * the use of [&], which denotes a special case of a lambda expression
-     * where values found outside the scope are passed by reference, wrt the
-     * currently executing coroutine.
+     * This function just wraps @ref hardFetchLedgerRange(boost::asio::yield_context) using @ref
+     * synchronous(FnType&&).
      *
-     * @return std::optional<LedgerRange>
+     * @return The ledger range if available; nullopt otherwise
      */
     std::optional<LedgerRange>
-    hardFetchLedgerRange() const
-    {
-        return synchronous([&](boost::asio::yield_context yield) { return hardFetchLedgerRange(yield); });
-    }
+    hardFetchLedgerRange() const;
 
-    /*! @brief Virtual function equivalent of hardFetchLedgerRange. */
+    /**
+     * @brief Fetches the ledger range from DB.
+     *
+     * @return The ledger range if available; nullopt otherwise
+     */
     virtual std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context yield) const = 0;
 
-    /*! @brief Fetches ledger range but doesn't throw timeout. Use with care. */
+    /**
+     * @brief Fetches the ledger range from DB retrying until no DatabaseTimeout is thrown.
+     *
+     * @return The ledger range if available; nullopt otherwise
+     */
     std::optional<LedgerRange>
     hardFetchLedgerRangeNoThrow() const;
-    /*! @brief Fetches ledger range but doesn't throw timeout. Use with care. */
-    std::optional<LedgerRange>
-    hardFetchLedgerRangeNoThrow(boost::asio::yield_context yield) const;
 
     /**
      * @brief Writes to a specific ledger.
@@ -453,11 +474,9 @@ public:
     /**
      * @brief Writes a new ledger object.
      *
-     * The key and blob are r-value references and do NOT have memory addresses.
-     *
-     * @param key String represented as an r-value.
-     * @param seq Unsigned integer representing a sequence.
-     * @param blob r-value vector of unsigned characters (blob).
+     * @param key The key to write the ledger object under
+     * @param seq The ledger sequence to write for
+     * @param blob The data to write
      */
     virtual void
     writeLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob);
@@ -465,11 +484,11 @@ public:
     /**
      * @brief Writes a new transaction.
      *
-     * @param hash r-value reference. No memory address.
-     * @param seq Unsigned 32-bit integer.
-     * @param date Unsigned 32-bit integer.
-     * @param transaction r-value reference. No memory address.
-     * @param metadata r-value refrence. No memory address.
+     * @param hash The hash of the transaction
+     * @param seq The ledger sequence to write for
+     * @param date The timestamp of the entry
+     * @param transaction The transaction data to write
+     * @param metadata The metadata to write
      */
     virtual void
     writeTransaction(
@@ -480,9 +499,9 @@ public:
         std::string&& metadata) = 0;
 
     /**
-     * @brief Write a new NFT.
+     * @brief Writes NFTs to the database.
      *
-     * @param data Passed in as an r-value reference.
+     * @param data A vector of NFTsData objects representing the NFTs
      */
     virtual void
     writeNFTs(std::vector<NFTsData>&& data) = 0;
@@ -490,15 +509,15 @@ public:
     /**
      * @brief Write a new set of account transactions.
      *
-     * @param data Passed in as an r-value reference.
+     * @param data A vector of AccountTransactionsData objects representing the account transactions
      */
     virtual void
     writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
 
     /**
-     * @brief Write a new transaction for a specific NFT.
+     * @brief Write NFTs transactions.
      *
-     * @param data Passed in as an r-value reference.
+     * @param data A vector of NFTTransactionsData objects
      */
     virtual void
     writeNFTTransactions(std::vector<NFTTransactionsData>&& data) = 0;
@@ -506,41 +525,39 @@ public:
     /**
      * @brief Write a new successor.
      *
-     * @param key Passed in as an r-value reference.
-     * @param seq Unsigned 32-bit integer.
-     * @param successor Passed in as an r-value reference.
+     * @param key Key of the object that the passed successor will be the successor for
+     * @param seq The ledger sequence to write for
+     * @param successor The successor data to write
      */
     virtual void
     writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) = 0;
 
-    /*! @brief Tells database we will write data for a specific ledger. */
+    /**
+     * @brief Starts a write transaction with the DB. No-op for cassandra.
+     *
+     * Note: Can potentially be deprecated and removed.
+     */
     virtual void
     startWrites() const = 0;
 
     /**
      * @brief Tells database we finished writing all data for a specific ledger.
      *
-     * TODO: change the return value to represent different results:
-     * Committed, write conflict, errored, successful but not committed
+     * Uses @ref doFinishWrites() to synchronize with the pending writes.
      *
-     * @param ledgerSequence Const unsigned 32-bit integer on ledger sequence.
-     * @return true
-     * @return false
+     * @param ledgerSequence The ledger sequence to finish writing for
+     * @return true on success; false otherwise
      */
     bool
     finishWrites(std::uint32_t const ledgerSequence);
 
+    /**
+     * @return true if database is overwhelmed; false otherwise
+     */
     virtual bool
     isTooBusy() const = 0;
 
 private:
-    /**
-     * @brief Private helper method to write ledger object
-     *
-     * @param key r-value string representing key.
-     * @param seq Unsigned 32-bit integer representing sequence.
-     * @param blob r-value vector of unsigned chars.
-     */
     virtual void
     doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) = 0;
 

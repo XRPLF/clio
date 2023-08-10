@@ -33,42 +33,97 @@
 
 namespace data::cassandra::detail {
 
+// TODO: move Settings to public interface, not detail
+
+/**
+ * @brief Bundles all cassandra settings in one place.
+ */
 struct Settings
 {
+    /**
+     * @brief Represents the configuration of contact points for cassandra.
+     */
     struct ContactPoints
     {
         std::string contactPoints = "127.0.0.1";  // defaults to localhost
         std::optional<uint16_t> port;
     };
 
+    /**
+     * @brief Represents the configuration of a secure connection bundle.
+     */
     struct SecureConnectionBundle
     {
         std::string bundle;  // no meaningful default
     };
 
+    /*! @brief Enables or disables cassandra driver logger */
     bool enableLog = false;
+
+    /*! @brief Connect timeout specified in milliseconds */
     std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{10000};
+
+    /*! @brief Request timeout specified in milliseconds */
     std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
+
+    /*! @brief Connection information; either ContactPoints or SecureConnectionBundle */
     std::variant<ContactPoints, SecureConnectionBundle> connectionInfo = ContactPoints{};
+
+    /*! @brief The number of threads for the driver to pool */
     uint32_t threads = std::thread::hardware_concurrency();
+
+    /*! @brief The maximum number of outstanding write requests at any given moment */
     uint32_t maxWriteRequestsOutstanding = 10'000;
+
+    /*! @brief The maximum number of outstanding read requests at any given moment */
     uint32_t maxReadRequestsOutstanding = 100'000;
+
+    /*! @brief The maximum number of connections per host */
     uint32_t maxConnectionsPerHost = 2u;
+
+    /*! @brief The number of connection per host to always have active */
     uint32_t coreConnectionsPerHost = 2u;
+
+    /*! @brief The maximum concurrent requests per connection; new connections will be created when reached */
     uint32_t maxConcurrentRequestsThreshold =
         (maxWriteRequestsOutstanding + maxReadRequestsOutstanding) / coreConnectionsPerHost;
+
+    /*! @brief Size of the event queue */
     std::optional<uint32_t> queueSizeEvent;
+
+    /*! @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO;
+
+    /*! @brief High watermark for bytes written */
     std::optional<uint32_t> writeBytesHighWatermark;
+
+    /*! @brief Low watermark for bytes written */
     std::optional<uint32_t> writeBytesLowWatermark;
+
+    /*! @brief High watermark for pending requests */
     std::optional<uint32_t> pendingRequestsHighWatermark;
+
+    /*! @brief Low watermark for pending requests */
     std::optional<uint32_t> pendingRequestsLowWatermark;
+
+    /*! @brief Maximum number of requests per flush */
     std::optional<uint32_t> maxRequestsPerFlush;
+
+    /*! @brief Maximum number of connections that will be created concurrently */
     std::optional<uint32_t> maxConcurrentCreation;
+
+    /*! @brief SSL certificate */
     std::optional<std::string> certificate;  // ssl context
+
+    /*! @brief Username/login */
     std::optional<std::string> username;
+
+    /*! @brief Password to match the `username` */
     std::optional<std::string> password;
 
+    /**
+     * @brief Creates a new Settings object as a copy of the current one with overridden contact points.
+     */
     Settings
     withContactPoints(std::string_view contactPoints)
     {
@@ -77,6 +132,9 @@ struct Settings
         return tmp;
     }
 
+    /**
+     * @brief Returns the default settings.
+     */
     static Settings
     defaultSettings()
     {

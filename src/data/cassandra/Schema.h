@@ -38,16 +38,11 @@ template <SomeSettingsProvider SettingsProviderType>
 }
 
 /**
- * @brief Manages the DB schema and provides access to prepared statements
+ * @brief Manages the DB schema and provides access to prepared statements.
  */
 template <SomeSettingsProvider SettingsProviderType>
 class Schema
 {
-    // Current schema version.
-    // Update this everytime you update the schema.
-    // Migrations will be ran automatically based on this value.
-    static constexpr uint16_t version = 1u;
-
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
@@ -261,7 +256,7 @@ public:
     }();
 
     /**
-     * @brief Prepared statements holder
+     * @brief Prepared statements holder.
      */
     class Statements
     {
@@ -641,7 +636,7 @@ public:
     };
 
     /**
-     * @brief Recreates the prepared statements
+     * @brief Recreates the prepared statements.
      */
     void
     prepareStatements(Handle const& handle)
@@ -652,7 +647,7 @@ public:
     }
 
     /**
-     * @brief Provides access to statements
+     * @brief Provides access to statements.
      */
     std::unique_ptr<Statements> const&
     operator->() const

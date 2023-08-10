@@ -57,28 +57,31 @@ public:
     using ResultType = Result;
 
     /**
-     * @brief Construct a new handle from a @ref Settings object
+     * @brief Construct a new handle from a @ref Settings object.
+     *
+     * @param clusterSettings The settings to use
      */
     explicit Handle(Settings clusterSettings = Settings::defaultSettings());
 
     /**
-     * @brief Construct a new handle with default settings and only by setting
-     * the contact points
+     * @brief Construct a new handle with default settings and only by setting the contact points.
+     *
+     * @param contactPoints The contact points to use instead of settings
      */
     explicit Handle(std::string_view contactPoints);
 
     /**
-     * @brief Disconnects gracefully if possible
+     * @brief Disconnects gracefully if possible.
      */
     ~Handle();
 
     /**
-     * @brief Move is supported
+     * @brief Move is supported.
      */
     Handle(Handle&&) = default;
 
     /**
-     * @brief Connect to the cluster asynchronously
+     * @brief Connect to the cluster asynchronously.
      *
      * @return A future
      */
@@ -86,31 +89,37 @@ public:
     asyncConnect() const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
      * See @ref asyncConnect() const for how this works.
+     *
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeErrorType
     connect() const;
 
     /**
-     * @brief Connect to the the specified keyspace asynchronously
+     * @brief Connect to the the specified keyspace asynchronously.
      *
+     * @param keyspace The keyspace to use
      * @return A future
      */
     [[nodiscard]] FutureType
     asyncConnect(std::string_view keyspace) const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
      * See @ref asyncConnect(std::string_view) const for how this works.
+     *
+     * @param keyspace The keyspace to use
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeErrorType
     connect(std::string_view keyspace) const;
 
     /**
-     * @brief Disconnect from the cluster asynchronously
+     * @brief Disconnect from the cluster asynchronously.
      *
      * @return A future
      */
@@ -118,32 +127,40 @@ public:
     asyncDisconnect() const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
      * See @ref asyncDisconnect() const for how this works.
+     *
+     * @return Possibly an error
      */
     [[maybe_unused]] MaybeErrorType
     disconnect() const;
 
     /**
-     * @brief Reconnect to the the specified keyspace asynchronously
+     * @brief Reconnect to the the specified keyspace asynchronously.
      *
+     * @param keyspace The keyspace to use
      * @return A future
      */
     [[nodiscard]] FutureType
     asyncReconnect(std::string_view keyspace) const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
      * See @ref asyncReconnect(std::string_view) const for how this works.
+     *
+     * @param keyspace The keyspace to use
+     * @return Possibly an error
      */
     [[nodiscard]] MaybeErrorType
     reconnect(std::string_view keyspace) const;
 
     /**
-     * @brief Execute a simple query with optional args asynchronously
+     * @brief Execute a simple query with optional args asynchronously.
      *
+     * @param query The query to execute
+     * @param args The arguments to bind for execution
      * @return A future
      */
     template <typename... Args>
@@ -155,10 +172,13 @@ public:
     }
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecute(std::string_view, Args&&...) const for how this
-     * works.
+     * See @ref asyncExecute(std::string_view, Args&&...) const for how this works.
+     *
+     * @param query The query to execute
+     * @param args The arguments to bind for execution
+     * @return The result or an error
      */
     template <typename... Args>
     [[maybe_unused]] ResultOrErrorType
@@ -168,30 +188,34 @@ public:
     }
 
     /**
-     * @brief Execute each of the statements asynchronously
+     * @brief Execute each of the statements asynchronously.
      *
-     * Batched version is not always the right option. Especially since it only
-     * supports INSERT, UPDATE and DELETE statements.
-     * This can be used as an alternative when statements need to execute in
-     * bulk.
+     * Batched version is not always the right option.
+     * Especially since it only supports INSERT, UPDATE and DELETE statements.
+     * This can be used as an alternative when statements need to execute in bulk.
      *
+     * @param statements The statements to execute
      * @return A vector of future objects
      */
     [[nodiscard]] std::vector<FutureType>
     asyncExecuteEach(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecuteEach(std::vector<StatementType> const&) const for
-     * how this works.
+     * See @ref asyncExecuteEach(std::vector<StatementType> const&) const for how this works.
+     *
+     * @param statements The statements to execute
+     * @return Possibly an error
      */
     [[maybe_unused]] MaybeErrorType
     executeEach(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Execute a prepared statement with optional args asynchronously
+     * @brief Execute a prepared statement with optional args asynchronously.
      *
+     * @param statement The prepared statement to execute
+     * @param args The arguments to bind for execution
      * @return A future
      */
     template <typename... Args>
@@ -203,10 +227,13 @@ public:
     }
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecute(std::vector<StatementType> const&, Args&&...) const
-     * for how this works.
+     * See @ref asyncExecute(std::vector<StatementType> const&, Args&&...) const for how this works.
+     *
+     * @param statement The prepared statement to bind and execute
+     * @param args The arguments to bind for execution
+     * @return The result or an error
      */
     template <typename... Args>
     [[maybe_unused]] ResultOrErrorType
@@ -216,60 +243,69 @@ public:
     }
 
     /**
-     * @brief Execute one (bound or simple) statements asynchronously
+     * @brief Execute one (bound or simple) statements asynchronously.
      *
+     * @param statement The statement to execute
      * @return A future
      */
     [[nodiscard]] FutureType
     asyncExecute(StatementType const& statement) const;
 
     /**
-     * @brief Execute one (bound or simple) statements asynchronously with a
-     * callback
+     * @brief Execute one (bound or simple) statements asynchronously with a callback.
      *
+     * @param statement The statement to execute
+     * @param cb The callback to execute when data is ready
      * @return A future that holds onto the callback provided
      */
     [[nodiscard]] FutureWithCallbackType
     asyncExecute(StatementType const& statement, std::function<void(ResultOrErrorType)>&& cb) const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecute(StatementType const&) const for how this
-     * works.
+     * See @ref asyncExecute(StatementType const&) const for how this works.
+     *
+     * @param statement The statement to execute
+     * @return The result or an error
      */
     [[maybe_unused]] ResultOrErrorType
     execute(StatementType const& statement) const;
 
     /**
-     * @brief Execute a batch of (bound or simple) statements asynchronously
+     * @brief Execute a batch of (bound or simple) statements asynchronously.
      *
+     * @param statements The statements to execute
      * @return A future
      */
     [[nodiscard]] FutureType
     asyncExecute(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Synchonous version of the above
+     * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecute(std::vector<StatementType> const&) const for how
-     * this works.
+     * See @ref asyncExecute(std::vector<StatementType> const&) const for how this works.
+     *
+     * @param statements The statements to execute
+     * @return Possibly an error
      */
     [[maybe_unused]] MaybeErrorType
     execute(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Execute a batch of (bound or simple) statements asynchronously
-     * with a completion callback
+     * @brief Execute a batch of (bound or simple) statements asynchronously with a completion callback.
      *
+     * @param statements The statements to execute
+     * @param cb The callback to execute when data is ready
      * @return A future that holds onto the callback provided
      */
     [[nodiscard]] FutureWithCallbackType
     asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const;
 
     /**
-     * @brief Prepare a statement
+     * @brief Prepare a statement.
      *
+     * @param query
      * @return A @ref PreparedStatementType
      * @throws std::runtime_error with underlying error description on failure
      */
@@ -278,12 +314,13 @@ public:
 };
 
 /**
- * @brief Extracts the results into series of std::tuple<Types...> by creating a
- * simple wrapper with an STL input iterator inside.
+ * @brief Extracts the results into series of std::tuple<Types...> by creating a simple wrapper with an STL input
+ * iterator inside.
  *
  * You can call .begin() and .end() in order to iterate as usual.
- * This also means that you can use it in a range-based for or with some
- * algorithms.
+ * This also means that you can use it in a range-based for or with some algorithms.
+ *
+ * @param result The result to iterate
  */
 template <typename... Types>
 [[nodiscard]] detail::ResultExtractor<Types...>
