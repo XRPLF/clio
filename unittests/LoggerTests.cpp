@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
-using namespace clio::util;
+using namespace util;
 
 // Used as a fixture for tests with enabled logging
 class LoggerTest : public LoggerFixture

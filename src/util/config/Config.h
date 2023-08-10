@@ -27,7 +27,7 @@
 #include <string>
 #include <string_view>
 
-namespace clio::util {
+namespace util {
 
 /**
  * @brief Convenience wrapper to query a JSON configuration file.
@@ -412,4 +412,4 @@ public:
     open(std::filesystem::path path);
 };
 
-}  // namespace clio::util
+}  // namespace util

@@ -35,7 +35,7 @@ namespace RPC::detail {
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
 class ForwardingProxy
 {
-    clio::util::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
     std::shared_ptr<LoadBalancerType> balancer_;
     std::reference_wrapper<CountersType> counters_;

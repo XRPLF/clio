@@ -47,7 +47,7 @@ public:
      * @param config Clio config
      * @param ctx The boost::asio::io_context
      */
-    IntervalSweepHandler(clio::util::Config const& config, boost::asio::io_context& ctx)
+    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx)
         : sweepInterval_{std::max(1u, static_cast<uint32_t>(config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
         , ctx_{std::ref(ctx)}
         , timer_{ctx.get_executor()}

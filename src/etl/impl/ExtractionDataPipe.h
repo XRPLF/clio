@@ -25,7 +25,7 @@
 #include <memory>
 #include <vector>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /**
  * @brief A collection of thread safe async queues used by Extractor and Transformer to communicate
@@ -40,7 +40,7 @@ public:
     constexpr static auto TOTAL_MAX_IN_QUEUE = 1000u;
 
 private:
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     uint32_t stride_;
     uint32_t startSequence_;
@@ -131,4 +131,4 @@ private:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

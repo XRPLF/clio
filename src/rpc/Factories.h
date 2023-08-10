@@ -41,21 +41,21 @@
  */
 namespace RPC {
 
-clio::util::Expected<web::Context, Status>
+util::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
     std::shared_ptr<web::ConnectionBase> const& session,
-    clio::util::TagDecoratorFactory const& tagFactory,
+    util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
-clio::util::Expected<web::Context, Status>
+util::Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    clio::util::TagDecoratorFactory const& tagFactory,
+    util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);

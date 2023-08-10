@@ -65,7 +65,7 @@ protected:
         static std::once_flag once_;
         std::call_once(once_, [] {
             boost::log::add_common_attributes();
-            boost::log::register_simple_formatter_factory<clio::util::Severity, char>("Severity");
+            boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
         });
 
         namespace src = boost::log::sources;
@@ -76,9 +76,9 @@ protected:
 
         core->remove_all_sinks();
         boost::log::add_console_log(stream_, keywords::format = "%Channel%:%Severity% %Message%");
-        auto min_severity = expr::channel_severity_filter(clio::util::log_channel, clio::util::log_severity);
-        min_severity["General"] = clio::util::Severity::DBG;
-        min_severity["Trace"] = clio::util::Severity::TRC;
+        auto min_severity = expr::channel_severity_filter(util::log_channel, util::log_severity);
+        min_severity["General"] = util::Severity::DBG;
+        min_severity["Trace"] = util::Severity::TRC;
         core->set_filter(min_severity);
         core->set_logging_enabled(true);
     }
@@ -194,7 +194,7 @@ struct MockBackendTest : virtual public NoLoggerFixture
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        clio::util::Config cfg;
+        util::Config cfg;
         mockBackendPtr = std::make_shared<MockBackend>(cfg);
     }
     void

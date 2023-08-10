@@ -43,23 +43,23 @@ class Counters;
  * @brief Return type used for Validators that can return error but don't have
  * specific value to return
  */
-using MaybeError = clio::util::Expected<void, Status>;
+using MaybeError = util::Expected<void, Status>;
 
 /**
  * @brief The type that represents just the error part of @ref MaybeError
  */
-using Error = clio::util::Unexpected<Status>;
+using Error = util::Unexpected<Status>;
 
 /**
  * @brief Return type for each individual handler
  */
 template <typename OutputType>
-using HandlerReturnType = clio::util::Expected<OutputType, Status>;
+using HandlerReturnType = util::Expected<OutputType, Status>;
 
 /**
  * @brief The final return type out of RPC engine
  */
-using ReturnType = clio::util::Expected<boost::json::value, Status>;
+using ReturnType = util::Expected<boost::json::value, Status>;
 
 struct RpcSpec;
 struct FieldSpec;

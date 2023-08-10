@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 
 using namespace testing;
-using namespace clio::util;
+using namespace util;
 using namespace std;
 using namespace web;
 namespace json = boost::json;

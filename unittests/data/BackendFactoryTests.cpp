@@ -67,7 +67,7 @@ protected:
 
 TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 {
-    clio::util::Config cfg{boost::json::parse(
+    util::Config cfg{boost::json::parse(
         R"({
             "database":
             {
@@ -79,7 +79,7 @@ TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 {
-    clio::util::Config cfg{boost::json::parse(fmt::format(
+    util::Config cfg{boost::json::parse(fmt::format(
         R"({{
             "database":
             {{
@@ -99,7 +99,7 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
-    clio::util::Config cfg{boost::json::parse(fmt::format(
+    util::Config cfg{boost::json::parse(fmt::format(
         R"({{
             "database":
             {{
@@ -140,7 +140,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
 {
-    clio::util::Config cfg{boost::json::parse(fmt::format(
+    util::Config cfg{boost::json::parse(fmt::format(
         R"({{
             "read_only": true,
             "database":
@@ -160,7 +160,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
 {
-    clio::util::Config cfgReadOnly{boost::json::parse(fmt::format(
+    util::Config cfgReadOnly{boost::json::parse(fmt::format(
         R"({{
             "read_only": true,
             "database":
@@ -176,7 +176,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
         contactPoints,
         keyspace))};
 
-    clio::util::Config cfgWrite{boost::json::parse(fmt::format(
+    util::Config cfgWrite{boost::json::parse(fmt::format(
         R"({{
             "read_only": false,
             "database":

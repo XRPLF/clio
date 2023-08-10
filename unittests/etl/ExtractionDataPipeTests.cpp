@@ -29,7 +29,7 @@ constexpr static auto START_SEQ = 1234;
 class ETLExtractionDataPipeTest : public NoLoggerFixture
 {
 protected:
-    clio::etl::detail::ExtractionDataPipe<uint32_t> pipe_{STRIDE, START_SEQ};
+    etl::detail::ExtractionDataPipe<uint32_t> pipe_{STRIDE, START_SEQ};
 };
 
 TEST_F(ETLExtractionDataPipeTest, StrideMatchesInput)

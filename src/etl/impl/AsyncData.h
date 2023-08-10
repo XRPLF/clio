@@ -25,11 +25,11 @@
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 class AsyncCallData
 {
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> cur_;
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> next_;
@@ -179,4 +179,4 @@ public:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

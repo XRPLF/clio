@@ -92,8 +92,8 @@ protected:
     http::request<http::string_body> req_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<Handler> const handler_;
-    clio::util::Logger log_{"WebServer"};
-    clio::util::Logger perfLog_{"Performance"};
+    util::Logger log_{"WebServer"};
+    util::Logger perfLog_{"Performance"};
 
     inline void
     httpFail(boost::beast::error_code ec, char const* what)
@@ -129,7 +129,7 @@ protected:
 public:
     HttpBase(
         std::string const& ip,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer buffer)

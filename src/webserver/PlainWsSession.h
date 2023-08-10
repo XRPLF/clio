@@ -36,7 +36,7 @@ public:
     explicit PlainWsSession(
         boost::asio::ip::tcp::socket&& socket,
         std::string ip,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& callback,
         boost::beast::flat_buffer&& buffer)
@@ -64,7 +64,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<Handler>>
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory_;
+    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     http::request<http::string_body> req_;
     std::string ip_;
@@ -74,7 +74,7 @@ public:
     WsUpgrader(
         boost::beast::tcp_stream&& stream,
         std::string ip,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& b,

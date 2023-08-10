@@ -37,7 +37,7 @@ public:
     explicit SslWsSession(
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
         std::string ip,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& b)
@@ -62,7 +62,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<Handler>
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::string ip_;
-    std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory_;
+    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<Handler> const handler_;
     http::request<http::string_body> req_;
@@ -71,7 +71,7 @@ public:
     SslWsUpgrader(
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::string ip,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& buf,

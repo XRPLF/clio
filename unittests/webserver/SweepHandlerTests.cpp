@@ -25,7 +25,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
-using namespace clio::util;
+using namespace util;
 using namespace web;
 using namespace testing;
 

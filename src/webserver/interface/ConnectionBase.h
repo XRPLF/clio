@@ -31,7 +31,7 @@ namespace http = boost::beast::http;
  * @brief Base class for all connections
  * This class is used to represent a connection in RPC executor and subscription manager
  */
-struct ConnectionBase : public clio::util::Taggable
+struct ConnectionBase : public util::Taggable
 {
 protected:
     boost::system::error_code ec_;
@@ -40,8 +40,7 @@ public:
     std::string const clientIp;
     bool upgraded = false;
 
-    ConnectionBase(clio::util::TagDecoratorFactory const& tagFactory, std::string ip)
-        : Taggable(tagFactory), clientIp(ip)
+    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
     {
     }
 

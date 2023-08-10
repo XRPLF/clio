@@ -39,7 +39,7 @@ tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::valu
             "Feed entire Cassandra section to parse "
             "Settings::ContactPoints instead");
 
-    clio::util::Config obj{value};
+    util::Config obj{value};
     Settings::ContactPoints out;
 
     out.contactPoints = obj.valueOrThrow<std::string>("contact_points", "`contact_points` must be a string");
@@ -57,7 +57,7 @@ tag_invoke(boost::json::value_to_tag<Settings::SecureConnectionBundle>, boost::j
 }
 }  // namespace detail
 
-SettingsProvider::SettingsProvider(clio::util::Config const& cfg, uint16_t ttl)
+SettingsProvider::SettingsProvider(util::Config const& cfg, uint16_t ttl)
     : config_{cfg}
     , keyspace_{cfg.valueOr<std::string>("keyspace", "clio")}
     , tablePrefix_{cfg.maybeValue<std::string>("table_prefix")}

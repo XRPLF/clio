@@ -47,7 +47,7 @@
 #include <thread>
 #include <vector>
 
-using namespace clio::util;
+using namespace util;
 using namespace boost::asio;
 
 namespace po = boost::program_options;
@@ -180,7 +180,7 @@ try
 
     // Rate limiter, to prevent abuse
     auto sweepHandler = web::IntervalSweepHandler{config, ioc};
-    auto whitelistHandler = web::detail::WhitelistHandler{config};
+    auto whitelistHandler = web::WhitelistHandler{config};
     auto dosGuard = web::DOSGuard{config, whitelistHandler, sweepHandler};
 
     // Interface to the database

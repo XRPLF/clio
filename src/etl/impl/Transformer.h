@@ -34,7 +34,7 @@
 #include <memory>
 #include <thread>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /*
  * TODO:
@@ -53,7 +53,7 @@ class Transformer
     using GetLedgerResponseType = typename LedgerLoaderType::GetLedgerResponseType;
     using RawLedgerObjectType = typename LedgerLoaderType::RawLedgerObjectType;
 
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
     std::shared_ptr<BackendInterface> backend_;
@@ -167,9 +167,9 @@ private:
     buildNextLedger(GetLedgerResponseType& rawData)
     {
         log_.debug() << "Beginning ledger update";
-        ripple::LedgerHeader lgrInfo = ::clio::util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
+        ripple::LedgerHeader lgrInfo = ::util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
-        log_.debug() << "Deserialized ledger header. " << ::clio::util::toString(lgrInfo);
+        log_.debug() << "Deserialized ledger header. " << ::util::toString(lgrInfo);
         backend_->startWrites();
         backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
 
@@ -202,10 +202,10 @@ private:
         backend_->writeNFTTransactions(std::move(insertTxResultOp->nfTokenTxData));
 
         auto [success, duration] =
-            ::clio::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
+            ::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
 
         log_.debug() << "Finished writes. Total time: " << std::to_string(duration);
-        log_.debug() << "Finished ledger update: " << ::clio::util::toString(lgrInfo);
+        log_.debug() << "Finished ledger update: " << ::util::toString(lgrInfo);
 
         return {lgrInfo, success};
     }
@@ -424,4 +424,4 @@ private:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

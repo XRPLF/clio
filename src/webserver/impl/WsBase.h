@@ -54,8 +54,8 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     std::shared_ptr<Handler> const handler_;
 
 protected:
-    clio::util::Logger log_{"WebServer"};
-    clio::util::Logger perfLog_{"Performance"};
+    util::Logger log_{"WebServer"};
+    util::Logger perfLog_{"Performance"};
 
     void
     wsFail(boost::beast::error_code ec, char const* what)
@@ -72,7 +72,7 @@ protected:
 public:
     explicit WsBase(
         std::string ip,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer&& buffer)

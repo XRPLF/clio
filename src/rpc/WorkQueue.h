@@ -41,7 +41,7 @@ class WorkQueue
     std::atomic_uint64_t curSize_ = 0;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
-    clio::util::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
     boost::asio::thread_pool ioc_;
 
 public:
@@ -49,9 +49,9 @@ public:
     ~WorkQueue();
 
     static WorkQueue
-    make_WorkQueue(clio::util::Config const& config)
+    make_WorkQueue(util::Config const& config)
     {
-        static clio::util::Logger log{"RPC"};
+        static util::Logger log{"RPC"};
         auto const serverConfig = config.section("server");
         auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
         auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit

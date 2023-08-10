@@ -37,7 +37,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace clio::util {
+namespace util {
 
 /** Expected is an approximation of std::expected (hoped for in C++23)
 
@@ -253,4 +253,4 @@ public:
     }
 };
 
-}  // namespace clio::util
+}  // namespace util

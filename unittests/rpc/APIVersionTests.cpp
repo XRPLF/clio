@@ -94,7 +94,7 @@ TEST_F(RPCAPIVersionTest, ReturnsParsedVersionIfAllPreconditionsAreMet)
 
 TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
 {
-    clio::util::Config cfg{json::parse(fmt::format(
+    util::Config cfg{json::parse(fmt::format(
         R"({{
             "min": {},
             "max": {},

@@ -50,7 +50,7 @@ class ProductionHandlerProvider final : public HandlerProvider
 
 public:
     ProductionHandlerProvider(
-        clio::util::Config const& config,
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<LoadBalancer> const& balancer,

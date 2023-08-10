@@ -26,8 +26,8 @@
 #include <gtest/gtest.h>
 
 namespace json = boost::json;
-using namespace clio::etl::detail;
-using namespace clio::util;
+using namespace etl::detail;
+using namespace util;
 using namespace data;
 using namespace testing;
 

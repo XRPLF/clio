@@ -26,7 +26,7 @@
 #include <mutex>
 #include <semaphore>
 
-using namespace clio::util;
+using namespace util;
 
 namespace {
 constexpr static auto JSONConfig = R"JSON({

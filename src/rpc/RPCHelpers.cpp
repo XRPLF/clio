@@ -32,7 +32,7 @@
 
 // local to compilation unit loggers
 namespace {
-clio::util::Logger gLog{"RPC"};
+util::Logger gLog{"RPC"};
 }  // namespace
 
 namespace RPC {
@@ -657,7 +657,7 @@ traverseOwnedNodes(
     gLog.debug() << "Time loading owned directories: "
                  << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
 
-    auto [objects, timeDiff] = clio::util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
+    auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
     gLog.debug() << "Time loading owned entries: " << timeDiff << " milliseconds";
 

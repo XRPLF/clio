@@ -53,7 +53,7 @@ class AsyncExecutor : public std::enable_shared_from_this<AsyncExecutor<Statemen
     using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
     using CallbackType = std::function<void(typename HandleType::ResultOrErrorType)>;
 
-    clio::util::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
 
     StatementType data_;
     RetryPolicyType retryPolicy_;

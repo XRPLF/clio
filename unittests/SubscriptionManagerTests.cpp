@@ -58,7 +58,7 @@ TEST(SubscriptionManagerTest, InitAndReport)
         "books":0,
         "book_changes":0
     })";
-    clio::util::Config cfg;
+    util::Config cfg;
     auto backend = std::make_shared<MockBackend>(cfg);
     auto subManager = SubscriptionManager::make_SubscriptionManager(cfg, backend);
     EXPECT_EQ(subManager->report(), json::parse(ReportReturn));
@@ -83,9 +83,9 @@ CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> ses
 class SubscriptionManagerSimpleBackendTest : public MockBackendTest
 {
 protected:
-    clio::util::Config cfg;
+    util::Config cfg;
     std::shared_ptr<SubscriptionManager> subManagerPtr;
-    clio::util::TagDecoratorFactory tagDecoratorFactory{cfg};
+    util::TagDecoratorFactory tagDecoratorFactory{cfg};
     std::shared_ptr<web::ConnectionBase> session;
     void
     SetUp() override

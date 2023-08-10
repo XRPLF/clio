@@ -40,8 +40,8 @@ protected:
     std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();
     MockCounters counters;
 
-    clio::util::Config config;
-    clio::util::TagDecoratorFactory tagFactory{config};
+    util::Config config;
+    util::TagDecoratorFactory tagFactory{config};
 
     RPC::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
         loadBalancer,

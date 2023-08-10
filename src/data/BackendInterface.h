@@ -63,7 +63,7 @@ template <class F>
 auto
 retryOnTimeout(F func, size_t waitMs = 500)
 {
-    static clio::util::Logger log{"Backend"};
+    static util::Logger log{"Backend"};
 
     while (true)
     {

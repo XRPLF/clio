@@ -42,15 +42,15 @@ class RPCServerHandler
     std::shared_ptr<ETL const> const etl_;
     // subscription manager holds the shared_ptr of this class
     std::weak_ptr<SubscriptionManager> const subscriptions_;
-    clio::util::TagDecoratorFactory const tagFactory_;
+    util::TagDecoratorFactory const tagFactory_;
     RPC::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
-    clio::util::Logger log_{"RPC"};
-    clio::util::Logger perfLog_{"Performance"};
+    util::Logger log_{"RPC"};
+    util::Logger perfLog_{"Performance"};
 
 public:
     RPCServerHandler(
-        clio::util::Config const& config,
+        util::Config const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<Engine> const& rpcEngine,
         std::shared_ptr<ETL const> const& etl,
@@ -131,7 +131,7 @@ private:
         std::shared_ptr<web::ConnectionBase> const& connection)
     {
         log_.info() << connection->tag() << (connection->upgraded ? "ws" : "http")
-                    << " received request from work queue: " << clio::util::removeSecret(request)
+                    << " received request from work queue: " << util::removeSecret(request)
                     << " ip = " << connection->clientIp;
 
         try
@@ -176,7 +176,7 @@ private:
                 return web::detail::ErrorHelper(connection, request).sendError(err);
             }
 
-            auto [v, timeDiff] = clio::util::timed([&]() { return rpcEngine_->buildResponse(*context); });
+            auto [v, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
             RPC::logDuration(*context, us);

@@ -24,7 +24,7 @@
 #include <array>
 #include <filesystem>
 
-namespace clio::util {
+namespace util {
 
 Logger LogService::general_log_ = Logger{"General"};
 Logger LogService::alert_log_ = Logger{"Alert"};
@@ -70,7 +70,7 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
 }
 
 void
-LogService::init(clio::util::Config const& config)
+LogService::init(util::Config const& config)
 {
     namespace src = boost::log::sources;
     namespace keywords = boost::log::keywords;
@@ -187,4 +187,4 @@ Logger::Pump::pretty_path(source_location_t const& loc, size_t max_depth) const
     return file_path.substr(idx == std::string::npos ? 0 : idx + 1) + ':' + std::to_string(loc.line());
 }
 
-}  // namespace clio::util
+}  // namespace util

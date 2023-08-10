@@ -31,7 +31,7 @@
 
 #include <util/config/Config.h>
 
-namespace clio::util {
+namespace util {
 namespace detail {
 
 /**
@@ -189,8 +189,7 @@ public:
      * @brief Instantiates a tag decorator factory from `clio` configuration.
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(clio::util::Config const& config)
-        : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
+    explicit TagDecoratorFactory(util::Config const& config) : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
     {
     }
 
@@ -204,7 +203,7 @@ public:
      * @brief Instantiates the TagDecorator specified by `type_` with parent
      * bound from `parent_`.
      *
-     * @return std::unique_ptr<clio::BaseTagDecorator> An instance of the requested
+     * @return std::unique_ptr<BaseTagDecorator> An instance of the requested
      * decorator
      */
     std::unique_ptr<BaseTagDecorator>
@@ -254,7 +253,7 @@ protected:
      * @brief New Taggable from a specified factory
      * @param tagFactory The factory to use
      */
-    explicit Taggable(clio::util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
+    explicit Taggable(util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
     {
     }
 
@@ -275,4 +274,4 @@ public:
     }
 };
 
-}  // namespace clio::util
+}  // namespace util

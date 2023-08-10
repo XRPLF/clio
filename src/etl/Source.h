@@ -97,10 +97,10 @@ public:
     }
 
 protected:
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
 private:
-    friend clio::etl::detail::ForwardCache;
+    friend etl::detail::ForwardCache;
     friend ProbingSource;
 
     virtual std::optional<boost::json::object>
@@ -148,7 +148,7 @@ class SourceImpl : public Source
     std::shared_ptr<SubscriptionManager> subscriptions_;
     LoadBalancer& balancer_;
 
-    clio::etl::detail::ForwardCache forwardCache_;
+    etl::detail::ForwardCache forwardCache_;
     boost::uuids::uuid uuid_;
 
 protected:
@@ -176,7 +176,7 @@ public:
      * Primarly used in read-only mode, to monitor when ledgers are validated.
      */
     SourceImpl(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -494,7 +494,7 @@ public:
         grpc::CompletionQueue cq;
         void* tag;
         bool ok = false;
-        std::vector<clio::etl::detail::AsyncCallData> calls;
+        std::vector<etl::detail::AsyncCallData> calls;
         auto markers = getMarkers(numMarkers);
 
         for (size_t i = 0; i < markers.size(); ++i)
@@ -521,7 +521,7 @@ public:
         while (numFinished < calls.size() && cq.Next(&tag, &ok))
         {
             assert(tag);
-            auto ptr = static_cast<clio::etl::detail::AsyncCallData*>(tag);
+            auto ptr = static_cast<etl::detail::AsyncCallData*>(tag);
 
             if (!ok)
             {
@@ -533,7 +533,7 @@ public:
                 log_.trace() << "Marker prefix = " << ptr->getMarkerPrefix();
 
                 auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
-                if (result != clio::etl::detail::AsyncCallData::CallStatus::MORE)
+                if (result != etl::detail::AsyncCallData::CallStatus::MORE)
                 {
                     ++numFinished;
                     log_.debug() << "Finished a marker. "
@@ -545,7 +545,7 @@ public:
                         edgeKeys.push_back(ptr->getLastKey());
                 }
 
-                if (result == clio::etl::detail::AsyncCallData::CallStatus::ERRORED)
+                if (result == etl::detail::AsyncCallData::CallStatus::ERRORED)
                     abort = true;
 
                 if (backend_->cache().size() > progress)
@@ -836,7 +836,7 @@ class PlainSource : public SourceImpl<PlainSource>
 
 public:
     PlainSource(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -876,7 +876,7 @@ class SslSource : public SourceImpl<SslSource>
 
 public:
     SslSource(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,

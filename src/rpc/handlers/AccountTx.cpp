@@ -83,7 +83,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const accountID = accountFromStringStrict(input.account);
-    auto const [txnsAndCursor, timeDiff] = clio::util::timed([&]() {
+    auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);
     });
 

@@ -28,7 +28,7 @@
 
 #include <optional>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /**
  * @brief GRPC Ledger data fetcher
@@ -40,7 +40,7 @@ public:
     using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
 
 private:
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
@@ -98,4 +98,4 @@ public:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

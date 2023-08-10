@@ -63,15 +63,15 @@ class ETLService
     using SubscriptionManagerType = SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
-    using DataPipeType = clio::etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using CacheLoaderType = clio::etl::detail::CacheLoader<data::LedgerCache>;
-    using LedgerFetcherType = clio::etl::detail::LedgerFetcher<LoadBalancerType>;
-    using ExtractorType = clio::etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
-    using LedgerLoaderType = clio::etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = clio::etl::detail::LedgerPublisher<SubscriptionManagerType>;
-    using TransformerType = clio::etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType>;
+    using DataPipeType = etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
+    using CacheLoaderType = etl::detail::CacheLoader<data::LedgerCache>;
+    using LedgerFetcherType = etl::detail::LedgerFetcher<LoadBalancerType>;
+    using ExtractorType = etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
+    using LedgerLoaderType = etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
+    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType>;
+    using TransformerType = etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType>;
 
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
@@ -104,7 +104,7 @@ public:
      * @param ledgers The network validated ledgers datastructure
      */
     ETLService(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
@@ -113,7 +113,7 @@ public:
 
     static std::shared_ptr<ETLService>
     make_ETLService(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,

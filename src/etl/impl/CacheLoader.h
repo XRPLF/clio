@@ -34,7 +34,7 @@
 #include <mutex>
 #include <thread>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /**
  * @brief Cache loading interface
@@ -44,7 +44,7 @@ class CacheLoader
 {
     enum class LoadStyle { ASYNC, SYNC, NOT_AT_ALL };
 
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<BackendInterface> backend_;
@@ -73,7 +73,7 @@ class CacheLoader
 
 public:
     CacheLoader(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> const& backend,
         CacheType& ledgerCache)
@@ -431,4 +431,4 @@ private:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

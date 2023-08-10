@@ -230,13 +230,13 @@ logDuration(web::Context const& ctx, T const& dur)
 {
     using boost::json::serialize;
 
-    static clio::util::Logger log{"RPC"};
+    static util::Logger log{"RPC"};
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
         "Request processing duration = {} milliseconds. request = {}",
         millis,
-        serialize(clio::util::removeSecret(ctx.params)));
+        serialize(util::removeSecret(ctx.params)));
 
     if (seconds > 10)
         log.error() << ctx.tag() << msg;

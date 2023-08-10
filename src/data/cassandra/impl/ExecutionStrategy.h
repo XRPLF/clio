@@ -48,7 +48,7 @@ namespace data::cassandra::detail {
 template <typename HandleType = Handle>
 class DefaultExecutionStrategy
 {
-    clio::util::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
 
     std::uint32_t maxWriteRequestsOutstanding_;
     std::atomic_uint32_t numWriteRequestsOutstanding_ = 0;

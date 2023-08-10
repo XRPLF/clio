@@ -21,11 +21,11 @@
 #include <rpc/common/Types.h>
 
 using namespace std;
-using namespace clio::util;
+using namespace util;
 
 namespace RPC {
 
-clio::util::Expected<web::Context, Status>
+util::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,

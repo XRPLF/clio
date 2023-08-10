@@ -23,8 +23,8 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
-using namespace clio::util;
-using namespace web::detail;
+using namespace util;
+using namespace web;
 
 constexpr static auto JSONDataIPV4 = R"JSON(
     {

@@ -36,14 +36,14 @@ class SslHttpSession : public detail::HttpBase<SslHttpSession, Handler>,
                        public std::enable_shared_from_this<SslHttpSession<Handler>>
 {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
-    std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory_;
+    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
 
 public:
     explicit SslHttpSession(
         tcp::socket&& socket,
         std::string const& ip,
         boost::asio::ssl::context& ctx,
-        std::reference_wrapper<clio::util::TagDecoratorFactory const> tagFactory,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<Handler> const& handler,
         boost::beast::flat_buffer buffer)

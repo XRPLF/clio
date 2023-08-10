@@ -26,7 +26,7 @@ using namespace data;
 
 struct MockBackend : public BackendInterface
 {
-    MockBackend(clio::util::Config)
+    MockBackend(util::Config)
     {
     }
 

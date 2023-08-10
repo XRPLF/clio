@@ -31,7 +31,7 @@ namespace RPC::detail {
 
 class ProductionAPIVersionParser : public APIVersionParser
 {
-    clio::util::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
     uint32_t defaultVersion_;
     uint32_t minVersion_;
@@ -70,9 +70,9 @@ public:
                     << "; default = " << defaultVersion_ << "]";
     }
 
-    ProductionAPIVersionParser(clio::util::Config const& config);
+    ProductionAPIVersionParser(util::Config const& config);
 
-    clio::util::Expected<uint32_t, std::string>
+    util::Expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
     inline uint32_t

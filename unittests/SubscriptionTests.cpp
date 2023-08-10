@@ -39,8 +39,8 @@ TEST(MessageTest, Message)
 class SubscriptionTest : public SyncAsioContextTest
 {
 protected:
-    clio::util::Config cfg;
-    clio::util::TagDecoratorFactory tagDecoratorFactory{cfg};
+    util::Config cfg;
+    util::TagDecoratorFactory tagDecoratorFactory{cfg};
 };
 
 class SubscriptionMapTest : public SubscriptionTest

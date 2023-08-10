@@ -50,9 +50,9 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        clio::util::Config cfg;
+        util::Config cfg;
         subManager_ = SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
-        clio::util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        util::TagDecoratorFactory tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void

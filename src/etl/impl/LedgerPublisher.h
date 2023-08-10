@@ -29,7 +29,7 @@
 
 #include <chrono>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /**
  * @brief Publishes ledgers in a synchronized fashion.
@@ -45,7 +45,7 @@ namespace clio::etl::detail {
 template <typename SubscriptionManagerType>
 class LedgerPublisher
 {
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
 
@@ -252,4 +252,4 @@ private:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

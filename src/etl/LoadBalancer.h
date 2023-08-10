@@ -48,7 +48,7 @@ public:
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
     std::vector<std::unique_ptr<Source>> sources_;
     std::uint32_t downloadRanges_ = 16;
 
@@ -63,7 +63,7 @@ public:
      * @param nwvl The network validated ledgers datastructure
      */
     LoadBalancer(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -71,7 +71,7 @@ public:
 
     static std::shared_ptr<LoadBalancer>
     make_LoadBalancer(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,
@@ -79,7 +79,7 @@ public:
 
     static std::unique_ptr<Source>
     make_Source(
-        clio::util::Config const& config,
+        util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManager> subscriptions,

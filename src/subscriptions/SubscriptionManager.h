@@ -190,7 +190,7 @@ SubscriptionMap<Key>::publish(std::shared_ptr<std::string> const& message, Key c
 
 class SubscriptionManager
 {
-    clio::util::Logger log_{"Subscriptions"};
+    util::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
     boost::asio::io_context ioc_;
@@ -211,7 +211,7 @@ class SubscriptionManager
 
 public:
     static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(clio::util::Config const& config, std::shared_ptr<data::BackendInterface const> const& b)
+    make_SubscriptionManager(util::Config const& config, std::shared_ptr<data::BackendInterface const> const& b)
     {
         auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
         return std::make_shared<SubscriptionManager>(numThreads, b);

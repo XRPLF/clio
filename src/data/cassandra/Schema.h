@@ -48,7 +48,7 @@ class Schema
     // Migrations will be ran automatically based on this value.
     static constexpr uint16_t version = 1u;
 
-    clio::util::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
 public:

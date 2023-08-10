@@ -26,7 +26,7 @@ using namespace std;
 
 namespace RPC::detail {
 
-ProductionAPIVersionParser::ProductionAPIVersionParser(clio::util::Config const& config)
+ProductionAPIVersionParser::ProductionAPIVersionParser(util::Config const& config)
     : ProductionAPIVersionParser(
           config.valueOr("default", API_VERSION_DEFAULT),
           config.valueOr("min", API_VERSION_MIN),
@@ -34,10 +34,10 @@ ProductionAPIVersionParser::ProductionAPIVersionParser(clio::util::Config const&
 {
 }
 
-clio::util::Expected<uint32_t, std::string>
+util::Expected<uint32_t, std::string>
 ProductionAPIVersionParser::parse(boost::json::object const& request) const
 {
-    using Error = clio::util::Unexpected<std::string>;
+    using Error = util::Unexpected<std::string>;
 
     if (request.contains("api_version"))
     {

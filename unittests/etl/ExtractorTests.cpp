@@ -36,7 +36,7 @@ protected:
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerFetcherType = MockLedgerFetcher;
     using ExtractorType =
-        clio::etl::detail::Extractor<ExtractionDataPipeType, MockNetworkValidatedLedgers, LedgerFetcherType>;
+        etl::detail::Extractor<ExtractionDataPipeType, MockNetworkValidatedLedgers, LedgerFetcherType>;
 
     ExtractionDataPipeType dataPipe_;
     std::shared_ptr<MockNetworkValidatedLedgers> networkValidatedLedgers_ =

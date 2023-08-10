@@ -245,7 +245,7 @@ ETLService::doWork()
 }
 
 ETLService::ETLService(
-    clio::util::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManagerType> subscriptions,

@@ -38,7 +38,7 @@ struct FormattedTransactionsData
     std::vector<NFTsData> nfTokensData;
 };
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /**
  * @brief Loads ledger data into the DB
@@ -52,7 +52,7 @@ public:
     using RawLedgerObjectType = typename LoadBalancerType::RawLedgerObjectType;
 
 private:
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
@@ -157,11 +157,11 @@ public:
         if (!ledgerData)
             return {};
 
-        ripple::LedgerHeader lgrInfo = ::clio::util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
+        ripple::LedgerHeader lgrInfo = ::util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
-        log_.debug() << "Deserialized ledger header. " << ::clio::util::toString(lgrInfo);
+        log_.debug() << "Deserialized ledger header. " << ::util::toString(lgrInfo);
 
-        auto timeDiff = ::clio::util::timed<std::chrono::duration<double>>([this, sequence, &lgrInfo, &ledgerData]() {
+        auto timeDiff = ::util::timed<std::chrono::duration<double>>([this, sequence, &lgrInfo, &ledgerData]() {
             backend_->startWrites();
 
             log_.debug() << "Started writes";
@@ -185,7 +185,7 @@ public:
                 backend_->cache().setFull();
 
                 auto seconds =
-                    ::clio::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
+                    ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
                         for (auto& key : *edgeKeys)
                         {
                             log_.debug() << "Writing edge key = " << ripple::strHex(key);
@@ -253,4 +253,4 @@ public:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

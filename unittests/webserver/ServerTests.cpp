@@ -27,7 +27,7 @@
 
 #include <optional>
 
-using namespace clio::util;
+using namespace util;
 using namespace web::detail;
 using namespace web;
 
@@ -149,12 +149,12 @@ protected:
     boost::asio::io_context ctxSync;
     Config cfg{boost::json::parse(JSONData)};
     IntervalSweepHandler sweepHandler = web::IntervalSweepHandler{cfg, ctxSync};
-    WhitelistHandler whitelistHandler = web::detail::WhitelistHandler{cfg};
+    WhitelistHandler whitelistHandler = web::WhitelistHandler{cfg};
     DOSGuard dosGuard = web::DOSGuard{cfg, whitelistHandler, sweepHandler};
 
     Config cfgOverload{boost::json::parse(JSONDataOverload)};
     IntervalSweepHandler sweepHandlerOverload = web::IntervalSweepHandler{cfgOverload, ctxSync};
-    WhitelistHandler whitelistHandlerOverload = web::detail::WhitelistHandler{cfgOverload};
+    WhitelistHandler whitelistHandlerOverload = web::WhitelistHandler{cfgOverload};
     DOSGuard dosGuardOverload = web::DOSGuard{cfgOverload, whitelistHandlerOverload, sweepHandlerOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
@@ -199,7 +199,7 @@ namespace {
 template <class Executor>
 static std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
-    clio::util::Config const& config,
+    util::Config const& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
     web::DOSGuard& dosGuard,

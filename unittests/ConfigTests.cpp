@@ -28,7 +28,7 @@
 #include <fstream>
 #include <iostream>
 
-using namespace clio::util;
+using namespace util;
 using namespace boost::log;
 using namespace std;
 namespace json = boost::json;

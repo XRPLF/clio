@@ -30,7 +30,7 @@
 #include <thread>
 #include <variant>
 
-using namespace clio::util;
+using namespace util;
 using namespace std;
 namespace json = boost::json;
 

@@ -32,7 +32,7 @@ namespace data::cassandra {
  */
 class SettingsProvider
 {
-    clio::util::Config config_;
+    util::Config config_;
 
     std::string keyspace_;
     std::optional<std::string> tablePrefix_;
@@ -41,7 +41,7 @@ class SettingsProvider
     Settings settings_;
 
 public:
-    explicit SettingsProvider(clio::util::Config const& cfg, uint16_t ttl = 0);
+    explicit SettingsProvider(util::Config const& cfg, uint16_t ttl = 0);
 
     /*! Get the cluster settings */
     [[nodiscard]] Settings

@@ -29,7 +29,7 @@
 #include <mutex>
 #include <thread>
 
-namespace clio::etl::detail {
+namespace etl::detail {
 
 /**
  * @brief Extractor thread that is fetching GRPC data and enqueue it on the DataPipeType
@@ -37,7 +37,7 @@ namespace clio::etl::detail {
 template <typename DataPipeType, typename NetworkValidatedLedgersType, typename LedgerFetcherType>
 class Extractor
 {
-    clio::util::Logger log_{"ETL"};
+    util::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
     std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers_;
@@ -90,7 +90,7 @@ private:
 
         while (!shouldFinish(currentSequence) && networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence))
         {
-            auto [fetchResponse, time] = ::clio::util::timed<std::chrono::duration<double>>(
+            auto [fetchResponse, time] = ::util::timed<std::chrono::duration<double>>(
                 [this, currentSequence]() { return ledgerFetcher_.get().fetchDataAndDiff(currentSequence); });
             totalTime += time;
 
@@ -137,4 +137,4 @@ private:
     }
 };
 
-}  // namespace clio::etl::detail
+}  // namespace etl::detail

@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace clio::util::detail {
+namespace util::detail {
 
 /**
  * @brief Thrown when a KeyPath related error occurs
@@ -161,4 +161,4 @@ typeName<double>()
     return "double";
 }
 
-};  // namespace clio::util::detail
+};  // namespace util::detail

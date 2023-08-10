@@ -86,7 +86,7 @@ struct Settings
 
 class Cluster : public ManagedObject<CassCluster>
 {
-    clio::util::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
 
 public:
     Cluster(Settings const& settings);

@@ -47,7 +47,7 @@ namespace data::cassandra {
 template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategy>
 class BasicCassandraBackend : public BackendInterface
 {
-    clio::util::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
@@ -243,7 +243,7 @@ public:
             {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue)
                 {
-                    return clio::util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    return util::deserializeHeader(ripple::makeSlice(*maybeValue));
                 }
 
                 log_.error() << "Could not fetch ledger by sequence - no rows";
@@ -564,7 +564,7 @@ public:
         std::vector<Statement> statements;
         statements.reserve(numHashes);
 
-        auto const timeDiff = clio::util::timed([this, &yield, &results, &hashes, &statements]() {
+        auto const timeDiff = util::timed([this, &yield, &results, &hashes, &statements]() {
             // TODO: seems like a job for "hash IN (list of hashes)" instead?
             std::transform(
                 std::cbegin(hashes), std::cend(hashes), std::back_inserter(statements), [this](auto const& hash) {
@@ -629,28 +629,27 @@ public:
     std::vector<LedgerObject>
     fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const override
     {
-        auto const [keys, timeDiff] =
-            clio::util::timed([this, &ledgerSequence, &yield]() -> std::vector<ripple::uint256> {
-                auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
-                if (not res)
-                {
-                    log_.error() << "Could not fetch ledger diff: " << res.error() << "; ledger = " << ledgerSequence;
-                    return {};
-                }
+        auto const [keys, timeDiff] = util::timed([this, &ledgerSequence, &yield]() -> std::vector<ripple::uint256> {
+            auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
+            if (not res)
+            {
+                log_.error() << "Could not fetch ledger diff: " << res.error() << "; ledger = " << ledgerSequence;
+                return {};
+            }
 
-                auto const& results = res.value();
-                if (not results)
-                {
-                    log_.error() << "Could not fetch ledger diff - no rows; ledger = " << ledgerSequence;
-                    return {};
-                }
+            auto const& results = res.value();
+            if (not results)
+            {
+                log_.error() << "Could not fetch ledger diff - no rows; ledger = " << ledgerSequence;
+                return {};
+            }
 
-                std::vector<ripple::uint256> keys;
-                for (auto [key] : extract<ripple::uint256>(results))
-                    keys.push_back(key);
+            std::vector<ripple::uint256> keys;
+            for (auto [key] : extract<ripple::uint256>(results))
+                keys.push_back(key);
 
-                return keys;
-            });
+            return keys;
+        });
 
         // one of the above errors must have happened
         if (keys.empty())

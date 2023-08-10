@@ -32,7 +32,7 @@
 
 namespace web {
 
-struct Context : clio::util::Taggable
+struct Context : util::Taggable
 {
     boost::asio::yield_context yield;
     std::string method;
@@ -48,7 +48,7 @@ struct Context : clio::util::Taggable
         std::uint32_t apiVersion,
         boost::json::object params,
         std::shared_ptr<web::ConnectionBase> const& session,
-        clio::util::TagDecoratorFactory const& tagFactory,
+        util::TagDecoratorFactory const& tagFactory,
         data::LedgerRange const& range,
         std::string const& clientIp)
         : Taggable(tagFactory)
@@ -60,7 +60,7 @@ struct Context : clio::util::Taggable
         , range(range)
         , clientIp(clientIp)
     {
-        static clio::util::Logger perfLog{"Performance"};
+        static util::Logger perfLog{"Performance"};
         perfLog.debug() << tag() << "new Context created";
     }
 

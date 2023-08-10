@@ -55,8 +55,8 @@ namespace RPC {
 template <typename AdminVerificationStrategyType>
 class RPCEngineBase
 {
-    clio::util::Logger perfLog_{"Performance"};
-    clio::util::Logger log_{"RPC"};
+    util::Logger perfLog_{"Performance"};
+    util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManager> subscriptions_;
@@ -93,7 +93,7 @@ public:
 
     static std::shared_ptr<RPCEngineBase>
     make_RPCEngine(
-        clio::util::Config const& config,
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManager> const& subscriptions,
         std::shared_ptr<LoadBalancer> const& balancer,

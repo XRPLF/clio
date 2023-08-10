@@ -40,7 +40,7 @@ class LedgerDataHandler
 {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    clio::util::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
     static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
 

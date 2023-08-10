@@ -36,7 +36,7 @@ namespace RPC {
  */
 class AccountTxHandler
 {
-    clio::util::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

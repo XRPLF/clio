@@ -36,7 +36,7 @@
 
 #include <thread>
 
-using namespace clio::util;
+using namespace util;
 
 std::unique_ptr<Source>
 LoadBalancer::make_Source(

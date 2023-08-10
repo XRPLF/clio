@@ -23,7 +23,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace clio::util {
+namespace util {
 
 /**
  * @brief Profiler function to measure the time consuming
@@ -52,4 +52,4 @@ timed(F&& func)
     }
 }
 
-}  // namespace clio::util
+}  // namespace util

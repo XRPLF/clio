@@ -28,9 +28,9 @@
 
 namespace data {
 std::shared_ptr<BackendInterface>
-make_Backend(boost::asio::io_context& ioc, clio::util::Config const& config)
+make_Backend(boost::asio::io_context& ioc, util::Config const& config)
 {
-    static clio::util::Logger log{"Backend"};
+    static util::Logger log{"Backend"};
     log.info() << "Constructing BackendInterface";
 
     auto const readOnly = config.valueOr("read_only", false);

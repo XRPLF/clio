@@ -43,8 +43,8 @@ protected:
     {
         HandlerBaseTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        clio::util::Config cfg;
-        clio::util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        util::Config cfg;
+        util::TagDecoratorFactory tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void

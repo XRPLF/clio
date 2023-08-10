@@ -25,7 +25,7 @@
 
 // local to compilation unit loggers
 namespace {
-clio::util::Logger gLog{"Backend"};
+util::Logger gLog{"Backend"};
 }  // namespace
 
 namespace data {

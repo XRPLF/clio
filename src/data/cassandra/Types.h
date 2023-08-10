@@ -60,8 +60,8 @@ struct Limit
 class Handle;
 class CassandraError;
 
-using MaybeError = clio::util::Expected<void, CassandraError>;
-using ResultOrError = clio::util::Expected<Result, CassandraError>;
-using Error = clio::util::Unexpected<CassandraError>;
+using MaybeError = util::Expected<void, CassandraError>;
+using ResultOrError = util::Expected<Result, CassandraError>;
+using Error = util::Unexpected<CassandraError>;
 
 }  // namespace data::cassandra

@@ -37,7 +37,7 @@ namespace data::cassandra::detail {
  */
 class ExponentialBackoffRetryPolicy
 {
-    clio::util::Logger log_{"Backend"};
+    util::Logger log_{"Backend"};
 
     boost::asio::steady_timer timer_;
     uint32_t attempt_ = 0u;

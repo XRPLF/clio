@@ -36,7 +36,7 @@ struct MockSession : public web::ConnectionBase
         message += msg;
     }
 
-    MockSession(clio::util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
+    MockSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
     {
     }
 };
@@ -55,7 +55,7 @@ struct MockDeadSession : public web::ConnectionBase
     {
     }
 
-    MockDeadSession(clio::util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
+    MockDeadSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
     {
     }
 };
