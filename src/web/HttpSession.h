@@ -27,26 +27,39 @@ namespace web {
 using tcp = boost::asio::ip::tcp;
 
 /**
- * @brief The HTTP session class
- * It will handle the upgrade to WebSocket, pass the ownership of the socket to the upgrade session.
+ * @brief Represents a HTTP connection established by a client.
+ *
+ * It will handle the upgrade to websocket, pass the ownership of the socket to the upgrade session.
  * Otherwise, it will pass control to the base class.
+ *
+ * @tparam HandlerType The type of the server handler to use
  */
-template <ServerHandler Handler>
-class HttpSession : public detail::HttpBase<HttpSession, Handler>,
-                    public std::enable_shared_from_this<HttpSession<Handler>>
+template <SomeServerHandler HandlerType>
+class HttpSession : public detail::HttpBase<HttpSession, HandlerType>,
+                    public std::enable_shared_from_this<HttpSession<HandlerType>>
 {
     boost::beast::tcp_stream stream_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
 
 public:
+    /**
+     * @brief Create a new session.
+     *
+     * @param socket The socket. Ownership is transferred to HttpSession
+     * @param ip Client's IP address
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     * @param buffer Buffer with initial data received from the peer
+     */
     explicit HttpSession(
         tcp::socket&& socket,
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
+        std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer buffer)
-        : detail::HttpBase<HttpSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        : detail::HttpBase<HttpSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , stream_(std::move(socket))
         , tagFactory_(tagFactory)
     {
@@ -54,21 +67,24 @@ public:
 
     ~HttpSession() = default;
 
+    /*! @return The TCP stream */
     boost::beast::tcp_stream&
     stream()
     {
         return stream_;
     }
 
+    /*! @brief Starts reading from the stream. */
     void
     run()
     {
         boost::asio::dispatch(
             stream_.get_executor(),
             boost::beast::bind_front_handler(
-                &detail::HttpBase<HttpSession, Handler>::doRead, this->shared_from_this()));
+                &detail::HttpBase<HttpSession, HandlerType>::doRead, this->shared_from_this()));
     }
 
+    /*! @brief Closes the underlying socket. */
     void
     doClose()
     {
@@ -76,10 +92,11 @@ public:
         stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
     }
 
+    /*! @brief Upgrade to WebSocket connection. */
     void
     upgrade()
     {
-        std::make_shared<WsUpgrader<Handler>>(
+        std::make_shared<WsUpgrader<HandlerType>>(
             std::move(stream_),
             this->clientIp,
             tagFactory_,

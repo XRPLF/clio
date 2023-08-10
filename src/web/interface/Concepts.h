@@ -28,11 +28,11 @@
 namespace web {
 
 /**
- * @brief Each executor fulfills this interface
+ * @brief Specifies the requirements a Webserver handler must fulfill.
  */
 // clang-format off
 template <typename T>
-concept ServerHandler = requires(T handler, std::string const& req, std::shared_ptr<ConnectionBase> const& ws, boost::beast::error_code ec) {
+concept SomeServerHandler = requires(T handler, std::string req, std::shared_ptr<ConnectionBase> ws, boost::beast::error_code ec) {
     // the callback when server receives a request
     { handler(req, ws) };
     // the callback when there is an error

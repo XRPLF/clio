@@ -41,15 +41,15 @@ using tcp = boost::asio::ip::tcp;
  * @brief This is the implementation class for http sessions
  *
  * @tparam Derived The derived class
- * @tparam Handler The handler class, will be called when a request is received.
+ * @tparam HandlerType The handler class, will be called when a request is received.
  */
-template <template <class> class Derived, ServerHandler Handler>
+template <template <class> class Derived, SomeServerHandler HandlerType>
 class HttpBase : public ConnectionBase
 {
-    Derived<Handler>&
+    Derived<HandlerType>&
     derived()
     {
-        return static_cast<Derived<Handler>&>(*this);
+        return static_cast<Derived<HandlerType>&>(*this);
     }
 
     // TODO: this should be rewritten using http::message_generator instead
@@ -91,7 +91,7 @@ protected:
     boost::beast::flat_buffer buffer_;
     http::request<http::string_body> req_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
-    std::shared_ptr<Handler> const handler_;
+    std::shared_ptr<HandlerType> const handler_;
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
 
@@ -131,7 +131,7 @@ public:
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
+        std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer buffer)
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)

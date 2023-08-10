@@ -40,18 +40,18 @@ namespace web::detail {
  * The write operation also supports shared_ptr of string, so the caller can keep the string alive until it is sent. It
  * is useful when we have multiple sessions sending the same content
  * @tparam Derived The derived class
- * @tparam Handler The handler type, will be called when a request is received.
+ * @tparam HandlerType The handler type, will be called when a request is received.
  */
-template <template <class> class Derived, ServerHandler Handler>
-class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, Handler>>
+template <template <class> class Derived, SomeServerHandler HandlerType>
+class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>>
 {
-    using std::enable_shared_from_this<WsBase<Derived, Handler>>::shared_from_this;
+    using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     bool sending_ = false;
     std::queue<std::shared_ptr<std::string>> messages_;
-    std::shared_ptr<Handler> const handler_;
+    std::shared_ptr<HandlerType> const handler_;
 
 protected:
     util::Logger log_{"WebServer"};
@@ -74,7 +74,7 @@ public:
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
+        std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer)
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
@@ -88,10 +88,10 @@ public:
         dosGuard_.get().decrement(clientIp);
     }
 
-    Derived<Handler>&
+    Derived<HandlerType>&
     derived()
     {
-        return static_cast<Derived<Handler>&>(*this);
+        return static_cast<Derived<HandlerType>&>(*this);
     }
 
     void

@@ -31,7 +31,7 @@ namespace RPC::detail {
 template <typename>
 static constexpr bool unsupported_v = false;
 
-template <Processor... Processors>
+template <SomeProcessor... Processors>
 [[nodiscard]] auto
 makeFieldProcessor(std::string const& key, Processors&&... procs)
 {
@@ -45,10 +45,10 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
             if (firstFailure)
                 return; // already failed earlier - skip
 
-            if constexpr (Requirement<decltype(*req)>) {
+            if constexpr (SomeRequirement<decltype(*req)>) {
                 if (auto const res = req->verify(j, key); not res)
                     firstFailure = res.error();
-            } else if constexpr (Modifier<decltype(*req)>) {
+            } else if constexpr (SomeModifier<decltype(*req)>) {
                 if (auto const res = req->modify(j, key); not res)
                     firstFailure = res.error();
             } else {

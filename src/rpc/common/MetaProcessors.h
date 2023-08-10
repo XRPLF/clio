@@ -98,7 +98,7 @@ public:
      * @brief Constructs a validator that validates the specs if the type matches.
      * @param requirements The requirements to validate against
      */
-    template <Requirement... Requirements>
+    template <SomeRequirement... Requirements>
     IfType(Requirements&&... requirements)
     {
         processor_ = [... r = std::forward<Requirements>(requirements)](
@@ -149,10 +149,10 @@ private:
 /**
  * @brief A meta-processor that wraps a validator and produces a custom error in case the wrapped validator fails.
  */
-template <typename Requirement>
+template <typename SomeRequirement>
 class WithCustomError final
 {
-    Requirement requirement;
+    SomeRequirement requirement;
     Status error;
 
 public:
@@ -160,7 +160,7 @@ public:
      * @brief Constructs a validator that calls the given validator `req` and returns a custom error `err` in case `req`
      * fails.
      */
-    WithCustomError(Requirement req, Status err) : requirement{std::move(req)}, error{err}
+    WithCustomError(SomeRequirement req, Status err) : requirement{std::move(req)}, error{err}
     {
     }
 

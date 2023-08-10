@@ -30,16 +30,16 @@
 #include <boost/json/parse.hpp>
 
 /**
- * @brief The server handler for RPC requests called by web server
+ * @brief The server handler for RPC requests called by web server.
  *
- * Note: see ServerHandler concept
+ * Note: see @ref SomeServerHandler concept
  */
-template <class Engine, class ETL>
+template <class RPCEngineType, class ETLType>
 class RPCServerHandler
 {
     std::shared_ptr<BackendInterface const> const backend_;
-    std::shared_ptr<Engine> const rpcEngine_;
-    std::shared_ptr<ETL const> const etl_;
+    std::shared_ptr<RPCEngineType> const rpcEngine_;
+    std::shared_ptr<ETLType const> const etl_;
     // subscription manager holds the shared_ptr of this class
     std::weak_ptr<feed::SubscriptionManager> const subscriptions_;
     util::TagDecoratorFactory const tagFactory_;
@@ -49,11 +49,20 @@ class RPCServerHandler
     util::Logger perfLog_{"Performance"};
 
 public:
+    /**
+     * @brief Create a new server handler.
+     *
+     * @param config Clio config to use
+     * @param backend The backend to use
+     * @param rpcEngine The RPC engine to use
+     * @param etl The ETL to use
+     * @param subscriptions The subscription manager to use
+     */
     RPCServerHandler(
         util::Config const& config,
         std::shared_ptr<BackendInterface const> const& backend,
-        std::shared_ptr<Engine> const& rpcEngine,
-        std::shared_ptr<ETL const> const& etl,
+        std::shared_ptr<RPCEngineType> const& rpcEngine,
+        std::shared_ptr<ETLType const> const& etl,
         std::shared_ptr<feed::SubscriptionManager> const& subscriptions)
         : backend_(backend)
         , rpcEngine_(rpcEngine)
@@ -65,16 +74,17 @@ public:
     }
 
     /**
-     * @brief The callback when server receives a request
-     * @param req The request
+     * @brief The callback when server receives a request.
+     *
+     * @param request The request
      * @param connection The connection
      */
     void
-    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& connection)
+    operator()(std::string const& request, std::shared_ptr<web::ConnectionBase> const& connection)
     {
         try
         {
-            auto req = boost::json::parse(reqStr).as_object();
+            auto req = boost::json::parse(request).as_object();
             perfLog_.debug() << connection->tag() << "Adding to work queue";
 
             if (not connection->upgraded and not req.contains("params"))
@@ -112,12 +122,14 @@ public:
 
     /**
      * @brief The callback when there is an error.
-     * Remove the session shared ptr from subscription manager
-     * @param _ The error code
+     *
+     * Remove the session shared ptr from subscription manager.
+     *
+     * @param ec The error code
      * @param connection The connection
      */
     void
-    operator()(boost::beast::error_code _, std::shared_ptr<web::ConnectionBase> const& connection)
+    operator()([[maybe_unused]] boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& connection)
     {
         if (auto manager = subscriptions_.lock(); manager)
             manager->cleanup(connection);
