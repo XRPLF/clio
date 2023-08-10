@@ -22,26 +22,41 @@
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/LedgerHeader.h>
+#include <fmt/core.h>
 
 #include <sstream>
 #include <string>
 
 namespace util {
 
+/**
+ * @brief Deserializes a ripple::LedgerHeader from ripple::Slice of data.
+ *
+ * @param data The slice to deserialize
+ * @return The deserialized ripple::LedgerHeader
+ */
 inline ripple::LedgerHeader
 deserializeHeader(ripple::Slice data)
 {
-    return ripple::deserializeHeader(data, /*hasHash=*/true);
+    return ripple::deserializeHeader(data, /* hasHash = */ true);
 }
 
+/**
+ * @brief A helper function that converts a ripple::LedgerHeader to a string representation.
+ *
+ * @param info The ledger header
+ * @return The string representation of the supplied ledger header
+ */
 inline std::string
 toString(ripple::LedgerHeader const& info)
 {
-    std::stringstream ss;
-    ss << "LedgerHeader { Sequence : " << info.seq << " Hash : " << ripple::strHex(info.hash)
-       << " TxHash : " << strHex(info.txHash) << " AccountHash : " << ripple::strHex(info.accountHash)
-       << " ParentHash : " << strHex(info.parentHash) << " }";
-    return ss.str();
+    return fmt::format(
+        "LedgerHeader {{Sequence: {}, Hash: {}, TxHash: {}, AccountHash: {}, ParentHash: {}}}",
+        info.seq,
+        ripple::strHex(info.hash),
+        strHex(info.txHash),
+        ripple::strHex(info.accountHash),
+        strHex(info.parentHash));
 }
 
 }  // namespace util

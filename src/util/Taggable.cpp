@@ -29,14 +29,14 @@
 
 namespace util::detail {
 
-UIntTagGenerator::tag_t
+UIntTagGenerator::TagType
 UIntTagGenerator::next()
 {
     static std::atomic_uint64_t num{0};
     return num++;
 }
 
-UUIDTagGenerator::tag_t
+UUIDTagGenerator::TagType
 UUIDTagGenerator::next()
 {
     static boost::uuids::random_generator gen{};
@@ -66,7 +66,7 @@ TagDecoratorFactory::make() const
 }
 
 TagDecoratorFactory
-TagDecoratorFactory::with(parent_t parent) const noexcept
+TagDecoratorFactory::with(ParentType parent) const noexcept
 {
     return TagDecoratorFactory(type_, parent);
 }

@@ -25,6 +25,12 @@
 
 namespace util {
 
+/**
+ * @brief Removes any detected secret information from a response JSON object.
+ *
+ * @param object The JSON object to remove secrets from
+ * @return A secret-free copy of the passed object
+ */
 inline boost::json::object
 removeSecret(boost::json::object const& object)
 {
@@ -40,6 +46,7 @@ removeSecret(boost::json::object const& object)
                 newObject.at("params").as_array()[0].as_object()[secretField] = "*";
         }
     }
+
     // for websocket requests
     for (auto const& secretField : secretFields)
     {

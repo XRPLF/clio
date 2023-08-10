@@ -30,9 +30,7 @@
 
 namespace RPC {
 
-/**
- * @brief Custom clio RPC Errors.
- */
+/*! @brief Custom clio RPC Errors. */
 enum class ClioError {
     // normal clio errors start with 5000
     rpcMALFORMED_CURRENCY = 5000,
@@ -51,9 +49,7 @@ enum class ClioError {
     rpcPARAMS_UNPARSEABLE = 6004,
 };
 
-/**
- * @brief Holds info about a particular @ref ClioError.
- */
+/*! @brief Holds info about a particular @ref ClioError. */
 struct ClioErrorInfo
 {
     ClioError const code;
@@ -61,9 +57,7 @@ struct ClioErrorInfo
     std::string_view const message;
 };
 
-/**
- * @brief Clio uses compatible Rippled error codes for most RPC errors.
- */
+/*! @brief Clio uses compatible Rippled error codes for most RPC errors. */
 using RippledError = ripple::error_code_i;
 
 /**
@@ -74,9 +68,7 @@ using RippledError = ripple::error_code_i;
  */
 using CombinedError = std::variant<RippledError, ClioError>;
 
-/**
- * @brief A status returned from any RPC handler.
- */
+/*! @brief A status returned from any RPC handler. */
 struct Status
 {
     CombinedError code = RippledError::rpcSUCCESS;
@@ -102,9 +94,7 @@ struct Status
     {
     }
 
-    /**
-     * @brief Returns true if the Status is *not* OK.
-     */
+    /*! @brief Returns true if the Status is *not* OK. */
     operator bool() const
     {
         if (auto err = std::get_if<RippledError>(&code))
@@ -144,14 +134,10 @@ struct Status
     }
 };
 
-/**
- * @brief Warning codes that can be returned by clio.
- */
+/*! @brief Warning codes that can be returned by clio. */
 enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 2002, warnRPC_RATE_LIMIT = 2003 };
 
-/**
- * @brief Holds information about a clio warning.
- */
+/*! @brief Holds information about a clio warning. */
 struct WarningInfo
 {
     constexpr WarningInfo() = default;
@@ -163,9 +149,7 @@ struct WarningInfo
     std::string_view const message = "unknown warning";
 };
 
-/**
- * @brief Invalid parameters error.
- */
+/*! @brief Invalid parameters error. */
 class InvalidParamsError : public std::exception
 {
     std::string msg;
@@ -182,9 +166,7 @@ public:
     }
 };
 
-/**
- * @brief Account not found error.
- */
+/*! @brief Account not found error. */
 class AccountNotFoundError : public std::exception
 {
     std::string account;
@@ -201,9 +183,7 @@ public:
     }
 };
 
-/**
- * @brief A globally available @ref Status that represents a successful state
- */
+/*! @brief A globally available @ref Status that represents a successful state. */
 static Status OK;
 
 /**

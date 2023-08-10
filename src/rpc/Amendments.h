@@ -27,8 +27,15 @@ namespace RPC {
 
 #define REGISTER_AMENDMENT(name) inline static const ripple::uint256 name = GetAmendmentId(#name);
 
+/**
+ * @brief Represents a list of amendments in the XRPL.
+ */
 struct Amendments
 {
+    /**
+     * @param name The name of the amendment
+     * @return The corresponding amendment Id
+     */
     static ripple::uint256 const
     GetAmendmentId(std::string_view const name)
     {

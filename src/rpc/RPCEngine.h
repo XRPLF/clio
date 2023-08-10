@@ -55,7 +55,7 @@ class ETLService;
 namespace RPC {
 
 /**
- * @brief The RPC engine that ties all RPC-related functionality together
+ * @brief The RPC engine that ties all RPC-related functionality together.
  */
 template <typename AdminVerificationStrategyType>
 class RPCEngineBase
@@ -113,8 +113,10 @@ public:
     }
 
     /**
-     * @brief Main request processor routine
+     * @brief Main request processor routine.
+     *
      * @param ctx The @ref Context of the request
+     * @return A result which can be an error status or a valid JSON response
      */
     Result
     buildResponse(web::Context const& ctx)
@@ -171,22 +173,24 @@ public:
     }
 
     /**
-     * @brief Used to schedule request processing onto the work queue
+     * @brief Used to schedule request processing onto the work queue.
+     *
+     * @tparam FnType The type of function
      * @param func The lambda to execute when this request is handled
      * @param ip The ip address for which this request is being executed
      */
-    template <typename Fn>
+    template <typename FnType>
     bool
-    post(Fn&& func, std::string const& ip)
+    post(FnType&& func, std::string const& ip)
     {
-        return workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
+        return workQueue_.get().postCoro(std::forward<FnType>(func), dosGuard_.get().isWhiteListed(ip));
     }
 
     /**
-     * @brief Notify the system that specified method was executed
+     * @brief Notify the system that specified method was executed.
+     *
      * @param method
-     * @param duration The time it took to execute the method specified in
-     * microseconds
+     * @param duration The time it took to execute the method specified in microseconds
      */
     void
     notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
@@ -196,7 +200,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that specified method failed to execute due to a recoverable user error
+     * @brief Notify the system that specified method failed to execute due to a recoverable user error.
      *
      * Used for errors based on user input, not actual failures of the db or clio itself.
      *
@@ -211,7 +215,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that specified method failed due to some unrecoverable error
+     * @brief Notify the system that specified method failed due to some unrecoverable error.
      *
      * Used for erors such as database timeout, internal errors, etc.
      *
@@ -225,7 +229,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that the RPC system is too busy to handle an incoming request
+     * @brief Notify the system that the RPC system is too busy to handle an incoming request.
      */
     void
     notifyTooBusy()
@@ -234,7 +238,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that the RPC system was not ready to handle an incoming request
+     * @brief Notify the system that the RPC system was not ready to handle an incoming request.
      *
      * This happens when the backend is not yet have a ledger range
      */
@@ -245,7 +249,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that the incoming request did not specify the RPC method/command
+     * @brief Notify the system that the incoming request did not specify the RPC method/command.
      */
     void
     notifyBadSyntax()
@@ -254,7 +258,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that the incoming request specified an unknown/unsupported method/command
+     * @brief Notify the system that the incoming request specified an unknown/unsupported method/command.
      */
     void
     notifyUnknownCommand()
@@ -263,7 +267,7 @@ public:
     }
 
     /**
-     * @brief Notify the system that the incoming request lead to an internal error (unrecoverable)
+     * @brief Notify the system that the incoming request lead to an internal error (unrecoverable).
      */
     void
     notifyInternalError()

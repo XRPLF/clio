@@ -26,16 +26,18 @@
 namespace util {
 
 /**
- * @brief Profiler function to measure the time consuming
- * @param func function object, can be a lamdba or function wrapper
- * @return return a pair if function wrapper has return value: result of
- * function wrapper and the elapsed time(ms) during executing the given
- * function only return the elapsed time if function wrapper does not have
- * return value
+ * @brief Profiler function to measure the time a function execution consumes.
+ *
+ * @tparam U The duration measurement to use; defaults to milliseconds
+ * @tparam FnType The type of the function object
+ * @param func Any function object
+ * @return If the function object has a return value, the result of the function call and the elapsed time(ms) is
+ * returned as a pair
+ * @return Only return the elapsed time if passed function object does not have a return value
  */
-template <typename U = std::chrono::milliseconds, typename F>
+template <typename U = std::chrono::milliseconds, typename FnType>
 [[nodiscard]] auto
-timed(F&& func)
+timed(FnType&& func)
 {
     auto start = std::chrono::system_clock::now();
 
@@ -48,7 +50,7 @@ timed(F&& func)
     {
         auto ret = func();
         auto elapsed = std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
-        return std::make_pair(ret, elapsed);
+        return std::make_pair(std::move(ret), std::move(elapsed));
     }
 }
 
