@@ -46,8 +46,7 @@ protected:
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerLoaderType = MockLedgerLoader;
     using LedgerPublisherType = MockLedgerPublisher;
-    using TransformerType =
-        etl::detail::Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType>;
+    using TransformerType = etl::detail::Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType>;
 
     ExtractionDataPipeType dataPipe_;
     LedgerLoaderType ledgerLoader_;
