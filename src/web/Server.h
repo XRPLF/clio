@@ -26,6 +26,14 @@
 
 #include <fmt/core.h>
 
+/**
+ * @brief This namespace implements the web server and related components.
+ *
+ * The web server is leveraging the power of `boost::asio` with it's coroutine support thru `boost::asio::yield_context`
+ * and `boost::asio::spawn`.
+ *
+ * Majority of the code is based on examples that came with boost.
+ */
 namespace web {
 
 /**

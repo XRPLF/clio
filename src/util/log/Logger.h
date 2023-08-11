@@ -71,11 +71,13 @@ public:
     SourceLocation(std::string_view file, std::size_t line) : file_{file}, line_{line}
     {
     }
+
     std::string_view
     file_name() const
     {
         return file_;
     }
+
     std::size_t
     line() const
     {
@@ -87,7 +89,7 @@ using SourceLocationType = SourceLocation;
 #endif
 
 /**
- * @brief Custom severity levels for @ref Logger.
+ * @brief Custom severity levels for @ref util::Logger.
  */
 enum class Severity {
     TRC,

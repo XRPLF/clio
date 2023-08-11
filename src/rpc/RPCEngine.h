@@ -52,6 +52,9 @@ class LoadBalancer;
 class ETLService;
 }  // namespace etl
 
+/**
+ * @brief This namespace contains all the RPC logic and handlers.
+ */
 namespace rpc {
 
 /**

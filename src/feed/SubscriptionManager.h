@@ -28,6 +28,9 @@
 
 #include <memory>
 
+/**
+ * @brief This namespace deals with subscriptions.
+ */
 namespace feed {
 
 using SessionPtrType = std::shared_ptr<web::ConnectionBase>;

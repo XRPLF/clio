@@ -67,7 +67,6 @@ make_WsContext(
  *
  * @param yc The coroutine context
  * @param request The request as JSON object
- * @param session The connection
  * @param tagFactory A factory that provides tags to track requests
  * @param range The ledger range that is available at request time
  * @param clientIp The IP address of the connected client

@@ -23,6 +23,9 @@
 
 #include <string>
 
+/**
+ * @brief This namespace contains various utilities.
+ */
 namespace util {
 
 /**
