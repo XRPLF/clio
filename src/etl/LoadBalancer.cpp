@@ -43,15 +43,13 @@ namespace etl {
 std::unique_ptr<Source>
 LoadBalancer::make_Source(
     Config const& config,
-    boost::asio::io_context& ioContext,
+    boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
     LoadBalancer& balancer)
 {
-    auto src =
-        std::make_unique<ProbingSource>(config, ioContext, backend, subscriptions, networkValidatedLedgers, balancer);
-
+    auto src = std::make_unique<ProbingSource>(config, ioc, backend, subscriptions, validatedLedgers, balancer);
     src->run();
 
     return src;
@@ -70,10 +68,10 @@ LoadBalancer::make_LoadBalancer(
 
 LoadBalancer::LoadBalancer(
     Config const& config,
-    boost::asio::io_context& ioContext,
+    boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> nwvl)
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
 {
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
         downloadRanges_ = std::clamp(*value, 1u, 256u);
@@ -82,11 +80,16 @@ LoadBalancer::LoadBalancer(
 
     for (auto const& entry : config.array("etl_sources"))
     {
-        std::unique_ptr<Source> source = make_Source(entry, ioContext, backend, subscriptions, nwvl, *this);
+        std::unique_ptr<Source> source = make_Source(entry, ioc, backend, subscriptions, validatedLedgers, *this);
 
         sources_.push_back(std::move(source));
         log_.info() << "Added etl source - " << sources_.back()->toString();
     }
+}
+
+LoadBalancer::~LoadBalancer()
+{
+    sources_.clear();
 }
 
 std::pair<std::vector<std::string>, bool>

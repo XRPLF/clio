@@ -32,6 +32,9 @@
 #include <shared_mutex>
 #include <thread>
 
+/**
+ * @brief An asynchronous, thread-safe queue for RPC requests.
+ */
 class WorkQueue
 {
     // these are cumulative for the lifetime of the process
@@ -45,9 +48,20 @@ class WorkQueue
     boost::asio::thread_pool ioc_;
 
 public:
+    /**
+     * @brief Create an we instance of the work queue.
+     *
+     * @param numWorkers The amount of threads to spawn in the pool
+     * @param maxSize The maximum capacity of the queue; 0 means unlimited
+     */
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
     ~WorkQueue();
 
+    /**
+     * @brief A factory function that creates the work queue based on a config.
+     *
+     * @param config The Clio config to use
+     */
     static WorkQueue
     make_WorkQueue(util::Config const& config)
     {
@@ -60,9 +74,19 @@ public:
         return WorkQueue{numThreads, maxQueueSize};
     }
 
-    template <typename F>
+    /**
+     * @brief Submit a job to the work queue.
+     *
+     * The job will be rejected if isWhiteListed is set to false and the current size of the queue reached capacity.
+     *
+     * @tparam FnType The function object type
+     * @param func The function object to queue as a job
+     * @param isWhiteListed Whether the queue capacity applies to this job
+     * @return true if the job was successfully queued; false otherwise
+     */
+    template <typename FnType>
     bool
-    postCoro(F&& f, bool isWhiteListed)
+    postCoro(FnType&& func, bool isWhiteListed)
     {
         if (curSize_ >= maxSize_ && !isWhiteListed)
         {
@@ -75,7 +99,8 @@ public:
         // Each time we enqueue a job, we want to post a symmetrical job that will dequeue and run the job at the front
         // of the job queue.
         boost::asio::spawn(
-            ioc_, [this, f = std::forward<F>(f), start = std::chrono::system_clock::now()](auto yield) mutable {
+            ioc_,
+            [this, func = std::forward<FnType>(func), start = std::chrono::system_clock::now()](auto yield) mutable {
                 auto const run = std::chrono::system_clock::now();
                 auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
 
@@ -83,13 +108,18 @@ public:
                 durationUs_ += wait;
                 log_.info() << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
 
-                f(yield);
+                func(yield);
                 --curSize_;
             });
 
         return true;
     }
 
+    /**
+     * @brief Generate a report of the work queue state.
+     *
+     * @return The report as a JSON object.
+     */
     boost::json::object
     report() const
     {

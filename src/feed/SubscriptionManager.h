@@ -324,7 +324,7 @@ public:
             workers_.emplace_back([this] { ioc_.run(); });
     }
 
-    /*! @brief Stops the worker threads of the subscription manager. */
+    /** @brief Stops the worker threads of the subscription manager. */
     ~SubscriptionManager()
     {
         work_.reset();
@@ -543,7 +543,7 @@ public:
     void
     unsubProposedTransactions(SessionPtrType session);
 
-    /*! @brief Clenup the session on removal. */
+    /** @brief Clenup the session on removal. */
     void
     cleanup(SessionPtrType session);
 

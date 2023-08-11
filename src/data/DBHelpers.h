@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-/*! @file */
+/** @file */
 #pragma once
 
 #include <ripple/basics/Log.h>
@@ -249,5 +249,5 @@ uint256ToString(ripple::uint256 const& input)
     return {reinterpret_cast<const char*>(input.data()), input.size()};
 }
 
-/*! @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */
+/** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */
 static constexpr std::uint32_t rippleEpochStart = 946684800;

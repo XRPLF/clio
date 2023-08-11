@@ -90,7 +90,7 @@ public:
         log_.info() << "Detector failed (" << message << "): " << ec.message();
     }
 
-    /*! @brief Initiate the detection. */
+    /** @brief Initiate the detection. */
     void
     run()
     {
@@ -211,7 +211,7 @@ public:
         }
     }
 
-    /*! @brief Start accepting incoming connections. */
+    /** @brief Start accepting incoming connections. */
     void
     run()
     {
@@ -244,7 +244,7 @@ private:
     }
 };
 
-/*! @brief The final type of the HttpServer used by Clio. */
+/** @brief The final type of the HttpServer used by Clio. */
 template <class HandlerType>
 using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
 

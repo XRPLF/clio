@@ -105,19 +105,19 @@ ProbingSource::token() const
 }
 
 std::pair<std::vector<std::string>, bool>
-ProbingSource::loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly)
+ProbingSource::loadInitialLedger(std::uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly)
 {
     if (!currentSrc_)
         return {{}, false};
-    return currentSrc_->loadInitialLedger(ledgerSequence, numMarkers, cacheOnly);
+    return currentSrc_->loadInitialLedger(sequence, numMarkers, cacheOnly);
 }
 
 std::pair<grpc::Status, ProbingSource::GetLedgerResponseType>
-ProbingSource::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
+ProbingSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighbors)
 {
     if (!currentSrc_)
         return {};
-    return currentSrc_->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
+    return currentSrc_->fetchLedger(sequence, getObjects, getObjectNeighbors);
 }
 
 std::optional<boost::json::object>

@@ -21,8 +21,8 @@
 
 #include <ripple/protocol/jss.h>
 
-/*! @brief Helper macro for borrowing from ripple::jss static (J)son (S)trings. */
+/** @brief Helper macro for borrowing from ripple::jss static (J)son (S)trings. */
 #define JS(x) ripple::jss::x.c_str()
 
-/*! @brief Provides access to (SF)ield name (S)trings. */
+/** @brief Provides access to (SF)ield name (S)trings. */
 #define SFS(x) ripple::x.jsonName.c_str()

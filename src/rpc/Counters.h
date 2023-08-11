@@ -122,31 +122,31 @@ public:
     void
     rpcFailedToForward(std::string const& method);
 
-    /*! @brief Increments the global too busy counter. */
+    /** @brief Increments the global too busy counter. */
     void
     onTooBusy();
 
-    /*! @brief Increments the global not ready counter. */
+    /** @brief Increments the global not ready counter. */
     void
     onNotReady();
 
-    /*! @brief Increments the global bad syntax counter. */
+    /** @brief Increments the global bad syntax counter. */
     void
     onBadSyntax();
 
-    /*! @brief Increments the global unknown command/method counter. */
+    /** @brief Increments the global unknown command/method counter. */
     void
     onUnknownCommand();
 
-    /*! @brief Increments the global internal error counter. */
+    /** @brief Increments the global internal error counter. */
     void
     onInternalError();
 
-    /*! @return Uptime of this instance in seconds. */
+    /** @return Uptime of this instance in seconds. */
     std::chrono::seconds
     uptime() const;
 
-    /*! @return A JSON report with current state of all counters for every method. */
+    /** @return A JSON report with current state of all counters for every method. */
     boost::json::object
     report() const;
 };

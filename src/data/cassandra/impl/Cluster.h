@@ -57,68 +57,68 @@ struct Settings
         std::string bundle;  // no meaningful default
     };
 
-    /*! @brief Enables or disables cassandra driver logger */
+    /** @brief Enables or disables cassandra driver logger */
     bool enableLog = false;
 
-    /*! @brief Connect timeout specified in milliseconds */
+    /** @brief Connect timeout specified in milliseconds */
     std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{10000};
 
-    /*! @brief Request timeout specified in milliseconds */
+    /** @brief Request timeout specified in milliseconds */
     std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
 
-    /*! @brief Connection information; either ContactPoints or SecureConnectionBundle */
+    /** @brief Connection information; either ContactPoints or SecureConnectionBundle */
     std::variant<ContactPoints, SecureConnectionBundle> connectionInfo = ContactPoints{};
 
-    /*! @brief The number of threads for the driver to pool */
+    /** @brief The number of threads for the driver to pool */
     uint32_t threads = std::thread::hardware_concurrency();
 
-    /*! @brief The maximum number of outstanding write requests at any given moment */
+    /** @brief The maximum number of outstanding write requests at any given moment */
     uint32_t maxWriteRequestsOutstanding = 10'000;
 
-    /*! @brief The maximum number of outstanding read requests at any given moment */
+    /** @brief The maximum number of outstanding read requests at any given moment */
     uint32_t maxReadRequestsOutstanding = 100'000;
 
-    /*! @brief The maximum number of connections per host */
+    /** @brief The maximum number of connections per host */
     uint32_t maxConnectionsPerHost = 2u;
 
-    /*! @brief The number of connection per host to always have active */
+    /** @brief The number of connection per host to always have active */
     uint32_t coreConnectionsPerHost = 2u;
 
-    /*! @brief The maximum concurrent requests per connection; new connections will be created when reached */
+    /** @brief The maximum concurrent requests per connection; new connections will be created when reached */
     uint32_t maxConcurrentRequestsThreshold =
         (maxWriteRequestsOutstanding + maxReadRequestsOutstanding) / coreConnectionsPerHost;
 
-    /*! @brief Size of the event queue */
+    /** @brief Size of the event queue */
     std::optional<uint32_t> queueSizeEvent;
 
-    /*! @brief Size of the IO queue */
+    /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO;
 
-    /*! @brief High watermark for bytes written */
+    /** @brief High watermark for bytes written */
     std::optional<uint32_t> writeBytesHighWatermark;
 
-    /*! @brief Low watermark for bytes written */
+    /** @brief Low watermark for bytes written */
     std::optional<uint32_t> writeBytesLowWatermark;
 
-    /*! @brief High watermark for pending requests */
+    /** @brief High watermark for pending requests */
     std::optional<uint32_t> pendingRequestsHighWatermark;
 
-    /*! @brief Low watermark for pending requests */
+    /** @brief Low watermark for pending requests */
     std::optional<uint32_t> pendingRequestsLowWatermark;
 
-    /*! @brief Maximum number of requests per flush */
+    /** @brief Maximum number of requests per flush */
     std::optional<uint32_t> maxRequestsPerFlush;
 
-    /*! @brief Maximum number of connections that will be created concurrently */
+    /** @brief Maximum number of connections that will be created concurrently */
     std::optional<uint32_t> maxConcurrentCreation;
 
-    /*! @brief SSL certificate */
+    /** @brief SSL certificate */
     std::optional<std::string> certificate;  // ssl context
 
-    /*! @brief Username/login */
+    /** @brief Username/login */
     std::optional<std::string> username;
 
-    /*! @brief Password to match the `username` */
+    /** @brief Password to match the `username` */
     std::optional<std::string> password;
 
     /**

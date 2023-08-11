@@ -41,8 +41,8 @@ class Config final
     static constexpr char Separator = '.';
 
 public:
-    using KeyType = std::string;           /*! The type of key used */
-    using ArrayType = std::vector<Config>; /*! The type of array used */
+    using KeyType = std::string;           /*< The type of key used */
+    using ArrayType = std::vector<Config>; /*< The type of array used */
     using WriteCursorType = std::pair<std::optional<std::reference_wrapper<boost::json::value>>, KeyType>;
 
     /**

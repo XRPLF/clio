@@ -51,7 +51,7 @@ public:
     FutureWithCallback(FutureWithCallback&&) = default;
 
 private:
-    /*! Wrapped in a unique_ptr so it can survive std::move :/ */
+    /** Wrapped in a unique_ptr so it can survive std::move :/ */
     FnPtrType cb_;
 };
 
