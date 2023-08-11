@@ -32,6 +32,8 @@
 #include <shared_mutex>
 #include <thread>
 
+namespace rpc {
+
 /**
  * @brief An asynchronous, thread-safe queue for RPC requests.
  */
@@ -133,3 +135,5 @@ public:
         return obj;
     }
 };
+
+}  // namespace rpc

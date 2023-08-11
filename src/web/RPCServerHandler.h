@@ -29,6 +29,8 @@
 
 #include <boost/json/parse.hpp>
 
+namespace web {
+
 /**
  * @brief The server handler for RPC requests called by web server.
  *
@@ -266,3 +268,5 @@ private:
         }
     }
 };
+
+}  // namespace web

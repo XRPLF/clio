@@ -27,6 +27,7 @@
 #include <semaphore>
 
 using namespace util;
+using namespace rpc;
 
 namespace {
 constexpr static auto JSONConfig = R"JSON({

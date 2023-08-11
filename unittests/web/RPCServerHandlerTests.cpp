@@ -26,6 +26,7 @@
 
 using namespace std::chrono_literals;
 using namespace feed;
+using namespace web;
 
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
