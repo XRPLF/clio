@@ -21,7 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 

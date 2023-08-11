@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
+#include <feed/SubscriptionManager.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/Subscribe.h>
-#include <subscriptions/SubscriptionManager.h>
 #include <util/Fixtures.h>
 #include <util/MockWsBase.h>
 #include <util/TestObject.h>

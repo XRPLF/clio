@@ -51,7 +51,7 @@ class SubscriptionManager;
 namespace etl {
 class LoadBalancer;
 class ETLService;
-}  
+}  // namespace etl
 
 namespace RPC {
 

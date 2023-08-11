@@ -20,8 +20,8 @@
 #include <rpc/common/impl/HandlerProvider.h>
 
 #include <etl/ETLService.h>
+#include <feed/SubscriptionManager.h>
 #include <rpc/Counters.h>
-#include <subscriptions/SubscriptionManager.h>
 
 #include <rpc/handlers/AccountChannels.h>
 #include <rpc/handlers/AccountCurrencies.h>

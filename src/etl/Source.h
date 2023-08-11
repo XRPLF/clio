@@ -24,7 +24,7 @@
 #include <etl/LoadBalancer.h>
 #include <etl/impl/AsyncData.h>
 #include <etl/impl/ForwardCache.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 

@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
+#include <feed/SubscriptionManager.h>
 #include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
-#include <subscriptions/SubscriptionManager.h>
 
 namespace feed {
 

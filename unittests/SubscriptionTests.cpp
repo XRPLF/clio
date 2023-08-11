@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <subscriptions/Message.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/Message.h>
+#include <feed/SubscriptionManager.h>
 
 #include <util/Fixtures.h>
 #include <util/MockWsBase.h>

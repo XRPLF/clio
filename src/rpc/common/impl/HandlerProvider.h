@@ -20,9 +20,9 @@
 #pragma once
 
 #include <data/BackendInterface.h>
+#include <feed/SubscriptionManager.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
-#include <subscriptions/SubscriptionManager.h>
 
 #include <optional>
 #include <string>
@@ -31,7 +31,7 @@
 namespace etl {
 class ETLService;
 class LoadBalancer;
-}
+}  // namespace etl
 
 namespace RPC {
 class Counters;

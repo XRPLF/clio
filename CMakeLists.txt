@@ -80,8 +80,8 @@ target_sources(clio PRIVATE
   src/etl/ETLService.cpp
   src/etl/LoadBalancer.cpp
   src/etl/impl/ForwardCache.cpp
-  ## Subscriptions
-  src/subscriptions/SubscriptionManager.cpp
+  ## Feed
+  src/feed/SubscriptionManager.cpp
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/Factories.cpp

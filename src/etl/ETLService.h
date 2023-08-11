@@ -31,7 +31,7 @@
 #include <etl/impl/LedgerLoader.h>
 #include <etl/impl/LedgerPublisher.h>
 #include <etl/impl/Transformer.h>
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
