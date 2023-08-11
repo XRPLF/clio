@@ -38,12 +38,14 @@
 
 using namespace util;
 
+namespace etl {
+
 std::unique_ptr<Source>
 LoadBalancer::make_Source(
     Config const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
     LoadBalancer& balancer)
 {
@@ -60,7 +62,7 @@ LoadBalancer::make_LoadBalancer(
     Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
 {
     return std::make_shared<LoadBalancer>(config, ioc, backend, subscriptions, validatedLedgers);
@@ -70,7 +72,7 @@ LoadBalancer::LoadBalancer(
     Config const& config,
     boost::asio::io_context& ioContext,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl)
 {
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
@@ -233,3 +235,4 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
     }
     return true;
 }
+}  // namespace etl

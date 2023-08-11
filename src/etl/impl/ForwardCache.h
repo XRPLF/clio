@@ -47,7 +47,7 @@ class ForwardCache
     mutable std::shared_mutex mtx_;
     std::unordered_map<std::string, ResponseType> latestForwarded_;
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    ::Source const& source_;
+    etl::Source const& source_;
     std::uint32_t duration_ = 10;
 
     void

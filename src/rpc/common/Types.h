@@ -28,12 +28,13 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 
+class LoadBalancer;
 namespace web {
 struct ConnectionBase;
 }
-
-class LoadBalancer;
+namespace feed {
 class SubscriptionManager;
+}
 
 namespace RPC {
 

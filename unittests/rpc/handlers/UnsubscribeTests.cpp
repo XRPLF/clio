@@ -29,6 +29,7 @@
 using namespace RPC;
 namespace json = boost::json;
 using namespace testing;
+using namespace feed;
 
 using TestUnsubscribeHandler = BaseUnsubscribeHandler<MockSubscriptionManager>;
 
@@ -54,7 +55,7 @@ protected:
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<SubscriptionManager> subManager_;
+    std::shared_ptr<feed::SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
 };
 

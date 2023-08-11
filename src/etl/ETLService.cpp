@@ -21,6 +21,7 @@
 
 #include <ripple/protocol/LedgerHeader.h>
 
+namespace etl {
 // Database must be populated when this starts
 std::optional<uint32_t>
 ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
@@ -265,3 +266,4 @@ ETLService::ETLService(
     extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
     txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
 }
+}  // namespace etl

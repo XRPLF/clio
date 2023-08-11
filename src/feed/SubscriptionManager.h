@@ -22,11 +22,13 @@
 #include <data/BackendInterface.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
-#include <webserver/interface/ConnectionBase.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <memory>
+
+namespace feed {
 
 using SessionPtrType = std::shared_ptr<web::ConnectionBase>;
 
@@ -369,3 +371,5 @@ private:
     std::mutex cleanupMtx_;
     std::unordered_map<SessionPtrType, std::vector<CleanupFunction>> cleanupFuncs_ = {};
 };
+
+}  // namespace feed

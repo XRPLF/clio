@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include <subscriptions/SubscriptionManager.h>
+#include <feed/SubscriptionManager.h>
 #include <util/Fixtures.h>
 #include <util/MockBackend.h>
 #include <util/MockWsBase.h>
@@ -60,7 +60,7 @@ TEST(SubscriptionManagerTest, InitAndReport)
     })";
     util::Config cfg;
     auto backend = std::make_shared<MockBackend>(cfg);
-    auto subManager = SubscriptionManager::make_SubscriptionManager(cfg, backend);
+    auto subManager = feed::SubscriptionManager::make_SubscriptionManager(cfg, backend);
     EXPECT_EQ(subManager->report(), json::parse(ReportReturn));
 }
 
@@ -84,14 +84,14 @@ class SubscriptionManagerSimpleBackendTest : public MockBackendTest
 {
 protected:
     util::Config cfg;
-    std::shared_ptr<SubscriptionManager> subManagerPtr;
+    std::shared_ptr<feed::SubscriptionManager> subManagerPtr;
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
     std::shared_ptr<web::ConnectionBase> session;
     void
     SetUp() override
     {
         MockBackendTest::SetUp();
-        subManagerPtr = SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
+        subManagerPtr = feed::SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
         session = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void

@@ -20,7 +20,7 @@
 #pragma once
 
 #include <util/config/Config.h>
-#include <webserver/impl/WhitelistHandler.h>
+#include <web/WhitelistHandler.h>
 
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>

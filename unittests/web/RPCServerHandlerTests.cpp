@@ -19,12 +19,13 @@
 #include <util/Fixtures.h>
 #include <util/MockETLService.h>
 #include <util/MockRPCEngine.h>
-#include <webserver/RPCServerHandler.h>
+#include <web/RPCServerHandler.h>
 
 #include <chrono>
 #include <gtest/gtest.h>
 
 using namespace std::chrono_literals;
+using namespace feed;
 
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;

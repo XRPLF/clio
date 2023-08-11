@@ -19,7 +19,7 @@
 
 #include <util/Fixtures.h>
 #include <util/TestHttpSyncClient.h>
-#include <webserver/Server.h>
+#include <web/Server.h>
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>

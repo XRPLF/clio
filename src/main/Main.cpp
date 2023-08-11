@@ -31,8 +31,8 @@
 #include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
 #include <util/config/Config.h>
-#include <webserver/RPCServerHandler.h>
-#include <webserver/Server.h>
+#include <web/RPCServerHandler.h>
+#include <web/Server.h>
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/filesystem/path.hpp>
@@ -187,19 +187,19 @@ try
     auto backend = data::make_Backend(ioc, config);
 
     // Manages clients subscribed to streams
-    auto subscriptions = SubscriptionManager::make_SubscriptionManager(config, backend);
+    auto subscriptions = feed::SubscriptionManager::make_SubscriptionManager(config, backend);
 
     // Tracks which ledgers have been validated by the network
-    auto ledgers = NetworkValidatedLedgers::make_ValidatedLedgers();
+    auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();
 
     // Handles the connection to one or more rippled nodes.
     // ETL uses the balancer to extract data.
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
-    auto balancer = LoadBalancer::make_LoadBalancer(config, ioc, backend, subscriptions, ledgers);
+    auto balancer = etl::LoadBalancer::make_LoadBalancer(config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = ETLService::make_ETLService(config, ioc, backend, subscriptions, balancer, ledgers);
+    auto etl = etl::ETLService::make_ETLService(config, ioc, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = WorkQueue::make_WorkQueue(config);
     auto counters = RPC::Counters::make_Counters(workQueue);
@@ -209,8 +209,8 @@ try
         config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 
     // init the web server
-    auto handler =
-        std::make_shared<RPCServerHandler<RPC::RPCEngine, ETLService>>(config, backend, rpcEngine, etl, subscriptions);
+    auto handler = std::make_shared<RPCServerHandler<RPC::RPCEngine, etl::ETLService>>(
+        config, backend, rpcEngine, etl, subscriptions);
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
     auto const httpServer = web::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);

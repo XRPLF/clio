@@ -30,6 +30,7 @@
 #include <memory>
 
 using namespace testing;
+using namespace etl;
 
 // taken from BackendTests
 constexpr static auto RAW_HEADER =

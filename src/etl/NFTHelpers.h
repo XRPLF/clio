@@ -24,6 +24,8 @@
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
 
+namespace etl {
+
 /**
  * @brief Pull NFT data from TX via ETLService
  */
@@ -35,3 +37,5 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  */
 std::vector<NFTsData>
 getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob);
+
+}  // namespace etl

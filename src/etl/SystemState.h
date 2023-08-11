@@ -21,6 +21,8 @@
 
 #include <atomic>
 
+namespace etl {
+
 struct SystemState
 {
     /**
@@ -53,3 +55,4 @@ struct SystemState
      */
     std::atomic_bool isAmendmentBlocked = false;
 };
+}  // namespace etl

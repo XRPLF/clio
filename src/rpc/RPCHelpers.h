@@ -28,7 +28,7 @@
 #include <rpc/JS.h>
 #include <rpc/common/Types.h>
 #include <util/JsonUtils.h>
-#include <webserver/Context.h>
+#include <web/Context.h>
 
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Rate.h>

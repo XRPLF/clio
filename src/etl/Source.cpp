@@ -34,6 +34,8 @@
 
 #include <thread>
 
+namespace etl {
+
 static boost::beast::websocket::stream_base::timeout
 make_TimeoutOption()
 {
@@ -191,3 +193,4 @@ SslSource::onSslHandshake(
         ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }
 }
+}  // namespace etl

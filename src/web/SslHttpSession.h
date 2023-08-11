@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <webserver/SslWsSession.h>
-#include <webserver/impl/HttpBase.h>
+#include <web/SslWsSession.h>
+#include <web/impl/HttpBase.h>
 
 namespace web {
 

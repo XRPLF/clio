@@ -80,8 +80,8 @@ target_sources(clio PRIVATE
   src/etl/ETLService.cpp
   src/etl/LoadBalancer.cpp
   src/etl/impl/ForwardCache.cpp
-  ## Subscriptions
-  src/subscriptions/SubscriptionManager.cpp
+  ## Feed
+  src/feed/SubscriptionManager.cpp
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/Factories.cpp
@@ -200,10 +200,10 @@ if(tests)
     unittests/data/cassandra/ExecutionStrategyTests.cpp
     unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
-    unittests/webserver/ServerTests.cpp
-    unittests/webserver/RPCServerHandlerTests.cpp
-    unittests/webserver/WhitelistHandlerTests.cpp
-    unittests/webserver/SweepHandlerTests.cpp)
+    unittests/web/ServerTests.cpp
+    unittests/web/RPCServerHandlerTests.cpp
+    unittests/web/WhitelistHandlerTests.cpp
+    unittests/web/SweepHandlerTests.cpp)
 
   include(CMake/deps/gtest.cmake)
 

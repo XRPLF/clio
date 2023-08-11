@@ -21,6 +21,7 @@
 
 #include <string>
 
+namespace feed {
 // This class should only be constructed once, then it can
 // be read from in parallel by many websocket senders
 class Message
@@ -54,3 +55,5 @@ public:
         return message_.size();
     }
 };
+
+}  // namespace feed

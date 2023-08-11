@@ -19,11 +19,13 @@
 
 #include <etl/ProbingSource.h>
 
+namespace etl {
+
 ProbingSource::ProbingSource(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl,
     LoadBalancer& balancer,
     boost::asio::ssl::context sslCtx)
@@ -197,3 +199,4 @@ ProbingSource::make_PlainHooks() noexcept
                 return SourceHooks::Action::STOP;
             }};
 };
+}  // namespace etl

@@ -29,6 +29,7 @@
 #include <memory>
 
 using namespace testing;
+using namespace etl;
 
 class ETLExtractorTest : public NoLoggerFixture
 {

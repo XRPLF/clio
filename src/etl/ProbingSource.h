@@ -31,6 +31,8 @@
 
 #include <mutex>
 
+namespace etl {
+
 /**
  * @brief This Source implementation attempts to connect over both secure websocket and plain websocket.
  *
@@ -68,7 +70,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         LoadBalancer& balancer,
         boost::asio::ssl::context sslCtx = boost::asio::ssl::context{boost::asio::ssl::context::tlsv12});
@@ -122,3 +124,4 @@ private:
     SourceHooks
     make_PlainHooks() noexcept;
 };
+}  // namespace etl
