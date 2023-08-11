@@ -22,7 +22,7 @@
 #include <rpc/Factories.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Validators.h>
-#include <webserver/DOSGuard.h>
+#include <web/DOSGuard.h>
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>

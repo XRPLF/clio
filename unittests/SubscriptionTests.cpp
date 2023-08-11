@@ -27,6 +27,7 @@
 #include <gmock/gmock.h>
 
 namespace json = boost::json;
+using namespace feed;
 
 TEST(MessageTest, Message)
 {

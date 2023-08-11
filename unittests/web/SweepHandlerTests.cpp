@@ -17,27 +17,39 @@
 */
 //==============================================================================
 
-#pragma once
+#include <rpc/handlers/impl/FakesAndMocks.h>
+#include <util/Fixtures.h>
+#include <util/config/Config.h>
+#include <web/DOSGuard.h>
 
-#include <webserver/interface/ConnectionBase.h>
+#include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 
-#include <boost/beast.hpp>
+using namespace util;
+using namespace web;
+using namespace testing;
 
-#include <memory>
+constexpr static auto JSONData = R"JSON(
+    {
+        "dos_guard": {
+            "max_fetches": 100,
+            "sweep_interval": 0.1,
+            "max_connections": 2,
+            "whitelist": ["127.0.0.1"]
+        }
+    }
+)JSON";
 
-namespace web {
-
-/**
- * @brief Each executor fulfills this interface
- */
-// clang-format off
-template <typename T>
-concept ServerHandler = requires(T handler, std::string const& req, std::shared_ptr<ConnectionBase> const& ws, boost::beast::error_code ec) {
-    // the callback when server receives a request
-    { handler(req, ws) };
-    // the callback when there is an error
-    { handler(ec, ws) };
+class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest
+{
+protected:
+    Config cfg{boost::json::parse(JSONData)};
+    IntervalSweepHandler sweepHandler{cfg, ctx};
+    unittests::detail::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
 };
-// clang-format on
 
-}  // namespace web
+TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
+{
+    EXPECT_CALL(guard, clear()).Times(AtLeast(2));
+    ctx.run_for(std::chrono::milliseconds(400));
+}

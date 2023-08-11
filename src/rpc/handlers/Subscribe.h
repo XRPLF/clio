@@ -24,6 +24,10 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
+namespace feed {
+class SubscriptionManager;
+}
+
 namespace RPC {
 template <typename SubscriptionManagerType>
 class BaseSubscribeHandler
@@ -318,6 +322,6 @@ private:
  *
  * For more details see: https://xrpl.org/subscribe.html
  */
-using SubscribeHandler = BaseSubscribeHandler<SubscriptionManager>;
+using SubscribeHandler = BaseSubscribeHandler<feed::SubscriptionManager>;
 
 }  // namespace RPC

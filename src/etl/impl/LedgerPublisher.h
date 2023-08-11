@@ -69,7 +69,7 @@ public:
     LedgerPublisher(
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         SystemState const& state)
         : publishStrand_{boost::asio::make_strand(ioc)}
         , backend_{backend}

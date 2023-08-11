@@ -27,6 +27,8 @@
 #include <data/Types.h>
 #include <fmt/core.h>
 
+namespace etl {
+
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
@@ -338,3 +340,4 @@ getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string c
 
     return nfts;
 }
+}  // namespace etl

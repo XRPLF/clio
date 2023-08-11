@@ -32,9 +32,14 @@
 #include <chrono>
 #include <fmt/core.h>
 
-class SubscriptionManager;
+namespace etl {
 class ETLService;
 class LoadBalancer;
+}  // namespace etl
+
+namespace feed {
+class SubscriptionManager;
+}
 
 namespace RPC {
 class Counters;
@@ -252,6 +257,7 @@ private:
  *
  * For more details see: https://xrpl.org/server_info-clio.html
  */
-using ServerInfoHandler = BaseServerInfoHandler<SubscriptionManager, LoadBalancer, ETLService, Counters>;
+using ServerInfoHandler =
+    BaseServerInfoHandler<feed::SubscriptionManager, etl::LoadBalancer, etl::ETLService, Counters>;
 
 }  // namespace RPC

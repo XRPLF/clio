@@ -26,6 +26,7 @@
 #include <queue>
 #include <sstream>
 
+namespace etl {
 /**
  * @brief This datastructure is used to keep track of the sequence of the most recent ledger validated by the network.
  *
@@ -219,3 +220,4 @@ getMarkers(size_t numMarkers)
     }
     return markers;
 }
+}  // namespace etl

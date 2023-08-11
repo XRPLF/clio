@@ -18,7 +18,7 @@
 //==============================================================================
 #include <util/Fixtures.h>
 #include <util/config/Config.h>
-#include <webserver/DOSGuard.h>
+#include <web/DOSGuard.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

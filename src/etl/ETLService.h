@@ -42,7 +42,11 @@
 struct AccountTransactionsData;
 struct NFTTransactionsData;
 struct NFTsData;
+namespace feed {
 class SubscriptionManager;
+}
+
+namespace etl {
 
 /**
  * @brief This class is responsible for continuously extracting data from a p2p node, and writing that data to the
@@ -60,7 +64,7 @@ class SubscriptionManager;
 class ETLService
 {
     // TODO: make these template parameters in ETLService
-    using SubscriptionManagerType = SubscriptionManager;
+    using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
@@ -258,3 +262,4 @@ private:
         state_.isAmendmentBlocked = true;
     }
 };
+}  // namespace etl

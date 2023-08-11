@@ -363,7 +363,7 @@ TEST_F(BackendCassandraTest, Basic)
             ripple::TxMeta nftTxMeta{nftHash256, lgrInfoNext.seq, nftTxnMetaBlob};
             ripple::SerialIter it{nftTxnBlob.data(), nftTxnBlob.size()};
             ripple::STTx sttx{it};
-            auto const [parsedNFTTxsRef, parsedNFT] = getNFTDataFromTx(nftTxMeta, sttx);
+            auto const [parsedNFTTxsRef, parsedNFT] = etl::getNFTDataFromTx(nftTxMeta, sttx);
             // need to copy the nft txns so we can std::move later
             std::vector<NFTTransactionsData> parsedNFTTxs;
             parsedNFTTxs.insert(parsedNFTTxs.end(), parsedNFTTxsRef.begin(), parsedNFTTxsRef.end());

@@ -22,7 +22,7 @@
 #include <data/BackendInterface.h>
 #include <util/Taggable.h>
 #include <util/log/Logger.h>
-#include <webserver/interface/ConnectionBase.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

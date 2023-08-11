@@ -31,8 +31,8 @@
 #include <util/Taggable.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
-#include <webserver/Context.h>
-#include <webserver/DOSGuard.h>
+#include <web/Context.h>
+#include <web/DOSGuard.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -43,9 +43,15 @@
 #include <unordered_map>
 #include <variant>
 
+// forward declarations
+namespace feed {
 class SubscriptionManager;
+}
+
+namespace etl {
 class LoadBalancer;
 class ETLService;
+}  
 
 namespace RPC {
 
@@ -59,23 +65,23 @@ class RPCEngineBase
     util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<LoadBalancer> balancer_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::LoadBalancer> balancer_;
     std::reference_wrapper<web::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    detail::ForwardingProxy<LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
+    detail::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
     AdminVerificationStrategyType adminVerifier_;
 
 public:
     RPCEngineBase(
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<SubscriptionManager> const& subscriptions,
-        std::shared_ptr<LoadBalancer> const& balancer,
-        std::shared_ptr<ETLService> const& etl,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
+        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<etl::ETLService> const& etl,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
@@ -95,9 +101,9 @@ public:
     make_RPCEngine(
         util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<SubscriptionManager> const& subscriptions,
-        std::shared_ptr<LoadBalancer> const& balancer,
-        std::shared_ptr<ETLService> const& etl,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
+        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<etl::ETLService> const& etl,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,

@@ -58,9 +58,9 @@ namespace RPC::detail {
 ProductionHandlerProvider::ProductionHandlerProvider(
     util::Config const& config,
     std::shared_ptr<BackendInterface> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptionManager,
-    std::shared_ptr<LoadBalancer> const& balancer,
-    std::shared_ptr<ETLService const> const& etl,
+    std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
+    std::shared_ptr<etl::LoadBalancer> const& balancer,
+    std::shared_ptr<etl::ETLService const> const& etl,
     Counters const& counters)
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},

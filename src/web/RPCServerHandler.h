@@ -25,7 +25,7 @@
 #include <rpc/common/impl/APIVersionParser.h>
 #include <util/JsonUtils.h>
 #include <util/Profiler.h>
-#include <webserver/impl/ErrorHandling.h>
+#include <web/impl/ErrorHandling.h>
 
 #include <boost/json/parse.hpp>
 
@@ -41,7 +41,7 @@ class RPCServerHandler
     std::shared_ptr<Engine> const rpcEngine_;
     std::shared_ptr<ETL const> const etl_;
     // subscription manager holds the shared_ptr of this class
-    std::weak_ptr<SubscriptionManager> const subscriptions_;
+    std::weak_ptr<feed::SubscriptionManager> const subscriptions_;
     util::TagDecoratorFactory const tagFactory_;
     RPC::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
@@ -54,7 +54,7 @@ public:
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<Engine> const& rpcEngine,
         std::shared_ptr<ETL const> const& etl,
-        std::shared_ptr<SubscriptionManager> const& subscriptions)
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions)
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)

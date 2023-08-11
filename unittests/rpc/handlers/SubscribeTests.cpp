@@ -51,7 +51,7 @@ protected:
     {
         HandlerBaseTest::SetUp();
         util::Config cfg;
-        subManager_ = SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
+        subManager_ = feed::SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
         util::TagDecoratorFactory tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
@@ -61,7 +61,7 @@ protected:
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<SubscriptionManager> subManager_;
+    std::shared_ptr<feed::SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
 };
 

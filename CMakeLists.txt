@@ -200,10 +200,10 @@ if(tests)
     unittests/data/cassandra/ExecutionStrategyTests.cpp
     unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
-    unittests/webserver/ServerTests.cpp
-    unittests/webserver/RPCServerHandlerTests.cpp
-    unittests/webserver/WhitelistHandlerTests.cpp
-    unittests/webserver/SweepHandlerTests.cpp)
+    unittests/web/ServerTests.cpp
+    unittests/web/RPCServerHandlerTests.cpp
+    unittests/web/WhitelistHandlerTests.cpp
+    unittests/web/SweepHandlerTests.cpp)
 
   include(CMake/deps/gtest.cmake)
 

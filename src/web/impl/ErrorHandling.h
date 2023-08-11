@@ -20,7 +20,7 @@
 #pragma once
 
 #include <rpc/Errors.h>
-#include <webserver/interface/ConnectionBase.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <boost/beast/http.hpp>
 #include <boost/json.hpp>

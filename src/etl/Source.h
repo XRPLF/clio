@@ -40,13 +40,17 @@
 #include <grpcpp/grpcpp.h>
 
 class ProbingSource;
+namespace feed {
 class SubscriptionManager;
+}
 
 // TODO: we use Source so that we can store a vector of Sources
 // but we also use CRTP for implementation of the common logic - this is a bit strange because CRTP as used here is
 // supposed to be used instead of an abstract base.
 // Maybe we should rework this a bit. At this point there is not too much use in the CRTP implementation - we can move
 // things into the base class instead.
+
+namespace etl {
 
 /**
  * @brief Base class for all ETL sources
@@ -145,7 +149,7 @@ class SourceImpl : public Source
     mutable std::mutex lastMsgTimeMtx_;
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     LoadBalancer& balancer_;
 
     etl::detail::ForwardCache forwardCache_;
@@ -179,7 +183,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
         LoadBalancer& balancer,
         SourceHooks hooks)
@@ -839,7 +843,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         LoadBalancer& balancer,
         SourceHooks hooks)
@@ -880,7 +884,7 @@ public:
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> sslCtx,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         LoadBalancer& balancer,
         SourceHooks hooks)
@@ -915,3 +919,4 @@ public:
         return *ws_;
     }
 };
+}  // namespace etl

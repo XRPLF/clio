@@ -33,7 +33,9 @@ struct ConnectionBase;
 }
 
 class LoadBalancer;
+namespace feed {
 class SubscriptionManager;
+}
 
 namespace RPC {
 

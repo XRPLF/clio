@@ -20,9 +20,9 @@
 #pragma once
 
 #include <util/log/Logger.h>
-#include <webserver/HttpSession.h>
-#include <webserver/SslHttpSession.h>
-#include <webserver/interface/Concepts.h>
+#include <web/HttpSession.h>
+#include <web/SslHttpSession.h>
+#include <web/interface/Concepts.h>
 
 #include <fmt/core.h>
 

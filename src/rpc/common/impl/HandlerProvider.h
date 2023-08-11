@@ -28,12 +28,17 @@
 #include <string>
 #include <unordered_map>
 
-class SubscriptionManager;
+namespace etl {
 class ETLService;
 class LoadBalancer;
+}
 
 namespace RPC {
 class Counters;
+}
+
+namespace feed {
+class SubscriptionManager;
 }
 
 namespace RPC::detail {
@@ -52,9 +57,9 @@ public:
     ProductionHandlerProvider(
         util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<SubscriptionManager> const& subscriptionManager,
-        std::shared_ptr<LoadBalancer> const& balancer,
-        std::shared_ptr<ETLService const> const& etl,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
+        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<etl::ETLService const> const& etl,
         Counters const& counters);
 
     bool

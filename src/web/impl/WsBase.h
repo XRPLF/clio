@@ -21,9 +21,9 @@
 
 #include <rpc/common/Types.h>
 #include <util/log/Logger.h>
-#include <webserver/DOSGuard.h>
-#include <webserver/interface/Concepts.h>
-#include <webserver/interface/ConnectionBase.h>
+#include <web/DOSGuard.h>
+#include <web/interface/Concepts.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>

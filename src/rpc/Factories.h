@@ -23,8 +23,8 @@
 #include <rpc/Errors.h>
 #include <rpc/common/APIVersion.h>
 #include <util/Expected.h>
-#include <webserver/Context.h>
-#include <webserver/interface/ConnectionBase.h>
+#include <web/Context.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

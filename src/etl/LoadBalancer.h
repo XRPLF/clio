@@ -29,9 +29,16 @@
 #include <boost/asio.hpp>
 #include <grpcpp/grpcpp.h>
 
+namespace etl {
 class Source;
 class ProbingSource;
+}  // namespace etl
+
+namespace feed {
 class SubscriptionManager;
+}
+
+namespace etl {
 
 /**
  * @brief This class is used to manage connections to transaction processing processes
@@ -66,7 +73,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl);
 
     static std::shared_ptr<LoadBalancer>
@@ -74,7 +81,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
 
     static std::unique_ptr<Source>
@@ -82,7 +89,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioContext,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers,
         LoadBalancer& balancer);
 
@@ -159,3 +166,4 @@ private:
     bool
     execute(Func f, uint32_t ledgerSequence);
 };
+}  // namespace etl

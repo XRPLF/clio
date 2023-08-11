@@ -21,6 +21,8 @@
 #include <rpc/RPCHelpers.h>
 #include <subscriptions/SubscriptionManager.h>
 
+namespace feed {
+
 void
 Subscription::subscribe(SessionPtrType const& session)
 {
@@ -364,3 +366,5 @@ SubscriptionManager::cleanup(SessionPtrType session)
 
     cleanupFuncs_.erase(session);
 }
+
+}  // namespace feed
