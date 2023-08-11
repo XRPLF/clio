@@ -22,7 +22,7 @@
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -60,7 +60,7 @@ protected:
     }
 
     void
-    validateNormalOutput(RPC::ReturnType const& output)
+    validateNormalOutput(rpc::ReturnType const& output)
     {
         ASSERT_TRUE(output);
         auto const& result = output.value().as_object();
@@ -98,7 +98,7 @@ protected:
     }
 
     void
-    validateAdminOutput(RPC::ReturnType const& output)
+    validateAdminOutput(rpc::ReturnType const& output)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();
@@ -107,7 +107,7 @@ protected:
     }
 
     void
-    validateRippledOutput(RPC::ReturnType const& output)
+    validateRippledOutput(rpc::ReturnType const& output)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();
@@ -122,7 +122,7 @@ protected:
     }
 
     void
-    validateCacheOutput(RPC::ReturnType const& output)
+    validateCacheOutput(rpc::ReturnType const& output)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();
@@ -153,7 +153,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "internal");
         EXPECT_EQ(err.at("error_message").as_string(), "Internal error.");
     });
@@ -180,7 +180,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "internal");
         EXPECT_EQ(err.at("error_message").as_string(), "Internal error.");
     });

@@ -25,7 +25,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief BookChangesHandler returns the order book changes for a given ledger.
@@ -81,4 +81,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

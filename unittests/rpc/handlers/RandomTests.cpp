@@ -22,7 +22,7 @@
 #include <rpc/handlers/Random.h>
 #include <util/Fixtures.h>
 
-using namespace RPC;
+using namespace rpc;
 
 class RPCRandomHandlerTest : public HandlerBaseTest
 {

@@ -17,13 +17,14 @@
 */
 //==============================================================================
 
+/** @file */
 #pragma once
 
 #include <rpc/RPCHelpers.h>
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -178,7 +179,7 @@ private:
         void
         handleBookChange(data::TransactionAndMetadata const& blob)
         {
-            auto const [tx, meta] = RPC::deserializeTxPlusMeta(blob);
+            auto const [tx, meta] = rpc::deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
                 return;
 
@@ -205,6 +206,12 @@ private:
     };
 };
 
+/**
+ * @brief Implementation of value_from for BookChange type.
+ *
+ * @param jv The JSON value to populate
+ * @param change The BookChange to serialize
+ */
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change)
 {
@@ -228,7 +235,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
     };
 }
 
+/**
+ * @brief Computes all book changes for the given ledger header and transactions.
+ *
+ * @param lgrInfo The ledger header
+ * @param transactions The vector of transactions with heir metadata
+ */
 [[nodiscard]] boost::json::object const
 computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
 
-}  // namespace RPC
+}  // namespace rpc

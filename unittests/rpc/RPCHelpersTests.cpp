@@ -25,7 +25,7 @@
 
 #include <variant>
 
-using namespace RPC;
+using namespace rpc;
 using namespace testing;
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";

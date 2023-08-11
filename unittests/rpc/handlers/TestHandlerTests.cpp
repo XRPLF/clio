@@ -25,8 +25,8 @@
 #include <boost/json/parse.hpp>
 
 using namespace std;
-using namespace RPC;
-using namespace RPC::validation;
+using namespace rpc;
+using namespace rpc::validation;
 using namespace unittests::detail;
 
 namespace json = boost::json;
@@ -77,7 +77,7 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
         EXPECT_EQ(err.at("error_code").as_uint64(), 31);
@@ -97,7 +97,7 @@ TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "Very custom error");
     });
 }

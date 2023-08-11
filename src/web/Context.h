@@ -32,6 +32,9 @@
 
 namespace web {
 
+/**
+ * @brief Context that is used by the Webserver to pass around information about an incoming request.
+ */
 struct Context : util::Taggable
 {
     boost::asio::yield_context yield;
@@ -42,6 +45,18 @@ struct Context : util::Taggable
     data::LedgerRange range;
     std::string clientIp;
 
+    /**
+     * @brief Create a new Context instance.
+     *
+     * @param yield The coroutine context
+     * @param command The method/command requested
+     * @param apiVersion The api_version parsed from the request
+     * @param params Request's parameters/data as a JSON object
+     * @param session The connection to the peer
+     * @param tagFactory A factory that is used to generate tags to track requests and connections
+     * @param range The ledger range that is available at the time of the request
+     * @param clientIp IP of the peer
+     */
     Context(
         boost::asio::yield_context yield,
         std::string const& command,

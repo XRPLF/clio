@@ -38,12 +38,13 @@
 
 namespace data::cassandra::detail {
 
+// TODO: this could probably be also moved out of detail and into the main cassandra namespace.
+
 /**
- * @brief Implements async and sync querying against the cassandra DB with
- * support for throttling.
+ * @brief Implements async and sync querying against the cassandra DB with support for throttling.
  *
- * Note: A lot of the code that uses yield is repeated below. This is ok for now
- * because we are hopefully going to be getting rid of it entirely later on.
+ * Note: A lot of the code that uses yield is repeated below.
+ * This is ok for now because we are hopefully going to be getting rid of it entirely later on.
  */
 template <typename HandleType = Handle>
 class DefaultExecutionStrategy
@@ -77,6 +78,10 @@ public:
     using ResultType = typename HandleType::ResultType;
     using CompletionTokenType = boost::asio::yield_context;
 
+    /**
+     * @param settings The settings to use
+     * @param handle A handle to the cassandra database
+     */
     DefaultExecutionStrategy(Settings const& settings, HandleType const& handle)
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
@@ -96,7 +101,7 @@ public:
     }
 
     /**
-     * @brief Wait for all async writes to finish before unblocking
+     * @brief Wait for all async writes to finish before unblocking.
      */
     void
     sync()
@@ -107,6 +112,9 @@ public:
         log_.debug() << "Sync done.";
     }
 
+    /**
+     * @return true if outstanding read requests allowance is exhausted; false otherwise
+     */
     bool
     isTooBusy() const
     {
@@ -114,7 +122,7 @@ public:
     }
 
     /**
-     * @brief Blocking query execution used for writing data
+     * @brief Blocking query execution used for writing data.
      *
      * Retries forever sleeping for 5 milliseconds between attempts.
      */
@@ -136,7 +144,7 @@ public:
     }
 
     /**
-     * @brief Blocking query execution used for writing data
+     * @brief Blocking query execution used for writing data.
      *
      * Retries forever sleeping for 5 milliseconds between attempts.
      */
@@ -148,11 +156,11 @@ public:
     }
 
     /**
-     * @brief Non-blocking query execution used for writing data
+     * @brief Non-blocking query execution used for writing data.
      *
      * Retries forever with retry policy specified by @ref AsyncExecutor
      *
-     * @param prepradeStatement Statement to prepare and execute
+     * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
      * @throw DatabaseTimeout on timeout
      */
@@ -169,7 +177,7 @@ public:
     }
 
     /**
-     * @brief Non-blocking batched query execution used for writing data
+     * @brief Non-blocking batched query execution used for writing data.
      *
      * Retries forever with retry policy specified by @ref AsyncExecutor.
      *
@@ -195,7 +203,7 @@ public:
      * Retries forever until successful or throws an exception on timeout.
      *
      * @param token Completion token (yield_context)
-     * @param prepradeStatement Statement to prepare and execute
+     * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
      * @throw DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected

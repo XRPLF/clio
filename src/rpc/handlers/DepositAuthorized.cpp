@@ -20,7 +20,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/DepositAuthorized.h>
 
-namespace RPC {
+namespace rpc {
 
 DepositAuthorizedHandler::Result
 DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context const& ctx) const
@@ -112,4 +112,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, DepositAuthorize
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

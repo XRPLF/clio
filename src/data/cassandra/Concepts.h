@@ -30,6 +30,9 @@
 
 namespace data::cassandra {
 
+/**
+ * @brief The requirements of a settings provider.
+ */
 // clang-format off
 template <typename T>
 concept SomeSettingsProvider = requires(T a) {
@@ -41,6 +44,9 @@ concept SomeSettingsProvider = requires(T a) {
 };
 // clang-format on
 
+/**
+ * @brief The requirements of an execution strategy.
+ */
 // clang-format off
 template <typename T>
 concept SomeExecutionStrategy = requires(
@@ -66,6 +72,9 @@ concept SomeExecutionStrategy = requires(
 };
 // clang-format on
 
+/**
+ * @brief The requirements of a retry policy.
+ */
 // clang-format off
 template <typename T>
 concept SomeRetryPolicy = requires(T a, boost::asio::io_context ioc, CassandraError err, uint32_t attempt) {

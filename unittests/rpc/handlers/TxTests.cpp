@@ -24,7 +24,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -54,7 +54,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "excessiveLgrRange");
         EXPECT_EQ(err.at("error_message").as_string(), "Ledger range exceeds 1000.");
     });
@@ -75,7 +75,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidLgrRange");
         EXPECT_EQ(err.at("error_message").as_string(), "Ledger range is invalid.");
     });
@@ -98,7 +98,7 @@ TEST_F(RPCTxTest, TxnNotFound)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
     });
@@ -125,7 +125,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), false);
@@ -153,7 +153,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), true);

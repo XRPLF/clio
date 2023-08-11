@@ -23,36 +23,23 @@
 
 namespace etl {
 
+/**
+ * @brief Represents the state of the ETL subsystem.
+ */
 struct SystemState
 {
     /**
-     * @brief Whether the process is in strict read-only mode
+     * @brief Whether the process is in strict read-only mode.
      *
      * In strict read-only mode, the process will never attempt to become the ETL writer, and will only publish ledgers
      * as they are written to the database.
      */
     bool isReadOnly = false;
 
-    /**
-     * @brief Whether the process is writing to the database.
-     *
-     * Used by server_info
-     */
-    std::atomic_bool isWriting = false;
-
-    /**
-     * @brief Whether the software is stopping
-     */
-    std::atomic_bool isStopping = false;
-
-    /**
-     * @brief Whether a write conflict was detected
-     */
-    std::atomic_bool writeConflict = false;
-
-    /**
-     * @brief Whether we detected an amendment block
-     */
-    std::atomic_bool isAmendmentBlocked = false;
+    std::atomic_bool isWriting = false;          /**< @brief Whether the process is writing to the database. */
+    std::atomic_bool isStopping = false;         /**< @brief Whether the software is stopping. */
+    std::atomic_bool writeConflict = false;      /**< @brief Whether a write conflict was detected. */
+    std::atomic_bool isAmendmentBlocked = false; /**< @brief Whether we detected an amendment block. */
 };
+
 }  // namespace etl

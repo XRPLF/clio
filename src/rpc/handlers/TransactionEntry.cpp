@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/TransactionEntry.h>
 
-namespace RPC {
+namespace rpc {
 
 TransactionEntryHandler::Result
 TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context const& ctx) const
@@ -90,4 +90,4 @@ tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::jso
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -68,15 +68,15 @@ public:
             }
         };
 
-        using decayed_t = std::decay_t<Type>;
+        using DecayedType = std::decay_t<Type>;
 
-        if constexpr (std::is_same_v<decayed_t, bool>)
+        if constexpr (std::is_same_v<DecayedType, bool>)
         {
             auto const rc = cass_tuple_set_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
-        else if constexpr (std::is_convertible_v<decayed_t, int64_t>)
+        else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
         {
             auto const rc = cass_tuple_set_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
@@ -84,7 +84,7 @@ public:
         else
         {
             // type not supported for binding
-            static_assert(unsupported_v<decayed_t>);
+            static_assert(unsupported_v<DecayedType>);
         }
     }
 };
@@ -126,20 +126,20 @@ private:
             }
         };
 
-        using decayed_t = std::decay_t<Type>;
+        using DecayedType = std::decay_t<Type>;
 
         // clio only uses bigint (int64_t) so we convert any incoming type
-        if constexpr (std::is_convertible_v<decayed_t, int64_t>)
+        if constexpr (std::is_convertible_v<DecayedType, int64_t>)
         {
             int64_t out;
             auto const rc = cass_value_get_int64(cass_iterator_get_value(*this), &out);
             throwErrorIfNeeded(rc, "Extract int64 from tuple");
-            output = static_cast<decayed_t>(out);
+            output = static_cast<DecayedType>(out);
         }
         else
         {
             // type not supported for extraction
-            static_assert(unsupported_v<decayed_t>);
+            static_assert(unsupported_v<DecayedType>);
         }
 
         return output;

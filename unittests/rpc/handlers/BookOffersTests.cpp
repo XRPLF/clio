@@ -38,7 +38,7 @@ constexpr static auto PAYS20XRPGETS10USDBOOKDIR = "7B1767D41DBCE79D9585CF9D0262A
 // transfer rate x2
 constexpr static auto TRANSFERRATEX2 = 2000000000;
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -75,7 +75,7 @@ TEST_P(RPCBookOffersParameterTest, CheckError)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), bundle.expectedErrorMessage);
     });
@@ -564,9 +564,9 @@ generateNormalPathBookOffersTestBundles()
         PAYS20USDGETS10XRPBOOKDIR);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::to_currency("USD"), account, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), account, ripple::xrpCurrency(), ripple::xrpAccount())));
     auto const getsUSDPaysXRPBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), account)));
+        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), account)));
 
     auto const getsXRPPaysUSDInputJson = fmt::format(
         R"({{
@@ -1125,7 +1125,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -1158,7 +1158,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -1193,7 +1193,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -1215,7 +1215,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
@@ -1286,7 +1286,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 

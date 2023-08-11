@@ -53,7 +53,7 @@
 #include <rpc/handlers/Unsubscribe.h>
 #include <rpc/handlers/VersionHandler.h>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 ProductionHandlerProvider::ProductionHandlerProvider(
     util::Config const& config,
@@ -117,4 +117,4 @@ ProductionHandlerProvider::isClioOnly(std::string const& command) const
     return handlerMap_.contains(command) && handlerMap_.at(command).isClioOnly;
 }
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

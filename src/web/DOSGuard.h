@@ -32,11 +32,17 @@
 
 namespace web {
 
+/**
+ * @brief The interface of a denial of service guard.
+ */
 class BaseDOSGuard
 {
 public:
     virtual ~BaseDOSGuard() = default;
 
+    /**
+     * @brief Clears implementation-defined counters.
+     */
     virtual void
     clear() noexcept = 0;
 };
@@ -44,8 +50,8 @@ public:
 /**
  * @brief A simple denial of service guard used for rate limiting.
  *
- * @tparam Type of the Whitelist Handler
- * @tparam Type of the Sweep Handler
+ * @tparam WhitelistHandlerType The type of the whitelist handler
+ * @tparam SweepHandlerType The type of the sweep handler
  */
 template <typename WhitelistHandlerType, typename SweepHandlerType>
 class BasicDOSGuard : public BaseDOSGuard
@@ -75,8 +81,8 @@ public:
      * @brief Constructs a new DOS guard.
      *
      * @param config Clio config
-     * @param WhitelistHandlerType Whitelist handler that checks whitelist for ip addresses
-     * @param SweepHandlerType Sweep handler that implements the sweeping behaviour
+     * @param whitelistHandler Whitelist handler that checks whitelist for IP addresses
+     * @param sweepHandler Sweep handler that implements the sweeping behaviour
      */
     BasicDOSGuard(
         util::Config const& config,
@@ -91,7 +97,7 @@ public:
     }
 
     /**
-     * @brief Check whether an ip address is in the whitelist or not
+     * @brief Check whether an ip address is in the whitelist or not.
      *
      * @param ip The ip address to check
      * @return true
@@ -104,7 +110,7 @@ public:
     }
 
     /**
-     * @brief Check whether an ip address is currently rate limited or not
+     * @brief Check whether an ip address is currently rate limited or not.
      *
      * @param ip The ip address to check
      * @return true If not rate limited
@@ -143,7 +149,7 @@ public:
     }
 
     /**
-     * @brief Increment connection count for the given ip address
+     * @brief Increment connection count for the given ip address.
      *
      * @param ip
      */
@@ -157,7 +163,7 @@ public:
     }
 
     /**
-     * @brief Decrement connection count for the given ip address
+     * @brief Decrement connection count for the given ip address.
      *
      * @param ip
      */
@@ -225,8 +231,7 @@ public:
     }
 
     /**
-     * @brief Instantly clears all fetch counters added by @see add(std::string
-     * const&, uint32_t)
+     * @brief Instantly clears all fetch counters added by @see add(std::string const&, uint32_t).
      */
     void
     clear() noexcept override
@@ -261,7 +266,7 @@ class IntervalSweepHandler
 
 public:
     /**
-     * @brief Construct a new interval-based sweep handler
+     * @brief Construct a new interval-based sweep handler.
      *
      * @param config Clio config
      * @param ctx The boost::asio::io_context
@@ -279,8 +284,7 @@ public:
     }
 
     /**
-     * @brief This setup member function is called by @ref BasicDOSGuard during
-     * its initialization.
+     * @brief This setup member function is called by @ref BasicDOSGuard during its initialization.
      *
      * @param guard Pointer to the dos guard
      */

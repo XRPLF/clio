@@ -35,7 +35,7 @@ namespace {
 util::Logger gLog{"RPC"};
 }  // namespace
 
-namespace RPC {
+namespace rpc {
 
 std::optional<AccountCursor>
 parseAccountCursor(std::optional<std::string> jsonCursor)
@@ -1340,4 +1340,4 @@ isAmendmentEnabled(
     return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();
 }
 
-}  // namespace RPC
+}  // namespace rpc

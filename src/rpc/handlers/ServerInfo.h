@@ -39,11 +39,11 @@ class LoadBalancer;
 namespace feed {
 class SubscriptionManager;
 }
-namespace RPC {
+namespace rpc {
 class Counters;
 }
 
-namespace RPC {
+namespace rpc {
 
 template <typename SubscriptionManagerType, typename LoadBalancerType, typename ETLServiceType, typename CountersType>
 class BaseServerInfoHandler
@@ -120,7 +120,7 @@ public:
     Result
     process(Context const& ctx) const
     {
-        using namespace RPC;
+        using namespace rpc;
         using namespace std::chrono;
 
         auto const range = backend_->fetchLedgerRange();
@@ -258,4 +258,4 @@ private:
 using ServerInfoHandler =
     BaseServerInfoHandler<feed::SubscriptionManager, etl::LoadBalancer, etl::ETLService, Counters>;
 
-}  // namespace RPC
+}  // namespace rpc

@@ -25,7 +25,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ledger_entry method returns a single ledger object from the XRP Ledger in its raw format.
@@ -187,4 +187,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

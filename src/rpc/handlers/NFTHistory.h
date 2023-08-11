@@ -27,7 +27,7 @@
 #include <rpc/common/Validators.h>
 #include <util/log/Logger.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The nft_history command asks the Clio server for past transaction metadata for the NFT being queried.
@@ -126,4 +126,4 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
 
-}  // namespace RPC
+}  // namespace rpc

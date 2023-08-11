@@ -24,7 +24,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The tx method retrieves information on a single transaction, by its identifying hash.
@@ -85,4 +85,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

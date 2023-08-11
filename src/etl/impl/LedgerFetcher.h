@@ -64,11 +64,11 @@ public:
      * @return ledger header and transaction+metadata blobs; empty optional if the server is shutting down
      */
     OptionalGetLedgerResponseType
-    fetchData(uint32_t seq)
+    fetchData(uint32_t sequence)
     {
-        log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
+        log_.debug() << "Attempting to fetch ledger with sequence = " << sequence;
 
-        auto response = loadBalancer_->fetchLedger(seq, false, false);
+        auto response = loadBalancer_->fetchLedger(sequence, false, false);
         if (response)
             log_.trace() << "GetLedger reply = " << response->DebugString();
         return response;
@@ -85,12 +85,12 @@ public:
      * this ledger and the parent; Empty optional if the server is shutting down
      */
     OptionalGetLedgerResponseType
-    fetchDataAndDiff(uint32_t seq)
+    fetchDataAndDiff(uint32_t sequence)
     {
-        log_.debug() << "Attempting to fetch ledger with sequence = " << seq;
+        log_.debug() << "Attempting to fetch ledger with sequence = " << sequence;
 
         auto response = loadBalancer_->fetchLedger(
-            seq, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= seq);
+            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence);
         if (response)
             log_.trace() << "GetLedger reply = " << response->DebugString();
 

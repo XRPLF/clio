@@ -21,7 +21,7 @@
 #include <rpc/handlers/Ping.h>
 #include <util/Fixtures.h>
 
-using namespace RPC;
+using namespace rpc;
 
 class RPCPingHandlerTest : public HandlerBaseTest
 {

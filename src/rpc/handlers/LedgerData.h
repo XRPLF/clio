@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ledger_data method retrieves contents of the specified ledger. You can iterate through several calls to
@@ -92,11 +92,7 @@ public:
             {"out_of_order", validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {
-                JS(limit),
-                validation::Type<uint32_t>{},
-                validation::Min(1u),
-            },
+            {JS(limit), validation::Type<uint32_t>{}, validation::Min(1u)},
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
              meta::IfType<std::string>{validation::Uint256HexStringValidator}},
@@ -122,4 +118,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

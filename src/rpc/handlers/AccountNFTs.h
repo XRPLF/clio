@@ -25,7 +25,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_nfts method returns a list of NFToken objects for the specified account.
@@ -96,4 +96,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

@@ -24,7 +24,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -91,7 +91,7 @@ TEST_P(BookChangesParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -112,7 +112,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -132,7 +132,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -157,7 +157,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });

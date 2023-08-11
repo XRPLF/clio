@@ -40,18 +40,18 @@ namespace web::detail {
  * The write operation also supports shared_ptr of string, so the caller can keep the string alive until it is sent. It
  * is useful when we have multiple sessions sending the same content
  * @tparam Derived The derived class
- * @tparam Handler The handler type, will be called when a request is received.
+ * @tparam HandlerType The handler type, will be called when a request is received.
  */
-template <template <class> class Derived, ServerHandler Handler>
-class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, Handler>>
+template <template <class> class Derived, SomeServerHandler HandlerType>
+class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>>
 {
-    using std::enable_shared_from_this<WsBase<Derived, Handler>>::shared_from_this;
+    using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     bool sending_ = false;
     std::queue<std::shared_ptr<std::string>> messages_;
-    std::shared_ptr<Handler> const handler_;
+    std::shared_ptr<HandlerType> const handler_;
 
 protected:
     util::Logger log_{"WebServer"};
@@ -74,7 +74,7 @@ public:
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
+        std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer)
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
@@ -88,10 +88,10 @@ public:
         dosGuard_.get().decrement(clientIp);
     }
 
-    Derived<Handler>&
+    Derived<HandlerType>&
     derived()
     {
-        return static_cast<Derived<Handler>&>(*this);
+        return static_cast<Derived<HandlerType>&>(*this);
     }
 
     void
@@ -158,9 +158,9 @@ public:
             jsonResponse["warning"] = "load";
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
-                jsonResponse["warnings"].as_array().push_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
+                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
             else
-                jsonResponse["warnings"] = boost::json::array{RPC::makeWarning(RPC::warnRPC_RATE_LIMIT)};
+                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
 
             // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);
@@ -221,7 +221,7 @@ public:
         perfLog_.info() << tag() << "Received request from ip = " << this->clientIp;
 
         auto sendError = [this](auto error, std::string&& requestStr) {
-            auto e = RPC::makeError(error);
+            auto e = rpc::makeError(error);
 
             try
             {
@@ -244,7 +244,7 @@ public:
         if (!dosGuard_.get().request(clientIp))
         {
             // TODO: could be useful to count in counters in the future too
-            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(requestStr));
+            sendError(rpc::RippledError::rpcSLOW_DOWN, std::move(requestStr));
         }
         else
         {
@@ -254,7 +254,7 @@ public:
             }
             catch (std::exception const&)
             {
-                sendError(RPC::RippledError::rpcINTERNAL, std::move(requestStr));
+                sendError(rpc::RippledError::rpcINTERNAL, std::move(requestStr));
             }
         }
 

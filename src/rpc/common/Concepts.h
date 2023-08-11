@@ -26,65 +26,87 @@
 
 #include <string>
 
-namespace RPC {
+namespace rpc {
 
 struct RpcSpec;
 
 /**
- * @brief A concept that specifies what a requirement used with @ref FieldSpec
- * must provide
+ * @brief Specifies what a requirement used with @ref rpc::FieldSpec must provide.
  */
 // clang-format off
 template <typename T>
-concept Requirement = requires(T a, boost::json::value lval) {
+concept SomeRequirement = requires(T a, boost::json::value lval) {
     { a.verify(lval, std::string{}) } -> std::same_as<MaybeError>;
 };
 // clang-format on
 
+/**
+ * @brief Specifies what a modifier used with @ref rpc::FieldSpec must provide.
+ */
 // clang-format off
 template <typename T>
-concept Modifier = requires(T a, boost::json::value lval) {
+concept SomeModifier = requires(T a, boost::json::value lval) {
     { a.modify(lval, std::string{}) } -> std::same_as<MaybeError>;
 };
 // clang-format on
 
+/**
+ * @brief The requirements of a processor to be used with @ref rpc::FieldSpec.
+ */
 template <typename T>
-concept Processor = (Requirement<T> or Modifier<T>);
+concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T>);
 
 /**
- * @brief A concept that specifies what a Handler type must provide
- *
- * Note that value_from and value_to should be implemented using tag_invoke
- * as per boost::json documentation for these functions.
+ * @brief A process function that expects both some Input and a Context.
  */
 // clang-format off
 template <typename T>
-concept ContextProcessWithInput = requires(T a, typename T::Input in, typename T::Output out, Context const& ctx) {
+concept SomeContextProcessWithInput = requires(T a, typename T::Input in, typename T::Output out, Context const& ctx) {
     { a.process(in, ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>; 
 };
+// clang-format on
 
+/**
+ * @brief A process function that expects no Input but does take a Context.
+ */
+// clang-format off
 template <typename T>
-concept ContextProcessWithoutInput = requires(T a, typename T::Output out, Context const& ctx) {
+concept SomeContextProcessWithoutInput = requires(T a, typename T::Output out, Context const& ctx) {
     { a.process(ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>; 
 };
+// clang-format on
 
+/**
+ * @brief Specifies what a Handler with Input must provide.
+ */
+// clang-format off
 template <typename T>
-concept HandlerWithInput = requires(T a, uint32_t version) {
+concept SomeHandlerWithInput = requires(T a, uint32_t version) {
     { a.spec(version) } -> std::same_as<RpcSpecConstRef>; 
 }
-and ContextProcessWithInput<T>
+and SomeContextProcessWithInput<T>
 and boost::json::has_value_to<typename T::Input>::value;
+// clang-format on
 
+/**
+ * @brief Specifies what a Handler without Input must provide.
+ */
+// clang-format off
 template <typename T>
-concept HandlerWithoutInput = ContextProcessWithoutInput<T>;
+concept SomeHandlerWithoutInput = SomeContextProcessWithoutInput<T>;
+// clang-format on
 
+/**
+ * @brief Specifies what a Handler type must provide.
+ */
+// clang-format off
 template <typename T>
-concept Handler = 
+concept SomeHandler = 
 (
-    HandlerWithInput<T> or
-    HandlerWithoutInput<T>
+    SomeHandlerWithInput<T> or
+    SomeHandlerWithoutInput<T>
 ) 
 and boost::json::has_value_from<typename T::Output>::value;
 // clang-format on
 
-}  // namespace RPC
+}  // namespace rpc

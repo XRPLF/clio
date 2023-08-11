@@ -21,7 +21,7 @@
 
 #include <string_view>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 class IPAdminVerificationStrategy final
 {
@@ -39,4 +39,4 @@ public:
     }
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

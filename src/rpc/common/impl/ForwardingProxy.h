@@ -30,7 +30,7 @@
 #include <memory>
 #include <string>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
 class ForwardingProxy
@@ -148,4 +148,4 @@ private:
     }
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

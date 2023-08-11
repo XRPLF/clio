@@ -34,7 +34,7 @@ constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -170,7 +170,7 @@ TEST_P(LedgerParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -194,7 +194,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
             RANGEMAX));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -218,7 +218,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
             RANGEMAX));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -242,7 +242,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
             LEDGERHASH));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });

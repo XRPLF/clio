@@ -24,7 +24,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Retrieve information about the public ledger.
@@ -94,4 +94,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

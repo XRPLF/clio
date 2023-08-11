@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/AccountOffers.h>
 
-namespace RPC {
+namespace rpc {
 
 void
 AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const
@@ -157,4 +157,4 @@ tag_invoke(boost::json::value_to_tag<AccountOffersHandler::Input>, boost::json::
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

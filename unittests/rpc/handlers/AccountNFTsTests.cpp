@@ -36,7 +36,7 @@ constexpr static auto PAGE = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255A
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -155,7 +155,7 @@ TEST_P(AccountNFTParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -182,7 +182,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -209,7 +209,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -236,7 +236,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -263,7 +263,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });

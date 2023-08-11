@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/GatewayBalances.h>
 
-namespace RPC {
+namespace rpc {
 
 GatewayBalancesHandler::Result
 GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context const& ctx) const
@@ -228,4 +228,4 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

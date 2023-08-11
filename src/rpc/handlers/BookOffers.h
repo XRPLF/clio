@@ -25,7 +25,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The book_offers method retrieves a list of Offers between two currencies, also known as an order book.
@@ -117,4 +117,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

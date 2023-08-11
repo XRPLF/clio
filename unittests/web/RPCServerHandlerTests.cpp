@@ -26,6 +26,7 @@
 
 using namespace std::chrono_literals;
 using namespace feed;
+using namespace web;
 
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
@@ -271,7 +272,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
                                             ]
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
+        .WillOnce(testing::Return(rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -311,7 +312,7 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
                                             "id": "123"
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(RPC::Status{RPC::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
+        .WillOnce(testing::Return(rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 

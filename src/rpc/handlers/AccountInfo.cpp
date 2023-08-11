@@ -21,7 +21,7 @@
 
 #include <ripple/protocol/ErrorCodes.h>
 
-namespace RPC {
+namespace rpc {
 AccountInfoHandler::Result
 AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
@@ -51,10 +51,10 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
     auto const isDisallowIncomingEnabled =
-        RPC::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, RPC::Amendments::DisallowIncoming);
+        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::DisallowIncoming);
 
     auto const isClawbackEnabled =
-        RPC::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, RPC::Amendments::Clawback);
+        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::Clawback);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists)
@@ -173,4 +173,4 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

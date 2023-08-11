@@ -1,5 +1,7 @@
-# Unit Testing
+# Unit testing
+
 The correctness of new implementations can be verified via running unit tests. Below are the information on how to run unit tests.
+
 ## Requirements
 ### Cassandra cluster
 If you wish to test the backend component you will need to have access to a **local (127.0.0.1)** Cassandra cluster, opened at port **9042**. Please ensure that the cluster is successfully running before running unit tests unless you filter out all `Backend` tests.

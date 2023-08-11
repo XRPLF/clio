@@ -28,7 +28,7 @@
 namespace data::cassandra {
 
 /**
- * @brief Provides settings for @ref CassandraBackend
+ * @brief Provides settings for @ref BasicCassandraBackend.
  */
 class SettingsProvider
 {
@@ -41,34 +41,50 @@ class SettingsProvider
     Settings settings_;
 
 public:
+    /**
+     * @brief Create a settings provider from the specified config.
+     *
+     * @param cfg The config of Clio to use
+     * @param ttl Time to live setting
+     */
     explicit SettingsProvider(util::Config const& cfg, uint16_t ttl = 0);
 
-    /*! Get the cluster settings */
+    /**
+     * @return The cluster settings
+     */
     [[nodiscard]] Settings
     getSettings() const;
 
-    /*! Get the specified keyspace */
+    /**
+     * @return The specified keyspace
+     */
     [[nodiscard]] inline std::string
     getKeyspace() const
     {
         return keyspace_;
     }
 
-    /*! Get an optional table prefix to use in all queries */
+    /**
+     * @return The optional table prefix to use in all queries
+     */
     [[nodiscard]] inline std::optional<std::string>
     getTablePrefix() const
     {
         return tablePrefix_;
     }
 
-    /*! Get the replication factor */
+    /**
+     * @return The replication factor
+     */
     [[nodiscard]] inline uint16_t
     getReplicationFactor() const
     {
         return replicationFactor_;
     }
 
-    /*! Get the default time to live to use in all `create` queries */
+    /**
+     * @return The default time to live to use in all `create` queries
+     */
     [[nodiscard]] inline uint16_t
     getTtl() const
     {

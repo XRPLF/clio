@@ -20,7 +20,7 @@
 #include <rpc/handlers/AccountTx.h>
 #include <util/Profiler.h>
 
-namespace RPC {
+namespace rpc {
 
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
@@ -211,4 +211,4 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -56,7 +56,7 @@ private:
 
 public:
     /**
-     * @brief Create an instance of the probing source
+     * @brief Create an instance of the probing source.
      *
      * @param config The configuration to use
      * @param ioc io context to run on
@@ -99,10 +99,10 @@ public:
     toString() const override;
 
     std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly = false) override;
+    loadInitialLedger(std::uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false) override;
 
     std::pair<grpc::Status, GetLedgerResponseType>
-    fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) override;
+    fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false) override;
 
     std::optional<boost::json::object>
     forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)

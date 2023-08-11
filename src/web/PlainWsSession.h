@@ -24,43 +24,59 @@
 namespace web {
 
 /**
- * @brief The plain WebSocket session class, just to hold the plain stream. Other operations will be handled by the base
- * class
+ * @brief Represents a non-secure websocket session.
+ *
+ * Majority of the operations are handled by the base class.
  */
-template <ServerHandler Handler>
-class PlainWsSession : public detail::WsBase<PlainWsSession, Handler>
+template <SomeServerHandler HandlerType>
+class PlainWsSession : public detail::WsBase<PlainWsSession, HandlerType>
 {
-    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    using StreamType = boost::beast::websocket::stream<boost::beast::tcp_stream>;
+    StreamType ws_;
 
 public:
+    /**
+     * @brief Create a new non-secure websocket session.
+     *
+     * @param socket The socket. Ownership is transferred
+     * @param ip Client's IP address
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     * @param buffer Buffer with initial data received from the peer
+     */
     explicit PlainWsSession(
         boost::asio::ip::tcp::socket&& socket,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& callback,
+        std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer)
-        : detail::WsBase<PlainWsSession, Handler>(ip, tagFactory, dosGuard, callback, std::move(buffer))
+        : detail::WsBase<PlainWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(socket))
     {
     }
 
-    boost::beast::websocket::stream<boost::beast::tcp_stream>&
+    ~PlainWsSession() = default;
+
+    /** @return The websocket stream. */
+    StreamType&
     ws()
     {
         return ws_;
     }
-
-    ~PlainWsSession() = default;
 };
 
 /**
- * @brief The plain WebSocket upgrader class, upgrade from http session to websocket session.
+ * @brief The websocket upgrader class, upgrade from an HTTP session to a non-secure websocket session.
+ *
  * Pass the socket to the session class after upgrade.
  */
-template <ServerHandler Handler>
-class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<Handler>>
+template <SomeServerHandler HandlerType>
+class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>>
 {
+    using std::enable_shared_from_this<WsUpgrader<HandlerType>>::shared_from_this;
+
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
@@ -68,33 +84,47 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<Handler>>
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     http::request<http::string_body> req_;
     std::string ip_;
-    std::shared_ptr<Handler> const handler_;
+    std::shared_ptr<HandlerType> const handler_;
 
 public:
+    /**
+     * @brief Create a new upgrader to non-secure websocket.
+     *
+     * @param stream The TCP stream. Ownership is transferred
+     * @param ip Client's IP address
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     * @param buffer Buffer with initial data received from the peer. Ownership is transferred
+     * @param request The request. Ownership is transferred
+     */
     WsUpgrader(
         boost::beast::tcp_stream&& stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
-        boost::beast::flat_buffer&& b,
-        http::request<http::string_body> req)
+        std::shared_ptr<HandlerType> const& handler,
+        boost::beast::flat_buffer&& buffer,
+        http::request<http::string_body> request)
         : http_(std::move(stream))
-        , buffer_(std::move(b))
+        , buffer_(std::move(buffer))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , req_(std::move(req))
+        , req_(std::move(request))
         , ip_(ip)
         , handler_(handler)
     {
     }
 
+    WsUpgrader() = default;
+
+    /** @brief Initiate the upgrade. */
     void
     run()
     {
         boost::asio::dispatch(
             http_.get_executor(),
-            boost::beast::bind_front_handler(&WsUpgrader<Handler>::doUpgrade, this->shared_from_this()));
+            boost::beast::bind_front_handler(&WsUpgrader<HandlerType>::doUpgrade, shared_from_this()));
     }
 
 private:
@@ -103,26 +133,23 @@ private:
     {
         parser_.emplace();
 
-        constexpr static auto MaxBobySize = 10000;
-        parser_->body_limit(MaxBobySize);
+        constexpr static auto maxBodySize = 10000;
+        parser_->body_limit(maxBodySize);
 
         boost::beast::get_lowest_layer(http_).expires_after(std::chrono::seconds(30));
-
         onUpgrade();
     }
 
     void
     onUpgrade()
     {
-        // See if it is a WebSocket Upgrade
         if (!boost::beast::websocket::is_upgrade(req_))
             return;
 
-        // Disable the timeout.
-        // The websocket::stream uses its own timeout settings.
+        // Disable the timeout. The websocket::stream uses its own timeout settings.
         boost::beast::get_lowest_layer(http_).expires_never();
 
-        std::make_shared<PlainWsSession<Handler>>(
+        std::make_shared<PlainWsSession<HandlerType>>(
             http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
             ->run(std::move(req_));
     }

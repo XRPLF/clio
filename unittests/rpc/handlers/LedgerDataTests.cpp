@@ -24,7 +24,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -111,7 +111,7 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -135,7 +135,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
             RANGEMAX));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -159,7 +159,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
             RANGEMAX));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -183,7 +183,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
             LEDGERHASH));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -212,7 +212,7 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
             INDEX1));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerDoesNotExist");
     });

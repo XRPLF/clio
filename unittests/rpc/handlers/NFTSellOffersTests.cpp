@@ -24,7 +24,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -51,7 +51,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -69,7 +69,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -87,7 +87,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -105,7 +105,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
@@ -124,7 +124,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
@@ -143,7 +143,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
@@ -159,7 +159,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
         })");
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "nft_idMalformed");
     });
@@ -176,7 +176,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "nft_idNotString");
     });
@@ -203,7 +203,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -228,7 +228,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -256,7 +256,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -281,7 +281,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -309,7 +309,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "notFound");
     });
@@ -328,7 +328,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
     });
@@ -349,7 +349,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerMalformed");
     });
@@ -364,7 +364,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }

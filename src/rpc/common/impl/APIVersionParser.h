@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <string>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 class ProductionAPIVersionParser : public APIVersionParser
 {
@@ -94,4 +94,4 @@ public:
     }
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

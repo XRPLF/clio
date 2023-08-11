@@ -44,7 +44,7 @@ class Statement : public ManagedObject<CassStatement>
 
 public:
     /**
-     * @brief Construct a new statement with optionally provided arguments
+     * @brief Construct a new statement with optionally provided arguments.
      *
      * Note: it's up to the user to make sure the bound parameters match
      * the format of the query (e.g. amount of '?' matches count of args).
@@ -66,6 +66,11 @@ public:
 
     Statement(Statement&&) = default;
 
+    /**
+     * @brief Binds the given arguments to the statement.
+     *
+     * @param args Arguments to bind
+     */
     template <typename... Args>
     void
     bind(Args&&... args) const
@@ -74,6 +79,12 @@ public:
         (this->bindAt<Args>(idx++, std::forward<Args>(args)), ...);
     }
 
+    /**
+     * @brief Binds an argument to a specific index.
+     *
+     * @param idx The index of the argument
+     * @param value The value to bind it to
+     */
     template <typename Type>
     void
     bindAt(std::size_t const idx, Type&& value) const
@@ -88,48 +99,48 @@ public:
             return cass_statement_bind_bytes(*this, idx, static_cast<cass_byte_t const*>(data), size);
         };
 
-        using decayed_t = std::decay_t<Type>;
-        using uchar_vec_t = std::vector<unsigned char>;
-        using uint_tuple_t = std::tuple<uint32_t, uint32_t>;
+        using DecayedType = std::decay_t<Type>;
+        using UCharVectorType = std::vector<unsigned char>;
+        using UintTupleType = std::tuple<uint32_t, uint32_t>;
 
-        if constexpr (std::is_same_v<decayed_t, ripple::uint256>)
+        if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
         {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::uint256");
         }
-        else if constexpr (std::is_same_v<decayed_t, ripple::AccountID>)
+        else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>)
         {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::AccountID");
         }
-        else if constexpr (std::is_same_v<decayed_t, uchar_vec_t>)
+        else if constexpr (std::is_same_v<DecayedType, UCharVectorType>)
         {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
         }
-        else if constexpr (std::is_convertible_v<decayed_t, std::string>)
+        else if constexpr (std::is_convertible_v<DecayedType, std::string>)
         {
             // reinterpret_cast is needed here :'(
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         }
-        else if constexpr (std::is_same_v<decayed_t, uint_tuple_t>)
+        else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
         {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
         }
-        else if constexpr (std::is_same_v<decayed_t, bool>)
+        else if constexpr (std::is_same_v<DecayedType, bool>)
         {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
         }
-        else if constexpr (std::is_same_v<decayed_t, Limit>)
+        else if constexpr (std::is_same_v<DecayedType, Limit>)
         {
             auto const rc = cass_statement_bind_int32(*this, idx, value.limit);
             throwErrorIfNeeded(rc, "Bind limit (int32)");
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
-        else if constexpr (std::is_convertible_v<decayed_t, int64_t>)
+        else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
         {
             auto const rc = cass_statement_bind_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
@@ -137,11 +148,16 @@ public:
         else
         {
             // type not supported for binding
-            static_assert(unsupported_v<decayed_t>);
+            static_assert(unsupported_v<DecayedType>);
         }
     }
 };
 
+/**
+ * @brief Represents a prepared statement on the DB side.
+ *
+ * This is used to produce Statement objects that can be executed.
+ */
 class PreparedStatement : public ManagedObject<CassPrepared const>
 {
     static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
@@ -151,6 +167,12 @@ public:
     {
     }
 
+    /**
+     * @brief Bind the given arguments and produce a ready to execute Statement.
+     *
+     * @param args The arguments to bind
+     * @return A bound and ready to execute Statement object
+     */
     template <typename... Args>
     Statement
     bind(Args&&... args) const

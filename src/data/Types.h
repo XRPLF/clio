@@ -21,20 +21,23 @@
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
+
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace data {
 
-// *** return types
-
 using Blob = std::vector<unsigned char>;
 
+/**
+ * @brief Represents an object in the ledger.
+ */
 struct LedgerObject
 {
     ripple::uint256 key;
     Blob blob;
+
     bool
     operator==(const LedgerObject& other) const
     {
@@ -42,16 +45,27 @@ struct LedgerObject
     }
 };
 
+/**
+ * @brief Represents a page of LedgerObjects.
+ */
 struct LedgerPage
 {
     std::vector<LedgerObject> objects;
     std::optional<ripple::uint256> cursor;
 };
+
+/**
+ * @brief Represents a page of book offer objects.
+ */
 struct BookOffersPage
 {
     std::vector<LedgerObject> offers;
     std::optional<ripple::uint256> cursor;
 };
+
+/**
+ * @brief Represents a transaction and its metadata bundled together.
+ */
 struct TransactionAndMetadata
 {
     Blob transaction;
@@ -85,6 +99,9 @@ struct TransactionAndMetadata
     }
 };
 
+/**
+ * @brief Represents a cursor into the transactions table.
+ */
 struct TransactionsCursor
 {
     std::uint32_t ledgerSequence = 0;
@@ -114,12 +131,18 @@ struct TransactionsCursor
     }
 };
 
+/**
+ * @brief Represests a bundle of transactions with metadata and a cursor to the next page.
+ */
 struct TransactionsAndCursor
 {
     std::vector<TransactionAndMetadata> txns;
     std::optional<TransactionsCursor> cursor;
 };
 
+/**
+ * @brief Represents a NFToken.
+ */
 struct NFT
 {
     ripple::uint256 tokenID;
@@ -143,9 +166,8 @@ struct NFT
     {
     }
 
-    // clearly two tokens are the same if they have the same ID, but this
-    // struct stores the state of a given token at a given ledger sequence, so
-    // we also need to compare with ledgerSequence
+    // clearly two tokens are the same if they have the same ID, but this struct stores the state of a given token at a
+    // given ledger sequence, so we also need to compare with ledgerSequence.
     bool
     operator==(NFT const& other) const
     {
@@ -153,12 +175,17 @@ struct NFT
     }
 };
 
+/**
+ * @brief Stores a range of sequences as a min and max pair.
+ */
 struct LedgerRange
 {
     std::uint32_t minSequence = 0;
     std::uint32_t maxSequence = 0;
 };
+
 constexpr ripple::uint256 firstKey{"0000000000000000000000000000000000000000000000000000000000000000"};
 constexpr ripple::uint256 lastKey{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
 constexpr ripple::uint256 hi192{"0000000000000000000000000000000000000000000000001111111111111111"};
+
 }  // namespace data

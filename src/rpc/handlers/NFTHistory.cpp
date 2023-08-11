@@ -22,7 +22,7 @@
 
 #include <limits>
 
-namespace RPC {
+namespace rpc {
 
 // TODO: this is currently very similar to account_tx but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
@@ -209,4 +209,4 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -24,9 +24,9 @@
 #include <ripple/protocol/nft.h>
 
 using namespace ripple;
-using namespace ::RPC;
+using namespace ::rpc;
 
-namespace RPC {
+namespace rpc {
 
 NFTInfoHandler::Result
 NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
@@ -103,4 +103,4 @@ tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

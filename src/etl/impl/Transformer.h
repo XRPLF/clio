@@ -45,7 +45,7 @@ namespace etl::detail {
  */
 
 /**
- * @brief Transformer thread that prepares new ledger out of raw data from GRPC
+ * @brief Transformer thread that prepares new ledger out of raw data from GRPC.
  */
 template <typename DataPipeType, typename LedgerLoaderType, typename LedgerPublisherType>
 class Transformer
@@ -66,7 +66,7 @@ class Transformer
 
 public:
     /**
-     * @brief Create an instance of the transformer
+     * @brief Create an instance of the transformer.
      *
      * This spawns a new thread that reads from the data pipe and writes ledgers to the DB using LedgerLoader and
      * LedgerPublisher.
@@ -89,7 +89,7 @@ public:
     }
 
     /**
-     * @brief Joins the transformer thread
+     * @brief Joins the transformer thread.
      */
     ~Transformer()
     {
@@ -98,7 +98,7 @@ public:
     }
 
     /**
-     * @brief Block calling thread until transformer thread exits
+     * @brief Block calling thread until transformer thread exits.
      */
     void
     waitTillFinished()
@@ -155,13 +155,12 @@ private:
         }
     }
 
-    // TODO update this documentation
     /**
      * @brief Build the next ledger using the previous ledger and the extracted data.
      * @note rawData should be data that corresponds to the ledger immediately following the previous seq.
      *
-     * @param rawData data extracted from an ETL source
-     * @return the newly built ledger and data to write to the database
+     * @param rawData Data extracted from an ETL source
+     * @return The newly built ledger and data to write to the database
      */
     std::pair<ripple::LedgerHeader, bool>
     buildNextLedger(GetLedgerResponseType& rawData)
@@ -342,7 +341,7 @@ private:
     }
 
     /**
-     * @brief Write successors info into DB
+     * @brief Write successors info into DB.
      *
      * @param lgrInfo Ledger info
      * @param rawData Ledger data from GRPC
@@ -399,24 +398,38 @@ private:
         }
     }
 
+    /** @return true if the transformer is stopping; false otherwise */
     bool
     isStopping() const
     {
         return state_.get().isStopping;
     }
 
+    /** @return true if there was a write conflict; false otherwise */
     bool
     hasWriteConflict() const
     {
         return state_.get().writeConflict;
     }
 
+    /**
+     * @brief Sets the write conflict flag.
+     *
+     * @param conflict The value to set
+     */
     void
     setWriteConflict(bool conflict)
     {
         state_.get().writeConflict = conflict;
     }
 
+    /**
+     * @brief Sets the amendment blocked flag.
+     *
+     * Being amendment blocked means that Clio was compiled with libxrpl that does not yet support some field that
+     * arrived from rippled and therefore can't extract the ledger diff. When this happens, Clio can't proceed with ETL
+     * and should log this error and only handle RPC requests.
+     */
     void
     setAmendmentBlocked()
     {

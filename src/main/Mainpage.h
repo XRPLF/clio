@@ -17,28 +17,27 @@
 */
 //==============================================================================
 
-#pragma once
-
-#include <data/BackendInterface.h>
-#include <rpc/handlers/NFTOffersCommon.h>
-
-namespace rpc {
-
 /**
- * @brief The nft_sell_offers method returns a list of sell offers for a given NFToken object.
+ * @mainpage Clio API server
  *
- * For more details see: https://xrpl.org/nft_sell_offers.html
+ * @section intro Introduction
+ *
+ * Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC.
+ *
+ * Validated historical ledger and transaction data are stored in a more space-efficient format, using up to 4 times
+ * less space than rippled.
+ *
+ * Clio can be configured to store data in Apache Cassandra or ScyllaDB, allowing for scalable read throughput.
+ * Multiple Clio nodes can share access to the same dataset, allowing for a highly available cluster of Clio nodes,
+ * without the need for redundant data storage or computation.
+ *
+ * You can read more general information about Clio and its subsystems from the `Related Pages` section.
+ *
+ * @section Develop
+ *
+ * As you prepare to develop code for Clio, please be sure you are aware of our current
+ * <A HREF="https://github.com/XRPLF/clio/blob/develop/CONTRIBUTING.md">Contribution guidelines</A>.
+ *
+ * Read `rpc/README.md` carefully to know more about writing your own handlers for
+ * Clio.
  */
-class NFTSellOffersHandler : public NFTOffersHandlerBase
-{
-public:
-    NFTSellOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : NFTOffersHandlerBase(sharedPtrBackend)
-    {
-    }
-
-    Result
-    process(Input input, Context const& ctx) const;
-};
-
-}  // namespace rpc

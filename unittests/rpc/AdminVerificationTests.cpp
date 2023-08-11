@@ -27,7 +27,7 @@
 class RPCAdminVerificationTest : public NoLoggerFixture
 {
 protected:
-    RPC::detail::IPAdminVerificationStrategy strat_;
+    rpc::detail::IPAdminVerificationStrategy strat_;
 };
 
 TEST_F(RPCAdminVerificationTest, IsAdminOnlyForIP_127_0_0_1)

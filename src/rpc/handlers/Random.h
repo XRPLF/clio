@@ -25,7 +25,7 @@
 
 #include <string>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The random command provides a random number to be used as a source of entropy for random number generation by
@@ -51,4 +51,4 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 };
 
-}  // namespace RPC
+}  // namespace rpc

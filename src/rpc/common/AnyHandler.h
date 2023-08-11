@@ -23,7 +23,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/impl/Processors.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief A type-erased Handler that can contain any (NextGen) RPC handler class
@@ -40,9 +40,9 @@ public:
      *
      * @tparam HandlerType The real type of wrapped handler class
      * @tparam ProcessingStrategy A strategy that implements how processing of JSON is to be done
-     * @param handler The handler to wrap. Required to fulfil the @ref Handler concept.
+     * @param handler The handler to wrap. Required to fulfil the @ref rpc::SomeHandler concept.
      */
-    template <Handler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
+    template <SomeHandler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
         : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(std::forward<HandlerType>(handler))}
     {
@@ -117,4 +117,4 @@ private:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace RPC
+}  // namespace rpc

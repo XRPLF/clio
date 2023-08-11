@@ -24,7 +24,7 @@
 
 #include <string_view>
 
-namespace RPC::meta {
+namespace rpc::meta {
 
 [[nodiscard]] MaybeError
 Section::verify(boost::json::value& value, std::string_view key) const
@@ -68,4 +68,4 @@ ValidateArrayAt::verify(boost::json::value& value, std::string_view key) const
     return {};
 }
 
-}  // namespace RPC::meta
+}  // namespace rpc::meta

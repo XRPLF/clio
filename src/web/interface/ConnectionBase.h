@@ -28,8 +28,9 @@ namespace web {
 namespace http = boost::beast::http;
 
 /**
- * @brief Base class for all connections
- * This class is used to represent a connection in RPC executor and subscription manager
+ * @brief Base class for all connections.
+ *
+ * This class is used to represent a connection in RPC executor and subscription manager.
  */
 struct ConnectionBase : public util::Taggable
 {
@@ -40,20 +41,32 @@ public:
     std::string const clientIp;
     bool upgraded = false;
 
+    /**
+     * @brief Create a new connection base.
+     *
+     * @param tagFactory The factory that generates tags to track sessions and requests
+     * @param ip The IP address of the connected peer
+     */
     ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
     {
     }
 
+    virtual ~ConnectionBase() = default;
+
     /**
-     * @brief Send the response to the client
+     * @brief Send the response to the client.
+     *
      * @param msg The message to send
+     * @param status The HTTP status code; defaults to OK
      */
     virtual void
     send(std::string&& msg, http::status status = http::status::ok) = 0;
 
     /**
-     * @brief Send via shared_ptr of string, that enables SubscriptionManager to publish to clients
+     * @brief Send via shared_ptr of string, that enables SubscriptionManager to publish to clients.
+     *
      * @param msg The message to send
+     * @throws Not supported unless implemented in child classes. Will always throw std::runtime_error.
      */
     virtual void
     send(std::shared_ptr<std::string> msg)
@@ -62,18 +75,14 @@ public:
     }
 
     /**
-     * @brief Indicates whether the connection had an error and is considered
-     * dead
+     * @brief Indicates whether the connection had an error and is considered dead.
      *
-     * @return true
-     * @return false
+     * @return true if the connection is considered dead; false otherwise
      */
     bool
     dead()
     {
         return ec_ != boost::system::error_code{};
     }
-
-    virtual ~ConnectionBase() = default;
 };
 }  // namespace web

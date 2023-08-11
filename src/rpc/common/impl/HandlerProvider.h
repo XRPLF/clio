@@ -32,14 +32,14 @@ namespace etl {
 class ETLService;
 class LoadBalancer;
 }  // namespace etl
-namespace RPC {
+namespace rpc {
 class Counters;
 }
 namespace feed {
 class SubscriptionManager;
 }
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 class ProductionHandlerProvider final : public HandlerProvider
 {
@@ -70,4 +70,4 @@ public:
     isClioOnly(std::string const& command) const override;
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

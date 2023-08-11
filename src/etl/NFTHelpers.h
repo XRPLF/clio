@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+/** @file */
 #pragma once
 
 #include <data/DBHelpers.h>
@@ -27,13 +28,22 @@
 namespace etl {
 
 /**
- * @brief Pull NFT data from TX via ETLService
+ * @brief Pull NFT data from TX via ETLService.
+ *
+ * @param txMeta Transaction metadata
+ * @param sttx The transaction
+ * @return NFT transactions data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
 /**
- * @brief Pull NFT data from ledger object via loadInitialLedger
+ * @brief Pull NFT data from ledger object via loadInitialLedger.
+ *
+ * @param seq The ledger sequence to pull for
+ * @param key The owner key
+ * @param blob Object data as blob
+ * @return The NFT data as a vector
  */
 std::vector<NFTsData>
 getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob);

@@ -19,6 +19,8 @@
 
 #include <rpc/WorkQueue.h>
 
+namespace rpc {
+
 WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize) : ioc_{numWorkers}
 {
     if (maxSize != 0)
@@ -29,3 +31,5 @@ WorkQueue::~WorkQueue()
 {
     ioc_.join();
 }
+
+}  // namespace rpc

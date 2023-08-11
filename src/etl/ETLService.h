@@ -46,6 +46,9 @@ namespace feed {
 class SubscriptionManager;
 }
 
+/**
+ * @brief This namespace contains everything to do with the ETL and ETL sources.
+ */
 namespace etl {
 
 /**
@@ -98,7 +101,7 @@ class ETLService
 
 public:
     /**
-     * @brief Create an instance of ETLService
+     * @brief Create an instance of ETLService.
      *
      * @param config The configuration to use
      * @param ioc io context to run on
@@ -115,6 +118,18 @@ public:
         std::shared_ptr<LoadBalancerType> balancer,
         std::shared_ptr<NetworkValidatedLedgersType> ledgers);
 
+    /**
+     * @brief A factory function to spawn new ETLService instances.
+     *
+     * Creates and runs the ETL service.
+     *
+     * @param config The configuration to use
+     * @param ioc io context to run on
+     * @param backend BackendInterface implementation
+     * @param subscriptions Subscription manager
+     * @param balancer Load balancer to use
+     * @param ledgers The network validated ledgers datastructure
+     */
     static std::shared_ptr<ETLService>
     make_ETLService(
         util::Config const& config,
@@ -131,7 +146,7 @@ public:
     }
 
     /**
-     * @brief Stops components and joins worker thread
+     * @brief Stops components and joins worker thread.
      */
     ~ETLService()
     {
@@ -148,7 +163,7 @@ public:
     }
 
     /**
-     * @brief Get time passed since last ledger close, in seconds
+     * @brief Get time passed since last ledger close, in seconds.
      */
     std::uint32_t
     lastCloseAgeSeconds() const
@@ -229,7 +244,7 @@ private:
     }
 
     /**
-     * @brief Get the number of markers to use during the initial ledger download
+     * @brief Get the number of markers to use during the initial ledger download.
      *
      * This is equivelent to the degree of parallelism during the initial ledger download.
      *
@@ -242,19 +257,19 @@ private:
     }
 
     /**
-     * @brief Start all components to run ETL service
+     * @brief Start all components to run ETL service.
      */
     void
     run();
 
     /**
-     * @brief Spawn the worker thread and start monitoring
+     * @brief Spawn the worker thread and start monitoring.
      */
     void
     doWork();
 
     /**
-     * @brief Sets amendment blocked flag
+     * @brief Sets amendment blocked flag.
      */
     void
     setAmendmentBlocked()

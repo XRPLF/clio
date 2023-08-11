@@ -21,7 +21,7 @@
 
 #include <rpc/common/Types.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ping command returns an acknowledgement, so that clients can test the connection status and latency.
@@ -41,4 +41,4 @@ public:
     }
 };
 
-}  // namespace RPC
+}  // namespace rpc

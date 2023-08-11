@@ -31,6 +31,9 @@
 
 #include <memory>
 
+/**
+ * @brief Account transactions, NFT transactions and NFT data bundled togeher.
+ */
 struct FormattedTransactionsData
 {
     std::vector<AccountTransactionsData> accountTxData;

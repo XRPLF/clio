@@ -24,7 +24,7 @@
 
 using namespace std;
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 ProductionAPIVersionParser::ProductionAPIVersionParser(util::Config const& config)
     : ProductionAPIVersionParser(
@@ -58,4 +58,4 @@ ProductionAPIVersionParser::parse(boost::json::object const& request) const
     return defaultVersion_;
 }
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

@@ -23,12 +23,12 @@
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Types.h>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 template <typename>
 static constexpr bool unsupported_handler_v = false;
 
-template <Handler HandlerType>
+template <SomeHandler HandlerType>
 struct DefaultProcessor final
 {
     [[nodiscard]] ReturnType
@@ -36,7 +36,7 @@ struct DefaultProcessor final
     {
         using boost::json::value_from;
         using boost::json::value_to;
-        if constexpr (HandlerWithInput<HandlerType>)
+        if constexpr (SomeHandlerWithInput<HandlerType>)
         {
             // first we run validation against specified API version
             auto const spec = handler.spec(ctx.apiVersion);
@@ -54,7 +54,7 @@ struct DefaultProcessor final
             else
                 return value_from(ret.value());
         }
-        else if constexpr (HandlerWithoutInput<HandlerType>)
+        else if constexpr (SomeHandlerWithoutInput<HandlerType>)
         {
             // no input to pass, ignore the value
             if (auto const ret = handler.process(ctx); not ret)
@@ -64,11 +64,10 @@ struct DefaultProcessor final
         }
         else
         {
-            // when concept HandlerWithInput and HandlerWithoutInput not cover
-            // all Handler case
+            // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler case
             static_assert(unsupported_handler_v<HandlerType>);
         }
     }
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

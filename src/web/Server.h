@@ -26,35 +26,55 @@
 
 #include <fmt/core.h>
 
+/**
+ * @brief This namespace implements the web server and related components.
+ *
+ * The web server is leveraging the power of `boost::asio` with it's coroutine support thru `boost::asio::yield_context`
+ * and `boost::asio::spawn`.
+ *
+ * Majority of the code is based on examples that came with boost.
+ */
 namespace web {
 
 /**
  * @brief The Detector class to detect if the connection is a ssl or not.
- * If it is a ssl connection, it will pass the ownership of the socket to SslSession, otherwise to PlainSession.
- * @tparam PlainSession The plain session type
- * @tparam SslSession The ssl session type
- * @tparam Handler The executor to handle the requests
+ *
+ * If it is an SSL connection, the Detector will pass the ownership of the socket to SslSessionType, otherwise to
+ * PlainSessionType.
+ *
+ * @tparam PlainSessionType The plain session type
+ * @tparam SslSessionType The SSL session type
+ * @tparam HandlerType The executor to handle the requests
  */
-template <template <class> class PlainSession, template <class> class SslSession, ServerHandler Handler>
-class Detector : public std::enable_shared_from_this<Detector<PlainSession, SslSession, Handler>>
+template <template <class> class PlainSessionType, template <class> class SslSessionType, SomeServerHandler HandlerType>
+class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>
 {
-    using std::enable_shared_from_this<Detector<PlainSession, SslSession, Handler>>::shared_from_this;
+    using std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<web::DOSGuard> const dosGuard_;
-    std::shared_ptr<Handler> const handler_;
+    std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
 
 public:
+    /**
+     * @brief Create a new detector.
+     *
+     * @param socket The socket. Ownership is transferred
+     * @param ctx The SSL context if any
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     */
     Detector(
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler)
+        std::shared_ptr<HandlerType> const& handler)
         : stream_(std::move(socket))
         , ctx_(ctx)
         , tagFactory_(std::cref(tagFactory))
@@ -63,6 +83,12 @@ public:
     {
     }
 
+    /**
+     * @brief A helper function that is called when any error ocurs.
+     *
+     * @param ec The error code
+     * @param message The message to include in the log
+     */
     inline void
     fail(boost::system::error_code ec, char const* message)
     {
@@ -72,6 +98,7 @@ public:
         log_.info() << "Detector failed (" << message << "): " << ec.message();
     }
 
+    /** @brief Initiate the detection. */
     void
     run()
     {
@@ -79,6 +106,12 @@ public:
         async_detect_ssl(stream_, buffer_, boost::beast::bind_front_handler(&Detector::onDetect, shared_from_this()));
     }
 
+    /**
+     * @brief Handles detection result.
+     *
+     * @param ec The error code
+     * @param result true if SSL is detected; false otherwise
+     */
     void
     onDetect(boost::beast::error_code ec, bool result)
     {
@@ -100,13 +133,13 @@ public:
             if (!ctx_)
                 return fail(ec, "SSL is not supported by this server");
 
-            std::make_shared<SslSession<Handler>>(
+            std::make_shared<SslSessionType<HandlerType>>(
                 stream_.release_socket(), ip, *ctx_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
                 ->run();
             return;
         }
 
-        std::make_shared<PlainSession<Handler>>(
+        std::make_shared<PlainSessionType<HandlerType>>(
             stream_.release_socket(), ip, tagFactory_, dosGuard_, handler_, std::move(buffer_))
             ->run();
     }
@@ -114,37 +147,49 @@ public:
 
 /**
  * @brief The WebServer class. It creates server socket and start listening on it.
+ *
  * Once there is client connection, it will accept it and pass the socket to Detector to detect ssl or plain.
- * @tparam PlainSession The plain session to handler non-ssl connection.
- * @tparam SslSession The ssl session to handler ssl connection.
- * @tparam Handler The handler to process the request and return response.
+ *
+ * @tparam PlainSessionType The plain session to handle non-ssl connection.
+ * @tparam SslSessionType The SSL session to handle SSL connection.
+ * @tparam HandlerType The handler to process the request and return response.
  */
-template <template <class> class PlainSession, template <class> class SslSession, ServerHandler Handler>
-class Server : public std::enable_shared_from_this<Server<PlainSession, SslSession, Handler>>
+template <template <class> class PlainSessionType, template <class> class SslSessionType, SomeServerHandler HandlerType>
+class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>
 {
-    using std::enable_shared_from_this<Server<PlainSession, SslSession, Handler>>::shared_from_this;
+    using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
     std::reference_wrapper<boost::asio::io_context> ioc_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
     util::TagDecoratorFactory tagFactory_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
-    std::shared_ptr<Handler> handler_;
+    std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
 
 public:
+    /**
+     * @brief Create a new instance of the web server.
+     *
+     * @param ioc The io_context to run the server on
+     * @param ctx The SSL context if any
+     * @param endpoint The endpoint to listen on
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     */
     Server(
         boost::asio::io_context& ioc,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         tcp::endpoint endpoint,
         util::TagDecoratorFactory tagFactory,
         web::DOSGuard& dosGuard,
-        std::shared_ptr<Handler> const& callback)
+        std::shared_ptr<HandlerType> const& handler)
         : ioc_(std::ref(ioc))
         , ctx_(ctx)
         , tagFactory_(std::move(tagFactory))
         , dosGuard_(std::ref(dosGuard))
-        , handler_(callback)
+        , handler_(handler)
         , acceptor_(boost::asio::make_strand(ioc))
     {
         boost::beast::error_code ec;
@@ -174,6 +219,7 @@ public:
         }
     }
 
+    /** @brief Start accepting incoming connections. */
     void
     run()
     {
@@ -197,7 +243,7 @@ private:
             auto ctxRef =
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
-            std::make_shared<Detector<PlainSession, SslSession, Handler>>(
+            std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
                 std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_)
                 ->run();
         }
@@ -206,26 +252,28 @@ private:
     }
 };
 
-template <class Executor>
-using HttpServer = Server<HttpSession, SslHttpSession, Executor>;
+/** @brief The final type of the HttpServer used by Clio. */
+template <class HandlerType>
+using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
 
 /**
- * @brief Create a http server.
- * @tparam Executor The executor to process the request.
- * @param config The config to create server.
- * @param ioc The server will run under this io_context.
- * @param sslCtx The ssl context to create ssl session.
- * @param dosGuard The dos guard to protect the server.
- * @param handler The executor to process the request.
+ * @brief A factory function that spawns a ready to use HTTP server.
+ *
+ * @tparam HandlerType The tyep of handler to process the request
+ * @param config The config to create server
+ * @param ioc The server will run under this io_context
+ * @param ctx The SSL context if any
+ * @param dosGuard The dos guard to protect the server
+ * @param handler The handler to process the request
  */
-template <class Executor>
-static std::shared_ptr<HttpServer<Executor>>
+template <class HandlerType>
+static std::shared_ptr<HttpServer<HandlerType>>
 make_HttpServer(
     util::Config const& config,
     boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
+    std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& ctx,
     web::DOSGuard& dosGuard,
-    std::shared_ptr<Executor> const& handler)
+    std::shared_ptr<HandlerType> const& handler)
 {
     static util::Logger log{"WebServer"};
     if (!config.contains("server"))
@@ -235,13 +283,8 @@ make_HttpServer(
     auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
     auto const port = serverConfig.value<unsigned short>("port");
 
-    auto server = std::make_shared<HttpServer<Executor>>(
-        ioc,
-        sslCtx,
-        boost::asio::ip::tcp::endpoint{address, port},
-        util::TagDecoratorFactory(config),
-        dosGuard,
-        handler);
+    auto server = std::make_shared<HttpServer<HandlerType>>(
+        ioc, ctx, boost::asio::ip::tcp::endpoint{address, port}, util::TagDecoratorFactory(config), dosGuard, handler);
 
     server->run();
     return server;

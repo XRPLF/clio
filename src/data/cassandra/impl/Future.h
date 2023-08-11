@@ -43,16 +43,16 @@ invokeHelper(CassFuture* ptr, void* self);
 class FutureWithCallback : public Future
 {
 public:
-    using fn_t = std::function<void(ResultOrError)>;
-    using fn_ptr_t = std::unique_ptr<fn_t>;
+    using FnType = std::function<void(ResultOrError)>;
+    using FnPtrType = std::unique_ptr<FnType>;
 
-    /* implicit */ FutureWithCallback(CassFuture* ptr, fn_t&& cb);
+    /* implicit */ FutureWithCallback(CassFuture* ptr, FnType&& cb);
     FutureWithCallback(FutureWithCallback const&) = delete;
     FutureWithCallback(FutureWithCallback&&) = default;
 
 private:
-    /*! Wrapped in a unique_ptr so it can survive std::move :/ */
-    fn_ptr_t cb_;
+    /** Wrapped in a unique_ptr so it can survive std::move :/ */
+    FnPtrType cb_;
 };
 
 }  // namespace data::cassandra::detail

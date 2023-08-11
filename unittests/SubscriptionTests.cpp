@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <feed/Message.h>
 #include <feed/SubscriptionManager.h>
 
 #include <util/Fixtures.h>
@@ -28,13 +27,6 @@
 
 namespace json = boost::json;
 using namespace feed;
-
-TEST(MessageTest, Message)
-{
-    auto m = Message{"test"};
-    EXPECT_STREQ(m.data(), "test");
-    EXPECT_EQ(m.size(), 4);
-}
 
 // io_context
 class SubscriptionTest : public SyncAsioContextTest

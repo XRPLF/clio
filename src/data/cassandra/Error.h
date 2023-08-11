@@ -26,7 +26,7 @@
 namespace data::cassandra {
 
 /**
- * @brief A simple container for both error message and error code
+ * @brief A simple container for both error message and error code.
  */
 class CassandraError
 {
@@ -67,18 +67,27 @@ public:
         return os;
     }
 
+    /**
+     * @return The final error message as a std::string
+     */
     std::string
     message() const
     {
         return message_;
     }
 
+    /**
+     * @return The error code
+     */
     uint32_t
     code() const
     {
         return code_;
     }
 
+    /**
+     * @return true if the wrapped error is considered a timeout; false otherwise
+     */
     bool
     isTimeout() const
     {
@@ -89,6 +98,9 @@ public:
         return false;
     }
 
+    /**
+     * @return true if the wrapped error is an invalid query; false otherwise
+     */
     bool
     isInvalidQuery() const
     {

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+/** @file */
 #pragma once
 
 #include <ripple/basics/base_uint.h>
@@ -44,6 +45,9 @@ class NetworkValidatedLedgers
     std::condition_variable cv_;
 
 public:
+    /**
+     * @brief A factory function for NetworkValidatedLedgers.
+     */
     static std::shared_ptr<NetworkValidatedLedgers>
     make_ValidatedLedgers()
     {
@@ -51,9 +55,9 @@ public:
     }
 
     /**
-     * @brief Notify the datastructure that idx has been validated by the network
+     * @brief Notify the datastructure that idx has been validated by the network.
      *
-     * @param idx sequence validated by network
+     * @param idx Sequence validated by network
      */
     void
     push(uint32_t idx)
@@ -69,7 +73,7 @@ public:
      *
      * If no ledgers are known to have been validated, this function waits until the next ledger is validated
      *
-     * @return sequence of most recently validated ledger. empty optional if the datastructure has been stopped
+     * @return Sequence of most recently validated ledger. empty optional if the datastructure has been stopped
      */
     std::optional<uint32_t>
     getMostRecent()
@@ -80,9 +84,9 @@ public:
     }
 
     /**
-     * @brief Waits for the sequence to be validated by the network
+     * @brief Waits for the sequence to be validated by the network.
      *
-     * @param sequence to wait for
+     * @param sequence The sequence to wait for
      * @return true if sequence was validated, false otherwise a return value of false means the datastructure has been
      * stopped
      */
@@ -101,7 +105,7 @@ public:
 
 // TODO: does the note make sense? lockfree queues provide the same blocking behaviour just without mutex, don't they?
 /**
- * @brief Generic thread-safe queue with a max capacity
+ * @brief Generic thread-safe queue with a max capacity.
  *
  * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for an element to be
  * added or removed from the queue. These waits are blocking calls.
@@ -117,21 +121,21 @@ class ThreadSafeQueue
 
 public:
     /**
-     * @brief Create an instance of the queue
+     * @brief Create an instance of the queue.
      *
      * @param maxSize maximum size of the queue. Calls that would cause the queue to exceed this size will block until
-     * free space is available
+     * free space is available.
      */
     ThreadSafeQueue(uint32_t maxSize) : maxSize_(maxSize)
     {
     }
 
     /**
-     * @brief Push element onto the queue
+     * @brief Push element onto the queue.
      *
-     * Note: This method will block until free space is available
+     * Note: This method will block until free space is available.
      *
-     * @param elt element to push onto queue
+     * @param elt Element to push onto queue
      */
     void
     push(T const& elt)
@@ -143,11 +147,11 @@ public:
     }
 
     /**
-     * @brief Push element onto the queue
+     * @brief Push element onto the queue.
      *
      * Note: This method will block until free space is available
      *
-     * @param elt element to push onto queue. elt is moved from
+     * @param elt Element to push onto queue. Ownership is transferred
      */
     void
     push(T&& elt)
@@ -159,11 +163,11 @@ public:
     }
 
     /**
-     * @brief Pop element from the queue
+     * @brief Pop element from the queue.
      *
-     * Note: Will block until queue is non-empty
+     * Note: Will block until queue is non-empty.
      *
-     * @return element popped from queue
+     * @return Element popped from queue
      */
     T
     pop()
@@ -179,9 +183,9 @@ public:
     }
 
     /**
-     * @brief Attempt to pop an element
+     * @brief Attempt to pop an element.
      *
-     * @return element popped from queue or empty optional if queue was empty
+     * @return Element popped from queue or empty optional if queue was empty
      */
     std::optional<T>
     tryPop()
@@ -201,7 +205,7 @@ public:
 /**
  * @brief Parititions the uint256 keyspace into numMarkers partitions, each of equal size.
  *
- * @param numMarkers total markers to partition for
+ * @param numMarkers Total markers to partition for
  */
 inline std::vector<ripple::uint256>
 getMarkers(size_t numMarkers)

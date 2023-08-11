@@ -24,27 +24,40 @@
 namespace web {
 
 /**
- * @brief The SSL WebSocket session class, just to hold the ssl stream. Other operations will be handled by the base
- * class.
+ * @brief Represents a secure websocket session.
+ *
+ * Majority of the operations are handled by the base class.
  */
-template <ServerHandler Handler>
-class SslWsSession : public detail::WsBase<SslWsSession, Handler>
+template <SomeServerHandler HandlerType>
+class SslWsSession : public detail::WsBase<SslWsSession, HandlerType>
 {
     using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
     StreamType ws_;
 
 public:
+    /**
+     * @brief Create a new non-secure websocket session.
+     *
+     * @param stream The SSL stream. Ownership is transferred
+     * @param ip Client's IP address
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     * @param buffer Buffer with initial data received from the peer
+     */
     explicit SslWsSession(
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
-        boost::beast::flat_buffer&& b)
-        : detail::WsBase<SslWsSession, Handler>(ip, tagFactory, dosGuard, handler, std::move(b)), ws_(std::move(stream))
+        std::shared_ptr<HandlerType> const& handler,
+        boost::beast::flat_buffer&& buffer)
+        : detail::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        , ws_(std::move(stream))
     {
     }
 
+    /** @return The secure websocket stream. */
     StreamType&
     ws()
     {
@@ -53,50 +66,65 @@ public:
 };
 
 /**
- * @brief The SSL WebSocket upgrader class, upgrade from http session to websocket session.
+ * @brief The HTTPS upgrader class, upgrade from an HTTPS session to a secure websocket session.
+ *
+ * Pass the stream to the session class after upgrade.
  */
-template <ServerHandler Handler>
-class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<Handler>>
+template <SomeServerHandler HandlerType>
+class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>>
 {
+    using std::enable_shared_from_this<SslWsUpgrader<HandlerType>>::shared_from_this;
+
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::string ip_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
-    std::shared_ptr<Handler> const handler_;
+    std::shared_ptr<HandlerType> const handler_;
     http::request<http::string_body> req_;
 
 public:
+    /**
+     * @brief Create a new upgrader to secure websocket.
+     *
+     * @param stream The SSL stream. Ownership is transferred
+     * @param ip Client's IP address
+     * @param tagFactory A factory that is used to generate tags to track requests and sessions
+     * @param dosGuard The denial of service guard to use
+     * @param handler The server handler to use
+     * @param buffer Buffer with initial data received from the peer. Ownership is transferred
+     * @param request The request. Ownership is transferred
+     */
     SslWsUpgrader(
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<Handler> const& handler,
-        boost::beast::flat_buffer&& buf,
-        http::request<http::string_body> req)
+        std::shared_ptr<HandlerType> const& handler,
+        boost::beast::flat_buffer&& buffer,
+        http::request<http::string_body> request)
         : https_(std::move(stream))
-        , buffer_(std::move(buf))
+        , buffer_(std::move(buffer))
         , ip_(ip)
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , handler_(handler)
-        , req_(std::move(req))
+        , req_(std::move(request))
     {
     }
 
     ~SslWsUpgrader() = default;
 
+    /** @brief Initiate the upgrade. */
     void
     run()
     {
-        // Set the timeout.
         boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
 
         boost::asio::dispatch(
             https_.get_executor(),
-            boost::beast::bind_front_handler(&SslWsUpgrader<Handler>::doUpgrade, this->shared_from_this()));
+            boost::beast::bind_front_handler(&SslWsUpgrader<HandlerType>::doUpgrade, shared_from_this()));
     }
 
 private:
@@ -105,32 +133,25 @@ private:
     {
         parser_.emplace();
 
-        // Apply a reasonable limit to the allowed size
-        // of the body in bytes to prevent abuse.
-        constexpr static auto MaxBobySize = 10000;
-        parser_->body_limit(MaxBobySize);
+        // Apply a reasonable limit to the allowed size of the body in bytes to prevent abuse.
+        constexpr static auto maxBodySize = 10000;
+        parser_->body_limit(maxBodySize);
 
-        // Set the timeout.
         boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
-
         onUpgrade();
     }
 
     void
     onUpgrade()
     {
-        // See if it is a WebSocket Upgrade
         if (!boost::beast::websocket::is_upgrade(req_))
-        {
             return;
-        }
 
-        // Disable the timeout.
-        // The websocket::stream uses its own timeout settings.
+        // Disable the timeout. The websocket::stream uses its own timeout settings.
         boost::beast::get_lowest_layer(https_).expires_never();
 
-        std::make_shared<SslWsSession<Handler>>(
-            std::move(https_), ip_, this->tagFactory_, this->dosGuard_, this->handler_, std::move(buffer_))
+        std::make_shared<SslWsSession<HandlerType>>(
+            std::move(https_), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
             ->run(std::move(req_));
     }
 };

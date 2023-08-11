@@ -24,7 +24,7 @@
 
 using namespace ripple;
 
-namespace RPC {
+namespace rpc {
 
 NFTSellOffersHandler::Result
 NFTSellOffersHandler::process(NFTSellOffersHandler::Input input, Context const& ctx) const
@@ -35,4 +35,4 @@ NFTSellOffersHandler::process(NFTSellOffersHandler::Input input, Context const& 
     return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
 }
 
-}  // namespace RPC
+}  // namespace rpc

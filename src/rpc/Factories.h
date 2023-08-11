@@ -36,11 +36,22 @@
  * This file contains various classes necessary for executing RPC handlers.
  * Context gives the handlers access to various other parts of the application Status is used to report errors.
  * And lastly, there are various functions for making Contexts, Statuses and serializing Status to JSON.
- * This file is meant to contain any class or function that code outside of the rpc folder needs to use. For helper
- * functions or classes used within the rpc folder, use RPCHelpers.h.
+ * This file is meant to contain any class or function that code outside of the rpc folder needs to use.
+ * For helper functions or classes used within the rpc folder, use RPCHelpers.h.
  */
-namespace RPC {
+namespace rpc {
 
+/**
+ * @brief A factory function that creates a Websocket context.
+ *
+ * @param yc The coroutine context
+ * @param request The request as JSON object
+ * @param session The connection
+ * @param tagFactory A factory that provides tags to track requests
+ * @param range The ledger range that is available at request time
+ * @param clientIp The IP address of the connected client
+ * @param apiVersionParser A parser that is used to parse out the "api_version" field
+ */
 util::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
@@ -51,6 +62,16 @@ make_WsContext(
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
+/**
+ * @brief A factory function that creates a HTTP context.
+ *
+ * @param yc The coroutine context
+ * @param request The request as JSON object
+ * @param tagFactory A factory that provides tags to track requests
+ * @param range The ledger range that is available at request time
+ * @param clientIp The IP address of the connected client
+ * @param apiVersionParser A parser that is used to parse out the "api_version" field
+ */
 util::Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
@@ -60,4 +81,4 @@ make_HttpContext(
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
-}  // namespace RPC
+}  // namespace rpc

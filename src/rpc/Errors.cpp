@@ -36,7 +36,7 @@ template <class... Ts>
 overloadSet(Ts...) -> overloadSet<Ts...>;
 }  // namespace
 
-namespace RPC {
+namespace rpc {
 
 WarningInfo const&
 getWarningInfo(WarningCode code)
@@ -152,4 +152,4 @@ makeError(Status const& status)
     return res;
 }
 
-}  // namespace RPC
+}  // namespace rpc

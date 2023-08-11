@@ -24,7 +24,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -44,7 +44,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(json::parse("{}"), Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "fieldNotFoundTransaction");
         EXPECT_EQ(err.at("error_message").as_string(), "Missing field.");
     });
@@ -56,7 +56,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(json::parse(R"({"tx_hash":"123"})"), Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "tx_hashMalformed");
     });
@@ -81,7 +81,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -106,7 +106,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -131,7 +131,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "transactionNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
     });
@@ -164,7 +164,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "transactionNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
     });

@@ -70,7 +70,7 @@ ForwardCache::get(boost::json::object const& request) const
 
     if (!command)
         return {};
-    if (RPC::specifiesCurrentOrClosedLedger(request))
+    if (rpc::specifiesCurrentOrClosedLedger(request))
         return {};
 
     std::shared_lock lk(mtx_);

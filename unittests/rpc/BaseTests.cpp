@@ -35,10 +35,10 @@
 
 using namespace std;
 
-using namespace RPC;
-using namespace RPC::validation;
-using namespace RPC::meta;
-using namespace RPC::modifiers;
+using namespace rpc;
+using namespace rpc::validation;
+using namespace rpc::meta;
+using namespace rpc::modifiers;
 
 namespace json = boost::json;
 
@@ -321,8 +321,8 @@ TEST_F(RPCBaseTest, WithCustomError)
 {
     auto const spec = RpcSpec{
         {"transaction",
-         WithCustomError{Uint256HexStringValidator, RPC::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}}},
-        {"other", WithCustomError{Type<std::string>{}, RPC::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}};
+         WithCustomError{Uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}}},
+        {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}};
 
     auto passingInput = json::parse(
         R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})");
@@ -348,7 +348,7 @@ TEST_F(RPCBaseTest, CustomValidator)
     auto customFormatCheck = CustomValidator{
         [](json::value const& value, std::string_view key) -> MaybeError {
             return value.as_string().size() == 34 ? 
-                MaybeError{} : Error{RPC::Status{"Uh oh"}};
+                MaybeError{} : Error{rpc::Status{"Uh oh"}};
         }
     };
     // clang-format on
