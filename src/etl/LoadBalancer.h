@@ -33,7 +33,6 @@ namespace etl {
 class Source;
 class ProbingSource;
 }  // namespace etl
-
 namespace feed {
 class SubscriptionManager;
 }

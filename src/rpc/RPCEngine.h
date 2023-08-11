@@ -47,7 +47,6 @@
 namespace feed {
 class SubscriptionManager;
 }
-
 namespace etl {
 class LoadBalancer;
 class ETLService;

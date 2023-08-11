@@ -32,11 +32,9 @@ namespace etl {
 class ETLService;
 class LoadBalancer;
 }  // namespace etl
-
 namespace RPC {
 class Counters;
 }
-
 namespace feed {
 class SubscriptionManager;
 }
