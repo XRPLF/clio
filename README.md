@@ -96,6 +96,8 @@ If all goes well, `conan install` will find required packages and `cmake` will d
 
 > **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_tests`.
 
+> **Tip:** To generate a Code Coverage report, include `-o coverage=True` in the `conan install` command above, along with `-o tests=True` to enable tests. After running the `cmake` commands, execute `make clio_tests-ccov`. The coverage report will be found at `clio_tests-llvm-cov/index.html`.
+
 ## Running
 ```sh
 ./clio_server config.json
