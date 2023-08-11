@@ -26,7 +26,7 @@
 #include <charconv>
 #include <string_view>
 
-namespace RPC::validation {
+namespace rpc::validation {
 
 [[nodiscard]] MaybeError
 Required::verify(boost::json::value const& value, std::string_view key) const
@@ -202,4 +202,4 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-}  // namespace RPC::validation
+}  // namespace rpc::validation

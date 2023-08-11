@@ -201,7 +201,7 @@ public:
             return sender_(httpResponse(
                 http::status::service_unavailable,
                 "text/plain",
-                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcSLOW_DOWN))));
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))));
         }
 
         log_.info() << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
@@ -215,7 +215,7 @@ public:
             return sender_(httpResponse(
                 http::status::internal_server_error,
                 "application/json",
-                boost::json::serialize(RPC::makeError(RPC::RippledError::rpcINTERNAL))));
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))));
         }
     }
 
@@ -232,9 +232,9 @@ public:
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
-                jsonResponse["warnings"].as_array().push_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
+                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
             else
-                jsonResponse["warnings"] = boost::json::array{RPC::makeWarning(RPC::warnRPC_RATE_LIMIT)};
+                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
 
             // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);

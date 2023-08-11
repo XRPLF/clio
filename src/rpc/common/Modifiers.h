@@ -23,7 +23,7 @@
 #include <rpc/common/Specs.h>
 #include <rpc/common/Types.h>
 
-namespace RPC::modifiers {
+namespace rpc::modifiers {
 
 /**
  * @brief Clamp value between min and max.
@@ -68,4 +68,4 @@ public:
     }
 };
 
-}  // namespace RPC::modifiers
+}  // namespace rpc::modifiers

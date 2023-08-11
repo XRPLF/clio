@@ -23,7 +23,7 @@
 
 #include <ripple/protocol/digest.h>
 
-namespace RPC {
+namespace rpc {
 
 #define REGISTER_AMENDMENT(name) inline static const ripple::uint256 name = GetAmendmentId(#name);
 
@@ -45,4 +45,4 @@ struct Amendments
     REGISTER_AMENDMENT(DisallowIncoming)
     REGISTER_AMENDMENT(Clawback)
 };
-}  // namespace RPC
+}  // namespace rpc

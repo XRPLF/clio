@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/BookChanges.h>
 
-namespace RPC {
+namespace rpc {
 
 BookChangesHandler::Result
 BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx) const
@@ -92,4 +92,4 @@ computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::Transa
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

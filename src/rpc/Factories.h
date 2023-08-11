@@ -39,7 +39,7 @@
  * This file is meant to contain any class or function that code outside of the rpc folder needs to use.
  * For helper functions or classes used within the rpc folder, use RPCHelpers.h.
  */
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief A factory function that creates a Websocket context.
@@ -82,4 +82,4 @@ make_HttpContext(
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
-}  // namespace RPC
+}  // namespace rpc

@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include <feed/Message.h>
 #include <feed/SubscriptionManager.h>
 
 #include <util/Fixtures.h>

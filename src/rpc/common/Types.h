@@ -36,7 +36,7 @@ namespace feed {
 class SubscriptionManager;
 }
 
-namespace RPC {
+namespace rpc {
 
 class Counters;
 struct RpcSpec;
@@ -139,4 +139,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput const
     jv = boost::json::object{};
 }
 
-}  // namespace RPC
+}  // namespace rpc

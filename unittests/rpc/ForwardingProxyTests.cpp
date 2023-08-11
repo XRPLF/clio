@@ -28,7 +28,7 @@
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
 
-using namespace RPC;
+using namespace rpc;
 using namespace testing;
 
 constexpr static auto CLIENT_IP = "127.0.0.1";
@@ -43,7 +43,7 @@ protected:
     util::Config config;
     util::TagDecoratorFactory tagFactory{config};
 
-    RPC::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
+    rpc::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
         loadBalancer,
         counters,
         handlerProvider};

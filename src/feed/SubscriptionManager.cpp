@@ -55,9 +55,9 @@ getLedgerPubMessage(
     pubMsg["ledger_hash"] = to_string(lgrInfo.hash);
     pubMsg["ledger_time"] = lgrInfo.closeTime.time_since_epoch().count();
 
-    pubMsg["fee_base"] = RPC::toBoostJson(fees.base.jsonClipped());
-    pubMsg["reserve_base"] = RPC::toBoostJson(fees.reserve.jsonClipped());
-    pubMsg["reserve_inc"] = RPC::toBoostJson(fees.increment.jsonClipped());
+    pubMsg["fee_base"] = rpc::toBoostJson(fees.base.jsonClipped());
+    pubMsg["reserve_base"] = rpc::toBoostJson(fees.reserve.jsonClipped());
+    pubMsg["reserve_inc"] = rpc::toBoostJson(fees.increment.jsonClipped());
 
     pubMsg["validated_ledgers"] = ledgerRange;
     pubMsg["txn_count"] = txnCount;
@@ -159,11 +159,11 @@ SubscriptionManager::pubLedger(
 void
 SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo)
 {
-    auto [tx, meta] = RPC::deserializeTxPlusMeta(blobs, lgrInfo.seq);
+    auto [tx, meta] = rpc::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
-    pubObj["transaction"] = RPC::toJson(*tx);
-    pubObj["meta"] = RPC::toJson(*meta);
-    RPC::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta, blobs.date);
+    pubObj["transaction"] = rpc::toJson(*tx);
+    pubObj["meta"] = rpc::toJson(*meta);
+    rpc::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta, blobs.date);
     pubObj["type"] = "transaction";
     pubObj["validated"] = true;
     pubObj["status"] = "closed";
@@ -187,7 +187,7 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
                 data::synchronous([&](boost::asio::yield_context yield) {
-                    ownerFunds = RPC::accountFunds(*backend_, lgrInfo.seq, amount, account, yield);
+                    ownerFunds = rpc::accountFunds(*backend_, lgrInfo.seq, amount, account, yield);
                 });
             };
 
@@ -248,7 +248,7 @@ SubscriptionManager::pubBookChanges(
     ripple::LedgerHeader const& lgrInfo,
     std::vector<data::TransactionAndMetadata> const& transactions)
 {
-    auto const json = RPC::computeBookChanges(lgrInfo, transactions);
+    auto const json = rpc::computeBookChanges(lgrInfo, transactions);
     auto const bookChangesMsg = std::make_shared<std::string>(boost::json::serialize(json));
     bookChangesSubscribers_.publish(bookChangesMsg);
 }
@@ -260,7 +260,7 @@ SubscriptionManager::forwardProposedTransaction(boost::json::object const& respo
     txProposedSubscribers_.publish(pubMsg);
 
     auto transaction = response.at("transaction").as_object();
-    auto accounts = RPC::getAccountsFromTransaction(transaction);
+    auto accounts = rpc::getAccountsFromTransaction(transaction);
 
     for (ripple::AccountID const& account : accounts)
         accountProposedSubscribers_.publish(pubMsg, account);

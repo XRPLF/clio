@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ledger_data method retrieves contents of the specified ledger. You can iterate through several calls to
@@ -118,4 +118,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

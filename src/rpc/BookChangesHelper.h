@@ -24,7 +24,7 @@
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -179,7 +179,7 @@ private:
         void
         handleBookChange(data::TransactionAndMetadata const& blob)
         {
-            auto const [tx, meta] = RPC::deserializeTxPlusMeta(blob);
+            auto const [tx, meta] = rpc::deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
                 return;
 
@@ -244,4 +244,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
 [[nodiscard]] boost::json::object const
 computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
 
-}  // namespace RPC
+}  // namespace rpc

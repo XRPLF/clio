@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace RPC;
+using namespace rpc;
 
 TEST(RPCAmendmentsTest, GenerateAmendmentId)
 {

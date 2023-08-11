@@ -26,7 +26,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_offers method retrieves a list of offers made by a given account.
@@ -111,4 +111,4 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Offer const& offer);
 };
-}  // namespace RPC
+}  // namespace rpc

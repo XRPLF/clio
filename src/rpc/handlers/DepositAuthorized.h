@@ -26,7 +26,7 @@
 
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The deposit_authorized command indicates whether one account is authorized to send payments directly to
@@ -90,4 +90,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

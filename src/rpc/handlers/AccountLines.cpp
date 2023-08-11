@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/AccountLines.h>
 
-namespace RPC {
+namespace rpc {
 
 void
 AccountLinesHandler::addLine(
@@ -236,4 +236,4 @@ tag_invoke(
     jv = std::move(obj);
 }
 
-}  // namespace RPC
+}  // namespace rpc

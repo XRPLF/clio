@@ -26,7 +26,7 @@
 
 #include <fmt/core.h>
 
-namespace RPC::meta {
+namespace rpc::meta {
 
 /**
  * @brief A meta-processor that acts as a spec for a sub-object/section.
@@ -136,7 +136,7 @@ public:
         if (not value.is_object() or not value.as_object().contains(key.data()))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        if (not RPC::validation::checkType<Type>(value.as_object().at(key.data())))
+        if (not rpc::validation::checkType<Type>(value.as_object().at(key.data())))
             return {};  // ignore if type does not match
 
         return processor_(value, key);
@@ -181,4 +181,4 @@ public:
     }
 };
 
-}  // namespace RPC::meta
+}  // namespace rpc::meta

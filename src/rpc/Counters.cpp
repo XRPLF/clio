@@ -21,7 +21,7 @@
 #include <rpc/JS.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace rpc {
 
 void
 Counters::rpcFailed(std::string const& method)
@@ -137,4 +137,4 @@ Counters::report() const
     return obj;
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -21,7 +21,7 @@
 
 #include <unordered_map>
 
-namespace RPC {
+namespace rpc {
 
 LedgerEntryHandler::Result
 LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx) const
@@ -237,4 +237,4 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

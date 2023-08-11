@@ -27,7 +27,7 @@
 #include <rpc/common/Validators.h>
 #include <util/log/Logger.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_tx method retrieves a list of transactions that involved the specified account.
@@ -127,4 +127,4 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
-}  // namespace RPC
+}  // namespace rpc

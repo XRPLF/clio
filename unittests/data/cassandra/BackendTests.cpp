@@ -31,7 +31,7 @@
 
 using namespace util;
 using namespace std;
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 
 using namespace data::cassandra;

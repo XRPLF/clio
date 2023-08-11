@@ -29,7 +29,7 @@
 #include <string_view>
 #include <variant>
 
-namespace RPC {
+namespace rpc {
 
 /** @brief Custom clio RPC Errors. */
 enum class ClioError {
@@ -105,9 +105,9 @@ struct Status
     }
 
     /**
-     * @brief Returns true if the @ref RPC::Status contains the desired @ref RPC::RippledError
+     * @brief Returns true if the @ref rpc::Status contains the desired @ref rpc::RippledError
      *
-     * @param other The @ref RPC::RippledError to match
+     * @param other The @ref rpc::RippledError to match
      * @return true if status matches given error; false otherwise
      */
     bool
@@ -184,7 +184,7 @@ public:
     }
 };
 
-/** @brief A globally available @ref RPC::Status that represents a successful state. */
+/** @brief A globally available @ref rpc::Status that represents a successful state. */
 static Status OK;
 
 /**
@@ -206,7 +206,7 @@ ClioErrorInfo const&
 getErrorInfo(ClioError code);
 
 /**
- * @brief Generate JSON from a @ref RPC::WarningCode.
+ * @brief Generate JSON from a @ref rpc::WarningCode.
  *
  * @param code The warning code
  * @return The JSON output
@@ -215,7 +215,7 @@ boost::json::object
 makeWarning(WarningCode code);
 
 /**
- * @brief Generate JSON from a @ref RPC::Status.
+ * @brief Generate JSON from a @ref rpc::Status.
  *
  * @param status The status object
  * @return The JSON output
@@ -224,7 +224,7 @@ boost::json::object
 makeError(Status const& status);
 
 /**
- * @brief Generate JSON from a @ref RPC::RippledError.
+ * @brief Generate JSON from a @ref rpc::RippledError.
  *
  * @param err The rippled error
  * @return The JSON output
@@ -236,7 +236,7 @@ makeError(
     std::optional<std::string_view> customMessage = std::nullopt);
 
 /**
- * @brief Generate JSON from a @ref RPC::ClioError.
+ * @brief Generate JSON from a @ref rpc::ClioError.
  *
  * @param err The clio's custom error
  * @return The JSON output
@@ -247,4 +247,4 @@ makeError(
     std::optional<std::string_view> customError = std::nullopt,
     std::optional<std::string_view> customMessage = std::nullopt);
 
-}  // namespace RPC
+}  // namespace rpc

@@ -27,7 +27,7 @@
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_currencies command retrieves a list of currencies that an account can send or receive,
@@ -87,4 +87,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

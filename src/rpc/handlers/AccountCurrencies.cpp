@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/AccountCurrencies.h>
 
-namespace RPC {
+namespace rpc {
 AccountCurrenciesHandler::Result
 AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context const& ctx) const
 {
@@ -114,4 +114,4 @@ tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::js
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

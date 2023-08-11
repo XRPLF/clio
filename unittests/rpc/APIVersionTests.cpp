@@ -29,7 +29,7 @@ constexpr static auto DEFAULT_API_VERSION = 5u;
 constexpr static auto MIN_API_VERSION = 2u;
 constexpr static auto MAX_API_VERSION = 10u;
 
-using namespace RPC::detail;
+using namespace rpc::detail;
 namespace json = boost::json;
 
 class RPCAPIVersionTest : public NoLoggerFixture

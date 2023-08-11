@@ -28,7 +28,7 @@
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The noripple_check command provides a quick way to check the status of the Default Ripple field for an account
@@ -104,4 +104,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

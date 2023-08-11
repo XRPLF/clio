@@ -20,7 +20,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/AccountChannels.h>
 
-namespace RPC {
+namespace rpc {
 
 void
 AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle) const
@@ -188,4 +188,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsH
 
     jv = std::move(obj);
 }
-}  // namespace RPC
+}  // namespace rpc

@@ -28,7 +28,7 @@
 
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_lines method returns information about an account's trust lines, which contain balances in all
@@ -135,4 +135,4 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LineResponse const& line);
 };
 
-}  // namespace RPC
+}  // namespace rpc

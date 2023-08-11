@@ -158,9 +158,9 @@ public:
             jsonResponse["warning"] = "load";
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
-                jsonResponse["warnings"].as_array().push_back(RPC::makeWarning(RPC::warnRPC_RATE_LIMIT));
+                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
             else
-                jsonResponse["warnings"] = boost::json::array{RPC::makeWarning(RPC::warnRPC_RATE_LIMIT)};
+                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
 
             // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);
@@ -221,7 +221,7 @@ public:
         perfLog_.info() << tag() << "Received request from ip = " << this->clientIp;
 
         auto sendError = [this](auto error, std::string&& requestStr) {
-            auto e = RPC::makeError(error);
+            auto e = rpc::makeError(error);
 
             try
             {
@@ -244,7 +244,7 @@ public:
         if (!dosGuard_.get().request(clientIp))
         {
             // TODO: could be useful to count in counters in the future too
-            sendError(RPC::RippledError::rpcSLOW_DOWN, std::move(requestStr));
+            sendError(rpc::RippledError::rpcSLOW_DOWN, std::move(requestStr));
         }
         else
         {
@@ -254,7 +254,7 @@ public:
             }
             catch (std::exception const&)
             {
-                sendError(RPC::RippledError::rpcINTERNAL, std::move(requestStr));
+                sendError(rpc::RippledError::rpcINTERNAL, std::move(requestStr));
             }
         }
 

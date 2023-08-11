@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Represents a Specification for one field of an RPC command.
@@ -38,7 +38,7 @@ struct FieldSpec final
      *
      * @tparam Processors The types of processors
      * @param key The key in a JSON object that the field validates
-     * @param processors The processors, each of them have to fulfil the @ref RPC::SomeProcessor concept
+     * @param processors The processors, each of them have to fulfil the @ref rpc::SomeProcessor concept
      */
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
@@ -89,4 +89,4 @@ private:
     std::vector<FieldSpec> fields_;
 };
 
-}  // namespace RPC
+}  // namespace rpc

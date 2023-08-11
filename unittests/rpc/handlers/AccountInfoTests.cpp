@@ -25,7 +25,7 @@
 #include <ripple/protocol/digest.h>
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -110,7 +110,7 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -135,7 +135,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -160,7 +160,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -187,7 +187,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -214,7 +214,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
@@ -242,7 +242,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "dbDeserialization");
         EXPECT_EQ(err.at("error_message").as_string(), "Database deserialization error.");
     });
@@ -279,7 +279,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "dbDeserialization");
         EXPECT_EQ(err.at("error_message").as_string(), "Database deserialization error.");
     });
@@ -548,7 +548,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
-        .WillByDefault(Return(CreateAmendmentsObject({RPC::Amendments::DisallowIncoming}).getSerializer().peekData()));
+        .WillByDefault(Return(CreateAmendmentsObject({rpc::Amendments::DisallowIncoming}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const static input = boost::json::parse(fmt::format(
@@ -621,7 +621,7 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
-        .WillByDefault(Return(CreateAmendmentsObject({RPC::Amendments::Clawback}).getSerializer().peekData()));
+        .WillByDefault(Return(CreateAmendmentsObject({rpc::Amendments::Clawback}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const static input = boost::json::parse(fmt::format(

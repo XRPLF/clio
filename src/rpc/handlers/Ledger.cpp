@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/Ledger.h>
 
-namespace RPC {
+namespace rpc {
 LedgerHandler::Result
 LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
 {
@@ -85,7 +85,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                     if (input.ownerFunds)
                     {
                         // check the type of tx
-                        auto const [tx, meta] = RPC::deserializeTxPlusMeta(obj);
+                        auto const [tx, meta] = rpc::deserializeTxPlusMeta(obj);
                         if (tx and tx->isFieldPresent(ripple::sfTransactionType) and
                             tx->getTxnType() == ripple::ttOFFER_CREATE)
                         {
@@ -204,4 +204,4 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

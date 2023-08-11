@@ -25,7 +25,7 @@
 
 #include <fmt/core.h>
 
-namespace RPC::validation {
+namespace rpc::validation {
 
 /**
  * @brief Check that the type is the same as what was expected.
@@ -527,4 +527,4 @@ extern CustomValidator SubscribeStreamValidator;
  */
 extern CustomValidator SubscribeAccountsValidator;
 
-}  // namespace RPC::validation
+}  // namespace rpc::validation

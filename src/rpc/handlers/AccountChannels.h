@@ -27,7 +27,7 @@
 
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_channels method returns information about an account's Payment Channels. This includes only
@@ -126,4 +126,4 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ChannelResponse const& channel);
 };
-}  // namespace RPC
+}  // namespace rpc

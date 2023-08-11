@@ -26,7 +26,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 using namespace feed;
@@ -498,7 +498,7 @@ TEST_P(UnsubscribeParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -549,8 +549,8 @@ TEST_F(RPCUnsubscribeTest, Accounts)
 
     MockSubscriptionManager* rawSubscriptionManagerPtr =
         static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(RPC::accountFromStringStrict(ACCOUNT).value(), _)).Times(1);
-    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(RPC::accountFromStringStrict(ACCOUNT2).value(), _)).Times(1);
+    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _)).Times(1);
+    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _)).Times(1);
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
@@ -571,9 +571,9 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
 
     MockSubscriptionManager* rawSubscriptionManagerPtr =
         static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(RPC::accountFromStringStrict(ACCOUNT).value(), _))
+    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _))
         .Times(1);
-    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(RPC::accountFromStringStrict(ACCOUNT2).value(), _))
+    EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _))
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -603,7 +603,7 @@ TEST_F(RPCUnsubscribeTest, Books)
         }})",
         ACCOUNT));
 
-    auto const parsedBookMaybe = RPC::parseBook(input.as_object().at("books").as_array()[0].as_object());
+    auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
 
     MockSubscriptionManager* rawSubscriptionManagerPtr =
@@ -637,7 +637,7 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
         }})",
         ACCOUNT));
 
-    auto const parsedBookMaybe = RPC::parseBook(input.as_object().at("books").as_array()[0].as_object());
+    auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
 
     MockSubscriptionManager* rawSubscriptionManagerPtr =

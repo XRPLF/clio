@@ -23,7 +23,7 @@
 #include <ripple/beast/utility/rngfill.h>
 #include <ripple/crypto/csprng.h>
 
-namespace RPC {
+namespace rpc {
 
 RandomHandler::Result
 RandomHandler::process([[maybe_unused]] Context const& ctx) const
@@ -42,4 +42,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, RandomHandler::O
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

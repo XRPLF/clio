@@ -20,7 +20,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/BookOffers.h>
 
-namespace RPC {
+namespace rpc {
 
 BookOffersHandler::Result
 BookOffersHandler::process(Input input, Context const& ctx) const
@@ -98,4 +98,4 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

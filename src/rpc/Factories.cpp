@@ -23,7 +23,7 @@
 using namespace std;
 using namespace util;
 
-namespace RPC {
+namespace rpc {
 
 util::Expected<web::Context, Status>
 make_WsContext(
@@ -94,4 +94,4 @@ make_HttpContext(
     return web::Context(yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
 }
 
-}  // namespace RPC
+}  // namespace rpc

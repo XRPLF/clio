@@ -22,7 +22,7 @@
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/nft.h>
 
-namespace RPC {
+namespace rpc {
 
 AccountNFTsHandler::Result
 AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx) const
@@ -146,4 +146,4 @@ tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::va
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

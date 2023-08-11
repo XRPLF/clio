@@ -28,7 +28,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Holds information about successful, failed, forwarded, etc. RPC handler calls.
@@ -151,4 +151,4 @@ public:
     report() const;
 };
 
-}  // namespace RPC
+}  // namespace rpc

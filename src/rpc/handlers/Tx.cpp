@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/Tx.h>
 
-namespace RPC {
+namespace rpc {
 
 TxHandler::Result
 TxHandler::process(Input input, Context const& ctx) const
@@ -118,4 +118,4 @@ tag_invoke(boost::json::value_to_tag<TxHandler::Input>, boost::json::value const
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

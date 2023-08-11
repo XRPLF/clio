@@ -26,7 +26,7 @@
 
 #include <string>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Default API version to use if no version is specified by clients
@@ -63,4 +63,4 @@ public:
     util::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
 };
 
-}  // namespace RPC
+}  // namespace rpc

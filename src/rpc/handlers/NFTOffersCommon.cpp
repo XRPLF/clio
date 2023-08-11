@@ -23,7 +23,7 @@
 #include <ripple/protocol/Indexes.h>
 
 using namespace ripple;
-using namespace ::RPC;
+using namespace ::rpc;
 
 namespace ripple {
 
@@ -51,7 +51,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, SLE const& offer
 
 }  // namespace ripple
 
-namespace RPC {
+namespace rpc {
 
 NFTOffersHandlerBase::Result
 NFTOffersHandlerBase::iterateOfferDirectory(
@@ -183,4 +183,4 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

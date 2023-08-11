@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/AccountObjects.h>
 
-namespace RPC {
+namespace rpc {
 
 std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPESMAP{
     {"state", ripple::ltRIPPLE_STATE},
@@ -168,4 +168,4 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

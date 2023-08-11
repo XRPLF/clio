@@ -23,7 +23,7 @@
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Types.h>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 template <typename>
 static constexpr bool unsupported_handler_v = false;
@@ -70,4 +70,4 @@ struct DefaultProcessor final
     }
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

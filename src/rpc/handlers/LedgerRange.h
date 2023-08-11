@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ledger_range command returns the index number of the earliest and latest ledgers that the server has.
@@ -56,4 +56,4 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 };
-}  // namespace RPC
+}  // namespace rpc

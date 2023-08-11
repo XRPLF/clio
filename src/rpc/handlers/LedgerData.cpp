@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-namespace RPC {
+namespace rpc {
 
 std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler::TYPES_MAP{
     {JS(account), ripple::ltACCOUNT_ROOT},
@@ -254,4 +254,4 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

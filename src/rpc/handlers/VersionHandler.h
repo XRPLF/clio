@@ -25,7 +25,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/impl/APIVersionParser.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The version command returns the min,max and current api Version we are using
@@ -33,7 +33,7 @@ namespace RPC {
  */
 class VersionHandler
 {
-    RPC::detail::ProductionAPIVersionParser apiVersionParser_;
+    rpc::detail::ProductionAPIVersionParser apiVersionParser_;
 
 public:
     struct Output
@@ -56,7 +56,7 @@ public:
     Result
     process([[maybe_unused]] Context const& ctx) const
     {
-        using namespace RPC;
+        using namespace rpc;
 
         auto output = Output{};
         output.currVersion = apiVersionParser_.getDefaultVersion();
@@ -80,4 +80,4 @@ private:
     }
 };
 
-}  // namespace RPC
+}  // namespace rpc

@@ -71,14 +71,14 @@ class HandlerFake
 public:
     using Input = TestInput;
     using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    RPC::RpcSpecConstRef
+    rpc::RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion) const
     {
-        using namespace RPC::validation;
+        using namespace rpc::validation;
 
-        static const auto rpcSpec = RPC::RpcSpec{
+        static const auto rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
@@ -87,7 +87,7 @@ public:
     }
 
     Result
-    process(Input input, [[maybe_unused]] RPC::Context const& ctx) const
+    process(Input input, [[maybe_unused]] rpc::Context const& ctx) const
     {
         return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
     }
@@ -97,10 +97,10 @@ class NoInputHandlerFake
 {
 public:
     using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
     Result
-    process([[maybe_unused]] RPC::Context const& ctx) const
+    process([[maybe_unused]] rpc::Context const& ctx) const
     {
         return Output{"test"};
     }
@@ -112,14 +112,14 @@ class FailingHandlerFake
 public:
     using Input = TestInput;
     using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    RPC::RpcSpecConstRef
+    rpc::RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion) const
     {
-        using namespace RPC::validation;
+        using namespace rpc::validation;
 
-        static const auto rpcSpec = RPC::RpcSpec{
+        static const auto rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };
@@ -128,10 +128,10 @@ public:
     }
 
     Result
-    process([[maybe_unused]] Input input, [[maybe_unused]] RPC::Context const& ctx) const
+    process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx) const
     {
         // always fail
-        return RPC::Error{RPC::Status{"Very custom error"}};
+        return rpc::Error{rpc::Status{"Very custom error"}};
     }
 };
 
@@ -162,18 +162,18 @@ struct HandlerMock
 {
     using Input = InOutFake;
     using Output = InOutFake;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    MOCK_METHOD(RPC::RpcSpecConstRef, spec, (uint32_t), (const));
-    MOCK_METHOD(Result, process, (Input, RPC::Context const&), (const));
+    MOCK_METHOD(rpc::RpcSpecConstRef, spec, (uint32_t), (const));
+    MOCK_METHOD(Result, process, (Input, rpc::Context const&), (const));
 };
 
 struct HandlerWithoutInputMock
 {
     using Output = InOutFake;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    MOCK_METHOD(Result, process, (RPC::Context const&), (const));
+    MOCK_METHOD(Result, process, (rpc::Context const&), (const));
 };
 
 // testing sweep handler by mocking dos guard

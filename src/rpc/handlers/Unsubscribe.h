@@ -28,7 +28,7 @@ namespace feed {
 class SubscriptionManager;
 }
 
-namespace RPC {
+namespace rpc {
 
 template <typename SubscriptionManagerType>
 class BaseUnsubscribeHandler
@@ -225,4 +225,4 @@ private:
  */
 using UnsubscribeHandler = BaseUnsubscribeHandler<feed::SubscriptionManager>;
 
-}  // namespace RPC
+}  // namespace rpc

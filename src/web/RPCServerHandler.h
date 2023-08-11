@@ -43,7 +43,7 @@ class RPCServerHandler
     // subscription manager holds the shared_ptr of this class
     std::weak_ptr<feed::SubscriptionManager> const subscriptions_;
     util::TagDecoratorFactory const tagFactory_;
-    RPC::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
+    rpc::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
     util::Logger log_{"RPC"};
     util::Logger perfLog_{"Performance"};
@@ -158,7 +158,7 @@ private:
 
             auto const context = [&] {
                 if (connection->upgraded)
-                    return RPC::make_WsContext(
+                    return rpc::make_WsContext(
                         yield,
                         request,
                         connection,
@@ -167,7 +167,7 @@ private:
                         connection->clientIp,
                         std::cref(apiVersionParser_));
                 else
-                    return RPC::make_HttpContext(
+                    return rpc::make_HttpContext(
                         yield,
                         request,
                         tagFactory_.with(connection->tag()),
@@ -191,10 +191,10 @@ private:
             auto [v, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
-            RPC::logDuration(*context, us);
+            rpc::logDuration(*context, us);
 
             boost::json::object response;
-            if (auto const status = std::get_if<RPC::Status>(&v))
+            if (auto const status = std::get_if<rpc::Status>(&v))
             {
                 // note: error statuses are counted/notified in buildResponse itself
                 response = web::detail::ErrorHelper(connection, request).composeError(*status);
@@ -246,10 +246,10 @@ private:
             }
 
             boost::json::array warnings;
-            warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_CLIO));
+            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
 
             if (etl_->lastCloseAgeSeconds() >= 60)
-                warnings.emplace_back(RPC::makeWarning(RPC::warnRPC_OUTDATED));
+                warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
 
             response["warnings"] = warnings;
             connection->send(boost::json::serialize(response));

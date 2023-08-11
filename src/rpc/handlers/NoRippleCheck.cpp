@@ -22,7 +22,7 @@
 
 #include <fmt/core.h>
 
-namespace RPC {
+namespace rpc {
 
 NoRippleCheckHandler::Result
 NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& ctx) const
@@ -201,4 +201,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NoRippleCheckHan
     jv = std::move(obj);
 }
 
-}  // namespace RPC
+}  // namespace rpc

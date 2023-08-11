@@ -24,7 +24,7 @@
 
 using namespace ripple;
 
-namespace RPC {
+namespace rpc {
 
 NFTBuyOffersHandler::Result
 NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input input, Context const& ctx) const
@@ -34,4 +34,4 @@ NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input input, Context const& ct
 
     return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
 }
-}  // namespace RPC
+}  // namespace rpc

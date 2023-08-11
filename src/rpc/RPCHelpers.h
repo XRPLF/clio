@@ -38,7 +38,7 @@
 
 #include <fmt/core.h>
 
-namespace RPC {
+namespace rpc {
 
 enum class NFTokenjson { ENABLE, DISABLE };
 
@@ -247,4 +247,4 @@ logDuration(web::Context const& ctx, T const& dur)
         log.info() << ctx.tag() << msg;
 }
 
-}  // namespace RPC
+}  // namespace rpc

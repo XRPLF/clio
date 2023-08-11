@@ -202,14 +202,14 @@ try
     auto etl = etl::ETLService::make_ETLService(config, ioc, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = WorkQueue::make_WorkQueue(config);
-    auto counters = RPC::Counters::make_Counters(workQueue);
-    auto const handlerProvider = std::make_shared<RPC::detail::ProductionHandlerProvider const>(
+    auto counters = rpc::Counters::make_Counters(workQueue);
+    auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
         config, backend, subscriptions, balancer, etl, counters);
-    auto const rpcEngine = RPC::RPCEngine::make_RPCEngine(
+    auto const rpcEngine = rpc::RPCEngine::make_RPCEngine(
         config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 
     // init the web server
-    auto handler = std::make_shared<RPCServerHandler<RPC::RPCEngine, etl::ETLService>>(
+    auto handler = std::make_shared<RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(
         config, backend, rpcEngine, etl, subscriptions);
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;

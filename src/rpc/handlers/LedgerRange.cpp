@@ -22,7 +22,7 @@
 
 #include <optional>
 
-namespace RPC {
+namespace rpc {
 
 LedgerRangeHandler::Result
 LedgerRangeHandler::process([[maybe_unused]] Context const& ctx) const
@@ -40,4 +40,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerRangeHandl
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

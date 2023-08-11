@@ -52,7 +52,7 @@ class LoadBalancer;
 class ETLService;
 }  // namespace etl
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
@@ -285,4 +285,4 @@ private:
 
 using RPCEngine = RPCEngineBase<detail::IPAdminVerificationStrategy>;
 
-}  // namespace RPC
+}  // namespace rpc

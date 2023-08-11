@@ -21,7 +21,7 @@
 
 #include <boost/json/value.hpp>
 
-namespace RPC {
+namespace rpc {
 
 [[nodiscard]] MaybeError
 FieldSpec::process(boost::json::value& value) const
@@ -39,4 +39,4 @@ RpcSpec::process(boost::json::value& value) const
     return {};
 }
 
-}  // namespace RPC
+}  // namespace rpc

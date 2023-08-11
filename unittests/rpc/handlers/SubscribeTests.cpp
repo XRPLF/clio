@@ -29,7 +29,7 @@
 #include <chrono>
 
 using namespace std::chrono_literals;
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -542,7 +542,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -755,10 +755,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
 
     auto const reversedBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
+        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
 
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
@@ -920,10 +920,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
 
     auto const reversedBook = getBookBase(std::get<ripple::Book>(
-        RPC::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
+        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
 
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
