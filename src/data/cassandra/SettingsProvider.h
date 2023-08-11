@@ -28,7 +28,7 @@
 namespace data::cassandra {
 
 /**
- * @brief Provides settings for @ref CassandraBackend.
+ * @brief Provides settings for @ref BasicCassandraBackend.
  */
 class SettingsProvider
 {

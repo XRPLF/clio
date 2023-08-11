@@ -424,9 +424,8 @@ public:
      * @param book Unsigned 256-bit integer.
      * @param ledgerSequence The ledger sequence to fetch for
      * @param limit Pagaing limit as to how many transactions returned per page.
-     * @param cursor Important metadata returned every time paging occurs.
      * @param yield The coroutine context
-     * @return BookOffersPage
+     * @return The book offers page
      */
     BookOffersPage
     fetchBookOffers(
@@ -438,8 +437,7 @@ public:
     /**
      * @brief Synchronously fetches the ledger range from DB.
      *
-     * This function just wraps @ref hardFetchLedgerRange(boost::asio::yield_context) using @ref
-     * synchronous(FnType&&).
+     * This function just wraps hardFetchLedgerRange(boost::asio::yield_context) using synchronous(FnType&&).
      *
      * @return The ledger range if available; nullopt otherwise
      */
@@ -543,7 +541,7 @@ public:
     /**
      * @brief Tells database we finished writing all data for a specific ledger.
      *
-     * Uses @ref doFinishWrites() to synchronize with the pending writes.
+     * Uses doFinishWrites to synchronize with the pending writes.
      *
      * @param ledgerSequence The ledger sequence to finish writing for
      * @return true on success; false otherwise

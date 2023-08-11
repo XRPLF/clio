@@ -40,7 +40,7 @@ public:
      *
      * @tparam HandlerType The real type of wrapped handler class
      * @tparam ProcessingStrategy A strategy that implements how processing of JSON is to be done
-     * @param handler The handler to wrap. Required to fulfil the @ref SomeHandler concept.
+     * @param handler The handler to wrap. Required to fulfil the @ref RPC::SomeHandler concept.
      */
     template <SomeHandler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)

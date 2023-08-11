@@ -412,11 +412,12 @@ public:
     }
 
     /**
-     * @brief Fetch the specified ledger
+     * @brief Fetch the specified ledger.
      *
-     * @param ledgerSequence sequence of the ledger to fetch @getObjects whether to get the account state diff between
-     * this ledger and the prior one
-     * @return the extracted data and the result status
+     * @param ledgerSequence Sequence of the ledger to fetch
+     * @param getObjects Whether to get the account state diff between this ledger and the prior one
+     * @param getObjectNeighbors Whether to request object neighbors
+     * @return The extracted data and the result status
      */
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedger(uint32_t ledgerSequence, bool getObjects = true, bool getObjectNeighbors = false) override
@@ -483,11 +484,12 @@ public:
     }
 
     /**
-     * @brief Download a ledger in full
+     * @brief Download a ledger in full.
      *
-     * @param ledgerSequence sequence of the ledger to download
-     * @param writeQueue queue to push downloaded ledger objects
-     * @return true if the download was successful
+     * @param ledgerSequence Sequence of the ledger to download
+     * @param numMarkers Number of markers to generate for async calls
+     * @param cacheOnly Only insert into cache, not the DB
+     * @return true if the download was successful; false otherwise
      */
     std::pair<std::vector<std::string>, bool>
     loadInitialLedger(std::uint32_t ledgerSequence, std::uint32_t numMarkers, bool cacheOnly = false) override

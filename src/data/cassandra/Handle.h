@@ -57,7 +57,7 @@ public:
     using ResultType = Result;
 
     /**
-     * @brief Construct a new handle from a @ref Settings object.
+     * @brief Construct a new handle from a @ref detail::Settings object.
      *
      * @param clusterSettings The settings to use
      */
@@ -174,7 +174,7 @@ public:
     /**
      * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecute(std::string_view, Args&&...) const for how this works.
+     * See asyncExecute(std::string_view, Args&&...) const for how this works.
      *
      * @param query The query to execute
      * @param args The arguments to bind for execution
@@ -229,7 +229,7 @@ public:
     /**
      * @brief Synchonous version of the above.
      *
-     * See @ref asyncExecute(std::vector<StatementType> const&, Args&&...) const for how this works.
+     * See asyncExecute(std::vector<StatementType> const&, Args&&...) const for how this works.
      *
      * @param statement The prepared statement to bind and execute
      * @param args The arguments to bind for execution
@@ -306,7 +306,7 @@ public:
      * @brief Prepare a statement.
      *
      * @param query
-     * @return A @ref PreparedStatementType
+     * @return A prepared statement
      * @throws std::runtime_error with underlying error description on failure
      */
     [[nodiscard]] PreparedStatementType

@@ -31,7 +31,7 @@ namespace RPC {
 struct RpcSpec;
 
 /**
- * @brief Specifies what a requirement used with @ref FieldSpec must provide.
+ * @brief Specifies what a requirement used with @ref RPC::FieldSpec must provide.
  */
 // clang-format off
 template <typename T>
@@ -41,7 +41,7 @@ concept SomeRequirement = requires(T a, boost::json::value lval) {
 // clang-format on
 
 /**
- * @brief Specifies what a modifier used with @ref FieldSpec must provide.
+ * @brief Specifies what a modifier used with @ref RPC::FieldSpec must provide.
  */
 // clang-format off
 template <typename T>
@@ -51,7 +51,7 @@ concept SomeModifier = requires(T a, boost::json::value lval) {
 // clang-format on
 
 /**
- * @brief The requirements of a processor to be used with @ref FieldSpec.
+ * @brief The requirements of a processor to be used with @ref RPC::FieldSpec.
  */
 template <typename T>
 concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T>);

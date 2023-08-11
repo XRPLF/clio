@@ -208,27 +208,27 @@ public:
     Logger&
     operator=(Logger&&) = default;
 
-    /*! Interface for logging at @ref Severity::TRC severity */
+    /*! Interface for logging at Severity::TRC severity */
     [[nodiscard]] Pump
     trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::DBG severity */
+    /*! Interface for logging at Severity::DBG severity */
     [[nodiscard]] Pump
     debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::INFO severity */
+    /*! Interface for logging at Severity::INFO severity */
     [[nodiscard]] Pump
     info(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::WRN severity */
+    /*! Interface for logging at Severity::WRN severity */
     [[nodiscard]] Pump
     warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::ERR severity */
+    /*! Interface for logging at Severity::ERR severity */
     [[nodiscard]] Pump
     error(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /*! Interface for logging at @ref Severity::FTL severity */
+    /*! Interface for logging at Severity::FTL severity */
     [[nodiscard]] Pump
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 };
@@ -253,42 +253,42 @@ public:
     static void
     init(Config const& config);
 
-    /*! Globally accesible General logger at @ref Severity::TRC severity */
+    /*! Globally accesible General logger at Severity::TRC severity */
     [[nodiscard]] static Logger::Pump
     trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.trace(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::DBG severity */
+    /*! Globally accesible General logger at Severity::DBG severity */
     [[nodiscard]] static Logger::Pump
     debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.debug(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::NFO severity */
+    /*! Globally accesible General logger at Severity::NFO severity */
     [[nodiscard]] static Logger::Pump
     info(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.info(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::WRN severity */
+    /*! Globally accesible General logger at Severity::WRN severity */
     [[nodiscard]] static Logger::Pump
     warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.warn(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::ERR severity */
+    /*! Globally accesible General logger at Severity::ERR severity */
     [[nodiscard]] static Logger::Pump
     error(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.error(loc);
     }
 
-    /*! Globally accesible General logger at @ref Severity::FTL severity */
+    /*! Globally accesible General logger at Severity::FTL severity */
     [[nodiscard]] static Logger::Pump
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {

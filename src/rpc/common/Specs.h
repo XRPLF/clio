@@ -36,9 +36,9 @@ struct FieldSpec final
     /**
      * @brief Construct a field specification out of a set of processors.
      *
-     * @tparam Processors The types of processors @ref SomeProcessor
+     * @tparam Processors The types of processors
      * @param key The key in a JSON object that the field validates
-     * @param processors The processors, each of them have to fulfil the @ref SomeProcessor concept
+     * @param processors The processors, each of them have to fulfil the @ref RPC::SomeProcessor concept
      */
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)

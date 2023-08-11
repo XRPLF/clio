@@ -2,6 +2,7 @@ PROJECT_NAME           = "Clio"
 INPUT                  = ../src ../unittests
 EXCLUDE_PATTERNS       = *Test*.cpp *Test*.h
 RECURSIVE              = YES
+HAVE_DOT               = NO
 
 QUIET                  = YES
 WARNINGS               = NO

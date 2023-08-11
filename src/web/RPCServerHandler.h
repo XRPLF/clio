@@ -32,7 +32,7 @@
 /**
  * @brief The server handler for RPC requests called by web server.
  *
- * Note: see @ref SomeServerHandler concept
+ * Note: see @ref web::SomeServerHandler concept
  */
 template <class RPCEngineType, class ETLType>
 class RPCServerHandler

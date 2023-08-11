@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+/*! @file */
 #pragma once
 
 #include <ripple/protocol/ErrorCodes.h>
@@ -104,10 +105,10 @@ struct Status
     }
 
     /**
-     * @brief Returns true if the Status contains the desired @ref RippledError
+     * @brief Returns true if the @ref RPC::Status contains the desired @ref RPC::RippledError
      *
-     * @param other The RippledError to match
-     * @return bool true if status matches given error; false otherwise
+     * @param other The @ref RPC::RippledError to match
+     * @return true if status matches given error; false otherwise
      */
     bool
     operator==(RippledError other) const
@@ -122,7 +123,7 @@ struct Status
      * @brief Returns true if the Status contains the desired @ref ClioError
      *
      * @param other The RippledError to match
-     * @return bool true if status matches given error; false otherwise
+     * @return true if status matches given error; false otherwise
      */
     bool
     operator==(ClioError other) const
@@ -183,14 +184,14 @@ public:
     }
 };
 
-/*! @brief A globally available @ref Status that represents a successful state. */
+/*! @brief A globally available @ref RPC::Status that represents a successful state. */
 static Status OK;
 
 /**
  * @brief Get the warning info object from a warning code.
  *
  * @param code The warning code
- * @return WarningInfo const& A reference to the static warning info
+ * @return A reference to the static warning info
  */
 WarningInfo const&
 getWarningInfo(WarningCode code);
@@ -199,34 +200,34 @@ getWarningInfo(WarningCode code);
  * @brief Get the error info object from an clio-specific error code.
  *
  * @param code The error code
- * @return ClioErrorInfo const& A reference to the static error info
+ * @return A reference to the static error info
  */
 ClioErrorInfo const&
 getErrorInfo(ClioError code);
 
 /**
- * @brief Generate JSON from a warning code.
+ * @brief Generate JSON from a @ref RPC::WarningCode.
  *
- * @param code The @ref WarningCode
- * @return boost::json::object The JSON output
+ * @param code The warning code
+ * @return The JSON output
  */
 boost::json::object
 makeWarning(WarningCode code);
 
 /**
- * @brief Generate JSON from a @ref Status.
+ * @brief Generate JSON from a @ref RPC::Status.
  *
- * @param status The @ref Status
- * @return boost::json::object The JSON output
+ * @param status The status object
+ * @return The JSON output
  */
 boost::json::object
 makeError(Status const& status);
 
 /**
- * @brief Generate JSON from a @ref RippledError.
+ * @brief Generate JSON from a @ref RPC::RippledError.
  *
- * @param status The rippled @ref RippledError
- * @return boost::json::object The JSON output
+ * @param err The rippled error
+ * @return The JSON output
  */
 boost::json::object
 makeError(
@@ -235,10 +236,10 @@ makeError(
     std::optional<std::string_view> customMessage = std::nullopt);
 
 /**
- * @brief Generate JSON from a @ref ClioError.
+ * @brief Generate JSON from a @ref RPC::ClioError.
  *
- * @param status The clio's custom @ref ClioError
- * @return boost::json::object The JSON output
+ * @param err The clio's custom error
+ * @return The JSON output
  */
 boost::json::object
 makeError(

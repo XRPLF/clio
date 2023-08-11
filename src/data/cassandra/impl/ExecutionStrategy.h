@@ -160,7 +160,7 @@ public:
      *
      * Retries forever with retry policy specified by @ref AsyncExecutor
      *
-     * @param prepradeStatement Statement to prepare and execute
+     * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
      * @throw DatabaseTimeout on timeout
      */
@@ -203,7 +203,7 @@ public:
      * Retries forever until successful or throws an exception on timeout.
      *
      * @param token Completion token (yield_context)
-     * @param prepradeStatement Statement to prepare and execute
+     * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
      * @throw DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected

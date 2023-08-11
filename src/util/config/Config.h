@@ -274,7 +274,7 @@ public:
      * stored under the desired key - fallback object is used instead.
      *
      * @param key The key to check
-     * @param fallabkc The fallback object
+     * @param fallback The fallback object
      * @return Config Section represented as a separate instance of Config
      */
     [[nodiscard]] Config
