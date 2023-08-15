@@ -184,7 +184,7 @@ try
     auto dosGuard = web::DOSGuard{config, whitelistHandler, sweepHandler};
 
     // Interface to the database
-    auto backend = data::make_Backend(ioc, config);
+    auto backend = data::make_Backend(config);
 
     // Manages clients subscribed to streams
     auto subscriptions = feed::SubscriptionManager::make_SubscriptionManager(config, backend);
@@ -208,7 +208,7 @@ try
     auto const rpcEngine = rpc::RPCEngine::make_RPCEngine(
         config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
 
-    // init the web server
+    // Init the web server
     auto handler = std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(
         config, backend, rpcEngine, etl, subscriptions);
     auto ctx = parseCerts(config);

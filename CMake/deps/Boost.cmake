@@ -1,7 +1,7 @@
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
+set (Boost_USE_STATIC_LIBS ON)
+set (Boost_USE_STATIC_RUNTIME ON)
 
-find_package(Boost 1.82 REQUIRED
+find_package (Boost 1.82 REQUIRED
   COMPONENTS
     program_options
     coroutine

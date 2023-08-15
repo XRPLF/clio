@@ -1,4 +1,4 @@
-target_compile_options(clio PUBLIC
+target_compile_options (clio PUBLIC
   -Wall
   -Werror
   -Wno-narrowing

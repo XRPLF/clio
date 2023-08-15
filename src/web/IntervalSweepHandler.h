@@ -19,15 +19,15 @@
 
 #pragma once
 
+#include <util/config/Config.h>
+
 #include <boost/asio.hpp>
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/system/error_code.hpp>
 
-#include <algorithm>
 #include <chrono>
-#include <ctime>
 
-namespace web::detail {
+namespace web {
+
+class BaseDOSGuard;
 
 /**
  * @brief Sweep handler using a steady_timer and boost::asio::io_context.
@@ -42,52 +42,29 @@ class IntervalSweepHandler
 
 public:
     /**
-     * @brief Construct a new interval-based sweep handler
+     * @brief Construct a new interval-based sweep handler.
      *
-     * @param config Clio config
-     * @param ctx The boost::asio::io_context
+     * @param config Clio config to use
+     * @param ctx The boost::asio::io_context to use
      */
-    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx)
-        : sweepInterval_{std::max(1u, static_cast<uint32_t>(config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
-        , ctx_{std::ref(ctx)}
-        , timer_{ctx.get_executor()}
-    {
-    }
-
-    ~IntervalSweepHandler()
-    {
-        timer_.cancel();
-    }
+    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx);
 
     /**
-     * @brief This setup member function is called by @ref BasicDOSGuard during
-     * its initialization.
+     * @brief Cancels the sweep timer.
+     */
+    ~IntervalSweepHandler();
+
+    /**
+     * @brief This setup member function is called by @ref BasicDOSGuard during its initialization.
      *
      * @param guard Pointer to the dos guard
      */
     void
-    setup(web::BaseDOSGuard* guard)
-    {
-        assert(dosGuard_ == nullptr);
-        dosGuard_ = guard;
-        assert(dosGuard_ != nullptr);
-
-        createTimer();
-    }
+    setup(web::BaseDOSGuard* guard);
 
 private:
     void
-    createTimer()
-    {
-        timer_.expires_after(sweepInterval_);
-        timer_.async_wait([this](boost::system::error_code const& error) {
-            if (error == boost::asio::error::operation_aborted)
-                return;
-
-            dosGuard_->clear();
-            boost::asio::post(ctx_.get().get_executor(), [this] { createTimer(); });
-        });
-    }
+    createTimer();
 };
 
-}  // namespace web::detail
+}  // namespace web

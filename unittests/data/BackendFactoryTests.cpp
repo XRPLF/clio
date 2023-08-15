@@ -74,7 +74,7 @@ TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
                 "type":"unknown"
             }
         })")};
-    EXPECT_THROW(make_Backend(ctx, cfg), std::runtime_error);
+    EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
@@ -94,7 +94,7 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
         }})",
         "127.0.0.2",
         keyspace))};
-    EXPECT_THROW(make_Backend(ctx, cfg), std::runtime_error);
+    EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
@@ -115,7 +115,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         keyspace))};
 
     {
-        auto backend = make_Backend(ctx, cfg);
+        auto backend = make_Backend(cfg);
         EXPECT_TRUE(backend);
 
         // empty db does not have ledger range
@@ -129,7 +129,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
     }
 
     {
-        auto backend = make_Backend(ctx, cfg);
+        auto backend = make_Backend(cfg);
         EXPECT_TRUE(backend);
 
         auto const range = backend->fetchLedgerRange();
@@ -155,7 +155,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
         }})",
         contactPoints,
         keyspace))};
-    EXPECT_THROW(make_Backend(ctx, cfg), std::runtime_error);
+    EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
@@ -192,6 +192,6 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
         contactPoints,
         keyspace))};
 
-    EXPECT_TRUE(make_Backend(ctx, cfgWrite));
-    EXPECT_TRUE(make_Backend(ctx, cfgReadOnly));
+    EXPECT_TRUE(make_Backend(cfgWrite));
+    EXPECT_TRUE(make_Backend(cfgReadOnly));
 }

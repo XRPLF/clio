@@ -236,7 +236,7 @@ void
 ETLService::doWork()
 {
     worker_ = std::thread([this]() {
-        beast::setCurrentThreadName("rippled: ETLService worker");
+        beast::setCurrentThreadName("ETLService worker");
 
         if (state_.isReadOnly)
             monitorReadOnly();
