@@ -155,7 +155,7 @@ ProbingSource::make_SSLHooks() noexcept
                 {
                     plainSrc_->pause();
                     currentSrc_ = sslSrc_;
-                    log_.info() << "Selected WSS as the main source: " << currentSrc_->toString();
+                    LOG(log_.info()) << "Selected WSS as the main source: " << currentSrc_->toString();
                 }
                 return SourceHooks::Action::PROCEED;
             },
@@ -184,7 +184,7 @@ ProbingSource::make_PlainHooks() noexcept
                 {
                     sslSrc_->pause();
                     currentSrc_ = plainSrc_;
-                    log_.info() << "Selected Plain WS as the main source: " << currentSrc_->toString();
+                    LOG(log_.info()) << "Selected Plain WS as the main source: " << currentSrc_->toString();
                 }
                 return SourceHooks::Action::PROCEED;
             },

@@ -70,7 +70,7 @@ retryOnTimeout(FnType func, size_t waitMs = 500)
         }
         catch (DatabaseTimeout const&)
         {
-            log.error() << "Database request timed out. Sleeping and retrying ... ";
+            LOG(log.error()) << "Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
         }
     }

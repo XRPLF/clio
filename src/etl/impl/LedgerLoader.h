@@ -98,7 +98,7 @@ public:
             ripple::SerialIter it{raw->data(), raw->size()};
             ripple::STTx sttx{it};
 
-            log_.trace() << "Inserting transaction = " << sttx.getTransactionID();
+            LOG(log_.trace()) << "Inserting transaction = " << sttx.getTransactionID();
 
             ripple::TxMeta txMeta{sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
 
@@ -149,7 +149,7 @@ public:
         auto rng = backend_->hardFetchLedgerRangeNoThrow();
         if (rng)
         {
-            log_.fatal() << "Database is not empty";
+            LOG(log_.fatal()) << "Database is not empty";
             assert(false);
             return {};
         }
@@ -162,18 +162,18 @@ public:
 
         ripple::LedgerHeader lgrInfo = ::util::deserializeHeader(ripple::makeSlice(ledgerData->ledger_header()));
 
-        log_.debug() << "Deserialized ledger header. " << ::util::toString(lgrInfo);
+        LOG(log_.debug()) << "Deserialized ledger header. " << ::util::toString(lgrInfo);
 
         auto timeDiff = ::util::timed<std::chrono::duration<double>>([this, sequence, &lgrInfo, &ledgerData]() {
             backend_->startWrites();
 
-            log_.debug() << "Started writes";
+            LOG(log_.debug()) << "Started writes";
 
             backend_->writeLedger(lgrInfo, std::move(*ledgerData->mutable_ledger_header()));
 
-            log_.debug() << "Wrote ledger";
+            LOG(log_.debug()) << "Wrote ledger";
             FormattedTransactionsData insertTxResult = insertTransactions(lgrInfo, *ledgerData);
-            log_.debug() << "Inserted txns";
+            LOG(log_.debug()) << "Inserted txns";
 
             // download the full account state map. This function downloads full
             // ledger data and pushes the downloaded data into the writeQueue.
@@ -191,7 +191,7 @@ public:
                     ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
                         for (auto& key : *edgeKeys)
                         {
-                            log_.debug() << "Writing edge key = " << ripple::strHex(key);
+                            LOG(log_.debug()) << "Writing edge key = " << ripple::strHex(key);
                             auto succ =
                                 backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
                             if (succ)
@@ -215,8 +215,8 @@ public:
                                     assert(succ);
                                     if (succ->key == cur->key)
                                     {
-                                        log_.debug() << "Writing book successor = " << ripple::strHex(base) << " - "
-                                                     << ripple::strHex(cur->key);
+                                        LOG(log_.debug()) << "Writing book successor = " << ripple::strHex(base)
+                                                          << " - " << ripple::strHex(cur->key);
 
                                         backend_->writeSuccessor(
                                             uint256ToString(base), sequence, uint256ToString(cur->key));
@@ -228,18 +228,18 @@ public:
 
                             prev = std::move(cur->key);
                             if (numWrites % 100000 == 0 && numWrites != 0)
-                                log_.info() << "Wrote " << numWrites << " book successors";
+                                LOG(log_.info()) << "Wrote " << numWrites << " book successors";
                         }
 
                         backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(data::lastKey));
                         ++numWrites;
                     });
 
-                log_.info() << "Looping through cache and submitting all writes took " << seconds
-                            << " seconds. numWrites = " << std::to_string(numWrites);
+                LOG(log_.info()) << "Looping through cache and submitting all writes took " << seconds
+                                 << " seconds. numWrites = " << std::to_string(numWrites);
             }
 
-            log_.debug() << "Loaded initial ledger";
+            LOG(log_.debug()) << "Loaded initial ledger";
 
             if (not state_.get().isStopping)
             {
@@ -251,7 +251,7 @@ public:
             backend_->finishWrites(sequence);
         });
 
-        log_.debug() << "Time to download and store ledger = " << timeDiff;
+        LOG(log_.debug()) << "Time to download and store ledger = " << timeDiff;
         return lgrInfo;
     }
 };

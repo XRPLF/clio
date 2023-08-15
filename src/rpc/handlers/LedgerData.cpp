@@ -150,8 +150,8 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
     }
 
     auto const end = std::chrono::system_clock::now();
-    log_.debug() << "Number of results = " << results.size() << " fetched in "
-                 << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds";
+    LOG(log_.debug()) << "Number of results = " << results.size() << " fetched in "
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds";
 
     output.states.reserve(results.size());
 
@@ -180,8 +180,8 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         output.cacheFull = sharedPtrBackend_->cache().isFull();
 
     auto const end2 = std::chrono::system_clock::now();
-    log_.debug() << "Number of results = " << results.size() << " serialized in "
-                 << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count() << " microseconds";
+    LOG(log_.debug()) << "Number of results = " << results.size() << " serialized in "
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count() << " microseconds";
 
     return output;
 }

@@ -89,7 +89,7 @@ public:
     bool
     publish(uint32_t ledgerSequence, std::optional<uint32_t> maxAttempts)
     {
-        log_.info() << "Attempting to publish ledger = " << ledgerSequence;
+        LOG(log_.info()) << "Attempting to publish ledger = " << ledgerSequence;
         size_t numAttempts = 0;
         while (not state_.get().isStopping)
         {
@@ -97,14 +97,14 @@ public:
 
             if (!range || range->maxSequence < ledgerSequence)
             {
-                log_.debug() << "Trying to publish. Could not find "
-                                "ledger with sequence = "
-                             << ledgerSequence;
+                LOG(log_.debug()) << "Trying to publish. Could not find "
+                                     "ledger with sequence = "
+                                  << ledgerSequence;
 
                 // We try maxAttempts times to publish the ledger, waiting one second in between each attempt.
                 if (maxAttempts && numAttempts >= maxAttempts)
                 {
-                    log_.debug() << "Failed to publish ledger after " << numAttempts << " attempts.";
+                    LOG(log_.debug()) << "Failed to publish ledger after " << numAttempts << " attempts.";
                     return false;
                 }
                 std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -136,11 +136,11 @@ public:
     publish(ripple::LedgerHeader const& lgrInfo)
     {
         boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
-            log_.info() << "Publishing ledger " << std::to_string(lgrInfo.seq);
+            LOG(log_.info()) << "Publishing ledger " << std::to_string(lgrInfo.seq);
 
             if (!state_.get().isWriting)
             {
-                log_.info() << "Updating cache";
+                LOG(log_.info()) << "Updating cache";
 
                 std::vector<data::LedgerObject> diff = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
@@ -177,10 +177,10 @@ public:
                 subscriptions_->pubBookChanges(lgrInfo, transactions);
 
                 setLastPublishTime();
-                log_.info() << "Published ledger " << std::to_string(lgrInfo.seq);
+                LOG(log_.info()) << "Published ledger " << std::to_string(lgrInfo.seq);
             }
             else
-                log_.info() << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
+                LOG(log_.info()) << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
         });
 
         // we track latest publish-requested seq, not necessarily already published

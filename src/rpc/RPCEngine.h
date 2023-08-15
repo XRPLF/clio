@@ -129,7 +129,7 @@ public:
 
         if (backend_->isTooBusy())
         {
-            log_.error() << "Database is too busy. Rejecting request";
+            LOG(log_.error()) << "Database is too busy. Rejecting request";
             notifyTooBusy();  // TODO: should we add ctx.method if we have it?
             return Status{RippledError::rpcTOO_BUSY};
         }
@@ -143,13 +143,13 @@ public:
 
         try
         {
-            perfLog_.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
+            LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
             auto const isAdmin = adminVerifier_.isAdmin(ctx.clientIp);
             auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp, ctx.apiVersion};
             auto const v = (*method).process(ctx.params, context);
 
-            perfLog_.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
+            LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
             if (v)
                 return v->as_object();
@@ -161,14 +161,14 @@ public:
         }
         catch (data::DatabaseTimeout const& t)
         {
-            log_.error() << "Database timeout";
+            LOG(log_.error()) << "Database timeout";
             notifyTooBusy();
 
             return Status{RippledError::rpcTOO_BUSY};
         }
         catch (std::exception const& ex)
         {
-            log_.error() << ctx.tag() << "Caught exception: " << ex.what();
+            LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 
             return Status{RippledError::rpcINTERNAL};

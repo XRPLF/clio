@@ -129,8 +129,8 @@ public:
                 auto [transferedByte, requests] = ipState_.at(ip);
                 if (transferedByte > maxFetches_ || requests > maxRequestCount_)
                 {
-                    log_.warn() << "Dosguard: Client surpassed the rate limit. ip = " << ip
-                                << " Transfered Byte: " << transferedByte << "; Requests: " << requests;
+                    LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip
+                                     << " Transfered Byte: " << transferedByte << "; Requests: " << requests;
                     return false;
                 }
             }
@@ -139,8 +139,8 @@ public:
             {
                 if (it->second > maxConnCount_)
                 {
-                    log_.warn() << "Dosguard: Client surpassed the rate limit. ip = " << ip
-                                << " Concurrent connection: " << it->second;
+                    LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip
+                                     << " Concurrent connection: " << it->second;
                     return false;
                 }
             }

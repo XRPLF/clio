@@ -121,7 +121,7 @@ protected:
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            perfLog_.info() << tag() << ": " << what << ": " << ec.message();
+            LOG(perfLog_.info()) << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().stream()).socket().close(ec);
         }
     }
@@ -139,13 +139,13 @@ public:
         , dosGuard_(dosGuard)
         , handler_(handler)
     {
-        perfLog_.debug() << tag() << "http session created";
+        LOG(perfLog_.debug()) << tag() << "http session created";
         dosGuard_.get().increment(ip);
     }
 
     virtual ~HttpBase()
     {
-        perfLog_.debug() << tag() << "http session closed";
+        LOG(perfLog_.debug()) << tag() << "http session closed";
         if (not upgraded)
             dosGuard_.get().decrement(this->clientIp);
     }
@@ -204,7 +204,7 @@ public:
                 boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))));
         }
 
-        log_.info() << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
+        LOG(log_.info()) << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
 
         try
         {

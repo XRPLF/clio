@@ -39,7 +39,7 @@ std::shared_ptr<BackendInterface>
 make_Backend(boost::asio::io_context& ioc, util::Config const& config)
 {
     static util::Logger log{"Backend"};
-    log.info() << "Constructing BackendInterface";
+    LOG(log.info()) << "Constructing BackendInterface";
 
     auto const readOnly = config.valueOr("read_only", false);
 
@@ -63,7 +63,7 @@ make_Backend(boost::asio::io_context& ioc, util::Config const& config)
         backend->updateRange(rng->maxSequence);
     }
 
-    log.info() << "Constructed BackendInterface Successfully";
+    LOG(log.info()) << "Constructed BackendInterface Successfully";
     return backend;
 }
 }  // namespace data

@@ -139,7 +139,7 @@ LogService::init(util::Config const& config)
     }
 
     core->set_filter(min_severity);
-    LogService::info() << "Default log level = " << defaultSeverity;
+    LOG(LogService::info()) << "Default log level = " << defaultSeverity;
 }
 
 Logger::Pump

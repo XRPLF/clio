@@ -127,7 +127,6 @@ TEST_F(CacheLoaderTest, FromCache)
         .WillByDefault(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(loops);
 
-    EXPECT_CALL(cache, size).Times(AtLeast(1));
     EXPECT_CALL(cache, update).Times(loops);
     EXPECT_CALL(cache, isFull).Times(1);
 

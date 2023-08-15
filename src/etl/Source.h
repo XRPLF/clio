@@ -273,11 +273,11 @@ public:
                 chArgs.SetMaxReceiveMessageSize(-1);
                 stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
                     grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs));
-                log_.debug() << "Made stub for remote = " << toString();
+                LOG(log_.debug()) << "Made stub for remote = " << toString();
             }
             catch (std::exception const& e)
             {
-                log_.debug() << "Exception while creating stub = " << e.what() << " . Remote = " << toString();
+                LOG(log_.debug()) << "Exception while creating stub = " << e.what() << " . Remote = " << toString();
             }
         }
     }
@@ -305,13 +305,13 @@ public:
         std::string const& clientIp,
         boost::asio::yield_context yield) const override
     {
-        log_.trace() << "Attempting to forward request to tx. "
-                     << "request = " << boost::json::serialize(request);
+        LOG(log_.trace()) << "Attempting to forward request to tx. "
+                          << "request = " << boost::json::serialize(request);
 
         boost::json::object response;
         if (!isConnected())
         {
-            log_.error() << "Attempted to proxy but failed to connect to tx";
+            LOG(log_.error()) << "Attempted to proxy but failed to connect to tx";
             return {};
         }
 
@@ -365,7 +365,7 @@ public:
 
             if (!parsed.is_object())
             {
-                log_.error() << "Error parsing response: " << std::string{begin, end};
+                LOG(log_.error()) << "Error parsing response: " << std::string{begin, end};
                 return {};
             }
 
@@ -376,7 +376,7 @@ public:
         }
         catch (std::exception const& e)
         {
-            log_.error() << "Encountered exception : " << e.what();
+            LOG(log_.error()) << "Encountered exception : " << e.what();
             return {};
         }
     }
@@ -481,7 +481,7 @@ public:
             calls.emplace_back(sequence, markers[i], nextMarker);
         }
 
-        log_.debug() << "Starting data download for ledger " << sequence << ". Using source = " << toString();
+        LOG(log_.debug()) << "Starting data download for ledger " << sequence << ". Using source = " << toString();
 
         for (auto& c : calls)
             c.call(stub_, cq);
@@ -499,19 +499,19 @@ public:
 
             if (!ok)
             {
-                log_.error() << "loadInitialLedger - ok is false";
+                LOG(log_.error()) << "loadInitialLedger - ok is false";
                 return {{}, false};  // handle cancelled
             }
             else
             {
-                log_.trace() << "Marker prefix = " << ptr->getMarkerPrefix();
+                LOG(log_.trace()) << "Marker prefix = " << ptr->getMarkerPrefix();
 
                 auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
                 if (result != etl::detail::AsyncCallData::CallStatus::MORE)
                 {
                     ++numFinished;
-                    log_.debug() << "Finished a marker. "
-                                 << "Current number of finished = " << numFinished;
+                    LOG(log_.debug()) << "Finished a marker. "
+                                      << "Current number of finished = " << numFinished;
 
                     std::string lastKey = ptr->getLastKey();
 
@@ -524,13 +524,13 @@ public:
 
                 if (backend_->cache().size() > progress)
                 {
-                    log_.info() << "Downloaded " << backend_->cache().size() << " records from rippled";
+                    LOG(log_.info()) << "Downloaded " << backend_->cache().size() << " records from rippled";
                     progress += incr;
                 }
             }
         }
 
-        log_.info() << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
+        LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
         return {std::move(edgeKeys), !abort};
     }
 
@@ -540,7 +540,7 @@ public:
     {
         if (auto resp = forwardCache_.get(request); resp)
         {
-            log_.debug() << "request hit forwardCache";
+            LOG(log_.debug()) << "request hit forwardCache";
             return resp;
         }
 
@@ -607,7 +607,7 @@ public:
                 {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}},
             };
             std::string s = boost::json::serialize(jv);
-            log_.trace() << "Sending subscribe stream message";
+            LOG(log_.trace()) << "Sending subscribe stream message";
 
             derived().ws().set_option(
                 boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
@@ -689,13 +689,13 @@ public:
                     setValidatedRange({validatedLedgers.data(), validatedLedgers.size()});
                 }
 
-                log_.info() << "Received a message on ledger "
-                            << " subscription stream. Message : " << response << " - " << toString();
+                LOG(log_.info()) << "Received a message on ledger "
+                                 << " subscription stream. Message : " << response << " - " << toString();
             }
             else if (response.contains("type") && response.at("type") == "ledgerClosed")
             {
-                log_.info() << "Received a message on ledger "
-                            << " subscription stream. Message : " << response << " - " << toString();
+                LOG(log_.info()) << "Received a message on ledger "
+                                 << " subscription stream. Message : " << response << " - " << toString();
                 if (response.contains("ledger_index"))
                 {
                     ledgerIndex = response.at("ledger_index").as_int64();
@@ -728,7 +728,7 @@ public:
 
             if (ledgerIndex != 0)
             {
-                log_.trace() << "Pushing ledger sequence = " << ledgerIndex << " - " << toString();
+                LOG(log_.trace()) << "Pushing ledger sequence = " << ledgerIndex << " - " << toString();
                 networkValidatedLedgers_->push(ledgerIndex);
             }
 
@@ -736,7 +736,7 @@ public:
         }
         catch (std::exception const& e)
         {
-            log_.error() << "Exception in handleMessage : " << e.what();
+            LOG(log_.error()) << "Exception in handleMessage : " << e.what();
             return false;
         }
     }
@@ -780,16 +780,16 @@ protected:
             ::ERR_error_string_n(ec.value(), buf, sizeof(buf));
             err += buf;
 
-            log_.error() << err;
+            LOG(log_.error()) << err;
         }
 
         if (ec != boost::asio::error::operation_aborted && ec != boost::asio::error::connection_refused)
         {
-            log_.error() << "error code = " << ec << " - " << toString();
+            LOG(log_.error()) << "error code = " << ec << " - " << toString();
         }
         else
         {
-            log_.warn() << "error code = " << ec << " - " << toString();
+            LOG(log_.warn()) << "error code = " << ec << " - " << toString();
         }
 
         // exponentially increasing timeouts, with a max of 30 seconds

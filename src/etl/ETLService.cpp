@@ -29,7 +29,7 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     if (finishSequence_ && startSequence > *finishSequence_)
         return {};
 
-    log_.debug() << "Starting etl pipeline";
+    LOG(log_.debug()) << "Starting etl pipeline";
     state_.isWriting = true;
 
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
@@ -57,12 +57,12 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
 
     auto const end = std::chrono::system_clock::now();
     auto const lastPublishedSeq = ledgerPublisher_.getLastPublishedSequence();
-    log_.debug() << "Extracted and wrote " << lastPublishedSeq.value_or(startSequence) - startSequence << " in "
-                 << ((end - begin).count()) / 1000000000.0;
+    LOG(log_.debug()) << "Extracted and wrote " << lastPublishedSeq.value_or(startSequence) - startSequence << " in "
+                      << ((end - begin).count()) / 1000000000.0;
 
     state_.isWriting = false;
 
-    log_.debug() << "Stopping etl pipeline";
+    LOG(log_.debug()) << "Stopping etl pipeline";
     return lastPublishedSeq;
 }
 
@@ -80,30 +80,30 @@ ETLService::monitor()
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
     if (!rng)
     {
-        log_.info() << "Database is empty. Will download a ledger from the network.";
+        LOG(log_.info()) << "Database is empty. Will download a ledger from the network.";
         std::optional<ripple::LedgerHeader> ledger;
 
         try
         {
             if (startSequence_)
             {
-                log_.info() << "ledger sequence specified in config. "
-                            << "Will begin ETL process starting with ledger " << *startSequence_;
+                LOG(log_.info()) << "ledger sequence specified in config. "
+                                 << "Will begin ETL process starting with ledger " << *startSequence_;
                 ledger = ledgerLoader_.loadInitialLedger(*startSequence_);
             }
             else
             {
-                log_.info() << "Waiting for next ledger to be validated by network...";
+                LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
                 std::optional<uint32_t> mostRecentValidated = networkValidatedLedgers_->getMostRecent();
 
                 if (mostRecentValidated)
                 {
-                    log_.info() << "Ledger " << *mostRecentValidated << " has been validated. Downloading...";
+                    LOG(log_.info()) << "Ledger " << *mostRecentValidated << " has been validated. Downloading...";
                     ledger = ledgerLoader_.loadInitialLedger(*mostRecentValidated);
                 }
                 else
                 {
-                    log_.info() << "The wait for the next validated ledger has been aborted. Exiting monitor loop";
+                    LOG(log_.info()) << "The wait for the next validated ledger has been aborted. Exiting monitor loop";
                     return;
                 }
             }
@@ -124,24 +124,24 @@ ETLService::monitor()
         }
         else
         {
-            log_.error() << "Failed to load initial ledger. Exiting monitor loop";
+            LOG(log_.error()) << "Failed to load initial ledger. Exiting monitor loop";
             return;
         }
     }
     else
     {
         if (startSequence_)
-            log_.warn() << "start sequence specified but db is already populated";
+            LOG(log_.warn()) << "start sequence specified but db is already populated";
 
-        log_.info() << "Database already populated. Picking up from the tip of history";
+        LOG(log_.info()) << "Database already populated. Picking up from the tip of history";
         cacheLoader_.load(rng->maxSequence);
     }
 
     assert(rng);
     uint32_t nextSequence = rng->maxSequence + 1;
 
-    log_.debug() << "Database is populated. "
-                 << "Starting monitor loop. sequence = " << nextSequence;
+    LOG(log_.debug()) << "Database is populated. "
+                      << "Starting monitor loop. sequence = " << nextSequence;
 
     while (true)
     {
@@ -152,8 +152,8 @@ ETLService::monitor()
         }
         else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, 1000))
         {
-            log_.info() << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
-                        << "Attempting to find in database and publish";
+            LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
+                             << "Attempting to find in database and publish";
 
             // Attempt to take over responsibility of ETL writer after 10 failed
             // attempts to publish the ledger. publishLedger() fails if the
@@ -166,11 +166,11 @@ ETLService::monitor()
 
             if (!success)
             {
-                log_.warn() << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
+                LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
 
                 // returns the most recent sequence published empty optional if no sequence was published
                 std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
-                log_.info() << "Aborting ETL. Falling back to publishing";
+                LOG(log_.info()) << "Aborting ETL. Falling back to publishing";
 
                 // if no ledger was published, don't increment nextSequence
                 if (lastPublished)
@@ -187,7 +187,7 @@ ETLService::monitor()
 void
 ETLService::monitorReadOnly()
 {
-    log_.debug() << "Starting reporting in strict read only mode";
+    LOG(log_.debug()) << "Starting reporting in strict read only mode";
 
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
     uint32_t latestSequence;
@@ -226,7 +226,7 @@ ETLService::monitorReadOnly()
 void
 ETLService::run()
 {
-    log_.info() << "Starting reporting etl";
+    LOG(log_.info()) << "Starting reporting etl";
     state_.isStopping = false;
 
     doWork();

@@ -143,18 +143,18 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
         return maybeValue ? to_string(*maybeValue) : "default";
     };
 
-    log_.info() << "Threads: " << settings.threads;
-    log_.info() << "Max concurrent requests per host: " << settings.maxConcurrentRequestsThreshold;
-    log_.info() << "Max connections per host: " << settings.maxConnectionsPerHost;
-    log_.info() << "Core connections per host: " << settings.coreConnectionsPerHost;
-    log_.info() << "IO queue size: " << queueSize;
-    log_.info() << "Event queue size: " << valueOrDefault(settings.queueSizeEvent);
-    log_.info() << "Write bytes high watermark: " << valueOrDefault(settings.writeBytesHighWatermark);
-    log_.info() << "Write bytes low watermark: " << valueOrDefault(settings.writeBytesLowWatermark);
-    log_.info() << "Pending requests high watermark: " << valueOrDefault(settings.pendingRequestsHighWatermark);
-    log_.info() << "Pending requests low watermark: " << valueOrDefault(settings.pendingRequestsLowWatermark);
-    log_.info() << "Max requests per flush: " << valueOrDefault(settings.maxRequestsPerFlush);
-    log_.info() << "Max concurrent creation: " << valueOrDefault(settings.maxConcurrentCreation);
+    LOG(log_.info()) << "Threads: " << settings.threads;
+    LOG(log_.info()) << "Max concurrent requests per host: " << settings.maxConcurrentRequestsThreshold;
+    LOG(log_.info()) << "Max connections per host: " << settings.maxConnectionsPerHost;
+    LOG(log_.info()) << "Core connections per host: " << settings.coreConnectionsPerHost;
+    LOG(log_.info()) << "IO queue size: " << queueSize;
+    LOG(log_.info()) << "Event queue size: " << valueOrDefault(settings.queueSizeEvent);
+    LOG(log_.info()) << "Write bytes high watermark: " << valueOrDefault(settings.writeBytesHighWatermark);
+    LOG(log_.info()) << "Write bytes low watermark: " << valueOrDefault(settings.writeBytesLowWatermark);
+    LOG(log_.info()) << "Pending requests high watermark: " << valueOrDefault(settings.pendingRequestsHighWatermark);
+    LOG(log_.info()) << "Pending requests low watermark: " << valueOrDefault(settings.pendingRequestsLowWatermark);
+    LOG(log_.info()) << "Max requests per flush: " << valueOrDefault(settings.maxRequestsPerFlush);
+    LOG(log_.info()) << "Max concurrent creation: " << valueOrDefault(settings.maxConcurrentCreation);
 }
 
 void
@@ -178,7 +178,7 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
     };
 
     {
-        log_.debug() << "Attempt connection using contact points: " << points.contactPoints;
+        LOG(log_.debug()) << "Attempt connection using contact points: " << points.contactPoints;
         auto const rc = cass_cluster_set_contact_points(*this, points.contactPoints.data());
         throwErrorIfNeeded(rc, "contact_points", points.contactPoints);
     }
@@ -193,7 +193,7 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
 void
 Cluster::setupSecureBundle(Settings::SecureConnectionBundle const& bundle)
 {
-    log_.debug() << "Attempt connection using secure bundle";
+    LOG(log_.debug()) << "Attempt connection using secure bundle";
     if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK)
     {
         throw std::runtime_error("Failed to connect using secure connection bundle " + bundle.bundle);
@@ -206,7 +206,7 @@ Cluster::setupCertificate(Settings const& settings)
     if (not settings.certificate)
         return;
 
-    log_.debug() << "Configure SSL context";
+    LOG(log_.debug()) << "Configure SSL context";
     SslContext context = SslContext(*settings.certificate);
     cass_cluster_set_ssl(*this, context);
 }
@@ -217,7 +217,7 @@ Cluster::setupCredentials(Settings const& settings)
     if (not settings.username || not settings.password)
         return;
 
-    log_.debug() << "Set credentials; username: " << settings.username.value();
+    LOG(log_.debug()) << "Set credentials; username: " << settings.username.value();
     cass_cluster_set_credentials(*this, settings.username.value().c_str(), settings.password.value().c_str());
 }
 

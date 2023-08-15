@@ -86,7 +86,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
 
     auto const [txnsAndCursor, timeDiff] = util::timed(
         [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
-    log_.info() << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     Output response;
     auto const [blobs, retCursor] = txnsAndCursor;
@@ -105,7 +105,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         }
         else if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
         {
-            log_.debug() << "Skipping over transactions from incomplete ledger";
+            LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
         }
 

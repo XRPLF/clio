@@ -76,7 +76,7 @@ struct Context : util::Taggable
         , clientIp(clientIp)
     {
         static util::Logger perfLog{"Performance"};
-        perfLog.debug() << tag() << "new Context created";
+        LOG(perfLog.debug()) << tag() << "new Context created";
     }
 
     Context(Context&&) = default;

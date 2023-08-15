@@ -87,7 +87,7 @@ public:
         try
         {
             auto req = boost::json::parse(request).as_object();
-            perfLog_.debug() << connection->tag() << "Adding to work queue";
+            LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
             if (not connection->upgraded and not req.contains("params"))
                 req["params"] = boost::json::array({boost::json::object{}});
@@ -116,7 +116,7 @@ public:
         }
         catch (std::exception const& ex)
         {
-            perfLog_.error() << connection->tag() << "Caught exception: " << ex.what();
+            LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
             rpcEngine_->notifyInternalError();
             throw;
         }
@@ -144,9 +144,9 @@ private:
         boost::json::object&& request,
         std::shared_ptr<web::ConnectionBase> const& connection)
     {
-        log_.info() << connection->tag() << (connection->upgraded ? "ws" : "http")
-                    << " received request from work queue: " << util::removeSecret(request)
-                    << " ip = " << connection->clientIp;
+        LOG(log_.info()) << connection->tag() << (connection->upgraded ? "ws" : "http")
+                         << " received request from work queue: " << util::removeSecret(request)
+                         << " ip = " << connection->clientIp;
 
         try
         {
@@ -181,8 +181,8 @@ private:
             if (!context)
             {
                 auto const err = context.error();
-                perfLog_.warn() << connection->tag() << "Could not create Web context: " << err;
-                log_.warn() << connection->tag() << "Could not create Web context: " << err;
+                LOG(perfLog_.warn()) << connection->tag() << "Could not create Web context: " << err;
+                LOG(log_.warn()) << connection->tag() << "Could not create Web context: " << err;
 
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
@@ -202,8 +202,8 @@ private:
                 response = web::detail::ErrorHelper(connection, request).composeError(*status);
                 auto const responseStr = boost::json::serialize(response);
 
-                perfLog_.debug() << context->tag() << "Encountered error: " << responseStr;
-                log_.debug() << context->tag() << "Encountered error: " << responseStr;
+                LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
+                LOG(log_.debug()) << context->tag() << "Encountered error: " << responseStr;
             }
             else
             {
@@ -260,8 +260,8 @@ private:
         {
             // note: while we are catching this in buildResponse too, this is here to make sure
             // that any other code that may throw is outside of buildResponse is also worked around.
-            perfLog_.error() << connection->tag() << "Caught exception: " << ex.what();
-            log_.error() << connection->tag() << "Caught exception: " << ex.what();
+            LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
+            LOG(log_.error()) << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
             return web::detail::ErrorHelper(connection, request).sendInternalError();

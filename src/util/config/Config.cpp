@@ -183,7 +183,8 @@ ConfigReader::open(std::filesystem::path path)
     }
     catch (std::exception const& e)
     {
-        util::LogService::error() << "Could not read configuration file from '" << path.string() << "': " << e.what();
+        LOG(util::LogService::error()) << "Could not read configuration file from '" << path.string()
+                                       << "': " << e.what();
     }
 
     return Config{};

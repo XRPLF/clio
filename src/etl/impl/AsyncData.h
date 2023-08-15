@@ -57,9 +57,9 @@ public:
 
         unsigned char prefix = marker.data()[0];
 
-        log_.debug() << "Setting up AsyncCallData. marker = " << ripple::strHex(marker)
-                     << " . prefix = " << ripple::strHex(std::string(1, prefix))
-                     << " . nextPrefix_ = " << ripple::strHex(std::string(1, nextPrefix_));
+        LOG(log_.debug()) << "Setting up AsyncCallData. marker = " << ripple::strHex(marker)
+                          << " . prefix = " << ripple::strHex(std::string(1, prefix))
+                          << " . nextPrefix_ = " << ripple::strHex(std::string(1, nextPrefix_));
 
         assert(nextPrefix_ > prefix || nextPrefix_ == 0x00);
 
@@ -78,23 +78,23 @@ public:
         bool abort,
         bool cacheOnly = false)
     {
-        log_.trace() << "Processing response. "
-                     << "Marker prefix = " << getMarkerPrefix();
+        LOG(log_.trace()) << "Processing response. "
+                          << "Marker prefix = " << getMarkerPrefix();
         if (abort)
         {
-            log_.error() << "AsyncCallData aborted";
+            LOG(log_.error()) << "AsyncCallData aborted";
             return CallStatus::ERRORED;
         }
         if (!status_.ok())
         {
-            log_.error() << "AsyncCallData status_ not ok: "
-                         << " code = " << status_.error_code() << " message = " << status_.error_message();
+            LOG(log_.error()) << "AsyncCallData status_ not ok: "
+                              << " code = " << status_.error_code() << " message = " << status_.error_message();
             return CallStatus::ERRORED;
         }
         if (!next_->is_unlimited())
         {
-            log_.warn() << "AsyncCallData is_unlimited is false. Make sure "
-                           "secure_gateway is set correctly at the ETL source";
+            LOG(log_.warn()) << "AsyncCallData is_unlimited is false. Make sure "
+                                "secure_gateway is set correctly at the ETL source";
         }
 
         std::swap(cur_, next_);
@@ -118,7 +118,7 @@ public:
         }
 
         auto const numObjects = cur_->ledger_objects().objects_size();
-        log_.debug() << "Writing " << numObjects << " objects";
+        LOG(log_.debug()) << "Writing " << numObjects << " objects";
 
         std::vector<data::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(numObjects);
@@ -145,7 +145,7 @@ public:
             }
         }
         backend.cache().update(cacheUpdates, request_.ledger().sequence(), cacheOnly);
-        log_.debug() << "Wrote " << numObjects << " objects. Got more: " << (more ? "YES" : "NO");
+        LOG(log_.debug()) << "Wrote " << numObjects << " objects. Got more: " << (more ? "YES" : "NO");
 
         return more ? CallStatus::MORE : CallStatus::DONE;
     }

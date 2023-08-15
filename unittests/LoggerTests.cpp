@@ -57,6 +57,23 @@ TEST_F(LoggerTest, Filtering)
     checkEqual("Trace:TRC Trace line logged for 'Trace' component");
 }
 
+TEST_F(LoggerTest, LOGMacro)
+{
+    Logger log{"General"};
+
+    auto computeCalled = false;
+    auto compute = [&computeCalled]() {
+        computeCalled = true;
+        return "computed";
+    };
+
+    LOG(log.trace()) << compute();
+    EXPECT_FALSE(computeCalled);
+
+    log.trace() << compute();
+    EXPECT_TRUE(computeCalled);
+}
+
 TEST_F(NoLoggerTest, Basic)
 {
     Logger log{"Trace"};

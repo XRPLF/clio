@@ -32,11 +32,11 @@ namespace data {
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
-    gLog.debug() << "Want finish writes for " << ledgerSequence;
+    LOG(gLog.debug()) << "Want finish writes for " << ledgerSequence;
     auto commitRes = doFinishWrites();
     if (commitRes)
     {
-        gLog.debug() << "Successfully commited. Updating range now to " << ledgerSequence;
+        LOG(gLog.debug()) << "Successfully commited. Updating range now to " << ledgerSequence;
         updateRange(ledgerSequence);
     }
     return commitRes;
@@ -64,17 +64,17 @@ BackendInterface::fetchLedgerObject(
     auto obj = cache_.get(key, sequence);
     if (obj)
     {
-        gLog.trace() << "Cache hit - " << ripple::strHex(key);
+        LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
         return *obj;
     }
     else
     {
-        gLog.trace() << "Cache miss - " << ripple::strHex(key);
+        LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
         auto dbObj = doFetchLedgerObject(key, sequence, yield);
         if (!dbObj)
-            gLog.trace() << "Missed cache and missed in db";
+            LOG(gLog.trace()) << "Missed cache and missed in db";
         else
-            gLog.trace() << "Missed cache but found in db";
+            LOG(gLog.trace()) << "Missed cache but found in db";
         return dbObj;
     }
 }
@@ -96,7 +96,7 @@ BackendInterface::fetchLedgerObjects(
         else
             misses.push_back(keys[i]);
     }
-    gLog.trace() << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
+    LOG(gLog.trace()) << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
 
     if (misses.size())
     {
@@ -122,9 +122,9 @@ BackendInterface::fetchSuccessorKey(
 {
     auto succ = cache_.getSuccessor(key, ledgerSequence);
     if (succ)
-        gLog.trace() << "Cache hit - " << ripple::strHex(key);
+        LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
     else
-        gLog.trace() << "Cache miss - " << ripple::strHex(key);
+        LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
     return succ ? succ->key : doFetchSuccessorKey(key, ledgerSequence, yield);
 }
 
@@ -174,7 +174,7 @@ BackendInterface::fetchBookOffers(
         succMillis += getMillis(mid2 - mid1);
         if (!offerDir || offerDir->key >= bookEnd)
         {
-            gLog.trace() << "offerDir.has_value() " << offerDir.has_value() << " breaking";
+            LOG(gLog.trace()) << "offerDir.has_value() " << offerDir.has_value() << " breaking";
             break;
         }
         uTipIndex = offerDir->key;
@@ -187,7 +187,7 @@ BackendInterface::fetchBookOffers(
             auto next = sle.getFieldU64(ripple::sfIndexNext);
             if (!next)
             {
-                gLog.trace() << "Next is empty. breaking";
+                LOG(gLog.trace()) << "Next is empty. breaking";
                 break;
             }
             auto nextKey = ripple::keylet::page(uTipIndex, next);
@@ -203,21 +203,21 @@ BackendInterface::fetchBookOffers(
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i)
     {
-        gLog.trace() << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
-                     << " ledgerSequence = " << ledgerSequence;
+        LOG(gLog.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
+                          << " ledgerSequence = " << ledgerSequence;
         assert(objs[i].size());
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
-    gLog.debug() << "Fetching " << std::to_string(keys.size()) << " offers took "
-                 << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
-                 << std::to_string(succMillis) << " milliseonds. Fetched next dir " << std::to_string(numSucc)
-                 << " times"
-                 << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
-                 << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "
-                 << std::to_string(getMillis(end - mid))
-                 << " milliseconds. total time = " << std::to_string(getMillis(end - begin)) << " milliseconds"
-                 << " book = " << ripple::strHex(book);
+    LOG(gLog.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
+                      << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
+                      << std::to_string(succMillis) << " milliseonds. Fetched next dir " << std::to_string(numSucc)
+                      << " times"
+                      << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
+                      << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "
+                      << std::to_string(getMillis(end - mid))
+                      << " milliseconds. total time = " << std::to_string(getMillis(end - begin)) << " milliseconds"
+                      << " book = " << ripple::strHex(book);
 
     return page;
 }
@@ -276,14 +276,14 @@ BackendInterface::fetchLedgerPage(
             page.objects.push_back({std::move(keys[i]), std::move(objects[i])});
         else if (!outOfOrder)
         {
-            gLog.error() << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
-                         << " - seq = " << ledgerSequence;
+            LOG(gLog.error()) << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
+                              << " - seq = " << ledgerSequence;
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j)
             {
                 msg << " - " << ripple::strHex(keys[j]);
             }
-            gLog.error() << msg.str();
+            LOG(gLog.error()) << msg.str();
         }
     }
     if (keys.size() && !reachedEnd)
@@ -302,7 +302,7 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
 
     if (!bytes)
     {
-        gLog.error() << "Could not find fees";
+        LOG(gLog.error()) << "Could not find fees";
         return {};
     }
 
