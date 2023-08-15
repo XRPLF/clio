@@ -21,7 +21,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <boost/system/error_code.hpp>
 #include <fmt/core.h>
 
 #include <regex>
