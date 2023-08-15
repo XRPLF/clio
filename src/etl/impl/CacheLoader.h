@@ -68,7 +68,6 @@ class CacheLoader
 
     std::vector<ClioPeer> clioPeers_;
 
-    std::thread thread_;
     std::atomic_bool stopping_ = false;
 
 public:
@@ -116,8 +115,6 @@ public:
     ~CacheLoader()
     {
         stop();
-        if (thread_.joinable())
-            thread_.join();
     }
 
     /**
@@ -357,28 +354,28 @@ private:
         diff.erase(std::unique(diff.begin(), diff.end(), [](auto a, auto b) { return a.key == b.key; }), diff.end());
 
         cursors.push_back({});
-        for (auto& obj : diff)
+        for (auto const& obj : diff)
             if (obj.blob.size())
                 cursors.push_back({obj.key});
         cursors.push_back({});
 
         std::stringstream cursorStr;
-        for (auto& c : cursors)
+        for (auto const& c : cursors)
             if (c)
                 cursorStr << ripple::strHex(*c) << ", ";
 
         LOG(log_.info()) << "Loading cache. num cursors = " << cursors.size() - 1;
         LOG(log_.trace()) << "cursors = " << cursorStr.str();
 
-        thread_ = std::thread{[this, seq, cursors]() {
+        boost::asio::post(ioContext_.get(), [this, seq, cursors = std::move(cursors)]() {
             auto startTime = std::chrono::system_clock::now();
             auto markers = std::make_shared<std::atomic_int>(0);
             auto numRemaining = std::make_shared<std::atomic_int>(cursors.size() - 1);
 
             for (size_t i = 0; i < cursors.size() - 1; ++i)
             {
-                auto const start = cursors[i];
-                auto const end = cursors[i + 1];
+                auto const start = cursors.at(i);
+                auto const end = cursors.at(i + 1);
 
                 markers->wait(numCacheMarkers_);
                 ++(*markers);
@@ -386,14 +383,14 @@ private:
                 boost::asio::spawn(
                     ioContext_.get(),
                     [this, seq, start, end, numRemaining, startTime, markers](boost::asio::yield_context yield) {
-                        std::optional<ripple::uint256> cursor = start;
+                        auto cursor = start;
                         std::string cursorStr =
                             cursor.has_value() ? ripple::strHex(cursor.value()) : ripple::strHex(data::firstKey);
                         LOG(log_.debug()) << "Starting a cursor: " << cursorStr << " markers = " << *markers;
 
                         while (not stopping_)
                         {
-                            auto res = data::retryOnTimeout([this, seq, &cursor, &yield]() {
+                            auto res = data::retryOnTimeout([this, seq, &cursor, yield]() {
                                 return backend_->fetchLedgerPage(cursor, seq, cachePageFetchSize_, false, yield);
                             });
 
@@ -428,7 +425,7 @@ private:
                         }
                     });
             }
-        }};
+        });
     }
 };
 

@@ -20,6 +20,8 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/iterator/transform_iterator.hpp>
+#include <boost/system/error_code.hpp>
 #include <fmt/core.h>
 
 #include <regex>
@@ -30,8 +32,7 @@
 namespace web {
 
 /**
- * @brief A whitelist to remove rate limits of certain IP addresses
- *
+ * @brief A whitelist to remove rate limits of certain IP addresses.
  */
 class Whitelist
 {
@@ -41,7 +42,7 @@ class Whitelist
 
 public:
     /**
-     * @brief Add network address to whitelist
+     * @brief Add network address to whitelist.
      *
      * @param net Network part of the ip address
      * @throws std::runtime::error when the network address is not valid
@@ -66,7 +67,7 @@ public:
     }
 
     /**
-     * @brief Checks to see if ip address is whitelisted
+     * @brief Checks to see if ip address is whitelisted.
      *
      * @param ip IP address
      * @throws std::runtime::error when the network address is not valid
@@ -130,15 +131,18 @@ private:
 };
 
 /**
- * @brief A simple handler to add/check elements in a whitelist
- *
- * @param arr map of net addresses to add to whitelist
+ * @brief A simple handler to add/check elements in a whitelist.
  */
 class WhitelistHandler
 {
     Whitelist whitelist_;
 
 public:
+    /**
+     * @brief Adds all whitelisted IPs and masks from the given config.
+     *
+     * @param config The Clio config to use
+     */
     WhitelistHandler(util::Config const& config)
     {
         std::unordered_set<std::string> arr = getWhitelist(config);
@@ -146,6 +150,9 @@ public:
             whitelist_.add(net);
     }
 
+    /**
+     * @return true if the given IP is whitelisted; false otherwise
+     */
     bool
     isWhiteListed(std::string_view ip) const
     {

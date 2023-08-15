@@ -17,39 +17,48 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/impl/FakesAndMocks.h>
-#include <util/Fixtures.h>
-#include <util/config/Config.h>
+#include <web/IntervalSweepHandler.h>
+
 #include <web/DOSGuard.h>
 
-#include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
+#include <algorithm>
+#include <ctime>
 
-using namespace util;
-using namespace web;
-using namespace testing;
+namespace web {
 
-constexpr static auto JSONData = R"JSON(
-    {
-        "dos_guard": {
-            "max_fetches": 100,
-            "sweep_interval": 0.1,
-            "max_connections": 2,
-            "whitelist": ["127.0.0.1"]
-        }
-    }
-)JSON";
-
-class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest
+IntervalSweepHandler::IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx)
+    : sweepInterval_{std::max(1u, static_cast<uint32_t>(config.valueOr("dos_guard.sweep_interval", 1.0) * 1000.0))}
+    , ctx_{std::ref(ctx)}
+    , timer_{ctx.get_executor()}
 {
-protected:
-    Config cfg{boost::json::parse(JSONData)};
-    IntervalSweepHandler sweepHandler{cfg, ctx};
-    unittests::detail::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
-};
-
-TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
-{
-    EXPECT_CALL(guard, clear()).Times(AtLeast(2));
-    ctx.run_for(std::chrono::milliseconds(400));
 }
+
+IntervalSweepHandler::~IntervalSweepHandler()
+{
+    boost::asio::post(ctx_.get(), [this]() { timer_.cancel(); });
+}
+
+void
+IntervalSweepHandler::setup(web::BaseDOSGuard* guard)
+{
+    assert(dosGuard_ == nullptr);
+    dosGuard_ = guard;
+    assert(dosGuard_ != nullptr);
+
+    createTimer();
+}
+
+void
+IntervalSweepHandler::createTimer()
+{
+    timer_.expires_after(sweepInterval_);
+    timer_.async_wait([this](boost::system::error_code const& error) {
+        if (error == boost::asio::error::operation_aborted)
+            return;
+
+        dosGuard_->clear();
+        boost::asio::post(ctx_.get(), [this] { createTimer(); });
+    });
+}
+
+}  // namespace web

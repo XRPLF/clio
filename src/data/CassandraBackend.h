@@ -568,7 +568,7 @@ public:
         std::vector<Statement> statements;
         statements.reserve(numHashes);
 
-        auto const timeDiff = util::timed([this, &yield, &results, &hashes, &statements]() {
+        auto const timeDiff = util::timed([this, yield, &results, &hashes, &statements]() {
             // TODO: seems like a job for "hash IN (list of hashes)" instead?
             std::transform(
                 std::cbegin(hashes), std::cend(hashes), std::back_inserter(statements), [this](auto const& hash) {
@@ -634,7 +634,7 @@ public:
     std::vector<LedgerObject>
     fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const override
     {
-        auto const [keys, timeDiff] = util::timed([this, &ledgerSequence, &yield]() -> std::vector<ripple::uint256> {
+        auto const [keys, timeDiff] = util::timed([this, &ledgerSequence, yield]() -> std::vector<ripple::uint256> {
             auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
             if (not res)
             {

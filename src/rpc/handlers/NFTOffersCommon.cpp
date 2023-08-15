@@ -84,7 +84,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         cursor = uint256(input.marker->c_str());
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
-        auto const sle = [this, &cursor, &lgrInfo, &yield]() -> std::shared_ptr<SLE const> {
+        auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftoffer(cursor).key;
 
             if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield); blob)
