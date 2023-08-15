@@ -59,8 +59,8 @@ public:
     shouldRetry([[maybe_unused]] CassandraError err)
     {
         auto const delay = calculateDelay(attempt_);
-        log_.error() << "Cassandra write error: " << err << ", current retries " << attempt_ << ", retrying in "
-                     << delay.count() << " milliseconds";
+        LOG(log_.error()) << "Cassandra write error: " << err << ", current retries " << attempt_ << ", retrying in "
+                          << delay.count() << " milliseconds";
 
         return true;  // keep retrying forever
     }

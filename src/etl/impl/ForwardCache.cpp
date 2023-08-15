@@ -29,7 +29,7 @@ namespace etl::detail {
 void
 ForwardCache::freshen()
 {
-    log_.trace() << "Freshening ForwardCache";
+    LOG(log_.trace()) << "Freshening ForwardCache";
 
     auto numOutstanding = std::make_shared<std::atomic_uint>(latestForwarded_.size());
 

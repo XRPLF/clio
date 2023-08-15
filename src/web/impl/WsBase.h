@@ -63,7 +63,7 @@ protected:
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            perfLog_.info() << tag() << ": " << what << ": " << ec.message();
+            LOG(perfLog_.info()) << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
             (*handler_)(ec, derived().shared_from_this());
         }
@@ -79,12 +79,12 @@ public:
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
         upgraded = true;
-        perfLog_.debug() << tag() << "session created";
+        LOG(perfLog_.debug()) << tag() << "session created";
     }
 
     virtual ~WsBase()
     {
-        perfLog_.debug() << tag() << "session closed";
+        LOG(perfLog_.debug()) << tag() << "session closed";
         dosGuard_.get().decrement(clientIp);
     }
 
@@ -193,7 +193,7 @@ public:
         if (ec)
             return wsFail(ec, "accept");
 
-        perfLog_.info() << tag() << "accepting new connection";
+        LOG(perfLog_.info()) << tag() << "accepting new connection";
 
         doRead();
     }
@@ -218,7 +218,7 @@ public:
         if (ec)
             return wsFail(ec, "read");
 
-        perfLog_.info() << tag() << "Received request from ip = " << this->clientIp;
+        LOG(perfLog_.info()) << tag() << "Received request from ip = " << this->clientIp;
 
         auto sendError = [this](auto error, std::string&& requestStr) {
             auto e = rpc::makeError(error);

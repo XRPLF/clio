@@ -89,8 +89,8 @@ public:
         , handle_{std::cref(handle)}
         , thread_{[this]() { ioc_.run(); }}
     {
-        log_.info() << "Max write requests outstanding is " << maxWriteRequestsOutstanding_
-                    << "; Max read requests outstanding is " << maxReadRequestsOutstanding_;
+        LOG(log_.info()) << "Max write requests outstanding is " << maxWriteRequestsOutstanding_
+                         << "; Max read requests outstanding is " << maxReadRequestsOutstanding_;
     }
 
     ~DefaultExecutionStrategy()
@@ -106,10 +106,10 @@ public:
     void
     sync()
     {
-        log_.debug() << "Waiting to sync all writes...";
+        LOG(log_.debug()) << "Waiting to sync all writes...";
         std::unique_lock<std::mutex> lck(syncMutex_);
         syncCv_.wait(lck, [this]() { return finishedAllWriteRequests(); });
-        log_.debug() << "Sync done.";
+        LOG(log_.debug()) << "Sync done.";
     }
 
     /**
@@ -137,7 +137,7 @@ public:
             }
             else
             {
-                log_.warn() << "Cassandra sync write error, retrying: " << res.error();
+                LOG(log_.warn()) << "Cassandra sync write error, retrying: " << res.error();
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         }
@@ -262,7 +262,7 @@ public:
             }
             else
             {
-                log_.error() << "Failed batch read in coroutine: " << res.error();
+                LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
                 throwErrorIfNeeded(res.error());
             }
         }
@@ -311,7 +311,7 @@ public:
             }
             else
             {
-                log_.error() << "Failed read in coroutine: " << res.error();
+                LOG(log_.error()) << "Failed read in coroutine: " << res.error();
                 throwErrorIfNeeded(res.error());
             }
         }
@@ -400,8 +400,8 @@ private:
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!canAddWriteRequest())
             {
-                log_.trace() << "Max outstanding requests reached. "
-                             << "Waiting for other requests to finish";
+                LOG(log_.trace()) << "Max outstanding requests reached. "
+                                  << "Waiting for other requests to finish";
                 throttleCv_.wait(lck, [this]() { return canAddWriteRequest(); });
             }
         }

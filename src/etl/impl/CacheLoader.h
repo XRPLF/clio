@@ -132,7 +132,7 @@ public:
         if (cacheLoadStyle_ == LoadStyle::NOT_AT_ALL)
         {
             cache_.get().setDisabled();
-            log_.warn() << "Cache is disabled. Not loading";
+            LOG(log_.warn()) << "Cache is disabled. Not loading";
             return;
         }
 
@@ -165,10 +165,10 @@ public:
         // If loading synchronously, poll cache until full
         while (cacheLoadStyle_ == LoadStyle::SYNC && not cache_.get().isFull())
         {
-            log_.debug() << "Cache not full. Cache size = " << cache_.get().size() << ". Sleeping ...";
+            LOG(log_.debug()) << "Cache not full. Cache size = " << cache_.get().size() << ". Sleeping ...";
             std::this_thread::sleep_for(std::chrono::seconds(10));
             if (cache_.get().isFull())
-                log_.info() << "Cache is full. Cache size = " << cache_.get().size();
+                LOG(log_.info()) << "Cache is full. Cache size = " << cache_.get().size();
         }
     }
 
@@ -186,7 +186,7 @@ private:
         std::string const& port,
         boost::asio::yield_context yield)
     {
-        log_.info() << "Loading cache from peer. ip = " << ip << " . port = " << port;
+        LOG(log_.info()) << "Loading cache from peer. ip = " << ip << " . port = " << port;
         namespace beast = boost::beast;          // from <boost/beast.hpp>
         namespace http = beast::http;            // from <boost/beast/http.hpp>
         namespace websocket = beast::websocket;  // from
@@ -198,7 +198,7 @@ private:
             // These objects perform our I/O
             tcp::resolver resolver{ioContext_.get()};
 
-            log_.trace() << "Creating websocket";
+            LOG(log_.trace()) << "Creating websocket";
             auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioContext_.get());
 
             // Look up the domain name
@@ -206,13 +206,13 @@ private:
             if (ec)
                 return {};
 
-            log_.trace() << "Connecting websocket";
+            LOG(log_.trace()) << "Connecting websocket";
             // Make the connection on the IP address we get from a lookup
             ws->next_layer().async_connect(results, yield[ec]);
             if (ec)
                 return false;
 
-            log_.trace() << "Performing websocket handshake";
+            LOG(log_.trace()) << "Performing websocket handshake";
             // Perform the websocket handshake
             ws->async_handshake(ip, "/", yield[ec]);
             if (ec)
@@ -220,7 +220,7 @@ private:
 
             std::optional<boost::json::value> marker;
 
-            log_.trace() << "Sending request";
+            LOG(log_.trace()) << "Sending request";
             auto getRequest = [&](auto marker) {
                 boost::json::object request = {
                     {"command", "ledger_data"},
@@ -242,7 +242,7 @@ private:
                 ws->async_write(net::buffer(boost::json::serialize(getRequest(marker))), yield[ec]);
                 if (ec)
                 {
-                    log_.error() << "error writing = " << ec.message();
+                    LOG(log_.error()) << "error writing = " << ec.message();
                     return false;
                 }
 
@@ -250,7 +250,7 @@ private:
                 ws->async_read(buffer, yield[ec]);
                 if (ec)
                 {
-                    log_.error() << "error reading = " << ec.message();
+                    LOG(log_.error()) << "error reading = " << ec.message();
                     return false;
                 }
 
@@ -259,27 +259,28 @@ private:
 
                 if (!parsed.is_object())
                 {
-                    log_.error() << "Error parsing response: " << raw;
+                    LOG(log_.error()) << "Error parsing response: " << raw;
                     return false;
                 }
-                log_.trace() << "Successfully parsed response " << parsed;
+                LOG(log_.trace()) << "Successfully parsed response " << parsed;
 
                 if (auto const& response = parsed.as_object(); response.contains("error"))
                 {
-                    log_.error() << "Response contains error: " << response;
+                    LOG(log_.error()) << "Response contains error: " << response;
                     auto const& err = response.at("error");
                     if (err.is_string() && err.as_string() == "lgrNotFound")
                     {
                         ++numAttempts;
                         if (numAttempts >= 5)
                         {
-                            log_.error() << " ledger not found at peer after 5 attempts. "
-                                            "peer = "
-                                         << ip << " ledger = " << ledgerIndex
-                                         << ". Check your config and the health of the peer";
+                            LOG(log_.error()) << " ledger not found at peer after 5 attempts. "
+                                                 "peer = "
+                                              << ip << " ledger = " << ledgerIndex
+                                              << ". Check your config and the health of the peer";
                             return false;
                         }
-                        log_.warn() << "Ledger not found. ledger = " << ledgerIndex << ". Sleeping and trying again";
+                        LOG(log_.warn()) << "Ledger not found. ledger = " << ledgerIndex
+                                         << ". Sleeping and trying again";
                         std::this_thread::sleep_for(std::chrono::seconds(1));
                         continue;
                     }
@@ -290,7 +291,7 @@ private:
 
                 if (!response.contains("cache_full") || !response.at("cache_full").as_bool())
                 {
-                    log_.error() << "cache not full for clio node. ip = " << ip;
+                    LOG(log_.error()) << "cache not full for clio node. ip = " << ip;
                     return false;
                 }
                 if (response.contains("marker"))
@@ -310,7 +311,7 @@ private:
 
                     if (!stateObject.key.parseHex(obj.at("index").as_string().c_str()))
                     {
-                        log_.error() << "failed to parse object id";
+                        LOG(log_.error()) << "failed to parse object id";
                         return false;
                     }
                     boost::algorithm::unhex(obj.at("data").as_string().c_str(), std::back_inserter(stateObject.blob));
@@ -319,17 +320,17 @@ private:
                 cache_.get().update(objects, ledgerIndex, true);
 
                 if (marker)
-                    log_.debug() << "At marker " << *marker;
+                    LOG(log_.debug()) << "At marker " << *marker;
             } while (marker || !started);
 
-            log_.info() << "Finished downloading ledger from clio node. ip = " << ip;
+            LOG(log_.info()) << "Finished downloading ledger from clio node. ip = " << ip;
 
             cache_.get().setFull();
             return true;
         }
         catch (std::exception const& e)
         {
-            log_.error() << "Encountered exception : " << e.what() << " - ip = " << ip;
+            LOG(log_.error()) << "Encountered exception : " << e.what() << " - ip = " << ip;
             return false;
         }
     }
@@ -366,8 +367,8 @@ private:
             if (c)
                 cursorStr << ripple::strHex(*c) << ", ";
 
-        log_.info() << "Loading cache. num cursors = " << cursors.size() - 1;
-        log_.trace() << "cursors = " << cursorStr.str();
+        LOG(log_.info()) << "Loading cache. num cursors = " << cursors.size() - 1;
+        LOG(log_.trace()) << "cursors = " << cursorStr.str();
 
         thread_ = std::thread{[this, seq, cursors]() {
             auto startTime = std::chrono::system_clock::now();
@@ -388,7 +389,7 @@ private:
                         std::optional<ripple::uint256> cursor = start;
                         std::string cursorStr =
                             cursor.has_value() ? ripple::strHex(cursor.value()) : ripple::strHex(data::firstKey);
-                        log_.debug() << "Starting a cursor: " << cursorStr << " markers = " << *markers;
+                        LOG(log_.debug()) << "Starting a cursor: " << cursorStr << " markers = " << *markers;
 
                         while (not stopping_)
                         {
@@ -401,9 +402,9 @@ private:
                             if (!res.cursor || (end && *(res.cursor) > *end))
                                 break;
 
-                            log_.trace() << "Loading cache. cache size = " << cache_.get().size()
-                                         << " - cursor = " << ripple::strHex(res.cursor.value())
-                                         << " start = " << cursorStr << " markers = " << *markers;
+                            LOG(log_.trace()) << "Loading cache. cache size = " << cache_.get().size()
+                                              << " - cursor = " << ripple::strHex(res.cursor.value())
+                                              << " start = " << cursorStr << " markers = " << *markers;
 
                             cursor = std::move(res.cursor);
                         }
@@ -416,14 +417,14 @@ private:
                             auto endTime = std::chrono::system_clock::now();
                             auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
 
-                            log_.info() << "Finished loading cache. cache size = " << cache_.get().size() << ". Took "
-                                        << duration.count() << " seconds";
+                            LOG(log_.info()) << "Finished loading cache. cache size = " << cache_.get().size()
+                                             << ". Took " << duration.count() << " seconds";
                             cache_.get().setFull();
                         }
                         else
                         {
-                            log_.info() << "Finished a cursor. num remaining = " << *numRemaining
-                                        << " start = " << cursorStr << " markers = " << *markers;
+                            LOG(log_.info()) << "Finished a cursor. num remaining = " << *numRemaining
+                                             << " start = " << cursorStr << " markers = " << *markers;
                         }
                     });
             }

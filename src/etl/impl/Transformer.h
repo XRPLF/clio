@@ -137,18 +137,18 @@ private:
                 auto const end = std::chrono::system_clock::now();
                 auto const duration = ((end - start).count()) / 1000000000.0;
 
-                log_.info() << "Load phase of etl : "
-                            << "Successfully wrote ledger! Ledger info: " << util::toString(lgrInfo)
-                            << ". txn count = " << numTxns << ". object count = " << numObjects
-                            << ". load time = " << duration << ". load txns per second = " << numTxns / duration
-                            << ". load objs per second = " << numObjects / duration;
+                LOG(log_.info()) << "Load phase of etl : "
+                                 << "Successfully wrote ledger! Ledger info: " << util::toString(lgrInfo)
+                                 << ". txn count = " << numTxns << ". object count = " << numObjects
+                                 << ". load time = " << duration << ". load txns per second = " << numTxns / duration
+                                 << ". load objs per second = " << numObjects / duration;
 
                 // success is false if the ledger was already written
                 publisher_.get().publish(lgrInfo);
             }
             else
             {
-                log_.error() << "Error writing ledger. " << util::toString(lgrInfo);
+                LOG(log_.error()) << "Error writing ledger. " << util::toString(lgrInfo);
             }
 
             setWriteConflict(not success);
@@ -165,10 +165,10 @@ private:
     std::pair<ripple::LedgerHeader, bool>
     buildNextLedger(GetLedgerResponseType& rawData)
     {
-        log_.debug() << "Beginning ledger update";
+        LOG(log_.debug()) << "Beginning ledger update";
         ripple::LedgerHeader lgrInfo = ::util::deserializeHeader(ripple::makeSlice(rawData.ledger_header()));
 
-        log_.debug() << "Deserialized ledger header. " << ::util::toString(lgrInfo);
+        LOG(log_.debug()) << "Deserialized ledger header. " << ::util::toString(lgrInfo);
         backend_->startWrites();
         backend_->writeLedger(lgrInfo, std::move(*rawData.mutable_ledger_header()));
 
@@ -178,8 +178,8 @@ private:
         {
             updateCache(lgrInfo, rawData);
 
-            log_.debug() << "Inserted/modified/deleted all objects. Number of objects = "
-                         << rawData.ledger_objects().objects_size();
+            LOG(log_.debug()) << "Inserted/modified/deleted all objects. Number of objects = "
+                              << rawData.ledger_objects().objects_size();
 
             insertTxResultOp.emplace(loader_.get().insertTransactions(lgrInfo, rawData));
         }
@@ -193,8 +193,8 @@ private:
             return {ripple::LedgerHeader{}, false};
         }
 
-        log_.debug() << "Inserted all transactions. Number of transactions  = "
-                     << rawData.transactions_list().transactions_size();
+        LOG(log_.debug()) << "Inserted all transactions. Number of transactions  = "
+                          << rawData.transactions_list().transactions_size();
 
         backend_->writeAccountTransactions(std::move(insertTxResultOp->accountTxData));
         backend_->writeNFTs(std::move(insertTxResultOp->nfTokensData));
@@ -203,8 +203,8 @@ private:
         auto [success, duration] =
             ::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });
 
-        log_.debug() << "Finished writes. Total time: " << std::to_string(duration);
-        log_.debug() << "Finished ledger update: " << ::util::toString(lgrInfo);
+        LOG(log_.debug()) << "Finished writes. Total time: " << std::to_string(duration);
+        LOG(log_.debug()) << "Finished ledger update: " << ::util::toString(lgrInfo);
 
         return {lgrInfo, success};
     }
@@ -231,11 +231,11 @@ private:
             assert(key);
 
             cacheUpdates.push_back({*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
-            log_.debug() << "key = " << ripple::strHex(*key) << " - mod type = " << obj.mod_type();
+            LOG(log_.debug()) << "key = " << ripple::strHex(*key) << " - mod type = " << obj.mod_type();
 
             if (obj.mod_type() != RawLedgerObjectType::MODIFIED && !rawData.object_neighbors_included())
             {
-                log_.debug() << "object neighbors not included. using cache";
+                LOG(log_.debug()) << "object neighbors not included. using cache";
 
                 if (!backend_->cache().isFull() || backend_->cache().latestLedgerSequence() != lgrInfo.seq - 1)
                     throw std::runtime_error("Cache is not full, but object neighbors were not included");
@@ -257,7 +257,7 @@ private:
 
                 if (checkBookBase)
                 {
-                    log_.debug() << "Is book dir. Key = " << ripple::strHex(*key);
+                    LOG(log_.debug()) << "Is book dir. Key = " << ripple::strHex(*key);
 
                     auto const bookBase = getBookBase(*key);
                     auto const oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
@@ -266,9 +266,10 @@ private:
                     // We deleted the first directory, or we added a directory prior to the old first directory
                     if ((isDeleted && key == oldFirstDir->key) || (!isDeleted && key < oldFirstDir->key))
                     {
-                        log_.debug() << "Need to recalculate book base successor. base = " << ripple::strHex(bookBase)
-                                     << " - key = " << ripple::strHex(*key) << " - isDeleted = " << isDeleted
-                                     << " - seq = " << lgrInfo.seq;
+                        LOG(log_.debug())
+                            << "Need to recalculate book base successor. base = " << ripple::strHex(bookBase)
+                            << " - key = " << ripple::strHex(*key) << " - isDeleted = " << isDeleted
+                            << " - seq = " << lgrInfo.seq;
                         bookSuccessorsToCalculate.insert(bookBase);
                     }
                 }
@@ -285,7 +286,7 @@ private:
         // rippled didn't send successor information, so use our cache
         if (!rawData.object_neighbors_included())
         {
-            log_.debug() << "object neighbors not included. using cache";
+            LOG(log_.debug()) << "object neighbors not included. using cache";
             if (!backend_->cache().isFull() || backend_->cache().latestLedgerSequence() != lgrInfo.seq)
                 throw std::runtime_error("Cache is not full, but object neighbors were not included");
 
@@ -304,8 +305,8 @@ private:
 
                 if (obj.blob.size() == 0)
                 {
-                    log_.debug() << "writing successor for deleted object " << ripple::strHex(obj.key) << " - "
-                                 << ripple::strHex(lb->key) << " - " << ripple::strHex(ub->key);
+                    LOG(log_.debug()) << "writing successor for deleted object " << ripple::strHex(obj.key) << " - "
+                                      << ripple::strHex(lb->key) << " - " << ripple::strHex(ub->key);
 
                     backend_->writeSuccessor(uint256ToString(lb->key), lgrInfo.seq, uint256ToString(ub->key));
                 }
@@ -314,8 +315,8 @@ private:
                     backend_->writeSuccessor(uint256ToString(lb->key), lgrInfo.seq, uint256ToString(obj.key));
                     backend_->writeSuccessor(uint256ToString(obj.key), lgrInfo.seq, uint256ToString(ub->key));
 
-                    log_.debug() << "writing successor for new object " << ripple::strHex(lb->key) << " - "
-                                 << ripple::strHex(obj.key) << " - " << ripple::strHex(ub->key);
+                    LOG(log_.debug()) << "writing successor for new object " << ripple::strHex(lb->key) << " - "
+                                      << ripple::strHex(obj.key) << " - " << ripple::strHex(ub->key);
                 }
             }
 
@@ -326,15 +327,15 @@ private:
                 {
                     backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(succ->key));
 
-                    log_.debug() << "Updating book successor " << ripple::strHex(base) << " - "
-                                 << ripple::strHex(succ->key);
+                    LOG(log_.debug()) << "Updating book successor " << ripple::strHex(base) << " - "
+                                      << ripple::strHex(succ->key);
                 }
                 else
                 {
                     backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(data::lastKey));
 
-                    log_.debug() << "Updating book successor " << ripple::strHex(base) << " - "
-                                 << ripple::strHex(data::lastKey);
+                    LOG(log_.debug()) << "Updating book successor " << ripple::strHex(base) << " - "
+                                      << ripple::strHex(data::lastKey);
                 }
             }
         }
@@ -352,15 +353,15 @@ private:
         // Write successor info, if included from rippled
         if (rawData.object_neighbors_included())
         {
-            log_.debug() << "object neighbors included";
+            LOG(log_.debug()) << "object neighbors included";
 
             for (auto& obj : *(rawData.mutable_book_successors()))
             {
                 auto firstBook = std::move(*obj.mutable_first_book());
                 if (!firstBook.size())
                     firstBook = uint256ToString(data::lastKey);
-                log_.debug() << "writing book successor " << ripple::strHex(obj.book_base()) << " - "
-                             << ripple::strHex(firstBook);
+                LOG(log_.debug()) << "writing book successor " << ripple::strHex(obj.book_base()) << " - "
+                                  << ripple::strHex(firstBook);
 
                 backend_->writeSuccessor(std::move(*obj.mutable_book_base()), lgrInfo.seq, std::move(firstBook));
             }
@@ -378,22 +379,22 @@ private:
 
                     if (obj.mod_type() == RawLedgerObjectType::DELETED)
                     {
-                        log_.debug() << "Modifying successors for deleted object " << ripple::strHex(obj.key()) << " - "
-                                     << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
+                        LOG(log_.debug()) << "Modifying successors for deleted object " << ripple::strHex(obj.key())
+                                          << " - " << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
 
                         backend_->writeSuccessor(std::move(*predPtr), lgrInfo.seq, std::move(*succPtr));
                     }
                     else
                     {
-                        log_.debug() << "adding successor for new object " << ripple::strHex(obj.key()) << " - "
-                                     << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
+                        LOG(log_.debug()) << "adding successor for new object " << ripple::strHex(obj.key()) << " - "
+                                          << ripple::strHex(*predPtr) << " - " << ripple::strHex(*succPtr);
 
                         backend_->writeSuccessor(std::move(*predPtr), lgrInfo.seq, std::string{obj.key()});
                         backend_->writeSuccessor(std::string{obj.key()}, lgrInfo.seq, std::move(*succPtr));
                     }
                 }
                 else
-                    log_.debug() << "object modified " << ripple::strHex(obj.key());
+                    LOG(log_.debug()) << "object modified " << ripple::strHex(obj.key());
             }
         }
     }

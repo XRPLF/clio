@@ -126,7 +126,7 @@ private:
     std::shared_ptr<QueueType>
     getQueue(uint32_t sequence)
     {
-        log_.debug() << "Grabbing extraction queue for " << sequence << "; start was " << startSequence_;
+        LOG(log_.debug()) << "Grabbing extraction queue for " << sequence << "; start was " << startSequence_;
         return queues_[(sequence - startSequence_) % stride_];
     }
 };

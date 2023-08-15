@@ -163,9 +163,9 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
         std::stringstream meta;
         std::copy(blobs.transaction.begin(), blobs.transaction.end(), std::ostream_iterator<unsigned char>(txn));
         std::copy(blobs.metadata.begin(), blobs.metadata.end(), std::ostream_iterator<unsigned char>(meta));
-        gLog.error() << "Failed to deserialize transaction. txn = " << txn.str() << " - meta = " << meta.str()
-                     << " txn length = " << std::to_string(blobs.transaction.size())
-                     << " meta length = " << std::to_string(blobs.metadata.size());
+        LOG(gLog.error()) << "Failed to deserialize transaction. txn = " << txn.str() << " - meta = " << meta.str()
+                          << " txn length = " << std::to_string(blobs.transaction.size())
+                          << " meta length = " << std::to_string(blobs.metadata.size());
         throw e;
     }
 }
@@ -654,12 +654,12 @@ traverseOwnedNodes(
     }
     auto end = std::chrono::system_clock::now();
 
-    gLog.debug() << "Time loading owned directories: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
+    LOG(gLog.debug()) << "Time loading owned directories: "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
 
     auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
-    gLog.debug() << "Time loading owned entries: " << timeDiff << " milliseconds";
+    LOG(gLog.debug()) << "Time loading owned entries: " << timeDiff << " milliseconds";
 
     for (auto i = 0u; i < objects.size(); ++i)
     {
@@ -1133,7 +1133,7 @@ postProcessOrderBook(
         }
         catch (std::exception const& e)
         {
-            gLog.error() << "caught exception: " << e.what();
+            LOG(gLog.error()) << "caught exception: " << e.what();
         }
     }
     return jsonOffers;

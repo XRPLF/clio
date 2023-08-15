@@ -66,11 +66,11 @@ public:
     OptionalGetLedgerResponseType
     fetchData(uint32_t sequence)
     {
-        log_.debug() << "Attempting to fetch ledger with sequence = " << sequence;
+        LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
         auto response = loadBalancer_->fetchLedger(sequence, false, false);
         if (response)
-            log_.trace() << "GetLedger reply = " << response->DebugString();
+            LOG(log_.trace()) << "GetLedger reply = " << response->DebugString();
         return response;
     }
 
@@ -87,12 +87,12 @@ public:
     OptionalGetLedgerResponseType
     fetchDataAndDiff(uint32_t sequence)
     {
-        log_.debug() << "Attempting to fetch ledger with sequence = " << sequence;
+        LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
         auto response = loadBalancer_->fetchLedger(
             sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence);
         if (response)
-            log_.trace() << "GetLedger reply = " << response->DebugString();
+            LOG(log_.trace()) << "GetLedger reply = " << response->DebugString();
 
         return response;
     }

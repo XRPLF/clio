@@ -95,7 +95,7 @@ public:
         if (ec == boost::asio::ssl::error::stream_truncated)
             return;
 
-        log_.info() << "Detector failed (" << message << "): " << ec.message();
+        LOG(log_.info()) << "Detector failed (" << message << "): " << ec.message();
     }
 
     /** @brief Initiate the detection. */
@@ -205,7 +205,7 @@ public:
         acceptor_.bind(endpoint, ec);
         if (ec)
         {
-            log_.error() << "Failed to bind to endpoint: " << endpoint << ". message: " << ec.message();
+            LOG(log_.error()) << "Failed to bind to endpoint: " << endpoint << ". message: " << ec.message();
             throw std::runtime_error(
                 fmt::format("Failed to bind to endpoint: {}:{}", endpoint.address().to_string(), endpoint.port()));
         }
@@ -213,7 +213,7 @@ public:
         acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
         if (ec)
         {
-            log_.error() << "Failed to listen at endpoint: " << endpoint << ". message: " << ec.message();
+            LOG(log_.error()) << "Failed to listen at endpoint: " << endpoint << ". message: " << ec.message();
             throw std::runtime_error(
                 fmt::format("Failed to listen at endpoint: {}:{}", endpoint.address().to_string(), endpoint.port()));
         }

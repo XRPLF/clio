@@ -87,7 +87,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);
     });
 
-    log_.info() << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     auto const [blobs, retCursor] = txnsAndCursor;
     Output response;
@@ -106,7 +106,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         }
         else if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
         {
-            log_.debug() << "Skipping over transactions from incomplete ledger";
+            LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
         }
 

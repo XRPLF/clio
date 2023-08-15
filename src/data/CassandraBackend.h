@@ -93,11 +93,11 @@ public:
         }
         catch (std::runtime_error const& ex)
         {
-            log_.error() << "Failed to prepare the statements: " << ex.what() << "; readOnly: " << readOnly;
+            LOG(log_.error()) << "Failed to prepare the statements: " << ex.what() << "; readOnly: " << readOnly;
             throw;
         }
 
-        log_.info() << "Created (revamped) CassandraBackend";
+        LOG(log_.info()) << "Created (revamped) CassandraBackend";
     }
 
     TransactionsAndCursor
@@ -123,8 +123,8 @@ public:
         if (cursor)
         {
             statement.bindAt(1, cursor->asTuple());
-            log_.debug() << "account = " << ripple::strHex(account) << " tuple = " << cursor->ledgerSequence
-                         << cursor->transactionIndex;
+            LOG(log_.debug()) << "account = " << ripple::strHex(account) << " tuple = " << cursor->ledgerSequence
+                              << cursor->transactionIndex;
         }
         else
         {
@@ -132,7 +132,8 @@ public:
             auto const placeHolder = forward ? 0u : std::numeric_limits<std::uint32_t>::max();
 
             statement.bindAt(1, std::make_tuple(placeHolder, placeHolder));
-            log_.debug() << "account = " << ripple::strHex(account) << " idx = " << seq << " tuple = " << placeHolder;
+            LOG(log_.debug()) << "account = " << ripple::strHex(account) << " idx = " << seq
+                              << " tuple = " << placeHolder;
         }
 
         // FIXME: Limit is a hack to support uint32_t properly for the time
@@ -143,20 +144,20 @@ public:
         auto const& results = res.value();
         if (not results.hasRows())
         {
-            log_.debug() << "No rows returned";
+            LOG(log_.debug()) << "No rows returned";
             return {};
         }
 
         std::vector<ripple::uint256> hashes = {};
         auto numRows = results.numRows();
-        log_.info() << "num_rows = " << numRows;
+        LOG(log_.info()) << "num_rows = " << numRows;
 
         for (auto [hash, data] : extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results))
         {
             hashes.push_back(hash);
             if (--numRows == 0)
             {
-                log_.debug() << "Setting cursor";
+                LOG(log_.debug()) << "Setting cursor";
                 cursor = data;
 
                 // forward queries by ledger/tx sequence `>=`
@@ -167,11 +168,11 @@ public:
         }
 
         auto const txns = fetchTransactions(hashes, yield);
-        log_.debug() << "Txns = " << txns.size();
+        LOG(log_.debug()) << "Txns = " << txns.size();
 
         if (txns.size() == limit)
         {
-            log_.debug() << "Returning cursor";
+            LOG(log_.debug()) << "Returning cursor";
             return {txns, cursor};
         }
 
@@ -191,11 +192,11 @@ public:
 
         if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1)))
         {
-            log_.warn() << "Update failed for ledger " << ledgerSequence_;
+            LOG(log_.warn()) << "Update failed for ledger " << ledgerSequence_;
             return false;
         }
 
-        log_.info() << "Committed ledger " << ledgerSequence_;
+        LOG(log_.info()) << "Committed ledger " << ledgerSequence_;
         return true;
     }
 
@@ -219,15 +220,15 @@ public:
                 if (auto const maybeValue = result.template get<uint32_t>(); maybeValue)
                     return maybeValue;
 
-                log_.error() << "Could not fetch latest ledger - no rows";
+                LOG(log_.error()) << "Could not fetch latest ledger - no rows";
                 return std::nullopt;
             }
 
-            log_.error() << "Could not fetch latest ledger - no result";
+            LOG(log_.error()) << "Could not fetch latest ledger - no result";
         }
         else
         {
-            log_.error() << "Could not fetch latest ledger: " << res.error();
+            LOG(log_.error()) << "Could not fetch latest ledger: " << res.error();
         }
 
         return std::nullopt;
@@ -246,15 +247,15 @@ public:
                     return util::deserializeHeader(ripple::makeSlice(*maybeValue));
                 }
 
-                log_.error() << "Could not fetch ledger by sequence - no rows";
+                LOG(log_.error()) << "Could not fetch ledger by sequence - no rows";
                 return std::nullopt;
             }
 
-            log_.error() << "Could not fetch ledger by sequence - no result";
+            LOG(log_.error()) << "Could not fetch ledger by sequence - no result";
         }
         else
         {
-            log_.error() << "Could not fetch ledger by sequence: " << res.error();
+            LOG(log_.error()) << "Could not fetch ledger by sequence: " << res.error();
         }
 
         return std::nullopt;
@@ -270,15 +271,15 @@ public:
                 if (auto const maybeValue = result.template get<uint32_t>(); maybeValue)
                     return fetchLedgerBySequence(*maybeValue, yield);
 
-                log_.error() << "Could not fetch ledger by hash - no rows";
+                LOG(log_.error()) << "Could not fetch ledger by hash - no rows";
                 return std::nullopt;
             }
 
-            log_.error() << "Could not fetch ledger by hash - no result";
+            LOG(log_.error()) << "Could not fetch ledger by hash - no result";
         }
         else
         {
-            log_.error() << "Could not fetch ledger by hash: " << res.error();
+            LOG(log_.error()) << "Could not fetch ledger by hash: " << res.error();
         }
 
         return std::nullopt;
@@ -292,7 +293,7 @@ public:
             auto const& results = res.value();
             if (not results.hasRows())
             {
-                log_.debug() << "Could not fetch ledger range - no rows";
+                LOG(log_.debug()) << "Could not fetch ledger range - no rows";
                 return std::nullopt;
             }
 
@@ -314,12 +315,13 @@ public:
             if (range.minSequence > range.maxSequence)
                 std::swap(range.minSequence, range.maxSequence);
 
-            log_.debug() << "After hardFetchLedgerRange range is " << range.minSequence << ":" << range.maxSequence;
+            LOG(log_.debug()) << "After hardFetchLedgerRange range is " << range.minSequence << ":"
+                              << range.maxSequence;
             return range;
         }
         else
         {
-            log_.error() << "Could not fetch ledger range: " << res.error();
+            LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
         }
 
         return std::nullopt;
@@ -341,15 +343,15 @@ public:
 
         if (not res)
         {
-            log_.error() << "Could not fetch all transaction hashes: " << res.error();
+            LOG(log_.error()) << "Could not fetch all transaction hashes: " << res.error();
             return {};
         }
 
         auto const& result = res.value();
         if (not result.hasRows())
         {
-            log_.error() << "Could not fetch all transaction hashes - no rows; ledger = "
-                         << std::to_string(ledgerSequence);
+            LOG(log_.error()) << "Could not fetch all transaction hashes - no rows; ledger = "
+                              << std::to_string(ledgerSequence);
             return {};
         }
 
@@ -358,8 +360,9 @@ public:
             hashes.push_back(std::move(hash));
 
         auto end = std::chrono::system_clock::now();
-        log_.debug() << "Fetched " << hashes.size() << " transaction hashes from Cassandra in "
-                     << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
+        LOG(log_.debug()) << "Fetched " << hashes.size() << " transaction hashes from Cassandra in "
+                          << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                          << " milliseconds";
 
         return hashes;
     }
@@ -398,7 +401,7 @@ public:
             return result;
         }
 
-        log_.error() << "Could not fetch NFT - no rows";
+        LOG(log_.error()) << "Could not fetch NFT - no rows";
         return std::nullopt;
     }
 
@@ -425,8 +428,8 @@ public:
         if (cursor)
         {
             statement.bindAt(1, cursor->asTuple());
-            log_.debug() << "token_id = " << ripple::strHex(tokenID) << " tuple = " << cursor->ledgerSequence
-                         << cursor->transactionIndex;
+            LOG(log_.debug()) << "token_id = " << ripple::strHex(tokenID) << " tuple = " << cursor->ledgerSequence
+                              << cursor->transactionIndex;
         }
         else
         {
@@ -434,7 +437,8 @@ public:
             auto const placeHolder = forward ? 0 : std::numeric_limits<std::uint32_t>::max();
 
             statement.bindAt(1, std::make_tuple(placeHolder, placeHolder));
-            log_.debug() << "token_id = " << ripple::strHex(tokenID) << " idx = " << seq << " tuple = " << placeHolder;
+            LOG(log_.debug()) << "token_id = " << ripple::strHex(tokenID) << " idx = " << seq
+                              << " tuple = " << placeHolder;
         }
 
         statement.bindAt(2, Limit{limit});
@@ -443,20 +447,20 @@ public:
         auto const& results = res.value();
         if (not results.hasRows())
         {
-            log_.debug() << "No rows returned";
+            LOG(log_.debug()) << "No rows returned";
             return {};
         }
 
         std::vector<ripple::uint256> hashes = {};
         auto numRows = results.numRows();
-        log_.info() << "num_rows = " << numRows;
+        LOG(log_.info()) << "num_rows = " << numRows;
 
         for (auto [hash, data] : extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results))
         {
             hashes.push_back(hash);
             if (--numRows == 0)
             {
-                log_.debug() << "Setting cursor";
+                LOG(log_.debug()) << "Setting cursor";
                 cursor = data;
 
                 // forward queries by ledger/tx sequence `>=`
@@ -467,11 +471,11 @@ public:
         }
 
         auto const txns = fetchTransactions(hashes, yield);
-        log_.debug() << "NFT Txns = " << txns.size();
+        LOG(log_.debug()) << "NFT Txns = " << txns.size();
 
         if (txns.size() == limit)
         {
-            log_.debug() << "Returning cursor";
+            LOG(log_.debug()) << "Returning cursor";
             return {txns, cursor};
         }
 
@@ -482,7 +486,7 @@ public:
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
     {
-        log_.debug() << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
+        LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res)
         {
             if (auto const result = res->template get<Blob>(); result)
@@ -492,12 +496,12 @@ public:
             }
             else
             {
-                log_.debug() << "Could not fetch ledger object - no rows";
+                LOG(log_.debug()) << "Could not fetch ledger object - no rows";
             }
         }
         else
         {
-            log_.error() << "Could not fetch ledger object: " << res.error();
+            LOG(log_.error()) << "Could not fetch ledger object: " << res.error();
         }
 
         return std::nullopt;
@@ -515,12 +519,12 @@ public:
             }
             else
             {
-                log_.debug() << "Could not fetch transaction - no rows";
+                LOG(log_.debug()) << "Could not fetch transaction - no rows";
             }
         }
         else
         {
-            log_.error() << "Could not fetch transaction: " << res.error();
+            LOG(log_.error()) << "Could not fetch transaction: " << res.error();
         }
 
         return std::nullopt;
@@ -540,12 +544,12 @@ public:
             }
             else
             {
-                log_.debug() << "Could not fetch successor - no rows";
+                LOG(log_.debug()) << "Could not fetch successor - no rows";
             }
         }
         else
         {
-            log_.error() << "Could not fetch successor: " << res.error();
+            LOG(log_.error()) << "Could not fetch successor: " << res.error();
         }
 
         return std::nullopt;
@@ -585,7 +589,8 @@ public:
         });
 
         assert(numHashes == results.size());
-        log_.debug() << "Fetched " << numHashes << " transactions from Cassandra in " << timeDiff << " milliseconds";
+        LOG(log_.debug()) << "Fetched " << numHashes << " transactions from Cassandra in " << timeDiff
+                          << " milliseconds";
         return results;
     }
 
@@ -599,7 +604,7 @@ public:
             return {};
 
         auto const numKeys = keys.size();
-        log_.trace() << "Fetching " << numKeys << " objects";
+        LOG(log_.trace()) << "Fetching " << numKeys << " objects";
 
         std::vector<Blob> results;
         results.reserve(numKeys);
@@ -622,7 +627,7 @@ public:
                     return {};
             });
 
-        log_.trace() << "Fetched " << numKeys << " objects";
+        LOG(log_.trace()) << "Fetched " << numKeys << " objects";
         return results;
     }
 
@@ -633,14 +638,14 @@ public:
             auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
             if (not res)
             {
-                log_.error() << "Could not fetch ledger diff: " << res.error() << "; ledger = " << ledgerSequence;
+                LOG(log_.error()) << "Could not fetch ledger diff: " << res.error() << "; ledger = " << ledgerSequence;
                 return {};
             }
 
             auto const& results = res.value();
             if (not results)
             {
-                log_.error() << "Could not fetch ledger diff - no rows; ledger = " << ledgerSequence;
+                LOG(log_.error()) << "Could not fetch ledger diff - no rows; ledger = " << ledgerSequence;
                 return {};
             }
 
@@ -655,7 +660,8 @@ public:
         if (keys.empty())
             return {};
 
-        log_.debug() << "Fetched " << keys.size() << " diff hashes from Cassandra in " << timeDiff << " milliseconds";
+        LOG(log_.debug()) << "Fetched " << keys.size() << " diff hashes from Cassandra in " << timeDiff
+                          << " milliseconds";
 
         auto const objs = fetchLedgerObjects(keys, ledgerSequence, yield);
         std::vector<LedgerObject> results;
@@ -676,7 +682,7 @@ public:
     void
     doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
     {
-        log_.trace() << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
+        LOG(log_.trace()) << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
 
         if (range)
             executor_.write(schema_->insertDiff, seq, key);
@@ -687,8 +693,8 @@ public:
     void
     writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) override
     {
-        log_.trace() << "Writing successor. key = " << key.size() << " bytes. "
-                     << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
+        LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. "
+                          << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
         assert(key.size() != 0);
         assert(successor.size() != 0);
 
@@ -740,7 +746,7 @@ public:
         std::string&& transaction,
         std::string&& metadata) override
     {
-        log_.trace() << "Writing txn to cassandra";
+        LOG(log_.trace()) << "Writing txn to cassandra";
 
         executor_.write(schema_->insertLedgerTransaction, seq, hash);
         executor_.write(
@@ -798,13 +804,13 @@ private:
         auto maybeSuccess = res->template get<bool>();
         if (not maybeSuccess)
         {
-            log_.error() << "executeSyncUpdate - error getting result - no row";
+            LOG(log_.error()) << "executeSyncUpdate - error getting result - no row";
             return false;
         }
 
         if (not maybeSuccess.value())
         {
-            log_.warn() << "Update failed. Checking if DB state is what we expect";
+            LOG(log_.warn()) << "Update failed. Checking if DB state is what we expect";
 
             // error may indicate that another writer wrote something.
             // in this case let's just compare the current state of things

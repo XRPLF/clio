@@ -150,8 +150,8 @@ public:
      */
     ~ETLService()
     {
-        log_.info() << "onStop called";
-        log_.debug() << "Stopping Reporting ETL";
+        LOG(log_.info()) << "onStop called";
+        LOG(log_.debug()) << "Stopping Reporting ETL";
 
         state_.isStopping = true;
         cacheLoader_.stop();
@@ -159,7 +159,7 @@ public:
         if (worker_.joinable())
             worker_.join();
 
-        log_.debug() << "Joined ETLService worker thread";
+        LOG(log_.debug()) << "Joined ETLService worker thread";
     }
 
     /**

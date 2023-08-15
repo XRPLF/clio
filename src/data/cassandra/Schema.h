@@ -641,9 +641,9 @@ public:
     void
     prepareStatements(Handle const& handle)
     {
-        log_.info() << "Preparing cassandra statements";
+        LOG(log_.info()) << "Preparing cassandra statements";
         statements_ = std::make_unique<Statements>(settingsProvider_, handle);
-        log_.info() << "Finished preparing statements";
+        LOG(log_.info()) << "Finished preparing statements";
     }
 
     /**

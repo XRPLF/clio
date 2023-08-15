@@ -83,7 +83,7 @@ LoadBalancer::LoadBalancer(
         std::unique_ptr<Source> source = make_Source(entry, ioc, backend, subscriptions, validatedLedgers, *this);
 
         sources_.push_back(std::move(source));
-        log_.info() << "Added etl source - " << sources_.back()->toString();
+        LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
     }
 }
 
@@ -101,8 +101,8 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res)
-                log_.error() << "Failed to download initial ledger."
-                             << " Sequence = " << sequence << " source = " << source->toString();
+                LOG(log_.error()) << "Failed to download initial ledger."
+                                  << " Sequence = " << sequence << " source = " << source->toString();
             else
                 response = std::move(data);
 
@@ -122,15 +122,15 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
             response = std::move(data);
             if (status.ok() && response.validated())
             {
-                log.info() << "Successfully fetched ledger = " << ledgerSequence
-                           << " from source = " << source->toString();
+                LOG(log.info()) << "Successfully fetched ledger = " << ledgerSequence
+                                << " from source = " << source->toString();
                 return true;
             }
             else
             {
-                log.warn() << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
-                           << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
-                           << ", source = " << source->toString();
+                LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
+                                << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
+                                << ", source = " << source->toString();
                 return false;
             }
         },
@@ -201,8 +201,8 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
     {
         auto& source = sources_[sourceIdx];
 
-        log_.debug() << "Attempting to execute func. ledger sequence = " << ledgerSequence
-                     << " - source = " << source->toString();
+        LOG(log_.debug()) << "Attempting to execute func. ledger sequence = " << ledgerSequence
+                          << " - source = " << source->toString();
         // Originally, it was (source->hasLedger(ledgerSequence) || true)
         /* Sometimes rippled has ledger but doesn't actually know. However,
         but this does NOT happen in the normal case and is safe to remove
@@ -212,27 +212,28 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
             bool res = f(source);
             if (res)
             {
-                log_.debug() << "Successfully executed func at source = " << source->toString()
-                             << " - ledger sequence = " << ledgerSequence;
+                LOG(log_.debug()) << "Successfully executed func at source = " << source->toString()
+                                  << " - ledger sequence = " << ledgerSequence;
                 break;
             }
             else
             {
-                log_.warn() << "Failed to execute func at source = " << source->toString()
-                            << " - ledger sequence = " << ledgerSequence;
+                LOG(log_.warn()) << "Failed to execute func at source = " << source->toString()
+                                 << " - ledger sequence = " << ledgerSequence;
             }
         }
         else
         {
-            log_.warn() << "Ledger not present at source = " << source->toString()
-                        << " - ledger sequence = " << ledgerSequence;
+            LOG(log_.warn()) << "Ledger not present at source = " << source->toString()
+                             << " - ledger sequence = " << ledgerSequence;
         }
         sourceIdx = (sourceIdx + 1) % sources_.size();
         numAttempts++;
         if (numAttempts % sources_.size() == 0)
         {
-            log_.info() << "Ledger sequence " << ledgerSequence << " is not yet available from any configured sources. "
-                        << "Sleeping and trying again";
+            LOG(log_.info()) << "Ledger sequence " << ledgerSequence
+                             << " is not yet available from any configured sources. "
+                             << "Sleeping and trying again";
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }

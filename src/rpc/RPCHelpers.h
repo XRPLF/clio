@@ -240,11 +240,11 @@ logDuration(web::Context const& ctx, T const& dur)
         serialize(util::removeSecret(ctx.params)));
 
     if (seconds > 10)
-        log.error() << ctx.tag() << msg;
+        LOG(log.error()) << ctx.tag() << msg;
     else if (seconds > 1)
-        log.warn() << ctx.tag() << msg;
+        LOG(log.warn()) << ctx.tag() << msg;
     else
-        log.info() << ctx.tag() << msg;
+        LOG(log.info()) << ctx.tag() << msg;
 }
 
 }  // namespace rpc

@@ -59,8 +59,8 @@ PlainSource::close(bool startAgain)
             derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
                 if (ec)
                 {
-                    log_.error() << " async_close : "
-                                 << "error code = " << ec << " - " << toString();
+                    LOG(log_.error()) << " async_close : "
+                                      << "error code = " << ec << " - " << toString();
                 }
                 closing_ = false;
                 if (startAgain)
@@ -94,8 +94,8 @@ SslSource::close(bool startAgain)
             derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
                 if (ec)
                 {
-                    log_.error() << " async_close : "
-                                 << "error code = " << ec << " - " << toString();
+                    LOG(log_.error()) << " async_close : "
+                                      << "error code = " << ec << " - " << toString();
                 }
                 closing_ = false;
                 if (startAgain)

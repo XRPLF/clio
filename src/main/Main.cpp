@@ -164,15 +164,15 @@ try
     }
 
     LogService::init(config);
-    LogService::info() << "Clio version: " << Build::getClioFullVersionString();
+    LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();
 
     auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
     {
-        LogService::fatal() << "io_threads is less than 1";
+        LOG(LogService::fatal()) << "io_threads is less than 1";
         return EXIT_FAILURE;
     }
-    LogService::info() << "Number of io threads = " << threads;
+    LOG(LogService::info()) << "Number of io threads = " << threads;
 
     // IO context to handle all incoming requests, as well as other things.
     // This is not the only io context in the application.
@@ -224,5 +224,5 @@ try
 }
 catch (std::exception const& e)
 {
-    LogService::fatal() << "Exit on exception: " << e.what();
+    LOG(LogService::fatal()) << "Exit on exception: " << e.what();
 }

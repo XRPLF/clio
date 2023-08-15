@@ -89,6 +89,16 @@ using SourceLocationType = SourceLocation;
 #endif
 
 /**
+ * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the required severity level.
+ */
+#define LOG(x) \
+    if (!x)    \
+    {          \
+    }          \
+    else       \
+        x
+
+/**
  * @brief Custom severity levels for @ref util::Logger.
  */
 enum class Severity {
@@ -158,8 +168,7 @@ class Logger final
         operator=(Pump&&) = delete;
 
         /**
-         * @brief Perfectly forwards any incoming data into the underlying
-         * boost::log pump if the pump is available. nop otherwise.
+         * @brief Perfectly forwards any incoming data into the underlying boost::log pump if the pump is available.
          *
          * @tparam T Type of data to pump
          * @param data The data to pump
@@ -172,6 +181,14 @@ class Logger final
             if (pump_)
                 pump_->stream() << std::forward<T>(data);
             return *this;
+        }
+
+        /**
+         * @return true if logger is enabled; false otherwise
+         */
+        operator bool() const
+        {
+            return pump_.has_value();
         }
 
     private:

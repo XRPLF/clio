@@ -51,9 +51,9 @@ public:
         auto checkRange = [this](uint32_t version, std::string label) {
             if (std::clamp(version, API_VERSION_MIN, API_VERSION_MAX) != version)
             {
-                log_.error() << "API version settings issue detected: " << label << " version with value " << version
-                             << " is outside of supported range " << API_VERSION_MIN << "-" << API_VERSION_MAX
-                             << "; Falling back to hardcoded values.";
+                LOG(log_.error()) << "API version settings issue detected: " << label << " version with value "
+                                  << version << " is outside of supported range " << API_VERSION_MIN << "-"
+                                  << API_VERSION_MAX << "; Falling back to hardcoded values.";
 
                 defaultVersion_ = API_VERSION_DEFAULT;
                 minVersion_ = API_VERSION_MIN;
@@ -66,8 +66,8 @@ public:
         checkRange(maxVersion, "maximum");
 #endif
 
-        log_.info() << "API version settings: [min = " << minVersion_ << "; max = " << maxVersion_
-                    << "; default = " << defaultVersion_ << "]";
+        LOG(log_.info()) << "API version settings: [min = " << minVersion_ << "; max = " << maxVersion_
+                         << "; default = " << defaultVersion_ << "]";
     }
 
     ProductionAPIVersionParser(util::Config const& config);

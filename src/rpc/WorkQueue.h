@@ -72,7 +72,7 @@ public:
         auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
         auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
 
-        log.info() << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
+        LOG(log.info()) << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
         return WorkQueue{numThreads, maxQueueSize};
     }
 
@@ -92,7 +92,8 @@ public:
     {
         if (curSize_ >= maxSize_ && !isWhiteListed)
         {
-            log_.warn() << "Queue is full. rejecting job. current size = " << curSize_ << "; max size = " << maxSize_;
+            LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_
+                             << "; max size = " << maxSize_;
             return false;
         }
 
@@ -108,7 +109,7 @@ public:
 
                 ++queued_;
                 durationUs_ += wait;
-                log_.info() << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
+                LOG(log_.info()) << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
 
                 func(yield);
                 --curSize_;
