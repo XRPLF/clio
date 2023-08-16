@@ -90,13 +90,15 @@ using SourceLocationType = SourceLocation;
 
 /**
  * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the required severity level.
+ *
+ * Note: Currently this introduces potential shadowing (unlikely).
  */
-#define LOG(x) \
-    if (!x)    \
-    {          \
-    }          \
-    else       \
-        x
+#define LOG(x)                                 \
+    if (auto clio_pump__ = x; not clio_pump__) \
+    {                                          \
+    }                                          \
+    else                                       \
+        clio_pump__
 
 /**
  * @brief Custom severity levels for @ref util::Logger.
