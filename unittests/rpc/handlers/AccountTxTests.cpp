@@ -725,6 +725,61 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     });
 }
 
+TEST_F(RPCAccountTxHandlerTest, SpecificTransactionType)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    // adjust the order for forward->false
+    auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchAccountTransactions(
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
+            testing::_))
+        .Times(2);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(2);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const static input = boost::json::parse(fmt::format(
+            R"({{
+                "account":"{}",
+                "ledger_index":"validated",
+                "TransactionType": "EscrowCancel"
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        // The result should be transaction of type payment,
+        // however, EscrowCancel was specified, so it is filtered out.
+        EXPECT_EQ(output->at("transactions").as_array().size(), 0);
+    });
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const static input = boost::json::parse(fmt::format(
+            R"({{
+                "account":"{}",
+                "ledger_index":"validated",
+                "TransactionType": "Payment"
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        // Not filtered out in this case
+        EXPECT_EQ(output->at("transactions").as_array().size(), 1);
+    });
+}
+
 TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
