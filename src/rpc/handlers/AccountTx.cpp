@@ -22,6 +22,34 @@
 
 namespace rpc {
 
+// found here : https://xrpl.org/transaction-types.html
+std::unordered_map<std::string_view, ripple::TxType> const AccountTxHandler::TYPESMAP{
+    {"AccountSet", ripple::ttACCOUNT_SET},
+    {"AccountDelete", ripple::ttACCOUNT_DELETE},
+    {"CheckCancel", ripple::ttCHECK_CANCEL},
+    {"CheckCash", ripple::ttCHECK_CASH},
+    {"CheckCreate", ripple::ttCHECK_CREATE},
+    {"DepositPreauth", ripple::ttDEPOSIT_PREAUTH},
+    {"EscrowCancel", ripple::ttESCROW_CANCEL},
+    {"EscrowCreate", ripple::ttESCROW_CREATE},
+    {"EscrowFinish", ripple::ttESCROW_FINISH},
+    {"NFTokenAcceptOffer", ripple::ttNFTOKEN_ACCEPT_OFFER},
+    {"NFTokenBurn", ripple::ttNFTOKEN_BURN},
+    {"NFTokenCancelOffer", ripple::ttNFTOKEN_CANCEL_OFFER},
+    {"NFTokenCreateOffer", ripple::ttNFTOKEN_CREATE_OFFER},
+    {"NFTokenMint", ripple::ttNFTOKEN_MINT},
+    {"OfferCancel", ripple::ttOFFER_CANCEL},
+    {"OfferCreate", ripple::ttOFFER_CREATE},
+    {"Payment", ripple::ttPAYMENT},
+    {"PaymentChannelClaim", ripple::ttPAYCHAN_CLAIM},
+    {"PaymentChannelCreate", ripple::ttCHECK_CREATE},
+    {"PaymentChannelFund", ripple::ttPAYCHAN_FUND},
+    {"SetRegularKey", ripple::ttREGULAR_KEY_SET},
+    {"SignerListSet", ripple::ttSIGNER_LIST_SET},
+    {"TicketCreate", ripple::ttTICKET_CREATE},
+    {"TrustSet", ripple::ttTRUST_SET},
+};
+
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
 AccountTxHandler::Result
@@ -116,6 +144,13 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             auto [txn, meta] = toExpandedJson(txnPlusMeta, NFTokenjson::ENABLE);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
+
+            auto objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
+            // if transactionType does not match
+            if (input.transactionType.has_value() &&
+                AccountTxHandler::TYPESMAP.at(objTransactionType.as_string()) != input.transactionType.value())
+                continue;
+
             obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
         }
@@ -207,6 +242,12 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         input.marker = AccountTxHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+
+    if (jsonObject.contains(JS(TransactionType)))
+    {
+        auto objTransactionType = jsonObject.at(JS(TransactionType));
+        input.transactionType = AccountTxHandler::TYPESMAP.at(objTransactionType.as_string());
+    }
 
     return input;
 }

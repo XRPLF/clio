@@ -21,6 +21,7 @@
 
 namespace rpc {
 
+// found here : https://xrpl.org/ledger_entry.html#:~:text=valid%20fields%20are%3A-,index,-account_root
 std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPESMAP{
     {"state", ripple::ltRIPPLE_STATE},
     {"ticket", ripple::ltTICKET},
