@@ -4,7 +4,7 @@ project(clio)
 # ========================================================================== #
 #                                   Options                                  #
 # ========================================================================== #
-option (verbose   "Verbose build"                                     FALSE) 
+option (verbose   "Verbose build"                                     FALSE)
 option (tests     "Build tests"                                       FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
@@ -135,7 +135,8 @@ target_sources (clio PRIVATE
 
 # Clio server
 add_executable (clio_server src/main/Main.cpp)
-target_link_libraries (clio_server PUBLIC clio)
+target_link_libraries (clio_server PRIVATE clio)
+target_link_options(clio_server PRIVATE -static-libgcc -static-libstdc++)
 
 # Unittesting
 if (tests)
@@ -219,7 +220,7 @@ if (tests)
   # See https://github.com/google/googletest/issues/3475
   gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 10)
 
-  # Fix for dwarf5 bug on ci 
+  # Fix for dwarf5 bug on ci
   target_compile_options (clio PUBLIC -gdwarf-4)
 
   target_compile_definitions (${TEST_TARGET} PUBLIC UNITTEST_BUILD)
