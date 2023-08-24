@@ -139,7 +139,7 @@ target_link_libraries (clio_server PRIVATE clio)
 target_link_options(clio_server
   PRIVATE
     $<$<AND:$<NOT:$<BOOL:${APPLE}>>,$<NOT:$<BOOL:${san}>>>:-static-libstdc++ -static-libgcc>
-
+)
 
 # Unittesting
 if (tests)
