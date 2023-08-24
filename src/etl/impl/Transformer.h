@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/SystemState.h>
+#include <etl/impl/AmendmentBlock.h>
 #include <etl/impl/LedgerLoader.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
@@ -47,7 +48,11 @@ namespace etl::detail {
 /**
  * @brief Transformer thread that prepares new ledger out of raw data from GRPC.
  */
-template <typename DataPipeType, typename LedgerLoaderType, typename LedgerPublisherType>
+template <
+    typename DataPipeType,
+    typename LedgerLoaderType,
+    typename LedgerPublisherType,
+    typename AmendmentBlockHandlerType>
 class Transformer
 {
     using GetLedgerResponseType = typename LedgerLoaderType::GetLedgerResponseType;
@@ -59,6 +64,8 @@ class Transformer
     std::shared_ptr<BackendInterface> backend_;
     std::reference_wrapper<LedgerLoaderType> loader_;
     std::reference_wrapper<LedgerPublisherType> publisher_;
+    std::reference_wrapper<AmendmentBlockHandlerType> amendmentBlockHandler_;
+
     uint32_t startSequence_;
     std::reference_wrapper<SystemState> state_;  // shared state for ETL
 
@@ -76,12 +83,14 @@ public:
         std::shared_ptr<BackendInterface> backend,
         LedgerLoaderType& loader,
         LedgerPublisherType& publisher,
+        AmendmentBlockHandlerType& amendmentBlockHandler,
         uint32_t startSequence,
         SystemState& state)
-        : pipe_(std::ref(pipe))
+        : pipe_{std::ref(pipe)}
         , backend_{backend}
-        , loader_(std::ref(loader))
-        , publisher_(std::ref(publisher))
+        , loader_{std::ref(loader)}
+        , publisher_{std::ref(publisher)}
+        , amendmentBlockHandler_{std::ref(amendmentBlockHandler)}
         , startSequence_{startSequence}
         , state_{std::ref(state)}
     {
@@ -185,11 +194,7 @@ private:
         }
         catch (std::runtime_error const& e)
         {
-            setAmendmentBlocked();
-
-            log_.fatal()
-                << "Failed to build next ledger: " << e.what()
-                << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
+            amendmentBlockHandler_.get().onAmendmentBlock();
             return {ripple::LedgerHeader{}, false};
         }
 
@@ -238,7 +243,7 @@ private:
                 LOG(log_.debug()) << "object neighbors not included. using cache";
 
                 if (!backend_->cache().isFull() || backend_->cache().latestLedgerSequence() != lgrInfo.seq - 1)
-                    throw std::runtime_error("Cache is not full, but object neighbors were not included");
+                    throw std::logic_error("Cache is not full, but object neighbors were not included");
 
                 auto const blob = obj.mutable_data();
                 auto checkBookBase = false;
@@ -288,7 +293,7 @@ private:
         {
             LOG(log_.debug()) << "object neighbors not included. using cache";
             if (!backend_->cache().isFull() || backend_->cache().latestLedgerSequence() != lgrInfo.seq)
-                throw std::runtime_error("Cache is not full, but object neighbors were not included");
+                throw std::logic_error("Cache is not full, but object neighbors were not included");
 
             for (auto const& obj : cacheUpdates)
             {
@@ -422,19 +427,6 @@ private:
     setWriteConflict(bool conflict)
     {
         state_.get().writeConflict = conflict;
-    }
-
-    /**
-     * @brief Sets the amendment blocked flag.
-     *
-     * Being amendment blocked means that Clio was compiled with libxrpl that does not yet support some field that
-     * arrived from rippled and therefore can't extract the ledger diff. When this happens, Clio can't proceed with ETL
-     * and should log this error and only handle RPC requests.
-     */
-    void
-    setAmendmentBlocked()
-    {
-        state_.get().isAmendmentBlocked = true;
     }
 };
 

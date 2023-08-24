@@ -158,6 +158,7 @@ if (tests)
     unittests/etl/ExtractorTests.cpp
     unittests/etl/TransformerTests.cpp
     unittests/etl/CacheLoaderTests.cpp
+    unittests/etl/AmendmentBlockHandlerTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp

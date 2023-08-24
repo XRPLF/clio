@@ -36,10 +36,18 @@ struct SystemState
      */
     bool isReadOnly = false;
 
-    std::atomic_bool isWriting = false;          /**< @brief Whether the process is writing to the database. */
-    std::atomic_bool isStopping = false;         /**< @brief Whether the software is stopping. */
-    std::atomic_bool writeConflict = false;      /**< @brief Whether a write conflict was detected. */
-    std::atomic_bool isAmendmentBlocked = false; /**< @brief Whether we detected an amendment block. */
+    std::atomic_bool isWriting = false;     /**< @brief Whether the process is writing to the database. */
+    std::atomic_bool isStopping = false;    /**< @brief Whether the software is stopping. */
+    std::atomic_bool writeConflict = false; /**< @brief Whether a write conflict was detected. */
+
+    /**
+     * @brief Whether clio detected an amendment block.
+     *
+     * Being amendment blocked means that Clio was compiled with libxrpl that does not yet support some field that
+     * arrived from rippled and therefore can't extract the ledger diff. When this happens, Clio can't proceed with ETL
+     * and should log this error and only handle RPC requests.
+     */
+    std::atomic_bool isAmendmentBlocked = false;
 };
 
 }  // namespace etl

@@ -24,6 +24,7 @@
 #include <etl/LoadBalancer.h>
 #include <etl/Source.h>
 #include <etl/SystemState.h>
+#include <etl/impl/AmendmentBlock.h>
 #include <etl/impl/CacheLoader.h>
 #include <etl/impl/ExtractionDataPipe.h>
 #include <etl/impl/Extractor.h>
@@ -35,6 +36,7 @@
 #include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <boost/asio/steady_timer.hpp>
 #include <grpcpp/grpcpp.h>
 
 #include <memory>
@@ -76,7 +78,9 @@ class ETLService
     using ExtractorType = etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
     using LedgerLoaderType = etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
     using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType>;
-    using TransformerType = etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType>;
+    using AmendmentBlockHandlerType = etl::detail::AmendmentBlockHandler<>;
+    using TransformerType =
+        etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
 
     util::Logger log_{"ETL"};
 
@@ -91,6 +95,7 @@ class ETLService
     LedgerFetcherType ledgerFetcher_;
     LedgerLoaderType ledgerLoader_;
     LedgerPublisherType ledgerPublisher_;
+    AmendmentBlockHandlerType amendmentBlockHandler_;
 
     SystemState state_;
 
@@ -267,14 +272,5 @@ private:
      */
     void
     doWork();
-
-    /**
-     * @brief Sets amendment blocked flag.
-     */
-    void
-    setAmendmentBlocked()
-    {
-        state_.isAmendmentBlocked = true;
-    }
 };
 }  // namespace etl

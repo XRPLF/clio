@@ -66,12 +66,12 @@ public:
      * @brief Send via shared_ptr of string, that enables SubscriptionManager to publish to clients.
      *
      * @param msg The message to send
-     * @throws Not supported unless implemented in child classes. Will always throw std::runtime_error.
+     * @throws Not supported unless implemented in child classes. Will always throw std::logic_error.
      */
     virtual void
     send(std::shared_ptr<std::string> msg)
     {
-        throw std::runtime_error("web server can not send the shared payload");
+        throw std::logic_error("web server can not send the shared payload");
     }
 
     /**
