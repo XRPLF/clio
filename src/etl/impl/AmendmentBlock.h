@@ -62,7 +62,7 @@ public:
         : ctx_{std::ref(ioc)}
         , state_{std::ref(state)}
         , timer_{ioc}
-        , interval_{std::chrono::duration_cast<DurationType>(interval)}
+        , interval_{std::chrono::duration_cast<std::chrono::milliseconds>(interval)}
         , action_{std::move(action)}
     {
     }

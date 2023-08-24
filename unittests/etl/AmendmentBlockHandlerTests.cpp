@@ -39,12 +39,12 @@ TEST_F(AmendmentBlockHandlerTest, CallToOnAmendmentBlockSetsStateAndRepeatedlyCa
 {
     std::size_t callCount = 0;
     SystemState state;
-    AmendmentBlockHandlerType handler{ioc_, state, std::chrono::milliseconds{1}, {std::ref(callCount)}};
+    AmendmentBlockHandlerType handler{ioc_, state, std::chrono::nanoseconds{1}, {std::ref(callCount)}};
 
-    EXPECT_EQ(state.isAmendmentBlocked, false);
+    EXPECT_FALSE(state.isAmendmentBlocked);
     handler.onAmendmentBlock();
-    EXPECT_EQ(state.isAmendmentBlocked, true);
+    EXPECT_TRUE(state.isAmendmentBlocked);
 
-    ioc_.run_for(std::chrono::milliseconds{5});
-    EXPECT_TRUE(callCount >= 3);  // 5ms can be enough for 5 calls but not guaranteed; 3 should be less flaky
+    ioc_.run_for(std::chrono::milliseconds{1});
+    EXPECT_TRUE(callCount >= 10);
 }
