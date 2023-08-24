@@ -30,7 +30,8 @@
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/ssl.hpp>
@@ -212,7 +213,7 @@ protected:
     std::string ip_;
     size_t numFailures_ = 0;
 
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+    std::reference_wrapper<boost::asio::io_context> ioc_;
     boost::asio::steady_timer timer_;
     boost::asio::ip::tcp::resolver resolver_;
     boost::beast::flat_buffer readBuffer_;
@@ -250,9 +251,9 @@ public:
         , subscriptions_(subscriptions)
         , balancer_(balancer)
         , forwardCache_(config, ioc, *this)
-        , strand_(boost::asio::make_strand(ioc))
-        , timer_(strand_)
-        , resolver_(strand_)
+        , ioc_(std::ref(ioc))
+        , timer_(ioc.get_executor())
+        , resolver_(boost::asio::make_strand(ioc))
         , hooks_(hooks)
     {
         static boost::uuids::random_generator uuidGenerator;
@@ -887,7 +888,7 @@ public:
         LoadBalancer& balancer,
         SourceHooks hooks)
         : SourceImpl(config, ioc, backend, subscriptions, validatedLedgers, balancer, std::move(hooks))
-        , ws_(std::make_unique<StreamType>(strand_))
+        , ws_(std::make_unique<StreamType>(boost::asio::make_strand(ioc)))
     {
     }
 
@@ -949,7 +950,7 @@ public:
         SourceHooks hooks)
         : SourceImpl(config, ioc, backend, subscriptions, validatedLedgers, balancer, std::move(hooks))
         , sslCtx_(sslCtx)
-        , ws_(std::make_unique<StreamType>(strand_, *sslCtx_))
+        , ws_(std::make_unique<StreamType>(boost::asio::make_strand(ioc), *sslCtx_))
     {
     }
 

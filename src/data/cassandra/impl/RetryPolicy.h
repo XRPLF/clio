@@ -46,7 +46,7 @@ public:
     /**
      * @brief Create a new retry policy instance with the io_context provided
      */
-    ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc) : timer_{boost::asio::make_strand(ioc)}
+    ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc) : timer_{ioc}
     {
     }
 
@@ -75,10 +75,7 @@ public:
     retry(Fn&& fn)
     {
         timer_.expires_after(calculateDelay(attempt_++));
-        timer_.async_wait([fn = std::forward<Fn>(fn)]([[maybe_unused]] const auto& err) {
-            // todo: deal with cancellation (thru err)
-            fn();
-        });
+        timer_.async_wait([fn = std::forward<Fn>(fn)](auto) { fn(); });
     }
 
     /**

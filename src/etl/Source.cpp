@@ -46,7 +46,7 @@ void
 PlainSource::close(bool startAgain)
 {
     timer_.cancel();
-    boost::asio::post(strand_, [this, startAgain]() {
+    boost::asio::post(ioc_.get(), [this, startAgain]() {
         if (closing_)
             return;
 
@@ -64,14 +64,14 @@ PlainSource::close(bool startAgain)
                 closing_ = false;
                 if (startAgain)
                 {
-                    ws_ = std::make_unique<StreamType>(strand_);
+                    ws_ = std::make_unique<StreamType>(boost::asio::make_strand(ioc_.get()));
                     run();
                 }
             });
         }
         else if (startAgain)
         {
-            ws_ = std::make_unique<StreamType>(strand_);
+            ws_ = std::make_unique<StreamType>(boost::asio::make_strand(ioc_.get()));
             run();
         }
     });
@@ -81,7 +81,7 @@ void
 SslSource::close(bool startAgain)
 {
     timer_.cancel();
-    boost::asio::post(strand_, [this, startAgain]() {
+    boost::asio::post(ioc_.get(), [this, startAgain]() {
         if (closing_)
             return;
 
@@ -98,14 +98,14 @@ SslSource::close(bool startAgain)
                 closing_ = false;
                 if (startAgain)
                 {
-                    ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
+                    ws_ = std::make_unique<StreamType>(boost::asio::make_strand(ioc_.get()), *sslCtx_);
                     run();
                 }
             });
         }
         else if (startAgain)
         {
-            ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
+            ws_ = std::make_unique<StreamType>(boost::asio::make_strand(ioc_.get()), *sslCtx_);
             run();
         }
     });
