@@ -46,5 +46,5 @@ TEST_F(AmendmentBlockHandlerTest, CallToOnAmendmentBlockSetsStateAndRepeatedlyCa
     EXPECT_EQ(state.isAmendmentBlocked, true);
 
     ioc_.run_for(std::chrono::milliseconds{5});
-    EXPECT_TRUE(callCount >= 5);
+    EXPECT_TRUE(callCount >= 3);  // 5ms can be enough for 5 calls but not guaranteed; 3 should be less flaky
 }
