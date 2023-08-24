@@ -311,7 +311,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
@@ -352,7 +352,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -393,7 +393,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
@@ -434,7 +434,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -475,7 +475,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "binary": true
@@ -524,7 +524,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "limit": 2,
@@ -572,8 +572,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":{}
+                "account": "{}",
+                "ledger_index": {}
             }})",
             ACCOUNT,
             MAXSEQ - 1));
@@ -601,8 +601,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":{}
+                "account": "{}",
+                "ledger_index": {}
             }})",
             ACCOUNT,
             MAXSEQ - 1));
@@ -627,8 +627,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":"{}"
+                "account": "{}",
+                "ledger_index": "{}"
             }})",
             ACCOUNT,
             MAXSEQ - 1));
@@ -667,8 +667,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_hash":"{}"
+                "account": "{}",
+                "ledger_hash": "{}"
             }})",
             ACCOUNT,
             LEDGERHASH));
@@ -710,8 +710,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":"validated"
+                "account": "{}",
+                "ledger_index": "validated"
             }})",
             ACCOUNT));
         auto const output = handler.process(input, Context{yield});
@@ -721,61 +721,6 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
         EXPECT_FALSE(output->as_object().contains("limit"));
         EXPECT_FALSE(output->as_object().contains("marker"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 1);
-    });
-}
-
-TEST_F(RPCAccountTxHandlerTest, SpecificTransactionType)
-{
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    // adjust the order for forward->false
-    auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(
-        *rawBackendPtr,
-        fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
-        .Times(2);
-
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(2);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
-
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
-            R"({{
-                "account":"{}",
-                "ledger_index":"validated",
-                "TransactionType": "EscrowCancel"
-            }})",
-            ACCOUNT));
-        auto const output = handler.process(input, Context{yield});
-        ASSERT_TRUE(output);
-        // The result should be transaction of type payment,
-        // however, EscrowCancel was specified, so it is filtered out.
-        EXPECT_EQ(output->at("transactions").as_array().size(), 0);
-    });
-
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
-            R"({{
-                "account":"{}",
-                "ledger_index":"validated",
-                "TransactionType": "Payment"
-            }})",
-            ACCOUNT));
-        auto const output = handler.process(input, Context{yield});
-        ASSERT_TRUE(output);
-        // Not filtered out in this case
         EXPECT_EQ(output->at("transactions").as_array().size(), 1);
     });
 }
@@ -802,7 +747,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -843,7 +788,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = boost::json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -1084,5 +1029,313 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, boost::json::parse(OUT));
+    });
+}
+
+struct AccountTxTransactionBundle
+{
+    std::string testName;
+    std::string testJson;
+    std::string result;
+};
+
+// parameterized test cases for parameters check
+struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
+                                      public WithParamInterface<AccountTxTransactionBundle>
+{
+    struct NameGenerator
+    {
+        template <class ParamType>
+        std::string
+        operator()(const testing::TestParamInfo<ParamType>& info) const
+        {
+            auto bundle = static_cast<AccountTxTransactionBundle>(info.param);
+            return bundle.testName;
+        }
+    };
+};
+
+static auto
+generateTransactionTypeTestValues()
+{
+    return std::vector<AccountTxTransactionBundle>{
+        AccountTxTransactionBundle{
+            "AccountSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "AccountSet"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AccountDelete",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "AccountDelete"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "CheckCancel",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "CheckCancel"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "CheckCash",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "CheckCash"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "CheckCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "CheckCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "DepositPreauth",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "DepositPreauth"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "EscrowCancel",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "EscrowCancel"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "EscrowCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "EscrowCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "EscrowFinish",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "EscrowFinish"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenAcceptOffer",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "NFTokenAcceptOffer"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenBurn",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "NFTokenBurn"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenCancelOffer",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "NFTokenCancelOffer"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenCreateOffer",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "NFTokenCreateOffer"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenMint",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "NFTokenMint"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "OfferCancel",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "OfferCancel"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "OfferCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "OfferCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "Payment",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "Payment"
+            })",
+            R"([
+                {
+                "meta": {
+                "AffectedNodes": [
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "Balance": "22"
+                            },
+                            "LedgerEntryType": "AccountRoot"
+                        }
+                    },
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                "Balance": "23"
+                            },
+                            "LedgerEntryType": "AccountRoot"
+                        }
+                    }
+                    ],
+                "TransactionIndex": 0,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
+            },
+            "tx": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "ledger_index": 30,
+                "date": 1
+            },
+            "validated": true
+            }
+        ])"},
+        AccountTxTransactionBundle{
+            "PaymentChannelClaim",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "PaymentChannelClaim"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "PaymentChannelCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "PaymentChannelCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "PaymentChannelFund",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "PaymentChannelFund"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "SetRegularKey",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "SetRegularKey"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "SignerListSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "SignerListSet"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "TicketCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "TicketCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "TrustSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "TransactionType": "TrustSet"
+            })",
+            "[]"},
+    };
+}
+
+INSTANTIATE_TEST_CASE_P(
+    RPCAccountTxTransactionTypeTest,
+    AccountTxTransactionTypeTest,
+    ValuesIn(generateTransactionTypeTestValues()),
+    AccountTxTransactionTypeTest::NameGenerator{});
+
+TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+
+    auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchAccountTransactions(
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
+            testing::_))
+        .Times(1);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+
+    auto const testBundle = GetParam();
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const req = json::parse(testBundle.testJson);
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto transactions = output->at("transactions").as_array();
+        // parse to json object
+        boost::json::value jsonObject = boost::json::parse(testBundle.result);
+
+        EXPECT_EQ(jsonObject, transactions);
     });
 }

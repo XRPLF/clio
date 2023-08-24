@@ -41,6 +41,8 @@ class AccountTxHandler
 
     static std::unordered_map<std::string_view, ripple::TxType> const TYPESMAP;
 
+    static const std::unordered_set<std::string_view> TYPES_KEYS;
+
 public:
     // no max limit
     static auto constexpr LIMIT_MIN = 1;
@@ -113,33 +115,12 @@ public:
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
              }},
             {JS(TransactionType),
-             validation::Type<std::string>{},
-             validation::OneOf<std::string>{
-                 "AccountSet",
-                 "AccountDelete",
-                 "CheckCancel",
-                 "CheckCash",
-                 "CheckCreate",
-                 "DepositPreauth",
-                 "EscrowCancel",
-                 "EscrowCreate",
-                 "EscrowFinish",
-                 "NFTokenAcceptOffer",
-                 "NFTokenBurn",
-                 "NFTokenCancelOffer",
-                 "NFTokenCreateOffer",
-                 "NFTokenMint",
-                 "OfferCancel",
-                 "OfferCreate",
-                 "Payment",
-                 "PaymentChannelClaim",
-                 "PaymentChannelCreate",
-                 "PaymentChannelFund",
-                 "SetRegularKey",
-                 "SignerListSet",
-                 "TicketCreate",
-                 "TrustSet",
-             }},
+             meta::WithCustomError{
+                 validation::Type<std::string>{},
+                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
+             meta::WithCustomError{
+                 validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type'."}}},
         };
 
         return rpcSpec;

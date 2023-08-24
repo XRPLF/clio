@@ -24,31 +24,40 @@ namespace rpc {
 
 // found here : https://xrpl.org/transaction-types.html
 std::unordered_map<std::string_view, ripple::TxType> const AccountTxHandler::TYPESMAP{
-    {"AccountSet", ripple::ttACCOUNT_SET},
-    {"AccountDelete", ripple::ttACCOUNT_DELETE},
-    {"CheckCancel", ripple::ttCHECK_CANCEL},
-    {"CheckCash", ripple::ttCHECK_CASH},
-    {"CheckCreate", ripple::ttCHECK_CREATE},
-    {"DepositPreauth", ripple::ttDEPOSIT_PREAUTH},
-    {"EscrowCancel", ripple::ttESCROW_CANCEL},
-    {"EscrowCreate", ripple::ttESCROW_CREATE},
-    {"EscrowFinish", ripple::ttESCROW_FINISH},
-    {"NFTokenAcceptOffer", ripple::ttNFTOKEN_ACCEPT_OFFER},
-    {"NFTokenBurn", ripple::ttNFTOKEN_BURN},
-    {"NFTokenCancelOffer", ripple::ttNFTOKEN_CANCEL_OFFER},
-    {"NFTokenCreateOffer", ripple::ttNFTOKEN_CREATE_OFFER},
-    {"NFTokenMint", ripple::ttNFTOKEN_MINT},
-    {"OfferCancel", ripple::ttOFFER_CANCEL},
-    {"OfferCreate", ripple::ttOFFER_CREATE},
-    {"Payment", ripple::ttPAYMENT},
-    {"PaymentChannelClaim", ripple::ttPAYCHAN_CLAIM},
-    {"PaymentChannelCreate", ripple::ttCHECK_CREATE},
-    {"PaymentChannelFund", ripple::ttPAYCHAN_FUND},
-    {"SetRegularKey", ripple::ttREGULAR_KEY_SET},
-    {"SignerListSet", ripple::ttSIGNER_LIST_SET},
-    {"TicketCreate", ripple::ttTICKET_CREATE},
-    {"TrustSet", ripple::ttTRUST_SET},
+    {JS(AccountSet), ripple::ttACCOUNT_SET},
+    {JS(AccountDelete), ripple::ttACCOUNT_DELETE},
+    {JS(CheckCancel), ripple::ttCHECK_CANCEL},
+    {JS(CheckCash), ripple::ttCHECK_CASH},
+    {JS(CheckCreate), ripple::ttCHECK_CREATE},
+    {JS(DepositPreauth), ripple::ttDEPOSIT_PREAUTH},
+    {JS(EscrowCancel), ripple::ttESCROW_CANCEL},
+    {JS(EscrowCreate), ripple::ttESCROW_CREATE},
+    {JS(EscrowFinish), ripple::ttESCROW_FINISH},
+    {JS(NFTokenAcceptOffer), ripple::ttNFTOKEN_ACCEPT_OFFER},
+    {JS(NFTokenBurn), ripple::ttNFTOKEN_BURN},
+    {JS(NFTokenCancelOffer), ripple::ttNFTOKEN_CANCEL_OFFER},
+    {JS(NFTokenCreateOffer), ripple::ttNFTOKEN_CREATE_OFFER},
+    {JS(NFTokenMint), ripple::ttNFTOKEN_MINT},
+    {JS(OfferCancel), ripple::ttOFFER_CANCEL},
+    {JS(OfferCreate), ripple::ttOFFER_CREATE},
+    {JS(Payment), ripple::ttPAYMENT},
+    {JS(PaymentChannelClaim), ripple::ttPAYCHAN_CLAIM},
+    {JS(PaymentChannelCreate), ripple::ttCHECK_CREATE},
+    {JS(PaymentChannelFund), ripple::ttPAYCHAN_FUND},
+    {JS(SetRegularKey), ripple::ttREGULAR_KEY_SET},
+    {JS(SignerListSet), ripple::ttSIGNER_LIST_SET},
+    {JS(TicketCreate), ripple::ttTICKET_CREATE},
+    {JS(TrustSet), ripple::ttTRUST_SET},
 };
+
+// TODO: should be std::views::keys when clang supports it
+std::unordered_set<std::string_view> const AccountTxHandler::TYPES_KEYS = [] {
+    std::unordered_set<std::string_view> keys;
+    std::transform(TYPESMAP.begin(), TYPESMAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
+        return pair.first;
+    });
+    return keys;
+}();
 
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
