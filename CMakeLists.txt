@@ -136,7 +136,10 @@ target_sources (clio PRIVATE
 # Clio server
 add_executable (clio_server src/main/Main.cpp)
 target_link_libraries (clio_server PRIVATE clio)
-target_link_options(clio_server PRIVATE -static-libgcc -static-libstdc++)
+target_link_options(clio_server
+  PRIVATE
+    $<$<AND:$<NOT:$<BOOL:${APPLE}>>,$<NOT:$<BOOL:${san}>>>:-static-libstdc++ -static-libgcc>
+
 
 # Unittesting
 if (tests)
