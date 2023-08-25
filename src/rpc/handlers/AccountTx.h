@@ -40,7 +40,6 @@ class AccountTxHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
     static std::unordered_map<std::string_view, ripple::TxType> const TYPESMAP;
-
     static const std::unordered_set<std::string_view> TYPES_KEYS;
 
 public:
@@ -114,13 +113,11 @@ public:
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
              }},
-            {JS(TransactionType),
-             meta::WithCustomError{
-                 validation::Type<std::string>{},
-                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
-             meta::WithCustomError{
-                 validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
-                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type'."}}},
+            {
+                JS(TransactionType),
+                validation::Type<std::string>{},
+                validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+            },
         };
 
         return rpcSpec;
