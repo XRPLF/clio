@@ -309,7 +309,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -350,7 +350,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -391,7 +391,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -432,7 +432,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -473,7 +473,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -522,7 +522,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -570,7 +570,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": {}
@@ -599,7 +599,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": {}
@@ -625,7 +625,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": "{}"
@@ -665,7 +665,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_hash": "{}"
@@ -708,7 +708,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": "validated"
@@ -745,7 +745,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -786,7 +786,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -1015,7 +1015,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const static input = boost::json::parse(fmt::format(
+        auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -1028,7 +1028,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
             -1));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, boost::json::parse(OUT));
+        EXPECT_EQ(*output, json::parse(OUT));
     });
 }
 
@@ -1334,7 +1334,7 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
 
         auto transactions = output->at("transactions").as_array();
         // parse to json object
-        boost::json::value jsonObject = boost::json::parse(testBundle.result);
+        json::value jsonObject = json::parse(testBundle.result);
 
         EXPECT_EQ(jsonObject, transactions);
     });
