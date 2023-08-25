@@ -1334,7 +1334,7 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
 
         auto transactions = output->at("transactions").as_array();
         // parse to json object
-        boost::json::value jsonObject = boost::json::parse(testBundle.result);
+        json::value jsonObject = json::parse(testBundle.result);
 
         EXPECT_EQ(jsonObject, transactions);
     });
