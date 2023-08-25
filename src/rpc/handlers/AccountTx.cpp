@@ -155,8 +155,10 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             obj[JS(tx)] = std::move(txn);
 
             auto objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
+            auto it = TYPESMAP.find(objTransactionType.as_string());
+
             // if transactionType does not match
-            if (input.transactionType.has_value() &&
+            if (input.transactionType.has_value() && it != TYPESMAP.end() &&
                 AccountTxHandler::TYPESMAP.at(objTransactionType.as_string()) != input.transactionType.value())
                 continue;
 

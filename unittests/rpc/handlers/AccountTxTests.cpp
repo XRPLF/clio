@@ -1197,7 +1197,7 @@ generateTransactionTypeTestValues()
             R"([
                 {
                 "meta": {
-                "AffectedNodes": [
+                    "AffectedNodes": [
                     {
                         "ModifiedNode": {
                             "FinalFields": {
@@ -1215,27 +1215,26 @@ generateTransactionTypeTestValues()
                             },
                             "LedgerEntryType": "AccountRoot"
                         }
-                    }
-                    ],
-                "TransactionIndex": 0,
-                "TransactionResult": "tesSUCCESS",
-                "delivered_amount": "unavailable"
-            },
-            "tx": {
-                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Amount": "1",
-                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee": "1",
-                "Sequence": 32,
-                "SigningPubKey": "74657374",
-                "TransactionType": "Payment",
-                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                "ledger_index": 30,
-                "date": 1
-            },
-            "validated": true
-            }
-        ])"},
+                    }],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "delivered_amount": "unavailable"
+                },
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Amount": "1",
+                    "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "Fee": "1",
+                    "Sequence": 32,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "Payment",
+                    "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                    "ledger_index": 30,
+                    "date": 1
+                },
+                "validated": true
+                }
+            ])"},
         AccountTxTransactionBundle{
             "PaymentChannelClaim",
             R"({
@@ -1311,18 +1310,11 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
-        fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
+        *rawBackendPtr, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _))
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
 
     auto const testBundle = GetParam();
@@ -1330,12 +1322,10 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
-        ASSERT_TRUE(output);
+        EXPECT_TRUE(output);
 
-        auto transactions = output->at("transactions").as_array();
-        // parse to json object
-        json::value jsonObject = json::parse(testBundle.result);
-
+        auto const transactions = output->at("transactions").as_array();
+        auto const jsonObject = json::parse(testBundle.result);
         EXPECT_EQ(jsonObject, transactions);
     });
 }
