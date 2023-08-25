@@ -176,7 +176,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":30
@@ -201,7 +201,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":"30"
@@ -227,7 +227,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -256,7 +256,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -334,7 +334,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -385,7 +385,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -434,7 +434,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -496,7 +496,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -555,7 +555,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "type":"offer"
@@ -611,7 +611,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "type": "check"
@@ -674,7 +674,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true
@@ -725,7 +725,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true,
@@ -793,7 +793,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true
@@ -858,7 +858,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true,
@@ -978,7 +978,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -1022,7 +1022,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(11);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -1075,7 +1075,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(12);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -1157,7 +1157,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(13);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -1218,7 +1218,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -1250,7 +1250,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "marker" : "{},{}"
@@ -1287,7 +1287,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountNftMax, MAXSEQ, _)).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "marker" : "{},{}"
@@ -1367,7 +1367,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(13);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}",
@@ -1469,7 +1469,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "type": "nft_page"
@@ -1517,7 +1517,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{},
@@ -1602,7 +1602,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit": {}
@@ -1683,7 +1683,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit": {}

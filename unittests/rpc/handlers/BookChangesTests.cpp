@@ -107,7 +107,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(R"({"ledger_index":30})");
+    auto const static input = json::parse(R"({"ledger_index":30})");
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -127,7 +127,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = boost::json::parse(R"({"ledger_index":"30"})");
+    auto const static input = json::parse(R"({"ledger_index":"30"})");
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -148,7 +148,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "ledger_hash":"{}"
         }})",

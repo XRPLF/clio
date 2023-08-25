@@ -284,7 +284,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
-    auto const empty = boost::json::object{};
+    auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -336,7 +336,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
-    auto const empty = boost::json::object{};
+    auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -351,7 +351,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
     EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
 
-    auto const rippledObj = boost::json::parse(R"({
+    auto const rippledObj = json::parse(R"({
         "result": {
             "info": {
                 "build_version": "1234",
@@ -399,7 +399,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
-    auto const empty = boost::json::object{};
+    auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -414,7 +414,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
     EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
 
-    auto const rippledObj = boost::json::parse(R"({
+    auto const rippledObj = json::parse(R"({
         "result": {
             "info": {}
         }

@@ -174,7 +174,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "role": "gateway",
@@ -202,7 +202,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "role": "gateway",
@@ -230,7 +230,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "role": "gateway",
