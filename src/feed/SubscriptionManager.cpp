@@ -186,6 +186,7 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
         {
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
+                // TODO: data::synchronous is potentially dangerous, can get stuck sometimes on async_compose
                 data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = rpc::accountFunds(*backend_, lgrInfo.seq, amount, account, yield);
                 });

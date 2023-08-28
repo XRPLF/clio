@@ -76,6 +76,7 @@ public:
     using FutureType = typename HandleType::FutureType;
     using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
     using ResultType = typename HandleType::ResultType;
+    using ErrorType = typename HandleType::ErrorType;
     using CompletionTokenType = boost::asio::yield_context;
 
     /**
@@ -229,23 +230,22 @@ public:
     read(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
         auto const numStatements = statements.size();
-        std::optional<FutureWithCallbackType> future;
+        auto retry = makeRetryStrategy();
 
-        // todo: perhaps use policy instead
-        while (true)
+        do
         {
+            auto future = std::optional<FutureWithCallbackType>{};
             numReadRequestsOutstanding_ += numStatements;
-            // TODO: see if we can avoid using shared_ptr for self here
+
             auto init = [this, &statements, &future]<typename Self>(Self& self) {
                 future.emplace(handle_.get().asyncExecute(
-                    statements, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
-                        // Note: explicit work below needed on linux/gcc11
-                        auto executor = boost::asio::get_associated_executor(*sself);
+                    // Note: explicit work below needed on linux/gcc11
+                    statements,
+                    [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(self)),
+                     sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
                         boost::asio::post(
-                            executor,
-                            [sself = std::move(sself),
-                             res = std::move(res),
-                             _ = boost::asio::make_work_guard(executor)]() mutable {
+                            boost::asio::get_associated_executor(*sself),
+                            [sself = std::move(sself), res = std::move(res)]() mutable {
                                 sself->complete(std::move(res));
                                 sself.reset();
                             });
@@ -265,7 +265,9 @@ public:
                 LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
                 throwErrorIfNeeded(res.error());
             }
-        }
+
+            retry(token);
+        } while (true);
     }
 
     /**
@@ -281,31 +283,33 @@ public:
     [[maybe_unused]] ResultOrErrorType
     read(CompletionTokenType token, StatementType const& statement)
     {
-        std::optional<FutureWithCallbackType> future;
+        auto retry = makeRetryStrategy();
 
-        // todo: perhaps use policy instead
-        while (true)
+        do
         {
+            auto future = std::optional<FutureWithCallbackType>{};
             ++numReadRequestsOutstanding_;
-            // TODO: see if we can avoid using shared_ptr for self here
+
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
+                // Note: explicit work below needed on linux/gcc11
                 future.emplace(handle_.get().asyncExecute(
-                    statement, [sself = std::make_shared<Self>(std::move(self))](auto&&) mutable {
-                        // Note: explicit work below needed on linux/gcc11
-                        auto executor = boost::asio::get_associated_executor(*sself);
+                    statement,
+                    [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(self)),
+                     sself = std::make_shared<Self>(std::move(self))](auto&& data) mutable {
                         boost::asio::post(
-                            executor, [sself = std::move(sself), _ = boost::asio::make_work_guard(executor)]() mutable {
-                                sself->complete();
+                            boost::asio::get_associated_executor(*sself),
+                            [data = std::move(data), sself = std::move(sself)]() mutable {
+                                sself->complete(std::move(data));
                                 sself.reset();
                             });
                     }));
             };
 
-            boost::asio::async_compose<CompletionTokenType, void()>(
+            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
                 init, token, boost::asio::get_associated_executor(token));
             --numReadRequestsOutstanding_;
 
-            if (auto res = future->get(); res)
+            if (res)
             {
                 return res;
             }
@@ -314,7 +318,9 @@ public:
                 LOG(log_.error()) << "Failed read in coroutine: " << res.error();
                 throwErrorIfNeeded(res.error());
             }
-        }
+
+            retry(token);
+        } while (true);
     }
 
     /**
@@ -340,7 +346,10 @@ public:
 
         auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
             auto sself = std::make_shared<Self>(std::move(self));  // TODO: see if we can avoid this
-            auto executionHandler = [&hadError, &numOutstanding, sself = std::move(sself)](auto const& res) mutable {
+            auto executionHandler = [&hadError,
+                                     &numOutstanding,
+                                     _ = boost::asio::make_work_guard(*sself),
+                                     sself = std::move(sself)](auto const& res) mutable {
                 if (not res)
                     hadError = true;
 
@@ -348,9 +357,8 @@ public:
                 if (--numOutstanding == 0)
                 {
                     // Note: explicit work below needed on linux/gcc11
-                    auto executor = boost::asio::get_associated_executor(*sself);
                     boost::asio::post(
-                        executor, [sself = std::move(sself), _ = boost::asio::make_work_guard(executor)]() mutable {
+                        boost::asio::get_associated_executor(*sself), [sself = std::move(sself)]() mutable {
                             sself->complete();
                             sself.reset();
                         });
@@ -453,6 +461,19 @@ private:
 
         if (err.isInvalidQuery())
             throw std::runtime_error("Invalid query");
+    }
+
+    auto
+    makeRetryStrategy() const -> decltype(auto)
+    {
+        return [start = 0u](auto yield) mutable {
+            double delay = lround(std::pow(2, std::min(10u, ++start)));
+            auto timer = boost::asio::deadline_timer(
+                boost::asio::get_associated_executor(yield),
+                boost::posix_time::milliseconds(static_cast<int>(delay * 2.0)));
+
+            timer.async_wait(yield);
+        };
     }
 };
 

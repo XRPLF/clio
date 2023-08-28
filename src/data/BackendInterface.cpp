@@ -223,12 +223,6 @@ BackendInterface::fetchBookOffers(
 }
 
 std::optional<LedgerRange>
-BackendInterface::hardFetchLedgerRange() const
-{
-    return synchronous([this](auto yield) { return hardFetchLedgerRange(yield); });
-}
-
-std::optional<LedgerRange>
 BackendInterface::fetchLedgerRange() const
 {
     std::shared_lock lck(rngMtx_);

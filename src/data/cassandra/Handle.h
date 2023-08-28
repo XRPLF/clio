@@ -55,6 +55,7 @@ public:
     using StatementType = Statement;
     using PreparedStatementType = PreparedStatement;
     using ResultType = Result;
+    using ErrorType = Error;
 
     /**
      * @brief Construct a new handle from a @ref detail::Settings object.

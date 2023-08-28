@@ -93,7 +93,7 @@ public:
     {
         if (code_ == CASS_ERROR_LIB_NO_HOSTS_AVAILABLE or code_ == CASS_ERROR_LIB_REQUEST_TIMED_OUT or
             code_ == CASS_ERROR_SERVER_UNAVAILABLE or code_ == CASS_ERROR_SERVER_OVERLOADED or
-            code_ == CASS_ERROR_SERVER_READ_TIMEOUT)
+            code_ == CASS_ERROR_SERVER_READ_TIMEOUT or code_ == CASS_ERROR_SERVER_READ_FAILURE)
             return true;
         return false;
     }

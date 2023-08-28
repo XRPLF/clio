@@ -62,6 +62,11 @@ retryOnTimeout(FnType func, size_t waitMs = 500)
 {
     static util::Logger log{"Backend"};
 
+    auto retry = [start = 0u, waitMs]() mutable {
+        double delay = lround(std::pow(2, std::min(10u, ++start)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(waitMs + static_cast<unsigned int>(delay)));
+    };
+
     while (true)
     {
         try
@@ -71,7 +76,7 @@ retryOnTimeout(FnType func, size_t waitMs = 500)
         catch (DatabaseTimeout const&)
         {
             LOG(log.error()) << "Database request timed out. Sleeping and retrying ... ";
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
+            retry();
         }
     }
 }
@@ -116,6 +121,7 @@ template <class FnType>
 auto
 synchronousAndRetryOnTimeout(FnType&& func)
 {
+    // TODO: data::synchronous is potentially dangerous, can get stuck sometimes on async_compose
     return retryOnTimeout([&]() { return synchronous(func); });
 }
 
@@ -435,17 +441,15 @@ public:
         boost::asio::yield_context yield) const;
 
     /**
-     * @brief Synchronously fetches the ledger range from DB.
-     *
-     * This function just wraps hardFetchLedgerRange(boost::asio::yield_context) using synchronous(FnType&&).
+     * @brief Implementation must synchronously fetch the ledger range from DB.
      *
      * @return The ledger range if available; nullopt otherwise
      */
-    std::optional<LedgerRange>
-    hardFetchLedgerRange() const;
+    virtual std::optional<LedgerRange>
+    hardFetchLedgerRange() const = 0;
 
     /**
-     * @brief Fetches the ledger range from DB.
+     * @brief Implementation must fetch the ledger range from DB on a coroutine.
      *
      * @return The ledger range if available; nullopt otherwise
      */
@@ -453,7 +457,7 @@ public:
     hardFetchLedgerRange(boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches the ledger range from DB retrying until no DatabaseTimeout is thrown.
+     * @brief Synchronously fetches the ledger range from DB retrying until no DatabaseTimeout is thrown.
      *
      * @return The ledger range if available; nullopt otherwise
      */

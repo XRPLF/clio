@@ -286,45 +286,15 @@ public:
     }
 
     std::optional<LedgerRange>
+    hardFetchLedgerRange() const override
+    {
+        return hardFetchLedgerRange(handle_.execute(schema_->selectLedgerRange));
+    }
+
+    std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context yield) const override
     {
-        if (auto const res = executor_.read(yield, schema_->selectLedgerRange); res)
-        {
-            auto const& results = res.value();
-            if (not results.hasRows())
-            {
-                LOG(log_.debug()) << "Could not fetch ledger range - no rows";
-                return std::nullopt;
-            }
-
-            // TODO: this is probably a good place to use user type in
-            // cassandra instead of having two rows with bool flag. or maybe at
-            // least use tuple<int, int>?
-            LedgerRange range;
-            std::size_t idx = 0;
-            for (auto [seq] : extract<uint32_t>(results))
-            {
-                if (idx == 0)
-                    range.maxSequence = range.minSequence = seq;
-                else if (idx == 1)
-                    range.maxSequence = seq;
-
-                ++idx;
-            }
-
-            if (range.minSequence > range.maxSequence)
-                std::swap(range.minSequence, range.maxSequence);
-
-            LOG(log_.debug()) << "After hardFetchLedgerRange range is " << range.minSequence << ":"
-                              << range.maxSequence;
-            return range;
-        }
-        else
-        {
-            LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
-        }
-
-        return std::nullopt;
+        return hardFetchLedgerRange(executor_.read(yield, schema_->selectLedgerRange));
     }
 
     std::vector<TransactionAndMetadata>
@@ -821,6 +791,48 @@ private:
         }
 
         return true;
+    }
+
+    std::optional<LedgerRange>
+    hardFetchLedgerRange(ResultOrError&& res) const
+    {
+        if (res)
+        {
+            auto const& results = res.value();
+            if (not results.hasRows())
+            {
+                LOG(log_.debug()) << "Could not fetch ledger range - no rows";
+                return std::nullopt;
+            }
+
+            // TODO: this is probably a good place to use user type in
+            // cassandra instead of having two rows with bool flag. or maybe at
+            // least use tuple<int, int>?
+            LedgerRange range;
+            std::size_t idx = 0;
+            for (auto [seq] : extract<uint32_t>(results))
+            {
+                if (idx == 0)
+                    range.maxSequence = range.minSequence = seq;
+                else if (idx == 1)
+                    range.maxSequence = seq;
+
+                ++idx;
+            }
+
+            if (range.minSequence > range.maxSequence)
+                std::swap(range.minSequence, range.maxSequence);
+
+            LOG(log_.debug()) << "After hardFetchLedgerRange range is " << range.minSequence << ":"
+                              << range.maxSequence;
+            return range;
+        }
+        else
+        {
+            LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
+        }
+
+        return std::nullopt;
     }
 };
 

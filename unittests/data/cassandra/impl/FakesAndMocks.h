@@ -31,6 +31,10 @@ struct FakeResult
 {
 };
 
+struct FakeError
+{
+};
+
 struct FakeResultOrError
 {
     CassandraError err{"<default>", CASS_OK};
@@ -95,6 +99,7 @@ struct MockHandle
     using StatementType = FakeStatement;
     using PreparedStatementType = FakePreparedStatement;
     using ResultType = FakeResult;
+    using ErrorType = FakeError;
 
     MOCK_METHOD(
         FutureWithCallbackType,
