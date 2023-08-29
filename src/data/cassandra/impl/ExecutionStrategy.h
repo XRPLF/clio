@@ -256,15 +256,14 @@ public:
 
             auto init = [this, &statements, &future]<typename Self>(Self& self) {
                 future.emplace(handle_.get().asyncExecute(
-                    // Note: explicit work below needed on linux/gcc11
-                    statements,
-                    [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(self)),
-                     sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
+                    statements, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
+                        // Note: explicit work below needed on linux/gcc11
+                        auto executor = boost::asio::get_associated_executor(*sself);
                         boost::asio::post(
                             boost::asio::get_associated_executor(*sself),
-                            [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(*sself)),
-                             sself = std::move(sself),
-                             res = std::move(res)]() mutable {
+                            [sself = std::move(sself),
+                             res = std::move(res),
+                             _ = boost::asio::make_work_guard(executor)]() mutable {
                                 sself->complete(std::move(res));
                                 sself.reset();
                             });
@@ -310,16 +309,15 @@ public:
             ++numReadRequestsOutstanding_;
 
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
-                // Note: explicit work below needed on linux/gcc11
                 future.emplace(handle_.get().asyncExecute(
-                    statement,
-                    [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(self)),
-                     sself = std::make_shared<Self>(std::move(self))](auto&& data) mutable {
+                    statement, [sself = std::make_shared<Self>(std::move(self))](auto&& data) mutable {
+                        // Note: explicit work below needed on linux/gcc11
+                        auto executor = boost::asio::get_associated_executor(*sself);
                         boost::asio::post(
-                            boost::asio::get_associated_executor(*sself),
-                            [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(*sself)),
-                             data = std::move(data),
-                             sself = std::move(sself)]() mutable {
+                            executor,
+                            [data = std::move(data),
+                             sself = std::move(sself),
+                             _ = boost::asio::make_work_guard(executor)]() mutable {
                                 sself->complete(std::move(data));
                                 sself.reset();
                             });
@@ -401,10 +399,7 @@ public:
 
         auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
             auto sself = std::make_shared<Self>(std::move(self));  // TODO: see if we can avoid this
-            auto executionHandler = [&hadError,
-                                     &numOutstanding,
-                                     _ = boost::asio::make_work_guard(*sself),
-                                     sself = std::move(sself)](auto const& res) mutable {
+            auto executionHandler = [&hadError, &numOutstanding, sself = std::move(sself)](auto const& res) mutable {
                 if (not res)
                     hadError = true;
 
@@ -412,8 +407,9 @@ public:
                 if (--numOutstanding == 0)
                 {
                     // Note: explicit work below needed on linux/gcc11
+                    auto executor = boost::asio::get_associated_executor(*sself);
                     boost::asio::post(
-                        boost::asio::get_associated_executor(*sself), [sself = std::move(sself)]() mutable {
+                        executor, [sself = std::move(sself), _ = boost::asio::make_work_guard(executor)]() mutable {
                             sself->complete();
                             sself.reset();
                         });
