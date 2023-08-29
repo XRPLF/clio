@@ -260,7 +260,7 @@ public:
                         // Note: explicit work below needed on linux/gcc11
                         auto executor = boost::asio::get_associated_executor(*sself);
                         boost::asio::post(
-                            boost::asio::get_associated_executor(*sself),
+                            executor,
                             [sself = std::move(sself),
                              res = std::move(res),
                              _ = boost::asio::make_work_guard(executor)]() mutable {
@@ -398,7 +398,7 @@ public:
         futures.reserve(numOutstanding);
 
         auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
-            auto sself = std::make_shared<Self>(std::move(self));  // TODO: see if we can avoid this
+            auto sself = std::make_shared<Self>(std::move(self));
             auto executionHandler = [&hadError, &numOutstanding, sself = std::move(sself)](auto const& res) mutable {
                 if (not res)
                     hadError = true;
