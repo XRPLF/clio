@@ -217,6 +217,23 @@ public:
     }
 
     /**
+     * @brief Synchronous query execution used for reading data.
+     *
+     * Retries forever until successful or throws an exception on timeout.
+     *
+     * @param preparedStatement Statement to prepare and execute
+     * @param args Args to bind to the prepared statement
+     * @throw DatabaseTimeout on timeout
+     * @return ResultType or error wrapped in Expected
+     */
+    template <typename... Args>
+    [[maybe_unused]] ResultOrErrorType
+    read(PreparedStatementType const& preparedStatement, Args&&... args)
+    {
+        return read(preparedStatement.bind(std::forward<Args>(args)...));
+    }
+
+    /**
      * @brief Coroutine-based query execution used for reading data.
      *
      * Retries forever until successful or throws an exception on timeout.
@@ -245,7 +262,9 @@ public:
                      sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
                         boost::asio::post(
                             boost::asio::get_associated_executor(*sself),
-                            [sself = std::move(sself), res = std::move(res)]() mutable {
+                            [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(*sself)),
+                             sself = std::move(sself),
+                             res = std::move(res)]() mutable {
                                 sself->complete(std::move(res));
                                 sself.reset();
                             });
@@ -298,7 +317,9 @@ public:
                      sself = std::make_shared<Self>(std::move(self))](auto&& data) mutable {
                         boost::asio::post(
                             boost::asio::get_associated_executor(*sself),
-                            [data = std::move(data), sself = std::move(sself)]() mutable {
+                            [_ = boost::asio::make_work_guard(boost::asio::get_associated_executor(*sself)),
+                             data = std::move(data),
+                             sself = std::move(sself)]() mutable {
                                 sself->complete(std::move(data));
                                 sself.reset();
                             });
@@ -320,6 +341,40 @@ public:
             }
 
             retry(token);
+        } while (true);
+    }
+
+    /**
+     * @brief Synchronous query execution used for reading data.
+     *
+     * Retries forever until successful or throws an exception on timeout.
+     *
+     * @param statement Statement to execute
+     * @throw DatabaseTimeout on timeout
+     * @return ResultType or error wrapped in Expected
+     */
+    [[maybe_unused]] ResultOrErrorType
+    read(StatementType const& statement)
+    {
+        auto retry = makeSyncRetryStrategy();
+
+        do
+        {
+            ++numReadRequestsOutstanding_;
+            auto res = handle_.get().execute(statement);
+            --numReadRequestsOutstanding_;
+
+            if (res)
+            {
+                return res;
+            }
+            else
+            {
+                LOG(log_.error()) << "Failed synchronous read: " << res.error();
+                throwErrorIfNeeded(res.error());
+            }
+
+            retry();
         } while (true);
     }
 
@@ -400,6 +455,56 @@ public:
         return results;
     }
 
+    /**
+     * @brief Synchronous query execution used for reading data.
+     *
+     * Attempts to execute each statement. On any error the whole vector will be
+     * discarded and exception will be thrown.
+     *
+     * @param statements Statements to execute
+     * @throw DatabaseTimeout on db error
+     * @return Vector of results
+     */
+    std::vector<ResultType>
+    readEach(std::vector<StatementType> const& statements)
+    {
+        bool hadError = false;
+        std::vector<ResultOrErrorType> maybeResults;
+        maybeResults.reserve(statements.size());
+
+        numReadRequestsOutstanding_ += statements.size();
+        std::transform(
+            std::cbegin(statements),
+            std::cend(statements),
+            std::back_inserter(maybeResults),
+            [this, &hadError](auto const& statement) -> ResultOrErrorType {
+                auto res = handle_.get().execute(statement);
+                if (not res)
+                    hadError = true;
+
+                return res;
+            });
+        numReadRequestsOutstanding_ -= statements.size();
+
+        if (hadError)
+            throw DatabaseTimeout{};
+
+        std::vector<ResultType> results;
+        results.reserve(statements.size());
+
+        std::transform(
+            std::make_move_iterator(std::begin(maybeResults)),
+            std::make_move_iterator(std::end(maybeResults)),
+            std::back_inserter(results),
+            [](auto&& entry) {
+                auto&& res = entry.value();
+                return std::move(res);
+            });
+
+        assert(results.size() == statements.size());
+        return results;
+    }
+
 private:
     void
     incrementOutstandingRequestCount()
@@ -473,6 +578,15 @@ private:
                 boost::posix_time::milliseconds(static_cast<int>(delay * 2.0)));
 
             timer.async_wait(yield);
+        };
+    }
+
+    auto
+    makeSyncRetryStrategy() const -> decltype(auto)
+    {
+        return [start = 0u]() mutable {
+            double delay = lround(std::pow(2, std::min(10u, ++start)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delay * 2.0)));
         };
     }
 };

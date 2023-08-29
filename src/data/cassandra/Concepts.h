@@ -67,8 +67,10 @@ concept SomeExecutionStrategy = requires(
     { a.write(std::move(statements)) } -> std::same_as<void>;
     { a.read(token, prepared) } -> std::same_as<ResultOrError>;
     { a.read(token, statement) } -> std::same_as<ResultOrError>;
+    { a.read(statement) } -> std::same_as<ResultOrError>;
     { a.read(token, statements) } -> std::same_as<ResultOrError>;
     { a.readEach(token, statements) } -> std::same_as<std::vector<Result>>;
+    { a.readEach(statements) } -> std::same_as<std::vector<Result>>;
 };
 // clang-format on
 

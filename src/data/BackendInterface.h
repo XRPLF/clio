@@ -111,21 +111,6 @@ synchronous(FnType&& func)
 }
 
 /**
- * @brief Synchronously execute the given function object and retry until no DatabaseTimeout is thrown.
- *
- * @tparam FnType The type of function object to execute
- * @param func The function object to execute
- * @return auto The same as the return type of func
- */
-template <class FnType>
-auto
-synchronousAndRetryOnTimeout(FnType&& func)
-{
-    // TODO: data::synchronous is potentially dangerous, can get stuck sometimes on async_compose
-    return retryOnTimeout([&]() { return synchronous(func); });
-}
-
-/**
  * @brief The interface to the database used by Clio.
  */
 class BackendInterface
@@ -159,7 +144,7 @@ public:
     }
 
     /**
-     * @brief Fetches a specific ledger by sequence number.
+     * @brief Fetches a specific ledger by sequence number on a coroutine.
      *
      * @param sequence The sequence number to fetch for
      * @param yield The coroutine context
@@ -167,6 +152,15 @@ public:
      */
     virtual std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const = 0;
+
+    /**
+     * @brief Synchronously fetches a specific ledger by sequence number.
+     *
+     * @param sequence The sequence number to fetch for
+     * @return The ripple::LedgerHeader if found; nullopt otherwise
+     */
+    virtual std::optional<ripple::LedgerHeader>
+    syncFetchLedgerBySequence(std::uint32_t const sequence) const = 0;
 
     /**
      * @brief Fetches a specific ledger by hash.
@@ -204,7 +198,7 @@ public:
     updateRange(uint32_t newMax);
 
     /**
-     * @brief Fetch the fees from a specific ledger sequence.
+     * @brief Fetch the fees from a specific ledger sequence on a coroutine.
      *
      * @param seq The sequence to fetch for
      * @param yield The coroutine context
@@ -212,6 +206,15 @@ public:
      */
     std::optional<ripple::Fees>
     fetchFees(std::uint32_t const seq, boost::asio::yield_context yield) const;
+
+    /**
+     * @brief Synchronously fetch the fees from a specific ledger sequence.
+     *
+     * @param seq The sequence to fetch for
+     * @return ripple::Fees if fees are found; nullopt otherwise
+     */
+    std::optional<ripple::Fees>
+    syncFetchFees(std::uint32_t const seq) const;
 
     /**
      * @brief Fetches a specific transaction.
@@ -224,7 +227,7 @@ public:
     fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches multiple transactions.
+     * @brief Fetches multiple transactions on a coroutine.
      *
      * @param hashes A vector of hashes to fetch transactions for
      * @param yield The coroutine context
@@ -232,6 +235,15 @@ public:
      */
     virtual std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context yield) const = 0;
+
+    /**
+     * @brief Synchronously fetches multiple transactions.
+     *
+     * @param hashes A vector of hashes to fetch transactions for
+     * @return A vector of TransactionAndMetadata matching the given hashes
+     */
+    virtual std::vector<TransactionAndMetadata>
+    syncFetchTransactions(std::vector<ripple::uint256> const& hashes) const = 0;
 
     /**
      * @brief Fetches all transactions for a specific account.
@@ -252,7 +264,7 @@ public:
         boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches all transactions from a specific ledger.
+     * @brief Fetches all transactions from a specific ledger on a coroutine.
      *
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
@@ -262,7 +274,16 @@ public:
     fetchAllTransactionsInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches all transaction hashes from a specific ledger.
+     * @brief Synchronously fetches all transactions from a specific ledger.
+     *
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @return Results as a vector of TransactionAndMetadata
+     */
+    virtual std::vector<TransactionAndMetadata>
+    syncFetchAllTransactionsInLedger(std::uint32_t const ledgerSequence) const = 0;
+
+    /**
+     * @brief Fetches all transaction hashes from a specific ledger on a coroutine.
      *
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
@@ -270,6 +291,15 @@ public:
      */
     virtual std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const = 0;
+
+    /**
+     * @brief Synchronously fetches all transaction hashes from a specific ledger.
+     *
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @return Hashes as ripple::uint256 in a vector
+     */
+    virtual std::vector<ripple::uint256>
+    syncFetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence) const = 0;
 
     /**
      * @brief Fetches a specific NFT.
@@ -302,7 +332,7 @@ public:
         boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches a specific ledger object.
+     * @brief Fetches a specific ledger object on a coroutine.
      *
      * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
      * and only calls out to the real DB if a cache miss ocurred.
@@ -316,7 +346,20 @@ public:
     fetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield) const;
 
     /**
-     * @brief Fetches all ledger objects by their keys.
+     * @brief Synchronously fetches a specific ledger object.
+     *
+     * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
+     * and only calls out to the real DB if a cache miss ocurred.
+     *
+     * @param key The key of the object
+     * @param sequence The ledger sequence to fetch for
+     * @return The object as a Blob on success; nullopt otherwise
+     */
+    std::optional<Blob>
+    syncFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence) const;
+
+    /**
+     * @brief Fetches all ledger objects by their keys on a coroutine.
      *
      * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to fetch from Cache
      * first and only calls out to the real DB for each of the keys that was not found in the cache.
@@ -333,7 +376,20 @@ public:
         boost::asio::yield_context yield) const;
 
     /**
-     * @brief The database-specific implementation for fetching a ledger object.
+     * @brief Synchronously fetch all ledger objects by their keys.
+     *
+     * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to fetch from Cache
+     * first and only calls out to the real DB for each of the keys that was not found in the cache.
+     *
+     * @param keys A vector with the keys of the objects to fetch
+     * @param sequence The ledger sequence to fetch for
+     * @return A vector of ledger objects as Blobs
+     */
+    std::vector<Blob>
+    syncFetchLedgerObjects(std::vector<ripple::uint256> const& keys, std::uint32_t const sequence) const;
+
+    /**
+     * @brief The database-specific implementation for fetching a ledger object on a coroutine.
      *
      * @param key The key to fetch for
      * @param sequence The ledger sequence to fetch for
@@ -345,7 +401,17 @@ public:
         const = 0;
 
     /**
-     * @brief The database-specific implementation for fetching ledger objects.
+     * @brief The database-specific implementation for synchronously fetching a ledger object.
+     *
+     * @param key The key to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @return The object as a Blob on success; nullopt otherwise
+     */
+    virtual std::optional<Blob>
+    doSyncFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence) const = 0;
+
+    /**
+     * @brief The database-specific implementation for fetching ledger objects on a coroutine.
      *
      * @param keys The keys to fetch for
      * @param sequence The ledger sequence to fetch for
@@ -359,7 +425,17 @@ public:
         boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Returns the difference between ledgers.
+     * @brief The database-specific implementation for fetching ledger objects synchronously.
+     *
+     * @param keys The keys to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @return A vector of Blobs representing each fetched object
+     */
+    virtual std::vector<Blob>
+    doSyncFetchLedgerObjects(std::vector<ripple::uint256> const& keys, std::uint32_t const sequence) const = 0;
+
+    /**
+     * @brief Implementation must fetch the difference between ledgers on a coroutine.
      *
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
@@ -367,6 +443,15 @@ public:
      */
     virtual std::vector<LedgerObject>
     fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const = 0;
+
+    /**
+     * @brief Implementation must synchronously fetch the difference between ledgers.
+     *
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @return A vector of LedgerObject representing the diff
+     */
+    virtual std::vector<LedgerObject>
+    syncFetchLedgerDiff(std::uint32_t const ledgerSequence) const = 0;
 
     /**
      * @brief Fetches a page of ledger objects, ordered by key/index.

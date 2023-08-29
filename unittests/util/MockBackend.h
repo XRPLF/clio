@@ -36,6 +36,8 @@ struct MockBackend : public BackendInterface
         (std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
+    MOCK_METHOD(std::optional<ripple::LedgerInfo>, syncFetchLedgerBySequence, (std::uint32_t const), (const, override));
+
     MOCK_METHOD(
         std::optional<ripple::LedgerInfo>,
         fetchLedgerByHash,
@@ -61,6 +63,12 @@ struct MockBackend : public BackendInterface
         (const, override));
 
     MOCK_METHOD(
+        std::vector<TransactionAndMetadata>,
+        syncFetchTransactions,
+        (std::vector<ripple::uint256> const&),
+        (const, override));
+
+    MOCK_METHOD(
         TransactionsAndCursor,
         fetchAccountTransactions,
         (ripple::AccountID const&,
@@ -77,9 +85,21 @@ struct MockBackend : public BackendInterface
         (const, override));
 
     MOCK_METHOD(
+        std::vector<TransactionAndMetadata>,
+        syncFetchAllTransactionsInLedger,
+        (std::uint32_t const),
+        (const, override));
+
+    MOCK_METHOD(
         std::vector<ripple::uint256>,
         fetchAllTransactionHashesInLedger,
         (std::uint32_t const, boost::asio::yield_context),
+        (const, override));
+
+    MOCK_METHOD(
+        std::vector<ripple::uint256>,
+        syncFetchAllTransactionHashesInLedger,
+        (std::uint32_t const),
         (const, override));
 
     MOCK_METHOD(
@@ -105,9 +125,21 @@ struct MockBackend : public BackendInterface
         (const, override));
 
     MOCK_METHOD(
+        std::vector<Blob>,
+        doSyncFetchLedgerObjects,
+        (std::vector<ripple::uint256> const&, std::uint32_t const),
+        (const, override));
+
+    MOCK_METHOD(
         std::optional<Blob>,
         doFetchLedgerObject,
         (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
+        (const, override));
+
+    MOCK_METHOD(
+        std::optional<Blob>,
+        doSyncFetchLedgerObject,
+        (ripple::uint256 const&, std::uint32_t const),
         (const, override));
 
     MOCK_METHOD(
@@ -115,6 +147,8 @@ struct MockBackend : public BackendInterface
         fetchLedgerDiff,
         (std::uint32_t const, boost::asio::yield_context),
         (const, override));
+
+    MOCK_METHOD(std::vector<LedgerObject>, syncFetchLedgerDiff, (std::uint32_t const), (const, override));
 
     MOCK_METHOD(
         std::optional<ripple::uint256>,

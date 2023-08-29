@@ -261,6 +261,34 @@ public:
         return std::nullopt;
     }
 
+    // TODO: extract common logic
+    std::optional<ripple::LedgerHeader>
+    syncFetchLedgerBySequence(std::uint32_t const sequence) const override
+    {
+        auto const res = executor_.read(schema_->selectLedgerBySeq, sequence);
+        if (res)
+        {
+            if (auto const& result = res.value(); result)
+            {
+                if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue)
+                {
+                    return util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                }
+
+                LOG(log_.error()) << "Could not fetch ledger by sequence - no rows";
+                return std::nullopt;
+            }
+
+            LOG(log_.error()) << "Could not fetch ledger by sequence - no result";
+        }
+        else
+        {
+            LOG(log_.error()) << "Could not fetch ledger by sequence: " << res.error();
+        }
+
+        return std::nullopt;
+    }
+
     std::optional<ripple::LedgerHeader>
     fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {
@@ -288,7 +316,7 @@ public:
     std::optional<LedgerRange>
     hardFetchLedgerRange() const override
     {
-        return hardFetchLedgerRange(handle_.execute(schema_->selectLedgerRange));
+        return hardFetchLedgerRange(executor_.read(schema_->selectLedgerRange));
     }
 
     std::optional<LedgerRange>
@@ -304,12 +332,51 @@ public:
         return fetchTransactions(hashes, yield);
     }
 
+    std::vector<TransactionAndMetadata>
+    syncFetchAllTransactionsInLedger(std::uint32_t const ledgerSequence) const override
+    {
+        auto hashes = syncFetchAllTransactionHashesInLedger(ledgerSequence);
+        return syncFetchTransactions(hashes);
+    }
+
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
         const override
     {
         auto start = std::chrono::system_clock::now();
         auto const res = executor_.read(yield, schema_->selectAllTransactionHashesInLedger, ledgerSequence);
+
+        if (not res)
+        {
+            LOG(log_.error()) << "Could not fetch all transaction hashes: " << res.error();
+            return {};
+        }
+
+        auto const& result = res.value();
+        if (not result.hasRows())
+        {
+            LOG(log_.error()) << "Could not fetch all transaction hashes - no rows; ledger = "
+                              << std::to_string(ledgerSequence);
+            return {};
+        }
+
+        std::vector<ripple::uint256> hashes;
+        for (auto [hash] : extract<ripple::uint256>(result))
+            hashes.push_back(std::move(hash));
+
+        auto end = std::chrono::system_clock::now();
+        LOG(log_.debug()) << "Fetched " << hashes.size() << " transaction hashes from Cassandra in "
+                          << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                          << " milliseconds";
+
+        return hashes;
+    }
+
+    std::vector<ripple::uint256>
+    syncFetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence) const override
+    {
+        auto start = std::chrono::system_clock::now();
+        auto const res = executor_.read(schema_->selectAllTransactionHashesInLedger, ledgerSequence);
 
         if (not res)
         {
@@ -456,8 +523,34 @@ public:
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
     {
-        LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
+        LOG(log_.debug()) << "Fetching (async) ledger object for seq " << sequence
+                          << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res)
+        {
+            if (auto const result = res->template get<Blob>(); result)
+            {
+                if (result->size())
+                    return *result;
+            }
+            else
+            {
+                LOG(log_.debug()) << "Could not fetch ledger object - no rows";
+            }
+        }
+        else
+        {
+            LOG(log_.error()) << "Could not fetch ledger object: " << res.error();
+        }
+
+        return std::nullopt;
+    }
+
+    std::optional<Blob>
+    doSyncFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence) const override
+    {
+        LOG(log_.debug()) << "Fetching (sync) ledger object for seq " << sequence
+                          << ", key = " << ripple::to_string(key);
+        if (auto const res = executor_.read(schema_->selectObject, key, sequence); res)
         {
             if (auto const result = res->template get<Blob>(); result)
             {
@@ -564,6 +657,45 @@ public:
         return results;
     }
 
+    std::vector<TransactionAndMetadata>
+    syncFetchTransactions(std::vector<ripple::uint256> const& hashes) const override
+    {
+        if (hashes.size() == 0)
+            return {};
+
+        auto const numHashes = hashes.size();
+        std::vector<TransactionAndMetadata> results;
+        results.reserve(numHashes);
+
+        std::vector<Statement> statements;
+        statements.reserve(numHashes);
+
+        auto const timeDiff = util::timed([this, &results, &hashes, &statements]() {
+            // TODO: seems like a job for "hash IN (list of hashes)" instead?
+            std::transform(
+                std::cbegin(hashes), std::cend(hashes), std::back_inserter(statements), [this](auto const& hash) {
+                    return schema_->selectTransaction.bind(hash);
+                });
+
+            auto const entries = executor_.readEach(statements);
+            std::transform(
+                std::cbegin(entries),
+                std::cend(entries),
+                std::back_inserter(results),
+                [](auto const& res) -> TransactionAndMetadata {
+                    if (auto const maybeRow = res.template get<Blob, Blob, uint32_t, uint32_t>(); maybeRow)
+                        return *maybeRow;
+                    else
+                        return {};
+                });
+        });
+
+        assert(numHashes == results.size());
+        LOG(log_.debug()) << "Fetched " << numHashes << " transactions from Cassandra in " << timeDiff
+                          << " milliseconds";
+        return results;
+    }
+
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
@@ -589,6 +721,40 @@ public:
             });
 
         auto const entries = executor_.readEach(yield, statements);
+        std::transform(
+            std::cbegin(entries), std::cend(entries), std::back_inserter(results), [](auto const& res) -> Blob {
+                if (auto const maybeValue = res.template get<Blob>(); maybeValue)
+                    return *maybeValue;
+                else
+                    return {};
+            });
+
+        LOG(log_.trace()) << "Fetched " << numKeys << " objects";
+        return results;
+    }
+
+    std::vector<Blob>
+    doSyncFetchLedgerObjects(std::vector<ripple::uint256> const& keys, std::uint32_t const sequence) const override
+    {
+        if (keys.size() == 0)
+            return {};
+
+        auto const numKeys = keys.size();
+        LOG(log_.trace()) << "Fetching " << numKeys << " objects";
+
+        std::vector<Blob> results;
+        results.reserve(numKeys);
+
+        std::vector<Statement> statements;
+        statements.reserve(numKeys);
+
+        // TODO: seems like a job for "key IN (list of keys)" instead?
+        std::transform(
+            std::cbegin(keys), std::cend(keys), std::back_inserter(statements), [this, &sequence](auto const& key) {
+                return schema_->selectObject.bind(key, sequence);
+            });
+
+        auto const entries = executor_.readEach(statements);
         std::transform(
             std::cbegin(entries), std::cend(entries), std::back_inserter(results), [](auto const& res) -> Blob {
                 if (auto const maybeValue = res.template get<Blob>(); maybeValue)
@@ -634,6 +800,54 @@ public:
                           << " milliseconds";
 
         auto const objs = fetchLedgerObjects(keys, ledgerSequence, yield);
+        std::vector<LedgerObject> results;
+        results.reserve(keys.size());
+
+        std::transform(
+            std::cbegin(keys),
+            std::cend(keys),
+            std::cbegin(objs),
+            std::back_inserter(results),
+            [](auto const& key, auto const& obj) {
+                return LedgerObject{key, obj};
+            });
+
+        return results;
+    }
+
+    virtual std::vector<LedgerObject>
+    syncFetchLedgerDiff(std::uint32_t const ledgerSequence) const override
+    {
+        auto const [keys, timeDiff] = util::timed([this, &ledgerSequence]() -> std::vector<ripple::uint256> {
+            auto const res = executor_.read(schema_->selectDiff, ledgerSequence);
+            if (not res)
+            {
+                LOG(log_.error()) << "Could not fetch ledger diff: " << res.error() << "; ledger = " << ledgerSequence;
+                return {};
+            }
+
+            auto const& results = res.value();
+            if (not results)
+            {
+                LOG(log_.error()) << "Could not fetch ledger diff - no rows; ledger = " << ledgerSequence;
+                return {};
+            }
+
+            std::vector<ripple::uint256> keys;
+            for (auto [key] : extract<ripple::uint256>(results))
+                keys.push_back(key);
+
+            return keys;
+        });
+
+        // one of the above errors must have happened
+        if (keys.empty())
+            return {};
+
+        LOG(log_.debug()) << "Fetched " << keys.size() << " diff hashes from Cassandra in " << timeDiff
+                          << " milliseconds";
+
+        auto const objs = syncFetchLedgerObjects(keys, ledgerSequence);
         std::vector<LedgerObject> results;
         results.reserve(keys.size());
 

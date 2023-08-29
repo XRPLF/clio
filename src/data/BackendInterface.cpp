@@ -54,7 +54,6 @@ BackendInterface::hardFetchLedgerRangeNoThrow() const
     return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
 }
 
-// *** state data methods
 std::optional<Blob>
 BackendInterface::fetchLedgerObject(
     ripple::uint256 const& key,
@@ -71,6 +70,27 @@ BackendInterface::fetchLedgerObject(
     {
         LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
         auto dbObj = doFetchLedgerObject(key, sequence, yield);
+        if (!dbObj)
+            LOG(gLog.trace()) << "Missed cache and missed in db";
+        else
+            LOG(gLog.trace()) << "Missed cache but found in db";
+        return dbObj;
+    }
+}
+
+std::optional<Blob>
+BackendInterface::syncFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence) const
+{
+    auto obj = cache_.get(key, sequence);
+    if (obj)
+    {
+        LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
+        return *obj;
+    }
+    else
+    {
+        LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
+        auto dbObj = doSyncFetchLedgerObject(key, sequence);
         if (!dbObj)
             LOG(gLog.trace()) << "Missed cache and missed in db";
         else
@@ -113,6 +133,39 @@ BackendInterface::fetchLedgerObjects(
 
     return results;
 }
+
+std::vector<Blob>
+BackendInterface::syncFetchLedgerObjects(std::vector<ripple::uint256> const& keys, std::uint32_t const sequence) const
+{
+    std::vector<Blob> results;
+    results.resize(keys.size());
+    std::vector<ripple::uint256> misses;
+    for (size_t i = 0; i < keys.size(); ++i)
+    {
+        auto obj = cache_.get(keys[i], sequence);
+        if (obj)
+            results[i] = *obj;
+        else
+            misses.push_back(keys[i]);
+    }
+    LOG(gLog.trace()) << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
+
+    if (misses.size())
+    {
+        auto objs = doSyncFetchLedgerObjects(misses, sequence);
+        for (size_t i = 0, j = 0; i < results.size(); ++i)
+        {
+            if (results[i].size() == 0)
+            {
+                results[i] = objs[j];
+                ++j;
+            }
+        }
+    }
+
+    return results;
+}
+
 // Fetches the successor to key/index
 std::optional<ripple::uint256>
 BackendInterface::fetchSuccessorKey(
@@ -293,6 +346,35 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
 
     auto key = ripple::keylet::fees().key;
     auto bytes = fetchLedgerObject(key, seq, yield);
+
+    if (!bytes)
+    {
+        LOG(gLog.error()) << "Could not find fees";
+        return {};
+    }
+
+    ripple::SerialIter it(bytes->data(), bytes->size());
+    ripple::SLE sle{it, key};
+
+    if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
+        fees.base = sle.getFieldU64(ripple::sfBaseFee);
+
+    if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
+        fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
+
+    if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
+        fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
+
+    return fees;
+}
+
+std::optional<ripple::Fees>
+BackendInterface::syncFetchFees(std::uint32_t const seq) const
+{
+    ripple::Fees fees;
+
+    auto key = ripple::keylet::fees().key;
+    auto bytes = syncFetchLedgerObject(key, seq);
 
     if (!bytes)
     {

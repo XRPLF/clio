@@ -68,6 +68,7 @@ class CacheLoader
 
     std::vector<ClioPeer> clioPeers_;
 
+    std::thread thread_;
     std::atomic_bool stopping_ = false;
 
 public:
@@ -115,6 +116,8 @@ public:
     ~CacheLoader()
     {
         stop();
+        if (thread_.joinable())
+            thread_.join();
     }
 
     /**
@@ -342,9 +345,7 @@ private:
 
         for (size_t i = 0; i < numCacheDiffs_; ++i)
         {
-            append(diff, data::synchronousAndRetryOnTimeout([&](auto yield) {
-                       return backend_->fetchLedgerDiff(seq - i, yield);
-                   }));
+            append(diff, data::retryOnTimeout([this, seq, i] { return backend_->syncFetchLedgerDiff(seq - i); }));
         }
 
         std::sort(diff.begin(), diff.end(), [](auto a, auto b) {
@@ -367,7 +368,7 @@ private:
         LOG(log_.info()) << "Loading cache. num cursors = " << cursors.size() - 1;
         LOG(log_.trace()) << "cursors = " << cursorStr.str();
 
-        boost::asio::post(ioContext_.get(), [this, seq, cursors = std::move(cursors)]() {
+        thread_ = std::thread{[this, seq, cursors = std::move(cursors)]() {
             auto startTime = std::chrono::system_clock::now();
             auto markers = std::make_shared<std::atomic_int>(0);
             auto numRemaining = std::make_shared<std::atomic_int>(cursors.size() - 1);
@@ -425,7 +426,7 @@ private:
                         }
                     });
             }
-        });
+        }};
     }
 };
 

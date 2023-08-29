@@ -113,9 +113,7 @@ public:
             }
             else
             {
-                auto lgr = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
-
+                auto lgr = data::retryOnTimeout([&] { return backend_->syncFetchLedgerBySequence(ledgerSequence); });
                 assert(lgr);
                 publish(*lgr);
 
@@ -142,8 +140,8 @@ public:
             {
                 LOG(log_.info()) << "Updating cache";
 
-                std::vector<data::LedgerObject> diff = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
+                std::vector<data::LedgerObject> diff =
+                    data::retryOnTimeout([&] { return backend_->syncFetchLedgerDiff(lgrInfo.seq); });
 
                 backend_->cache().update(diff, lgrInfo.seq);  // todo: inject cache to update, don't use backend cache
                 backend_->updateRange(lgrInfo.seq);
@@ -156,11 +154,11 @@ public:
             // TODO: this probably should be a strategy
             if (age < 600)
             {
-                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
+                std::optional<ripple::Fees> fees =
+                    data::retryOnTimeout([this, &lgrInfo] { return backend_->syncFetchFees(lgrInfo.seq); });
 
-                std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
+                std::vector<data::TransactionAndMetadata> transactions = data::retryOnTimeout(
+                    [this, &lgrInfo] { return backend_->syncFetchAllTransactionsInLedger(lgrInfo.seq); });
 
                 auto ledgerRange = backend_->fetchLedgerRange();
                 assert(ledgerRange);

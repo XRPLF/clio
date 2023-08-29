@@ -92,8 +92,8 @@ TEST_F(CacheLoaderTest, FromCache)
     CacheLoader loader{cfg, ctx, mockBackendPtr, cache};
 
     auto const diffs = getLatestDiff();
-    ON_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(32);
+    ON_CALL(*rawBackendPtr, syncFetchLedgerDiff(_)).WillByDefault(Return(diffs));
+    EXPECT_CALL(*rawBackendPtr, syncFetchLedgerDiff(_)).Times(32);
 
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
