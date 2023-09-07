@@ -1,6 +1,7 @@
 *clio*.log
 build*/
 .build
+.cache
 .vscode
 .python-version
 CMakeUserPresets.json

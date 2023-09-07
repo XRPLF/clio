@@ -11,6 +11,7 @@ option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
 # ========================================================================== #
 set (san "" CACHE STRING "Add sanitizer instrumentation")
+set (CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # ========================================================================== #
 
