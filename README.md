@@ -80,7 +80,6 @@ Now you should be able to download prebuilt `xrpl` package on some platforms.
 2. Remove old packages you may have cached: 
 ```sh 
 conan remove -f xrpl
-conan remove -f cassandra-cpp-driver
 ```
 
 ## Building Clio
