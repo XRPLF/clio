@@ -654,8 +654,10 @@ traverseOwnedNodes(
     }
     auto end = std::chrono::system_clock::now();
 
-    LOG(gLog.debug()) << "Time loading owned directories: "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds";
+    LOG(gLog.debug()) << fmt::format(
+        "Time loading owned directories: {} milliseconds, entries size: {}",
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(),
+        keys.size());
 
     auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
