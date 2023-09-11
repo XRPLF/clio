@@ -1107,7 +1107,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "ledger_index": 30,
             "taker_gets": 
@@ -1140,7 +1140,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "ledger_index": "30",
             "taker_gets": 
@@ -1174,7 +1174,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "ledger_hash": "{}",
             "taker_gets": 
@@ -1248,7 +1248,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "taker_gets": 
             {{
@@ -1319,7 +1319,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "taker_gets": 
             {{

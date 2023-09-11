@@ -171,7 +171,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -198,7 +198,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":"{}"
@@ -225,7 +225,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":{}
@@ -254,7 +254,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -316,7 +316,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -351,7 +351,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1 + limit);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -387,7 +387,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{}"
@@ -450,7 +450,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -513,7 +513,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = boost::json::parse(fmt::format(
+    auto const static input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
