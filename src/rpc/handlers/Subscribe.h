@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
@@ -95,7 +96,11 @@ public:
                         return Error{Status{RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
 
                     if (book.as_object().contains("taker"))
-                        if (auto const err = validation::AccountValidator.verify(book.as_object(), "taker"); !err)
+                        if (auto const err = meta::WithCustomError(
+                                                 validation::AccountValidator,
+                                                 Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
+                                                 .verify(book.as_object(), "taker");
+                            !err)
                             return err;
 
                     auto const parsedBook = parseBook(book.as_object());
