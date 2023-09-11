@@ -69,7 +69,7 @@ LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
     if (!full_)
         return {};
-    std::shared_lock{mtx_};
+    std::shared_lock lck{mtx_};
     successorReqCounter_++;
     if (seq != latestSeq_)
         return {};
