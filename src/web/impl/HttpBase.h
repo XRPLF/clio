@@ -22,6 +22,7 @@
 #include <main/Build.h>
 #include <util/log/Logger.h>
 #include <web/DOSGuard.h>
+#include <web/impl/AdminVerificationStrategy.h>
 #include <web/interface/Concepts.h>
 #include <web/interface/ConnectionBase.h>
 
@@ -86,6 +87,7 @@ class HttpBase : public ConnectionBase
 
     std::shared_ptr<void> res_;
     SendLambda sender_;
+    std::unique_ptr<AdminVerificationStrategy> adminVerification_;
 
 protected:
     boost::beast::flat_buffer buffer_;
@@ -130,11 +132,13 @@ public:
     HttpBase(
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
+        std::optional<std::string> adminPassword,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer buffer)
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)
+        , adminVerification_(make_AdminVerificationStrategy(std::move(adminPassword)))
         , buffer_(std::move(buffer))
         , dosGuard_(dosGuard)
         , handler_(handler)
@@ -177,6 +181,9 @@ public:
 
         if (ec)
             return httpFail(ec, "read");
+
+        // Update isAdmin property of the connection
+        ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
 
         if (boost::beast::websocket::is_upgrade(req_))
         {

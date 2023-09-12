@@ -91,6 +91,7 @@ target_sources (clio PRIVATE
   ## Feed
   src/feed/SubscriptionManager.cpp
   ## Web
+  src/web/impl/AdminVerificationStrategy.cpp
   src/web/IntervalSweepHandler.cpp
   ## RPC
   src/rpc/Errors.cpp
@@ -168,7 +169,6 @@ if (tests)
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTests.cpp
     unittests/rpc/CountersTests.cpp
-    unittests/rpc/AdminVerificationTests.cpp
     unittests/rpc/APIVersionTests.cpp
     unittests/rpc/ForwardingProxyTests.cpp
     unittests/rpc/WorkQueueTests.cpp
@@ -214,6 +214,7 @@ if (tests)
     unittests/data/cassandra/ExecutionStrategyTests.cpp
     unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
+    unittests/web/AdminVerificationTests.cpp
     unittests/web/ServerTests.cpp
     unittests/web/RPCServerHandlerTests.cpp
     unittests/web/WhitelistHandlerTests.cpp

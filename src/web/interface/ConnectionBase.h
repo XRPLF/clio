@@ -40,12 +40,14 @@ protected:
 public:
     std::string const clientIp;
     bool upgraded = false;
+    bool isAdmin_ = false;
 
     /**
      * @brief Create a new connection base.
      *
      * @param tagFactory The factory that generates tags to track sessions and requests
      * @param ip The IP address of the connected peer
+     * @param adminPassword The optional password to verify admin role in requests
      */
     ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
     {
@@ -83,6 +85,17 @@ public:
     dead()
     {
         return ec_ != boost::system::error_code{};
+    }
+
+    /**
+     * @brief Indicates whether the connection has admin privileges
+     *
+     * @return true if the connection is from admin user
+     */
+    [[nodiscard]] bool
+    isAdmin() const
+    {
+        return isAdmin_;
     }
 };
 }  // namespace web

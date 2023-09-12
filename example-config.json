@@ -73,7 +73,8 @@
         "port": 51233,
         // Max number of requests to queue up before rejecting further requests.
         // Defaults to 0, which disables the limit.
-        "max_queue_size": 500
+        "max_queue_size": 500,
+        "admin_password": "xrp"
     },
     // Overrides log level on a per logging channel.
     // Defaults to global "log_level" for each unspecified channel.

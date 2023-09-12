@@ -26,7 +26,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
-#include <rpc/common/impl/AdminVerificationStrategy.h>
 #include <rpc/common/impl/ForwardingProxy.h>
 #include <util/Taggable.h>
 #include <util/config/Config.h>
@@ -60,8 +59,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
-template <typename AdminVerificationStrategyType>
-class RPCEngineBase
+class RPCEngine
 {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
@@ -76,10 +74,9 @@ class RPCEngineBase
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
     detail::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
-    AdminVerificationStrategyType adminVerifier_;
 
 public:
-    RPCEngineBase(
+    RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
@@ -99,7 +96,7 @@ public:
     {
     }
 
-    static std::shared_ptr<RPCEngineBase>
+    static std::shared_ptr<RPCEngine>
     make_RPCEngine(
         util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
@@ -111,7 +108,7 @@ public:
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider)
     {
-        return std::make_shared<RPCEngineBase>(
+        return std::make_shared<RPCEngine>(
             backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
     }
 
@@ -145,8 +142,7 @@ public:
         {
             LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-            auto const isAdmin = adminVerifier_.isAdmin(ctx.clientIp);
-            auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp, ctx.apiVersion};
+            auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
             auto const v = (*method).process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
@@ -285,7 +281,5 @@ private:
         return handlerProvider_->contains(method) || forwardingProxy_.isProxied(method);
     }
 };
-
-using RPCEngine = RPCEngineBase<detail::IPAdminVerificationStrategy>;
 
 }  // namespace rpc
