@@ -504,8 +504,8 @@ generateTestValuesForParametersTest()
                     }
                 ]
             })",
-            "invalidParams",
-            "takerNotString"},
+            "badIssuer",
+            "Issuer account malformed."},
         SubscribeParamTestCaseBundle{
             "BooksItemInvalidTaker",
             R"({
@@ -523,8 +523,8 @@ generateTestValuesForParametersTest()
                     }
                 ]
             })",
-            "actMalformed",
-            "takerMalformed"},
+            "badIssuer",
+            "Issuer account malformed."},
     };
 }
 
