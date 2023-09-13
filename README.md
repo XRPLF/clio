@@ -237,6 +237,19 @@ Clio will fallback to hardcoded defaults when not specified in the config file o
 of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVersion.h`.
 > **Note:** See `example-config.json` for more details. 
 
+## Admin rights for requests
+
+By default clio checks admin privileges by IP address from request (only `127.0.0.1` is considered to be an admin).
+It is not very secure because the IP could be spoofed.
+For a better security `admin_password` could be provided in the `server` section of clio's config:
+```json
+"server": {
+    "admin_password": "secret"
+}
+```
+If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
+Exactly equal password gains admin rights for the request or a websocket connection.
+
 ## Developing against `rippled` in standalone mode
 
 If you wish you develop against a `rippled` instance running in standalone

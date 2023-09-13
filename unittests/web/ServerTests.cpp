@@ -360,12 +360,12 @@ TEST_F(WebServerTest, WsPayloadOverload)
         R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
 }
 
-constexpr static auto JSONServerConfigWithAdminPassword = R"JSON(
+static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
     {
         "server":{
-            "ip":"0.0.0.0",
-            "port":8888,
-            "admin_password":"secret"
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "admin_password": "secret"
         }
     }
 )JSON";

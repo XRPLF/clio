@@ -69,7 +69,7 @@ public:
      * @brief Checks whether request is from a host that is considered authorized as admin using
      * the password (if any) from the request.
      *
-     * @param passwordFromRequest The password from request
+     * @param request The request from a host
      * @return true if the password from request matches admin password from config
      */
     bool
