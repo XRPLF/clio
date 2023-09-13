@@ -252,8 +252,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 
     while (limitLine--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -315,8 +314,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 
     while (limitLine--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -381,8 +379,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(ripple::uint256{INDEX2}, RANGEMAX, _))
         .WillByDefault(Return(std::nullopt));
 
-    auto const line =
-        CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
     bbs.push_back(line.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -430,8 +427,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
 
     while (limit--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -474,8 +470,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 
     while (limit--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
         los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
     }
@@ -521,8 +516,7 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
 
     while (limit--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -565,8 +559,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 
     while (limit--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -610,8 +603,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 
     while (limit--)
     {
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 

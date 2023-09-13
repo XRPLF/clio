@@ -82,7 +82,7 @@ public:
         };
 
         return rpcSpec;
-}
+    }
 
 protected:
     Result

@@ -465,10 +465,8 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 
     // return two trust lines
     std::vector<Blob> bbs;
-    auto const line1 =
-        CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
-    auto const line2 =
-        CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -545,8 +543,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     while (repetitions--)
     {
         indexes.push_back(ripple::uint256{INDEX1});
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
@@ -625,8 +622,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     while (repetitions--)
     {
         indexes.push_back(ripple::uint256{INDEX1});
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -635,8 +631,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     while (repetitions--)
     {
         indexes.push_back(ripple::uint256{INDEX1});
-        auto const line =
-            CreateRippleStateLedgerObject("USD", ACCOUNT3, 10, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT3, 10, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -878,8 +873,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    auto const line =
-        CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
+    auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
     int objectsCount = limit;
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
@@ -944,10 +938,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 
     // return two trust lines
     std::vector<Blob> bbs;
-    auto const line1 =
-        CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
-    auto const line2 =
-        CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1027,10 +1019,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
 
     // return two trust lines
     std::vector<Blob> bbs;
-    auto const line1 =
-        CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
-    auto const line2 =
-        CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));

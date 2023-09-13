@@ -400,8 +400,10 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
             auto txns = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
             ASSERT_EQ(txns.size(), 1);
-            EXPECT_STREQ(reinterpret_cast<const char*>(txns[0].transaction.data()), static_cast<const char*>(txnBlob.data()));
-            EXPECT_STREQ(reinterpret_cast<const char*>(txns[0].metadata.data()), static_cast<const char*>(metaBlob.data()));
+            EXPECT_STREQ(
+                reinterpret_cast<const char*>(txns[0].transaction.data()), static_cast<const char*>(txnBlob.data()));
+            EXPECT_STREQ(
+                reinterpret_cast<const char*>(txns[0].metadata.data()), static_cast<const char*>(metaBlob.data()));
             auto hashes = backend->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
@@ -641,8 +643,14 @@ TEST_F(BackendCassandraTest, Basic)
                 bool found = false;
                 for (auto [retTxn, retMeta, retSeq, retDate] : retTxns)
                 {
-                    if (std::strncmp(reinterpret_cast<const char*>(retTxn.data()), static_cast<const char*>(txn.data()), txn.size()) == 0 &&
-                        std::strncmp(reinterpret_cast<const char*>(retMeta.data()), static_cast<const char*>(meta.data()), meta.size()) == 0)
+                    if (std::strncmp(
+                            reinterpret_cast<const char*>(retTxn.data()),
+                            static_cast<const char*>(txn.data()),
+                            txn.size()) == 0 &&
+                        std::strncmp(
+                            reinterpret_cast<const char*>(retMeta.data()),
+                            static_cast<const char*>(meta.data()),
+                            meta.size()) == 0)
                         found = true;
                 }
                 ASSERT_TRUE(found);
@@ -696,7 +704,8 @@ TEST_F(BackendCassandraTest, Basic)
                     if (obj.size())
                     {
                         ASSERT_TRUE(retObj.size());
-                        EXPECT_STREQ(static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
+                        EXPECT_STREQ(
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
                     }
                     else
                     {
@@ -1173,7 +1182,8 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     if (obj.size())
                     {
                         ASSERT_TRUE(retObj.size());
-                        EXPECT_STREQ(static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
+                        EXPECT_STREQ(
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
                     }
                     else
                     {

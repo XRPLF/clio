@@ -1035,8 +1035,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
     // mock line
-    auto const line = CreateRippleStateLedgerObject(
-        CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
+    auto const line =
+        CreateRippleStateLedgerObject(CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
     auto lineKey = ripple::keylet::line(
                        GetAccountIDWithString(ACCOUNT),
                        GetAccountIDWithString(ACCOUNT2),
