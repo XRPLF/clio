@@ -79,11 +79,6 @@ public:
 struct ToLower final
 {
     /**
-     * @brief Construct the modifier.
-     */
-    explicit ToLower() = default;
-
-    /**
      * @brief Update the input string to lower case.
      *
      * @param value The JSON value representing the outer object
