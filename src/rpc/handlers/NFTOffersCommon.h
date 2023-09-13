@@ -38,6 +38,10 @@ public:
 
     struct Output
     {
+        Output(std::string nftID) : nftID(std::move(nftID))
+        {
+        }
+
         std::string nftID;
         std::vector<ripple::SLE> offers;
 
@@ -78,7 +82,7 @@ public:
         };
 
         return rpcSpec;
-    }
+}
 
 protected:
     Result

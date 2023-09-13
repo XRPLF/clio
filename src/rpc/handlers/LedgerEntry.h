@@ -81,7 +81,7 @@ public:
         // The accounts array must have two different elements
         // Each element must be a valid address
         static auto const rippleStateAccountsCheck =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
                 if (!value.is_array() || value.as_array().size() != 2 || !value.as_array()[0].is_string() ||
                     !value.as_array()[1].is_string() ||
                     value.as_array()[0].as_string() == value.as_array()[1].as_string())

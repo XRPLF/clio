@@ -309,10 +309,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -367,10 +367,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
     auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -428,10 +428,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -486,10 +486,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
     auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -536,10 +536,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
 
     auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -588,10 +588,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -690,10 +690,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -742,7 +742,7 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     for (auto i = 0; i < NoRippleCheckHandler::LIMIT_MAX + 1; i++)

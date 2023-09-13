@@ -45,7 +45,12 @@ struct Settings
      */
     struct ContactPoints
     {
-        std::string contactPoints = "127.0.0.1";  // defaults to localhost
+        ContactPoints(std::string contactPoints = "127.0.0.1", std::optional<uint16_t> port = {})
+            : contactPoints(std::move(contactPoints)), port(port)
+        {
+        }
+
+        std::string contactPoints;  // defaults to localhost
         std::optional<uint16_t> port;
     };
 
@@ -128,7 +133,7 @@ struct Settings
     withContactPoints(std::string_view contactPoints)
     {
         auto tmp = *this;
-        tmp.connectionInfo = ContactPoints{std::string{contactPoints}};
+        tmp.connectionInfo = ContactPoints{std::string{contactPoints}, std::nullopt};
         return tmp;
     }
 

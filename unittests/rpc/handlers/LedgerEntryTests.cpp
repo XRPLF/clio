@@ -861,7 +861,7 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT,
                 ACCOUNT2),
             ripple::keylet::line(account1, account2, currency).key,
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)},
+            CreateRippleStateLedgerObject("USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)},
         NormalPathTestBundle{
             "Ticket",
             fmt::format(

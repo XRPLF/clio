@@ -116,7 +116,7 @@ struct FakeRetryPolicy
     FakeRetryPolicy(boost::asio::io_context&){};  // required by concept
 
     std::chrono::milliseconds
-    calculateDelay(uint32_t attempt)
+    calculateDelay(uint32_t /* attempt */)
     {
         return std::chrono::milliseconds{1};
     }

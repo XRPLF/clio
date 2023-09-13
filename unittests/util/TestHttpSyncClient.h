@@ -107,7 +107,7 @@ public:
 struct HttpsSyncClient
 {
     static bool
-    verify_certificate(bool preverified, boost::asio::ssl::verify_context& ctx)
+    verify_certificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
     {
         return true;
     }

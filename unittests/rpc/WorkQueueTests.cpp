@@ -55,7 +55,7 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
     for (auto i = 0u; i < TOTAL; ++i)
     {
         queue.postCoro(
-            [&executeCount, &sem, &mtx](auto yield) {
+            [&executeCount, &sem, &mtx](auto /* yield */) {
                 std::lock_guard lk(mtx);
                 if (++executeCount; executeCount == TOTAL)
                     sem.release();  // 1) note we are still in user function
@@ -91,7 +91,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     for (auto i = 0u; i < TOTAL; ++i)
     {
         auto res = queue.postCoro(
-            [&](auto yield) {
+            [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
                 cv.wait(lk, [&] { return unblocked == true; });
 

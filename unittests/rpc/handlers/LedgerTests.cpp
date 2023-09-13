@@ -1036,7 +1036,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 
     // mock line
     auto const line = CreateRippleStateLedgerObject(
-        ACCOUNT, CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
+        CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
     auto lineKey = ripple::keylet::line(
                        GetAccountIDWithString(ACCOUNT),
                        GetAccountIDWithString(ACCOUNT2),
@@ -1090,7 +1090,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 
     // mock line freeze
     auto const line = CreateRippleStateLedgerObject(
-        ACCOUNT,
         CURRENCY,
         ACCOUNT2,
         50 /*balance*/,

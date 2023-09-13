@@ -118,6 +118,8 @@ struct TransactionsCursor
     {
     }
 
+    TransactionsCursor(TransactionsCursor const&) = default;
+
     TransactionsCursor&
     operator=(TransactionsCursor const&) = default;
 

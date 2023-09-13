@@ -328,7 +328,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     std::vector<Blob> bbs;
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -379,7 +379,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     while (count-- != 0)
     {
         auto const line1 =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+            CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -428,7 +428,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     while (count-- != 0)
     {
         auto const line1 =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+            CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -490,7 +490,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     while (cc-- != 0)
     {
         auto const line1 =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+            CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -539,7 +539,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     std::vector<Blob> bbs;
     // put 1 state and 1 offer
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const offer = CreateOfferLedgerObject(
         ACCOUNT,
         10,
@@ -595,7 +595,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
     std::vector<Blob> bbs;
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const offer = CreateOfferLedgerObject(
         ACCOUNT,
         10,
@@ -654,7 +654,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const line =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     auto const offer = CreateOfferLedgerObject(
         ACCOUNT,
@@ -715,7 +715,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
 
     auto const line =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
 
     std::vector<Blob> bbs;
@@ -972,7 +972,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
     std::vector<Blob> bbs;
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1135,7 +1135,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     auto const line =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     auto const offer = CreateOfferLedgerObject(
         ACCOUNT,
@@ -1196,7 +1196,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     auto const line =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     auto const offer = CreateOfferLedgerObject(
         ACCOUNT,
@@ -1345,7 +1345,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     auto const line =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     auto const offer = CreateOfferLedgerObject(
         ACCOUNT,
@@ -1463,7 +1463,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
     std::vector<Blob> bbs;
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1511,7 +1511,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     while (count-- != 0)
     {
         auto const line1 =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+            CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1596,7 +1596,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     std::vector<Blob> bbs;
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1677,7 +1677,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     std::vector<Blob> bbs;
     auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+        CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));

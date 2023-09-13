@@ -83,7 +83,6 @@ public:
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        std::shared_ptr<etl::ETLService> const& etl,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
@@ -101,18 +100,16 @@ public:
 
     static std::shared_ptr<RPCEngineBase>
     make_RPCEngine(
-        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        std::shared_ptr<etl::ETLService> const& etl,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider)
     {
         return std::make_shared<RPCEngineBase>(
-            backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
+            backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider);
     }
 
     /**

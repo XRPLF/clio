@@ -349,14 +349,13 @@ TEST_F(BackendCassandraTest, Basic)
             ripple::uint256 hash256;
             EXPECT_TRUE(hash256.parseHex(hashHex));
             ripple::TxMeta txMeta{hash256, lgrInfoNext.seq, metaBlob};
-            auto journal = ripple::debugLog();
             auto accountsSet = txMeta.getAffectedAccounts();
             for (auto& a : accountsSet)
             {
                 affectedAccounts.push_back(a);
             }
             std::vector<AccountTransactionsData> accountTxData;
-            accountTxData.emplace_back(txMeta, hash256, journal);
+            accountTxData.emplace_back(txMeta, hash256);
 
             ripple::uint256 nftHash256;
             EXPECT_TRUE(nftHash256.parseHex(nftTxnHashHex));

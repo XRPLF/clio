@@ -160,7 +160,7 @@ ProbingSource::make_SSLHooks() noexcept
                 return SourceHooks::Action::PROCEED;
             },
             // onDisconnected
-            [this](auto ec) {
+            [this](auto /* ec */) {
                 std::lock_guard lck(mtx_);
                 if (currentSrc_)
                 {
@@ -189,7 +189,7 @@ ProbingSource::make_PlainHooks() noexcept
                 return SourceHooks::Action::PROCEED;
             },
             // onDisconnected
-            [this](auto ec) {
+            [this](auto /* ec */) {
                 std::lock_guard lck(mtx_);
                 if (currentSrc_)
                 {

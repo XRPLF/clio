@@ -38,7 +38,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineSuccessful)
     auto strat = DefaultExecutionStrategy{Settings{}, handle};
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const& statement, auto&& cb) {
+        .WillByDefault([](auto const& /* statement */, auto&& cb) {
             cb({});  // pretend we got data
             return FakeFutureWithCallback{};
         });

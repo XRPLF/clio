@@ -150,7 +150,7 @@ public:
      * If the DOSGuard is triggered, the message will be modified to include a warning
      */
     void
-    send(std::string&& msg, http::status _ = http::status::ok) override
+    send(std::string&& msg, http::status = http::status::ok) override
     {
         if (!dosGuard_.get().add(clientIp, msg.size()))
         {
