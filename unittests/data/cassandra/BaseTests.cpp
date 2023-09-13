@@ -30,8 +30,6 @@ using namespace std;
 
 using namespace data::cassandra;
 
-namespace json = boost::json;
-
 class BackendCassandraBaseTest : public NoLoggerFixture
 {
 protected:
