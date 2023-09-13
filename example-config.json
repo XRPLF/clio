@@ -19,7 +19,7 @@
             "core_connections_per_host": 1 // Defaults to 1
             //
             // Below options will use defaults from cassandra driver if left unspecified.
-            // See https://docs.datastax.com/en/developer/cpp-driver/2.0/api/struct.CassCluster/ for details.
+            // See https://docs.datastax.com/en/developer/cpp-driver/2.17/api/struct.CassCluster/ for details.
             // 
             // "queue_size_io": 2
             //
