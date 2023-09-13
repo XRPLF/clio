@@ -18,41 +18,42 @@
 //==============================================================================
 
 #include <rpc/handlers/AccountTx.h>
+#include <util/JsonUtils.h>
 #include <util/Profiler.h>
 
 namespace rpc {
 
 // found here : https://xrpl.org/transaction-types.html
-std::unordered_map<std::string_view, ripple::TxType> const AccountTxHandler::TYPESMAP{
-    {JS(AccountSet), ripple::ttACCOUNT_SET},
-    {JS(AccountDelete), ripple::ttACCOUNT_DELETE},
-    {JS(CheckCancel), ripple::ttCHECK_CANCEL},
-    {JS(CheckCash), ripple::ttCHECK_CASH},
-    {JS(CheckCreate), ripple::ttCHECK_CREATE},
-    {JS(DepositPreauth), ripple::ttDEPOSIT_PREAUTH},
-    {JS(EscrowCancel), ripple::ttESCROW_CANCEL},
-    {JS(EscrowCreate), ripple::ttESCROW_CREATE},
-    {JS(EscrowFinish), ripple::ttESCROW_FINISH},
-    {JS(NFTokenAcceptOffer), ripple::ttNFTOKEN_ACCEPT_OFFER},
-    {JS(NFTokenBurn), ripple::ttNFTOKEN_BURN},
-    {JS(NFTokenCancelOffer), ripple::ttNFTOKEN_CANCEL_OFFER},
-    {JS(NFTokenCreateOffer), ripple::ttNFTOKEN_CREATE_OFFER},
-    {JS(NFTokenMint), ripple::ttNFTOKEN_MINT},
-    {JS(OfferCancel), ripple::ttOFFER_CANCEL},
-    {JS(OfferCreate), ripple::ttOFFER_CREATE},
-    {JS(Payment), ripple::ttPAYMENT},
-    {JS(PaymentChannelClaim), ripple::ttPAYCHAN_CLAIM},
-    {JS(PaymentChannelCreate), ripple::ttCHECK_CREATE},
-    {JS(PaymentChannelFund), ripple::ttPAYCHAN_FUND},
-    {JS(SetRegularKey), ripple::ttREGULAR_KEY_SET},
-    {JS(SignerListSet), ripple::ttSIGNER_LIST_SET},
-    {JS(TicketCreate), ripple::ttTICKET_CREATE},
-    {JS(TrustSet), ripple::ttTRUST_SET},
+std::unordered_map<std::string, ripple::TxType> const AccountTxHandler::TYPESMAP{
+    {JSL(AccountSet), ripple::ttACCOUNT_SET},
+    {JSL(AccountDelete), ripple::ttACCOUNT_DELETE},
+    {JSL(CheckCancel), ripple::ttCHECK_CANCEL},
+    {JSL(CheckCash), ripple::ttCHECK_CASH},
+    {JSL(CheckCreate), ripple::ttCHECK_CREATE},
+    {JSL(DepositPreauth), ripple::ttDEPOSIT_PREAUTH},
+    {JSL(EscrowCancel), ripple::ttESCROW_CANCEL},
+    {JSL(EscrowCreate), ripple::ttESCROW_CREATE},
+    {JSL(EscrowFinish), ripple::ttESCROW_FINISH},
+    {JSL(NFTokenAcceptOffer), ripple::ttNFTOKEN_ACCEPT_OFFER},
+    {JSL(NFTokenBurn), ripple::ttNFTOKEN_BURN},
+    {JSL(NFTokenCancelOffer), ripple::ttNFTOKEN_CANCEL_OFFER},
+    {JSL(NFTokenCreateOffer), ripple::ttNFTOKEN_CREATE_OFFER},
+    {JSL(NFTokenMint), ripple::ttNFTOKEN_MINT},
+    {JSL(OfferCancel), ripple::ttOFFER_CANCEL},
+    {JSL(OfferCreate), ripple::ttOFFER_CREATE},
+    {JSL(Payment), ripple::ttPAYMENT},
+    {JSL(PaymentChannelClaim), ripple::ttPAYCHAN_CLAIM},
+    {JSL(PaymentChannelCreate), ripple::ttCHECK_CREATE},
+    {JSL(PaymentChannelFund), ripple::ttPAYCHAN_FUND},
+    {JSL(SetRegularKey), ripple::ttREGULAR_KEY_SET},
+    {JSL(SignerListSet), ripple::ttSIGNER_LIST_SET},
+    {JSL(TicketCreate), ripple::ttTICKET_CREATE},
+    {JSL(TrustSet), ripple::ttTRUST_SET},
 };
 
 // TODO: should be std::views::keys when clang supports it
-std::unordered_set<std::string_view> const AccountTxHandler::TYPES_KEYS = [] {
-    std::unordered_set<std::string_view> keys;
+std::unordered_set<std::string> const AccountTxHandler::TYPES_KEYS = [] {
+    std::unordered_set<std::string> keys;
     std::transform(TYPESMAP.begin(), TYPESMAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
         return pair.first;
     });
@@ -154,13 +155,16 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
 
-            const auto objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
+            if (obj[JS(tx)].as_object().contains(JS(TransactionType)))
+            {
+                auto const objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
+                auto const strType = util::toLower(objTransactionType.as_string().c_str());
 
-            // if transactionType does not match
-            if (input.transactionType.has_value() &&
-                AccountTxHandler::TYPESMAP.contains(objTransactionType.as_string()) &&
-                AccountTxHandler::TYPESMAP.at(objTransactionType.as_string()) != input.transactionType.value())
-                continue;
+                // if transactionType does not match
+                if (input.transactionType.has_value() && AccountTxHandler::TYPESMAP.contains(strType) &&
+                    AccountTxHandler::TYPESMAP.at(strType) != input.transactionType.value())
+                    continue;
+            }
 
             obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
@@ -254,10 +258,10 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
 
-    if (jsonObject.contains(JS(TransactionType)))
+    if (jsonObject.contains("tx_type"))
     {
-        auto objTransactionType = jsonObject.at(JS(TransactionType));
-        input.transactionType = AccountTxHandler::TYPESMAP.at(objTransactionType.as_string());
+        auto objTransactionType = jsonObject.at("tx_type");
+        input.transactionType = AccountTxHandler::TYPESMAP.at(objTransactionType.as_string().c_str());
     }
 
     return input;

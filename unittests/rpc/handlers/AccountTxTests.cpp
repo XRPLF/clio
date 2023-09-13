@@ -324,7 +324,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -365,7 +365,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -406,7 +406,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -447,7 +447,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -488,7 +488,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
             output->at("transactions").as_array()[0].as_object().at("meta").as_string(),
@@ -540,7 +540,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
         EXPECT_EQ(output->at("limit").as_uint64(), 2);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
     });
 }
@@ -803,7 +803,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 2);
         EXPECT_EQ(output->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
     });
 }
 
@@ -909,8 +909,8 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
                                         "date": 2
                                     },
                                     "validated": true
-                                    },
-                                    {
+                                },
+                                {
                                     "meta": 
                                     {
                                         "AffectedNodes": 
@@ -1064,7 +1064,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "AccountSet"
+                "tx_type": "AccountSet"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1072,7 +1072,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "AccountDelete"
+                "tx_type": "AccountDelete"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1080,7 +1080,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "CheckCancel"
+                "tx_type": "CheckCancel"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1088,7 +1088,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "CheckCash"
+                "tx_type": "CheckCash"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1096,7 +1096,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "CheckCreate"
+                "tx_type": "CheckCreate"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1104,7 +1104,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "DepositPreauth"
+                "tx_type": "DepositPreauth"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1112,7 +1112,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "EscrowCancel"
+                "tx_type": "EscrowCancel"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1120,7 +1120,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "EscrowCreate"
+                "tx_type": "EscrowCreate"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1128,7 +1128,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "EscrowFinish"
+                "tx_type": "EscrowFinish"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1136,7 +1136,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "NFTokenAcceptOffer"
+                "tx_type": "NFTokenAcceptOffer"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1144,7 +1144,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "NFTokenBurn"
+                "tx_type": "NFTokenBurn"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1152,7 +1152,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "NFTokenCancelOffer"
+                "tx_type": "NFTokenCancelOffer"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1160,7 +1160,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "NFTokenCreateOffer"
+                "tx_type": "NFTokenCreateOffer"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1168,7 +1168,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "NFTokenMint"
+                "tx_type": "NFTokenMint"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1176,7 +1176,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "OfferCancel"
+                "tx_type": "OfferCancel"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1184,7 +1184,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "OfferCreate"
+                "tx_type": "OfferCreate"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1192,7 +1192,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "Payment"
+                "tx_type": "Payment"
             })",
             R"([
                 {
@@ -1240,7 +1240,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "PaymentChannelClaim"
+                "tx_type": "PaymentChannelClaim"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1248,7 +1248,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "PaymentChannelCreate"
+                "tx_type": "PaymentChannelCreate"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1256,7 +1256,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "PaymentChannelFund"
+                "tx_type": "PaymentChannelFund"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1264,7 +1264,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "SetRegularKey"
+                "tx_type": "SetRegularKey"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1272,7 +1272,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "SignerListSet"
+                "tx_type": "SignerListSet"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1280,7 +1280,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "TicketCreate"
+                "tx_type": "TicketCreate"
             })",
             "[]"},
         AccountTxTransactionBundle{
@@ -1288,7 +1288,7 @@ generateTransactionTypeTestValues()
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
-                "TransactionType": "TrustSet"
+                "tx_type": "TrustSet"
             })",
             "[]"},
     };

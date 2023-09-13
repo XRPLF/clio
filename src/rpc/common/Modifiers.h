@@ -22,6 +22,9 @@
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Types.h>
+#include <util/JsonUtils.h>
+
+#include <string_view>
 
 namespace rpc::modifiers {
 
@@ -64,6 +67,39 @@ public:
         auto const oldValue = value_to<Type>(value.as_object().at(key.data()));
         value.as_object()[key.data()] = std::clamp<Type>(oldValue, min_, max_);
 
+        return {};
+    }
+};
+
+/**
+ * @brief Convert input string to lower case.
+ *
+ * Note: the conversion is only performed if the input value is a string.
+ */
+struct ToLower final
+{
+    /**
+     * @brief Construct the modifier.
+     */
+    explicit ToLower() = default;
+
+    /**
+     * @brief Update the input string to lower case.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the modified value from the outer object
+     * @return Possibly an error
+     */
+    [[nodiscard]] MaybeError
+    modify(boost::json::value& value, std::string_view key) const
+    {
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        if (not value.as_object().at(key.data()).is_string())
+            return {};  // ignore for non-string types
+
+        value.as_object()[key.data()] = util::toLower(value.as_object().at(key.data()).as_string().c_str());
         return {};
     }
 };
