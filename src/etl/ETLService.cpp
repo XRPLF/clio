@@ -47,7 +47,8 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
         extractors.push_back(std::make_unique<ExtractorType>(
             pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_));
 
-    auto transformer = TransformerType{pipe, backend_, ledgerLoader_, ledgerPublisher_, startSequence, state_};
+    auto transformer =
+        TransformerType{pipe, backend_, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, startSequence, state_};
     transformer.waitTillFinished();  // suspend current thread until exit condition is met
     pipe.cleanup();                  // TODO: this should probably happen automatically using destructor
 
@@ -110,12 +111,8 @@ ETLService::monitor()
         }
         catch (std::runtime_error const& e)
         {
-            setAmendmentBlocked();
-
-            log_.fatal()
-                << "Failed to load initial ledger, Exiting monitor loop: " << e.what()
-                << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
-            return;
+            LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
+            return amendmentBlockHandler_.onAmendmentBlock();
         }
 
         if (ledger)
@@ -259,6 +256,7 @@ ETLService::ETLService(
     , ledgerFetcher_(backend, balancer)
     , ledgerLoader_(backend, balancer, ledgerFetcher_, state_)
     , ledgerPublisher_(ioc, backend, subscriptions, state_)
+    , amendmentBlockHandler_(ioc, state_)
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");

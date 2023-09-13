@@ -160,10 +160,6 @@ private:
  */
 struct SyncAsioContextTest : virtual public NoLoggerFixture
 {
-    SyncAsioContextTest()
-    {
-    }
-
     template <typename F>
     void
     runSpawn(F&& f)
