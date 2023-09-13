@@ -243,8 +243,9 @@ public:
                     statements,
                     [sself = std::make_shared<Self>(std::move(self)),
                      _ = boost::asio::make_work_guard(executor)](auto&& res) mutable {
+                        auto executor = boost::asio::system_executor{};  // TODO: remove tmp workaround
+
                         // Note: explicit work below needed on linux/gcc11
-                        auto executor = boost::asio::get_associated_executor(*sself);
                         boost::asio::post(
                             executor,
                             [sself = std::move(sself),
@@ -298,9 +299,9 @@ public:
                     statement,
                     [sself = std::make_shared<Self>(std::move(self)),
                      _ = boost::asio::make_work_guard(executor)](auto&& res) mutable {
-                        // Note: explicit work below needed on linux/gcc11
-                        auto executor = boost::asio::get_associated_executor(*sself);
+                        auto executor = boost::asio::system_executor{};  // TODO: remove tmp workaround
 
+                        // Note: explicit work below needed on linux/gcc11
                         boost::asio::post(
                             executor,
                             [sself = std::move(sself),
@@ -359,8 +360,9 @@ public:
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
                 {
+                    auto executor = boost::asio::system_executor{};  // TODO: remove tmp workaround
+
                     // Note: explicit work below needed on linux/gcc11
-                    auto executor = boost::asio::get_associated_executor(*sself);
                     boost::asio::post(
                         executor, [sself, _ = boost::asio::make_work_guard(executor)]() mutable { sself->complete(); });
                 }
