@@ -23,7 +23,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND COMPILER_FLAGS
     -Wduplicated-branches
     -Wduplicated-cond
-    -Wlifetime
     -Wlogical-op
     -Wuseless-cast
   )
