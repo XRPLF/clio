@@ -146,7 +146,7 @@ LedgerCache::getObjectHitRate() const
 {
     if (!objectReqCounter_)
         return 1;
-    return ((float)objectHitCounter_) / objectReqCounter_;
+    return static_cast<float>(objectHitCounter_) / objectReqCounter_;
 }
 
 float
@@ -154,7 +154,7 @@ LedgerCache::getSuccessorHitRate() const
 {
     if (!successorReqCounter_)
         return 1;
-    return ((float)successorHitCounter_) / successorReqCounter_;
+    return static_cast<float>(successorHitCounter_) / successorReqCounter_;
 }
 
 }  // namespace data

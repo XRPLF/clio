@@ -147,7 +147,7 @@ LoadBalancer::forwardToRippled(
     std::string const& clientIp,
     boost::asio::yield_context yield) const
 {
-    srand((unsigned)time(0));
+    srand(static_cast<unsigned>(time(0)));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0u;
 
@@ -193,7 +193,7 @@ template <class Func>
 bool
 LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 {
-    srand((unsigned)time(0));
+    srand(static_cast<unsigned>(time(0)));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0;
 

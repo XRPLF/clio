@@ -108,7 +108,7 @@ public:
                 result.nfTokensData.push_back(*maybeNFT);
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
-            std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
+            std::string keyStr{reinterpret_cast<const char*>(sttx.getTransactionID().data()), 32};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,

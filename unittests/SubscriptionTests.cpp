@@ -25,7 +25,6 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
-namespace json = boost::json;
 using namespace feed;
 
 // io_context
@@ -83,9 +82,9 @@ TEST_F(SubscriptionTest, SubscriptionPublish)
     sub.publish(std::make_shared<std::string>("message"));
     ctx.restart();
     ctx.run();
-    MockSession* p1 = (MockSession*)(session1.get());
+    MockSession* p1 = static_cast<MockSession*>(session1.get());
     EXPECT_EQ(p1->message, "message");
-    MockSession* p2 = (MockSession*)(session2.get());
+    MockSession* p2 = static_cast<MockSession*>(session2.get());
     EXPECT_EQ(p2->message, "message");
     sub.unsubscribe(session1);
     ctx.restart();
@@ -166,9 +165,9 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
     subMap.publish(std::make_shared<std::string>(topic2Message.data()), topic2);  // rvalue
     ctx.restart();
     ctx.run();
-    MockSession* p1 = (MockSession*)(session1.get());
+    MockSession* p1 = static_cast<MockSession*>(session1.get());
     EXPECT_EQ(p1->message, topic1Message);
-    MockSession* p2 = (MockSession*)(session2.get());
+    MockSession* p2 = static_cast<MockSession*>(session2.get());
     EXPECT_EQ(p2->message, topic2Message);
 }
 
@@ -190,9 +189,9 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
     subMap.publish(std::make_shared<std::string>(topic2Message), topic2);  // rvalue
     ctx.restart();
     ctx.run();
-    MockDeadSession* p1 = (MockDeadSession*)(session1.get());
+    MockDeadSession* p1 = static_cast<MockDeadSession*>(session1.get());
     EXPECT_EQ(p1->dead(), true);
-    MockSession* p2 = (MockSession*)(session2.get());
+    MockSession* p2 = static_cast<MockSession*>(session2.get());
     EXPECT_EQ(p2->message, topic2Message);
     subMap.publish(message1, topic1);
     ctx.restart();
