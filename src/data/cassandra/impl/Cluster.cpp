@@ -64,19 +64,6 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     cass_cluster_set_connect_timeout(*this, settings.connectionTimeout.count());
     cass_cluster_set_request_timeout(*this, settings.requestTimeout.count());
 
-    if (auto const rc =
-            cass_cluster_set_max_concurrent_requests_threshold(*this, settings.maxConcurrentRequestsThreshold);
-        rc != CASS_OK)
-    {
-        throw std::runtime_error(
-            fmt::format("Could not set max concurrent requests per host threshold: {}", cass_error_desc(rc)));
-    }
-
-    if (auto const rc = cass_cluster_set_max_connections_per_host(*this, settings.maxConnectionsPerHost); rc != CASS_OK)
-    {
-        throw std::runtime_error(fmt::format("Could not set max connections per host: {}", cass_error_desc(rc)));
-    }
-
     if (auto const rc = cass_cluster_set_core_connections_per_host(*this, settings.coreConnectionsPerHost);
         rc != CASS_OK)
     {
@@ -90,71 +77,13 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
         throw std::runtime_error(fmt::format("Could not set queue size for IO per host: {}", cass_error_desc(rc)));
     }
 
-    auto apply = []<typename ValueType, typename Fn>(
-        std::optional<ValueType> const& maybeValue, Fn&& fn) requires std::is_object_v<Fn>
-    {
-        if (maybeValue)
-            std::invoke(fn, maybeValue.value());
-    };
-
-    apply(settings.queueSizeEvent, [this](auto value) {
-        if (auto const rc = cass_cluster_set_queue_size_event(*this, value); rc != CASS_OK)
-            throw std::runtime_error(
-                fmt::format("Could not set queue size for events per host: {}", cass_error_desc(rc)));
-    });
-
-    apply(settings.writeBytesHighWatermark, [this](auto value) {
-        if (auto const rc = cass_cluster_set_write_bytes_high_water_mark(*this, value); rc != CASS_OK)
-            throw std::runtime_error(fmt::format("Could not set write bytes high water_mark: {}", cass_error_desc(rc)));
-    });
-
-    apply(settings.writeBytesLowWatermark, [this](auto value) {
-        if (auto const rc = cass_cluster_set_write_bytes_low_water_mark(*this, value); rc != CASS_OK)
-            throw std::runtime_error(fmt::format("Could not set write bytes low water mark: {}", cass_error_desc(rc)));
-    });
-
-    apply(settings.pendingRequestsHighWatermark, [this](auto value) {
-        if (auto const rc = cass_cluster_set_pending_requests_high_water_mark(*this, value); rc != CASS_OK)
-            throw std::runtime_error(
-                fmt::format("Could not set pending requests high water mark: {}", cass_error_desc(rc)));
-    });
-
-    apply(settings.pendingRequestsLowWatermark, [this](auto value) {
-        if (auto const rc = cass_cluster_set_pending_requests_low_water_mark(*this, value); rc != CASS_OK)
-            throw std::runtime_error(
-                fmt::format("Could not set pending requests low water mark: {}", cass_error_desc(rc)));
-    });
-
-    apply(settings.maxRequestsPerFlush, [this](auto value) {
-        if (auto const rc = cass_cluster_set_max_requests_per_flush(*this, value); rc != CASS_OK)
-            throw std::runtime_error(fmt::format("Could not set max requests per flush: {}", cass_error_desc(rc)));
-    });
-
-    apply(settings.maxConcurrentCreation, [this](auto value) {
-        if (auto const rc = cass_cluster_set_max_concurrent_creation(*this, value); rc != CASS_OK)
-            throw std::runtime_error(fmt::format("Could not set max concurrent creation: {}", cass_error_desc(rc)));
-    });
-
     setupConnection(settings);
     setupCertificate(settings);
     setupCredentials(settings);
 
-    auto valueOrDefault = []<typename T>(std::optional<T> const& maybeValue) -> std::string {
-        return maybeValue ? to_string(*maybeValue) : "default";
-    };
-
     LOG(log_.info()) << "Threads: " << settings.threads;
-    LOG(log_.info()) << "Max concurrent requests per host: " << settings.maxConcurrentRequestsThreshold;
-    LOG(log_.info()) << "Max connections per host: " << settings.maxConnectionsPerHost;
     LOG(log_.info()) << "Core connections per host: " << settings.coreConnectionsPerHost;
     LOG(log_.info()) << "IO queue size: " << queueSize;
-    LOG(log_.info()) << "Event queue size: " << valueOrDefault(settings.queueSizeEvent);
-    LOG(log_.info()) << "Write bytes high watermark: " << valueOrDefault(settings.writeBytesHighWatermark);
-    LOG(log_.info()) << "Write bytes low watermark: " << valueOrDefault(settings.writeBytesLowWatermark);
-    LOG(log_.info()) << "Pending requests high watermark: " << valueOrDefault(settings.pendingRequestsHighWatermark);
-    LOG(log_.info()) << "Pending requests low watermark: " << valueOrDefault(settings.pendingRequestsLowWatermark);
-    LOG(log_.info()) << "Max requests per flush: " << valueOrDefault(settings.maxRequestsPerFlush);
-    LOG(log_.info()) << "Max concurrent creation: " << valueOrDefault(settings.maxConcurrentCreation);
 }
 
 void

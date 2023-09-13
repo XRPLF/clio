@@ -73,44 +73,16 @@ struct Settings
     uint32_t threads = std::thread::hardware_concurrency();
 
     /** @brief The maximum number of outstanding write requests at any given moment */
-    uint32_t maxWriteRequestsOutstanding = 10'000;
+    uint32_t maxWriteRequestsOutstanding = 10'000u;
 
     /** @brief The maximum number of outstanding read requests at any given moment */
-    uint32_t maxReadRequestsOutstanding = 100'000;
-
-    /** @brief The maximum number of connections per host */
-    uint32_t maxConnectionsPerHost = 2u;
+    uint32_t maxReadRequestsOutstanding = 100'000u;
 
     /** @brief The number of connection per host to always have active */
-    uint32_t coreConnectionsPerHost = 2u;
-
-    /** @brief The maximum concurrent requests per connection; new connections will be created when reached */
-    uint32_t maxConcurrentRequestsThreshold =
-        (maxWriteRequestsOutstanding + maxReadRequestsOutstanding) / coreConnectionsPerHost;
-
-    /** @brief Size of the event queue */
-    std::optional<uint32_t> queueSizeEvent;
+    uint32_t coreConnectionsPerHost = 1u;
 
     /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO;
-
-    /** @brief High watermark for bytes written */
-    std::optional<uint32_t> writeBytesHighWatermark;
-
-    /** @brief Low watermark for bytes written */
-    std::optional<uint32_t> writeBytesLowWatermark;
-
-    /** @brief High watermark for pending requests */
-    std::optional<uint32_t> pendingRequestsHighWatermark;
-
-    /** @brief Low watermark for pending requests */
-    std::optional<uint32_t> pendingRequestsLowWatermark;
-
-    /** @brief Maximum number of requests per flush */
-    std::optional<uint32_t> maxRequestsPerFlush;
-
-    /** @brief Maximum number of connections that will be created concurrently */
-    std::optional<uint32_t> maxConcurrentCreation;
 
     /** @brief SSL certificate */
     std::optional<std::string> certificate;  // ssl context
