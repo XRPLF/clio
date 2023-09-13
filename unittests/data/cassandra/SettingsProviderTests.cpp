@@ -53,7 +53,7 @@ TEST_F(SettingsProviderTest, Defaults)
     EXPECT_EQ(settings.requestTimeout, std::chrono::milliseconds{0});
     EXPECT_EQ(settings.maxWriteRequestsOutstanding, 10'000);
     EXPECT_EQ(settings.maxReadRequestsOutstanding, 100'000);
-    EXPECT_EQ(settings.coreConnectionsPerHost, 2);
+    EXPECT_EQ(settings.coreConnectionsPerHost, 1);
     EXPECT_EQ(settings.certificate, std::nullopt);
     EXPECT_EQ(settings.username, std::nullopt);
     EXPECT_EQ(settings.password, std::nullopt);
