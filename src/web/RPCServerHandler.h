@@ -190,13 +190,13 @@ private:
                 return web::detail::ErrorHelper(connection, request).sendError(err);
             }
 
-            auto [v, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
+            auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
             rpc::logDuration(*context, us);
 
             boost::json::object response;
-            if (auto const status = std::get_if<rpc::Status>(&v))
+            if (auto const status = std::get_if<rpc::Status>(&result))
             {
                 // note: error statuses are counted/notified in buildResponse itself
                 response = web::detail::ErrorHelper(connection, request).composeError(*status);
@@ -210,20 +210,20 @@ private:
                 // This can still technically be an error. Clio counts forwarded requests as successful.
                 rpcEngine_->notifyComplete(context->method, us);
 
-                auto& result = std::get<boost::json::object>(v);
-                auto const isForwarded = result.contains("forwarded") && result.at("forwarded").is_bool() &&
-                    result.at("forwarded").as_bool();
+                auto& json = std::get<boost::json::object>(result);
+                auto const isForwarded =
+                    json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 
                 // if the result is forwarded - just use it as is
                 // if forwarded request has error, for http, error should be in "result"; for ws, error should be at top
-                if (isForwarded && (result.contains("result") || connection->upgraded))
+                if (isForwarded && (json.contains("result") || connection->upgraded))
                 {
-                    for (auto const& [k, v] : result)
+                    for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
                 }
                 else
                 {
-                    response["result"] = result;
+                    response["result"] = json;
                 }
 
                 // for ws there is an additional field "status" in the response,

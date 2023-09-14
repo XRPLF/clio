@@ -33,6 +33,7 @@
 // local to compilation unit loggers
 namespace {
 util::Logger gLog{"RPC"};
+
 }  // namespace
 
 namespace rpc {
@@ -564,10 +565,10 @@ traverseOwnedNodes(
         if (!hintDir)
             return Status(ripple::rpcINVALID_PARAMS, "Invalid marker.");
 
-        ripple::SerialIter it{hintDir->data(), hintDir->size()};
-        ripple::SLE sle{it, hintIndex.key};
+        ripple::SerialIter hintDirIt{hintDir->data(), hintDir->size()};
+        ripple::SLE hintDirSle{hintDirIt, hintIndex.key};
 
-        if (auto const& indexes = sle.getFieldV256(ripple::sfIndexes);
+        if (auto const& indexes = hintDirSle.getFieldV256(ripple::sfIndexes);
             std::find(std::begin(indexes), std::end(indexes), hexMarker) == std::end(indexes))
         {
             // the index specified by marker is not in the page specified by marker
@@ -583,10 +584,10 @@ traverseOwnedNodes(
             if (!ownerDir)
                 return Status(ripple::rpcINVALID_PARAMS, "Owner directory not found.");
 
-            ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
-            ripple::SLE sle{it, currentIndex.key};
+            ripple::SerialIter ownedDirIt{ownerDir->data(), ownerDir->size()};
+            ripple::SLE ownedDirSle{ownedDirIt, currentIndex.key};
 
-            for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
+            for (auto const& key : ownedDirSle.getFieldV256(ripple::sfIndexes))
             {
                 if (!found)
                 {
@@ -610,7 +611,7 @@ traverseOwnedNodes(
                 break;
             }
             // the next page
-            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
+            auto const uNodeNext = ownedDirSle.getFieldU64(ripple::sfIndexNext);
             if (uNodeNext == 0)
                 break;
 
@@ -627,10 +628,10 @@ traverseOwnedNodes(
             if (!ownerDir)
                 break;
 
-            ripple::SerialIter it{ownerDir->data(), ownerDir->size()};
-            ripple::SLE sle{it, currentIndex.key};
+            ripple::SerialIter ownedDirIt{ownerDir->data(), ownerDir->size()};
+            ripple::SLE ownedDirSle{ownedDirIt, currentIndex.key};
 
-            for (auto const& key : sle.getFieldV256(ripple::sfIndexes))
+            for (auto const& key : ownedDirSle.getFieldV256(ripple::sfIndexes))
             {
                 keys.push_back(key);
 
@@ -644,7 +645,7 @@ traverseOwnedNodes(
                 break;
             }
 
-            auto const uNodeNext = sle.getFieldU64(ripple::sfIndexNext);
+            auto const uNodeNext = ownedDirSle.getFieldU64(ripple::sfIndexNext);
             if (uNodeNext == 0)
                 break;
 

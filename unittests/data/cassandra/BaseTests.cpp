@@ -239,9 +239,11 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         )",
         5000);
 
-    auto const f1 = handle.asyncExecute(q1);
-    auto const rc = f1.await();
-    ASSERT_TRUE(rc) << rc.error();
+    {
+        auto const f1 = handle.asyncExecute(q1);
+        auto const rc = f1.await();
+        ASSERT_TRUE(rc) << rc.error();
+    }
 
     std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
     auto insert = handle.prepare(q2);
@@ -300,9 +302,11 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
               WITH default_time_to_live = {}
         )",
         5000);
-    auto const f1 = handle.asyncExecute(q1);
-    auto const rc = f1.await();
-    ASSERT_TRUE(rc) << rc.error();
+    {
+        auto const f1 = handle.asyncExecute(q1);
+        auto const rc = f1.await();
+        ASSERT_TRUE(rc) << rc.error();
+    }
 
     std::string q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
     auto const insert = handle.prepare(q2);

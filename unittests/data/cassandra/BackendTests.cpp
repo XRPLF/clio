@@ -122,9 +122,9 @@ TEST_F(BackendCassandraTest, Basic)
         lgrInfoNext.hash++;
         lgrInfoNext.accountHash = ~lgrInfo.accountHash;
         {
-            std::string rawHeaderBlob = ledgerInfoToBinaryString(lgrInfoNext);
+            std::string infoBlob = ledgerInfoToBinaryString(lgrInfoNext);
 
-            backend->writeLedger(lgrInfoNext, std::move(rawHeaderBlob));
+            backend->writeLedger(lgrInfoNext, std::move(infoBlob));
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
         {
@@ -398,20 +398,22 @@ TEST_F(BackendCassandraTest, Basic)
             auto retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
             EXPECT_TRUE(retLgr);
             EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
-            auto txns = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
-            ASSERT_EQ(txns.size(), 1);
+            auto allTransactions = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
+            ASSERT_EQ(allTransactions.size(), 1);
             EXPECT_STREQ(
-                reinterpret_cast<const char*>(txns[0].transaction.data()), static_cast<const char*>(txnBlob.data()));
+                reinterpret_cast<const char*>(allTransactions[0].transaction.data()),
+                static_cast<const char*>(txnBlob.data()));
             EXPECT_STREQ(
-                reinterpret_cast<const char*>(txns[0].metadata.data()), static_cast<const char*>(metaBlob.data()));
+                reinterpret_cast<const char*>(allTransactions[0].metadata.data()),
+                static_cast<const char*>(metaBlob.data()));
             auto hashes = backend->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
             for (auto& a : affectedAccounts)
             {
-                auto [txns, cursor] = backend->fetchAccountTransactions(a, 100, true, {}, yield);
-                EXPECT_EQ(txns.size(), 1);
-                EXPECT_EQ(txns[0], txns[0]);
+                auto [accountTransactions, cursor] = backend->fetchAccountTransactions(a, 100, true, {}, yield);
+                EXPECT_EQ(accountTransactions.size(), 1);
+                EXPECT_EQ(accountTransactions[0], accountTransactions[0]);
                 EXPECT_FALSE(cursor);
             }
             auto nft = backend->fetchNFT(nftID, lgrInfoNext.seq, yield);
@@ -662,17 +664,18 @@ TEST_F(BackendCassandraTest, Basic)
                 do
                 {
                     uint32_t limit = 10;
-                    auto [txns, retCursor] = backend->fetchAccountTransactions(account, limit, false, cursor, yield);
+                    auto [accountTransactions, retCursor] =
+                        backend->fetchAccountTransactions(account, limit, false, cursor, yield);
                     if (retCursor)
-                        EXPECT_EQ(txns.size(), limit);
-                    retData.insert(retData.end(), txns.begin(), txns.end());
+                        EXPECT_EQ(accountTransactions.size(), limit);
+                    retData.insert(retData.end(), accountTransactions.begin(), accountTransactions.end());
                     cursor = retCursor;
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i)
                 {
-                    auto [txn, meta, seq, date] = retData[i];
-                    auto [hash, expTxn, expMeta] = data[i];
+                    auto [txn, meta, _, __] = retData[i];
+                    auto [___, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(reinterpret_cast<const char*>(txn.data()), static_cast<const char*>(expTxn.data()));
                     EXPECT_STREQ(reinterpret_cast<const char*>(meta.data()), static_cast<const char*>(expMeta.data()));
                 }
@@ -924,10 +927,10 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         lgrInfoNext.hash++;
         lgrInfoNext.accountHash = ~lgrInfo.accountHash;
         {
-            std::string rawHeaderBlob = ledgerInfoToBinaryString(lgrInfoNext);
+            std::string infoBlob = ledgerInfoToBinaryString(lgrInfoNext);
 
             backend->startWrites();
-            backend->writeLedger(lgrInfoNext, std::move(rawHeaderBlob));
+            backend->writeLedger(lgrInfoNext, std::move(infoBlob));
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
         {

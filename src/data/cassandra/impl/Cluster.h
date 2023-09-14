@@ -128,7 +128,7 @@ struct Settings
     withContactPoints(std::string_view contactPoints)
     {
         auto tmp = *this;
-        tmp.connectionInfo = ContactPoints{std::string{contactPoints}, std::nullopt};
+        tmp.connectionInfo = ContactPoints{std::string{contactPoints}};
         return tmp;
     }
 

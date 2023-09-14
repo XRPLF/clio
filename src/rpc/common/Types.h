@@ -82,25 +82,11 @@ struct VoidOutput
  */
 struct Context
 {
-    Context(
-        boost::asio::yield_context yield,
-        std::shared_ptr<web::ConnectionBase> session = {},
-        bool isAdmin = false,
-        std::string clientIp = {},
-        uint32_t apiVersion = 0u)
-        : yield(std::move(yield))
-        , session(std::move(session))
-        , isAdmin(isAdmin)
-        , clientIp(std::move(clientIp))
-        , apiVersion(apiVersion)
-    {
-    }
-
     boost::asio::yield_context yield;
-    std::shared_ptr<web::ConnectionBase> session;
-    bool isAdmin;
-    std::string clientIp;
-    uint32_t apiVersion;  // invalid by default
+    std::shared_ptr<web::ConnectionBase> session = {};
+    bool isAdmin = false;
+    std::string clientIp = {};
+    uint32_t apiVersion = 0u;  // invalid by default
 };
 
 /**

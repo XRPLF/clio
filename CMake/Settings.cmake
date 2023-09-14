@@ -16,7 +16,7 @@ set(COMPILER_FLAGS
   -Wold-style-cast
   -pedantic
   -Wpedantic
-  # -Wshadow
+  -Wshadow
   -Wunused
 )
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
