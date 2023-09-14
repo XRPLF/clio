@@ -14,9 +14,9 @@ set(COMPILER_FLAGS
   -Wnon-virtual-dtor
   -Wnull-dereference
   -Wold-style-cast
-  -Woverloaded-virtual
   -pedantic
   -Wpedantic
+  # -Wshadow
   -Wunused
 )
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

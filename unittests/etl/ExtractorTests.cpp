@@ -68,8 +68,7 @@ public:
 
 TEST_F(ETLExtractorTest, StopsWhenCurrentSequenceExceedsFinishSequence)
 {
-    auto const rawNetworkValidatedLedgersPtr =
-        static_cast<MockNetworkValidatedLedgers*>(networkValidatedLedgers_.get());
+    auto const rawNetworkValidatedLedgersPtr = networkValidatedLedgers_.get();
 
     ON_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).WillByDefault(Return(true));
     EXPECT_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).Times(3);
@@ -107,8 +106,7 @@ TEST_F(ETLExtractorTest, StopsOnServerShutdown)
 // stop extractor thread if fetcheResponse is empty
 TEST_F(ETLExtractorTest, StopsIfFetchIsUnsuccessful)
 {
-    auto const rawNetworkValidatedLedgersPtr =
-        static_cast<MockNetworkValidatedLedgers*>(networkValidatedLedgers_.get());
+    auto const rawNetworkValidatedLedgersPtr = networkValidatedLedgers_.get();
 
     ON_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).WillByDefault(Return(true));
     EXPECT_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).Times(1);
@@ -123,8 +121,7 @@ TEST_F(ETLExtractorTest, StopsIfFetchIsUnsuccessful)
 
 TEST_F(ETLExtractorTest, StopsIfWaitingUntilValidatedByNetworkTimesOut)
 {
-    auto const rawNetworkValidatedLedgersPtr =
-        static_cast<MockNetworkValidatedLedgers*>(networkValidatedLedgers_.get());
+    auto const rawNetworkValidatedLedgersPtr = networkValidatedLedgers_.get();
 
     // note that in actual clio code we don't return false unless a timeout is specified and exceeded
     ON_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).WillByDefault(Return(false));
@@ -137,8 +134,7 @@ TEST_F(ETLExtractorTest, StopsIfWaitingUntilValidatedByNetworkTimesOut)
 
 TEST_F(ETLExtractorTest, SendsCorrectResponseToDataPipe)
 {
-    auto const rawNetworkValidatedLedgersPtr =
-        static_cast<MockNetworkValidatedLedgers*>(networkValidatedLedgers_.get());
+    auto const rawNetworkValidatedLedgersPtr = networkValidatedLedgers_.get();
 
     ON_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).WillByDefault(Return(true));
     EXPECT_CALL(*rawNetworkValidatedLedgersPtr, waitUntilValidatedByNetwork).Times(1);

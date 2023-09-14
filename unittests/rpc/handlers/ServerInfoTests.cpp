@@ -189,9 +189,9 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
-    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
-    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -233,9 +233,9 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
-    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
-    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -275,11 +275,10 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
-    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -327,11 +326,10 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
-    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -390,11 +388,10 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 {
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    MockLoadBalancer* rawBalancerPtr = static_cast<MockLoadBalancer*>(mockLoadBalancerPtr.get());
-    MockCounters* rawCountersPtr = static_cast<MockCounters*>(mockCountersPtr.get());
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-    MockETLService* rawETLServicePtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max

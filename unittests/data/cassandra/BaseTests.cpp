@@ -86,7 +86,7 @@ protected:
         int64_t idx = 1000;
 
         for (auto const& entry : entries)
-            statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
+            statements.push_back(insert.bind(entry, idx++));
 
         EXPECT_EQ(statements.size(), entries.size());
         EXPECT_TRUE(handle.execute(statements));
@@ -252,7 +252,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         int64_t idx = 1000;
 
         for (auto const& entry : entries)
-            futures.push_back(handle.asyncExecute(insert, entry, static_cast<int64_t>(idx++)));
+            futures.push_back(handle.asyncExecute(insert, entry, idx++));
 
         ASSERT_EQ(futures.size(), entries.size());
         for (auto const& f : futures)
@@ -313,7 +313,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
         int64_t idx = 1000;
 
         for (auto const& entry : entries)
-            statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
+            statements.push_back(insert.bind(entry, idx++));
 
         ASSERT_EQ(statements.size(), entries.size());
 
@@ -372,7 +372,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
             int64_t idx = 1000;
 
             for (auto const& entry : entries)
-                statements.push_back(insert.bind(entry, static_cast<int64_t>(idx++)));
+                statements.push_back(insert.bind(entry, idx++));
 
             ASSERT_EQ(statements.size(), entries.size());
             fut.emplace(handle.asyncExecute(statements, [&](auto const res) {
@@ -432,8 +432,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     {
         static_assert(std::is_same_v<decltype(hash), std::string>);
         static_assert(std::is_same_v<decltype(seq), int64_t>);
-        migrationStatements.push_back(
-            migrationInsert.bind(hash, static_cast<int64_t>(seq), static_cast<int64_t>(seq + 1u)));
+        migrationStatements.push_back(migrationInsert.bind(hash, seq, seq + 1u));
     }
 
     EXPECT_TRUE(handle.execute(migrationStatements));
