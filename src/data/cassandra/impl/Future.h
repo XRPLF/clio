@@ -44,14 +44,15 @@ class FutureWithCallback : public Future
 {
 public:
     using FnType = std::function<void(ResultOrError)>;
-    using FnPtrType = std::unique_ptr<FnType>;
+    using FnPtrType = FnType*;
 
     /* implicit */ FutureWithCallback(CassFuture* ptr, FnType&& cb);
     FutureWithCallback(FutureWithCallback const&) = delete;
     FutureWithCallback(FutureWithCallback&&) = default;
 
 private:
-    /** Wrapped in a unique_ptr so it can survive std::move :/ */
+    // we are forced to use raw new/delete for this because FutureWithCallback gets destroyed god knows why
+    // from DefaultExecutionStrategy when using async_compose.
     FnPtrType cb_;
 };
 
