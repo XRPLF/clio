@@ -16,9 +16,15 @@ set(COMPILER_FLAGS
   -Wold-style-cast
   -pedantic
   -Wpedantic
-  -Wshadow
   -Wunused
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  list(APPEND COMPILER_FLAGS
+    -Wshadow # gcc is to aggressive with shadowing https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
+  )
+endif ()
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND COMPILER_FLAGS
     -Wduplicated-branches
