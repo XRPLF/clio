@@ -93,14 +93,15 @@ synchronous(FnType&& func)
     if constexpr (!std::is_same<R, void>::value)
     {
         R res;
-        boost::asio::spawn(ctx, [&func, &res](auto yield) { res = func(yield); });
+        boost::asio::spawn(
+            ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) { res = func(yield); });
 
         ctx.run();
         return res;
     }
     else
     {
-        boost::asio::spawn(ctx, [&func](auto yield) { func(yield); });
+        boost::asio::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func](auto yield) { func(yield); });
         ctx.run();
     }
 }
