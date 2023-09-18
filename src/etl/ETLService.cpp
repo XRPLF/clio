@@ -279,7 +279,7 @@ ETLService::ETLService(
     , cacheLoader_(config, ioc, backend, backend->cache())
     , ledgerFetcher_(backend, balancer)
     , ledgerLoader_(backend, balancer, ledgerFetcher_, state_)
-    , ledgerPublisher_(ioc, backend, subscriptions, state_)
+    , ledgerPublisher_(ioc, backend, backend->cache(), subscriptions, state_)
     , amendmentBlockHandler_(ioc, state_)
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
