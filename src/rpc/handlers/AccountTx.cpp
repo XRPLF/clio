@@ -24,12 +24,14 @@
 namespace rpc {
 
 // found here : https://xrpl.org/transaction-types.html
+// TODO [https://github.com/XRPLF/clio/issues/856]: add AMMBid, AMMCreate, AMMDelete, AMMDeposit, AMMVote, AMMWithdraw
 std::unordered_map<std::string, ripple::TxType> const AccountTxHandler::TYPESMAP{
     {JSL(AccountSet), ripple::ttACCOUNT_SET},
     {JSL(AccountDelete), ripple::ttACCOUNT_DELETE},
     {JSL(CheckCancel), ripple::ttCHECK_CANCEL},
     {JSL(CheckCash), ripple::ttCHECK_CASH},
     {JSL(CheckCreate), ripple::ttCHECK_CREATE},
+    {JSL(Clawback), ripple::ttCLAWBACK},
     {JSL(DepositPreauth), ripple::ttDEPOSIT_PREAUTH},
     {JSL(EscrowCancel), ripple::ttESCROW_CANCEL},
     {JSL(EscrowCreate), ripple::ttESCROW_CREATE},

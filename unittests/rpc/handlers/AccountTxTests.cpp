@@ -1100,6 +1100,14 @@ generateTransactionTypeTestValues()
             })",
             "[]"},
         AccountTxTransactionBundle{
+            "Clawback",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "Clawback"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
             "DepositPreauth",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
