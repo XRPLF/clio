@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
+#include <util/log/Logger.h>
 #include <rpc/AMMHelpers.h>
 
 #include <ripple/app/misc/AMMUtils.h>
