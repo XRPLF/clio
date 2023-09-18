@@ -16,6 +16,7 @@ class Clio(ConanFile):
         'docs': [True, False],      # doxygen API docs; create custom target 'docs'
         'packaging': [True, False], # create distribution packages
         'coverage': [True, False],  # build for test coverage report; create custom target `clio_tests-ccov`
+        'clang_tidy': [True, False], # run clang-tidy checks during compilation
     }
 
     requires = [
@@ -33,6 +34,7 @@ class Clio(ConanFile):
         'tests': False,
         'packaging': False,
         'coverage': False,
+        'clang_tidy': False,
         'docs': False,
         
         'xrpl/*:tests': False,
@@ -73,6 +75,7 @@ class Clio(ConanFile):
         tc.variables['verbose'] = self.options.verbose
         tc.variables['tests'] = self.options.tests
         tc.variables['coverage'] = self.options.coverage
+        tc.variables['clang_tidy'] = self.options.clang_tidy
         tc.variables['docs'] = self.options.docs
         tc.variables['packaging'] = self.options.packaging
         tc.generate()

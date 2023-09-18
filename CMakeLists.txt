@@ -9,6 +9,7 @@ option (tests     "Build tests"                                       FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
+option (clang_tidy "Run clang-tidy checks during compilation"         FALSE)
 # ========================================================================== #
 set (san "" CACHE STRING "Add sanitizer instrumentation")
 set (CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -18,6 +19,7 @@ set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # Include required modules
 include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
+include (CMake/ClangTidy.cmake)
 
 if (verbose)
   set (CMAKE_VERBOSE_MAKEFILE TRUE)
