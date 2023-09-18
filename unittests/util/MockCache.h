@@ -25,7 +25,14 @@
 
 struct MockCache
 {
-    MOCK_METHOD(void, update, (std::vector<data::LedgerObject> const& a, uint32_t b, bool c), ());
+    MOCK_METHOD(void, updateImp, (std::vector<data::LedgerObject> const& a, uint32_t b, bool c), ());
+
+    // mock update has a parameter with default value
+    virtual void
+    update(std::vector<data::LedgerObject> const& a, uint32_t b, bool c = false)
+    {
+        updateImp(a, b, c);
+    }
 
     MOCK_METHOD(std::optional<data::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const));
 

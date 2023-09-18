@@ -22,7 +22,6 @@
 #include <data/BackendInterface.h>
 #include <etl/SystemState.h>
 #include <util/LedgerUtils.h>
-#include <util/Profiler.h>
 #include <util/log/Logger.h>
 
 #include <ripple/protocol/LedgerHeader.h>
@@ -42,14 +41,18 @@ namespace etl::detail {
  * includes reading all of the transactions from the database) is done from the application wide asio io_service, and a
  * strand is used to ensure ledgers are published in order.
  */
-template <typename SubscriptionManagerType>
+template <typename SubscriptionManagerType, typename CacheType>
 class LedgerPublisher
 {
+    // we are still catching up if not within PUBLISH_THRESHOLD_SEC from the last close,
+    constexpr static auto PUBLISH_THRESHOLD_SEC = 600;
+
     util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
 
     std::shared_ptr<BackendInterface> backend_;
+    std::reference_wrapper<CacheType> cache_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
@@ -69,10 +72,12 @@ public:
     LedgerPublisher(
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
+        std::reference_wrapper<CacheType> cache,
+        std::shared_ptr<SubscriptionManagerType> subscriptions,
         SystemState const& state)
         : publishStrand_{boost::asio::make_strand(ioc)}
         , backend_{backend}
+        , cache_{cache}
         , subscriptions_{subscriptions}
         , state_{std::cref(state)}
     {
@@ -97,6 +102,7 @@ public:
 
             if (!range || range->maxSequence < ledgerSequence)
             {
+                ++numAttempts;
                 LOG(log_.debug()) << "Trying to publish. Could not find "
                                      "ledger with sequence = "
                                   << ledgerSequence;
@@ -108,7 +114,6 @@ public:
                     return false;
                 }
                 std::this_thread::sleep_for(std::chrono::seconds(1));
-                ++numAttempts;
                 continue;
             }
             else
@@ -126,7 +131,7 @@ public:
     }
 
     /**
-     * @brief Publish the passed in ledger
+     * @brief Publish the passed ledger asynchronously.
      *
      * All ledgers are published thru publishStrand_ which ensures that all publishes are performed in a serial fashion.
      *
@@ -145,33 +150,33 @@ public:
                 std::vector<data::LedgerObject> diff = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
 
-                backend_->cache().update(diff, lgrInfo.seq);  // todo: inject cache to update, don't use backend cache
+                cache_.get().update(diff, lgrInfo.seq);
                 backend_->updateRange(lgrInfo.seq);
             }
 
             setLastClose(lgrInfo.closeTime);
             auto age = lastCloseAgeSeconds();
 
-            // if the ledger closed over 10 minutes ago, assume we are still catching up and don't publish
+            // if the ledger closed over PUBLISH_THRESHOLD_SEC ago, assume we are still catching up and don't publish
             // TODO: this probably should be a strategy
-            if (age < 600)
+            if (age < PUBLISH_THRESHOLD_SEC)
             {
                 std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
+                assert(fees);
 
                 std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
 
-                auto ledgerRange = backend_->fetchLedgerRange();
+                auto const ledgerRange = backend_->fetchLedgerRange();
                 assert(ledgerRange);
-                assert(fees);
 
-                std::string range =
+                auto const range =
                     std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
-                for (auto& txAndMeta : transactions)
+                for (auto const& txAndMeta : transactions)
                     subscriptions_->pubTransaction(txAndMeta, lgrInfo);
 
                 subscriptions_->pubBookChanges(lgrInfo, transactions);
@@ -214,14 +219,21 @@ public:
     lastCloseAgeSeconds() const
     {
         std::shared_lock lck(closeTimeMtx_);
-        auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
-                       .count();
-        auto closeTime = lastCloseTime_.time_since_epoch().count();
-        if (now < (rippleEpochStart + closeTime))
+        auto const now =
+            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
+        auto const closeTime = lastCloseTime_.time_since_epoch().count();
+
+        if (auto const age = now - (rippleEpochStart + closeTime); age < 0)
             return 0;
-        return now - (rippleEpochStart + closeTime);
+        else
+            return age;
     }
 
+    /**
+     * @brief Get the sequence of the last schueduled ledger to publish, Be aware that the ledger may not have been
+     * published to network
+     */
     std::optional<uint32_t>
     getLastPublishedSequence() const
     {
