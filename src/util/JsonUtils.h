@@ -21,12 +21,21 @@
 
 #include <boost/json.hpp>
 
+#include <algorithm>
+#include <cctype>
 #include <string>
 
 /**
  * @brief This namespace contains various utilities.
  */
 namespace util {
+
+inline std::string
+toLower(std::string str)
+{
+    std::transform(std::begin(str), std::end(str), std::begin(str), [](unsigned char c) { return std::tolower(c); });
+    return str;
+}
 
 /**
  * @brief Removes any detected secret information from a response JSON object.

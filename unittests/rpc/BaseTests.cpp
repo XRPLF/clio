@@ -568,3 +568,25 @@ TEST_F(RPCBaseTest, ClampingModifier)
     ASSERT_TRUE(spec.process(passingInput3));
     ASSERT_EQ(passingInput3.at("amount").as_uint64(), 20u);  // clamped
 }
+
+TEST_F(RPCBaseTest, ToLowerModifier)
+{
+    auto spec = RpcSpec{
+        {"str", ToLower{}},
+    };
+
+    auto passingInput = json::parse(R"({ "str": "TesT" })");
+    ASSERT_TRUE(spec.process(passingInput));
+    ASSERT_EQ(passingInput.at("str").as_string(), "test");
+
+    auto passingInput2 = json::parse(R"({ "str2": "TesT" })");
+    ASSERT_TRUE(spec.process(passingInput2));  // no str no problem
+
+    auto passingInput3 = json::parse(R"({ "str": "already lower case" })");
+    ASSERT_TRUE(spec.process(passingInput3));
+    ASSERT_EQ(passingInput3.at("str").as_string(), "already lower case");
+
+    auto passingInput4 = json::parse(R"({ "str": "" })");
+    ASSERT_TRUE(spec.process(passingInput4));  // empty str no problem
+    ASSERT_EQ(passingInput4.at("str").as_string(), "");
+}
