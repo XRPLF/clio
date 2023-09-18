@@ -116,22 +116,10 @@ SettingsProvider::parseSettings() const
         config_.valueOr<uint32_t>("max_write_requests_outstanding", settings.maxWriteRequestsOutstanding);
     settings.maxReadRequestsOutstanding =
         config_.valueOr<uint32_t>("max_read_requests_outstanding", settings.maxReadRequestsOutstanding);
-    settings.maxConnectionsPerHost =
-        config_.valueOr<uint32_t>("max_connections_per_host", settings.maxConnectionsPerHost);
     settings.coreConnectionsPerHost =
         config_.valueOr<uint32_t>("core_connections_per_host", settings.coreConnectionsPerHost);
-    settings.maxConcurrentRequestsThreshold = config_.valueOr<uint32_t>(
-        "max_concurrent_requests_threshold",
-        (settings.maxReadRequestsOutstanding + settings.maxWriteRequestsOutstanding) / settings.coreConnectionsPerHost);
 
     settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
-    settings.queueSizeEvent = config_.maybeValue<uint32_t>("queue_size_event");
-    settings.writeBytesHighWatermark = config_.maybeValue<uint32_t>("write_bytes_high_water_mark");
-    settings.writeBytesLowWatermark = config_.maybeValue<uint32_t>("write_bytes_low_water_mark");
-    settings.pendingRequestsHighWatermark = config_.maybeValue<uint32_t>("pending_requests_high_water_mark");
-    settings.pendingRequestsLowWatermark = config_.maybeValue<uint32_t>("pending_requests_low_water_mark");
-    settings.maxRequestsPerFlush = config_.maybeValue<uint32_t>("max_requests_per_flush");
-    settings.maxConcurrentCreation = config_.maybeValue<uint32_t>("max_concurrent_creation");
 
     auto const connectTimeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
     if (connectTimeoutSecond)
