@@ -282,7 +282,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this, &callCount](auto const&, auto&& cb) {
             // run on thread to emulate concurrency model of real asyncExecute
-            boost::asio::post(ctx, [&callCount, cb = std::move(cb)] {
+            boost::asio::post(ctx, [&callCount, cb = std::forward<decltype(cb)>(cb)] {
                 ++callCount;
                 cb({});  // pretend we got data
             });

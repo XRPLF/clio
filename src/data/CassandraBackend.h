@@ -715,7 +715,7 @@ public:
                 std::back_inserter(statements),
                 [this, &record](auto&& account) {
                     return schema_->insertAccountTx.bind(
-                        std::move(account),
+                        std::forward<decltype(account)>(account),
                         std::make_tuple(record.ledgerSequence, record.transactionIndex),
                         record.txHash);
                 });

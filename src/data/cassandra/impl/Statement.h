@@ -126,7 +126,7 @@ public:
         }
         else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
         {
-            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
+            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
         }
         else if constexpr (std::is_same_v<DecayedType, bool>)

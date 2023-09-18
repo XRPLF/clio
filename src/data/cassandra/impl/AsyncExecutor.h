@@ -98,14 +98,14 @@ private:
         auto handler = [this, &handle, self](auto&& res) mutable {
             if (res)
             {
-                onComplete_(std::move(res));
+                onComplete_(std::forward<decltype(res)>(res));
             }
             else
             {
                 if (retryPolicy_.shouldRetry(res.error()))
                     retryPolicy_.retry([self, &handle]() { self->execute(handle); });
                 else
-                    onComplete_(std::move(res));  // report error
+                    onComplete_(std::forward<decltype(res)>(res));  // report error
             }
 
             self = nullptr;  // explicitly decrement refcount

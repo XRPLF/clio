@@ -91,7 +91,7 @@ Config::maybeArray(KeyType key) const
             out.reserve(arr.size());
 
             std::transform(std::begin(arr), std::end(arr), std::back_inserter(out), [](auto&& element) {
-                return Config{std::move(element)};
+                return Config{std::forward<decltype(element)>(element)};
             });
             return std::make_optional<ArrayType>(std::move(out));
         }

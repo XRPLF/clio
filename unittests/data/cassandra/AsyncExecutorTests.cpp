@@ -40,7 +40,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this](auto const&, auto&& cb) {
-            ctx.post([cb = std::move(cb)]() { cb({}); });
+            ctx.post([cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
