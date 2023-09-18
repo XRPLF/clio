@@ -26,8 +26,8 @@
 #include <vector>
 
 namespace {
-static constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };
-};
+constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };
+}  // namespace
 
 namespace data::cassandra::detail {
 
@@ -38,8 +38,10 @@ Batch::Batch(std::vector<Statement> const& statements)
     cass_batch_set_is_idempotent(*this, cass_true);
 
     for (auto const& statement : statements)
+    {
         if (auto const res = add(statement); not res)
             throw std::runtime_error("Failed to add statement to batch: " + res.error());
+    }
 }
 
 MaybeError

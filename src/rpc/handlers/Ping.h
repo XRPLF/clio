@@ -34,8 +34,8 @@ public:
     using Output = VoidOutput;
     using Result = HandlerReturnType<Output>;
 
-    Result
-    process([[maybe_unused]] Context const& ctx) const
+    static Result
+    process([[maybe_unused]] Context const& ctx)
     {
         return Output{};
     }

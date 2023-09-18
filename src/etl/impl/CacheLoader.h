@@ -63,7 +63,7 @@ class CacheLoader
     struct ClioPeer
     {
         std::string ip;
-        int port;
+        int port{};
     };
 
     std::vector<ClioPeer> clioPeers_;
@@ -107,7 +107,7 @@ public:
                     clioPeers_.push_back({ip, port});
                 }
 
-                unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+                unsigned const seed = std::chrono::system_clock::now().time_since_epoch().count();
                 std::shuffle(std::begin(clioPeers_), std::end(clioPeers_), std::default_random_engine(seed));
             }
         }
@@ -157,10 +157,8 @@ public:
             });
             return;
         }
-        else
-        {
-            loadCacheFromDb(seq);
-        }
+
+        loadCacheFromDb(seq);
 
         // If loading synchronously, poll cache until full
         while (cacheLoadStyle_ == LoadStyle::SYNC && not cache_.get().isFull())
@@ -295,9 +293,13 @@ private:
                     return false;
                 }
                 if (response.contains("marker"))
+                {
                     marker = response.at("marker");
+                }
                 else
+                {
                     marker = {};
+                }
 
                 auto const& state = response.at("state").as_array();
 
@@ -356,16 +358,20 @@ private:
 
         diff.erase(std::unique(diff.begin(), diff.end(), [](auto a, auto b) { return a.key == b.key; }), diff.end());
 
-        cursors.push_back({});
+        cursors.emplace_back();
         for (auto const& obj : diff)
-            if (obj.blob.size())
-                cursors.push_back({obj.key});
-        cursors.push_back({});
+        {
+            if (!obj.blob.empty())
+                cursors.emplace_back(obj.key);
+        }
+        cursors.emplace_back();
 
         std::stringstream cursorStr;
         for (auto const& c : cursors)
+        {
             if (c)
                 cursorStr << ripple::strHex(*c) << ", ";
+        }
 
         LOG(log_.info()) << "Loading cache. num cursors = " << cursors.size() - 1;
         LOG(log_.trace()) << "cursors = " << cursorStr.str();

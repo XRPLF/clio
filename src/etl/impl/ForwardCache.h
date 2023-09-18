@@ -76,7 +76,7 @@ public:
     freshen();
 
     std::optional<boost::json::object>
-    get(boost::json::object const& command) const;
+    get(boost::json::object const& request) const;
 };
 
 }  // namespace etl::detail

@@ -26,7 +26,7 @@ AccountLinesHandler::addLine(
     std::vector<LineResponse>& lines,
     ripple::SLE const& lineSle,
     ripple::AccountID const& account,
-    std::optional<ripple::AccountID> const& peerAccount) const
+    std::optional<ripple::AccountID> const& peerAccount)
 {
     auto const flags = lineSle.getFieldU32(ripple::sfFlags);
     auto const lowLimit = lineSle.getFieldAmount(ripple::sfLowLimit);
@@ -52,12 +52,12 @@ AccountLinesHandler::addLine(
     if (not viewLowest)
         balance.negate();
 
-    bool const lineAuth = flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool const lineAuthPeer = flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth);
-    bool const lineNoRipple = flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool const lineNoRipplePeer = flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
-    bool const lineFreeze = flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
-    bool const lineFreezePeer = flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze);
+    bool const lineAuth = (flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
+    bool const lineAuthPeer = (flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
+    bool const lineNoRipple = (flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+    bool const lineNoRipplePeer = (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+    bool const lineFreeze = (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineFreezePeer = (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
 
     ripple::STAmount const& saBalance = balance;
     ripple::STAmount const& saLimit = lineLimit;
@@ -119,9 +119,13 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
             if (input.ignoreDefault)
             {
                 if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
-                    ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve);
+                {
+                    ignore = ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve) == 0u);
+                }
                 else
-                    ignore = !(sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve);
+                {
+                    ignore = ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve) == 0u);
+                }
             }
 
             if (not ignore)
@@ -174,9 +178,13 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

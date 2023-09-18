@@ -29,7 +29,7 @@
 namespace rpc::validation {
 
 [[nodiscard]] MaybeError
-Required::verify(boost::json::value const& value, std::string_view key) const
+Required::verify(boost::json::value const& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
@@ -49,7 +49,7 @@ CustomValidator::verify(boost::json::value const& value, std::string_view key) c
 [[nodiscard]] bool
 checkIsU32Numeric(std::string_view sv)
 {
-    uint32_t unused;
+    uint32_t unused = 0;
     auto [_, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), unused);
 
     return ec == std::errc();
@@ -145,12 +145,14 @@ CustomValidator IssuerValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
 
         if (issuer == ripple::noAccount())
+        {
             return Error{Status{
                 RippledError::rpcINVALID_PARAMS,
                 fmt::format(
                     "Invalid field '{}', bad issuer account "
                     "one.",
                     key)}};
+        }
 
         return MaybeError{};
     }};
@@ -185,7 +187,7 @@ CustomValidator SubscribeAccountsValidator =
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
-        if (value.as_array().size() == 0)
+        if (value.as_array().empty())
             return Error{Status{RippledError::rpcACT_MALFORMED, std::string(key) + " malformed."}};
 
         for (auto const& v : value.as_array())

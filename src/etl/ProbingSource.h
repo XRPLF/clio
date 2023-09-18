@@ -75,7 +75,7 @@ public:
         LoadBalancer& balancer,
         boost::asio::ssl::context sslCtx = boost::asio::ssl::context{boost::asio::ssl::context::tlsv12});
 
-    ~ProbingSource() = default;
+    ~ProbingSource() override = default;
 
     void
     run() override;

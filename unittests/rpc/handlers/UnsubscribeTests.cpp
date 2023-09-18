@@ -44,8 +44,8 @@ protected:
     {
         HandlerBaseTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        util::Config cfg;
-        util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        util::Config const cfg;
+        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void

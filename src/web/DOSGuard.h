@@ -125,7 +125,7 @@ public:
             return true;
 
         {
-            std::scoped_lock lck(mtx_);
+            std::scoped_lock const lck(mtx_);
             if (ipState_.find(ip) != ipState_.end())
             {
                 auto [transferedByte, requests] = ipState_.at(ip);
@@ -160,7 +160,7 @@ public:
     {
         if (whitelistHandler_.get().isWhiteListed(ip))
             return;
-        std::scoped_lock lck{mtx_};
+        std::scoped_lock const lck{mtx_};
         ipConnCount_[ip]++;
     }
 
@@ -174,7 +174,7 @@ public:
     {
         if (whitelistHandler_.get().isWhiteListed(ip))
             return;
-        std::scoped_lock lck{mtx_};
+        std::scoped_lock const lck{mtx_};
         assert(ipConnCount_[ip] > 0);
         ipConnCount_[ip]--;
         if (ipConnCount_[ip] == 0)
@@ -200,7 +200,7 @@ public:
             return true;
 
         {
-            std::scoped_lock lck(mtx_);
+            std::scoped_lock const lck(mtx_);
             ipState_[ip].transferedByte += numObjects;
         }
 
@@ -225,7 +225,7 @@ public:
             return true;
 
         {
-            std::scoped_lock lck(mtx_);
+            std::scoped_lock const lck(mtx_);
             ipState_[ip].requestsCount++;
         }
 
@@ -238,12 +238,12 @@ public:
     void
     clear() noexcept override
     {
-        std::scoped_lock lck(mtx_);
+        std::scoped_lock const lck(mtx_);
         ipState_.clear();
     }
 
 private:
-    [[nodiscard]] std::unordered_set<std::string> const
+    [[nodiscard]] std::unordered_set<std::string>
     getWhitelist(util::Config const& config) const
     {
         using T = std::unordered_set<std::string> const;

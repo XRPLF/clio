@@ -128,7 +128,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
 
     if (output.isClawbackEnabled)
     {
-        lsFlags.push_back({"allowTrustLineClawback", ripple::lsfAllowTrustLineClawback});
+        lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
     }
 
     boost::json::object acctFlags;
@@ -170,9 +170,13 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(signer_lists)))

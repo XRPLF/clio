@@ -130,7 +130,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTIDNotString)
 // error case ledger non exist via hash
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     // mock fetchLedgerByHash return empty
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
@@ -157,7 +157,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -181,7 +181,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -207,7 +207,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 // idk why this case will happen in reality
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
@@ -234,7 +234,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // no need to check from db,call fetchLedgerBySequence 0 time
@@ -259,7 +259,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case nft does not exist
 TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -301,7 +301,7 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         "uri": "757269",
         "validated": true
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -342,7 +342,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "uri": "757269",
         "validated": true
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -384,7 +384,7 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         "uri": "",
         "validated": true
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -425,7 +425,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         "uri": "757269",
         "validated": true
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);

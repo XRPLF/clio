@@ -62,7 +62,7 @@ public:
     void
     push(uint32_t idx)
     {
-        std::lock_guard lck(m_);
+        std::lock_guard const lck(m_);
         if (!max_ || idx > *max_)
             max_ = idx;
         cv_.notify_all();
@@ -96,9 +96,13 @@ public:
         std::unique_lock lck(m_);
         auto pred = [sequence, this]() -> bool { return (max_ && sequence <= *max_); };
         if (maxWaitMs)
+        {
             cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
+        }
         else
+        {
             cv_.wait(lck, pred);
+        }
         return pred();
     }
 };
@@ -190,7 +194,7 @@ public:
     std::optional<T>
     tryPop()
     {
-        std::scoped_lock lck(m_);
+        std::scoped_lock const lck(m_);
         if (queue_.empty())
             return {};
 
@@ -212,7 +216,7 @@ getMarkers(size_t numMarkers)
 {
     assert(numMarkers <= 256);
 
-    unsigned char incr = 256 / numMarkers;
+    unsigned char const incr = 256 / numMarkers;
 
     std::vector<ripple::uint256> markers;
     markers.reserve(numMarkers);

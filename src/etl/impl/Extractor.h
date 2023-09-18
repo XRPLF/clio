@@ -28,6 +28,7 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 namespace etl::detail {
 
@@ -57,7 +58,7 @@ public:
         std::optional<uint32_t> finishSequence,
         SystemState const& state)
         : pipe_(std::ref(pipe))
-        , networkValidatedLedgers_{networkValidatedLedgers}
+        , networkValidatedLedgers_{std::move(networkValidatedLedgers)}
         , ledgerFetcher_{std::ref(ledgerFetcher)}
         , startSequence_{startSequence}
         , finishSequence_{finishSequence}

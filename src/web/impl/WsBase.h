@@ -76,13 +76,16 @@ public:
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer)
-        : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
+        : ConnectionBase(tagFactory, ip)
+        , buffer_(std::move(buffer))
+        , dosGuard_(dosGuard)
+        , upgraded(true)
+        , handler_(handler)
     {
-        upgraded = true;
         LOG(perfLog_.debug()) << tag() << "session created";
     }
 
-    virtual ~WsBase()
+    ~WsBase() override
     {
         LOG(perfLog_.debug()) << tag() << "session closed";
         dosGuard_.get().decrement(clientIp);
@@ -138,7 +141,7 @@ public:
     {
         boost::asio::dispatch(
             derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
-                messages_.push(std::move(msg));
+                messages_.push(msg);
                 maybeSendNext();
             });
     }
@@ -158,9 +161,13 @@ public:
             jsonResponse["warning"] = "load";
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
+            {
                 jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
+            }
             else
+            {
                 jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
+            }
 
             // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);

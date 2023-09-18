@@ -22,7 +22,7 @@
 namespace rpc {
 
 void
-AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const
+AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle)
 {
     auto offer = AccountOffersHandler::Offer();
     offer.takerPays = offerSle.getFieldAmount(ripple::sfTakerPays);
@@ -115,13 +115,17 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHan
 
     auto const convertAmount = [&](const char* field, ripple::STAmount const& amount) {
         if (amount.native())
+        {
             jsonObject[field] = amount.getText();
+        }
         else
+        {
             jsonObject[field] = {
                 {JS(currency), ripple::to_string(amount.getCurrency())},
                 {JS(issuer), ripple::to_string(amount.getIssuer())},
                 {JS(value), amount.getText()},
             };
+        }
     };
 
     convertAmount(JS(taker_pays), offer.takerPays);
@@ -143,9 +147,13 @@ tag_invoke(boost::json::value_to_tag<AccountOffersHandler::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(limit)))

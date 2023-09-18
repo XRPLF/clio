@@ -84,7 +84,7 @@ public:
     /**
      * @brief Calculates the wait time before attempting another retry
      */
-    std::chrono::milliseconds
+    static std::chrono::milliseconds
     calculateDelay(uint32_t attempt)
     {
         return std::chrono::milliseconds{lround(std::pow(2, std::min(10u, attempt)))};

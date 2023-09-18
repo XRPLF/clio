@@ -31,7 +31,7 @@ namespace rpc {
 NFTInfoHandler::Result
 NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 {
-    auto const tokenID = ripple::uint256{input.nftID.c_str()};
+    auto const tokenID = ripple::uint256{input.nftID};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
@@ -95,9 +95,13 @@ tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

@@ -137,7 +137,7 @@ TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -162,7 +162,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -187,7 +187,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -214,7 +214,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 
 TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -241,7 +241,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 
 TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -269,7 +269,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 
 TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -372,7 +372,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
         ACCOUNT1,
         ACCOUNT2,
         LEDGERHASH);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -540,7 +540,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         ACCOUNT,
         INDEX1,
         LEDGERHASH);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -580,7 +580,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
 
 TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -647,7 +647,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
         ACCOUNT,
         INDEX1,
         LEDGERHASH);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -721,7 +721,7 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
         ACCOUNT,
         INDEX1,
         LEDGERHASH);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);

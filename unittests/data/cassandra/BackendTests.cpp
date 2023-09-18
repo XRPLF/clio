@@ -37,8 +37,8 @@ namespace json = boost::json;
 using namespace data::cassandra;
 
 namespace {
-constexpr static auto contactPoints = "127.0.0.1";
-constexpr static auto keyspace = "clio_test";
+constexpr auto contactPoints = "127.0.0.1";
+constexpr auto keyspace = "clio_test";
 }  // namespace
 
 class BackendCassandraTest : public SyncAsioContextTest
@@ -69,7 +69,7 @@ protected:
         backend.reset();
 
         // drop the keyspace for next test
-        Handle handle{contactPoints};
+        Handle const handle{contactPoints};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + std::string{keyspace});
     }
@@ -82,7 +82,7 @@ TEST_F(BackendCassandraTest, Basic)
     work.emplace(ctx);
 
     boost::asio::spawn(ctx, [this, &done, &work](boost::asio::yield_context yield) {
-        std::string rawHeader =
+        std::string const rawHeader =
             "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
             "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
             "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
@@ -90,7 +90,7 @@ TEST_F(BackendCassandraTest, Basic)
             "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
-        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        ripple::LedgerInfo const lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, uint256ToString(data::lastKey));
@@ -162,7 +162,7 @@ TEST_F(BackendCassandraTest, Basic)
         // metadata, or anything like that. These tests are purely
         // binary tests to make sure the same data that goes in, comes
         // back out
-        std::string metaHex =
+        std::string const metaHex =
             "201C0000001AF8E411006F560A3E08122A05AC91DEFA87052B0554E4A29B46"
             "3A27642EBB060B6052196592EEE72200000000240480FDB52503CE1A863300"
             "000000000000003400000000000000005529983CBAED30F547471452921C3C"
@@ -194,7 +194,7 @@ TEST_F(BackendCassandraTest, Basic)
             "CD9079573876F16C0C004F06E6240480FDB9624000000005FF0E2BE1E72200"
             "000000240480FDBA2D00000005624000000005FF0E1F81142252F328CF9126"
             "3417762570D67220CCB33B1370E1E1F1031000";
-        std::string txnHex =
+        std::string const txnHex =
             "1200072200000000240480FDB920190480FDB5201B03CE1A8964400000033C"
             "83A95F65D59D9A62919C2D18000000000000000000000000434E5900000000"
             "000360E3E0751BD9A566CD03FA6CAFC78118B82BA068400000000000000C73"
@@ -203,18 +203,18 @@ TEST_F(BackendCassandraTest, Basic)
             "FE6B2DEBCF9183A426BC022005DAC06CD4517E86C2548A80996019F3AC60A0"
             "9EED153BF60C992930D68F09F981142252F328CF91263417762570D67220CC"
             "B33B1370";
-        std::string hashHex = "0A81FB3D6324C2DCF73131505C6E4DC67981D7FC39F5E9574CEC4B1F22D28BF7";
+        std::string const hashHex = "0A81FB3D6324C2DCF73131505C6E4DC67981D7FC39F5E9574CEC4B1F22D28BF7";
 
         // this account is not related to the above transaction and
         // metadata
-        std::string accountHex =
+        std::string const accountHex =
             "1100612200000000240480FDBC2503CE1A872D0000000555516931B2AD018EFFBE"
             "17C5C9DCCF872F36837C2C6136ACF80F2A24079CF81FD0624000000005FF0E0781"
             "142252F328CF91263417762570D67220CCB33B1370";
-        std::string accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
+        std::string const accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
 
         // An NFTokenMint tx
-        std::string nftTxnHex =
+        std::string const nftTxnHex =
             "1200192200000008240011CC9B201B001F71D6202A0000000168400000"
             "000000000C7321ED475D1452031E8F9641AF1631519A58F7B8681E172E"
             "4838AA0E59408ADA1727DD74406960041F34F10E0CBB39444B4D4E577F"
@@ -223,7 +223,7 @@ TEST_F(BackendCassandraTest, Basic)
             "677265677765697362726F642E636F6D81146203F49C21D5D6E022CB16"
             "DE3538F248662FC73C";
 
-        std::string nftTxnMeta =
+        std::string const nftTxnMeta =
             "201C00000001F8E511005025001F71B3556ED9C9459001E4F4A9121F4E"
             "07AB6D14898A5BBEF13D85C25D743540DB59F3CF566203F49C21D5D6E0"
             "22CB16DE3538F248662FC73CFFFFFFFFFFFFFFFFFFFFFFFFE6FAEC5A00"
@@ -321,7 +321,7 @@ TEST_F(BackendCassandraTest, Basic)
             "ECE1E72200000000240011CC9C2D0000000A202B0000002D202C000000"
             "066240000002540BE3E081146203F49C21D5D6E022CB16DE3538F24866"
             "2FC73CE1E1F1031000";
-        std::string nftTxnHashHex =
+        std::string const nftTxnHashHex =
             "6C7F69A6D25A13AC4A2E9145999F45D4674F939900017A96885FDC2757"
             "E9284E";
         ripple::uint256 nftID;
@@ -331,13 +331,13 @@ TEST_F(BackendCassandraTest, Basic)
 
         std::string metaBlob = hexStringToBinaryString(metaHex);
         std::string txnBlob = hexStringToBinaryString(txnHex);
-        std::string hashBlob = hexStringToBinaryString(hashHex);
+        std::string const hashBlob = hexStringToBinaryString(hashHex);
         std::string accountBlob = hexStringToBinaryString(accountHex);
-        std::string accountIndexBlob = hexStringToBinaryString(accountIndexHex);
+        std::string const accountIndexBlob = hexStringToBinaryString(accountIndexHex);
         std::vector<ripple::AccountID> affectedAccounts;
 
         std::string nftTxnBlob = hexStringToBinaryString(nftTxnHex);
-        std::string nftTxnMetaBlob = hexStringToBinaryString(nftTxnMeta);
+        std::string const nftTxnMetaBlob = hexStringToBinaryString(nftTxnMeta);
 
         {
             lgrInfoNext.seq = lgrInfoNext.seq + 1;
@@ -359,9 +359,9 @@ TEST_F(BackendCassandraTest, Basic)
 
             ripple::uint256 nftHash256;
             EXPECT_TRUE(nftHash256.parseHex(nftTxnHashHex));
-            ripple::TxMeta nftTxMeta{nftHash256, lgrInfoNext.seq, nftTxnMetaBlob};
+            ripple::TxMeta const nftTxMeta{nftHash256, lgrInfoNext.seq, nftTxnMetaBlob};
             ripple::SerialIter it{nftTxnBlob.data(), nftTxnBlob.size()};
-            ripple::STTx sttx{it};
+            ripple::STTx const sttx{it};
             auto const [parsedNFTTxsRef, parsedNFT] = etl::getNFTDataFromTx(nftTxMeta, sttx);
             // need to copy the nft txns so we can std::move later
             std::vector<NFTTransactionsData> parsedNFTTxs;
@@ -521,7 +521,7 @@ TEST_F(BackendCassandraTest, Basic)
             for (auto& blob : res)
             {
                 ++key;
-                std::string keyStr{reinterpret_cast<const char*>(key.data()), key.size()};
+                std::string const keyStr{reinterpret_cast<const char*>(key.data()), ripple::uint256::size()};
                 blob.first = keyStr;
                 blob.second = std::to_string(ledgerSequence) + keyStr;
             }
@@ -541,9 +541,9 @@ TEST_F(BackendCassandraTest, Basic)
             for (auto& blob : res)
             {
                 ++base;
-                std::string hashStr{reinterpret_cast<const char*>(base.data()), base.size()};
-                std::string txnStr = "tx" + std::to_string(ledgerSequence) + hashStr;
-                std::string metaStr = "meta" + std::to_string(ledgerSequence) + hashStr;
+                std::string const hashStr{reinterpret_cast<const char*>(base.data()), ripple::uint256::size()};
+                std::string const txnStr = "tx" + std::to_string(ledgerSequence) + hashStr;
+                std::string const metaStr = "meta" + std::to_string(ledgerSequence) + hashStr;
                 blob = std::make_tuple(hashStr, txnStr, metaStr);
             }
             return res;
@@ -613,17 +613,25 @@ TEST_F(BackendCassandraTest, Basic)
                 for (size_t i = 0; i < objs.size(); ++i)
                 {
                     if (i + 1 < objs.size())
+                    {
                         backend->writeSuccessor(
                             std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first});
+                    }
                     else
+                    {
                         backend->writeSuccessor(
                             std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey));
+                    }
                 }
-                if (state.count(lgrInfo.seq - 1))
+                if (state.contains(lgrInfo.seq - 1))
+                {
                     backend->writeSuccessor(
                         std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
+                }
                 else
+                {
                     backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
+                }
             }
 
             backend->writeAccountTransactions(std::move(accountTx));
@@ -663,7 +671,7 @@ TEST_F(BackendCassandraTest, Basic)
                 std::optional<data::TransactionsCursor> cursor;
                 do
                 {
-                    uint32_t limit = 10;
+                    uint32_t const limit = 10;
                     auto [accountTransactions, retCursor] =
                         backend->fetchAccountTransactions(account, limit, false, cursor, yield);
                     if (retCursor)
@@ -721,15 +729,15 @@ TEST_F(BackendCassandraTest, Basic)
             std::vector<data::LedgerObject> retObjs;
             do
             {
-                uint32_t limit = 10;
+                uint32_t const limit = 10;
                 page = backend->fetchLedgerPage(page.cursor, seq, limit, false, yield);
                 retObjs.insert(retObjs.end(), page.objects.begin(), page.objects.end());
             } while (page.cursor);
 
-            for (auto obj : objs)
+            for (const auto& obj : objs)
             {
                 bool found = false;
-                for (auto retObj : retObjs)
+                for (const auto& retObj : retObjs)
                 {
                     if (ripple::strHex(obj.first) == ripple::strHex(retObj.key))
                     {
@@ -757,8 +765,8 @@ TEST_F(BackendCassandraTest, Basic)
             {
                 for (auto account : rec.accounts)
                 {
-                    allAccountTx[lgrInfoNext.seq][account].push_back(
-                        std::string{reinterpret_cast<const char*>(rec.txHash.data()), rec.txHash.size()});
+                    allAccountTx[lgrInfoNext.seq][account].emplace_back(
+                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size());
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -780,18 +788,22 @@ TEST_F(BackendCassandraTest, Basic)
         for (size_t i = 0; i < 10; ++i)
         {
             lgrInfoNext = generateNextLedger(lgrInfoNext);
-            if (!objs.size())
+            if (objs.empty())
+            {
                 objs = generateObjects(25, lgrInfoNext.seq);
+            }
             else
+            {
                 objs = updateObjects(lgrInfoNext.seq, objs);
+            }
             auto txns = generateTxns(10, lgrInfoNext.seq);
             auto accountTx = generateAccountTx(lgrInfoNext.seq, txns);
             for (auto rec : accountTx)
             {
                 for (auto account : rec.accounts)
                 {
-                    allAccountTx[lgrInfoNext.seq][account].push_back(
-                        std::string{reinterpret_cast<const char*>(rec.txHash.data()), rec.txHash.size()});
+                    allAccountTx[lgrInfoNext.seq][account].emplace_back(
+                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size());
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -818,7 +830,7 @@ TEST_F(BackendCassandraTest, Basic)
                 {
                     if (seq > max)
                     {
-                        if (objs.count(k) == 0)
+                        if (!objs.contains(k))
                             objs[k] = "";
                     }
                     else
@@ -827,9 +839,10 @@ TEST_F(BackendCassandraTest, Basic)
                     }
                 }
             }
+            flat.reserve(objs.size());
             for (auto [key, value] : objs)
             {
-                flat.push_back(std::make_pair(key, value));
+                flat.emplace_back(key, value);
             }
             return flat;
         };
@@ -846,7 +859,7 @@ TEST_F(BackendCassandraTest, Basic)
                     for (auto& hash : hashes)
                     {
                         auto& [txn, meta] = allTxnsMap[hash];
-                        accountTx[account].push_back(std::make_tuple(hash, txn, meta));
+                        accountTx[account].emplace_back(hash, txn, meta);
                     }
                 }
             }
@@ -878,7 +891,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     boost::asio::spawn(ctx, [this, &done, &work](boost::asio::yield_context yield) {
         backend->cache().setFull();
 
-        std::string rawHeader =
+        std::string const rawHeader =
             "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
             "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
             "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
@@ -886,16 +899,16 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
         // this account is not related to the above transaction and
         // metadata
-        std::string accountHex =
+        std::string const accountHex =
             "1100612200000000240480FDBC2503CE1A872D0000000555516931B2AD018EFFBE"
             "17C5C9DCCF872F36837C2C6136ACF80F2A24079CF81FD0624000000005FF0E0781"
             "142252F328CF91263417762570D67220CCB33B1370";
-        std::string accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
+        std::string const accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
 
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
         std::string accountBlob = hexStringToBinaryString(accountHex);
-        std::string accountIndexBlob = hexStringToBinaryString(accountIndexHex);
-        ripple::LedgerInfo lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        std::string const accountIndexBlob = hexStringToBinaryString(accountIndexHex);
+        ripple::LedgerInfo const lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend->startWrites();
         backend->writeLedger(lgrInfo, std::move(rawHeaderBlob));
@@ -998,7 +1011,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_FALSE(obj);
         }
         // obtain a time-based seed:
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        unsigned const seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::string accountBlobOld = accountBlob;
         {
             backend->startWrites();
@@ -1083,7 +1096,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             for (auto& blob : res)
             {
                 ++key;
-                std::string keyStr{reinterpret_cast<const char*>(key.data()), key.size()};
+                std::string const keyStr{reinterpret_cast<const char*>(key.data()), ripple::uint256::size()};
                 blob.first = keyStr;
                 blob.second = std::to_string(ledgerSequence) + keyStr;
             }
@@ -1126,17 +1139,25 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 for (size_t i = 0; i < objs.size(); ++i)
                 {
                     if (i + 1 < objs.size())
+                    {
                         backend->writeSuccessor(
                             std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first});
+                    }
                     else
+                    {
                         backend->writeSuccessor(
                             std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey));
+                    }
                 }
-                if (state.count(lgrInfo.seq - 1))
+                if (state.contains(lgrInfo.seq - 1))
+                {
                     backend->writeSuccessor(
                         std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
+                }
                 else
+                {
                     backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
+                }
             }
 
             ASSERT_TRUE(backend->finishWrites(lgrInfo.seq));
@@ -1198,14 +1219,14 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             std::vector<data::LedgerObject> retObjs;
             do
             {
-                uint32_t limit = 10;
+                uint32_t const limit = 10;
                 page = backend->fetchLedgerPage(page.cursor, seq, limit, false, yield);
                 retObjs.insert(retObjs.end(), page.objects.begin(), page.objects.end());
             } while (page.cursor);
-            for (auto obj : objs)
+            for (const auto& obj : objs)
             {
                 bool found = false;
-                for (auto retObj : retObjs)
+                for (const auto& retObj : retObjs)
                 {
                     if (ripple::strHex(obj.first) == ripple::strHex(retObj.key))
                     {
@@ -1236,10 +1257,14 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         for (size_t i = 0; i < 10; ++i)
         {
             lgrInfoNext = generateNextLedger(lgrInfoNext);
-            if (!objs.size())
+            if (objs.empty())
+            {
                 objs = generateObjects(25, lgrInfoNext.seq);
+            }
             else
+            {
                 objs = updateObjects(lgrInfoNext.seq, objs);
+            }
             EXPECT_EQ(objs.size(), 25);
             EXPECT_NE(objs[0], objs[1]);
             std::sort(objs.begin(), objs.end());
@@ -1257,7 +1282,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 {
                     if (seq > max)
                     {
-                        if (objs.count(k) == 0)
+                        if (!objs.contains(k))
                             objs[k] = "";
                     }
                     else
@@ -1266,9 +1291,10 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     }
                 }
             }
+            flat.reserve(objs.size());
             for (auto [key, value] : objs)
             {
-                flat.push_back(std::make_pair(key, value));
+                flat.emplace_back(key, value);
             }
             return flat;
         };

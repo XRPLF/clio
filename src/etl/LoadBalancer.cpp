@@ -74,9 +74,13 @@ LoadBalancer::LoadBalancer(
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
 {
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
+    {
         downloadRanges_ = std::clamp(*value, 1u, 256u);
+    }
     else if (backend->fetchLedgerRange())
+    {
         downloadRanges_ = 4;
+    }
 
     for (auto const& entry : config.array("etl_sources"))
     {
@@ -101,10 +105,14 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res)
+            {
                 LOG(log_.error()) << "Failed to download initial ledger."
                                   << " Sequence = " << sequence << " source = " << source->toString();
+            }
             else
+            {
                 response = std::move(data);
+            }
 
             return res;
         },
@@ -116,7 +124,7 @@ LoadBalancer::OptionalGetLedgerResponseType
 LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     GetLedgerResponseType response;
-    bool success = execute(
+    bool const success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
             auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
@@ -126,19 +134,18 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
                                 << " from source = " << source->toString();
                 return true;
             }
-            else
-            {
-                LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
-                                << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
-                                << ", source = " << source->toString();
-                return false;
-            }
+
+            LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
+                            << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
+                            << ", source = " << source->toString();
+            return false;
         },
         ledgerSequence);
     if (success)
+    {
         return response;
-    else
-        return {};
+    }
+    return {};
 }
 
 std::optional<boost::json::object>
@@ -209,18 +216,16 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
         This || true is only needed when loading full history standalone */
         if (source->hasLedger(ledgerSequence))
         {
-            bool res = f(source);
+            bool const res = f(source);
             if (res)
             {
                 LOG(log_.debug()) << "Successfully executed func at source = " << source->toString()
                                   << " - ledger sequence = " << ledgerSequence;
                 break;
             }
-            else
-            {
-                LOG(log_.warn()) << "Failed to execute func at source = " << source->toString()
-                                 << " - ledger sequence = " << ledgerSequence;
-            }
+
+            LOG(log_.warn()) << "Failed to execute func at source = " << source->toString()
+                             << " - ledger sequence = " << ledgerSequence;
         }
         else
         {

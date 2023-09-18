@@ -74,8 +74,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         // Validator only works in this handler
         // The accounts array must have two different elements
@@ -177,8 +177,8 @@ public:
 private:
     // dir_root and owner can not be both empty or filled at the same time
     // This function will return an error if this is the case
-    std::variant<ripple::uint256, Status>
-    composeKeyFromDirectory(boost::json::object const& directory) const noexcept;
+    static std::variant<ripple::uint256, Status>
+    composeKeyFromDirectory(boost::json::object const& directory) noexcept;
 
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);

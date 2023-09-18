@@ -168,7 +168,7 @@ TEST_P(AccountObjectsParameterTest, InvalidParams)
 
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -194,7 +194,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -219,7 +219,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -246,7 +246,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 
 TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -305,7 +305,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
                                             ]
                                         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -349,7 +349,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 
 TEST_F(RPCAccountObjectsHandlerTest, Limit)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -402,7 +402,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
 
 TEST_F(RPCAccountObjectsHandlerTest, Marker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -451,7 +451,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
 
 TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -511,7 +511,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -567,7 +567,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -622,7 +622,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
@@ -684,7 +684,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
@@ -735,7 +735,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
@@ -802,7 +802,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleTypeYieldsEmptyResult)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
@@ -931,7 +931,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
                                             ]
                                         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -985,7 +985,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1002,8 +1002,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous =
-            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
+        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1034,7 +1033,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1051,8 +1050,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous =
-            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
+        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1088,7 +1086,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1100,14 +1098,13 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{INDEX1};
-    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
+    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
     const auto marker = current;
     sort(first.begin(), first.end());
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous =
-            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
+        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1168,7 +1165,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 // when limit reached, happen to be the end of NFT page list
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1227,7 +1224,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1260,7 +1257,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1297,7 +1294,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1309,14 +1306,13 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{INDEX1};
-    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
+    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
     const auto marker = current;
     sort(first.begin(), first.end());
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous =
-            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
+        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1418,7 +1414,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
                                             ]
                                         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1473,7 +1469,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1559,7 +1555,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
         }})",
         AccountObjectsHandler::LIMIT_MIN);
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -1639,7 +1635,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
         }})",
         AccountObjectsHandler::LIMIT_MAX);
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);

@@ -131,7 +131,7 @@ protected:
         runner.emplace([this] { ctx.run(); });
     }
 
-    ~WebServerTest()
+    () override
     {
         work.reset();
         ctx.stop();
@@ -212,7 +212,7 @@ makeServerSync(
     boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
         server = web::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
         {
-            std::lock_guard lk(m);
+            std::lock_guard const lk(m);
             ready = true;
         }
         cv.notify_one();

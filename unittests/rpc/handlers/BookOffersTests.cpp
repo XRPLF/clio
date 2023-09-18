@@ -486,7 +486,7 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 {
     auto const& bundle = GetParam();
     auto const seq = 300;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -1100,7 +1100,7 @@ INSTANTIATE_TEST_SUITE_P(
 // ledger not exist
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -1133,7 +1133,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -1166,7 +1166,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -1202,7 +1202,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
 TEST_F(RPCBookOffersHandlerTest, Limit)
 {
     auto const seq = 300;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -1244,7 +1244,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         ACCOUNT,
         PAYS20USDGETS10XRPBOOKDIR);
 
-    std::vector<Blob> bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
@@ -1273,7 +1273,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
 TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
 {
     auto const seq = 300;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -1315,7 +1315,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         ACCOUNT,
         PAYS20USDGETS10XRPBOOKDIR);
 
-    std::vector<Blob> bbs(BookOffersHandler::LIMIT_MAX + 1, gets10XRPPays20USDOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs(BookOffersHandler::LIMIT_MAX + 1, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 

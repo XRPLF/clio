@@ -21,6 +21,8 @@
 
 #include <ripple/protocol/LedgerHeader.h>
 
+#include <utility>
+
 namespace etl {
 // Database must be populated when this starts
 std::optional<uint32_t>
@@ -44,8 +46,10 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     auto pipe = DataPipeType{numExtractors, startSequence};
 
     for (auto i = 0u; i < numExtractors; ++i)
+    {
         extractors.push_back(std::make_unique<ExtractorType>(
             pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_));
+    }
 
     auto transformer =
         TransformerType{pipe, backend_, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, startSequence, state_};
@@ -166,7 +170,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         // waits one second between each attempt to read the ledger from the
         // database
         constexpr size_t timeoutSeconds = 10;
-        bool success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
+        bool const success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
 
         if (!success)
         {
@@ -199,14 +203,13 @@ ETLService::monitorReadOnly()
         if (!rng)
         {
             if (auto net = networkValidatedLedgers_->getMostRecent())
+            {
                 return *net;
-            else
-                return std::nullopt;
+            }
+            return std::nullopt;
         }
-        else
-        {
-            return rng->maxSequence;
-        }
+
+        return rng->maxSequence;
     }();
 
     if (!latestSequenceOpt.has_value())
@@ -251,9 +254,13 @@ ETLService::doWork()
         beast::setCurrentThreadName("ETLService worker");
 
         if (state_.isReadOnly)
+        {
             monitorReadOnly();
+        }
         else
+        {
             monitor();
+        }
     });
 }
 
@@ -266,7 +273,7 @@ ETLService::ETLService(
     std::shared_ptr<NetworkValidatedLedgersType> ledgers)
     : backend_(backend)
     , loadBalancer_(balancer)
-    , networkValidatedLedgers_(ledgers)
+    , networkValidatedLedgers_(std::move(ledgers))
     , cacheLoader_(config, ioc, backend, backend->cache())
     , ledgerFetcher_(backend, balancer)
     , ledgerLoader_(backend, balancer, ledgerFetcher_, state_)

@@ -185,7 +185,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
 // error case ledger non exist via hash
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     // mock fetchLedgerByHash return empty
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
@@ -212,7 +212,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -238,7 +238,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 // idk why this case will happen in reality
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
@@ -265,7 +265,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // no need to check from db, call fetchLedgerBySequence 0 time
@@ -290,7 +290,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case when nft is not found
 TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -390,7 +390,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
             }
         ]
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -430,7 +430,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
 // normal case when provided with nft_id and limit
 TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -443,12 +443,12 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
     auto repetitions = 500;
     auto const offer = CreateNFTSellOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while (repetitions--)
+    while ((repetitions--) != 0)
     {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
+    ripple::STObject const ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
@@ -478,7 +478,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 // normal case when provided with nft_id, limit and marker
 TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -491,12 +491,12 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     auto repetitions = 500;
     auto const offer = CreateNFTSellOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while (repetitions--)
+    while ((repetitions--) != 0)
     {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
+    ripple::STObject const ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     auto const cursorSellOffer = CreateNFTSellOffer(NFTID, ACCOUNT);
 
     // first is nft offer object
@@ -541,7 +541,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 // nothing left after reading remaining 50 entries
 TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimit)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -554,12 +554,12 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     auto repetitions = 100;
     auto const offer = CreateNFTSellOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while (repetitions--)
+    while ((repetitions--) != 0)
     {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
+    ripple::STObject const ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     auto const cursorSellOffer = CreateNFTSellOffer(NFTID, ACCOUNT);
 
     // first is nft offer object
@@ -624,7 +624,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
 
 TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -643,6 +643,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
     // return two nft buy offers
     std::vector<Blob> bbs;
     auto const offer = CreateNFTSellOffer(NFTID, ACCOUNT);
+    bbs.reserve(NFTSellOffersHandler::LIMIT_MIN + 1);
     for (auto i = 0; i < NFTSellOffersHandler::LIMIT_MIN + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -667,7 +668,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -686,6 +687,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
     // return two nft buy offers
     std::vector<Blob> bbs;
     auto const offer = CreateNFTSellOffer(NFTID, ACCOUNT);
+    bbs.reserve(NFTSellOffersHandler::LIMIT_MAX + 1);
     for (auto i = 0; i < NFTSellOffersHandler::LIMIT_MAX + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));

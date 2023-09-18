@@ -52,8 +52,10 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
     auto const& logLevel = value.as_string();
 
     if (boost::iequals(logLevel, "trace"))
+    {
         return Severity::TRC;
-    else if (boost::iequals(logLevel, "debug"))
+    }
+    if (boost::iequals(logLevel, "debug"))
         return Severity::DBG;
     else if (boost::iequals(logLevel, "info"))
         return Severity::NFO;
@@ -72,7 +74,6 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
 void
 LogService::init(util::Config const& config)
 {
-    namespace src = boost::log::sources;
     namespace keywords = boost::log::keywords;
     namespace sinks = boost::log::sinks;
 
@@ -132,7 +133,7 @@ LogService::init(util::Config const& config)
     for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides)
     {
         auto name = cfg.valueOrThrow<std::string>("channel", "Channel name is required");
-        if (not std::count(std::begin(channels), std::end(channels), name))
+        if (std::count(std::begin(channels), std::end(channels), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
 
         min_severity[name] = cfg.valueOr<Severity>("log_level", defaultSeverity);
@@ -174,7 +175,7 @@ Logger::fatal(SourceLocationType const& loc) const
 };
 
 std::string
-Logger::Pump::pretty_path(SourceLocationType const& loc, size_t max_depth) const
+Logger::Pump::pretty_path(SourceLocationType const& loc, size_t max_depth)
 {
     auto const file_path = std::string{loc.file_name()};
     auto idx = file_path.size();

@@ -36,8 +36,8 @@
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
-    std::uint32_t ledgerSequence;
-    std::uint32_t transactionIndex;
+    std::uint32_t ledgerSequence{};
+    std::uint32_t transactionIndex{};
     ripple::uint256 txHash;
 
     AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash)
@@ -179,7 +179,7 @@ template <class T>
 inline bool
 isDirNode(T const& object)
 {
-    short spaceKey = (object.data()[1] << 8) | object.data()[2];
+    short const spaceKey = (object.data()[1] << 8) | object.data()[2];
     return spaceKey == 0x0064;
 }
 
@@ -212,7 +212,7 @@ inline ripple::uint256
 getBook(T const& offer)
 {
     ripple::SerialIter it{offer.data(), offer.size()};
-    ripple::SLE sle{it, {}};
+    ripple::SLE const sle{it, {}};
     ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
 
     return book;
@@ -246,7 +246,7 @@ getBookBase(T const& key)
 inline std::string
 uint256ToString(ripple::uint256 const& input)
 {
-    return {reinterpret_cast<const char*>(input.data()), input.size()};
+    return {reinterpret_cast<const char*>(input.data()), ripple::uint256::size()};
 }
 
 /** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */

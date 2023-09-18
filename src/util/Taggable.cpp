@@ -42,7 +42,7 @@ UUIDTagGenerator::next()
     static boost::uuids::random_generator gen{};
     static std::mutex mtx{};
 
-    std::lock_guard lk(mtx);
+    std::lock_guard const lk(mtx);
     return gen();
 }
 

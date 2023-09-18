@@ -81,7 +81,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
     if (input.marker)
     {
-        cursor = uint256(input.marker->c_str());
+        cursor = uint256(*input.marker->);
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
         auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {
@@ -169,9 +169,13 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(marker)))

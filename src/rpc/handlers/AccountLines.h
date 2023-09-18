@@ -53,10 +53,10 @@ public:
         std::string currency;
         std::string limit;
         std::string limitPeer;
-        uint32_t qualityIn;
-        uint32_t qualityOut;
-        bool noRipple;
-        bool noRipplePeer;
+        uint32_t qualityIn{};
+        uint32_t qualityOut{};
+        bool noRipple{};
+        bool noRipplePeer{};
         std::optional<bool> authorized;
         std::optional<bool> peerAuthorized;
         std::optional<bool> freeze;
@@ -68,10 +68,10 @@ public:
         std::string account;
         std::vector<LineResponse> lines;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         bool validated = true;  // should be sent via framework
         std::optional<std::string> marker;
-        uint32_t limit;
+        uint32_t limit{};
     };
 
     struct Input
@@ -92,8 +92,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account),
@@ -117,12 +117,12 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
+    static void
     addLine(
         std::vector<LineResponse>& lines,
         ripple::SLE const& lineSle,
         ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount) const;
+        std::optional<ripple::AccountID> const& peerAccount);
 
 private:
     friend void

@@ -50,17 +50,20 @@ struct DefaultProcessor final
 
             // real handler is given expected Input, not json
             if (!ret)
+            {
                 return Error{ret.error()};  // forward Status
-            else
-                return value_from(ret.value());
+            }
+            return value_from(ret.value());
         }
         else if constexpr (SomeHandlerWithoutInput<HandlerType>)
         {
             // no input to pass, ignore the value
-            if (auto const ret = handler.process(ctx); not ret)
+            auto const ret = handler.process(ctx);
+            if (not ret)
+            {
                 return Error{ret.error()};  // forward Status
-            else
-                return value_from(ret.value());
+            }
+            return value_from(ret.value());
         }
         else
         {

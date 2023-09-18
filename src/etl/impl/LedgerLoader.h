@@ -30,6 +30,7 @@
 #include <ripple/beast/core/CurrentThreadName.h>
 
 #include <memory>
+#include <utility>
 
 /**
  * @brief Account transactions, NFT transactions and NFT data bundled togeher.
@@ -71,7 +72,10 @@ public:
         std::shared_ptr<LoadBalancerType> balancer,
         LedgerFetcherType& fetcher,
         SystemState const& state)
-        : backend_{backend}, loadBalancer_{balancer}, fetcher_{std::ref(fetcher)}, state_{std::cref(state)}
+        : backend_{std::move(backend)}
+        , loadBalancer_{std::move(balancer)}
+        , fetcher_{std::ref(fetcher)}
+        , state_{std::cref(state)}
     {
     }
 
@@ -96,7 +100,7 @@ public:
             std::string* raw = txn.mutable_transaction_blob();
 
             ripple::SerialIter it{raw->data(), raw->size()};
-            ripple::STTx sttx{it};
+            ripple::STTx const sttx{it};
 
             LOG(log_.trace()) << "Inserting transaction = " << sttx.getTransactionID();
 
@@ -225,7 +229,7 @@ public:
                                 ++numWrites;
                             }
 
-                            prev = std::move(cur->key);
+                            prev = cur->key;
                             if (numWrites % 100000 == 0 && numWrites != 0)
                                 LOG(log_.info()) << "Wrote " << numWrites << " book successors";
                         }

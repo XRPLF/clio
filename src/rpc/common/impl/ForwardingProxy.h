@@ -80,10 +80,7 @@ public:
                   request.at("accounts").as_bool()));
         };
 
-        if (checkAccountInfoForward() or checkLedgerForward())
-            return true;
-
-        return false;
+        return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());
     }
 
     Result
@@ -92,16 +89,15 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        if (auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield); not res)
+        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        if (not res)
         {
             notifyFailedToForward(ctx.method);
             return Status{RippledError::rpcFAILED_TO_FORWARD};
         }
-        else
-        {
-            notifyForwarded(ctx.method);
-            return *res;
-        }
+
+        notifyForwarded(ctx.method);
+        return *res;
     }
 
     bool

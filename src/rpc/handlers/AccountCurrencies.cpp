@@ -106,9 +106,13 @@ tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::js
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

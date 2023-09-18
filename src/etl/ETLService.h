@@ -46,7 +46,7 @@ struct NFTTransactionsData;
 struct NFTsData;
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 /**
  * @brief This namespace contains everything to do with the ETL and ETL sources.
@@ -265,7 +265,7 @@ private:
      * @return the number of markers
      */
     std::uint32_t
-    getNumMarkers()
+    getNumMarkers() const
     {
         return numMarkers_;
     }

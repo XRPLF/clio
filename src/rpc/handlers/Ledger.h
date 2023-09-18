@@ -38,7 +38,7 @@ class LedgerHandler
 public:
     struct Output
     {
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         // TODO: use better type
         boost::json::object header;
@@ -65,8 +65,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},

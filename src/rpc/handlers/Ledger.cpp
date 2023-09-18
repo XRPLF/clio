@@ -138,7 +138,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
             {
                 entry["object"] = ripple::strHex(obj.blob);
             }
-            else if (obj.blob.size())
+            else if (!obj.blob.empty() != 0u)
             {
                 ripple::STLedgerEntry const sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
                 entry["object"] = toJson(sle);
@@ -181,9 +181,13 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(transactions)))

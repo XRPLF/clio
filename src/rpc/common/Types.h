@@ -31,10 +31,10 @@
 class LoadBalancer;
 namespace web {
 struct ConnectionBase;
-}
+}  // namespace web
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 namespace rpc {
 
@@ -100,7 +100,7 @@ using Result = std::variant<Status, boost::json::object>;
 struct AccountCursor
 {
     ripple::uint256 index;
-    std::uint32_t hint;
+    std::uint32_t hint{};
 
     std::string
     toString() const

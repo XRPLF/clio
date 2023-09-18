@@ -226,8 +226,10 @@ private:
         auto const& style = value.as_string();
 
         if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
+        {
             return TagDecoratorFactory::Type::UINT;
-        else if (boost::iequals(style, "null") || boost::iequals(style, "none"))
+        }
+        if (boost::iequals(style, "null") || boost::iequals(style, "none"))
             return TagDecoratorFactory::Type::NONE;
         else if (boost::iequals(style, "uuid"))
             return TagDecoratorFactory::Type::UUID;

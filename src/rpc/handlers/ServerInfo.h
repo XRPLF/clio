@@ -39,10 +39,10 @@ class LoadBalancer;
 }  // namespace etl
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 namespace rpc {
 class Counters;
-}
+}  // namespace rpc
 
 namespace rpc {
 

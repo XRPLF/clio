@@ -24,6 +24,7 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace data {
@@ -74,12 +75,8 @@ struct TransactionAndMetadata
     std::uint32_t date = 0;
 
     TransactionAndMetadata() = default;
-    TransactionAndMetadata(
-        Blob const& transaction,
-        Blob const& metadata,
-        std::uint32_t ledgerSequence,
-        std::uint32_t date)
-        : transaction{transaction}, metadata{metadata}, ledgerSequence{ledgerSequence}, date{date}
+    TransactionAndMetadata(Blob transaction, Blob metadata, std::uint32_t ledgerSequence, std::uint32_t date)
+        : transaction{std::move(transaction)}, metadata{std::move(metadata)}, ledgerSequence{ledgerSequence}, date{date}
     {
     }
 
@@ -148,18 +145,18 @@ struct TransactionsAndCursor
 struct NFT
 {
     ripple::uint256 tokenID;
-    std::uint32_t ledgerSequence;
+    std::uint32_t ledgerSequence{};
     ripple::AccountID owner;
     Blob uri;
-    bool isBurned;
+    bool isBurned{};
 
     NFT() = default;
     NFT(ripple::uint256 const& tokenID,
         std::uint32_t ledgerSequence,
         ripple::AccountID const& owner,
-        Blob const& uri,
+        Blob uri,
         bool isBurned)
-        : tokenID{tokenID}, ledgerSequence{ledgerSequence}, owner{owner}, uri{uri}, isBurned{isBurned}
+        : tokenID{tokenID}, ledgerSequence{ledgerSequence}, owner{owner}, uri{std::move(uri)}, isBurned{isBurned}
     {
     }
 

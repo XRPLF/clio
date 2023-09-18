@@ -160,6 +160,7 @@ private:
 
             auto const context = [&] {
                 if (connection->upgraded)
+                {
                     return rpc::make_WsContext(
                         yield,
                         request,
@@ -168,14 +169,14 @@ private:
                         *range,
                         connection->clientIp,
                         std::cref(apiVersionParser_));
-                else
-                    return rpc::make_HttpContext(
-                        yield,
-                        request,
-                        tagFactory_.with(connection->tag()),
-                        *range,
-                        connection->clientIp,
-                        std::cref(apiVersionParser_));
+                }
+                return rpc::make_HttpContext(
+                    yield,
+                    request,
+                    tagFactory_.with(connection->tag()),
+                    *range,
+                    connection->clientIp,
+                    std::cref(apiVersionParser_));
             }();
 
             if (!context)

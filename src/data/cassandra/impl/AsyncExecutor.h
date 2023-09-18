@@ -103,15 +103,19 @@ private:
             else
             {
                 if (retryPolicy_.shouldRetry(res.error()))
+                {
                     retryPolicy_.retry([self, &handle]() { self->execute(handle); });
+                }
                 else
+                {
                     onComplete_(std::forward<decltype(res)>(res));  // report error
+                }
             }
 
             self = nullptr;  // explicitly decrement refcount
         };
 
-        std::scoped_lock lck{mtx_};
+        std::scoped_lock const lck{mtx_};
         future_.emplace(handle.asyncExecute(data_, std::move(handler)));
     }
 };

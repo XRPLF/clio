@@ -397,19 +397,19 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    ripple::STObject metaObj = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
+    ripple::STObject const metaObj = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
 
     auto trans2 = TransactionAndMetadata();
-    ripple::STObject obj2 = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj2 = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    ripple::STObject metaObj2 = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
+    ripple::STObject const metaObj2 = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -448,7 +448,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -489,7 +489,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -530,7 +530,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -571,7 +571,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -612,7 +612,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -665,7 +665,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -704,7 +704,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -747,7 +747,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
@@ -773,7 +773,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
@@ -799,7 +799,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -842,7 +842,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -884,7 +884,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -925,7 +925,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -1158,7 +1158,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
                         })";
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     auto const transactions = genNFTTransactions(MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));

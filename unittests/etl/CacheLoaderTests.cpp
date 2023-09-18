@@ -50,8 +50,10 @@ struct CacheLoaderTest : public MockBackendTest
     {
         work.reset();
         for (auto& optThread : optThreads)
+        {
             if (optThread.joinable())
                 optThread.join();
+        }
         ctx.stop();
         MockBackendTest::TearDown();
     }
@@ -88,7 +90,7 @@ getLatestDiff()
 
 TEST_F(CacheLoaderTest, FromCache)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     CacheLoader loader{cfg, ctx, mockBackendPtr, cache};
 
     auto const diffs = getLatestDiff();
@@ -104,14 +106,14 @@ TEST_F(CacheLoaderTest, FromCache)
         .WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
             // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
             // for each thread, the last 2 items must be end flag and nullopt, otherwise it will loop forever
-            std::lock_guard<std::mutex> guard(keysMutex);
+            std::lock_guard<std::mutex> const guard(keysMutex);
             threadKeysMap[std::this_thread::get_id()]++;
 
             if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1)
             {
                 return lastKey;
             }
-            else if (threadKeysMap[std::this_thread::get_id()] == keysSize)
+            if (threadKeysMap[std::this_thread::get_id()] == keysSize)
             {
                 threadKeysMap[std::this_thread::get_id()] = 0;
                 return std::nullopt;
@@ -135,7 +137,7 @@ TEST_F(CacheLoaderTest, FromCache)
     bool cacheReady = false;
     ON_CALL(cache, setFull).WillByDefault(Invoke([&]() {
         {
-            std::lock_guard lk(m);
+            std::lock_guard const lk(m);
             cacheReady = true;
         }
         cv.notify_one();

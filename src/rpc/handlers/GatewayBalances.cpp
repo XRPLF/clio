@@ -67,7 +67,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
             // Here, a negative balance means the cold wallet owes (normal)
             // A positive balance means the cold wallet has an asset (unusual)
 
-            if (input.hotWallets.count(peer) > 0)
+            if (input.hotWallets.contains(peer))
             {
                 // This is a specified hot wallet
                 output.hotBalances[peer].push_back(-balance);
@@ -77,7 +77,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                 // This is a gateway asset
                 output.assets[peer].push_back(balance);
             }
-            else if (freeze)
+            else if (freeze != 0u)
             {
                 // An obligation the gateway has frozen
                 output.frozenBalances[peer].push_back(-balance);
@@ -168,15 +168,15 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
         return balancesObj;
     };
 
-    if (auto balances = toJson(output.hotBalances); balances.size())
+    if (auto balances = toJson(output.hotBalances); !balances.empty())
         obj[JS(balances)] = balances;
 
     // we don't have frozen_balances field in the
     // document:https://xrpl.org/gateway_balances.html#gateway_balances
-    if (auto balances = toJson(output.frozenBalances); balances.size())
+    if (auto balances = toJson(output.frozenBalances); !balances.empty())
         obj[JS(frozen_balances)] = balances;
 
-    if (auto balances = toJson(output.assets); balances.size())
+    if (auto balances = toJson(output.assets); !balances.empty())
         obj[JS(assets)] = balances;
 
     obj[JS(account)] = output.accountID;
@@ -203,9 +203,13 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(hotwallet)))

@@ -83,20 +83,21 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 // limit = 10, return 2 objects
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     // return owner index
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+    ripple::STObject const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -119,7 +120,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 // limit = 10, return 10 objects and marker
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
@@ -128,12 +129,12 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 11;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -160,7 +161,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 // 10 objects per page, limit is 15, return the second page as marker
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDirKk = ripple::keylet::ownerDir(account).key;
@@ -173,12 +174,12 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 10;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     objectsCount = 15;
@@ -216,7 +217,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 // Send a valid marker
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
@@ -227,12 +228,12 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 10;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     objectsCount = 10;
@@ -267,7 +268,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 // return invalid params error
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
@@ -276,12 +277,12 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     int objectsCount = 10;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);

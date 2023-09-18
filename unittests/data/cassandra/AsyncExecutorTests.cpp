@@ -69,9 +69,13 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3)
+            {
                 cb({});
+            }
             else
+            {
                 cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
+            }
 
             return FakeFutureWithCallback{};
         });
@@ -106,9 +110,13 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3)
+            {
                 cb({});
+            }
             else
+            {
                 cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
+            }
 
             return FakeFutureWithCallback{};
         });

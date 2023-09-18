@@ -21,6 +21,8 @@
 
 #include <web/impl/WsBase.h>
 
+#include <utility>
+
 namespace web {
 
 /**
@@ -57,7 +59,7 @@ public:
     {
     }
 
-    ~PlainWsSession() = default;
+    ~PlainWsSession() override = default;
 
     /** @return The websocket stream. */
     StreamType&
@@ -80,8 +82,8 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>>
     boost::beast::tcp_stream http_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
-    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<web::DOSGuard> dosGuard_;
+    std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_{};
+    std::reference_wrapper<web::DOSGuard> dosGuard_{};
     http::request<http::string_body> req_;
     std::string ip_;
     std::shared_ptr<HandlerType> const handler_;
@@ -111,7 +113,7 @@ public:
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , req_(std::move(request))
-        , ip_(ip)
+        , ip_(std::move(ip))
         , handler_(handler)
     {
     }

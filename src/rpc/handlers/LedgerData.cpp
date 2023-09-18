@@ -118,7 +118,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
 
         for (auto& [key, object] : diff)
         {
-            if (!object.size())
+            if (object.empty())
                 keys.push_back(std::move(key));
         }
 
@@ -127,8 +127,8 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         for (size_t i = 0; i < objs.size(); ++i)
         {
             auto& obj = objs[i];
-            if (obj.size())
-                results.push_back({std::move(keys[i]), std::move(obj)});
+            if (!obj.empty() != 0u)
+                results.push_back({keys[i], std::move(obj)});
         }
 
         if (*(input.diffMarker) > lgrInfo.seq)
@@ -144,9 +144,13 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         results = std::move(page.objects);
 
         if (page.cursor)
+        {
             output.marker = ripple::strHex(*(page.cursor));
+        }
         else if (input.outOfOrder)
+        {
             output.diffMarker = sharedPtrBackend_->fetchLedgerRange()->maxSequence;
+        }
     }
 
     auto const end = std::chrono::system_clock::now();
@@ -203,10 +207,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerDataHandle
         obj["cache_full"] = *(output.cacheFull);
 
     if (output.diffMarker)
+    {
         obj[JS(marker)] = *(output.diffMarker);
-
+    }
     else if (output.marker)
+    {
         obj[JS(marker)] = *(output.marker);
+    }
 
     jv = std::move(obj);
 }
@@ -232,9 +239,13 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     if (jsonObject.contains("marker"))
     {
         if (jsonObject.at("marker").is_string())
+        {
             input.marker = ripple::uint256{jsonObject.at("marker").as_string().c_str()};
+        }
         else
+        {
             input.diffMarker = jsonObject.at("marker").as_int64();
+        }
     }
 
     if (jsonObject.contains(JS(ledger_hash)))
@@ -243,9 +254,13 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(type)))

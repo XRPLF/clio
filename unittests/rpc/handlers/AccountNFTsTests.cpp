@@ -163,7 +163,7 @@ TEST_P(AccountNFTParameterTest, InvalidParams)
 
 TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -191,7 +191,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
 TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -218,7 +218,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
 TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -244,7 +244,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 
 TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -297,7 +297,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         ISSUER,
         TAXON,
         SERIAL);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -332,7 +332,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
 TEST_F(RPCAccountNFTsHandlerTest, Limit)
 {
     static auto constexpr limit = 20;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -369,7 +369,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
 
 TEST_F(RPCAccountNFTsHandlerTest, Marker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -431,7 +431,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
         TAXON,
         SERIAL,
         AccountNFTsHandler::LIMIT_MIN);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -494,7 +494,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
         TAXON,
         SERIAL,
         AccountNFTsHandler::LIMIT_MAX);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);

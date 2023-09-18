@@ -29,7 +29,7 @@ namespace rpc {
 NFTBuyOffersHandler::Result
 NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input input, Context const& ctx) const
 {
-    auto const tokenID = uint256{input.nftID.c_str()};
+    auto const tokenID = uint256{input.nftID};
     auto const directory = keylet::nft_buys(tokenID);
 
     return iterateOfferDirectory(input, tokenID, directory, ctx.yield);

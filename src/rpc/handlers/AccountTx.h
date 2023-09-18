@@ -90,8 +90,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},

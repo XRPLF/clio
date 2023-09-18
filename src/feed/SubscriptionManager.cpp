@@ -78,7 +78,7 @@ SubscriptionManager::subLedger(boost::asio::yield_context yield, SessionPtrType 
     fees = backend_->fetchFees(lgrInfo->seq, yield);
     assert(fees);
 
-    std::string range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
+    std::string const range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
     auto pubMsg = getLedgerPubMessage(*lgrInfo, *fees, range, 0);
     pubMsg.erase("txn_count");
@@ -216,20 +216,27 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
             // We need a field that contains the TakerGets and TakerPays
             // parameters.
             if (node.getFName() == ripple::sfModifiedNode)
+            {
                 field = &ripple::sfPreviousFields;
+            }
             else if (node.getFName() == ripple::sfCreatedNode)
+            {
                 field = &ripple::sfNewFields;
+            }
             else if (node.getFName() == ripple::sfDeletedNode)
+            {
                 field = &ripple::sfFinalFields;
+            }
 
-            if (field)
+            if (field != nullptr)
             {
                 auto data = dynamic_cast<const ripple::STObject*>(node.peekAtPField(*field));
 
-                if (data && data->isFieldPresent(ripple::sfTakerPays) && data->isFieldPresent(ripple::sfTakerGets))
+                if ((data != nullptr) && data->isFieldPresent(ripple::sfTakerPays) &&
+                    data->isFieldPresent(ripple::sfTakerGets))
                 {
                     // determine the OrderBook
-                    ripple::Book book{
+                    ripple::Book const book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
                         data->getFieldAmount(ripple::sfTakerPays).issue()};
                     if (alreadySent.find(book) == alreadySent.end())
@@ -335,7 +342,7 @@ void
 SubscriptionManager::subscribeHelper(SessionPtrType const& session, Subscription& subs, CleanupFunction&& func)
 {
     subs.subscribe(session);
-    std::scoped_lock lk(cleanupMtx_);
+    std::scoped_lock const lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
 }
 
@@ -348,18 +355,18 @@ SubscriptionManager::subscribeHelper(
     CleanupFunction&& func)
 {
     subs.subscribe(session, k);
-    std::scoped_lock lk(cleanupMtx_);
+    std::scoped_lock const lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
 }
 
 void
 SubscriptionManager::cleanup(SessionPtrType session)
 {
-    std::scoped_lock lk(cleanupMtx_);
+    std::scoped_lock const lk(cleanupMtx_);
     if (!cleanupFuncs_.contains(session))
         return;
 
-    for (auto f : cleanupFuncs_[session])
+    for (const auto& f : cleanupFuncs_[session])
     {
         f(session);
     }
