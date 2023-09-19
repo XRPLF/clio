@@ -39,7 +39,7 @@ struct MockWsBase : public web::ConnectionBase
     void
     send(std::shared_ptr<std::string> msg_type) override
     {
-        message += std::string(*msg_type->);
+        message += std::string(*msg_type);
         lastStatus = boost::beast::http::status::ok;
     }
 

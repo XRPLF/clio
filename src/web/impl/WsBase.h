@@ -76,12 +76,9 @@ public:
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer)
-        : ConnectionBase(tagFactory, ip)
-        , buffer_(std::move(buffer))
-        , dosGuard_(dosGuard)
-        , upgraded(true)
-        , handler_(handler)
+        : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
+        upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
         LOG(perfLog_.debug()) << tag() << "session created";
     }
 

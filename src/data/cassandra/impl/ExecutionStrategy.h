@@ -131,7 +131,7 @@ public:
     {
         while (true)
         {
-            auto const res = handle_.get().execute(statement);
+            auto res = handle_.get().execute(statement);
             if (res)
             {
                 return res;

@@ -131,7 +131,7 @@ protected:
         runner.emplace([this] { ctx.run(); });
     }
 
-    () override
+    ~WebServerTest() override
     {
         work.reset();
         ctx.stop();

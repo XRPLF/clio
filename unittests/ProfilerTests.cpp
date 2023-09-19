@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
+#include <cmath>
 #include <gtest/gtest.h>
-#include <math.h>
 #include <thread>
 #include <util/Profiler.h>
 
@@ -82,7 +82,7 @@ TEST(TimedTest, ChangeToNs)
 
 TEST(TimedTest, NestedLambda)
 {
-    double timeNested = NAN;
+    double timeNested = std::numeric_limits<double>::quiet_NaN();
     auto f = [&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         timeNested = timed([]() { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
