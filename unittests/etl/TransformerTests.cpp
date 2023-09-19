@@ -103,7 +103,7 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     ON_CALL(dataPipe_, popNext).WillByDefault([this, &response](auto) -> std::optional<FakeFetchResponse> {
         if (state_.isStopping)
             return std::nullopt;
-        return response;
+        return response;  // NOLINT (performance-no-automatic-move)
     });
     ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(true));
 

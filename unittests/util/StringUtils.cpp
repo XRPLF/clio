@@ -36,7 +36,6 @@ hexStringToBinaryString(std::string const& hex)
 ripple::uint256
 binaryStringToUint256(std::string const& bin)
 {
-    ripple::uint256 const uint;
     return ripple::uint256::fromVoid(static_cast<void const*>(bin.data()));
 }
 

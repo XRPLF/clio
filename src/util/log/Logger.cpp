@@ -57,18 +57,18 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
     }
     if (boost::iequals(logLevel, "debug"))
         return Severity::DBG;
-    else if (boost::iequals(logLevel, "info"))
+    if (boost::iequals(logLevel, "info"))
         return Severity::NFO;
-    else if (boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
+    if (boost::iequals(logLevel, "warning") || boost::iequals(logLevel, "warn"))
         return Severity::WRN;
-    else if (boost::iequals(logLevel, "error"))
+    if (boost::iequals(logLevel, "error"))
         return Severity::ERR;
-    else if (boost::iequals(logLevel, "fatal"))
+    if (boost::iequals(logLevel, "fatal"))
         return Severity::FTL;
-    else
-        throw std::runtime_error(
-            "Could not parse `log_level`: expected `trace`, `debug`, `info`, "
-            "`warning`, `error` or `fatal`");
+
+    throw std::runtime_error(
+        "Could not parse `log_level`: expected `trace`, `debug`, `info`, "
+        "`warning`, `error` or `fatal`");
 }
 
 void

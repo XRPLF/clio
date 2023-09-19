@@ -118,10 +118,7 @@ TEST_F(CacheLoaderTest, FromCache)
                 threadKeysMap[std::this_thread::get_id()] = 0;
                 return std::nullopt;
             }
-            else
-            {
-                return ripple::uint256{INDEX1};
-            }
+            return ripple::uint256{INDEX1};
         }));
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(keysSize * loops);
 

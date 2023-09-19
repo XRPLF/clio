@@ -288,7 +288,8 @@ public:
     std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context yield) const override
     {
-        if (auto const res = executor_.read(yield, schema_->selectLedgerRange); res)
+        auto const res = executor_.read(yield, schema_->selectLedgerRange);
+        if (res)
         {
             auto const& results = res.value();
             if (not results.hasRows())
@@ -323,10 +324,7 @@ public:
                               << range.maxSequence;
             return range;
         }
-        else
-        {
-            LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
-        }
+        LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
 
         return std::nullopt;
     }
