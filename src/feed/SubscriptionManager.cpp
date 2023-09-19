@@ -160,6 +160,7 @@ void
 SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo)
 {
     auto [tx, meta] = rpc::deserializeTxPlusMeta(blobs, lgrInfo.seq);
+    std::cout << "pubTransaction:" << lgrInfo.seq << ", index:" << meta->getIndex() << std::endl;
     boost::json::object pubObj;
     pubObj["transaction"] = rpc::toJson(*tx);
     pubObj["meta"] = rpc::toJson(*meta);
