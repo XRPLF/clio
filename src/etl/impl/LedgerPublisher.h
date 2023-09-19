@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/SystemState.h>
+#include <feed/SubscriptionManager.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
@@ -153,7 +154,8 @@ public:
 
             // if the ledger closed over 10 minutes ago, assume we are still catching up and don't publish
             // TODO: this probably should be a strategy
-            if (age < 600)
+            static constexpr std::uint32_t MAX_LEDGER_AGE_SECONDS = 600;
+            if (age < MAX_LEDGER_AGE_SECONDS)
             {
                 std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });

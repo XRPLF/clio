@@ -9,7 +9,6 @@ Checks: '-*,
   bugprone-dynamic-static-initializers,
   bugprone-fold-init-type,
   bugprone-forward-declaration-namespace,
-  bugprone-forwarding-reference-overload,
   bugprone-inaccurate-erase,
   bugprone-incorrect-roundings,
   bugprone-infinite-loop,
@@ -49,7 +48,6 @@ Checks: '-*,
   bugprone-terminating-continue,
   bugprone-throw-keyword-missing,
   bugprone-too-small-loop-variable,
-  bugprone-unchecked-optional-access,
   bugprone-undefined-memory-manipulation,
   bugprone-undelegated-constructor,
   bugprone-unhandled-exception-at-new,
@@ -59,12 +57,10 @@ Checks: '-*,
   bugprone-use-after-move,
   bugprone-virtual-near-miss,
   readability-magic-numbers,
-  cppcoreguidelines-avoid-non-const-global-variables,
   cppcoreguidelines-init-variables,
   cppcoreguidelines-prefer-member-initializer,
   cppcoreguidelines-pro-type-member-init,
   cppcoreguidelines-pro-type-static-cast-downcast,
-  cppcoreguidelines-special-member-functions,
   cppcoreguidelines-virtual-class-destructor,
   llvm-namespace-comment,
   misc-const-correctness,
@@ -120,7 +116,6 @@ Checks: '-*,
 CheckOptions:
   readability-braces-around-statements.ShortStatementLines: 2
 
-HeaderFilterRegex: '^.*/(src|unitests)/.*(h|hpp)$'
+HeaderFilterRegex: '^.*/(src|unitests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'
-UseColor: true
 

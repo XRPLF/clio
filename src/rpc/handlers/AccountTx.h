@@ -57,8 +57,8 @@ public:
     struct Output
     {
         std::string account;
-        uint32_t ledgerIndexMin;
-        uint32_t ledgerIndexMax;
+        uint32_t ledgerIndexMin{0};
+        uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         // TODO: use a better type than json

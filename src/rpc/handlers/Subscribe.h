@@ -97,10 +97,10 @@ public:
 
                     if (book.as_object().contains("taker"))
                     {
-                        if (auto const err = meta::WithCustomError(
-                                                 validation::AccountValidator,
-                                                 Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
-                                                 .verify(book.as_object(), "taker");
+                        if (auto err = meta::WithCustomError(
+                                           validation::AccountValidator,
+                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
+                                           .verify(book.as_object(), "taker");
                             !err)
                             return err;
                     }

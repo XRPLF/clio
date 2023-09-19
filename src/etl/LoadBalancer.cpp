@@ -73,9 +73,10 @@ LoadBalancer::LoadBalancer(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
 {
+    static constexpr std::uint32_t MAX_DOWNLOAD = 256;
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
     {
-        downloadRanges_ = std::clamp(*value, 1u, 256u);
+        downloadRanges_ = std::clamp(*value, 1u, MAX_DOWNLOAD);
     }
     else if (backend->fetchLedgerRange())
     {

@@ -119,7 +119,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         for (auto& [key, object] : diff)
         {
             if (object.empty())
-                keys.push_back(std::move(key));
+                keys.push_back(key);
         }
 
         auto objs = sharedPtrBackend_->fetchLedgerObjects(keys, lgrInfo.seq, ctx.yield);
@@ -127,7 +127,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         for (size_t i = 0; i < objs.size(); ++i)
         {
             auto& obj = objs[i];
-            if (!obj.empty() != 0u)
+            if (!obj.empty())
                 results.push_back({keys[i], std::move(obj)});
         }
 

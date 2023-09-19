@@ -40,7 +40,6 @@
 #include <grpcpp/grpcpp.h>
 #include <utility>
 
-class ProbingSource;
 namespace feed {
 class SubscriptionManager;
 }  // namespace feed
@@ -52,6 +51,7 @@ class SubscriptionManager;
 // things into the base class instead.
 
 namespace etl {
+class ProbingSource;
 
 /**
  * @brief Base class for all ETL sources.
@@ -317,7 +317,7 @@ public:
         }
 
         namespace beast = boost::beast;
-        namespace http = beast::http;
+        namespace http = boost::beast::http;
         namespace websocket = beast::websocket;
         namespace net = boost::asio;
         using tcp = boost::asio::ip::tcp;
@@ -325,7 +325,7 @@ public:
         try
         {
             auto executor = boost::asio::get_associated_executor(yield);
-            boost::beast::error_code ec;
+            beast::error_code ec;
             tcp::resolver resolver{executor};
 
             auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(executor);
@@ -515,7 +515,7 @@ public:
                 LOG(log_.debug()) << "Finished a marker. "
                                   << "Current number of finished = " << numFinished;
 
-                std::string lastKey = ptr->getLastKey();
+                std::string const lastKey = ptr->getLastKey();
 
                 if (!lastKey.empty())
                     edgeKeys.push_back(ptr->getLastKey());
@@ -578,7 +578,9 @@ public:
         }
         else
         {
-            boost::beast::get_lowest_layer(derived().ws()).expires_after(std::chrono::seconds(30));
+            static constexpr std::size_t LOWEST_LAYER_TIMEOUT_SECONDS = 30;
+            boost::beast::get_lowest_layer(derived().ws())
+                .expires_after(std::chrono::seconds(LOWEST_LAYER_TIMEOUT_SECONDS));
             boost::beast::get_lowest_layer(derived().ws()).async_connect(results, [this](auto ec, auto ep) {
                 derived().onConnect(ec, ep);
             });
@@ -762,6 +764,7 @@ protected:
     void
     reconnect(boost::beast::error_code ec)
     {
+        static constexpr std::size_t BUFFER_SIZE = 128;
         if (paused_)
             return;
 
@@ -781,7 +784,7 @@ protected:
                 boost::lexical_cast<std::string>(ERR_GET_REASON(ec.value())) + ") ";
 
             // ERR_PACK /* crypto/err/err.h */
-            char buf[128];
+            char buf[BUFFER_SIZE];
             ::ERR_error_string_n(ec.value(), buf, sizeof(buf));
             err += buf;
 

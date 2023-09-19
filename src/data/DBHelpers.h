@@ -149,8 +149,11 @@ template <class T>
 inline bool
 isOffer(T const& object)
 {
-    short offer_bytes = (object[1] << 8) | object[2];
-    return offer_bytes == 0x006f;
+    static constexpr short OFFER_OFFSET = 0x006f;
+    static constexpr short SHIFT = 8;
+
+    short offer_bytes = (object[1] << SHIFT) | object[2];
+    return offer_bytes == OFFER_OFFSET;
 }
 
 /**
@@ -179,8 +182,9 @@ template <class T>
 inline bool
 isDirNode(T const& object)
 {
+    static constexpr short DIR_NODE_SPACE_KEY = 0x0064;
     short const spaceKey = (object.data()[1] << 8) | object.data()[2];
-    return spaceKey == 0x0064;
+    return spaceKey == DIR_NODE_SPACE_KEY;
 }
 
 /**
@@ -228,10 +232,12 @@ template <class T>
 inline ripple::uint256
 getBookBase(T const& key)
 {
+    static constexpr size_t KEY_SIZE = 24;
+
     assert(key.size() == ripple::uint256::size());
 
     ripple::uint256 ret;
-    for (size_t i = 0; i < 24; ++i)
+    for (size_t i = 0; i < KEY_SIZE; ++i)
         ret.data()[i] = key.data()[i];
 
     return ret;

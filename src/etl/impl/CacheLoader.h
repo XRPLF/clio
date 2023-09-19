@@ -42,6 +42,10 @@ namespace etl::detail {
 template <typename CacheType>
 class CacheLoader
 {
+    static constexpr size_t DEFAULT_NUM_CACHE_DIFFS = 32;
+    static constexpr size_t DEFAULT_NUM_CACHE_MARKERS = 48;
+    static constexpr size_t DEFAULT_CACHE_PAGE_FETCH_SIZE = 512;
+
     enum class LoadStyle { ASYNC, SYNC, NOT_AT_ALL };
 
     util::Logger log_{"ETL"};
@@ -52,13 +56,13 @@ class CacheLoader
     LoadStyle cacheLoadStyle_ = LoadStyle::ASYNC;
 
     // number of diffs to use to generate cursors to traverse the ledger in parallel during initial cache download
-    size_t numCacheDiffs_ = 32;
+    size_t numCacheDiffs_ = DEFAULT_NUM_CACHE_DIFFS;
 
     // number of markers to use at one time to traverse the ledger in parallel during initial cache download
-    size_t numCacheMarkers_ = 48;
+    size_t numCacheMarkers_ = DEFAULT_NUM_CACHE_MARKERS;
 
     // number of ledger objects to fetch concurrently per marker during cache download
-    size_t cachePageFetchSize_ = 512;
+    size_t cachePageFetchSize_ = DEFAULT_CACHE_PAGE_FETCH_SIZE;
 
     struct ClioPeer
     {
@@ -161,10 +165,11 @@ public:
         loadCacheFromDb(seq);
 
         // If loading synchronously, poll cache until full
+        static constexpr size_t SLEEP_TIME_SECONDS = 10;
         while (cacheLoadStyle_ == LoadStyle::SYNC && not cache_.get().isFull())
         {
             LOG(log_.debug()) << "Cache not full. Cache size = " << cache_.get().size() << ". Sleeping ...";
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME_SECONDS));
             if (cache_.get().isFull())
                 LOG(log_.info()) << "Cache is full. Cache size = " << cache_.get().size();
         }
@@ -186,13 +191,12 @@ private:
     {
         LOG(log_.info()) << "Loading cache from peer. ip = " << ip << " . port = " << port;
         namespace beast = boost::beast;          // from <boost/beast.hpp>
-        namespace http = beast::http;            // from <boost/beast/http.hpp>
         namespace websocket = beast::websocket;  // from
         namespace net = boost::asio;             // from
         using tcp = boost::asio::ip::tcp;        // from
         try
         {
-            boost::beast::error_code ec;
+            beast::error_code ec;
             // These objects perform our I/O
             tcp::resolver resolver{ioContext_.get()};
 
@@ -219,13 +223,14 @@ private:
             std::optional<boost::json::value> marker;
 
             LOG(log_.trace()) << "Sending request";
+            static constexpr int LIMIT = 2048;
             auto getRequest = [&](auto marker) {
                 boost::json::object request = {
                     {"command", "ledger_data"},
                     {"ledger_index", ledgerIndex},
                     {"binary", true},
                     {"out_of_order", true},
-                    {"limit", 2048}};
+                    {"limit", LIMIT}};
 
                 if (marker)
                     request["marker"] = *marker;
@@ -268,8 +273,9 @@ private:
                     auto const& err = response.at("error");
                     if (err.is_string() && err.as_string() == "lgrNotFound")
                     {
+                        static constexpr size_t MAX_ATTEMPTS = 5;
                         ++numAttempts;
-                        if (numAttempts >= 5)
+                        if (numAttempts >= MAX_ATTEMPTS)
                         {
                             LOG(log_.error()) << " ledger not found at peer after 5 attempts. "
                                                  "peer = "

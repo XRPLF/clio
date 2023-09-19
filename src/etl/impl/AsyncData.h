@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <data/BackendInterface.h>
 #include <etl/NFTHelpers.h>
 #include <util/log/Logger.h>
 
@@ -113,7 +114,7 @@ public:
         // if we are not done, make the next async call
         if (more)
         {
-            request_.set_marker(std::move(cur_->marker()));
+            request_.set_marker(cur_->marker());
             call(stub, cq);
         }
 

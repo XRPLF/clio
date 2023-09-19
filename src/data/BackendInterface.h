@@ -48,6 +48,7 @@ public:
     }
 };
 
+static constexpr std::size_t DEFAULT_WAIT_BETWEEN_RETRY = 500;
 /**
  * @brief A helper function that catches DatabaseTimout exceptions and retries indefinitely.
  *
@@ -58,7 +59,7 @@ public:
  */
 template <class FnType>
 auto
-retryOnTimeout(FnType func, size_t waitMs = 500)
+retryOnTimeout(FnType func, size_t waitMs = DEFAULT_WAIT_BETWEEN_RETRY)
 {
     static util::Logger const log{"Backend"};
 

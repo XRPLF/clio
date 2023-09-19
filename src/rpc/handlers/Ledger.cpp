@@ -138,7 +138,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
             {
                 entry["object"] = ripple::strHex(obj.blob);
             }
-            else if (!obj.blob.empty() != 0u)
+            else if (!obj.blob.empty())
             {
                 ripple::STLedgerEntry const sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
                 entry["object"] = toJson(sle);

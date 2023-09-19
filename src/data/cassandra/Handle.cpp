@@ -99,7 +99,7 @@ Handle::executeEach(std::vector<Statement> const& statements) const
 {
     for (auto futures = asyncExecuteEach(statements); auto const& future : futures)
     {
-        if (auto const rc = future.await(); not rc)
+        if (auto rc = future.await(); not rc)
             return rc;
     }
 

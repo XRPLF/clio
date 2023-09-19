@@ -112,7 +112,8 @@ public:
                 result.nfTokensData.push_back(*maybeNFT);
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
-            std::string keyStr{reinterpret_cast<const char*>(sttx.getTransactionID().data()), 32};
+            static constexpr std::size_t KEY_SIZE = 32;
+            std::string keyStr{reinterpret_cast<const char*>(sttx.getTransactionID().data()), KEY_SIZE};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,
@@ -230,7 +231,8 @@ public:
                             }
 
                             prev = cur->key;
-                            if (numWrites % 100000 == 0 && numWrites != 0)
+                            static constexpr std::size_t LOG_INTERVAL = 100000;
+                            if (numWrites % LOG_INTERVAL == 0 && numWrites != 0)
                                 LOG(log_.info()) << "Wrote " << numWrites << " book successors";
                         }
 

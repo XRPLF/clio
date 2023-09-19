@@ -31,7 +31,9 @@
 #include <mutex>
 #include <unordered_map>
 
+namespace etl {
 class Source;
+}  // namespace etl
 
 namespace etl::detail {
 
@@ -41,6 +43,7 @@ namespace etl::detail {
 class ForwardCache
 {
     using ResponseType = std::optional<boost::json::object>;
+    static constexpr std::uint32_t DEFAULT_DURATION = 10;
 
     util::Logger log_{"ETL"};
 
@@ -48,7 +51,7 @@ class ForwardCache
     std::unordered_map<std::string, ResponseType> latestForwarded_;
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     etl::Source const& source_;
-    std::uint32_t duration_ = 10;
+    std::uint32_t duration_ = DEFAULT_DURATION;
 
     void
     clear();

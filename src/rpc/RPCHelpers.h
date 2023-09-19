@@ -232,6 +232,8 @@ logDuration(web::Context const& ctx, T const& dur)
     using boost::json::serialize;
 
     static util::Logger const log{"RPC"};
+    static constexpr std::size_t DURATION_ERROR_THRESHOLD_SECONDS = 10;
+
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
@@ -239,7 +241,7 @@ logDuration(web::Context const& ctx, T const& dur)
         millis,
         serialize(util::removeSecret(ctx.params)));
 
-    if (seconds > 10)
+    if (seconds > DURATION_ERROR_THRESHOLD_SECONDS)
     {
         LOG(log.error()) << ctx.tag() << msg;
     }

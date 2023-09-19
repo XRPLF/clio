@@ -64,8 +64,6 @@ public:
         cass_statement_set_is_idempotent(*this, cass_true);
     }
 
-    Statement(Statement&&) = default;
-
     /**
      * @brief Binds the given arguments to the statement.
      *

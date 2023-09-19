@@ -20,6 +20,7 @@
 #include <data/cassandra/SettingsProvider.h>
 #include <data/cassandra/impl/Cluster.h>
 #include <data/cassandra/impl/Statement.h>
+#include <util/Constants.h>
 #include <util/config/Config.h>
 
 #include <boost/json.hpp>
@@ -125,11 +126,11 @@ SettingsProvider::parseSettings() const
 
     auto const connectTimeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
     if (connectTimeoutSecond)
-        settings.connectionTimeout = std::chrono::milliseconds{*connectTimeoutSecond * 1000};
+        settings.connectionTimeout = std::chrono::milliseconds{*connectTimeoutSecond * util::MILISECONDS_PER_SECOND};
 
     auto const requestTimeoutSecond = config_.maybeValue<uint32_t>("request_timeout");
     if (requestTimeoutSecond)
-        settings.requestTimeout = std::chrono::milliseconds{*requestTimeoutSecond * 1000};
+        settings.requestTimeout = std::chrono::milliseconds{*requestTimeoutSecond * util::MILISECONDS_PER_SECOND};
 
     settings.certificate = parseOptionalCertificate();
     settings.username = config_.maybeValue<std::string>("username");

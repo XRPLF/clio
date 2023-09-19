@@ -115,11 +115,6 @@ struct TransactionsCursor
     {
     }
 
-    TransactionsCursor(TransactionsCursor const&) = default;
-
-    TransactionsCursor&
-    operator=(TransactionsCursor const&) = default;
-
     bool
     operator==(TransactionsCursor const& other) const = default;
 

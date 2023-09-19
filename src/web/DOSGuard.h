@@ -79,6 +79,9 @@ class BasicDOSGuard : public BaseDOSGuard
     util::Logger log_{"RPC"};
 
 public:
+    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u;
+    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;
+    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;
     /**
      * @brief Constructs a new DOS guard.
      *
@@ -91,9 +94,9 @@ public:
         WhitelistHandlerType const& whitelistHandler,
         SweepHandlerType& sweepHandler)
         : whitelistHandler_{std::cref(whitelistHandler)}
-        , maxFetches_{config.valueOr("dos_guard.max_fetches", 1000000u)}
-        , maxConnCount_{config.valueOr("dos_guard.max_connections", 20u)}
-        , maxRequestCount_{config.valueOr("dos_guard.max_requests", 20u)}
+        , maxFetches_{config.valueOr("dos_guard.max_fetches", DEFAULT_MAX_FETCHES)}
+        , maxConnCount_{config.valueOr("dos_guard.max_connections", DEFAULT_MAX_CONNECTIONS)}
+        , maxRequestCount_{config.valueOr("dos_guard.max_requests", DEFAULT_MAX_REQUESTS)}
     {
         sweepHandler.setup(this);
     }

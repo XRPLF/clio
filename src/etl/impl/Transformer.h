@@ -300,7 +300,7 @@ private:
 
             for (auto const& obj : cacheUpdates)
             {
-                if (modified.contains(obj.key) != 0u)
+                if (modified.contains(obj.key))
                     continue;
 
                 auto lb = backend_->cache().getPredecessor(obj.key, lgrInfo.seq);

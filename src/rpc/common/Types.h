@@ -28,7 +28,9 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 
+namespace etl {
 class LoadBalancer;
+}  // namespace etl
 namespace web {
 struct ConnectionBase;
 }  // namespace web

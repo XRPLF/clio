@@ -93,7 +93,9 @@ getDeliveredAmount(
         // then its absence indicates that the amount delivered is listed in the
         // Amount field. DeliveredAmount went live January 24, 2014.
         // 446000000 is in Feb 2014, well after DeliveredAmount went live
-        if (ledgerSequence >= 4594095 || date > 446000000)
+        static constexpr std::uint32_t FIRST_LEDGER_WITH_DELIVERED_AMOUNT = 4594095;
+        static constexpr std::uint32_t DELIVERED_AMOUNT_LIVE_DATE = 446000000;
+        if (ledgerSequence >= FIRST_LEDGER_WITH_DELIVERED_AMOUNT || date > DELIVERED_AMOUNT_LIVE_DATE)
         {
             return txn->getFieldAmount(ripple::sfAmount);
         }
@@ -569,7 +571,8 @@ traverseOwnedNodes(
     // Only reserve 2048 nodes when fetching all owned ledger objects. If there
     // are more, then keys will allocate more memory, which is suboptimal, but
     // should only occur occasionally.
-    keys.reserve(std::min(std::uint32_t{2048}, limit));
+    static constexpr std::uint32_t MIN_NODES = 2048;
+    keys.reserve(std::min(MIN_NODES, limit));
 
     auto start = std::chrono::system_clock::now();
 
@@ -719,8 +722,10 @@ parseRippleLibSeed(boost::json::value const& value)
 
     auto const result = ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
 
-    if (result.size() == 18 && static_cast<std::uint8_t>(result[0]) == std::uint8_t(0xE1) &&
-        static_cast<std::uint8_t>(result[1]) == std::uint8_t(0x4B))
+    static constexpr std::size_t SEED_SIZE = 18;
+    static constexpr std::array<std::uint8_t, 2> SEED_PREFIX = {0xE1, 0x4B};
+    if (result.size() == SEED_SIZE && static_cast<std::uint8_t>(result[0]) == SEED_PREFIX[0] &&
+        static_cast<std::uint8_t>(result[1]) == SEED_PREFIX[1])
         return ripple::Seed(ripple::makeSlice(result.substr(2)));
 
     return {};

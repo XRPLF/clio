@@ -128,9 +128,13 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include the 0 transaction
         // index of minIndex
         if (input.forward)
+        {
             cursor = {minIndex - 1, std::numeric_limits<int32_t>::max()};
+        }
         else
+        {
             cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
+        }
     }
 
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
@@ -156,7 +160,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             response.marker = std::nullopt;
             break;
         }
-        else if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
+        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
         {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
@@ -250,12 +254,18 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
         else
+        {
             // could not get the latest validated ledger seq here, using this flag to indicate that
             input.usingValidatedLedger = true;
+        }
     }
 
     if (jsonObject.contains(JS(binary)))
@@ -268,9 +278,11 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
     if (jsonObject.contains(JS(marker)))
+    {
         input.marker = AccountTxHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+    }
 
     if (jsonObject.contains("tx_type"))
     {

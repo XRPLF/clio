@@ -197,7 +197,7 @@ CustomValidator SubscribeAccountsValidator =
 
             obj[keyItem] = v;
 
-            if (auto const err = AccountValidator.verify(obj, keyItem); !err)
+            if (auto err = AccountValidator.verify(obj, keyItem); !err)
                 return err;
         }
 

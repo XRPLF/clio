@@ -20,6 +20,7 @@
 #include <etl/ETLService.h>
 
 #include <ripple/protocol/LedgerHeader.h>
+#include <util/Constants.h>
 
 #include <utility>
 
@@ -62,8 +63,9 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
 
     auto const end = std::chrono::system_clock::now();
     auto const lastPublishedSeq = ledgerPublisher_.getLastPublishedSequence();
+    static constexpr auto NANOSECONDS_PER_SECOND = 1'000'000'000.0;
     LOG(log_.debug()) << "Extracted and wrote " << lastPublishedSeq.value_or(startSequence) - startSequence << " in "
-                      << ((end - begin).count()) / 1000000000.0;
+                      << ((end - begin).count()) / NANOSECONDS_PER_SECOND;
 
     state_.isWriting = false;
 
@@ -158,7 +160,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         ledgerPublisher_.publish(nextSequence, {});
         ++nextSequence;
     }
-    else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, 1000))
+    else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILISECONDS_PER_SECOND))
     {
         LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
                          << "Attempting to find in database and publish";
@@ -233,7 +235,7 @@ ETLService::monitorReadOnly()
         {
             // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs first.
             // Even if we don't hear from rippled, if ledgers are being written to the db, we publish them.
-            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, 1000);
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILISECONDS_PER_SECOND);
         }
     }
 }

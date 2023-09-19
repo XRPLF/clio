@@ -76,13 +76,17 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     else
     {
         if (input.forward)
+        {
             cursor = {minIndex, 0};
+        }
         else
+        {
             cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
+        }
     }
 
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
-    auto const tokenID = ripple::uint256{input.nftID.c_str()};
+    auto const tokenID = ripple::uint256{input.nftID};
 
     auto const [txnsAndCursor, timeDiff] = util::timed(
         [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
@@ -103,7 +107,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
             response.marker = std::nullopt;
             break;
         }
-        else if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
+        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
         {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
@@ -187,9 +191,13 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(binary)))
@@ -202,9 +210,11 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
     if (jsonObject.contains(JS(marker)))
+    {
         input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+    }
 
     return input;
 }
