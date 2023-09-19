@@ -124,19 +124,20 @@ PAMNb1i80cMsjK98xXDdr+7Uvy5M4COMwA5XHmMZDEW8Jw==
 
 class WebServerTest : public NoLoggerFixture
 {
-protected:
-    WebServerTest()
-    {
-        work.emplace(ctx);  // make sure ctx does not stop on its own
-        runner.emplace([this] { ctx.run(); });
-    }
-
+public:
     ~WebServerTest() override
     {
         work.reset();
         ctx.stop();
         if (runner->joinable())
             runner->join();
+    }
+
+protected:
+    WebServerTest()
+    {
+        work.emplace(ctx);  // make sure ctx does not stop on its own
+        runner.emplace([this] { ctx.run(); });
     }
 
     void
@@ -197,7 +198,7 @@ public:
 namespace {
 
 template <class Executor>
-static std::shared_ptr<web::HttpServer<Executor>>
+std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
     util::Config const& config,
     boost::asio::io_context& ioc,

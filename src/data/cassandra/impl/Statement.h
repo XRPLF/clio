@@ -73,7 +73,7 @@ public:
     void
     bind(Args&&... args) const
     {
-        std::size_t idx = 0;
+        std::size_t idx = 0;  // NOLINT(misc-const-correctness)
         (this->bindAt<Args>(idx++, std::forward<Args>(args)), ...);
     }
 

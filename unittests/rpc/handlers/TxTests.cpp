@@ -360,6 +360,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
     std::vector<std::string> ids{NFTID, NFTID2};
     TransactionAndMetadata tx = CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 50, ids);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     tx.date = 123456;
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
@@ -378,7 +379,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
         for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
         {
             auto const idStr = id.as_string();
-            ids.erase(std::find(ids.begin(), ids.end(), std::string{idStr.c_str(), idStr.size()}));
+            ids.erase(std::find(ids.begin(), ids.end(), idStr));
         }
 
         EXPECT_TRUE(ids.empty());

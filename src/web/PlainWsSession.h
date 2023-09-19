@@ -118,8 +118,6 @@ public:
     {
     }
 
-    WsUpgrader() = default;
-
     /** @brief Initiate the upgrade. */
     void
     run()
