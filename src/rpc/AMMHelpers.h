@@ -32,7 +32,7 @@ getAmmPoolHolds(
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,
     ripple::Issue const& issue2,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 ripple::STAmount
 getAmmLpHolds(
@@ -42,7 +42,7 @@ getAmmLpHolds(
     ripple::Currency const& cur2,
     ripple::AccountID const& ammAccount,
     ripple::AccountID const& lpAccount,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 ripple::STAmount
 getAmmLpHolds(
@@ -50,6 +50,6 @@ getAmmLpHolds(
     std::uint32_t sequence,
     ripple::SLE const& ammSle,
     ripple::AccountID const& lpAccount,
-    boost::asio::yield_context& yield);
+    boost::asio::yield_context yield);
 
 }  // namespace RPC

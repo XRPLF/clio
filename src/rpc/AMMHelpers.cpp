@@ -24,8 +24,6 @@
 // #include <ripple/app/misc/AMMUtils.h>
 #include <ripple/protocol/AMMCore.h>
 
-using namespace clio;
-
 namespace rpc {
 
 std::pair<ripple::STAmount, ripple::STAmount>
@@ -35,7 +33,7 @@ getAmmPoolHolds(
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,
     ripple::Issue const& issue2,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     auto const assetInBalance =
         accountHolds(backend, sequence, ammAccountID, issue1.currency, issue1.account, true, yield);
@@ -52,7 +50,7 @@ getAmmLpHolds(
     ripple::Currency const& cur2,
     ripple::AccountID const& ammAccount,
     ripple::AccountID const& lpAccount,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     auto const lptCurrency = ammLPTCurrency(cur1, cur2);
     return accountHolds(backend, sequence, lpAccount, lptCurrency, ammAccount, true, yield);
@@ -64,7 +62,7 @@ getAmmLpHolds(
     std::uint32_t sequence,
     ripple::SLE const& ammSle,
     ripple::AccountID const& lpAccount,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context yield)
 {
     return getAmmLpHolds(
         backend,

@@ -73,12 +73,10 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     if (not accBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
-    auto yieldCopy = ctx.yield;
     auto const [asset1Balance, asset2Balance] =
-        rpc::getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, yieldCopy);
-
+        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, ctx.yield);
     auto const lptAMMBalance = input.accountID
-        ? rpc::getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
+        ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];
 
     Output response;
