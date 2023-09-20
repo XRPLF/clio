@@ -21,7 +21,7 @@
 #include <rpc/AMMHelpers.h>
 #include <rpc/handlers/AMMInfo.h>
 
-#include <ripple/app/misc/AMMUtils.h>
+// #include <ripple/app/misc/AMMUtils.h>
 #include <ripple/protocol/AMMCore.h>
 
 namespace {
@@ -39,7 +39,7 @@ to_iso8601(ripple::NetClock::time_point tp)
 
 }  // namespace
 
-namespace RPC {
+namespace rpc {
 AMMInfoHandler::Result
 AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 {
@@ -73,11 +73,12 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     if (not accBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
+    auto yieldCopy = ctx.yield;
     auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, ctx.yield);
+        rpc::getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, yieldCopy);
 
     auto const lptAMMBalance = input.accountID
-        ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
+        ? rpc::getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];
 
     Output response;

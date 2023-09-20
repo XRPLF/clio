@@ -21,12 +21,12 @@
 #include <util/log/Logger.h>
 #include <rpc/AMMHelpers.h>
 
-#include <ripple/app/misc/AMMUtils.h>
+// #include <ripple/app/misc/AMMUtils.h>
 #include <ripple/protocol/AMMCore.h>
 
 using namespace clio;
 
-namespace RPC {
+namespace rpc {
 
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(

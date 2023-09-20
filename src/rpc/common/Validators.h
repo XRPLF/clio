@@ -527,4 +527,11 @@ extern CustomValidator SubscribeStreamValidator;
  */
 extern CustomValidator SubscribeAccountsValidator;
 
+/**
+ * @brief Validates an asset (ripple::Issue).
+ *
+ * Used by amm_info.
+ */
+extern CustomValidator AssetValidator;
+
 }  // namespace rpc::validation

@@ -25,7 +25,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief AMMInfoHandler returns information about AMM pools.

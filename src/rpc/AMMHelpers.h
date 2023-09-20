@@ -19,11 +19,11 @@
 
 #pragma once
 
-// #include <data/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 
-namespace RPC {
+namespace rpc {
 
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(
