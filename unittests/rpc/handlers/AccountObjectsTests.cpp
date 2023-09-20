@@ -1002,7 +1002,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
+        auto previous =
+            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1050,7 +1051,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
+        auto previous =
+            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1098,13 +1100,14 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{INDEX1};
-    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
+    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
     const auto marker = current;
     sort(first.begin(), first.end());
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
+        auto previous =
+            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
@@ -1306,13 +1309,14 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{INDEX1};
-    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
+    auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
     const auto marker = current;
     sort(first.begin(), first.end());
     for (auto i = 0; i < 10; i++)
     {
         std::next_permutation(first.begin(), first.end());
-        auto previous = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first}).key;
+        auto previous =
+            ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))

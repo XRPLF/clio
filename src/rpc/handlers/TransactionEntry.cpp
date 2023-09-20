@@ -32,7 +32,7 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
-    auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash}, ctx.yield);
+    auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite

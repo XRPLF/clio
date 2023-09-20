@@ -374,16 +374,20 @@ TEST_F(RPCTxTest, NFTCancelOffer)
             }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
+        std::cout << "output: " << output.value() << std::endl;
         ASSERT_TRUE(output);
 
         for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
         {
             auto const idStr = id.as_string();
-            ids.erase(std::find(ids.begin(), ids.end(), idStr));
+            const auto it = std::find(ids.begin(), ids.end(), idStr);
+            ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
+            ids.erase(it);
         }
 
         EXPECT_TRUE(ids.empty());
     });
+    std::cout << "After spawn" << std::endl;
 }
 
 TEST_F(RPCTxTest, NFTCreateOffer)

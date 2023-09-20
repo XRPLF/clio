@@ -526,7 +526,7 @@ CreateNFTTokenPage(
     for (auto const& token : tokens)
     {
         auto entry = ripple::STObject(ripple::sfNFToken);
-        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{token.first});
+        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{token.first.c_str()});
         entry.setFieldVL(ripple::sfURI, ripple::Slice(token.second.c_str(), token.second.size()));
         list.push_back(std::move(entry));
     }
@@ -653,7 +653,7 @@ CreateCancelNFTOffersTxWithMetadata(
     ripple::STVector256 offers;
     offers.resize(2);
     std::transform(nftOffers.cbegin(), nftOffers.cend(), offers.begin(), [&](auto const& nftId) {
-        return ripple::uint256{nftId};
+        return ripple::uint256{nftId.c_str()};
     });
     tx.setFieldV256(ripple::sfNFTokenOffers, offers);
     const char* key = "test";
@@ -671,7 +671,7 @@ CreateCancelNFTOffersTxWithMetadata(
         node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
 
         ripple::STObject finalFields(ripple::sfFinalFields);
-        finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+        finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId.c_str()});
 
         node.emplace_back(std::move(finalFields));
         metaArray.push_back(node);

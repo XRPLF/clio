@@ -50,7 +50,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
     auto const pageKey =
-        input.marker ? ripple::uint256{input.marker.value()} : ripple::keylet::nftpage_max(*accountID).key;
+        input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob)

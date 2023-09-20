@@ -81,7 +81,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
     if (input.marker)
     {
-        cursor = uint256(*input.marker);
+        cursor = uint256(input.marker->c_str());
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
         auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {

@@ -86,7 +86,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     }
 
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
-    auto const tokenID = ripple::uint256{input.nftID};
+    auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
     auto const [txnsAndCursor, timeDiff] = util::timed(
         [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
