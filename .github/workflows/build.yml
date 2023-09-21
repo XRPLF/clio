@@ -45,8 +45,6 @@ jobs:
 
       - name: List conan artifactory
         run: |
-          conan search
-          conan remote list
           if [[ -z $(conan remote list | grep conan-non-prod) ]]; then
               echo "Adding conan-non-prod"
               conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
@@ -115,7 +113,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_linux
-          path: ./build/clio_tests
+          path: ./clio/build/clio_tests
 
       # TODO(skuznetsov): upload cache only for develop branch
       - name: Cleanup conan directory
