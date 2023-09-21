@@ -115,15 +115,25 @@ jobs:
           name: clio_tests_linux
           path: ./clio/build/clio_tests
 
-      # TODO(skuznetsov): upload cache only for develop branch
+      - name: Extract branch name
+        id: extract_branch
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
       - name: Cleanup conan directory
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: |
+          ${{ steps.cache_restore.outputs.cache-hit == 'false' }}
+          &&
+          ${{ steps.extract_branch.outputs.branch == 'develop' }}
         run: |
           conan remove "*" -s -b -f
 
       - name: Save conan and ccache cache
         uses: actions/cache/save@v3
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: |
+          ${{ steps.cache_restore.outputs.cache-hit == 'false' }}
+          &&
+          ${{ steps.extract_branch.outputs.branch == 'develop' }}
         with:
           path: |
             ~/.conan/data
