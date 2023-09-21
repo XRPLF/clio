@@ -59,7 +59,7 @@ jobs:
           mkdir -p build
           cd build
           conan install .. -of . -b missing -s build_type=Release -o clio:tests=True --profile $CONAN_PROFILE
-          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G ninja
+          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
           cmake --build . --parallel $(($(sysctl -n hw.logicalcpu) - 2))
 
       - name: Upload clio_tests
@@ -71,25 +71,31 @@ jobs:
   build_linux:
     name: Build linux
     needs: lint
-    continue-on-error: true
     runs-on: [self-hosted, Linux]
     container:
-      image: thejohnfreeman/rippled-build-ubuntu:12e19cd9034b
+      image: conanio/gcc11:1.61.0
       options: --user root
     steps:
       - name: Get Clio
         uses: actions/checkout@v3
-
-      - name: Get rippled
-        uses: actions/checkout@v3
         with:
-          repository: thejohnfreeman/rippled
-          ref: clio
-          path: rippled
+          path: clio
+
+      - name: Setup conan
+        run: |
+          conan profile new default --detect
+          conan profile update settings.compiler.cppstd=20 default
+          conan profile update settings.compiler.libcxx=libstdc++11 default
+          conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 
       - name: Build Clio
         run: |
-          ./.github/actions/linux_build/build.sh
+          cd clio
+          mkdir -p build
+          cd build
+          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
+          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
+          cmake --build . --parallel $(($(sysctl -n hw.logicalcpu) - 2))
 
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
