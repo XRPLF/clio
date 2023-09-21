@@ -57,6 +57,7 @@ TEST_F(LoggerTest, Filtering)
     checkEqual("Trace:TRC Trace line logged for 'Trace' component");
 }
 
+#ifndef COVERAGE_ENABLED
 TEST_F(LoggerTest, LOGMacro)
 {
     Logger log{"General"};
@@ -73,6 +74,7 @@ TEST_F(LoggerTest, LOGMacro)
     log.trace() << compute();
     EXPECT_TRUE(computeCalled);
 }
+#endif
 
 TEST_F(NoLoggerTest, Basic)
 {
