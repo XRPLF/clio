@@ -42,6 +42,12 @@ jobs:
             conan profile update env.CC="$clang_path" $CONAN_PROFILE
             conan profile update env.CXX="$clang_cxx_path" $CONAN_PROFILE
 
+      - name: Restore conan cache
+        uses: actions/cache/restore@v3
+        with:
+          path: path/to/dependencies
+          key: clio-${{ runner.os }}-develop
+
       - name: List conan artifactory
         run: |
           conan search
@@ -67,6 +73,17 @@ jobs:
         with:
           name: clio_tests_mac
           path: ./clio/build/clio_tests
+
+      - name: Cleanup conan directory
+        run: |
+          conan remove "*" -s -b -f
+
+      # TODO(skuznetsov): upload cache only for develop branch
+      - name: Save conan cache
+        uses: actions/cache/save@v3
+        with:
+          path: "~/.conan/data"
+          key: clio-${{ runner.os }}-develop
 
   build_linux:
     name: Build linux
