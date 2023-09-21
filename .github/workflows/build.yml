@@ -33,11 +33,12 @@ jobs:
       - name: Create conan profile
         run: |
             echo "Creating $CONAN_PROFILE conan profile";
-            conan profile new $CONAN_PROFILE --detect --force
             clang_path="$(brew --prefix llvm@14)/bin/clang"
             clang_cxx_path="$(brew --prefix llvm@14)/bin/clang++"
+            conan profile new $CONAN_PROFILE --detect --force
             conan profile update settings.compiler=clang $CONAN_PROFILE
             conan profile update settings.compiler.version=14 $CONAN_PROFILE
+            conan profile update settings.compiler.cppstd=20 $CONAN_PROFILE
             conan profile update "conf.tools.build:compiler_executables={\"c\": \"$clang_path\", \"cpp\": \"$clang_cxx_path\"}" $CONAN_PROFILE
             conan profile update env.CC="$clang_path" $CONAN_PROFILE
             conan profile update env.CXX="$clang_cxx_path" $CONAN_PROFILE
@@ -114,7 +115,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_linux
-          path: ./build_clio/clio_tests
+          path: ./build/clio_tests
 
       # TODO(skuznetsov): upload cache only for develop branch
       - name: Cleanup conan directory
