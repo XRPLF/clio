@@ -100,7 +100,7 @@ jobs:
           path: |
             ~/.conan/data
             ~/.ccache
-          key: clio-${{ runner.os }}-develop
+          key: clio-${{ runner.os }}-develop-${{ hashFiles('clio/conanfile.py') }}
 
       - name: Build Clio
         run: |
@@ -130,7 +130,7 @@ jobs:
           path: |
             ~/.conan/data
             ~/.ccache
-          key: clio-${{ runner.os }}-develop
+          key: clio-${{ runner.os }}-develop-${{ hashFiles('clio/conanfile.py') }}
 
   test_mac:
     needs: build_mac
