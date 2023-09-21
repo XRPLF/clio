@@ -39,6 +39,9 @@ class AccountTxHandler
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
+    static std::unordered_map<std::string, ripple::TxType> const TYPESMAP;
+    static const std::unordered_set<std::string> TYPES_KEYS;
+
 public:
     // no max limit
     static auto constexpr LIMIT_MIN = 1;
@@ -77,6 +80,7 @@ public:
         bool forward = false;
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
+        std::optional<ripple::TxType> transactionType;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -109,6 +113,12 @@ public:
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
              }},
+            {
+                "tx_type",
+                validation::Type<std::string>{},
+                modifiers::ToLower{},
+                validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+            },
         };
 
         return rpcSpec;
