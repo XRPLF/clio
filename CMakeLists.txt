@@ -235,6 +235,7 @@ if (tests)
   # Generate `clio_tests-ccov` if coverage is enabled
   # Note: use `make clio_tests-ccov` to generate report
   if (coverage)
+    target_compile_definitions(${TEST_TARGET} PRIVATE COVERAGE_ENABLED)
     include (CMake/Coverage.cmake)
     add_coverage (${TEST_TARGET})
   endif ()

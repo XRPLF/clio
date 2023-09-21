@@ -93,12 +93,16 @@ using SourceLocationType = SourceLocation;
  *
  * Note: Currently this introduces potential shadowing (unlikely).
  */
+#ifndef COVERAGE_ENABLED
 #define LOG(x)                                 \
     if (auto clio_pump__ = x; not clio_pump__) \
     {                                          \
     }                                          \
     else                                       \
         clio_pump__
+#else
+#define LOG(x) x
+#endif
 
 /**
  * @brief Custom severity levels for @ref util::Logger.
