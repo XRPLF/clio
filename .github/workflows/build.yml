@@ -18,41 +18,48 @@ jobs:
   build_mac:
     name: Build macOS
     needs: lint
-    continue-on-error: true
     runs-on: [self-hosted, macOS]
+    env:
+      CONAN_PROFILE: clio_clang_14
     steps:
       - uses: actions/checkout@v3
         with:
           path: clio
 
+      - name: Install dependencies
+        run: |
+          brew install llvm@14 pkg-config ninja bison cmake ccache
+
+      - name: Create conan profile
+        run: |
+            echo "Creating $CONAN_PROFILE conan profile";
+            conan profile new $CONAN_PROFILE --detect --force
+            clang_path="$(brew --prefix llvm@14)/bin/clang"
+            clang_cxx_path="$(brew --prefix llvm@14)/bin/clang++"
+            conan profile update settings.compiler=clang $CONAN_PROFILE
+            conan profile update settings.compiler.version=14 $CONAN_PROFILE
+            conan profile update "conf.tools.build:compiler_executables={\"c\": \"$clang_path\", \"cpp\": \"$clang_cxx_path\"}" $CONAN_PROFILE
+            conan profile update env.CC="$clang_path" $CONAN_PROFILE
+            conan profile update env.CXX="$clang_cxx_path" $CONAN_PROFILE
+
       - name: List conan artifactory
         run: |
           conan search
           conan remote list
-          if [[ $(conan remote list |grep conan-non-prod| wc -c) -ne 0 ]]; then
-              echo "conan-non-prod is available"
-          else
-              echo "adding conan-non-prod"
+          if [[ -z $(conan remote list | grep conan-non-prod) ]]; then
+              echo "Adding conan-non-prod"
               conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+          else
+              echo "Conan-non-prod is available"
           fi
-
-      - name: Install dependencies
-        run: |
-          brew install llvm@14 pkg-config ninja bison cmake
-
-      - name: Setup environment for llvm-14
-        run: |
-          export PATH="/usr/local/opt/llvm@14/bin:$PATH"
-          export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
-          export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
 
       - name: Build Clio
         run: |
           cd clio
           mkdir -p build
           cd build
-          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
-          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True --profile $CONAN_PROFILE
+          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G ninja
           cmake --build . --parallel $(($(sysctl -n hw.logicalcpu) - 2))
 
       - name: Upload clio_tests

@@ -1,3 +1,5 @@
+name: Check format
+description: Check format using clang-format-11
 runs:
   using: composite
   steps:
