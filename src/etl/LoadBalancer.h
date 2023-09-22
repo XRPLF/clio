@@ -164,13 +164,15 @@ public:
      * @brief Forward a JSON RPC request to a randomly selected rippled node.
      *
      * @param request JSON-RPC request to forward
-     * @param clientIp The IP address of the peer
+     * @param clientIp The IP address of the peer, which is used as http User-Agent if presents
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success; nullopt on failure
      */
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
-        const;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> clientIp,
+        boost::asio::yield_context yield) const;
 
 private:
     /**

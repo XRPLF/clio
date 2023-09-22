@@ -33,6 +33,7 @@
 #include <etl/impl/LedgerPublisher.h>
 #include <etl/impl/Transformer.h>
 #include <feed/SubscriptionManager.h>
+#include <rpc/JS.h>
 #include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
@@ -205,6 +206,34 @@ public:
         return result;
     }
 
+    /**
+     * @brief Get the network id of ETL lazily
+     */
+    std::optional<uint32_t>
+    getNetworkID() const
+    {
+        static std::optional<uint32_t> networkID;
+
+        if (networkID)
+            return *networkID;
+
+        auto const serverInfoRippled = data::synchronous([this](auto yield) {
+            return loadBalancer_->forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
+        });
+
+        if (serverInfoRippled && !serverInfoRippled->contains(JS(error)))
+        {
+            if (serverInfoRippled->contains(JS(result)) &&
+                serverInfoRippled->at(JS(result)).as_object().contains(JS(info)))
+            {
+                auto const rippledInfo = serverInfoRippled->at(JS(result)).as_object().at(JS(info)).as_object();
+                if (rippledInfo.contains(JS(network_id)))
+                    networkID.emplace(boost::json::value_to<int64_t>(rippledInfo.at(JS(network_id))));
+            }
+        }
+        return networkID;
+    }
+
 private:
     /**
      * @brief Run the ETL pipeline.
@@ -223,10 +252,10 @@ private:
      * @brief Monitor the network for newly validated ledgers.
      *
      * Also monitor the database to see if any process is writing those ledgers.
-     * This function is called when the application starts, and will only return when the application is shutting down.
-     * If the software detects the database is empty, this function will call loadInitialLedger(). If the software
-     * detects ledgers are not being written, this function calls runETLPipeline(). Otherwise, this function publishes
-     * ledgers as they are written to the database.
+     * This function is called when the application starts, and will only return when the application is shutting
+     * down. If the software detects the database is empty, this function will call loadInitialLedger(). If the
+     * software detects ledgers are not being written, this function calls runETLPipeline(). Otherwise, this
+     * function publishes ledgers as they are written to the database.
      */
     void
     monitor();

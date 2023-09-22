@@ -132,7 +132,6 @@ target_sources (clio PRIVATE
   src/rpc/handlers/NoRippleCheck.cpp
   src/rpc/handlers/Random.cpp
   src/rpc/handlers/TransactionEntry.cpp
-  src/rpc/handlers/Tx.cpp
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp

@@ -36,6 +36,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
 
+#include <boost/regex.hpp>
 #include <fmt/core.h>
 
 namespace rpc {
@@ -224,6 +225,42 @@ isAmendmentEnabled(
     boost::asio::yield_context yield,
     uint32_t seq,
     ripple::uint256 amendmentId);
+
+std::optional<std::string>
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept;
+
+template <typename T>
+inline std::optional<std::tuple<uint32_t, uint16_t, uint16_t>>
+decodeCTID(const T ctid) noexcept
+{
+    uint64_t ctidValue{0};
+    if constexpr (
+        std::is_same_v<T, std::string> || std::is_same_v<T, char*> || std::is_same_v<T, const char*> ||
+        std::is_same_v<T, std::string_view>)
+    {
+        std::string const ctidString(ctid);
+
+        if (ctidString.length() != 16)
+            return {};
+
+        if (!boost::regex_match(ctidString, boost::regex("^[0-9A-F]+$")))
+            return {};
+
+        ctidValue = std::stoull(ctidString, nullptr, 16);
+    }
+    else if constexpr (std::is_integral_v<T>)
+        ctidValue = ctid;
+    else
+        return {};
+
+    if ((ctidValue & 0xF000'0000'0000'0000ULL) != 0xC000'0000'0000'0000ULL)
+        return {};
+
+    uint32_t ledger_seq = (ctidValue >> 32) & 0xFFFF'FFFUL;
+    uint16_t txn_index = (ctidValue >> 16) & 0xFFFFU;
+    uint16_t network_id = ctidValue & 0xFFFFU;
+    return {{ledger_seq, txn_index, network_id}};
+}
 
 template <class T>
 void

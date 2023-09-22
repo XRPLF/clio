@@ -152,7 +152,7 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
 std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
+    std::optional<std::string> clientIp,
     boost::asio::yield_context yield) const
 {
     srand(static_cast<unsigned>(time(0)));

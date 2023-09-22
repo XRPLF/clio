@@ -1387,4 +1387,18 @@ isAmendmentEnabled(
     return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();
 }
 
+std::optional<std::string>
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
+{
+    if (ledgerSeq > 0x0FFF'FFFF)
+        return {};
+
+    uint64_t ctidValue = ((0xC000'0000ULL + static_cast<uint64_t>(ledgerSeq)) << 32) +
+        (static_cast<uint64_t>(txnIndex) << 16) + networkId;
+
+    std::stringstream buffer;
+    buffer << std::hex << std::uppercase << std::setfill('0') << std::setw(16) << ctidValue;
+    return {buffer.str()};
+}
+
 }  // namespace rpc

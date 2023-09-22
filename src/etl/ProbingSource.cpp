@@ -123,7 +123,7 @@ ProbingSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNei
 std::optional<boost::json::object>
 ProbingSource::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
+    std::optional<std::string> clientIp,
     boost::asio::yield_context yield) const
 {
     if (!currentSrc_)
@@ -134,7 +134,7 @@ ProbingSource::forwardToRippled(
 std::optional<boost::json::object>
 ProbingSource::requestFromRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
+    std::optional<std::string> clientIp,
     boost::asio::yield_context yield) const
 {
     if (!currentSrc_)

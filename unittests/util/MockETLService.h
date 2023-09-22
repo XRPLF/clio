@@ -31,4 +31,5 @@ struct MockETLService
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
     MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
     MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
+    MOCK_METHOD(std::optional<uint32_t>, getNetworkID, (), (const));
 };
