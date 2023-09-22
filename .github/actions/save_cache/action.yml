@@ -21,6 +21,10 @@ runs:
         # echo "should_save=$( [[ "$branch" == "develop" ] && echo "true" || echo "false" )" >> $GITHUB_OUTPUT
         echo "should_save=true" >> $GITHUB_OUTPUT
 
+    - name: Find common commit
+      id: git_common_ancestor
+      uses: ./.github/actions/git_common_ancestor
+
     - name: Cleanup conan directory from extra data
       if: |
         ${{ steps.branch_name.outputs.should_save == 'true' }}
@@ -45,6 +49,6 @@ runs:
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.ccache_dir }}
-        key: clio-ccache-${{ runner.os }}-develop
+        key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
 
 
