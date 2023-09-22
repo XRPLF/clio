@@ -13,59 +13,50 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run clang-format
-        uses: ./.github/actions/lint
+        uses: ./.github/actions/clang_format
 
   build_mac:
     name: Build macOS
     needs: lint
     runs-on: [self-hosted, macOS]
     env:
-      CONAN_PROFILE: clio_clang_14
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CONAN_USER_HOME: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: clio
 
       - name: Install dependencies
         run: |
           brew install llvm@14 pkg-config ninja bison cmake ccache
 
-      - name: Create conan profile
-        run: |
-            echo "Creating $CONAN_PROFILE conan profile";
-            clang_path="$(brew --prefix llvm@14)/bin/clang"
-            clang_cxx_path="$(brew --prefix llvm@14)/bin/clang++"
-            conan profile new $CONAN_PROFILE --detect --force
-            conan profile update settings.compiler=clang $CONAN_PROFILE
-            conan profile update settings.compiler.version=14 $CONAN_PROFILE
-            conan profile update settings.compiler.cppstd=20 $CONAN_PROFILE
-            conan profile update "conf.tools.build:compiler_executables={\"c\": \"$clang_path\", \"cpp\": \"$clang_cxx_path\"}" $CONAN_PROFILE
-            conan profile update env.CC="$clang_path" $CONAN_PROFILE
-            conan profile update env.CXX="$clang_cxx_path" $CONAN_PROFILE
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
 
-      - name: List conan artifactory
-        run: |
-          if [[ -z $(conan remote list | grep conan-non-prod) ]]; then
-              echo "Adding conan-non-prod"
-              conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
-          else
-              echo "Conan-non-prod is available"
-          fi
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
 
       - name: Build Clio
-        run: |
-          cd clio
-          mkdir -p build
-          cd build
-          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True --profile $CONAN_PROFILE
-          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
-          cmake --build . --parallel $(($(sysctl -n hw.logicalcpu) - 2))
+        uses: ./.github/actions/build_clio
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
 
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_mac
-          path: ./clio/build/clio_tests
+          path: clio/build/clio_tests
+
+      - name: Save cache
+        uses: ./.github/actions/save_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
 
   build_linux:
     name: Build linux
@@ -74,71 +65,43 @@ jobs:
     container:
       image: conanio/gcc11:1.61.0
       options: --user root
+    env:
+      CCACHE_DIR: "~/.ccache"
+      CONAN_USER_HOME: "~"
     steps:
       - name: Get Clio
         uses: actions/checkout@v3
-        with:
-          path: clio
+
       - name: Install ccache
         run: |
           apt-get -qq update
           apt-get install -y ccache
 
-      - name: Setup conan
-        run: |
-          conan profile new default --detect
-          conan profile update settings.compiler.cppstd=20 default
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-          conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
-
-      - name: Restore cache for conan and ccache
-        uses: actions/cache/restore@v3
-        id: cache_restore
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
         with:
-          path: |
-            ~/.conan/data
-            ~/.ccache
-          key: clio-${{ runner.os }}-develop-${{ hashFiles('clio/conanfile.py') }}
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
 
       - name: Build Clio
-        run: |
-          cd clio
-          mkdir -p build
-          cd build
-          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
-          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
-          cmake --build . --parallel $(($(nproc) - 2))
+        uses: ./.github/actions/build_clio
 
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_linux
-          path: ./clio/build/clio_tests
+          path: clio/build/clio_tests
 
-      - name: Extract branch name
-        id: extract_branch
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-
-      - name: Cleanup conan directory
-        if: |
-          ${{ steps.cache_restore.outputs.cache-hit == 'false' }}
-          &&
-          ${{ steps.extract_branch.outputs.branch == 'develop' }}
-        run: |
-          conan remove "*" -s -b -f
-
-      - name: Save conan and ccache cache
-        uses: actions/cache/save@v3
-        if: |
-          ${{ steps.cache_restore.outputs.cache-hit == 'false' }}
-          &&
-          ${{ steps.extract_branch.outputs.branch == 'develop' }}
+      - name: Save cache
+        uses: ./.github/actions/save_cache
         with:
-          path: |
-            ~/.conan/data
-            ~/.ccache
-          key: clio-${{ runner.os }}-develop-${{ hashFiles('clio/conanfile.py') }}
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
 
   test_mac:
     needs: build_mac

@@ -1,0 +1,55 @@
+name: Setup conan
+description: Setup conan profile and artifactory
+outputs:
+  conan_profile:
+    description: Created conan profile name
+    value: ${{ steps.conan_export_output.outputs.conan_profile }}
+runs:
+  using: composite
+  steps:
+    - name: On mac
+      if: ${{ runner.os == 'macOS' }}
+      shell: bash
+      env:
+        CONAN_PROFILE: clio_clang_14
+      id: conan_setup_mac
+      run: |
+        echo "Creating $CONAN_PROFILE conan profile";
+        clang_path="$(brew --prefix llvm@14)/bin/clang"
+        clang_cxx_path="$(brew --prefix llvm@14)/bin/clang++"
+        conan profile new $CONAN_PROFILE --detect --force
+        conan profile update settings.compiler=clang $CONAN_PROFILE
+        conan profile update settings.compiler.version=14 $CONAN_PROFILE
+        conan profile update settings.compiler.cppstd=20 $CONAN_PROFILE
+        conan profile update "conf.tools.build:compiler_executables={\"c\": \"$clang_path\", \"cpp\": \"$clang_cxx_path\"}" $CONAN_PROFILE
+        conan profile update env.CC="$clang_path" $CONAN_PROFILE
+        conan profile update env.CXX="$clang_cxx_path" $CONAN_PROFILE
+        echo "created_conan_profile=$CONAN_PROFILE" >> $GITHUB_OUTPUT
+
+    - name: On linux
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      id: conan_setup_linux
+      run: |
+        conan profile new default --detect
+        conan profile update settings.compiler.cppstd=20 default
+        conan profile update settings.compiler.libcxx=libstdc++11 default
+        echo "created_conan_profile=default" >> $GITHUB_OUTPUT
+
+    - name: Export output variable
+      shell: bash
+      id: conan_export_output
+      run: |
+        echo "conan_profile=${{ steps.conan_setup_mac.outputs.created_conan_profile || steps.conan_setup_linux.outputs.created_conan_profile }}" >> $GITHUB_OUTPUT
+
+    - name: Add conan-non-prod artifactory
+      shell: bash
+      run: |
+        if [[ -z $(conan remote list | grep conan-non-prod) ]]; then
+            echo "Adding conan-non-prod"
+            conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+        else
+            echo "Conan-non-prod is available"
+        fi
+
+
