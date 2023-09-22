@@ -76,8 +76,9 @@ jobs:
 
       - name: Install ccache
         run: |
-          apt-get -qq update
-          apt-get install -y ccache
+          wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
+          tar xf ./ccache-4.8.3-linux-x86_64.tar.xz
+          mv ./ccache-4.8.3-linux-x86_64/ccache /usr/bin/ccache
 
       - name: Fix git permissions
         run: git config --global --add safe.directory $PWD
