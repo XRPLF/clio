@@ -10,8 +10,5 @@ runs:
     - name: Find common git ancestor
       id: find_common_ancestor
       shell: bash
-      env:
-          BASE_BRANCH: ${{ github.base_ref || github.ref }}
       run: |
-        common_ancestor=$(git merge-base --fork-point origin/$BASE_BRANCH)
-        echo "commit=$common_ancestor" >> $GITHUB_OUTPUT
+        echo "commit=$(git merge-base --fork-point origin/develop)" >> $GITHUB_OUTPUT

@@ -7,45 +7,25 @@ inputs:
   ccache_dir:
     description: Path to .ccache directory
     required: true
-  conan_cache_hit:
-    description: Whether there was cache hit for conan cache in the restore step
-    required: true
 runs:
   using: composite
   steps:
-    - name: Get branch name
-      id: branch_name
-      shell: bash
-      run: |
-        branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
-        # echo "should_save=$( [[ "$branch" == "develop" ] && echo "true" || echo "false" )" >> $GITHUB_OUTPUT
-        echo "should_save=true" >> $GITHUB_OUTPUT
-
     - name: Find common commit
       id: git_common_ancestor
       uses: ./.github/actions/git_common_ancestor
 
     - name: Cleanup conan directory from extra data
-      if: |
-        ${{ steps.branch_name.outputs.should_save == 'true' }}
-        &&
-        ${{ inputs.conan_cache_hit != 'true' }}
       shell: bash
       run: |
         conan remove "*" -s -b -f
 
     - name: Save conan cache
-      if: |
-        ${{ steps.branch_name.outputs.should_save == 'true' }}
-        &&
-        ${{ inputs.conan_cache_hit != 'true' }}
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.conan_dir }}/data
         key: clio-conan_data-${{ runner.os }}-develop-${{ hashFiles('./conanfile.py') }}
 
     - name: Save ccache cache
-      if: ${{ steps.branch_name.outputs.should_save == 'true' }}
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.ccache_dir }}

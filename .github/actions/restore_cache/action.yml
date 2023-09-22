@@ -7,10 +7,6 @@ inputs:
   ccache_dir:
     description: Path to .ccache directory
     required: true
-outputs:
-  conan_cache_hit:
-    description: Whether conan cache is being used
-    value: ${{ steps.provide_output.outputs.conan_cache_hit }}
 runs:
   using: composite
   steps:
@@ -30,10 +26,3 @@ runs:
       with:
         path: ${{ inputs.ccache_dir }}
         key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
-
-    - name: Provide output
-      id: provide_output
-      shell: bash
-      run: echo "conan_cache_hit=${{ steps.conan_cache.outputs.cache-hit }}" >> $GITHUB_OUTPUT
-
-
