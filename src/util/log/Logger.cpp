@@ -52,9 +52,7 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
     auto const& logLevel = value.as_string();
 
     if (boost::iequals(logLevel, "trace"))
-    {
         return Severity::TRC;
-    }
     if (boost::iequals(logLevel, "debug"))
         return Severity::DBG;
     if (boost::iequals(logLevel, "info"))

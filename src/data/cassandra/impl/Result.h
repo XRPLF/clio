@@ -97,7 +97,7 @@ extractColumn(CassRow const* row, std::size_t idx)
         cass_bool_t flag = cass_bool_t::cass_false;
         auto const rc = cass_value_get_bool(cass_row_get_column(row, idx), &flag);
         throwErrorIfNeeded(rc, "Extract bool");
-        output = flag != 0;
+        output = flag != cass_bool_t::cass_false;
     }
     // clio only uses bigint (int64_t) so we convert any incoming type
     else if constexpr (std::is_convertible_v<DecayedType, int64_t>)

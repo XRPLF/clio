@@ -366,7 +366,7 @@ SubscriptionManager::cleanup(SessionPtrType session)
     if (!cleanupFuncs_.contains(session))
         return;
 
-    for (const auto& f : cleanupFuncs_[session])
+    for (auto const& f : cleanupFuncs_[session])
     {
         f(session);
     }
