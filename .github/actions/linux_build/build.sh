@@ -15,6 +15,6 @@ cmake --build build_rippled --target xrpl_core --parallel $(($(nproc) - 2))
 cd ..
 
 conan export external/cassandra
-conan install . -if build_clio -of build_clio --build missing --build protobuf --build grpc --settings build_type=Release -o tests=True
+conan install . -if build_clio -of build_clio --build missing --settings build_type=Release -o tests=True
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -B build_clio
 cmake --build build_clio --parallel $(($(nproc) - 2))
