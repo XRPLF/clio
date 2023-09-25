@@ -128,8 +128,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
     for (auto const& lsf : lsFlags)
         acctFlags[lsf.first.data()] = output.accountData.isFlag(lsf.second);
 
-    // wait for conan integration-> jss::account_flags
-    jv.as_object()["account_flags"] = std::move(acctFlags);
+    jv.as_object()[JS(account_flags)] = std::move(acctFlags);
 
     if (output.signerLists)
     {
@@ -140,7 +139,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
             std::back_inserter(signers),
             [](auto const& signerList) { return toJson(signerList); });
         // version 2 puts the signer_lists out of the account_data
-        jv.as_object()[JS(signer_lists)] = std::move(signers);
+        jv.as_object()[JS(signer_lists)] = signers;
+        // this is a temporary fix to support the clients that still expect v1 api(the signer_lists under
+        // account_data)
+        // TODO: we need to deprecate the duplicate later
+        jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
     }
 }
 
