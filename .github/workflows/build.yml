@@ -67,7 +67,7 @@ jobs:
     continue-on-error: true
     runs-on: [self-hosted, Linux]
     container:
-      image: conanio/gcc11:1.60.2
+      image: thejohnfreeman/rippled-build-ubuntu:12e19cd9034b
       options: --user root
     steps:
       - name: Get Clio
@@ -94,22 +94,22 @@ jobs:
     needs: build_mac
     runs-on: [self-hosted, macOS]
     steps:
-    - uses: actions/download-artifact@v3
-      with:
-        name: clio_tests_mac
-    - name: Run clio_tests
-      run: |
-        chmod +x ./clio_tests
-        ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+      - uses: actions/download-artifact@v3
+        with:
+          name: clio_tests_mac
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   test_linux:
     needs: build_linux
     runs-on: [self-hosted, x-heavy]
     steps:
-    - uses: actions/download-artifact@v3
-      with:
-        name: clio_tests_linux
-    - name: Run clio_tests
-      run: |
-        chmod +x ./clio_tests
-        ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+      - uses: actions/download-artifact@v3
+        with:
+          name: clio_tests_linux
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
