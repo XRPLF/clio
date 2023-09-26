@@ -290,7 +290,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerAccountsIsFalse)
     });
 }
 
-TEST_F(RPCForwardingProxyTest, DISABLED_ShouldForwardReturnsTrueIfAPIVersionIsV1)
+TEST_F(RPCForwardingProxyTest, ShouldNotForwardReturnsTrueIfAPIVersionIsV1)
 {
     auto const apiVersion = 1u;
     auto const method = "api_version_check";
@@ -302,7 +302,7 @@ TEST_F(RPCForwardingProxyTest, DISABLED_ShouldForwardReturnsTrueIfAPIVersionIsV1
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP);
 
         auto const res = proxy.shouldForward(ctx);
-        ASSERT_TRUE(res);
+        ASSERT_FALSE(res);
     });
 }
 

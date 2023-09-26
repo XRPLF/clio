@@ -1091,7 +1091,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(R"({})");
-        auto const output = handler.process(req, Context{yield, .apiVersion = 2});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "unknownOption");
@@ -1104,7 +1104,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion1)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{mockBackendPtr}};
         auto const req = json::parse(R"({})");
-        auto const output = handler.process(req, Context{yield, .apiVersion = 1});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
