@@ -7,6 +7,10 @@ inputs:
   ccache_dir:
     description: Path to .ccache directory
     required: true
+outputs:
+  conan_hash:
+    description: Hash to use as a part of conan cache key
+    value: ${{ steps.conan_hash.outputs.hash }}
 runs:
   using: composite
   steps:
@@ -14,12 +18,21 @@ runs:
       id: git_common_ancestor
       uses: ./.github/actions/git_common_ancestor
 
+    - name: Calculate conan hash
+      id: conan_hash
+      shell: bash
+      run: |
+        conan info . -j info.json
+        hash=$(cat info.json | jq '.[] | "\(.id), \(.package_revision)"' | shasum -a 256 | cut -d ' ' -f 1)
+        rm info.json
+        echo "hash=$hash" >> $GITHUB_OUTPUT
+
     - name: Restore conan cache
       uses: actions/cache/restore@v3
       id: conan_cache
       with:
         path: ${{ inputs.conan_dir }}/data
-        key: clio-conan_data-${{ runner.os }}-develop-${{ hashFiles('./conanfile.py') }}
+        key: clio-conan_data-${{ runner.os }}-develop-${{ steps.conan_hash.outputs.hash }}
 
     - name: Restore ccache cache
       uses: actions/cache/restore@v3

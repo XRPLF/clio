@@ -27,19 +27,20 @@ jobs:
         with:
             fetch-depth: 0
 
-      - name: Install dependencies
+      - name: Install packages
         run: |
-          brew install llvm@14 pkg-config ninja bison cmake ccache
-
-      - name: Restore cache
-        uses: ./.github/actions/restore_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          ccache_dir: ${{ env.CCACHE_DIR }}
+          brew install llvm@14 pkg-config ninja bison cmake ccache jq
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
         id: conan
+
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -59,6 +60,7 @@ jobs:
         uses: ./.github/actions/save_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
           ccache_dir: ${{ env.CCACHE_DIR }}
 
   build_linux:
@@ -77,6 +79,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install packages
+        run: |
+          apt update -qq
+          apt install -y jq
+
       - name: Install ccache
         run: |
           wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
@@ -86,14 +93,15 @@ jobs:
       - name: Fix git permissions
         run: git config --global --add safe.directory $PWD
 
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+
       - name: Restore cache
         uses: ./.github/actions/restore_cache
+        id: restore_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
-
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -111,6 +119,7 @@ jobs:
         uses: ./.github/actions/save_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
           ccache_dir: ${{ env.CCACHE_DIR }}
 
   test_mac:
