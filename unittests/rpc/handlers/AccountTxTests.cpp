@@ -232,6 +232,27 @@ generateTestValuesForParametersTest()
             std::nullopt,
             std::nullopt,
             1u},
+        AccountTxParamTestCaseBundle{
+            "LedgerIndexMaxIsLowerIndexMin",
+            R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 10,
+                "ledger_index_min": 11,
+                "ledger_index": "validated"
+            })",
+            "invalidLgrRange",
+            "Ledger range is invalid."},
+        AccountTxParamTestCaseBundle{
+            "LedgerIndexMaxIsLowerIndexMin_API_v1",
+            R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 10,
+                "ledger_index_min": 11,
+                "ledger_index": "validated"
+            })",
+            "lgrIdxsInvalid",
+            "Ledger indexes invalid.",
+            1u},
     };
 }
 
