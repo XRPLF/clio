@@ -296,6 +296,10 @@ TEST_F(RPCForwardingProxyTest, ShouldNotForwardReturnsTrueIfAPIVersionIsV1)
     auto const method = "api_version_check";
     auto const params = json::parse("{}");
 
+    auto const rawHandlerProviderPtr = static_cast<MockHandlerProvider*>(handlerProvider.get());
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
     runSpawn([&](auto yield) {
         auto const range = mockBackendPtr->fetchLedgerRange();
         auto const ctx =
