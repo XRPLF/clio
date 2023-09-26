@@ -45,8 +45,9 @@ struct AccountTxParamTestCaseBundle
 {
     std::string testName;
     std::string testJson;
-    std::string expectedError;
-    std::string expectedErrorMessage;
+    std::optional<std::string> expectedError;
+    std::optional<std::string> expectedErrorMessage;
+    std::uint32_t apiVersion{2};
 };
 
 // parameterized test cases for parameters check
@@ -209,6 +210,28 @@ generateTestValuesForParametersTest()
             })",
             "invalidParams",
             "containsLedgerSpecifierAndRange"},
+        AccountTxParamTestCaseBundle{
+            "LedgerIndexMaxMinAndLedgerIndex_API_v1",
+            R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_index": 10
+            })",
+            std::nullopt,
+            std::nullopt,
+            1u},
+        AccountTxParamTestCaseBundle{
+            "LedgerIndexMaxMinAndLedgerIndexValidated_API_v1",
+            R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_index": "validated"
+            })",
+            std::nullopt,
+            std::nullopt,
+            1u},
     };
 }
 
@@ -218,20 +241,41 @@ INSTANTIATE_TEST_CASE_P(
     ValuesIn(generateTestValuesForParametersTest()),
     AccountTxParameterTest::NameGenerator{});
 
-TEST_P(AccountTxParameterTest, InvalidParams)
+TEST_P(AccountTxParameterTest, CheckParams)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
+
+    if (!testBundle.expectedError.has_value())
+    {
+        auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+        EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence);
+    }
+
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{yield});
-        ASSERT_FALSE(output);
+        auto context = Context{yield};
+        context.apiVersion = testBundle.apiVersion;
+        auto const output = handler.process(req, std::move(context));
+        if (testBundle.expectedError.has_value())
+        {
+            ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
+            auto const expectedError = testBundle.expectedError.value();
+            auto const expectedErrorMessage = testBundle.expectedErrorMessage.value();
+            ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
+            auto const err = rpc::makeError(output.error());
+            EXPECT_EQ(err.at("error").as_string(), expectedError);
+            EXPECT_EQ(err.at("error_message").as_string(), expectedErrorMessage);
+        }
+        else
+        {
+            ASSERT_FALSE(output);
+            auto const err = rpc::makeError(output.error());
+            EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+        }
     });
 }
 

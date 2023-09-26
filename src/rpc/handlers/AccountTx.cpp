@@ -91,8 +91,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {
-        // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin)
+        if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
         auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
