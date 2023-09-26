@@ -290,7 +290,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerAccountsIsFalse)
     });
 }
 
-TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAPIVersionIsV1)
+TEST_F(RPCForwardingProxyTest, DISABLED_ShouldForwardReturnsTrueIfAPIVersionIsV1)
 {
     auto const apiVersion = 1u;
     auto const method = "api_version_check";

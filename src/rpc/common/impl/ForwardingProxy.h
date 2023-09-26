@@ -56,10 +56,6 @@ public:
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
 
-        // TODO: if needed, make configurable with json config option
-        if (ctx.apiVersion == 1)
-            return true;
-
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 
