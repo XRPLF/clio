@@ -45,11 +45,13 @@ struct AccountTxParamTestCaseBundle
 {
     std::string testName;
     std::string testJson;
-    std::string expectedError;
-    std::string expectedErrorMessage;
+    std::optional<std::string> expectedError;
+    std::optional<std::string> expectedErrorMessage;
+    std::uint32_t apiVersion = 2;
 };
 
-struct AccountTxParamTestBase : public RPCAccountTxHandlerTest
+// parameterized test cases for parameters check
+struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParamInterface<AccountTxParamTestCaseBundle>
 {
     struct NameGenerator
     {
@@ -60,11 +62,7 @@ struct AccountTxParamTestBase : public RPCAccountTxHandlerTest
             return info.param.testName;
         }
     };
-};
 
-// parameterized test cases for parameters check
-struct AccountTxParameterTest : public AccountTxParamTestBase, public WithParamInterface<AccountTxParamTestCaseBundle>
-{
     static auto
     generateTestValuesForParametersTest()
     {
@@ -77,10 +75,22 @@ struct AccountTxParameterTest : public AccountTxParamTestBase, public WithParamI
                 "invalidParams",
                 "Invalid parameters."},
             AccountTxParamTestCaseBundle{
+                "BinaryNotBool_API_v1",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
                 "ForwardNotBool",
                 R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
                 "invalidParams",
                 "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "ForwardNotBool_API_v1",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
+                std::nullopt,
+                std::nullopt,
+                1u},
             AccountTxParamTestCaseBundle{
                 "ledger_index_minNotInt",
                 R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_min": "x"})",
@@ -192,6 +202,16 @@ struct AccountTxParameterTest : public AccountTxParamTestBase, public WithParamI
                 "invalidLgrRange",
                 "Ledger range is invalid."},
             AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxLessThanLedgerIndexMin_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 11,
+                "ledger_index_min": 20
+            })",
+                "lgrIdxsInvalid",
+                "Ledger indexes invalid.",
+                1u},
+            AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxMinAndLedgerIndex",
                 R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
@@ -202,15 +222,52 @@ struct AccountTxParameterTest : public AccountTxParamTestBase, public WithParamI
                 "invalidParams",
                 "containsLedgerSpecifierAndRange"},
             AccountTxParamTestCaseBundle{
-                "LedgerIndexMaxMinAndLedgerIndexValidated",
+                "LedgerIndexMaxMinAndLedgerIndex_API_v1",
                 R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_index": 10
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerHash",
+                fmt::format(
+                    R"({{
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_hash": "{}"
+            }})",
+                    LEDGERHASH),
+                "invalidParams",
+                "containsLedgerSpecifierAndRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerHash_API_v1",
+                fmt::format(
+                    R"({{
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_hash": "{}"
+            }})",
+                    LEDGERHASH),
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerIndexValidated_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": "validated"
             })",
-                "invalidParams",
-                "containsLedgerSpecifierAndRange"},
+                std::nullopt,
+                std::nullopt,
+                1u},
         };
     };
 };
@@ -221,84 +278,44 @@ INSTANTIATE_TEST_CASE_P(
     ValuesIn(AccountTxParameterTest::generateTestValuesForParametersTest()),
     AccountTxParameterTest::NameGenerator{});
 
-TEST_P(AccountTxParameterTest, InvalidParams)
+TEST_P(AccountTxParameterTest, CheckParams)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{.yield=yield, .apiVersion = 2});
-        ASSERT_FALSE(output);
-
-        auto const err = rpc::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
-    });
-}
-
-struct AccountTxParamApiV1TestCaseBundle
-{
-    std::string testName;
-    std::string testJson;
-};
-
-// parameterized test cases for parameters check
-struct AccountTxParameterApiV1Test : public AccountTxParamTestBase,
-                                     public WithParamInterface<AccountTxParamApiV1TestCaseBundle>
-{
-    static auto
-    generateTestValuesForParametersTest()
-    {
-        return std::vector<AccountTxParamApiV1TestCaseBundle>{
-            AccountTxParamApiV1TestCaseBundle{
-                "BinaryNotBool", R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})"},
-            AccountTxParamApiV1TestCaseBundle{
-                "ForwardNotBool", R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})"},
-            AccountTxParamApiV1TestCaseBundle{
-                "LedgerIndexMaxMinAndLedgerIndex",
-                R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": 10
-            })"},
-            AccountTxParamApiV1TestCaseBundle{
-                "LedgerIndexMaxMinAndLedgerIndexValidated",
-                R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": "validated"
-            })"},
-        };
-    }
-};
-
-INSTANTIATE_TEST_CASE_P(
-    RPCAccountTxGroup2,
-    AccountTxParameterApiV1Test,
-    ValuesIn(AccountTxParameterApiV1Test::generateTestValuesForParametersTest()),
-    AccountTxParameterApiV1Test::NameGenerator{});
-
-TEST_P(AccountTxParameterApiV1Test, CheckParams)
-{
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    auto const testBundle = GetParam();
-
     auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     auto const req = json::parse(testBundle.testJson);
-    if (req.as_object().contains("ledger_index"))
-        EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(testing::Return(ripple::LedgerHeader{}));
-    EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
+    if (testBundle.expectedError.has_value())
+    {
+        ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const output = handler.process(req, Context{.yield=yield, .apiVersion = 1});
-        EXPECT_TRUE(output);
-    });
+        runSpawn([&, this](auto yield) {
+            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
+            ASSERT_FALSE(output);
+            auto const err = rpc::makeError(output.error());
+            EXPECT_EQ(err.at("error").as_string(), *testBundle.expectedError);
+            EXPECT_EQ(err.at("error_message").as_string(), *testBundle.expectedErrorMessage);
+        });
+    }
+    else
+    {
+        if (req.as_object().contains("ledger_hash"))
+        {
+            EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).WillOnce(testing::Return(ripple::LedgerHeader{}));
+        }
+        else if (req.as_object().contains("ledger_index"))
+        {
+            EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(testing::Return(ripple::LedgerHeader{}));
+        }
+        EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
+
+        runSpawn([&, this](auto yield) {
+            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
+            EXPECT_TRUE(output);
+        });
+    }
 }
 
 namespace {
