@@ -4,8 +4,8 @@
 namespace rpc {
 
 /**
-* @brief A wrapper around bool that allows to convert from any JSON value
-*/
+ * @brief A wrapper around bool that allows to convert from any JSON value
+ */
 struct JsonBool
 {
     bool value = false;

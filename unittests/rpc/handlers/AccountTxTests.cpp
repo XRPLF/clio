@@ -282,6 +282,16 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParam
                 "invalidParams",
                 "containsLedgerSpecifierAndRange"},
             AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerIndexValidated",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_index": "validated"
+            })",
+                "invalidParams",
+                "containsLedgerSpecifierAndRange"},
+            AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxMinAndLedgerIndex_API_v1",
                 R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -344,7 +354,9 @@ TEST_P(AccountTxParameterTest, CheckParams)
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
     auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    std::cout << "Before parse" << std::endl;
     auto const req = json::parse(testBundle.testJson);
+    std::cout << "After parse" << std::endl;
     if (testBundle.expectedError.has_value())
     {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
