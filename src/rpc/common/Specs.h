@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace rpc {
 
@@ -74,6 +75,18 @@ struct RpcSpec final
      */
     RpcSpec(std::initializer_list<FieldSpec> fields) : fields_{fields}
     {
+    }
+
+    /**
+    * @brief Construct a full RPC request specification from another spec and additional fields.
+     *
+     * @param other The other spec to copy fields from
+     * @param additionalFields The additional fields to add to the spec
+     */
+    RpcSpec(const RpcSpec& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
+    {
+        for (auto& f : additionalFields)
+            fields_.push_back(f);
     }
 
     /**

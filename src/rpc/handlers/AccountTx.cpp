@@ -250,10 +250,10 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     }
 
     if (jsonObject.contains(JS(binary)))
-        input.binary = jsonObject.at(JS(binary)).as_bool();
+        input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
     if (jsonObject.contains(JS(forward)))
-        input.forward = jsonObject.at(JS(forward)).as_bool();
+        input.forward = boost::json::value_to<JsonBool>(jsonObject.at(JS(forward)));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
