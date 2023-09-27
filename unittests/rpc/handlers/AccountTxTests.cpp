@@ -221,18 +221,15 @@ INSTANTIATE_TEST_CASE_P(
     ValuesIn(AccountTxParameterTest::generateTestValuesForParametersTest()),
     AccountTxParameterTest::NameGenerator{});
 
-TEST_P(AccountTxParameterTest, CheckParams)
+TEST_P(AccountTxParameterTest, InvalidParams)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
-
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto context = Context{yield};
-        context.apiVersion = 2;
-        auto const output = handler.process(req, std::move(context));
+        auto const output = handler.process(req, Context{.yield=yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.error());
@@ -299,10 +296,8 @@ TEST_P(AccountTxParameterApiV1Test, CheckParams)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto context = Context{yield};
-        context.apiVersion = 1;
-        auto const output = handler.process(req, std::move(context));
-        ASSERT_TRUE(output);
+        auto const output = handler.process(req, Context{.yield=yield, .apiVersion = 1});
+        EXPECT_TRUE(output);
     });
 }
 
