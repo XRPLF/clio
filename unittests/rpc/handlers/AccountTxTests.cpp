@@ -193,6 +193,66 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParam
                 "lgrIdxMalformed",
                 "ledgerSeqMaxOutOfRange"},
             AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxLargeThanMaxSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 31
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxSmallerThanMinSeq",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 9
+            })",
+                "lgrIdxMalformed",
+                "ledgerSeqMaxOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxSmallerThanMinSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 9
+            })",
+                "lgrIdxsInvalid",
+                "Ledger indexes invalid.",
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinSmallerThanMinSeq",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 9
+            })",
+                "lgrIdxMalformed",
+                "ledgerSeqMinOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinSmallerThanMinSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 9
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinLargerThanMaxSeq",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 31
+            })",
+                "lgrIdxMalformed",
+                "ledgerSeqMinOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinLargerThanMaxSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 31
+            })",
+                "lgrIdxsInvalid",
+                "Ledger indexes invalid.",
+                1u},
+            AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxLessThanLedgerIndexMin",
                 R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",

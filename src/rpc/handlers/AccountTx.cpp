@@ -72,21 +72,26 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
     if (input.ledgerIndexMin)
     {
-        if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMin > range->maxSequence || input.ledgerIndexMin < range->minSequence))
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
 
-        minIndex = *input.ledgerIndexMin;
+        if (*input.ledgerIndexMin > minIndex)
+            minIndex = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax)
     {
-        if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMax > range->maxSequence || input.ledgerIndexMax < range->minSequence))
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
 
-        maxIndex = *input.ledgerIndexMax;
+        if (*input.ledgerIndexMax < maxIndex)
+            maxIndex = *input.ledgerIndexMax;
     }
 
-    if (minIndex > maxIndex) {
+    if (minIndex > maxIndex)
+    {
         if (ctx.apiVersion == 1u)
             return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
 
