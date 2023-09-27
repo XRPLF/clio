@@ -78,7 +78,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
         }
 
-        if (*input.ledgerIndexMin > minIndex)
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMin) > minIndex)
             minIndex = *input.ledgerIndexMin;
     }
 
@@ -90,7 +90,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
         }
 
-        if (*input.ledgerIndexMax < maxIndex)
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMax) < maxIndex)
             maxIndex = *input.ledgerIndexMax;
     }
 
