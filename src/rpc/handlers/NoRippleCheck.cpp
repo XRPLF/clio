@@ -167,7 +167,7 @@ tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
     if (jsonObject.contains(JS(transactions)))
-        input.transactions = jsonObject.at(JS(transactions)).as_bool();
+        input.transactions = boost::json::value_to<JsonBool>(jsonObject.at(JS(transactions)));
 
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();

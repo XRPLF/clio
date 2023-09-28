@@ -107,12 +107,31 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
+    });
+}
+
+TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
+{
+    static constexpr auto reqJson = R"(
+        {"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1}
+    )";
+    auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence);
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
+        auto const req = json::parse(reqJson);
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
 }
 

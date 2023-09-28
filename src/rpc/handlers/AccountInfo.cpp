@@ -176,7 +176,7 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     }
 
     if (jsonObject.contains(JS(signer_lists)))
-        input.signerLists = jsonObject.at(JS(signer_lists)).as_bool();
+        input.signerLists = boost::json::value_to<JsonBool>(jsonObject.at(JS(signer_lists)));
 
     return input;
 }
