@@ -111,8 +111,8 @@
     // "ssl_cert_file" : "/full/path/to/cert.file",
     // "ssl_key_file" : "/full/path/to/key.file"
     "api_version": {
-        "min": 2,
-        "max": 2,
-        "default": 2 // Clio only supports API v2 and newer
+        "min": 1, // Minimum API version supported (could be 1 or 2)
+        "max": 2, // Maximum API version supported (could be 1 or 2, but >= min)
+        "default": 1 // Clio behaves the same as rippled by default
     }
 }
