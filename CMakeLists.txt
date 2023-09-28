@@ -16,6 +16,7 @@ set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # ========================================================================== #
 
 # Include required modules
+include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
 
 if (verbose)

@@ -1,0 +1,31 @@
+name: Build clio
+description: Build clio in build directory
+inputs:
+  conan_profile:
+    description: Conan profile name
+    required: true
+    default: default
+runs:
+  using: composite
+  steps:
+    - name: Get number of threads on mac
+      id: mac_threads
+      if: ${{ runner.os == 'macOS' }}
+      shell: bash
+      run: echo "num=$(($(sysctl -n hw.logicalcpu) - 2))" >> $GITHUB_OUTPUT
+
+    - name: Get number of threads on Linux
+      id: linux_threads
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: echo "num=$(($(nproc) - 2))" >> $GITHUB_OUTPUT
+
+    - name: Build Clio
+      shell: bash
+      run: |
+        mkdir -p build
+        cd build
+        threads_num=${{ steps.mac_threads.outputs.num || steps.linux_threads.outputs.num }}
+        conan install .. -of . -b missing -s build_type=Release -o clio:tests=True --profile ${{ inputs.conan_profile }}
+        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
+        cmake --build . --parallel $threads_num

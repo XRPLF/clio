@@ -1,0 +1,37 @@
+name: Save cache
+description: Save conan and ccache cache for develop branch
+inputs:
+  conan_dir:
+    description: Path to .conan directory
+    required: true
+  conan_hash:
+    description: Hash to use as a part of conan cache key
+    required: true
+  ccache_dir:
+    description: Path to .ccache directory
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Find common commit
+      id: git_common_ancestor
+      uses: ./.github/actions/git_common_ancestor
+
+    - name: Cleanup conan directory from extra data
+      shell: bash
+      run: |
+        conan remove "*" -s -b -f
+
+    - name: Save conan cache
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ inputs.conan_dir }}/data
+        key: clio-conan_data-${{ runner.os }}-develop-${{ inputs.conan_hash }}
+
+    - name: Save ccache cache
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ inputs.ccache_dir }}
+        key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
+
+
