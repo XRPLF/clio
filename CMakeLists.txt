@@ -175,6 +175,7 @@ if (tests)
     unittests/rpc/ForwardingProxyTests.cpp
     unittests/rpc/WorkQueueTests.cpp
     unittests/rpc/AmendmentsTests.cpp
+    unittests/rpc/JsonBoolTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
