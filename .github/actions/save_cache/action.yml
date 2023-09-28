@@ -7,8 +7,14 @@ inputs:
   conan_hash:
     description: Hash to use as a part of conan cache key
     required: true
+  conan_cache_hit:
+    description: Whether conan cache has been downloaded
+    required: true
   ccache_dir:
     description: Path to .ccache directory
+    required: true
+  ccache_cache_hit:
+    description: Whether conan cache has been downloaded
     required: true
 runs:
   using: composite
@@ -18,17 +24,20 @@ runs:
       uses: ./.github/actions/git_common_ancestor
 
     - name: Cleanup conan directory from extra data
+      if: ${{ inputs.conan_cache_hit != 'true' }}
       shell: bash
       run: |
         conan remove "*" -s -b -f
 
     - name: Save conan cache
+      if: ${{ inputs.conan_cache_hit != 'true' }}
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.conan_dir }}/data
         key: clio-conan_data-${{ runner.os }}-develop-${{ inputs.conan_hash }}
 
     - name: Save ccache cache
+      if: ${{ inputs.ccache_cache_hit != 'true' }}
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.ccache_dir }}

@@ -11,6 +11,12 @@ outputs:
   conan_hash:
     description: Hash to use as a part of conan cache key
     value: ${{ steps.conan_hash.outputs.hash }}
+  conan_cache_hit:
+    description: True if conan cache has been downloaded
+    value: ${{ steps.conan_cache.outputs.cache-hit }}
+  ccache_cache_hit:
+    description: True if ccache cache has been downloaded
+    value: ${{ steps.ccache_cache.outputs.cache-hit }}
 runs:
   using: composite
   steps:
@@ -36,6 +42,7 @@ runs:
 
     - name: Restore ccache cache
       uses: actions/cache/restore@v3
+      id: ccache_cache
       with:
         path: ${{ inputs.ccache_dir }}
         key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}

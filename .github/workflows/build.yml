@@ -46,6 +46,7 @@ jobs:
         uses: ./.github/actions/build_clio
         with:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
 
       - name: Strip tests
         run: strip build/clio_tests
@@ -61,7 +62,9 @@ jobs:
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           ccache_dir: ${{ env.CCACHE_DIR }}
+          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
   build_linux:
     name: Build linux
@@ -105,6 +108,8 @@ jobs:
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
+        with:
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
 
       - name: Strip tests
         run: strip build/clio_tests
@@ -120,7 +125,9 @@ jobs:
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           ccache_dir: ${{ env.CCACHE_DIR }}
+          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
   test_mac:
     needs: build_mac
