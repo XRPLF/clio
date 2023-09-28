@@ -285,7 +285,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     });
 }
 
-TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
+TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
 {
     auto const expectedOutput = fmt::format(
         R"({{
@@ -300,37 +300,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
                 "PreviousTxnLgrSeq": 2,
                 "Sequence": 2,
                 "TransferRate": 0,
-                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
-                "signer_lists":
-                [
-                    {{
-                        "Flags": 0,
-                        "LedgerEntryType": "SignerList",
-                        "OwnerNode": "0",
-                        "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                        "PreviousTxnLgrSeq": 0,
-                        "SignerEntries":
-                        [
-                            {{
-                                "SignerEntry":
-                                {{
-                                    "Account": "{}",
-                                    "SignerWeight": 1
-                                }}
-                            }},
-                            {{
-                                "SignerEntry":
-                                {{
-                                    "Account": "{}",
-                                    "SignerWeight": 1
-                                }}
-                            }}
-                        ],
-                        "SignerListID": 0,
-                        "SignerQuorum": 2,
-                        "index": "A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
-                    }}
-                ]
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
             }},
             "signer_lists":
             [
@@ -382,6 +352,105 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
         INDEX1,
         ACCOUNT1,
         ACCOUNT2,
+        LEDGERHASH);
+    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    auto signersKey = ripple::keylet::signers(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(signersKey, 30, _))
+        .WillByDefault(Return(CreateSignerLists({{ACCOUNT1, 1}, {ACCOUNT2, 1}}).getSerializer().peekData()));
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
+        .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
+
+    auto const static input = json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "signer_lists": true
+        }})",
+        ACCOUNT));
+    auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
+{
+    auto const expectedOutput = fmt::format(
+        R"({{
+            "account_data": 
+            {{
+                "Account": "{}",
+                "Balance": "200",
+                "Flags": 0,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "{}",
+                "PreviousTxnLgrSeq": 2,
+                "Sequence": 2,
+                "TransferRate": 0,
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
+                "signer_lists":
+                [
+                    {{
+                        "Flags": 0,
+                        "LedgerEntryType": "SignerList",
+                        "OwnerNode": "0",
+                        "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                        "PreviousTxnLgrSeq": 0,
+                        "SignerEntries":
+                        [
+                            {{
+                                "SignerEntry":
+                                {{
+                                    "Account": "{}",
+                                    "SignerWeight": 1
+                                }}
+                            }},
+                            {{
+                                "SignerEntry":
+                                {{
+                                    "Account": "{}",
+                                    "SignerWeight": 1
+                                }}
+                            }}
+                        ],
+                        "SignerListID": 0,
+                        "SignerQuorum": 2,
+                        "index": "A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
+                    }}
+                ]
+            }},
+            "account_flags": 
+            {{
+                "defaultRipple": false,
+                "depositAuth": false,
+                "disableMasterKey": false,
+                "disallowIncomingXRP": false,
+                "globalFreeze": false,
+                "noFreeze": false,
+                "passwordSpent": false,
+                "requireAuthorization": false,
+                "requireDestinationTag": false
+            }},
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true
+        }})",
+        ACCOUNT,
+        INDEX1,
         ACCOUNT1,
         ACCOUNT2,
         LEDGERHASH);
@@ -412,7 +481,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrue)
         ACCOUNT));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 1});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOutput));
     });

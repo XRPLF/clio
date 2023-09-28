@@ -77,6 +77,18 @@ struct RpcSpec final
     }
 
     /**
+     * @brief Construct a full RPC request specification from another spec and additional fields.
+     *
+     * @param other The other spec to copy fields from
+     * @param additionalFields The additional fields to add to the spec
+     */
+    RpcSpec(const RpcSpec& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
+    {
+        for (auto& f : additionalFields)
+            fields_.push_back(std::move(f));
+    }
+
+    /**
      * @brief Processos the passed JSON value using the stored field specs.
      *
      * @param value The JSON value to validate and/or modify
