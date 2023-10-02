@@ -46,7 +46,7 @@ struct Settings
     struct ContactPoints
     {
         std::string contactPoints = "127.0.0.1";  // defaults to localhost
-        std::optional<uint16_t> port;
+        std::optional<uint16_t> port = {};
     };
 
     /**

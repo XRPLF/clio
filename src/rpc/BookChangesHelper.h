@@ -199,6 +199,7 @@ private:
                 case ripple::ttOFFER_CREATE:
                     if (tx->isFieldPresent(ripple::sfOfferSequence))
                         return tx->getFieldU32(ripple::sfOfferSequence);
+                    [[fallthrough]];
                 default:
                     return std::nullopt;
             }

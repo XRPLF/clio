@@ -270,7 +270,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
     })";
     subManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
     CheckSubscriberMessage(dummyTransaction, session);
-    auto rawIdle = (MockSession*)(sessionIdle.get());
+    auto rawIdle = static_cast<MockSession*>(sessionIdle.get());
     EXPECT_EQ("", rawIdle->message);
 }
 

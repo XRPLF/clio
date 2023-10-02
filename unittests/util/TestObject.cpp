@@ -334,7 +334,6 @@ CreatePaymentChannelLedgerObject(
 
 [[nodiscard]] ripple::STObject
 CreateRippleStateLedgerObject(
-    std::string_view accountId,
     std::string_view currency,
     std::string_view issuerId,
     int balance,

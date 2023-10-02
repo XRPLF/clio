@@ -37,7 +37,7 @@ ripple::uint256
 binaryStringToUint256(std::string const& bin)
 {
     ripple::uint256 uint;
-    return uint.fromVoid((void const*)bin.data());
+    return uint.fromVoid(static_cast<void const*>(bin.data()));
 }
 
 std::string

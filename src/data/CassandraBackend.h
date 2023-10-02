@@ -649,11 +649,11 @@ public:
                 return {};
             }
 
-            std::vector<ripple::uint256> keys;
+            std::vector<ripple::uint256> resultKeys;
             for (auto [key] : extract<ripple::uint256>(results))
-                keys.push_back(key);
+                resultKeys.push_back(key);
 
-            return keys;
+            return resultKeys;
         });
 
         // one of the above errors must have happened

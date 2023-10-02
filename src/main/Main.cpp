@@ -206,7 +206,7 @@ try
     auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
         config, backend, subscriptions, balancer, etl, counters);
     auto const rpcEngine = rpc::RPCEngine::make_RPCEngine(
-        config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
+        backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     // Init the web server
     auto handler = std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(

@@ -38,13 +38,13 @@ public:
 
     struct Output
     {
-        std::string nftID;
-        std::vector<ripple::SLE> offers;
+        std::string nftID = {};
+        std::vector<ripple::SLE> offers = {};
 
         // validated should be sent via framework
         bool validated = true;
-        std::optional<uint32_t> limit;
-        std::optional<std::string> marker;
+        std::optional<uint32_t> limit = {};
+        std::optional<std::string> marker = {};
     };
 
     struct Input

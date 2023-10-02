@@ -531,7 +531,7 @@ generateNormalPathBookOffersTestBundles()
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
 
     auto const frozenTrustLine = CreateRippleStateLedgerObject(
-        ACCOUNT2, "USD", ACCOUNT, -8, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, ripple::lsfLowFreeze);
+        "USD", ACCOUNT, -8, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, ripple::lsfLowFreeze);
 
     auto const gets10USDPays20XRPOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -599,10 +599,10 @@ generateNormalPathBookOffersTestBundles()
     auto const feeLedgerObject = CreateFeeSettingBlob(1, 2, 3, 4, 0);
 
     auto const trustline30Balance =
-        CreateRippleStateLedgerObject(ACCOUNT2, "USD", ACCOUNT, -30, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, 0);
+        CreateRippleStateLedgerObject("USD", ACCOUNT, -30, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, 0);
 
     auto const trustline8Balance =
-        CreateRippleStateLedgerObject(ACCOUNT2, "USD", ACCOUNT, -8, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, 0);
+        CreateRippleStateLedgerObject("USD", ACCOUNT, -8, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, 0);
 
     return std::vector<BookOffersNormalTestBundle>{
         BookOffersNormalTestBundle{

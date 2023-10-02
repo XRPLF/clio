@@ -107,9 +107,8 @@ public:
             if (maybeNFT)
                 result.nfTokensData.push_back(*maybeNFT);
 
-            auto journal = ripple::debugLog();
-            result.accountTxData.emplace_back(txMeta, sttx.getTransactionID(), journal);
-            std::string keyStr{(const char*)sttx.getTransactionID().data(), 32};
+            result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
+            std::string keyStr{reinterpret_cast<const char*>(sttx.getTransactionID().data()), 32};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,

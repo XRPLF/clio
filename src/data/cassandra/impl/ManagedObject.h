@@ -38,7 +38,7 @@ public:
     }
     ManagedObject(ManagedObject&&) = default;
 
-    operator Managed* const() const
+    operator Managed*() const
     {
         return ptr_.get();
     }

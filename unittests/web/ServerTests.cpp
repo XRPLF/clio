@@ -174,7 +174,7 @@ public:
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
     }
 };
@@ -183,13 +183,13 @@ class ExceptionExecutor
 {
 public:
     void
-    operator()(std::string const& req, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(std::string const& /* req */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
         throw std::runtime_error("MyError");
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
     }
 };

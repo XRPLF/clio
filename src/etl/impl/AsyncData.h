@@ -128,7 +128,7 @@ public:
             auto& obj = *(cur_->mutable_ledger_objects()->mutable_objects(i));
             if (!more && nextPrefix_ != 0x00)
             {
-                if (((unsigned char)obj.key()[0]) >= nextPrefix_)
+                if (static_cast<unsigned char>(obj.key()[0]) >= nextPrefix_)
                     continue;
             }
             cacheUpdates.push_back(

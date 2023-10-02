@@ -68,7 +68,7 @@ CustomValidator Uint256HexStringValidator =
     }};
 
 CustomValidator LedgerIndexValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+    CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
         auto err = Error{Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
 
         if (!value.is_string() && !(value.is_uint64() || value.is_int64()))

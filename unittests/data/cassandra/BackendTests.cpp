@@ -122,9 +122,9 @@ TEST_F(BackendCassandraTest, Basic)
         lgrInfoNext.hash++;
         lgrInfoNext.accountHash = ~lgrInfo.accountHash;
         {
-            std::string rawHeaderBlob = ledgerInfoToBinaryString(lgrInfoNext);
+            std::string infoBlob = ledgerInfoToBinaryString(lgrInfoNext);
 
-            backend->writeLedger(lgrInfoNext, std::move(rawHeaderBlob));
+            backend->writeLedger(lgrInfoNext, std::move(infoBlob));
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
         {
@@ -349,14 +349,13 @@ TEST_F(BackendCassandraTest, Basic)
             ripple::uint256 hash256;
             EXPECT_TRUE(hash256.parseHex(hashHex));
             ripple::TxMeta txMeta{hash256, lgrInfoNext.seq, metaBlob};
-            auto journal = ripple::debugLog();
             auto accountsSet = txMeta.getAffectedAccounts();
             for (auto& a : accountsSet)
             {
                 affectedAccounts.push_back(a);
             }
             std::vector<AccountTransactionsData> accountTxData;
-            accountTxData.emplace_back(txMeta, hash256, journal);
+            accountTxData.emplace_back(txMeta, hash256);
 
             ripple::uint256 nftHash256;
             EXPECT_TRUE(nftHash256.parseHex(nftTxnHashHex));
@@ -399,18 +398,22 @@ TEST_F(BackendCassandraTest, Basic)
             auto retLgr = backend->fetchLedgerBySequence(lgrInfoNext.seq, yield);
             EXPECT_TRUE(retLgr);
             EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfoNext));
-            auto txns = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
-            ASSERT_EQ(txns.size(), 1);
-            EXPECT_STREQ((const char*)txns[0].transaction.data(), (const char*)txnBlob.data());
-            EXPECT_STREQ((const char*)txns[0].metadata.data(), (const char*)metaBlob.data());
+            auto allTransactions = backend->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
+            ASSERT_EQ(allTransactions.size(), 1);
+            EXPECT_STREQ(
+                reinterpret_cast<const char*>(allTransactions[0].transaction.data()),
+                static_cast<const char*>(txnBlob.data()));
+            EXPECT_STREQ(
+                reinterpret_cast<const char*>(allTransactions[0].metadata.data()),
+                static_cast<const char*>(metaBlob.data()));
             auto hashes = backend->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
             for (auto& a : affectedAccounts)
             {
-                auto [txns, cursor] = backend->fetchAccountTransactions(a, 100, true, {}, yield);
-                EXPECT_EQ(txns.size(), 1);
-                EXPECT_EQ(txns[0], txns[0]);
+                auto [accountTransactions, cursor] = backend->fetchAccountTransactions(a, 100, true, {}, yield);
+                EXPECT_EQ(accountTransactions.size(), 1);
+                EXPECT_EQ(accountTransactions[0], accountTransactions[0]);
                 EXPECT_FALSE(cursor);
             }
             auto nft = backend->fetchNFT(nftID, lgrInfoNext.seq, yield);
@@ -424,10 +427,10 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_TRUE(key256.parseHex(accountIndexHex));
             auto obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq + 1, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
@@ -463,13 +466,13 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_TRUE(key256.parseHex(accountIndexHex));
             auto obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq + 1, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq - 1, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlobOld.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlobOld.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
@@ -505,7 +508,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_FALSE(obj);
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq - 2, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlobOld.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlobOld.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
@@ -518,7 +521,7 @@ TEST_F(BackendCassandraTest, Basic)
             for (auto& blob : res)
             {
                 ++key;
-                std::string keyStr{(const char*)key.data(), key.size()};
+                std::string keyStr{reinterpret_cast<const char*>(key.data()), key.size()};
                 blob.first = keyStr;
                 blob.second = std::to_string(ledgerSequence) + keyStr;
             }
@@ -538,7 +541,7 @@ TEST_F(BackendCassandraTest, Basic)
             for (auto& blob : res)
             {
                 ++base;
-                std::string hashStr{(const char*)base.data(), base.size()};
+                std::string hashStr{reinterpret_cast<const char*>(base.data()), base.size()};
                 std::string txnStr = "tx" + std::to_string(ledgerSequence) + hashStr;
                 std::string metaStr = "meta" + std::to_string(ledgerSequence) + hashStr;
                 blob = std::make_tuple(hashStr, txnStr, metaStr);
@@ -642,8 +645,14 @@ TEST_F(BackendCassandraTest, Basic)
                 bool found = false;
                 for (auto [retTxn, retMeta, retSeq, retDate] : retTxns)
                 {
-                    if (std::strncmp((const char*)retTxn.data(), (const char*)txn.data(), txn.size()) == 0 &&
-                        std::strncmp((const char*)retMeta.data(), (const char*)meta.data(), meta.size()) == 0)
+                    if (std::strncmp(
+                            reinterpret_cast<const char*>(retTxn.data()),
+                            static_cast<const char*>(txn.data()),
+                            txn.size()) == 0 &&
+                        std::strncmp(
+                            reinterpret_cast<const char*>(retMeta.data()),
+                            static_cast<const char*>(meta.data()),
+                            meta.size()) == 0)
                         found = true;
                 }
                 ASSERT_TRUE(found);
@@ -655,19 +664,20 @@ TEST_F(BackendCassandraTest, Basic)
                 do
                 {
                     uint32_t limit = 10;
-                    auto [txns, retCursor] = backend->fetchAccountTransactions(account, limit, false, cursor, yield);
+                    auto [accountTransactions, retCursor] =
+                        backend->fetchAccountTransactions(account, limit, false, cursor, yield);
                     if (retCursor)
-                        EXPECT_EQ(txns.size(), limit);
-                    retData.insert(retData.end(), txns.begin(), txns.end());
+                        EXPECT_EQ(accountTransactions.size(), limit);
+                    retData.insert(retData.end(), accountTransactions.begin(), accountTransactions.end());
                     cursor = retCursor;
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i)
                 {
-                    auto [txn, meta, seq, date] = retData[i];
-                    auto [hash, expTxn, expMeta] = data[i];
-                    EXPECT_STREQ((const char*)txn.data(), (const char*)expTxn.data());
-                    EXPECT_STREQ((const char*)meta.data(), (const char*)expMeta.data());
+                    auto [txn, meta, _, __] = retData[i];
+                    auto [___, expTxn, expMeta] = data[i];
+                    EXPECT_STREQ(reinterpret_cast<const char*>(txn.data()), static_cast<const char*>(expTxn.data()));
+                    EXPECT_STREQ(reinterpret_cast<const char*>(meta.data()), static_cast<const char*>(expMeta.data()));
                 }
             }
             std::vector<ripple::uint256> keys;
@@ -677,7 +687,7 @@ TEST_F(BackendCassandraTest, Basic)
                 if (obj.size())
                 {
                     ASSERT_TRUE(retObj.has_value());
-                    EXPECT_STREQ((const char*)obj.data(), (const char*)retObj->data());
+                    EXPECT_STREQ(static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj->data()));
                 }
                 else
                 {
@@ -697,7 +707,8 @@ TEST_F(BackendCassandraTest, Basic)
                     if (obj.size())
                     {
                         ASSERT_TRUE(retObj.size());
-                        EXPECT_STREQ((const char*)obj.data(), (const char*)retObj.data());
+                        EXPECT_STREQ(
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
                     }
                     else
                     {
@@ -747,7 +758,7 @@ TEST_F(BackendCassandraTest, Basic)
                 for (auto account : rec.accounts)
                 {
                     allAccountTx[lgrInfoNext.seq][account].push_back(
-                        std::string{(const char*)rec.txHash.data(), rec.txHash.size()});
+                        std::string{reinterpret_cast<const char*>(rec.txHash.data()), rec.txHash.size()});
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -780,7 +791,7 @@ TEST_F(BackendCassandraTest, Basic)
                 for (auto account : rec.accounts)
                 {
                     allAccountTx[lgrInfoNext.seq][account].push_back(
-                        std::string{(const char*)rec.txHash.data(), rec.txHash.size()});
+                        std::string{reinterpret_cast<const char*>(rec.txHash.data()), rec.txHash.size()});
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -916,10 +927,10 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         lgrInfoNext.hash++;
         lgrInfoNext.accountHash = ~lgrInfo.accountHash;
         {
-            std::string rawHeaderBlob = ledgerInfoToBinaryString(lgrInfoNext);
+            std::string infoBlob = ledgerInfoToBinaryString(lgrInfoNext);
 
             backend->startWrites();
-            backend->writeLedger(lgrInfoNext, std::move(rawHeaderBlob));
+            backend->writeLedger(lgrInfoNext, std::move(infoBlob));
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
         }
         {
@@ -979,10 +990,10 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_TRUE(key256.parseHex(accountIndexHex));
             auto obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq + 1, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
@@ -1017,13 +1028,13 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_TRUE(key256.parseHex(accountIndexHex));
             auto obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq + 1, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlob.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlob.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq - 1, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlobOld.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlobOld.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
@@ -1059,7 +1070,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_FALSE(obj);
             obj = backend->fetchLedgerObject(key256, lgrInfoNext.seq - 2, yield);
             EXPECT_TRUE(obj);
-            EXPECT_STREQ((const char*)obj->data(), (const char*)accountBlobOld.data());
+            EXPECT_STREQ(reinterpret_cast<const char*>(obj->data()), static_cast<const char*>(accountBlobOld.data()));
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
@@ -1072,7 +1083,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             for (auto& blob : res)
             {
                 ++key;
-                std::string keyStr{(const char*)key.data(), key.size()};
+                std::string keyStr{reinterpret_cast<const char*>(key.data()), key.size()};
                 blob.first = keyStr;
                 blob.second = std::to_string(ledgerSequence) + keyStr;
             }
@@ -1154,7 +1165,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 if (obj.size())
                 {
                     ASSERT_TRUE(retObj.has_value());
-                    EXPECT_STREQ((const char*)obj.data(), (const char*)retObj->data());
+                    EXPECT_STREQ(static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj->data()));
                 }
                 else
                 {
@@ -1174,7 +1185,8 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     if (obj.size())
                     {
                         ASSERT_TRUE(retObj.size());
-                        EXPECT_STREQ((const char*)obj.data(), (const char*)retObj.data());
+                        EXPECT_STREQ(
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
                     }
                     else
                     {
