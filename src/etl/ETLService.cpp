@@ -18,9 +18,9 @@
 //==============================================================================
 
 #include <etl/ETLService.h>
+#include <util/Constants.h>
 
 #include <ripple/protocol/LedgerHeader.h>
-#include <util/Constants.h>
 
 #include <utility>
 
@@ -160,7 +160,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         ledgerPublisher_.publish(nextSequence, {});
         ++nextSequence;
     }
-    else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILISECONDS_PER_SECOND))
+    else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILLISECONDS_PER_SECOND))
     {
         LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
                          << "Attempting to find in database and publish";
@@ -235,7 +235,7 @@ ETLService::monitorReadOnly()
         {
             // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs first.
             // Even if we don't hear from rippled, if ledgers are being written to the db, we publish them.
-            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILISECONDS_PER_SECOND);
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILLISECONDS_PER_SECOND);
         }
     }
 }

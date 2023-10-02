@@ -31,7 +31,7 @@ IntervalSweepHandler::IntervalSweepHandler(util::Config const& config, boost::as
     : sweepInterval_{std::max(
           1u,
           static_cast<uint32_t>(
-              config.valueOr("dos_guard.sweep_interval", 1.0) * static_cast<double>(util::MILISECONDS_PER_SECOND)))}
+              config.valueOr("dos_guard.sweep_interval", 1.0) * static_cast<double>(util::MILLISECONDS_PER_SECOND)))}
     , ctx_{std::ref(ctx)}
     , timer_{ctx.get_executor()}
 {

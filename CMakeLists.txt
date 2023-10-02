@@ -9,7 +9,7 @@ option (tests     "Build tests"                                       FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
-option (clang_tidy "Run clang-tidy checks during compilation"         FALSE)
+option (lint      "Run clang-tidy checks during compilation"          FALSE)
 # ========================================================================== #
 set (san "" CACHE STRING "Add sanitizer instrumentation")
 set (CMAKE_EXPORT_COMPILE_COMMANDS TRUE)

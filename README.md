@@ -241,9 +241,9 @@ of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVe
 
 Minimum clang-tidy version required is 16.0.
 Clang-tidy could be run by cmake during building the project.
-For that provide the option `-o clang_tidy=True` for `conan install` command:
+For that provide the option `-o lint=True` for `conan install` command:
 ```sh
-conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o clang_tidy=True
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=True
 ```
 By default cmake will try to find clang-tidy automatically in your system.
 To force cmake use desired binary set `CLIO_CLANG_TIDY_BIN` environment variable as path to clang-tidy binary.

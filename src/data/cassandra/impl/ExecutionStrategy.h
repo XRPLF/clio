@@ -293,9 +293,7 @@ public:
             --numReadRequestsOutstanding_;
 
             if (res)
-            {
                 return res;
-            }
 
             LOG(log_.error()) << "Failed read in coroutine: " << res.error();
             throwErrorIfNeeded(res.error());
