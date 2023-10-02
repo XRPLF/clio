@@ -19,6 +19,15 @@ set(COMPILER_FLAGS
   -Wunused
 )
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT lint)
+  list(APPEND COMPILER_FLAGS
+    -Wduplicated-branches
+    -Wduplicated-cond
+    -Wlogical-op
+    -Wuseless-cast
+  )
+endif ()
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   list(APPEND COMPILER_FLAGS
     -Wshadow # gcc is to aggressive with shadowing https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147

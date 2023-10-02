@@ -623,6 +623,7 @@ TEST_P(IndexTest, InvalidIndexNotString)
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
     // return valid ledgerinfo
@@ -903,6 +904,7 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
 {
     auto const testBundle = GetParam();
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
     // return valid ledgerinfo
@@ -952,6 +954,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         }
     })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
     // return valid ledgerinfo
@@ -981,6 +984,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
     // return valid ledgerinfo
@@ -1011,6 +1015,7 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -1037,6 +1042,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -1063,6 +1069,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 

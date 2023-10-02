@@ -252,7 +252,7 @@ private:
      * @return true if stopping; false otherwise
      */
     bool
-    isStopping()
+    isStopping() const
     {
         return state_.isStopping;
     }

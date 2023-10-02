@@ -100,6 +100,7 @@ TEST_P(BookChangesParameterTest, InvalidParams)
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -121,6 +122,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -141,6 +143,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -186,6 +189,7 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
             ]
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);

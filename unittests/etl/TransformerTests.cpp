@@ -95,6 +95,7 @@ TEST_F(ETLTransformerTest, StopsOnWriteConflict)
 TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);
@@ -130,6 +131,7 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);

@@ -83,8 +83,10 @@ TEST_F(SubscriptionTest, SubscriptionPublish)
     ctx.restart();
     ctx.run();
     MockSession* p1 = dynamic_cast<MockSession*>(session1.get());
+    ASSERT_NE(p1, nullptr);
     EXPECT_EQ(p1->message, "message");
     MockSession* p2 = dynamic_cast<MockSession*>(session2.get());
+    ASSERT_NE(p2, nullptr);
     EXPECT_EQ(p2->message, "message");
     sub.unsubscribe(session1);
     ctx.restart();
@@ -166,8 +168,10 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
     ctx.restart();
     ctx.run();
     MockSession* p1 = dynamic_cast<MockSession*>(session1.get());
+    ASSERT_NE(p1, nullptr);
     EXPECT_EQ(p1->message, topic1Message);
     MockSession* p2 = dynamic_cast<MockSession*>(session2.get());
+    ASSERT_NE(p2, nullptr);
     EXPECT_EQ(p2->message, topic2Message);
 }
 
@@ -190,8 +194,10 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
     ctx.restart();
     ctx.run();
     MockDeadSession* p1 = dynamic_cast<MockDeadSession*>(session1.get());
+    ASSERT_NE(p1, nullptr);
     EXPECT_EQ(p1->dead(), true);
     MockSession* p2 = dynamic_cast<MockSession*>(session2.get());
+    ASSERT_NE(p2, nullptr);
     EXPECT_EQ(p2->message, topic2Message);
     subMap.publish(message1, topic1);
     ctx.restart();

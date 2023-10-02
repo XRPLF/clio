@@ -139,6 +139,7 @@ protected:
 TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -163,6 +164,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
 TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -190,6 +192,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr.get();
@@ -234,6 +237,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr.get();
@@ -276,6 +280,7 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
     MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
@@ -327,6 +332,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
     MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
@@ -389,6 +395,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
     MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();

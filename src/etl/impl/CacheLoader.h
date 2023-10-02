@@ -146,7 +146,7 @@ public:
             return;
         }
 
-        if (clioPeers_.size() > 0)
+        if (!clioPeers_.empty())
         {
             boost::asio::spawn(ioContext_.get(), [this, seq](boost::asio::yield_context yield) {
                 for (auto const& peer : clioPeers_)

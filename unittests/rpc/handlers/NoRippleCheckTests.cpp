@@ -192,6 +192,7 @@ TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
 TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -220,6 +221,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
 {
     auto constexpr seq = 12;
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -248,6 +250,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 {
     auto constexpr seq = 12;
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -275,6 +278,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 TEST_F(RPCNoRippleCheckTest, AccountNotExist)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -315,6 +319,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
             "validated":true
         })";
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -375,6 +380,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
             "validated":true
         })";
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -432,6 +438,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
             "validated":true
         })";
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -492,6 +499,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
             "validated":true
         })";
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -538,6 +546,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
 {
     static auto constexpr seq = 30;
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -588,6 +597,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
 {
     constexpr auto seq = 30;
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -689,6 +699,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         transactionSeq + 2,
         ripple::tfClearNoRipple);
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -741,6 +752,7 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
 {
     constexpr auto seq = 30;
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);

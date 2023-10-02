@@ -179,6 +179,7 @@ TEST_P(LedgerParameterTest, InvalidParams)
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -203,6 +204,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -227,6 +229,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -270,6 +273,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
             }
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -292,6 +296,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
 TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -315,6 +320,7 @@ TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
 TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -334,6 +340,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -363,6 +370,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
             }
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -405,6 +413,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
             }
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -493,6 +502,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
             }
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -527,6 +537,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -577,6 +588,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
             }
         ])";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -621,6 +633,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
             }
         ])";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -711,6 +724,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
             }
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -801,6 +815,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
             "validated": true
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -871,6 +886,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
             "validated": true
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -922,6 +938,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -976,6 +993,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
             "validated": true
         })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -1027,6 +1045,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -1081,6 +1100,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 

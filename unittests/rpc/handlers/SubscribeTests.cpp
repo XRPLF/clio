@@ -595,6 +595,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -752,6 +753,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
@@ -917,6 +919,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(

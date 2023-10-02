@@ -68,6 +68,7 @@ void
 CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> session, int retry = 10)
 {
     auto sessionPtr = dynamic_cast<MockSession*>(session.get());
+    ASSERT_NE(sessionPtr, nullptr);
     while (retry-- != 0)
     {
         std::this_thread::sleep_for(20ms);
@@ -170,6 +171,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedgerUnSub)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     boost::asio::io_context ctx;
@@ -271,6 +273,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
     subManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
     CheckSubscriberMessage(dummyTransaction, session);
     auto rawIdle = dynamic_cast<MockSession*>(sessionIdle.get());
+    ASSERT_NE(rawIdle, nullptr);
+    ASSERT_NE(rawIdle, nullptr);
     EXPECT_EQ("", rawIdle->message);
 }
 
@@ -282,6 +286,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedger)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     boost::asio::io_context ctx;
@@ -454,6 +459,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     auto issue2 = GetIssue(CURRENCY, ISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
@@ -553,6 +559,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue(CURRENCY, ISSUER), 100));
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
@@ -590,6 +597,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     auto issueAccount = GetAccountIDWithString(ISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue(CURRENCY, ISSUER), 100));
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
     auto kk = ripple::keylet::account(issueAccount).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(testing::_, testing::_, testing::_))

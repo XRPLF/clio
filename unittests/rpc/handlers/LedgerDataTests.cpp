@@ -120,6 +120,7 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -144,6 +145,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -168,6 +170,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -192,6 +195,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -235,6 +239,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
    })";
 
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -298,6 +303,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
    })";
 
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -364,6 +370,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
    })";
 
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -403,6 +410,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 TEST_F(RPCLedgerDataHandlerTest, Marker)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -455,6 +463,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
 TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -501,6 +510,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 TEST_F(RPCLedgerDataHandlerTest, Binary)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -544,6 +554,7 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
 TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -588,6 +599,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 

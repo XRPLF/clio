@@ -84,6 +84,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
@@ -121,6 +122,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
@@ -162,6 +164,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDirKk = ripple::keylet::ownerDir(account).key;
@@ -218,6 +221,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
@@ -269,6 +273,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
