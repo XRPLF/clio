@@ -353,7 +353,8 @@ TEST_P(AccountTxParameterTest, CheckParams)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
-    auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     std::cout << "Before parse" << std::endl;
     auto const req = json::parse(testBundle.testJson);
     std::cout << "After parse" << std::endl;
@@ -1467,7 +1468,8 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};

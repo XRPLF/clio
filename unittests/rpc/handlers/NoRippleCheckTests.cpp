@@ -174,7 +174,8 @@ TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
             "transactions": "gg"
          }
     )";
-    auto rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence);
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};

@@ -241,7 +241,7 @@ public:
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::move(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
                 }));
             };
 
@@ -284,7 +284,7 @@ public:
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::move(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
                 }));
             };
 
@@ -329,8 +329,10 @@ public:
 
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
+                {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself), [sself]() mutable { sself->complete(); });
+                }
             };
 
             std::transform(

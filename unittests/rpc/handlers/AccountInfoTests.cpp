@@ -121,7 +121,8 @@ TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
     static constexpr auto reqJson = R"(
         {"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1}
     )";
-    auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence);
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
@@ -473,7 +474,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
         ACCOUNT1,
         ACCOUNT2,
         LEDGERHASH);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);

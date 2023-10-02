@@ -146,9 +146,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
             std::back_inserter(signers),
             [](auto const& signerList) { return toJson(signerList); });
         if (output.apiVersion == 1)
+        {
             jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
+        }
         else
+        {
             jv.as_object()[JS(signer_lists)] = signers;
+        }
     }
 }
 
