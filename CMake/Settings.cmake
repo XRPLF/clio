@@ -25,15 +25,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   )
 endif ()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  list(APPEND COMPILER_FLAGS
-    -Wduplicated-branches
-    -Wduplicated-cond
-    -Wlogical-op
-    -Wuseless-cast
-  )
-endif ()
-
 # See https://github.com/cpp-best-practices/cppbestpractices/blob/master/02-Use_the_Tools_Available.md#gcc--clang for the flags description
 
 target_compile_options (clio PUBLIC ${COMPILER_FLAGS})

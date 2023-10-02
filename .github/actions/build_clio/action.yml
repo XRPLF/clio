@@ -27,7 +27,7 @@ runs:
       shell: bash
       env:
         BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '' }}"
-        LINT: "${{ os.runner == 'Linux' && 'True' || 'False' }}"
+        LINT: "${{ runner.os == 'Linux' && 'True' || 'False' }}"
       run: |
         mkdir -p build
         cd build
