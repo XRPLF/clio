@@ -16,6 +16,7 @@ set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # ========================================================================== #
 
 # Include required modules
+include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
 
 if (verbose)
@@ -174,6 +175,7 @@ if (tests)
     unittests/rpc/ForwardingProxyTests.cpp
     unittests/rpc/WorkQueueTests.cpp
     unittests/rpc/AmendmentsTests.cpp
+    unittests/rpc/JsonBoolTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
@@ -235,6 +237,7 @@ if (tests)
   # Generate `clio_tests-ccov` if coverage is enabled
   # Note: use `make clio_tests-ccov` to generate report
   if (coverage)
+    target_compile_definitions(${TEST_TARGET} PRIVATE COVERAGE_ENABLED)
     include (CMake/Coverage.cmake)
     add_coverage (${TEST_TARGET})
   endif ()

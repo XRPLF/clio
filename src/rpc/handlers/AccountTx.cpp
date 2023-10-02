@@ -18,9 +18,49 @@
 //==============================================================================
 
 #include <rpc/handlers/AccountTx.h>
+#include <util/JsonUtils.h>
 #include <util/Profiler.h>
 
 namespace rpc {
+
+// found here : https://xrpl.org/transaction-types.html
+// TODO [https://github.com/XRPLF/clio/issues/856]: add AMMBid, AMMCreate, AMMDelete, AMMDeposit, AMMVote, AMMWithdraw
+std::unordered_map<std::string, ripple::TxType> const AccountTxHandler::TYPESMAP{
+    {JSL(AccountSet), ripple::ttACCOUNT_SET},
+    {JSL(AccountDelete), ripple::ttACCOUNT_DELETE},
+    {JSL(CheckCancel), ripple::ttCHECK_CANCEL},
+    {JSL(CheckCash), ripple::ttCHECK_CASH},
+    {JSL(CheckCreate), ripple::ttCHECK_CREATE},
+    {JSL(Clawback), ripple::ttCLAWBACK},
+    {JSL(DepositPreauth), ripple::ttDEPOSIT_PREAUTH},
+    {JSL(EscrowCancel), ripple::ttESCROW_CANCEL},
+    {JSL(EscrowCreate), ripple::ttESCROW_CREATE},
+    {JSL(EscrowFinish), ripple::ttESCROW_FINISH},
+    {JSL(NFTokenAcceptOffer), ripple::ttNFTOKEN_ACCEPT_OFFER},
+    {JSL(NFTokenBurn), ripple::ttNFTOKEN_BURN},
+    {JSL(NFTokenCancelOffer), ripple::ttNFTOKEN_CANCEL_OFFER},
+    {JSL(NFTokenCreateOffer), ripple::ttNFTOKEN_CREATE_OFFER},
+    {JSL(NFTokenMint), ripple::ttNFTOKEN_MINT},
+    {JSL(OfferCancel), ripple::ttOFFER_CANCEL},
+    {JSL(OfferCreate), ripple::ttOFFER_CREATE},
+    {JSL(Payment), ripple::ttPAYMENT},
+    {JSL(PaymentChannelClaim), ripple::ttPAYCHAN_CLAIM},
+    {JSL(PaymentChannelCreate), ripple::ttCHECK_CREATE},
+    {JSL(PaymentChannelFund), ripple::ttPAYCHAN_FUND},
+    {JSL(SetRegularKey), ripple::ttREGULAR_KEY_SET},
+    {JSL(SignerListSet), ripple::ttSIGNER_LIST_SET},
+    {JSL(TicketCreate), ripple::ttTICKET_CREATE},
+    {JSL(TrustSet), ripple::ttTRUST_SET},
+};
+
+// TODO: should be std::views::keys when clang supports it
+std::unordered_set<std::string> const AccountTxHandler::TYPES_KEYS = [] {
+    std::unordered_set<std::string> keys;
+    std::transform(TYPESMAP.begin(), TYPESMAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
+        return pair.first;
+    });
+    return keys;
+}();
 
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
@@ -32,27 +72,39 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
     if (input.ledgerIndexMin)
     {
-        if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMin > range->maxSequence || input.ledgerIndexMin < range->minSequence))
+        {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
+        }
 
-        minIndex = *input.ledgerIndexMin;
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMin) > minIndex)
+            minIndex = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax)
     {
-        if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMax > range->maxSequence || input.ledgerIndexMax < range->minSequence))
+        {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
+        }
 
-        maxIndex = *input.ledgerIndexMax;
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMax) < maxIndex)
+            maxIndex = *input.ledgerIndexMax;
     }
 
     if (minIndex > maxIndex)
+    {
+        if (ctx.apiVersion == 1u)
+            return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
+
         return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+    }
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {
-        // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin)
+        if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
         auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
@@ -116,6 +168,18 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             auto [txn, meta] = toExpandedJson(txnPlusMeta, NFTokenjson::ENABLE);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
+
+            if (obj[JS(tx)].as_object().contains(JS(TransactionType)))
+            {
+                auto const objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
+                auto const strType = util::toLower(objTransactionType.as_string().c_str());
+
+                // if transactionType does not match
+                if (input.transactionType.has_value() && AccountTxHandler::TYPESMAP.contains(strType) &&
+                    AccountTxHandler::TYPESMAP.at(strType) != input.transactionType.value())
+                    continue;
+            }
+
             obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
         }
@@ -195,10 +259,10 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     }
 
     if (jsonObject.contains(JS(binary)))
-        input.binary = jsonObject.at(JS(binary)).as_bool();
+        input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
     if (jsonObject.contains(JS(forward)))
-        input.forward = jsonObject.at(JS(forward)).as_bool();
+        input.forward = boost::json::value_to<JsonBool>(jsonObject.at(JS(forward)));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
@@ -207,6 +271,12 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         input.marker = AccountTxHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+
+    if (jsonObject.contains("tx_type"))
+    {
+        auto objTransactionType = jsonObject.at("tx_type");
+        input.transactionType = AccountTxHandler::TYPESMAP.at(objTransactionType.as_string().c_str());
+    }
 
     return input;
 }

@@ -71,6 +71,7 @@ protected:
         EXPECT_STREQ(info.at("complete_ledgers").as_string().c_str(), "10-30");
         EXPECT_TRUE(info.contains("load_factor"));
         EXPECT_TRUE(info.contains("clio_version"));
+        EXPECT_TRUE(info.contains("libxrpl_version"));
         EXPECT_TRUE(info.contains("validated_ledger"));
         EXPECT_TRUE(info.contains("time"));
         EXPECT_TRUE(info.contains("uptime"));

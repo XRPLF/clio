@@ -142,6 +142,7 @@ accountFromStringStrict(std::string const& account)
     else
         return {};
 }
+
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
 {
