@@ -72,27 +72,39 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
     if (input.ledgerIndexMin)
     {
-        if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMin > range->maxSequence || input.ledgerIndexMin < range->minSequence))
+        {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
+        }
 
-        minIndex = *input.ledgerIndexMin;
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMin) > minIndex)
+            minIndex = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax)
     {
-        if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMax > range->maxSequence || input.ledgerIndexMax < range->minSequence))
+        {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
+        }
 
-        maxIndex = *input.ledgerIndexMax;
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMax) < maxIndex)
+            maxIndex = *input.ledgerIndexMax;
     }
 
     if (minIndex > maxIndex)
+    {
+        if (ctx.apiVersion == 1u)
+            return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
+
         return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+    }
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {
-        // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin)
+        if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
         auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
@@ -247,10 +259,10 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     }
 
     if (jsonObject.contains(JS(binary)))
-        input.binary = jsonObject.at(JS(binary)).as_bool();
+        input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
     if (jsonObject.contains(JS(forward)))
-        input.forward = jsonObject.at(JS(forward)).as_bool();
+        input.forward = boost::json::value_to<JsonBool>(jsonObject.at(JS(forward)));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();

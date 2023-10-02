@@ -156,12 +156,35 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
+    });
+}
+
+TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
+{
+    static constexpr auto reqJson = R"(
+        {
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "role": "gateway",
+            "transactions": "gg"
+         }
+    )";
+    auto rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence);
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
+        auto const req = json::parse(reqJson);
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
 }
 

@@ -80,10 +80,17 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         }
 
         return Output(
-            lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, signerList);
+            lgrInfo.seq,
+            ripple::strHex(lgrInfo.hash),
+            sle,
+            isDisallowIncomingEnabled,
+            isClawbackEnabled,
+            ctx.apiVersion,
+            signerList);
     }
 
-    return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled);
+    return Output(
+        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion);
 }
 
 void
@@ -138,12 +145,10 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
             std::cend(output.signerLists.value()),
             std::back_inserter(signers),
             [](auto const& signerList) { return toJson(signerList); });
-        // version 2 puts the signer_lists out of the account_data
-        jv.as_object()[JS(signer_lists)] = signers;
-        // this is a temporary fix to support the clients that still expect v1 api(the signer_lists under
-        // account_data)
-        // TODO: we need to deprecate the duplicate later
-        jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
+        if (output.apiVersion == 1)
+            jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
+        else
+            jv.as_object()[JS(signer_lists)] = signers;
     }
 }
 
@@ -171,7 +176,7 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     }
 
     if (jsonObject.contains(JS(signer_lists)))
-        input.signerLists = jsonObject.at(JS(signer_lists)).as_bool();
+        input.signerLists = boost::json::value_to<JsonBool>(jsonObject.at(JS(signer_lists)));
 
     return input;
 }

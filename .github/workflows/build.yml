@@ -13,82 +13,121 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run clang-format
-        uses: ./.github/actions/lint
+        uses: ./.github/actions/clang_format
 
   build_mac:
     name: Build macOS
     needs: lint
-    continue-on-error: true
     runs-on: [self-hosted, macOS]
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CONAN_USER_HOME: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v3
         with:
-          path: clio
+            fetch-depth: 0
 
-      - name: List conan artifactory
+      - name: Install packages
         run: |
-          conan search
-          conan remote list
-          if [[ $(conan remote list |grep conan-non-prod| wc -c) -ne 0 ]]; then
-              echo "conan-non-prod is available"
-          else
-              echo "adding conan-non-prod"
-              conan remote add conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
-          fi
+          brew install llvm@14 pkg-config ninja bison cmake ccache jq
 
-      - name: Install dependencies
-        run: |
-          brew install llvm@14 pkg-config ninja bison cmake
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
 
-      - name: Setup environment for llvm-14
-        run: |
-          export PATH="/usr/local/opt/llvm@14/bin:$PATH"
-          export LDFLAGS="-L/usr/local/opt/llvm@14/lib -L/usr/local/opt/llvm@14/lib/c++ -Wl,-rpath,/usr/local/opt/llvm@14/lib/c++"
-          export CPPFLAGS="-I/usr/local/opt/llvm@14/include"
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
 
       - name: Build Clio
-        run: |
-          cd clio
-          mkdir -p build
-          cd build
-          conan install .. -of . -b missing -s build_type=Release -o clio:tests=True
-          cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . --parallel $(($(sysctl -n hw.logicalcpu) - 2))
+        uses: ./.github/actions/build_clio
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+
+      - name: Strip tests
+        run: strip build/clio_tests
 
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_mac
-          path: ./clio/build/clio_tests
+          path: build/clio_tests
+
+      - name: Save cache
+        uses: ./.github/actions/save_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          ccache_dir: ${{ env.CCACHE_DIR }}
+          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
   build_linux:
     name: Build linux
     needs: lint
-    continue-on-error: true
     runs-on: [self-hosted, Linux]
     container:
-      image: thejohnfreeman/rippled-build-ubuntu:12e19cd9034b
+      image: conanio/gcc11:1.61.0
       options: --user root
+    env:
+      CCACHE_DIR: /root/.ccache
+      CONAN_USER_HOME: /root/
     steps:
       - name: Get Clio
         uses: actions/checkout@v3
-
-      - name: Get rippled
-        uses: actions/checkout@v3
         with:
-          repository: thejohnfreeman/rippled
-          ref: clio
-          path: rippled
+          fetch-depth: 0
+
+      - name: Install packages
+        run: |
+          apt update -qq
+          apt install -y jq
+
+      - name: Install ccache
+        run: |
+          wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
+          tar xf ./ccache-4.8.3-linux-x86_64.tar.xz
+          mv ./ccache-4.8.3-linux-x86_64/ccache /usr/bin/ccache
+
+      - name: Fix git permissions
+        run: git config --global --add safe.directory $PWD
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
 
       - name: Build Clio
-        run: |
-          ./.github/actions/linux_build/build.sh
+        uses: ./.github/actions/build_clio
+        with:
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+
+      - name: Strip tests
+        run: strip build/clio_tests
 
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_linux
-          path: ./build_clio/clio_tests
+          path: build/clio_tests
+
+      - name: Save cache
+        uses: ./.github/actions/save_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          ccache_dir: ${{ env.CCACHE_DIR }}
+          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
   test_mac:
     needs: build_mac
