@@ -42,8 +42,8 @@ class SettingsProviderTest : public NoLoggerFixture
 
 TEST_F(SettingsProviderTest, Defaults)
 {
-    Config cfg{json::parse(R"({"contact_points": "127.0.0.1"})")};
-    SettingsProvider provider{cfg};
+    Config const cfg{json::parse(R"({"contact_points": "127.0.0.1"})")};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, std::thread::hardware_concurrency());
@@ -71,7 +71,7 @@ TEST_F(SettingsProviderTest, Defaults)
 
 TEST_F(SettingsProviderTest, SimpleConfig)
 {
-    Config cfg{json::parse(R"({
+    Config const cfg{json::parse(R"({
         "contact_points": "123.123.123.123",
         "port": 1234,
         "keyspace": "test",
@@ -79,7 +79,7 @@ TEST_F(SettingsProviderTest, SimpleConfig)
         "table_prefix": "prefix",
         "threads": 24
     })")};
-    SettingsProvider provider{cfg};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, 24);
@@ -96,11 +96,11 @@ TEST_F(SettingsProviderTest, SimpleConfig)
 
 TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 {
-    Config cfg{json::parse(R"({
+    Config const cfg{json::parse(R"({
         "contact_points": "123.123.123.123",
         "queue_size_io": 2
     })")};
-    SettingsProvider provider{cfg};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.queueSizeIO, 2);
@@ -108,8 +108,8 @@ TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
-    Config cfg{json::parse(R"({"secure_connect_bundle": "bundleData"})")};
-    SettingsProvider provider{cfg};
+    Config const cfg{json::parse(R"({"secure_connect_bundle": "bundleData"})")};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     auto const* sb = std::get_if<Settings::SecureConnectionBundle>(&settings.connectionInfo);
@@ -119,14 +119,14 @@ TEST_F(SettingsProviderTest, SecureBundleConfig)
 
 TEST_F(SettingsProviderTest, CertificateConfig)
 {
-    TmpFile file{"certificateData"};
-    Config cfg{json::parse(fmt::format(
+    TmpFile const file{"certificateData"};
+    Config const cfg{json::parse(fmt::format(
         R"({{
             "contact_points": "127.0.0.1",
             "certfile": "{}"
         }})",
         file.path))};
-    SettingsProvider provider{cfg};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.certificate, "certificateData");

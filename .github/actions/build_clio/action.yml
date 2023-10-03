@@ -27,10 +27,11 @@ runs:
       shell: bash
       env:
         BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '' }}"
+        LINT: "${{ runner.os == 'Linux' && 'True' || 'False' }}"
       run: |
         mkdir -p build
         cd build
         threads_num=${{ steps.mac_threads.outputs.num || steps.linux_threads.outputs.num }}
-        conan install .. -of . -b $BUILD_OPTION -s build_type=Release -o clio:tests=True --profile ${{ inputs.conan_profile }}
+        conan install .. -of . -b $BUILD_OPTION -s build_type=Release -o clio:tests=True -o clio:lint=$LINT --profile ${{ inputs.conan_profile }}
         cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
         cmake --build . --parallel $threads_num

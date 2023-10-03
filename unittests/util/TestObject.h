@@ -172,7 +172,6 @@ CreatePaymentChannelLedgerObject(
 
 [[nodiscard]] ripple::STObject
 CreateRippleStateLedgerObject(
-    std::string_view accountId,
     std::string_view currency,
     std::string_view issuerId,
     int balance,
@@ -190,13 +189,13 @@ CreateOfferLedgerObject(
     int takerGets,
     int takerPays,
     std::string_view getsCurrency,
-    std::string_view payssCurrency,
+    std::string_view paysCurrency,
     std::string_view getsIssueId,
     std::string_view paysIssueId,
     std::string_view bookDirId);
 
 [[nodiscard]] ripple::STObject
-CreateTicketLedgerObject(std::string_view rootIndex, uint32_t sequence);
+CreateTicketLedgerObject(std::string_view account, uint32_t sequence);
 
 [[nodiscard]] ripple::STObject
 CreateEscrowLedgerObject(std::string_view account, std::string_view dest);
@@ -238,14 +237,14 @@ CreateMintNFTTxWithMetadata(
     std::string_view nftID);
 
 [[nodiscard]] data::TransactionAndMetadata
-CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
+CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view nftId);
 
 [[nodiscard]] data::TransactionAndMetadata
 CreateCancelNFTOffersTxWithMetadata(
     std::string_view accountId,
     uint32_t seq,
     uint32_t fee,
-    std::vector<std::string> const& nftIds);
+    std::vector<std::string> const& nftOffers);
 
 [[nodiscard]] data::TransactionAndMetadata
 CreateCreateNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);

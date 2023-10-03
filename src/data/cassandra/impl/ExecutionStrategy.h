@@ -131,15 +131,14 @@ public:
     {
         while (true)
         {
-            if (auto res = handle_.get().execute(statement); res)
+            auto res = handle_.get().execute(statement);
+            if (res)
             {
                 return res;
             }
-            else
-            {
-                LOG(log_.warn()) << "Cassandra sync write error, retrying: " << res.error();
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            }
+
+            LOG(log_.warn()) << "Cassandra sync write error, retrying: " << res.error();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 
@@ -242,7 +241,7 @@ public:
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::move(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
                 }));
             };
 
@@ -254,11 +253,9 @@ public:
             {
                 return res;
             }
-            else
-            {
-                LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
-                throwErrorIfNeeded(res.error());
-            }
+
+            LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
+            throwErrorIfNeeded(res.error());
         }
     }
 
@@ -287,7 +284,7 @@ public:
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::move(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
                 }));
             };
 
@@ -296,14 +293,10 @@ public:
             --numReadRequestsOutstanding_;
 
             if (res)
-            {
                 return res;
-            }
-            else
-            {
-                LOG(log_.error()) << "Failed read in coroutine: " << res.error();
-                throwErrorIfNeeded(res.error());
-            }
+
+            LOG(log_.error()) << "Failed read in coroutine: " << res.error();
+            throwErrorIfNeeded(res.error());
         }
     }
 
@@ -336,8 +329,10 @@ public:
 
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
+                {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself), [sself]() mutable { sself->complete(); });
+                }
             };
 
             std::transform(
@@ -400,18 +395,18 @@ private:
             assert(false);
             throw std::runtime_error("decrementing num outstanding below 0");
         }
-        size_t cur = (--numWriteRequestsOutstanding_);
+        size_t const cur = (--numWriteRequestsOutstanding_);
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
-            std::lock_guard lck(throttleMutex_);
+            std::lock_guard const lck(throttleMutex_);
             throttleCv_.notify_one();
         }
         if (cur == 0)
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
-            std::lock_guard lck(syncMutex_);
+            std::lock_guard const lck(syncMutex_);
             syncCv_.notify_one();
         }
     }

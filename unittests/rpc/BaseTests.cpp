@@ -346,7 +346,7 @@ TEST_F(RPCBaseTest, CustomValidator)
 {
     // clang-format off
     auto customFormatCheck = CustomValidator{
-        [](json::value const& value, std::string_view key) -> MaybeError {
+        [](json::value const& value, std::string_view /* key */) -> MaybeError {
             return value.as_string().size() == 34 ? 
                 MaybeError{} : Error{rpc::Status{"Uh oh"}};
         }

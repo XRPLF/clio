@@ -47,7 +47,7 @@ public:
         std::string sourceAccount;
         std::string destinationAccount;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         // validated should be sent via framework
         bool validated = true;
     };
@@ -67,8 +67,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(source_account), validation::Required{}, validation::AccountValidator},

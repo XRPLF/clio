@@ -32,8 +32,8 @@ public:
      * @param ip The ip addr of the client
      * @return true if authorized; false otherwise
      */
-    bool
-    isAdmin(std::string_view ip) const
+    static bool
+    isAdmin(std::string_view ip)
     {
         return ip == "127.0.0.1";
     }

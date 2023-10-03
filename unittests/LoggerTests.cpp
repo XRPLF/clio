@@ -32,7 +32,7 @@ class NoLoggerTest : public NoLoggerFixture
 
 TEST_F(LoggerTest, Basic)
 {
-    Logger log{"General"};
+    Logger const log{"General"};
     log.info() << "Info line logged";
     checkEqual("General:NFO Info line logged");
 
@@ -45,14 +45,14 @@ TEST_F(LoggerTest, Basic)
 
 TEST_F(LoggerTest, Filtering)
 {
-    Logger log{"General"};
+    Logger const log{"General"};
     log.trace() << "Should not be logged";
     checkEmpty();
 
     log.warn() << "Warning is logged";
     checkEqual("General:WRN Warning is logged");
 
-    Logger tlog{"Trace"};
+    Logger const tlog{"Trace"};
     tlog.trace() << "Trace line logged for 'Trace' component";
     checkEqual("Trace:TRC Trace line logged for 'Trace' component");
 }
@@ -60,7 +60,7 @@ TEST_F(LoggerTest, Filtering)
 #ifndef COVERAGE_ENABLED
 TEST_F(LoggerTest, LOGMacro)
 {
-    Logger log{"General"};
+    Logger const log{"General"};
 
     auto computeCalled = false;
     auto compute = [&computeCalled]() {
@@ -78,7 +78,7 @@ TEST_F(LoggerTest, LOGMacro)
 
 TEST_F(NoLoggerTest, Basic)
 {
-    Logger log{"Trace"};
+    Logger const log{"Trace"};
     log.trace() << "Nothing";
     checkEmpty();
 

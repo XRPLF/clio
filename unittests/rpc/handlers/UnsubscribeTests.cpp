@@ -44,8 +44,8 @@ protected:
     {
         HandlerBaseTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        util::Config cfg;
-        util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        util::Config const cfg;
+        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void
@@ -521,8 +521,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
             "streams": ["transactions_proposed","transactions","validations","manifests","book_changes","ledger"]
         })");
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubLedger).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubTransactions).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubValidation).Times(1);
@@ -547,8 +546,7 @@ TEST_F(RPCUnsubscribeTest, Accounts)
         ACCOUNT,
         ACCOUNT2));
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _)).Times(1);
 
@@ -569,8 +567,7 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
         ACCOUNT,
         ACCOUNT2));
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _))
         .Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _))
@@ -606,8 +603,7 @@ TEST_F(RPCUnsubscribeTest, Books)
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(ripple::reversed(book), _)).Times(1);
 
@@ -640,8 +636,7 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
 
     runSpawn([&, this](auto yield) {

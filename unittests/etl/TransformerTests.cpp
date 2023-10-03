@@ -94,7 +94,8 @@ TEST_F(ETLTransformerTest, StopsOnWriteConflict)
 
 TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);
@@ -103,7 +104,7 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     ON_CALL(dataPipe_, popNext).WillByDefault([this, &response](auto) -> std::optional<FakeFetchResponse> {
         if (state_.isStopping)
             return std::nullopt;
-        return response;
+        return response;  // NOLINT (performance-no-automatic-move)
     });
     ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(true));
 
@@ -129,7 +130,8 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 
 TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);

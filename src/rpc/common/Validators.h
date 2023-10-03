@@ -25,6 +25,8 @@
 
 #include <fmt/core.h>
 
+#include <utility>
+
 namespace rpc::validation {
 
 /**
@@ -83,8 +85,8 @@ template <typename Expected>
  */
 struct Required final
 {
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const;
+    [[nodiscard]] static MaybeError
+    verify(boost::json::value const& value, std::string_view key);
 };
 
 /**
@@ -129,9 +131,11 @@ public:
             using boost::json::value_to;
             auto const res = value_to<T>(value.as_object().at(key.data()));
             if (value_ == res)
+            {
                 return Error{Status{
                     RippledError::rpcNOT_SUPPORTED,
                     fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)}};
+            }
         }
         return {};
     }
@@ -151,8 +155,8 @@ public:
      * @param key The key used to retrieve the tested value from the outer object
      * @return `RippledError::rpcNOT_SUPPORTED` if the field is found; otherwise no error is returned
      */
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const
+    [[nodiscard]] static MaybeError
+    verify(boost::json::value const& value, std::string_view key)
     {
         if (value.is_object() and value.as_object().contains(key.data()))
             return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
@@ -340,7 +344,7 @@ public:
      *
      * @param original The original value to store
      */
-    explicit EqualTo(Type original) : original_{original}
+    explicit EqualTo(Type original) : original_{std::move(original)}
     {
     }
 

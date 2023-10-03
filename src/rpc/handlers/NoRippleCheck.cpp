@@ -45,7 +45,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     auto it = ripple::SerialIter{accountObj->data(), accountObj->size()};
     auto sle = ripple::SLE{it, keylet};
     auto accountSeq = sle.getFieldU32(ripple::sfSequence);
-    bool const bDefaultRipple = sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple;
+    bool const bDefaultRipple = (sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple) != 0u;
     auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
     auto output = NoRippleCheckHandler::Output();
@@ -64,7 +64,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
 
     if (bDefaultRipple && !input.roleGateway)
     {
-        output.problems.push_back(
+        output.problems.emplace_back(
             "You appear to have set your default ripple flag even though "
             "you "
             "are not a gateway. This is not recommended unless you are "
@@ -72,7 +72,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     }
     else if (input.roleGateway && !bDefaultRipple)
     {
-        output.problems.push_back("You should immediately set your default ripple flag");
+        output.problems.emplace_back("You should immediately set your default ripple flag");
 
         if (input.transactions)
         {
@@ -98,8 +98,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
             {
                 bool const bLow = accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
 
-                bool const bNoRipple =
-                    ownedItem.getFieldU32(ripple::sfFlags) & (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple);
+                bool const bNoRipple = (ownedItem.getFieldU32(ripple::sfFlags) &
+                                        (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
 
                 std::string problem;
                 bool needFix = false;
@@ -119,9 +119,9 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
                 {
                     --limit;
 
-                    ripple::AccountID peer =
+                    ripple::AccountID const peer =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit).getIssuer();
-                    ripple::STAmount peerLimit =
+                    ripple::STAmount const peerLimit =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
 
                     problem += fmt::format(
@@ -175,9 +175,13 @@ tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

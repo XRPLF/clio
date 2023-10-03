@@ -69,9 +69,13 @@ public:
         for (auto const& c : key)
         {
             if (c == Separator)
+            {
                 saveToken();
+            }
             else
+            {
                 token_ += c;
+            }
         }
 
         saveToken();

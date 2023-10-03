@@ -99,7 +99,8 @@ TEST_P(BookChangesParameterTest, InvalidParams)
 
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -120,7 +121,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -140,7 +142,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -185,7 +188,8 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
                 }
             ]
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -194,10 +198,10 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
 
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 1, 3, 3, 1);
+    ripple::STObject const metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 

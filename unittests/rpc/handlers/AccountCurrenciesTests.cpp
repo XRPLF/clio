@@ -42,7 +42,8 @@ class RPCAccountCurrenciesHandlerTest : public HandlerBaseTest
 
 TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -69,7 +70,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -94,7 +96,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -120,7 +123,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -160,7 +164,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
             "USD"
         ]
     })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // return valid ledgerinfo
@@ -180,16 +185,13 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
     // ACCOUNT can receive USD 10 from ACCOUNT2 and send USD 20 to ACCOUNT2, now
     // the balance is 100, ACCOUNT can only send USD to ACCOUNT2
-    auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     // ACCOUNT2 can receive JPY 10 from ACCOUNT and send JPY 20 to ACCOUNT, now
     // the balance is 100, ACCOUNT2 can only send JPY to ACCOUNT
-    auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "JPY", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
+    auto const line2 = CreateRippleStateLedgerObject("JPY", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
     // ACCOUNT can receive EUR 10 from ACCOUNT and send EUR 20 to ACCOUNT2, now
     // the balance is 8, ACCOUNT can receive/send EUR to/from ACCOUNT2
-    auto const line3 =
-        CreateRippleStateLedgerObject(ACCOUNT, "EUR", ISSUER, 8, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line3 = CreateRippleStateLedgerObject("EUR", ISSUER, 8, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
@@ -212,7 +214,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // return valid ledgerinfo
@@ -229,8 +232,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
     std::vector<Blob> bbs;
-    auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -251,7 +253,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerSeq = 29;
@@ -270,8 +273,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
     std::vector<Blob> bbs;
-    auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));

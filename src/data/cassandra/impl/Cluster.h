@@ -40,13 +40,16 @@ namespace data::cassandra::detail {
  */
 struct Settings
 {
+    static constexpr std::size_t DEFAULT_CONNECTION_TIMEOUT = 10000;
+    static constexpr uint32_t DEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
+    static constexpr uint32_t DEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
     /**
      * @brief Represents the configuration of contact points for cassandra.
      */
     struct ContactPoints
     {
         std::string contactPoints = "127.0.0.1";  // defaults to localhost
-        std::optional<uint16_t> port;
+        std::optional<uint16_t> port = {};
     };
 
     /**
@@ -61,7 +64,7 @@ struct Settings
     bool enableLog = false;
 
     /** @brief Connect timeout specified in milliseconds */
-    std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{10000};
+    std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{DEFAULT_CONNECTION_TIMEOUT};
 
     /** @brief Request timeout specified in milliseconds */
     std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
@@ -73,10 +76,10 @@ struct Settings
     uint32_t threads = std::thread::hardware_concurrency();
 
     /** @brief The maximum number of outstanding write requests at any given moment */
-    uint32_t maxWriteRequestsOutstanding = 10'000u;
+    uint32_t maxWriteRequestsOutstanding = DEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING;
 
     /** @brief The maximum number of outstanding read requests at any given moment */
-    uint32_t maxReadRequestsOutstanding = 100'000u;
+    uint32_t maxReadRequestsOutstanding = DEFAULT_MAX_READ_REQUESTS_OUTSTANDING;
 
     /** @brief The number of connection per host to always have active */
     uint32_t coreConnectionsPerHost = 1u;

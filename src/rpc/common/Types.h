@@ -28,13 +28,15 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 
+namespace etl {
 class LoadBalancer;
+}  // namespace etl
 namespace web {
 struct ConnectionBase;
-}
+}  // namespace web
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 namespace rpc {
 
@@ -83,9 +85,9 @@ struct VoidOutput
 struct Context
 {
     boost::asio::yield_context yield;
-    std::shared_ptr<web::ConnectionBase> session;
+    std::shared_ptr<web::ConnectionBase> session = {};
     bool isAdmin = false;
-    std::string clientIp;
+    std::string clientIp = {};
     uint32_t apiVersion = 0u;  // invalid by default
 };
 
@@ -100,7 +102,7 @@ using Result = std::variant<Status, boost::json::object>;
 struct AccountCursor
 {
     ripple::uint256 index;
-    std::uint32_t hint;
+    std::uint32_t hint{};
 
     std::string
     toString() const

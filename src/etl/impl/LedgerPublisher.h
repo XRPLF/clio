@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/SystemState.h>
+#include <feed/SubscriptionManager.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
@@ -28,6 +29,7 @@
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <chrono>
+#include <utility>
 
 namespace etl::detail {
 
@@ -72,8 +74,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         SystemState const& state)
         : publishStrand_{boost::asio::make_strand(ioc)}
-        , backend_{backend}
-        , subscriptions_{subscriptions}
+        , backend_{std::move(backend)}
+        , subscriptions_{std::move(subscriptions)}
         , state_{std::cref(state)}
     {
     }
@@ -111,16 +113,14 @@ public:
                 ++numAttempts;
                 continue;
             }
-            else
-            {
-                auto lgr = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
 
-                assert(lgr);
-                publish(*lgr);
+            auto lgr = data::synchronousAndRetryOnTimeout(
+                [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
 
-                return true;
-            }
+            assert(lgr);
+            publish(*lgr);
+
+            return true;
         }
         return false;
     }
@@ -142,7 +142,7 @@ public:
             {
                 LOG(log_.info()) << "Updating cache";
 
-                std::vector<data::LedgerObject> diff = data::synchronousAndRetryOnTimeout(
+                std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
 
                 backend_->cache().update(diff, lgrInfo.seq);  // todo: inject cache to update, don't use backend cache
@@ -154,19 +154,20 @@ public:
 
             // if the ledger closed over 10 minutes ago, assume we are still catching up and don't publish
             // TODO: this probably should be a strategy
-            if (age < 600)
+            static constexpr std::uint32_t MAX_LEDGER_AGE_SECONDS = 600;
+            if (age < MAX_LEDGER_AGE_SECONDS)
             {
                 std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
 
-                std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
+                std::vector<data::TransactionAndMetadata> const transactions = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
 
                 auto ledgerRange = backend_->fetchLedgerRange();
                 assert(ledgerRange);
                 assert(fees);
 
-                std::string range =
+                std::string const range =
                     std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
@@ -203,7 +204,7 @@ public:
     std::chrono::time_point<std::chrono::system_clock>
     getLastPublish() const
     {
-        std::shared_lock lck(publishTimeMtx_);
+        std::shared_lock const lck(publishTimeMtx_);
         return lastPublish_;
     }
 
@@ -213,7 +214,7 @@ public:
     std::uint32_t
     lastCloseAgeSeconds() const
     {
-        std::shared_lock lck(closeTimeMtx_);
+        std::shared_lock const lck(closeTimeMtx_);
         auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
                        .count();
         auto closeTime = lastCloseTime_.time_since_epoch().count();
@@ -225,7 +226,7 @@ public:
     std::optional<uint32_t>
     getLastPublishedSequence() const
     {
-        std::scoped_lock lck(lastPublishedSeqMtx_);
+        std::scoped_lock const lck(lastPublishedSeqMtx_);
         return lastPublishedSequence_;
     }
 
@@ -233,21 +234,21 @@ private:
     void
     setLastClose(std::chrono::time_point<ripple::NetClock> lastCloseTime)
     {
-        std::scoped_lock lck(closeTimeMtx_);
+        std::scoped_lock const lck(closeTimeMtx_);
         lastCloseTime_ = lastCloseTime;
     }
 
     void
     setLastPublishTime()
     {
-        std::scoped_lock lck(publishTimeMtx_);
+        std::scoped_lock const lck(publishTimeMtx_);
         lastPublish_ = std::chrono::system_clock::now();
     }
 
     void
     setLastPublishedSequence(std::optional<uint32_t> lastPublishedSequence)
     {
-        std::scoped_lock lck(lastPublishedSeqMtx_);
+        std::scoped_lock const lck(lastPublishedSeqMtx_);
         lastPublishedSequence_ = lastPublishedSequence;
     }
 };

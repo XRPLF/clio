@@ -124,19 +124,20 @@ PAMNb1i80cMsjK98xXDdr+7Uvy5M4COMwA5XHmMZDEW8Jw==
 
 class WebServerTest : public NoLoggerFixture
 {
-protected:
-    WebServerTest()
-    {
-        work.emplace(ctx);  // make sure ctx does not stop on its own
-        runner.emplace([this] { ctx.run(); });
-    }
-
-    ~WebServerTest()
+public:
+    ~WebServerTest() override
     {
         work.reset();
         ctx.stop();
         if (runner->joinable())
             runner->join();
+    }
+
+protected:
+    WebServerTest()
+    {
+        work.emplace(ctx);  // make sure ctx does not stop on its own
+        runner.emplace([this] { ctx.run(); });
     }
 
     void
@@ -174,7 +175,7 @@ public:
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
     }
 };
@@ -183,13 +184,13 @@ class ExceptionExecutor
 {
 public:
     void
-    operator()(std::string const& req, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(std::string const& /* req */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
         throw std::runtime_error("MyError");
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
     }
 };
@@ -197,7 +198,7 @@ public:
 namespace {
 
 template <class Executor>
-static std::shared_ptr<web::HttpServer<Executor>>
+std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
     util::Config const& config,
     boost::asio::io_context& ioc,
@@ -212,7 +213,7 @@ makeServerSync(
     boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
         server = web::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
         {
-            std::lock_guard lk(m);
+            std::lock_guard const lk(m);
             ready = true;
         }
         cv.notify_one();

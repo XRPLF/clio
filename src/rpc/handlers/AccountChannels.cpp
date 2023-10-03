@@ -23,7 +23,7 @@
 namespace rpc {
 
 void
-AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle) const
+AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle)
 {
     ChannelResponse channel;
     channel.channelID = ripple::to_string(channelSle.key());
@@ -128,9 +128,13 @@ tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

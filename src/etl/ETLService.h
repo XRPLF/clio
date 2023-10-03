@@ -46,7 +46,7 @@ struct NFTTransactionsData;
 struct NFTsData;
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 /**
  * @brief This namespace contains everything to do with the ETL and ETL sources.
@@ -231,6 +231,15 @@ private:
     monitor();
 
     /**
+     * @brief Monitor the network for newly validated ledgers and publish them to the ledgers stream
+     *
+     * @param nextSequence the ledger sequence to publish
+     * @return the next ledger sequence to publish
+     */
+    uint32_t
+    publishNextSequence(uint32_t nextSequence);
+
+    /**
      * @brief Monitor the database for newly written ledgers.
      *
      * Similar to the monitor(), except this function will never call runETLPipeline() or loadInitialLedger().
@@ -243,7 +252,7 @@ private:
      * @return true if stopping; false otherwise
      */
     bool
-    isStopping()
+    isStopping() const
     {
         return state_.isStopping;
     }
@@ -256,7 +265,7 @@ private:
      * @return the number of markers
      */
     std::uint32_t
-    getNumMarkers()
+    getNumMarkers() const
     {
         return numMarkers_;
     }

@@ -26,6 +26,8 @@
 
 #include <fmt/core.h>
 
+#include <utility>
+
 namespace rpc::meta {
 
 /**
@@ -100,13 +102,13 @@ public:
      */
     template <SomeRequirement... Requirements>
     IfType(Requirements&&... requirements)
-    {
-        processor_ = [... r = std::forward<Requirements>(requirements)](
-                         boost::json::value& j, std::string_view key) -> MaybeError {
-            std::optional<Status> firstFailure = std::nullopt;
+        : processor_(
+              [... r = std::forward<Requirements>(
+                   requirements)](boost::json::value& j, std::string_view key) -> MaybeError {
+                  std::optional<Status> firstFailure = std::nullopt;
 
-            // the check logic is the same as fieldspec
-            // clang-format off
+                  // the check logic is the same as fieldspec
+                  // clang-format off
             ([&j, &key, &firstFailure, req = &r]() {
                 if (firstFailure)
                     return;
@@ -114,13 +116,14 @@ public:
                 if (auto const res = req->verify(j, key); not res)
                     firstFailure = res.error();
             }(), ...);
-            // clang-format on
+                  // clang-format on
 
-            if (firstFailure)
-                return Error{firstFailure.value()};
+                  if (firstFailure)
+                      return Error{firstFailure.value()};
 
-            return {};
-        };
+                  return {};
+              })
+    {
     }
 
     /**
@@ -160,7 +163,7 @@ public:
      * @brief Constructs a validator that calls the given validator `req` and returns a custom error `err` in case `req`
      * fails.
      */
-    WithCustomError(SomeRequirement req, Status err) : requirement{std::move(req)}, error{err}
+    WithCustomError(SomeRequirement req, Status err) : requirement{std::move(req)}, error{std::move(err)}
     {
     }
 

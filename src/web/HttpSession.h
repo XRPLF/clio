@@ -65,7 +65,7 @@ public:
     {
     }
 
-    ~HttpSession() = default;
+    ~HttpSession() override = default;
 
     /** @return The TCP stream */
     boost::beast::tcp_stream&

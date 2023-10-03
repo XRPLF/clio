@@ -131,7 +131,7 @@ private:
         // clio only uses bigint (int64_t) so we convert any incoming type
         if constexpr (std::is_convertible_v<DecayedType, int64_t>)
         {
-            int64_t out;
+            int64_t out = 0;
             auto const rc = cass_value_get_int64(cass_iterator_get_value(*this), &out);
             throwErrorIfNeeded(rc, "Extract int64 from tuple");
             output = static_cast<DecayedType>(out);

@@ -44,8 +44,8 @@ public:
 
     struct Offer
     {
-        uint32_t flags;
-        uint32_t seq;
+        uint32_t flags{};
+        uint32_t seq{};
         ripple::STAmount takerGets;
         ripple::STAmount takerPays;
         std::string quality;
@@ -56,7 +56,7 @@ public:
     {
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::vector<Offer> offers;
         std::optional<std::string> marker;
         // validated should be sent via framework
@@ -79,8 +79,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
@@ -99,8 +99,8 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
-    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const;
+    static void
+    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle);
 
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);

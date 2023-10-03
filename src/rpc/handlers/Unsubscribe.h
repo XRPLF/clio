@@ -26,7 +26,7 @@
 
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 namespace rpc {
 
@@ -121,19 +121,33 @@ private:
         for (auto const& stream : streams)
         {
             if (stream == "ledger")
+            {
                 subscriptions_->unsubLedger(session);
+            }
             else if (stream == "transactions")
+            {
                 subscriptions_->unsubTransactions(session);
+            }
             else if (stream == "transactions_proposed")
+            {
                 subscriptions_->unsubProposedTransactions(session);
+            }
             else if (stream == "validations")
+            {
                 subscriptions_->unsubValidation(session);
+            }
             else if (stream == "manifests")
+            {
                 subscriptions_->unsubManifest(session);
+            }
             else if (stream == "book_changes")
+            {
                 subscriptions_->unsubBookChanges(session);
+            }
             else
+            {
                 assert(false);
+            }
         }
     }
 
