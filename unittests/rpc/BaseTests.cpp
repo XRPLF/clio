@@ -473,6 +473,15 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     passingInput = json::parse(R"({ "currency": "0158415500000000C1F76FF6ECB0BAC600000000"})");
     ASSERT_TRUE(spec.process(passingInput));
 
+    passingInput = json::parse(R"({ "currency": "0158415500000000c1f76ff6ecb0bac600000000"})");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    for (const auto& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"})
+    {
+        passingInput = json::parse(fmt::format(R"({{ "currency" : "{}" }})", currency));
+        ASSERT_TRUE(spec.process(passingInput));
+    }
+
     auto failingInput = json::parse(R"({ "currency": 256})");
     auto err = spec.process(failingInput);
     ASSERT_FALSE(err);
