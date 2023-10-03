@@ -21,6 +21,8 @@
 
 #include <web/impl/WsBase.h>
 
+#include <boost/beast/ssl.hpp>
+
 #include <utility>
 
 namespace web {
@@ -59,7 +61,7 @@ public:
         : detail::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(stream))
     {
-        ConnectionBase::isAdmin_ = isAdmin;
+        ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
     /** @return The secure websocket stream. */

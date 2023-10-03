@@ -48,7 +48,7 @@ protected:
     const std::string password_ = "secret";
     web::detail::PasswordAdminVerificationStrategy strat_{password_};
 
-    http::request<http::string_body>
+    static http::request<http::string_body>
     makeRequest(std::string const& password, http::field const field = http::field::authorization)
     {
         http::request<http::string_body> request = {};

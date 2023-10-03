@@ -400,11 +400,11 @@ class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInte
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888", GetParam().headers);
-    const std::string request = "Why hello";
+    std::string const request = "Why hello";
     auto const res = wsClient.syncPost(request);
     wsClient.disconnect();
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
@@ -413,9 +413,9 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
 TEST_P(WebServerAdminTest, HttpAdminCheck)
 {
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
-    const std::string request = "Why hello";
+    std::string const request = "Why hello";
     auto const res = HttpSyncClient::syncPost("localhost", "8888", request, GetParam().headers);
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
 }
