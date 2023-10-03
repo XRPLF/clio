@@ -174,7 +174,7 @@ public:
 
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
-                // order via transaction index
+                // order with transaction index
                 std::sort(transactions.begin(), transactions.end(), [](auto const& t1, auto const& t2) {
                     ripple::SerialIter iter1{t1.metadata.data(), t1.metadata.size()};
                     ripple::STObject const object1(iter1, ripple::sfMetadata);

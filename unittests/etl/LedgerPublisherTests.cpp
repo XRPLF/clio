@@ -182,7 +182,6 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
     t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     t1.ledgerSequence = SEQ;
-
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ, _))
         .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1}));
 
