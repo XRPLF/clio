@@ -121,6 +121,10 @@ public:
     void
     maybeSendNext()
     {
+        // cleanup if needed. can't do this in destructor so it's here
+        if (derived().dead())
+            (*handler_)(ec_, derived().shared_from_this());
+
         if (ec_ || sending_ || messages_.empty())
             return;
 
