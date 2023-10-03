@@ -22,6 +22,7 @@
 #include <util/Taggable.h>
 
 #include <boost/beast/http.hpp>
+#include <utility>
 
 namespace web {
 
@@ -47,11 +48,12 @@ public:
      * @param tagFactory The factory that generates tags to track sessions and requests
      * @param ip The IP address of the connected peer
      */
-    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
+    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip)
+        : Taggable(tagFactory), clientIp(std::move(ip))
     {
     }
 
-    virtual ~ConnectionBase() = default;
+    ~ConnectionBase() override = default;
 
     /**
      * @brief Send the response to the client.

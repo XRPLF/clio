@@ -187,7 +187,7 @@ public:
         std::shared_ptr<HandlerType> const& handler)
         : ioc_(std::ref(ioc))
         , ctx_(ctx)
-        , tagFactory_(std::move(tagFactory))
+        , tagFactory_(tagFactory)
         , dosGuard_(std::ref(dosGuard))
         , handler_(handler)
         , acceptor_(boost::asio::make_strand(ioc))
@@ -275,7 +275,7 @@ make_HttpServer(
     web::DOSGuard& dosGuard,
     std::shared_ptr<HandlerType> const& handler)
 {
-    static util::Logger log{"WebServer"};
+    static util::Logger const log{"WebServer"};
     if (!config.contains("server"))
         return nullptr;
 

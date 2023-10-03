@@ -64,8 +64,6 @@ public:
         cass_statement_set_is_idempotent(*this, cass_true);
     }
 
-    Statement(Statement&&) = default;
-
     /**
      * @brief Binds the given arguments to the statement.
      *
@@ -75,7 +73,7 @@ public:
     void
     bind(Args&&... args) const
     {
-        std::size_t idx = 0;
+        std::size_t idx = 0;  // NOLINT(misc-const-correctness)
         (this->bindAt<Args>(idx++, std::forward<Args>(args)), ...);
     }
 
@@ -126,7 +124,7 @@ public:
         }
         else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
         {
-            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
+            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
         }
         else if constexpr (std::is_same_v<DecayedType, bool>)

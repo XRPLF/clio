@@ -63,7 +63,7 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
 
         // Check destination for the DepositAuth flag.
         // If that flag is not set then a deposit should be just fine.
-        if (sle.getFieldU32(ripple::sfFlags) & ripple::lsfDepositAuth)
+        if ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfDepositAuth) != 0u)
         {
             // See if a preauthorization entry is in the ledger.
             auto const depositPreauthKeylet = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID);
@@ -91,9 +91,13 @@ tag_invoke(boost::json::value_to_tag<DepositAuthorizedHandler::Input>, boost::js
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

@@ -55,9 +55,12 @@ public:
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
+    static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
+
     util::Logger log_{"ETL"};
     std::vector<std::unique_ptr<Source>> sources_;
-    std::uint32_t downloadRanges_ = 16; /*< The number of markers to use when downloading intial ledger */
+    std::uint32_t downloadRanges_ =
+        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
 
 public:
     /**

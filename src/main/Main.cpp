@@ -79,13 +79,13 @@ parseCli(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
     po::notify(parsed);
 
-    if (parsed.count("version"))
+    if (parsed.count("version") != 0u)
     {
         std::cout << Build::getClioFullVersionString() << '\n';
         std::exit(EXIT_SUCCESS);
     }
 
-    if (parsed.count("help"))
+    if (parsed.count("help") != 0u)
     {
         std::cout << "Clio server " << Build::getClioFullVersionString() << "\n\n" << description;
         std::exit(EXIT_SUCCESS);
@@ -109,7 +109,7 @@ parseCerts(Config const& config)
     auto certFilename = config.value<std::string>("ssl_cert_file");
     auto keyFilename = config.value<std::string>("ssl_key_file");
 
-    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
+    std::ifstream const readCert(certFilename, std::ios::in | std::ios::binary);
     if (!readCert)
         return {};
 

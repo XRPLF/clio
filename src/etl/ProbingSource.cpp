@@ -147,7 +147,7 @@ ProbingSource::make_SSLHooks() noexcept
 {
     return {// onConnected
             [this](auto ec) {
-                std::lock_guard lck(mtx_);
+                std::lock_guard const lck(mtx_);
                 if (currentSrc_)
                     return SourceHooks::Action::STOP;
 
@@ -161,7 +161,7 @@ ProbingSource::make_SSLHooks() noexcept
             },
             // onDisconnected
             [this](auto /* ec */) {
-                std::lock_guard lck(mtx_);
+                std::lock_guard const lck(mtx_);
                 if (currentSrc_)
                 {
                     currentSrc_ = nullptr;
@@ -176,7 +176,7 @@ ProbingSource::make_PlainHooks() noexcept
 {
     return {// onConnected
             [this](auto ec) {
-                std::lock_guard lck(mtx_);
+                std::lock_guard const lck(mtx_);
                 if (currentSrc_)
                     return SourceHooks::Action::STOP;
 
@@ -190,7 +190,7 @@ ProbingSource::make_PlainHooks() noexcept
             },
             // onDisconnected
             [this](auto /* ec */) {
-                std::lock_guard lck(mtx_);
+                std::lock_guard const lck(mtx_);
                 if (currentSrc_)
                 {
                     currentSrc_ = nullptr;

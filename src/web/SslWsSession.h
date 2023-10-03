@@ -21,6 +21,8 @@
 
 #include <web/impl/WsBase.h>
 
+#include <utility>
+
 namespace web {
 
 /**
@@ -106,7 +108,7 @@ public:
         http::request<http::string_body> request)
         : https_(std::move(stream))
         , buffer_(std::move(buffer))
-        , ip_(ip)
+        , ip_(std::move(ip))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , handler_(handler)

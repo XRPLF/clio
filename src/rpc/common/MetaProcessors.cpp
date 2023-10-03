@@ -62,8 +62,10 @@ ValidateArrayAt::verify(boost::json::value& value, std::string_view key) const
 
     auto& res = arr.at(idx_);
     for (auto const& spec : specs_)
+    {
         if (auto const ret = spec.process(res); not ret)
             return Error{ret.error()};
+    }
 
     return {};
 }

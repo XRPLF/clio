@@ -46,7 +46,7 @@ struct NFTTransactionsData;
 struct NFTsData;
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 /**
  * @brief This namespace contains everything to do with the ETL and ETL sources.
@@ -252,7 +252,7 @@ private:
      * @return true if stopping; false otherwise
      */
     bool
-    isStopping()
+    isStopping() const
     {
         return state_.isStopping;
     }
@@ -265,7 +265,7 @@ private:
      * @return the number of markers
      */
     std::uint32_t
-    getNumMarkers()
+    getNumMarkers() const
     {
         return numMarkers_;
     }

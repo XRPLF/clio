@@ -94,7 +94,7 @@ TEST_F(RPCAPIVersionTest, ReturnsParsedVersionIfAllPreconditionsAreMet)
 
 TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
 {
-    util::Config cfg{json::parse(fmt::format(
+    util::Config const cfg{json::parse(fmt::format(
         R"({{
             "min": {},
             "max": {},
@@ -104,7 +104,7 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
         MAX_API_VERSION,
         DEFAULT_API_VERSION))};
 
-    ProductionAPIVersionParser configuredParser{cfg};
+    ProductionAPIVersionParser const configuredParser{cfg};
 
     {
         auto ver = configuredParser.parse(json::parse(R"({"api_version": 2})").as_object());

@@ -21,6 +21,8 @@
 
 #include <web/impl/WsBase.h>
 
+#include <utility>
+
 namespace web {
 
 /**
@@ -57,7 +59,7 @@ public:
     {
     }
 
-    ~PlainWsSession() = default;
+    ~PlainWsSession() override = default;
 
     /** @return The websocket stream. */
     StreamType&
@@ -111,12 +113,10 @@ public:
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , req_(std::move(request))
-        , ip_(ip)
+        , ip_(std::move(ip))
         , handler_(handler)
     {
     }
-
-    WsUpgrader() = default;
 
     /** @brief Initiate the upgrade. */
     void

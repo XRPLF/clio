@@ -46,7 +46,7 @@
 // forward declarations
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 namespace etl {
 class LoadBalancer;
 class ETLService;
@@ -149,12 +149,11 @@ public:
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
             if (v)
-                return v->as_object();
-            else
             {
-                notifyErrored(ctx.method);
-                return Status{v.error()};
+                return v->as_object();
             }
+            notifyErrored(ctx.method);
+            return Status{v.error()};
         }
         catch (data::DatabaseTimeout const& t)
         {

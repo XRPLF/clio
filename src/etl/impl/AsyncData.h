@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <data/BackendInterface.h>
 #include <etl/NFTHelpers.h>
 #include <util/log/Logger.h>
 
@@ -48,14 +49,14 @@ public:
         request_.mutable_ledger()->set_sequence(seq);
         if (marker.isNonZero())
         {
-            request_.set_marker(marker.data(), marker.size());
+            request_.set_marker(marker.data(), ripple::uint256::size());
         }
         request_.set_user("ETL");
         nextPrefix_ = 0x00;
         if (nextMarker)
             nextPrefix_ = nextMarker->data()[0];
 
-        unsigned char prefix = marker.data()[0];
+        unsigned char const prefix = marker.data()[0];
 
         LOG(log_.debug()) << "Setting up AsyncCallData. marker = " << ripple::strHex(marker)
                           << " . prefix = " << ripple::strHex(std::string(1, prefix))
@@ -102,18 +103,18 @@ public:
         bool more = true;
 
         // if no marker returned, we are done
-        if (cur_->marker().size() == 0)
+        if (cur_->marker().empty())
             more = false;
 
         // if returned marker is greater than our end, we are done
-        unsigned char prefix = cur_->marker()[0];
+        unsigned char const prefix = cur_->marker()[0];
         if (nextPrefix_ != 0x00 && prefix >= nextPrefix_)
             more = false;
 
         // if we are not done, make the next async call
         if (more)
         {
-            request_.set_marker(std::move(cur_->marker()));
+            request_.set_marker(cur_->marker());
             call(stub, cq);
         }
 
@@ -136,7 +137,7 @@ public:
                  {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
             if (!cacheOnly)
             {
-                if (lastKey_.size())
+                if (!lastKey_.empty())
                     backend.writeSuccessor(std::move(lastKey_), request_.ledger().sequence(), std::string{obj.key()});
                 lastKey_ = obj.key();
                 backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
@@ -166,10 +167,11 @@ public:
     std::string
     getMarkerPrefix()
     {
-        if (next_->marker().size() == 0)
+        if (next_->marker().empty())
+        {
             return "";
-        else
-            return ripple::strHex(std::string{next_->marker().data()[0]});
+        }
+        return ripple::strHex(std::string{next_->marker().data()[0]});
     }
 
     std::string

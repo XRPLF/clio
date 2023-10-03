@@ -34,6 +34,7 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#include <utility>
 
 namespace etl::detail {
 
@@ -87,7 +88,7 @@ public:
         uint32_t startSequence,
         SystemState& state)
         : pipe_{std::ref(pipe)}
-        , backend_{backend}
+        , backend_{std::move(backend)}
         , loader_{std::ref(loader)}
         , publisher_{std::ref(publisher)}
         , amendmentBlockHandler_{std::ref(amendmentBlockHandler)}
@@ -299,7 +300,7 @@ private:
 
             for (auto const& obj : cacheUpdates)
             {
-                if (modified.count(obj.key))
+                if (modified.contains(obj.key))
                     continue;
 
                 auto lb = backend_->cache().getPredecessor(obj.key, lgrInfo.seq);
@@ -310,7 +311,7 @@ private:
                 if (!ub)
                     ub = {data::lastKey, {}};
 
-                if (obj.blob.size() == 0)
+                if (obj.blob.empty())
                 {
                     LOG(log_.debug()) << "writing successor for deleted object " << ripple::strHex(obj.key) << " - "
                                       << ripple::strHex(lb->key) << " - " << ripple::strHex(ub->key);
@@ -378,10 +379,10 @@ private:
                 if (obj.mod_type() != RawLedgerObjectType::MODIFIED)
                 {
                     std::string* predPtr = obj.mutable_predecessor();
-                    if (!predPtr->size())
+                    if (predPtr->empty())
                         *predPtr = uint256ToString(data::firstKey);
                     std::string* succPtr = obj.mutable_successor();
-                    if (!succPtr->size())
+                    if (succPtr->empty())
                         *succPtr = uint256ToString(data::lastKey);
 
                     if (obj.mod_type() == RawLedgerObjectType::DELETED)

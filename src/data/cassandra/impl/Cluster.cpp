@@ -28,7 +28,7 @@
 #include <vector>
 
 namespace {
-static constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
+constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
 
 template <class... Ts>
 struct overloadSet : Ts...
@@ -102,8 +102,10 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
     using std::to_string;
     auto throwErrorIfNeeded = [](CassError rc, std::string const& label, std::string const& value) {
         if (rc != CASS_OK)
+        {
             throw std::runtime_error(
                 fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)));
+        }
     };
 
     {
@@ -136,7 +138,7 @@ Cluster::setupCertificate(Settings const& settings)
         return;
 
     LOG(log_.debug()) << "Configure SSL context";
-    SslContext context = SslContext(*settings.certificate);
+    SslContext const context = SslContext(*settings.certificate);
     cass_cluster_set_ssl(*this, context);
 }
 

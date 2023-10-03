@@ -36,8 +36,8 @@
 struct AccountTransactionsData
 {
     boost::container::flat_set<ripple::AccountID> accounts;
-    std::uint32_t ledgerSequence;
-    std::uint32_t transactionIndex;
+    std::uint32_t ledgerSequence{};
+    std::uint32_t transactionIndex{};
     ripple::uint256 txHash;
 
     AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash)
@@ -149,8 +149,11 @@ template <class T>
 inline bool
 isOffer(T const& object)
 {
-    short offer_bytes = (object[1] << 8) | object[2];
-    return offer_bytes == 0x006f;
+    static constexpr short OFFER_OFFSET = 0x006f;
+    static constexpr short SHIFT = 8;
+
+    short offer_bytes = (object[1] << SHIFT) | object[2];
+    return offer_bytes == OFFER_OFFSET;
 }
 
 /**
@@ -179,8 +182,9 @@ template <class T>
 inline bool
 isDirNode(T const& object)
 {
-    short spaceKey = (object.data()[1] << 8) | object.data()[2];
-    return spaceKey == 0x0064;
+    static constexpr short DIR_NODE_SPACE_KEY = 0x0064;
+    short const spaceKey = (object.data()[1] << 8) | object.data()[2];
+    return spaceKey == DIR_NODE_SPACE_KEY;
 }
 
 /**
@@ -212,7 +216,7 @@ inline ripple::uint256
 getBook(T const& offer)
 {
     ripple::SerialIter it{offer.data(), offer.size()};
-    ripple::SLE sle{it, {}};
+    ripple::SLE const sle{it, {}};
     ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
 
     return book;
@@ -228,10 +232,12 @@ template <class T>
 inline ripple::uint256
 getBookBase(T const& key)
 {
+    static constexpr size_t KEY_SIZE = 24;
+
     assert(key.size() == ripple::uint256::size());
 
     ripple::uint256 ret;
-    for (size_t i = 0; i < 24; ++i)
+    for (size_t i = 0; i < KEY_SIZE; ++i)
         ret.data()[i] = key.data()[i];
 
     return ret;
@@ -246,7 +252,7 @@ getBookBase(T const& key)
 inline std::string
 uint256ToString(ripple::uint256 const& input)
 {
-    return {reinterpret_cast<const char*>(input.data()), input.size()};
+    return {reinterpret_cast<const char*>(input.data()), ripple::uint256::size()};
 }
 
 /** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */

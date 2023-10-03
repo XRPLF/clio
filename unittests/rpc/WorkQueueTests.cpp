@@ -30,11 +30,11 @@ using namespace util;
 using namespace rpc;
 
 namespace {
-constexpr static auto JSONConfig = R"JSON({
+constexpr auto JSONConfig = R"JSON({
         "server": { "max_queue_size" : 2 },
         "workers": 4
     })JSON";
-}
+}  // namespace
 
 class RPCWorkQueueTest : public NoLoggerFixture
 {
@@ -56,7 +56,7 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
     {
         queue.postCoro(
             [&executeCount, &sem, &mtx](auto /* yield */) {
-                std::lock_guard lk(mtx);
+                std::lock_guard const lk(mtx);
                 if (++executeCount; executeCount == TOTAL)
                     sem.release();  // 1) note we are still in user function
             },
@@ -93,7 +93,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
         auto res = queue.postCoro(
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
-                cv.wait(lk, [&] { return unblocked == true; });
+                cv.wait(lk, [&] { return unblocked; });
 
                 if (--expectedCount; expectedCount == 0)
                     sem.release();
@@ -104,7 +104,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
         {
             EXPECT_FALSE(res);
 
-            std::unique_lock lk{mtx};
+            std::unique_lock const lk{mtx};
             unblocked = true;
             cv.notify_all();
         }

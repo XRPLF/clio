@@ -93,7 +93,9 @@ getDeliveredAmount(
         // then its absence indicates that the amount delivered is listed in the
         // Amount field. DeliveredAmount went live January 24, 2014.
         // 446000000 is in Feb 2014, well after DeliveredAmount went live
-        if (ledgerSequence >= 4594095 || date > 446000000)
+        static constexpr std::uint32_t FIRST_LEDGER_WITH_DELIVERED_AMOUNT = 4594095;
+        static constexpr std::uint32_t DELIVERED_AMOUNT_LIVE_DATE = 446000000;
+        if (ledgerSequence >= FIRST_LEDGER_WITH_DELIVERED_AMOUNT || date > DELIVERED_AMOUNT_LIVE_DATE)
         {
             return txn->getFieldAmount(ripple::sfAmount);
         }
@@ -133,14 +135,19 @@ accountFromStringStrict(std::string const& account)
 
     std::optional<ripple::AccountID> result;
     if (publicKey)
+    {
         result = ripple::calcAccountID(*publicKey);
+    }
     else
+    {
         result = ripple::parseBase58<ripple::AccountID>(account);
+    }
 
     if (result)
+    {
         return result.value();
-    else
-        return {};
+    }
+    return {};
 }
 
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
@@ -177,7 +184,7 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t s
 {
     auto [tx, meta] = deserializeTxPlusMeta(blobs);
 
-    std::shared_ptr<ripple::TxMeta> m = std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
+    std::shared_ptr<ripple::TxMeta> const m = std::make_shared<ripple::TxMeta>(tx->getTransactionID(), seq, *meta);
 
     return {tx, m};
 }
@@ -224,9 +231,13 @@ insertDeliveredAmount(
     if (canHaveDeliveredAmount(txn, meta))
     {
         if (auto amt = getDeliveredAmount(txn, meta, meta->getLgrSeq(), date))
+        {
             metaJson["delivered_amount"] = toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
+        }
         else
+        {
             metaJson["delivered_amount"] = "unavailable";
+        }
         return true;
     }
     return false;
@@ -330,9 +341,13 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
         {
             boost::json::string const& stringIndex = indexValue.as_string();
             if (stringIndex == "validated")
+            {
                 ledgerSequence = ctx.range.maxSequence;
+            }
             else
+            {
                 ledgerSequence = parseStringAsUInt(stringIndex.c_str());
+            }
         }
         else if (indexValue.is_int64())
             ledgerSequence = indexValue.as_int64();
@@ -368,7 +383,7 @@ getLedgerInfoFromHashOrSeq(
     {
         // invoke uint256's constructor to parse the hex string , instead of
         // copying buffer
-        ripple::uint256 ledgerHash256{std::string_view(*ledgerHash)};
+        ripple::uint256 const ledgerHash256{std::string_view(*ledgerHash)};
         lgrInfo = backend.fetchLedgerByHash(ledgerHash256, yield);
         if (!lgrInfo || lgrInfo->seq > maxSeq)
             return err;
@@ -411,8 +426,10 @@ getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID)
     if (sle.getType() == ripple::ltRIPPLE_STATE)
     {
         if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
+        {
             return sle.getFieldU64(ripple::sfLowNode);
-        else if (sle.getFieldAmount(ripple::sfHighLimit).getIssuer() == accountID)
+        }
+        if (sle.getFieldAmount(ripple::sfHighLimit).getIssuer() == accountID)
             return sle.getFieldU64(ripple::sfHighNode);
     }
 
@@ -443,17 +460,18 @@ traverseNFTObjects(
         return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
 
     // no marker, start from the last page
-    ripple::uint256 currentPage = nextPage == beast::zero ? lastNFTPage.key : nextPage;
+    ripple::uint256 const currentPage = nextPage == beast::zero ? lastNFTPage.key : nextPage;
 
     // read the current page
     auto page = backend.fetchLedgerObject(currentPage, sequence, yield);
 
     if (!page)
     {
-        if (nextPage == beast::zero)  // no nft objects in lastNFTPage
+        if (nextPage == beast::zero)
+        {  // no nft objects in lastNFTPage
             return AccountCursor{beast::zero, 0};
-        else  // marker is in the right range, but still invalid
-            return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
+        }  // marker is in the right range, but still invalid
+        return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
     }
 
     // the object exists and the key is in right range, must be nft page
@@ -553,7 +571,8 @@ traverseOwnedNodes(
     // Only reserve 2048 nodes when fetching all owned ledger objects. If there
     // are more, then keys will allocate more memory, which is suboptimal, but
     // should only occur occasionally.
-    keys.reserve(std::min(std::uint32_t{2048}, limit));
+    static constexpr std::uint32_t MIN_NODES = 2048;
+    keys.reserve(std::min(MIN_NODES, limit));
 
     auto start = std::chrono::system_clock::now();
 
@@ -567,7 +586,7 @@ traverseOwnedNodes(
             return Status(ripple::rpcINVALID_PARAMS, "Invalid marker.");
 
         ripple::SerialIter hintDirIt{hintDir->data(), hintDir->size()};
-        ripple::SLE hintDirSle{hintDirIt, hintIndex.key};
+        ripple::SLE const hintDirSle{hintDirIt, hintIndex.key};
 
         if (auto const& indexes = hintDirSle.getFieldV256(ripple::sfIndexes);
             std::find(std::begin(indexes), std::end(indexes), hexMarker) == std::end(indexes))
@@ -586,7 +605,7 @@ traverseOwnedNodes(
                 return Status(ripple::rpcINVALID_PARAMS, "Owner directory not found.");
 
             ripple::SerialIter ownedDirIt{ownerDir->data(), ownerDir->size()};
-            ripple::SLE ownedDirSle{ownedDirIt, currentIndex.key};
+            ripple::SLE const ownedDirSle{ownedDirIt, currentIndex.key};
 
             for (auto const& key : ownedDirSle.getFieldV256(ripple::sfIndexes))
             {
@@ -630,7 +649,7 @@ traverseOwnedNodes(
                 break;
 
             ripple::SerialIter ownedDirIt{ownerDir->data(), ownerDir->size()};
-            ripple::SLE ownedDirSle{ownedDirIt, currentIndex.key};
+            ripple::SLE const ownedDirSle{ownedDirIt, currentIndex.key};
 
             for (auto const& key : ownedDirSle.getFieldV256(ripple::sfIndexes))
             {
@@ -703,8 +722,10 @@ parseRippleLibSeed(boost::json::value const& value)
 
     auto const result = ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
 
-    if (result.size() == 18 && static_cast<std::uint8_t>(result[0]) == std::uint8_t(0xE1) &&
-        static_cast<std::uint8_t>(result[1]) == std::uint8_t(0x4B))
+    static constexpr std::size_t SEED_SIZE = 18;
+    static constexpr std::array<std::uint8_t, 2> SEED_PREFIX = {0xE1, 0x4B};
+    if (result.size() == SEED_SIZE && static_cast<std::uint8_t>(result[0]) == SEED_PREFIX[0] &&
+        static_cast<std::uint8_t>(result[1]) == SEED_PREFIX[1])
         return ripple::Seed(ripple::makeSlice(result.substr(2)));
 
     return {};
@@ -720,9 +741,9 @@ keypairFromRequst(boost::json::object const& request)
     static std::string const secretTypes[]{"passphrase", "secret", "seed", "seed_hex"};
 
     // Identify which secret type is in use.
-    std::string secretType = "";
+    std::string secretType;
     int count = 0;
-    for (auto t : secretTypes)
+    for (const auto& t : secretTypes)
     {
         if (request.contains(t))
         {
@@ -750,7 +771,7 @@ keypairFromRequst(boost::json::object const& request)
         if (!request.at("key_type").is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "keyTypeNotString"};
 
-        std::string key_type = request.at("key_type").as_string().c_str();
+        std::string const key_type = request.at("key_type").as_string().c_str();
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
@@ -788,17 +809,21 @@ keypairFromRequst(boost::json::object const& request)
             if (!request.at(secretType).is_string())
                 return Status{RippledError::rpcINVALID_PARAMS, "secret value must be string"};
 
-            std::string key = request.at(secretType).as_string().c_str();
+            std::string const key = request.at(secretType).as_string().c_str();
 
             if (secretType == "seed")
+            {
                 seed = ripple::parseBase58<ripple::Seed>(key);
+            }
             else if (secretType == "passphrase")
+            {
                 seed = ripple::parseGenericSeed(key);
+            }
             else if (secretType == "seed_hex")
             {
                 ripple::uint128 s;
                 if (s.parseHex(key))
-                    seed.emplace(ripple::Slice(s.data(), s.size()));
+                    seed.emplace(ripple::Slice(s.data(), ripple::uint128::size()));
             }
         }
         else
@@ -806,7 +831,7 @@ keypairFromRequst(boost::json::object const& request)
             if (!request.at("secret").is_string())
                 return Status{RippledError::rpcINVALID_PARAMS, "field secret should be a string"};
 
-            std::string secret = request.at("secret").as_string().c_str();
+            std::string const secret = request.at("secret").as_string().c_str();
             seed = ripple::parseGenericSeed(secret);
         }
     }
@@ -861,7 +886,7 @@ isGlobalFrozen(
         return false;
 
     ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE sle{it, key};
+    ripple::SLE const sle{it, key};
 
     return sle.isFlag(ripple::lsfGlobalFreeze);
 }
@@ -885,7 +910,7 @@ isFrozen(
         return false;
 
     ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE sle{it, key};
+    ripple::SLE const sle{it, key};
 
     if (sle.isFlag(ripple::lsfGlobalFreeze))
         return true;
@@ -899,7 +924,7 @@ isFrozen(
             return false;
 
         ripple::SerialIter issuerIt{blob->data(), blob->size()};
-        ripple::SLE issuerLine{issuerIt, key};
+        ripple::SLE const issuerLine{issuerIt, key};
 
         auto frozen = (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
 
@@ -924,7 +949,7 @@ xrpLiquid(
         return beast::zero;
 
     ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE sle{it, key};
+    ripple::SLE const sle{it, key};
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
 
@@ -951,10 +976,8 @@ accountFunds(
     {
         return amount;
     }
-    else
-    {
-        return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
-    }
+
+    return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
 }
 
 ripple::STAmount
@@ -983,7 +1006,7 @@ accountHolds(
     }
 
     ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE sle{it, key};
+    ripple::SLE const sle{it, key};
 
     if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield))
     {
@@ -1016,7 +1039,7 @@ transferRate(
     if (blob)
     {
         ripple::SerialIter it{blob->data(), blob->size()};
-        ripple::SLE sle{it, key};
+        ripple::SLE const sle{it, key};
 
         if (sle.isFieldPresent(ripple::sfTransferRate))
             return ripple::Rate{sle.getFieldU32(ripple::sfTransferRate)};
@@ -1038,7 +1061,7 @@ postProcessOrderBook(
 
     std::map<ripple::AccountID, ripple::STAmount> umBalance;
 
-    bool globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
+    bool const globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
         isGlobalFrozen(backend, ledgerSequence, book.in.account, yield);
 
     auto rate = transferRate(backend, ledgerSequence, book.out.account, yield);
@@ -1048,8 +1071,8 @@ postProcessOrderBook(
         try
         {
             ripple::SerialIter it{obj.blob.data(), obj.blob.size()};
-            ripple::SLE offer{it, obj.key};
-            ripple::uint256 bookDir = offer.getFieldH256(ripple::sfBookDirectory);
+            ripple::SLE const offer{it, obj.key};
+            ripple::uint256 const bookDir = offer.getFieldH256(ripple::sfBookDirectory);
 
             auto const uOfferOwnerID = offer.getAccountID(ripple::sfAccount);
             auto const& saTakerGets = offer.getFieldAmount(ripple::sfTakerGets);
@@ -1094,7 +1117,7 @@ postProcessOrderBook(
             ripple::STAmount saTakerGetsFunded;
             ripple::STAmount saOwnerFundsLimit = saOwnerFunds;
             ripple::Rate offerRate = ripple::parityRate;
-            ripple::STAmount dirRate = ripple::amountFromQuality(getQuality(bookDir));
+            ripple::STAmount const dirRate = ripple::amountFromQuality(getQuality(bookDir));
 
             if (rate != ripple::parityRate
                 // Have a tranfer fee.
@@ -1122,7 +1145,7 @@ postProcessOrderBook(
                                     .getJson(ripple::JsonOptions::none));
             }
 
-            ripple::STAmount saOwnerPays = (ripple::parityRate == offerRate)
+            ripple::STAmount const saOwnerPays = (ripple::parityRate == offerRate)
                 ? saTakerGetsFunded
                 : std::min(saOwnerFunds, ripple::multiply(saTakerGetsFunded, offerRate));
 
@@ -1148,26 +1171,34 @@ std::variant<Status, ripple::Book>
 parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency gets, ripple::AccountID getIssuer)
 {
     if (isXRP(pays) && !isXRP(payIssuer))
+    {
         return Status{
             RippledError::rpcSRC_ISR_MALFORMED,
             "Unneeded field 'taker_pays.issuer' for XRP currency "
             "specification."};
+    }
 
     if (!isXRP(pays) && isXRP(payIssuer))
+    {
         return Status{
             RippledError::rpcSRC_ISR_MALFORMED,
             "Invalid field 'taker_pays.issuer', expected non-XRP "
             "issuer."};
+    }
 
     if (ripple::isXRP(gets) && !ripple::isXRP(getIssuer))
+    {
         return Status{
             RippledError::rpcDST_ISR_MALFORMED,
             "Unneeded field 'taker_gets.issuer' for XRP currency "
             "specification."};
+    }
 
     if (!ripple::isXRP(gets) && ripple::isXRP(getIssuer))
+    {
         return Status{
             RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+    }
 
     if (pays == gets && payIssuer == getIssuer)
         return Status{RippledError::rpcBAD_MARKET, "badMarket"};
@@ -1202,9 +1233,11 @@ parseBook(boost::json::object const& request)
         return Status{RippledError::rpcDST_AMT_MALFORMED};
 
     if (!taker_gets.at("currency").is_string())
+    {
         return Status{
             RippledError::rpcDST_AMT_MALFORMED,
         };
+    }
 
     ripple::Currency pay_currency;
     if (!ripple::to_currency(pay_currency, taker_pays.at("currency").as_string().c_str()))
@@ -1232,16 +1265,20 @@ parseBook(boost::json::object const& request)
     }
 
     if (isXRP(pay_currency) && !isXRP(pay_issuer))
+    {
         return Status{
             RippledError::rpcSRC_ISR_MALFORMED,
             "Unneeded field 'taker_pays.issuer' for XRP currency "
             "specification."};
+    }
 
     if (!isXRP(pay_currency) && isXRP(pay_issuer))
+    {
         return Status{
             RippledError::rpcSRC_ISR_MALFORMED,
             "Invalid field 'taker_pays.issuer', expected non-XRP "
             "issuer."};
+    }
 
     if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
         return Status{RippledError::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."};
@@ -1257,10 +1294,12 @@ parseBook(boost::json::object const& request)
             return Status{RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer."};
 
         if (get_issuer == ripple::noAccount())
+        {
             return Status{
                 RippledError::rpcDST_ISR_MALFORMED,
                 "Invalid field 'taker_gets.issuer', bad issuer account "
                 "one."};
+        }
     }
     else
     {
@@ -1268,14 +1307,18 @@ parseBook(boost::json::object const& request)
     }
 
     if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer))
+    {
         return Status{
             RippledError::rpcDST_ISR_MALFORMED,
             "Unneeded field 'taker_gets.issuer' for XRP currency "
             "specification."};
+    }
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer))
+    {
         return Status{
             RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+    }
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
         return Status{RippledError::rpcBAD_MARKET, "badMarket"};
@@ -1304,7 +1347,7 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request)
         auto indexValue = request.at("ledger_index");
         if (indexValue.is_string())
         {
-            std::string index = indexValue.as_string().c_str();
+            std::string const index = indexValue.as_string().c_str();
             return index == "current" || index == "closed";
         }
     }
@@ -1337,7 +1380,7 @@ isAmendmentEnabled(
     // the amendments should always be present in ledger
     auto const& amendments = backend->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
 
-    ripple::SLE amendmentsSLE{
+    ripple::SLE const amendmentsSLE{
         ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key};
 
     auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);

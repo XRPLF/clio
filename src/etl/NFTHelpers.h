@@ -46,6 +46,6 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  * @return The NFT data as a vector
  */
 std::vector<NFTsData>
-getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob);
+getNFTDataFromObj(std::uint32_t seq, std::string const& key, std::string const& blob);
 
 }  // namespace etl

@@ -64,9 +64,13 @@ Config::lookup(KeyType key) const
             if (not cur.get().is_object())
                 throw detail::StoreException("Not an object at '" + subkey + "'");
             if (not cur.get().as_object().contains(section))
+            {
                 hasBrokenPath = true;
+            }
             else
+            {
                 cur = std::cref(cur.get().as_object().at(section));
+            }
         }
 
         subkey += Separator;
@@ -91,7 +95,7 @@ Config::maybeArray(KeyType key) const
             out.reserve(arr.size());
 
             std::transform(std::begin(arr), std::end(arr), std::back_inserter(out), [](auto&& element) {
-                return Config{std::move(element)};
+                return Config{std::forward<decltype(element)>(element)};
             });
             return std::make_optional<ArrayType>(std::move(out));
         }
@@ -171,7 +175,7 @@ ConfigReader::open(std::filesystem::path path)
 {
     try
     {
-        std::ifstream in(path, std::ios::in | std::ios::binary);
+        std::ifstream const in(path, std::ios::in | std::ios::binary);
         if (in)
         {
             std::stringstream contents;
