@@ -65,11 +65,13 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
 {
     SystemState dummyState;
     dummyState.isWriting = false;
-    ripple::LedgerInfo dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
+    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
     detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(SEQ, _)).Times(1);
 
@@ -89,11 +91,11 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
 {
     SystemState dummyState;
     dummyState.isWriting = true;
-    ripple::LedgerInfo dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
+    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
     detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
 
     // setLastPublishedSequence not in strand, should verify before run
@@ -109,14 +111,14 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
     SystemState dummyState;
     dummyState.isWriting = true;
 
-    ripple::LedgerInfo dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
+    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
     detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
     mockBackendPtr->updateRange(SEQ - 1);
     mockBackendPtr->updateRange(SEQ);
 
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
 
     // mock fetch fee
@@ -138,7 +140,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
     MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+        dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
 
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubBookChanges).Times(1);
@@ -166,7 +168,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
 
     // mock fetch fee
@@ -188,7 +190,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
     MockSubscriptionManager* rawSubscriptionManagerPtr =
-        static_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
+        dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
 
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubBookChanges).Times(1);
@@ -215,10 +217,10 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
     detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
 
     static auto constexpr MAX_ATTEMPT = 2;
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     EXPECT_CALL(*rawBackendPtr, hardFetchLedgerRange).Times(MAX_ATTEMPT);
 
-    LedgerRange range{.minSequence = SEQ - 1, .maxSequence = SEQ - 1};
+    LedgerRange const range{.minSequence = SEQ - 1, .maxSequence = SEQ - 1};
     ON_CALL(*rawBackendPtr, hardFetchLedgerRange(_)).WillByDefault(Return(range));
     EXPECT_FALSE(publisher.publish(SEQ, MAX_ATTEMPT));
 }
@@ -229,12 +231,12 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
     dummyState.isStopping = false;
     detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
 
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    LedgerRange range{.minSequence = SEQ, .maxSequence = SEQ};
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    LedgerRange const range{.minSequence = SEQ, .maxSequence = SEQ};
     ON_CALL(*rawBackendPtr, hardFetchLedgerRange(_)).WillByDefault(Return(range));
     EXPECT_CALL(*rawBackendPtr, hardFetchLedgerRange).Times(1);
 
-    ripple::LedgerInfo dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
+    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(SEQ, _)).WillByDefault(Return(dummyLedgerInfo));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 

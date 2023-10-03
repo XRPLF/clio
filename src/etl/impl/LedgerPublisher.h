@@ -46,9 +46,6 @@ namespace etl::detail {
 template <typename SubscriptionManagerType, typename CacheType>
 class LedgerPublisher
 {
-    // we are still catching up if not within PUBLISH_THRESHOLD_SEC from the last close,
-    constexpr static auto PUBLISH_THRESHOLD_SEC = 600;
-
     util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
@@ -79,10 +76,9 @@ public:
         SystemState const& state)
         : publishStrand_{boost::asio::make_strand(ioc)}
         , backend_{std::move(backend)}
+        , cache_{cache}
         , subscriptions_{std::move(subscriptions)}
-        , state_{std::cref(state)},
-                 cache_{cache}
-
+        , state_{std::cref(state)}
     {
     }
 
@@ -158,7 +154,7 @@ public:
             setLastClose(lgrInfo.closeTime);
             auto age = lastCloseAgeSeconds();
 
-            // if the ledger closed over PUBLISH_THRESHOLD_SEC ago, assume we are still catching up and don't publish
+            // if the ledger closed over MAX_LEDGER_AGE_SECONDS ago, assume we are still catching up and don't publish
             // TODO: this probably should be a strategy
             static constexpr std::uint32_t MAX_LEDGER_AGE_SECONDS = 600;
             if (age < MAX_LEDGER_AGE_SECONDS)
@@ -226,8 +222,7 @@ public:
         auto closeTime = lastCloseTime_.time_since_epoch().count();
         if (now < (rippleEpochStart + closeTime))
             return 0;
-        else
-            return age;
+        return now - (rippleEpochStart + closeTime);
     }
 
     /**
