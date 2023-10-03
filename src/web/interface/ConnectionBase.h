@@ -48,7 +48,6 @@ public:
      *
      * @param tagFactory The factory that generates tags to track sessions and requests
      * @param ip The IP address of the connected peer
-     * @param adminPassword The optional password to verify admin role in requests
      */
     ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip)
         : Taggable(tagFactory), clientIp(std::move(ip))
