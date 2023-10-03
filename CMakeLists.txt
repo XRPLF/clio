@@ -168,6 +168,7 @@ if (tests)
     unittests/etl/TransformerTests.cpp
     unittests/etl/CacheLoaderTests.cpp
     unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/LedgerPublisherTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
