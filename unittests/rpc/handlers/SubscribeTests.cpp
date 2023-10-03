@@ -50,9 +50,9 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        util::Config cfg;
+        util::Config const cfg;
         subManager_ = feed::SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
-        util::TagDecoratorFactory tagDecoratorFactory{cfg};
+        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void
@@ -594,7 +594,8 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         })";
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -751,7 +752,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ACCOUNT));
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
@@ -819,11 +821,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         toBase58(ripple::xrpAccount()),
         PAYS20XRPGETS10USDBOOKDIR);
 
-    std::vector<Blob> bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
 
     // for reverse
-    std::vector<Blob> bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(2);
@@ -916,7 +918,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         ACCOUNT));
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
@@ -983,11 +986,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         toBase58(ripple::xrpAccount()),
         PAYS20XRPGETS10USDBOOKDIR);
 
-    std::vector<Blob> bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
 
     // for reverse
-    std::vector<Blob> bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);

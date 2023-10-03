@@ -20,8 +20,8 @@
 #include <data/cassandra/impl/Tuple.h>
 
 namespace {
-static constexpr auto tupleDeleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
-static constexpr auto tupleIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
+constexpr auto tupleDeleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
+constexpr auto tupleIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::detail {

@@ -385,9 +385,11 @@ private:
         }
 
         if (has_error)
+        {
             throw std::runtime_error(
                 "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} + "' in JSON but requested '" +
                 detail::typeName<Return>() + "'");
+        }
 
         return value_to<Return>(value);
     }

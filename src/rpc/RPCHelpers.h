@@ -63,7 +63,7 @@ std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta co
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson includeNFTIDs = NFTokenjson::DISABLE);
+toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled = NFTokenjson::DISABLE);
 
 bool
 insertDeliveredAmount(
@@ -111,7 +111,7 @@ traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::Keylet const& owner,
     ripple::uint256 const& hexMarker,
-    std::uint32_t const startHint,
+    std::uint32_t startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
@@ -210,7 +210,7 @@ std::variant<Status, ripple::Book>
 parseBook(boost::json::object const& request);
 
 std::variant<Status, ripple::AccountID>
-parseTaker(boost::json::value const& request);
+parseTaker(boost::json::value const& taker);
 
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request);
@@ -231,7 +231,9 @@ logDuration(web::Context const& ctx, T const& dur)
 {
     using boost::json::serialize;
 
-    static util::Logger log{"RPC"};
+    static util::Logger const log{"RPC"};
+    static constexpr std::int64_t DURATION_ERROR_THRESHOLD_SECONDS = 10;
+
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
@@ -239,10 +241,14 @@ logDuration(web::Context const& ctx, T const& dur)
         millis,
         serialize(util::removeSecret(ctx.params)));
 
-    if (seconds > 10)
+    if (seconds > DURATION_ERROR_THRESHOLD_SECONDS)
+    {
         LOG(log.error()) << ctx.tag() << msg;
+    }
     else if (seconds > 1)
+    {
         LOG(log.warn()) << ctx.tag() << msg;
+    }
     else
         LOG(log.info()) << ctx.tag() << msg;
 }

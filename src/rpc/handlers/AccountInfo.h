@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/JsonBool.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
@@ -44,6 +45,7 @@ public:
         ripple::STLedgerEntry accountData;
         bool isDisallowIncomingEnabled = false;
         bool isClawbackEnabled = false;
+        uint32_t apiVersion;
         std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
         // validated should be sent via framework
         bool validated = true;
@@ -54,12 +56,14 @@ public:
             ripple::STLedgerEntry sle,
             bool isDisallowIncomingEnabled,
             bool isClawbackEnabled,
+            uint32_t version,
             std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt)
             : ledgerIndex(ledgerId)
             , ledgerHash(std::move(ledgerHash))
             , accountData(std::move(sle))
             , isDisallowIncomingEnabled(isDisallowIncomingEnabled)
             , isClawbackEnabled(isClawbackEnabled)
+            , apiVersion(version)
             , signerLists(std::move(signerLists))
         {
         }
@@ -73,7 +77,7 @@ public:
         std::optional<std::string> ident;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        bool signerLists = false;
+        JsonBool signerLists{false};
     };
 
     using Result = HandlerReturnType<Output>;
@@ -82,17 +86,18 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const rpcSpecV1 = RpcSpec{
             {JS(account), validation::AccountValidator},
             {JS(ident), validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(signer_lists), validation::Type<bool>{}}};
+            {JS(ledger_index), validation::LedgerIndexValidator}};
 
-        return rpcSpec;
+        static auto const rpcSpec = RpcSpec{rpcSpecV1, {{JS(signer_lists), validation::Type<bool>{}}}};
+
+        return apiVersion == 1 ? rpcSpecV1 : rpcSpec;
     }
 
     Result

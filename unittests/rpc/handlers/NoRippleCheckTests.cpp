@@ -156,7 +156,7 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.error());
@@ -165,9 +165,34 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
     });
 }
 
+TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
+{
+    static constexpr auto reqJson = R"(
+        {
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "role": "gateway",
+            "transactions": "gg"
+         }
+    )";
+    auto rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence);
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{NoRippleCheckHandler{mockBackendPtr}};
+        auto const req = json::parse(reqJson);
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
 TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -195,7 +220,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
 TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -223,7 +249,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
 TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -250,7 +277,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 
 TEST_F(RPCNoRippleCheckTest, AccountNotExist)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -290,7 +318,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
             ],
             "validated":true
         })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -309,10 +338,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -350,7 +379,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
             ],
             "validated":true
         })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -366,11 +396,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
-    auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -409,7 +437,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
             ],
             "validated":true
         })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -428,10 +457,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -469,7 +498,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
             ],
             "validated":true
         })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -485,11 +515,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
-    auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -517,7 +545,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
 TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoRippleUnsetHighAccount)
 {
     static auto constexpr seq = 30;
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -535,11 +564,9 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
-    auto const line1 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
 
-    auto const line2 =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT2, 10, ACCOUNT, 20, TXNID, 123, 0);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -569,7 +596,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
 TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
 {
     constexpr auto seq = 30;
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -588,10 +616,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -670,7 +698,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         ripple::tfClearNoRipple,
         transactionSeq + 2,
         ripple::tfClearNoRipple);
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);   // min
     mockBackendPtr->updateRange(seq);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -690,10 +719,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     auto const line2 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
     bbs.push_back(line1.getSerializer().peekData());
@@ -722,7 +751,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
 TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
 {
     constexpr auto seq = 30;
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
@@ -742,9 +772,10 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     auto const line1 = CreateRippleStateLedgerObject(
-        ACCOUNT, "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
+        "USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, ripple::lsfLowNoRipple);
 
     std::vector<Blob> bbs;
+    bbs.reserve(NoRippleCheckHandler::LIMIT_MAX + 1);
     for (auto i = 0; i < NoRippleCheckHandler::LIMIT_MAX + 1; i++)
     {
         bbs.push_back(line1.getSerializer().peekData());

@@ -20,7 +20,7 @@
 #include <data/cassandra/impl/SslContext.h>
 
 namespace {
-static constexpr auto contextDeleter = [](CassSsl* ptr) { cass_ssl_free(ptr); };
+constexpr auto contextDeleter = [](CassSsl* ptr) { cass_ssl_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::detail {

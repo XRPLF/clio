@@ -131,15 +131,14 @@ public:
     {
         while (true)
         {
-            if (auto res = handle_.get().execute(statement); res)
+            auto res = handle_.get().execute(statement);
+            if (res)
             {
                 return res;
             }
-            else
-            {
-                LOG(log_.warn()) << "Cassandra sync write error, retrying: " << res.error();
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            }
+
+            LOG(log_.warn()) << "Cassandra sync write error, retrying: " << res.error();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 
@@ -235,21 +234,15 @@ public:
         while (true)
         {
             numReadRequestsOutstanding_ += numStatements;
-            // TODO: see if we can avoid using shared_ptr for self here
+
             auto init = [this, &statements, &future]<typename Self>(Self& self) {
-                future.emplace(handle_.get().asyncExecute(
-                    statements, [sself = std::make_shared<Self>(std::move(self))](auto&& res) mutable {
-                        // Note: explicit work below needed on linux/gcc11
-                        auto executor = boost::asio::get_associated_executor(*sself);
-                        boost::asio::post(
-                            executor,
-                            [sself = std::move(sself),
-                             res = std::move(res),
-                             _ = boost::asio::make_work_guard(executor)]() mutable {
-                                sself->complete(std::move(res));
-                                sself.reset();
-                            });
-                    }));
+                auto sself = std::make_shared<Self>(std::move(self));
+
+                future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
+                    boost::asio::post(
+                        boost::asio::get_associated_executor(*sself),
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
+                }));
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
@@ -260,11 +253,9 @@ public:
             {
                 return res;
             }
-            else
-            {
-                LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
-                throwErrorIfNeeded(res.error());
-            }
+
+            LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
+            throwErrorIfNeeded(res.error());
         }
     }
 
@@ -287,33 +278,25 @@ public:
         while (true)
         {
             ++numReadRequestsOutstanding_;
-            // TODO: see if we can avoid using shared_ptr for self here
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
-                future.emplace(handle_.get().asyncExecute(
-                    statement, [sself = std::make_shared<Self>(std::move(self))](auto&&) mutable {
-                        // Note: explicit work below needed on linux/gcc11
-                        auto executor = boost::asio::get_associated_executor(*sself);
-                        boost::asio::post(
-                            executor, [sself = std::move(sself), _ = boost::asio::make_work_guard(executor)]() mutable {
-                                sself->complete();
-                                sself.reset();
-                            });
-                    }));
+                auto sself = std::make_shared<Self>(std::move(self));
+
+                future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
+                    boost::asio::post(
+                        boost::asio::get_associated_executor(*sself),
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
+                }));
             };
 
-            boost::asio::async_compose<CompletionTokenType, void()>(
+            auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
                 init, token, boost::asio::get_associated_executor(token));
             --numReadRequestsOutstanding_;
 
-            if (auto res = future->get(); res)
-            {
+            if (res)
                 return res;
-            }
-            else
-            {
-                LOG(log_.error()) << "Failed read in coroutine: " << res.error();
-                throwErrorIfNeeded(res.error());
-            }
+
+            LOG(log_.error()) << "Failed read in coroutine: " << res.error();
+            throwErrorIfNeeded(res.error());
         }
     }
 
@@ -339,21 +322,16 @@ public:
         futures.reserve(numOutstanding);
 
         auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
-            auto sself = std::make_shared<Self>(std::move(self));  // TODO: see if we can avoid this
-            auto executionHandler = [&hadError, &numOutstanding, sself = std::move(sself)](auto const& res) mutable {
+            auto sself = std::make_shared<Self>(std::move(self));
+            auto executionHandler = [&hadError, &numOutstanding, sself](auto const& res) mutable {
                 if (not res)
                     hadError = true;
 
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
                 {
-                    // Note: explicit work below needed on linux/gcc11
-                    auto executor = boost::asio::get_associated_executor(*sself);
                     boost::asio::post(
-                        executor, [sself = std::move(sself), _ = boost::asio::make_work_guard(executor)]() mutable {
-                            sself->complete();
-                            sself.reset();
-                        });
+                        boost::asio::get_associated_executor(*sself), [sself]() mutable { sself->complete(); });
                 }
             };
 
@@ -417,18 +395,18 @@ private:
             assert(false);
             throw std::runtime_error("decrementing num outstanding below 0");
         }
-        size_t cur = (--numWriteRequestsOutstanding_);
+        size_t const cur = (--numWriteRequestsOutstanding_);
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
-            std::lock_guard lck(throttleMutex_);
+            std::lock_guard const lck(throttleMutex_);
             throttleCv_.notify_one();
         }
         if (cur == 0)
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
-            std::lock_guard lck(syncMutex_);
+            std::lock_guard const lck(syncMutex_);
             syncCv_.notify_one();
         }
     }

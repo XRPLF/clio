@@ -227,14 +227,16 @@ private:
 
         if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
             return TagDecoratorFactory::Type::UINT;
-        else if (boost::iequals(style, "null") || boost::iequals(style, "none"))
+
+        if (boost::iequals(style, "null") || boost::iequals(style, "none"))
             return TagDecoratorFactory::Type::NONE;
-        else if (boost::iequals(style, "uuid"))
+
+        if (boost::iequals(style, "uuid"))
             return TagDecoratorFactory::Type::UUID;
-        else
-            throw std::runtime_error(
-                "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
-                "`null`");
+
+        throw std::runtime_error(
+            "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
+            "`null`");
     }
 };
 

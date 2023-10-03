@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace {
-static constexpr auto futureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };
+constexpr auto futureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::detail {
@@ -40,8 +40,8 @@ Future::await() const
     if (auto const rc = cass_future_error_code(*this); rc)
     {
         auto errMsg = [this](std::string const& label) {
-            char const* message;
-            std::size_t len;
+            char const* message = nullptr;
+            std::size_t len = 0;
             cass_future_error_message(*this, &message, &len);
             return label + ": " + std::string{message, len};
         }(cass_error_desc(rc));
@@ -56,37 +56,38 @@ Future::get() const
     if (auto const rc = cass_future_error_code(*this); rc)
     {
         auto const errMsg = [this](std::string const& label) {
-            char const* message;
-            std::size_t len;
+            char const* message = nullptr;
+            std::size_t len = 0;
             cass_future_error_message(*this, &message, &len);
             return label + ": " + std::string{message, len};
         }("future::get()");
         return Error{CassandraError{errMsg, rc}};
     }
-    else
-    {
-        return Result{cass_future_get_result(*this)};
-    }
+
+    return Result{cass_future_get_result(*this)};
 }
 
 void
 invokeHelper(CassFuture* ptr, void* cbPtr)
 {
     // Note: can't use Future{ptr}.get() because double free will occur :/
+    // Note2: we are moving/copying it locally as a workaround for an issue we are seeing from asio recently.
+    // stackoverflow.com/questions/77004137/boost-asio-async-compose-gets-stuck-under-load
     auto* cb = static_cast<FutureWithCallback::FnType*>(cbPtr);
+    auto local = std::make_unique<FutureWithCallback::FnType>(std::move(*cb));
     if (auto const rc = cass_future_error_code(ptr); rc)
     {
         auto const errMsg = [&ptr](std::string const& label) {
-            char const* message;
-            std::size_t len;
+            char const* message = nullptr;
+            std::size_t len = 0;
             cass_future_error_message(ptr, &message, &len);
             return label + ": " + std::string{message, len};
         }("invokeHelper");
-        (*cb)(Error{CassandraError{errMsg, rc}});
+        (*local)(Error{CassandraError{errMsg, rc}});
     }
     else
     {
-        (*cb)(Result{cass_future_get_result(ptr)});
+        (*local)(Result{cass_future_get_result(ptr)});
     }
 }
 

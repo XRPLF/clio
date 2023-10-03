@@ -54,9 +54,9 @@ public:
     {
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::optional<std::string> marker;
-        uint32_t limit;
+        uint32_t limit{};
         std::vector<ripple::SLE> accountObjects;
         bool validated = true;
     };
@@ -79,8 +79,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},

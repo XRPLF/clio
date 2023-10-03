@@ -24,7 +24,7 @@ namespace data {
 uint32_t
 LedgerCache::latestLedgerSequence() const
 {
-    std::shared_lock lck{mtx_};
+    std::shared_lock const lck{mtx_};
     return latestSeq_;
 }
 
@@ -35,7 +35,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
         return;
 
     {
-        std::scoped_lock lck{mtx_};
+        std::scoped_lock const lck{mtx_};
         if (seq > latestSeq_)
         {
             assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
@@ -43,9 +43,9 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
         }
         for (auto const& obj : objs)
         {
-            if (obj.blob.size())
+            if (!obj.blob.empty())
             {
-                if (isBackground && deletes_.count(obj.key))
+                if (isBackground && deletes_.contains(obj.key))
                     continue;
 
                 auto& e = map_[obj.key];
@@ -69,7 +69,7 @@ LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
     if (!full_)
         return {};
-    std::shared_lock lck{mtx_};
+    std::shared_lock const lck{mtx_};
     successorReqCounter_++;
     if (seq != latestSeq_)
         return {};
@@ -85,7 +85,7 @@ LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 {
     if (!full_)
         return {};
-    std::shared_lock lck{mtx_};
+    std::shared_lock const lck{mtx_};
     if (seq != latestSeq_)
         return {};
     auto e = map_.lower_bound(key);
@@ -98,7 +98,7 @@ LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<Blob>
 LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
-    std::shared_lock lck{mtx_};
+    std::shared_lock const lck{mtx_};
     if (seq > latestSeq_)
         return {};
     objectReqCounter_++;
@@ -124,7 +124,7 @@ LedgerCache::setFull()
         return;
 
     full_ = true;
-    std::scoped_lock lck{mtx_};
+    std::scoped_lock const lck{mtx_};
     deletes_.clear();
 }
 
@@ -137,24 +137,24 @@ LedgerCache::isFull() const
 size_t
 LedgerCache::size() const
 {
-    std::shared_lock lck{mtx_};
+    std::shared_lock const lck{mtx_};
     return map_.size();
 }
 
 float
 LedgerCache::getObjectHitRate() const
 {
-    if (!objectReqCounter_)
+    if (objectReqCounter_ == 0u)
         return 1;
-    return ((float)objectHitCounter_) / objectReqCounter_;
+    return static_cast<float>(objectHitCounter_) / objectReqCounter_;
 }
 
 float
 LedgerCache::getSuccessorHitRate() const
 {
-    if (!successorReqCounter_)
+    if (successorReqCounter_ == 0u)
         return 1;
-    return ((float)successorHitCounter_) / successorReqCounter_;
+    return static_cast<float>(successorHitCounter_) / successorReqCounter_;
 }
 
 }  // namespace data

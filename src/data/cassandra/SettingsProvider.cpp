@@ -20,6 +20,7 @@
 #include <data/cassandra/SettingsProvider.h>
 #include <data/cassandra/impl/Cluster.h>
 #include <data/cassandra/impl/Statement.h>
+#include <util/Constants.h>
 #include <util/config/Config.h>
 
 #include <boost/json.hpp>
@@ -35,11 +36,13 @@ inline Settings::ContactPoints
 tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::value const& value)
 {
     if (not value.is_object())
+    {
         throw std::runtime_error(
             "Feed entire Cassandra section to parse "
             "Settings::ContactPoints instead");
+    }
 
-    util::Config obj{value};
+    util::Config const obj{value};
     Settings::ContactPoints out;
 
     out.contactPoints = obj.valueOrThrow<std::string>("contact_points", "`contact_points` must be a string");
@@ -116,30 +119,18 @@ SettingsProvider::parseSettings() const
         config_.valueOr<uint32_t>("max_write_requests_outstanding", settings.maxWriteRequestsOutstanding);
     settings.maxReadRequestsOutstanding =
         config_.valueOr<uint32_t>("max_read_requests_outstanding", settings.maxReadRequestsOutstanding);
-    settings.maxConnectionsPerHost =
-        config_.valueOr<uint32_t>("max_connections_per_host", settings.maxConnectionsPerHost);
     settings.coreConnectionsPerHost =
         config_.valueOr<uint32_t>("core_connections_per_host", settings.coreConnectionsPerHost);
-    settings.maxConcurrentRequestsThreshold = config_.valueOr<uint32_t>(
-        "max_concurrent_requests_threshold",
-        (settings.maxReadRequestsOutstanding + settings.maxWriteRequestsOutstanding) / settings.coreConnectionsPerHost);
 
     settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
-    settings.queueSizeEvent = config_.maybeValue<uint32_t>("queue_size_event");
-    settings.writeBytesHighWatermark = config_.maybeValue<uint32_t>("write_bytes_high_water_mark");
-    settings.writeBytesLowWatermark = config_.maybeValue<uint32_t>("write_bytes_low_water_mark");
-    settings.pendingRequestsHighWatermark = config_.maybeValue<uint32_t>("pending_requests_high_water_mark");
-    settings.pendingRequestsLowWatermark = config_.maybeValue<uint32_t>("pending_requests_low_water_mark");
-    settings.maxRequestsPerFlush = config_.maybeValue<uint32_t>("max_requests_per_flush");
-    settings.maxConcurrentCreation = config_.maybeValue<uint32_t>("max_concurrent_creation");
 
     auto const connectTimeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
     if (connectTimeoutSecond)
-        settings.connectionTimeout = std::chrono::milliseconds{*connectTimeoutSecond * 1000};
+        settings.connectionTimeout = std::chrono::milliseconds{*connectTimeoutSecond * util::MILLISECONDS_PER_SECOND};
 
     auto const requestTimeoutSecond = config_.maybeValue<uint32_t>("request_timeout");
     if (requestTimeoutSecond)
-        settings.requestTimeout = std::chrono::milliseconds{*requestTimeoutSecond * 1000};
+        settings.requestTimeout = std::chrono::milliseconds{*requestTimeoutSecond * util::MILLISECONDS_PER_SECOND};
 
     settings.certificate = parseOptionalCertificate();
     settings.username = config_.maybeValue<std::string>("username");

@@ -21,6 +21,7 @@
 
 namespace rpc {
 
+// found here : https://xrpl.org/ledger_entry.html#:~:text=valid%20fields%20are%3A-,index,-account_root
 std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPESMAP{
     {"state", ripple::ltRIPPLE_STATE},
     {"ticket", ripple::ltTICKET},
@@ -148,9 +149,13 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(type)))

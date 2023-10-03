@@ -27,7 +27,7 @@
 
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 namespace rpc {
 template <typename SubscriptionManagerType>
@@ -96,12 +96,14 @@ public:
                         return Error{Status{RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
 
                     if (book.as_object().contains("taker"))
-                        if (auto const err = meta::WithCustomError(
-                                                 validation::AccountValidator,
-                                                 Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
-                                                 .verify(book.as_object(), "taker");
+                    {
+                        if (auto err = meta::WithCustomError(
+                                           validation::AccountValidator,
+                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
+                                           .verify(book.as_object(), "taker");
                             !err)
                             return err;
+                    }
 
                     auto const parsedBook = parseBook(book.as_object());
                     if (auto const status = std::get_if<Status>(&parsedBook))
@@ -159,17 +161,29 @@ private:
         for (auto const& stream : streams)
         {
             if (stream == "ledger")
+            {
                 response = subscriptions_->subLedger(yield, session);
+            }
             else if (stream == "transactions")
+            {
                 subscriptions_->subTransactions(session);
+            }
             else if (stream == "transactions_proposed")
+            {
                 subscriptions_->subProposedTransactions(session);
+            }
             else if (stream == "validations")
+            {
                 subscriptions_->subValidation(session);
+            }
             else if (stream == "manifests")
+            {
                 subscriptions_->subManifest(session);
+            }
             else if (stream == "book_changes")
+            {
                 subscriptions_->subBookChanges(session);
+            }
         }
 
         return response;

@@ -68,9 +68,7 @@ protected:
             boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
         });
 
-        namespace src = boost::log::sources;
         namespace keywords = boost::log::keywords;
-        namespace sinks = boost::log::sinks;
         namespace expr = boost::log::expressions;
         auto core = boost::log::core::get();
 
@@ -126,7 +124,7 @@ struct AsyncAsioContextTest : virtual public NoLoggerFixture
         runner.emplace([&] { ctx.run(); });
     }
 
-    ~AsyncAsioContextTest()
+    ~AsyncAsioContextTest() override
     {
         work.reset();
         if (runner->joinable())
@@ -160,10 +158,6 @@ private:
  */
 struct SyncAsioContextTest : virtual public NoLoggerFixture
 {
-    SyncAsioContextTest()
-    {
-    }
-
     template <typename F>
     void
     runSpawn(F&& f)

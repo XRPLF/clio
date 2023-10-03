@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/JsonBool.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
@@ -39,6 +40,9 @@ class AccountTxHandler
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
+    static std::unordered_map<std::string, ripple::TxType> const TYPESMAP;
+    static const std::unordered_set<std::string> TYPES_KEYS;
+
 public:
     // no max limit
     static auto constexpr LIMIT_MIN = 1;
@@ -53,8 +57,8 @@ public:
     struct Output
     {
         std::string account;
-        uint32_t ledgerIndexMin;
-        uint32_t ledgerIndexMax;
+        uint32_t ledgerIndexMin{0};
+        uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         // TODO: use a better type than json
@@ -73,10 +77,11 @@ public:
         std::optional<int32_t> ledgerIndexMin;
         std::optional<int32_t> ledgerIndexMax;
         bool usingValidatedLedger = false;
-        bool binary = false;
-        bool forward = false;
+        JsonBool binary{false};
+        JsonBool forward{false};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
+        std::optional<ripple::TxType> transactionType;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -85,17 +90,15 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const rpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
             {JS(ledger_index_max), validation::Type<int32_t>{}},
-            {JS(binary), validation::Type<bool>{}},
-            {JS(forward), validation::Type<bool>{}},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
@@ -109,9 +112,22 @@ public:
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
              }},
+            {
+                "tx_type",
+                validation::Type<std::string>{},
+                modifiers::ToLower{},
+                validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+            },
         };
 
-        return rpcSpec;
+        static auto const rpcSpec = RpcSpec{
+            rpcSpecForV1,
+            {
+                {JS(binary), validation::Type<bool>{}},
+                {JS(forward), validation::Type<bool>{}},
+            }};
+
+        return apiVersion == 1 ? rpcSpecForV1 : rpcSpec;
     }
 
     Result

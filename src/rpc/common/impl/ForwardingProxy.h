@@ -56,10 +56,6 @@ public:
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
 
-        // TODO: if needed, make configurable with json config option
-        if (ctx.apiVersion == 1)
-            return true;
-
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 
@@ -84,10 +80,7 @@ public:
                   request.at("accounts").as_bool()));
         };
 
-        if (checkAccountInfoForward() or checkLedgerForward())
-            return true;
-
-        return false;
+        return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());
     }
 
     Result
@@ -96,16 +89,15 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        if (auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield); not res)
+        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        if (not res)
         {
             notifyFailedToForward(ctx.method);
             return Status{RippledError::rpcFAILED_TO_FORWARD};
         }
-        else
-        {
-            notifyForwarded(ctx.method);
-            return *res;
-        }
+
+        notifyForwarded(ctx.method);
+        return *res;
     }
 
     bool

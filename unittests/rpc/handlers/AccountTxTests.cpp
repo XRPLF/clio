@@ -45,8 +45,9 @@ struct AccountTxParamTestCaseBundle
 {
     std::string testName;
     std::string testJson;
-    std::string expectedError;
-    std::string expectedErrorMessage;
+    std::optional<std::string> expectedError;
+    std::optional<std::string> expectedErrorMessage;
+    std::uint32_t apiVersion = 2;
 };
 
 // parameterized test cases for parameters check
@@ -58,91 +59,102 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParam
         std::string
         operator()(const testing::TestParamInfo<ParamType>& info) const
         {
-            auto bundle = static_cast<AccountTxParamTestCaseBundle>(info.param);
-            return bundle.testName;
+            return info.param.testName;
         }
     };
-};
 
-static auto
-generateTestValuesForParametersTest()
-{
-    return std::vector<AccountTxParamTestCaseBundle>{
-        AccountTxParamTestCaseBundle{"MissingAccount", R"({})", "invalidParams", "Required field 'account' missing"},
-        AccountTxParamTestCaseBundle{
-            "BinaryNotBool",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "ForwardNotBool",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "ledger_index_minNotInt",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_min": "x"})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "ledger_index_maxNotInt",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_max": "x"})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "ledger_indexInvalid",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
-            "invalidParams",
-            "ledgerIndexMalformed"},
-        AccountTxParamTestCaseBundle{
-            "ledger_hashInvalid",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
-            "invalidParams",
-            "ledger_hashMalformed"},
-        AccountTxParamTestCaseBundle{
-            "ledger_hashNotString",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
-            "invalidParams",
-            "ledger_hashNotString"},
-        AccountTxParamTestCaseBundle{
-            "limitNotInt",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "123"})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "limitNegative",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "limitZero",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "MarkerNotObject",
-            R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})",
-            "invalidParams",
-            "invalidMarker"},
-        AccountTxParamTestCaseBundle{
-            "MarkerMissingSeq",
-            R"({
+    static auto
+    generateTestValuesForParametersTest()
+    {
+        return std::vector<AccountTxParamTestCaseBundle>{
+            AccountTxParamTestCaseBundle{
+                "MissingAccount", R"({})", "invalidParams", "Required field 'account' missing"},
+            AccountTxParamTestCaseBundle{
+                "BinaryNotBool",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "BinaryNotBool_API_v1",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "ForwardNotBool",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "ForwardNotBool_API_v1",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "ledger_index_minNotInt",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_min": "x"})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "ledger_index_maxNotInt",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_max": "x"})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "ledger_indexInvalid",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
+                "invalidParams",
+                "ledgerIndexMalformed"},
+            AccountTxParamTestCaseBundle{
+                "ledger_hashInvalid",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
+                "invalidParams",
+                "ledger_hashMalformed"},
+            AccountTxParamTestCaseBundle{
+                "ledger_hashNotString",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
+                "invalidParams",
+                "ledger_hashNotString"},
+            AccountTxParamTestCaseBundle{
+                "limitNotInt",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "123"})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "limitNegative",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "limitZero",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "MarkerNotObject",
+                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})",
+                "invalidParams",
+                "invalidMarker"},
+            AccountTxParamTestCaseBundle{
+                "MarkerMissingSeq",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker": {"ledger": 123}
             })",
-            "invalidParams",
-            "Required field 'seq' missing"},
-        AccountTxParamTestCaseBundle{
-            "MarkerMissingLedger",
-            R"({
+                "invalidParams",
+                "Required field 'seq' missing"},
+            AccountTxParamTestCaseBundle{
+                "MarkerMissingLedger",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker":{"seq": 123}
             })",
-            "invalidParams",
-            "Required field 'ledger' missing"},
-        AccountTxParamTestCaseBundle{
-            "MarkerLedgerNotInt",
-            R"({
+                "invalidParams",
+                "Required field 'ledger' missing"},
+            AccountTxParamTestCaseBundle{
+                "MarkerLedgerNotInt",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker": 
                 {
@@ -150,11 +162,11 @@ generateTestValuesForParametersTest()
                     "ledger": 1
                 }
             })",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "MarkerSeqNotInt",
-            R"({
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "MarkerSeqNotInt",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker": 
                 {
@@ -162,77 +174,221 @@ generateTestValuesForParametersTest()
                     "seq": 1
                 }
             })",
-            "invalidParams",
-            "Invalid parameters."},
-        AccountTxParamTestCaseBundle{
-            "LedgerIndexMinLessThanMinSeq",
-            R"({
+                "invalidParams",
+                "Invalid parameters."},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinLessThanMinSeq",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_min": 9
             })",
-            "lgrIdxMalformed",
-            "ledgerSeqMinOutOfRange"},
-        AccountTxParamTestCaseBundle{
-            "LedgerIndexMaxLargeThanMaxSeq",
-            R"({
+                "lgrIdxMalformed",
+                "ledgerSeqMinOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxLargeThanMaxSeq",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 31
             })",
-            "lgrIdxMalformed",
-            "ledgerSeqMaxOutOfRange"},
-        AccountTxParamTestCaseBundle{
-            "LedgerIndexMaxLessThanLedgerIndexMin",
-            R"({
+                "lgrIdxMalformed",
+                "ledgerSeqMaxOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxLargeThanMaxSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 31
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxSmallerThanMinSeq",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 9
+            })",
+                "lgrIdxMalformed",
+                "ledgerSeqMaxOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxSmallerThanMinSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 9
+            })",
+                "lgrIdxsInvalid",
+                "Ledger indexes invalid.",
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinSmallerThanMinSeq",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 9
+            })",
+                "lgrIdxMalformed",
+                "ledgerSeqMinOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinSmallerThanMinSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 9
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinLargerThanMaxSeq",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 31
+            })",
+                "lgrIdxMalformed",
+                "ledgerSeqMinOutOfRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMinLargerThanMaxSeq_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_min": 31
+            })",
+                "lgrIdxsInvalid",
+                "Ledger indexes invalid.",
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxLessThanLedgerIndexMin",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 11,
                 "ledger_index_min": 20
             })",
-            "invalidLgrRange",
-            "Ledger range is invalid."},
-        AccountTxParamTestCaseBundle{
-            "LedgerIndexMaxMinAndLedgerIndex",
-            R"({
+                "invalidLgrRange",
+                "Ledger range is invalid."},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxLessThanLedgerIndexMin_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 11,
+                "ledger_index_min": 20
+            })",
+                "lgrIdxsInvalid",
+                "Ledger indexes invalid.",
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerIndex",
+                R"({
                 "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10
             })",
-            "invalidParams",
-            "containsLedgerSpecifierAndRange"},
-        AccountTxParamTestCaseBundle{
-            "LedgerIndexMaxMinAndLedgerIndexValidated",
-            R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "invalidParams",
+                "containsLedgerSpecifierAndRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerIndexValidated",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": "validated"
             })",
-            "invalidParams",
-            "containsLedgerSpecifierAndRange"},
+                "invalidParams",
+                "containsLedgerSpecifierAndRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerIndex_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_index": 10
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerHash",
+                fmt::format(
+                    R"({{
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_hash": "{}"
+            }})",
+                    LEDGERHASH),
+                "invalidParams",
+                "containsLedgerSpecifierAndRange"},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerHash_API_v1",
+                fmt::format(
+                    R"({{
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_hash": "{}"
+            }})",
+                    LEDGERHASH),
+                std::nullopt,
+                std::nullopt,
+                1u},
+            AccountTxParamTestCaseBundle{
+                "LedgerIndexMaxMinAndLedgerIndexValidated_API_v1",
+                R"({
+                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index_max": 20,
+                "ledger_index_min": 11,
+                "ledger_index": "validated"
+            })",
+                std::nullopt,
+                std::nullopt,
+                1u},
+        };
     };
-}
+};
 
 INSTANTIATE_TEST_CASE_P(
     RPCAccountTxGroup1,
     AccountTxParameterTest,
-    ValuesIn(generateTestValuesForParametersTest()),
+    ValuesIn(AccountTxParameterTest::generateTestValuesForParametersTest()),
     AccountTxParameterTest::NameGenerator{});
 
-TEST_P(AccountTxParameterTest, InvalidParams)
+TEST_P(AccountTxParameterTest, CheckParams)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
-        auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{yield});
-        ASSERT_FALSE(output);
+    auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    std::cout << "Before parse" << std::endl;
+    auto const req = json::parse(testBundle.testJson);
+    std::cout << "After parse" << std::endl;
+    if (testBundle.expectedError.has_value())
+    {
+        ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
-        auto const err = rpc::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
-        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
-    });
+        runSpawn([&, this](auto yield) {
+            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
+            ASSERT_FALSE(output);
+            auto const err = rpc::makeError(output.error());
+            EXPECT_EQ(err.at("error").as_string(), *testBundle.expectedError);
+            EXPECT_EQ(err.at("error_message").as_string(), *testBundle.expectedErrorMessage);
+        });
+    }
+    else
+    {
+        if (req.as_object().contains("ledger_hash"))
+        {
+            EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).WillOnce(testing::Return(ripple::LedgerHeader{}));
+        }
+        else if (req.as_object().contains("ledger_index"))
+        {
+            EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(testing::Return(ripple::LedgerHeader{}));
+        }
+        EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
+
+        runSpawn([&, this](auto yield) {
+            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
+            EXPECT_TRUE(output);
+        });
+    }
 }
 
 namespace {
@@ -242,19 +398,19 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    ripple::STObject metaObj = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
+    ripple::STObject const metaObj = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
 
     auto trans2 = TransactionAndMetadata();
-    ripple::STObject obj2 = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj2 = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    ripple::STObject metaObj2 = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
+    ripple::STObject const metaObj2 = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -293,7 +449,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -311,7 +468,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
@@ -324,7 +481,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -334,7 +491,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -352,7 +510,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -365,7 +523,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -375,7 +533,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -393,7 +552,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
@@ -406,7 +565,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -416,7 +575,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -434,7 +594,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -447,7 +607,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
@@ -457,7 +617,8 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -475,7 +636,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "binary": true
@@ -488,7 +649,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
             output->at("transactions").as_array()[0].as_object().at("meta").as_string(),
@@ -510,7 +671,8 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -524,7 +686,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "limit": 2,
@@ -540,7 +702,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
         EXPECT_EQ(output->at("limit").as_uint64(), 2);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
         EXPECT_EQ(output->at("transactions").as_array().size(), 2);
     });
 }
@@ -549,7 +711,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -572,8 +735,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":{}
+                "account": "{}",
+                "ledger_index": {}
             }})",
             ACCOUNT,
             MAXSEQ - 1));
@@ -592,7 +755,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
@@ -601,8 +765,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":{}
+                "account": "{}",
+                "ledger_index": {}
             }})",
             ACCOUNT,
             MAXSEQ - 1));
@@ -618,7 +782,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
@@ -627,8 +792,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":"{}"
+                "account": "{}",
+                "ledger_index": "{}"
             }})",
             ACCOUNT,
             MAXSEQ - 1));
@@ -644,7 +809,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -667,8 +833,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_hash":"{}"
+                "account": "{}",
+                "ledger_hash": "{}"
             }})",
             ACCOUNT,
             LEDGERHASH));
@@ -687,7 +853,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
@@ -710,8 +877,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
-                "ledger_index":"validated"
+                "account": "{}",
+                "ledger_index": "validated"
             }})",
             ACCOUNT));
         auto const output = handler.process(input, Context{yield});
@@ -729,7 +896,8 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -747,7 +915,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -770,7 +938,8 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -788,7 +957,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
-                "account":"{}",
+                "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
@@ -803,7 +972,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 2);
         EXPECT_EQ(output->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
     });
 }
 
@@ -909,8 +1078,8 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
                                         "date": 2
                                     },
                                     "validated": true
-                                    },
-                                    {
+                                },
+                                {
                                     "meta": 
                                     {
                                         "AffectedNodes": 
@@ -1003,7 +1172,8 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
                         })";
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const transactions = genNFTTransactions(MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
@@ -1029,5 +1199,312 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
+struct AccountTxTransactionBundle
+{
+    std::string testName;
+    std::string testJson;
+    std::string result;
+};
+
+// parameterized test cases for parameters check
+struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
+                                      public WithParamInterface<AccountTxTransactionBundle>
+{
+    struct NameGenerator
+    {
+        template <class ParamType>
+        std::string
+        operator()(const testing::TestParamInfo<ParamType>& info) const
+        {
+            auto bundle = static_cast<AccountTxTransactionBundle>(info.param);
+            return bundle.testName;
+        }
+    };
+};
+
+static auto
+generateTransactionTypeTestValues()
+{
+    return std::vector<AccountTxTransactionBundle>{
+        AccountTxTransactionBundle{
+            "AccountSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "AccountSet"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AccountDelete",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "AccountDelete"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "CheckCancel",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "CheckCancel"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "CheckCash",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "CheckCash"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "CheckCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "CheckCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "Clawback",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "Clawback"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "DepositPreauth",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "DepositPreauth"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "EscrowCancel",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "EscrowCancel"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "EscrowCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "EscrowCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "EscrowFinish",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "EscrowFinish"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenAcceptOffer",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "NFTokenAcceptOffer"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenBurn",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "NFTokenBurn"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenCancelOffer",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "NFTokenCancelOffer"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenCreateOffer",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "NFTokenCreateOffer"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "NFTokenMint",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "NFTokenMint"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "OfferCancel",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "OfferCancel"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "OfferCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "OfferCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "Payment",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "Payment"
+            })",
+            R"([
+                {
+                "meta": {
+                    "AffectedNodes": [
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "Balance": "22"
+                            },
+                            "LedgerEntryType": "AccountRoot"
+                        }
+                    },
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                "Balance": "23"
+                            },
+                            "LedgerEntryType": "AccountRoot"
+                        }
+                    }],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "delivered_amount": "unavailable"
+                },
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Amount": "1",
+                    "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "Fee": "1",
+                    "Sequence": 32,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "Payment",
+                    "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                    "ledger_index": 30,
+                    "date": 1
+                },
+                "validated": true
+                }
+            ])"},
+        AccountTxTransactionBundle{
+            "PaymentChannelClaim",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "PaymentChannelClaim"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "PaymentChannelCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "PaymentChannelCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "PaymentChannelFund",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "PaymentChannelFund"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "SetRegularKey",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "SetRegularKey"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "SignerListSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "SignerListSet"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "TicketCreate",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "TicketCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "TrustSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "TrustSet"
+            })",
+            "[]"},
+    };
+}
+
+INSTANTIATE_TEST_CASE_P(
+    RPCAccountTxTransactionTypeTest,
+    AccountTxTransactionTypeTest,
+    ValuesIn(generateTransactionTypeTestValues()),
+    AccountTxTransactionTypeTest::NameGenerator{});
+
+TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
+    auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _))
+        .Times(1);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+
+    auto const testBundle = GetParam();
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const req = json::parse(testBundle.testJson);
+        auto const output = handler.process(req, Context{yield});
+        EXPECT_TRUE(output);
+
+        auto const transactions = output->at("transactions").as_array();
+        auto const jsonObject = json::parse(testBundle.result);
+        EXPECT_EQ(jsonObject, transactions);
     });
 }

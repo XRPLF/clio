@@ -43,8 +43,8 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
-    Result
-    process(Context const& ctx) const;
+    static Result
+    process(Context const& ctx);
 
 private:
     friend void

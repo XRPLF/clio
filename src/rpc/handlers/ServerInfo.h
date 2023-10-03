@@ -28,6 +28,7 @@
 #include <rpc/common/Validators.h>
 
 #include <ripple/basics/chrono.h>
+#include <ripple/protocol/BuildInfo.h>
 
 #include <chrono>
 #include <fmt/core.h>
@@ -38,10 +39,10 @@ class LoadBalancer;
 }  // namespace etl
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 namespace rpc {
 class Counters;
-}
+}  // namespace rpc
 
 namespace rpc {
 
@@ -87,6 +88,7 @@ public:
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::seconds uptime = {};
         std::string clioVersion = Build::getClioVersionString();
+        std::string xrplVersion = ripple::BuildInfo::getVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};
@@ -194,6 +196,7 @@ private:
             {JS(time), to_string(std::chrono::floor<std::chrono::microseconds>(info.time))},
             {JS(uptime), info.uptime.count()},
             {"clio_version", info.clioVersion},
+            {"libxrpl_version", info.xrplVersion},
             {JS(validated_ledger), value_from(info.validatedLedger)},
             {"cache", value_from(info.cache)},
         };

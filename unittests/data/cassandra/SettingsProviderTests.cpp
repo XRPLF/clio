@@ -42,8 +42,8 @@ class SettingsProviderTest : public NoLoggerFixture
 
 TEST_F(SettingsProviderTest, Defaults)
 {
-    Config cfg{json::parse(R"({"contact_points": "127.0.0.1"})")};
-    SettingsProvider provider{cfg};
+    Config const cfg{json::parse(R"({"contact_points": "127.0.0.1"})")};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, std::thread::hardware_concurrency());
@@ -53,20 +53,11 @@ TEST_F(SettingsProviderTest, Defaults)
     EXPECT_EQ(settings.requestTimeout, std::chrono::milliseconds{0});
     EXPECT_EQ(settings.maxWriteRequestsOutstanding, 10'000);
     EXPECT_EQ(settings.maxReadRequestsOutstanding, 100'000);
-    EXPECT_EQ(settings.maxConnectionsPerHost, 2);
-    EXPECT_EQ(settings.coreConnectionsPerHost, 2);
-    EXPECT_EQ(settings.maxConcurrentRequestsThreshold, (100'000 + 10'000) / 2);
+    EXPECT_EQ(settings.coreConnectionsPerHost, 1);
     EXPECT_EQ(settings.certificate, std::nullopt);
     EXPECT_EQ(settings.username, std::nullopt);
     EXPECT_EQ(settings.password, std::nullopt);
     EXPECT_EQ(settings.queueSizeIO, std::nullopt);
-    EXPECT_EQ(settings.queueSizeEvent, std::nullopt);
-    EXPECT_EQ(settings.writeBytesHighWatermark, std::nullopt);
-    EXPECT_EQ(settings.writeBytesLowWatermark, std::nullopt);
-    EXPECT_EQ(settings.pendingRequestsHighWatermark, std::nullopt);
-    EXPECT_EQ(settings.pendingRequestsLowWatermark, std::nullopt);
-    EXPECT_EQ(settings.maxRequestsPerFlush, std::nullopt);
-    EXPECT_EQ(settings.maxConcurrentCreation, std::nullopt);
 
     auto const* cp = std::get_if<Settings::ContactPoints>(&settings.connectionInfo);
     ASSERT_TRUE(cp != nullptr);
@@ -80,7 +71,7 @@ TEST_F(SettingsProviderTest, Defaults)
 
 TEST_F(SettingsProviderTest, SimpleConfig)
 {
-    Config cfg{json::parse(R"({
+    Config const cfg{json::parse(R"({
         "contact_points": "123.123.123.123",
         "port": 1234,
         "keyspace": "test",
@@ -88,7 +79,7 @@ TEST_F(SettingsProviderTest, SimpleConfig)
         "table_prefix": "prefix",
         "threads": 24
     })")};
-    SettingsProvider provider{cfg};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, 24);
@@ -103,75 +94,22 @@ TEST_F(SettingsProviderTest, SimpleConfig)
     EXPECT_EQ(provider.getTablePrefix(), "prefix");
 }
 
-TEST_F(SettingsProviderTest, DriverOptionCalculation)
-{
-    Config cfg{json::parse(R"({
-        "contact_points": "123.123.123.123",
-        "max_write_requests_outstanding": 100,
-        "max_read_requests_outstanding": 200
-    })")};
-    SettingsProvider provider{cfg};
-
-    auto const settings = provider.getSettings();
-    EXPECT_EQ(settings.maxReadRequestsOutstanding, 200);
-    EXPECT_EQ(settings.maxWriteRequestsOutstanding, 100);
-
-    EXPECT_EQ(settings.maxConnectionsPerHost, 2);
-    EXPECT_EQ(settings.coreConnectionsPerHost, 2);
-    EXPECT_EQ(settings.maxConcurrentRequestsThreshold, 150);  // calculated from above
-}
-
-TEST_F(SettingsProviderTest, DriverOptionSecifiedMaxConcurrentRequestsThreshold)
-{
-    Config cfg{json::parse(R"({
-        "contact_points": "123.123.123.123",
-        "max_write_requests_outstanding": 100,
-        "max_read_requests_outstanding": 200,
-        "max_connections_per_host": 5,
-        "core_connections_per_host": 4,
-        "max_concurrent_requests_threshold": 1234
-    })")};
-    SettingsProvider provider{cfg};
-
-    auto const settings = provider.getSettings();
-    EXPECT_EQ(settings.maxReadRequestsOutstanding, 200);
-    EXPECT_EQ(settings.maxWriteRequestsOutstanding, 100);
-
-    EXPECT_EQ(settings.maxConnectionsPerHost, 5);
-    EXPECT_EQ(settings.coreConnectionsPerHost, 4);
-    EXPECT_EQ(settings.maxConcurrentRequestsThreshold, 1234);
-}
-
 TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 {
-    Config cfg{json::parse(R"({
+    Config const cfg{json::parse(R"({
         "contact_points": "123.123.123.123",
-        "queue_size_event": 1,
-        "queue_size_io": 2,
-        "write_bytes_high_water_mark": 3,
-        "write_bytes_low_water_mark": 4,
-        "pending_requests_high_water_mark": 5,
-        "pending_requests_low_water_mark": 6,
-        "max_requests_per_flush": 7,
-        "max_concurrent_creation": 8
+        "queue_size_io": 2
     })")};
-    SettingsProvider provider{cfg};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
-    EXPECT_EQ(settings.queueSizeEvent, 1);
     EXPECT_EQ(settings.queueSizeIO, 2);
-    EXPECT_EQ(settings.writeBytesHighWatermark, 3);
-    EXPECT_EQ(settings.writeBytesLowWatermark, 4);
-    EXPECT_EQ(settings.pendingRequestsHighWatermark, 5);
-    EXPECT_EQ(settings.pendingRequestsLowWatermark, 6);
-    EXPECT_EQ(settings.maxRequestsPerFlush, 7);
-    EXPECT_EQ(settings.maxConcurrentCreation, 8);
 }
 
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
-    Config cfg{json::parse(R"({"secure_connect_bundle": "bundleData"})")};
-    SettingsProvider provider{cfg};
+    Config const cfg{json::parse(R"({"secure_connect_bundle": "bundleData"})")};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     auto const* sb = std::get_if<Settings::SecureConnectionBundle>(&settings.connectionInfo);
@@ -181,14 +119,14 @@ TEST_F(SettingsProviderTest, SecureBundleConfig)
 
 TEST_F(SettingsProviderTest, CertificateConfig)
 {
-    TmpFile file{"certificateData"};
-    Config cfg{json::parse(fmt::format(
+    TmpFile const file{"certificateData"};
+    Config const cfg{json::parse(fmt::format(
         R"({{
             "contact_points": "127.0.0.1",
             "certfile": "{}"
         }})",
         file.path))};
-    SettingsProvider provider{cfg};
+    SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.certificate, "certificateData");

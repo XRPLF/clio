@@ -82,6 +82,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     else
     {
         // Must specify 1 of the following fields to indicate what type
+        if (ctx.apiVersion == 1)
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
         return Error{Status{ClioError::rpcUNKNOWN_OPTION}};
     }
 
@@ -96,7 +98,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
-    if (!ledgerObject || ledgerObject->size() == 0)
+    if (!ledgerObject || ledgerObject->empty())
         return Error{Status{"entryNotFound"}};
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
@@ -110,15 +112,19 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
 
     if (input.binary)
+    {
         output.nodeBinary = ripple::strHex(*ledgerObject);
+    }
     else
+    {
         output.node = toJson(sle);
+    }
 
     return output;
 }
 
 std::variant<ripple::uint256, Status>
-LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) const noexcept
+LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) noexcept
 {
     // can not specify both dir_root and owner.
     if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
@@ -152,9 +158,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerEntryHandl
     };
 
     if (output.nodeBinary)
+    {
         object[JS(node_binary)] = *(output.nodeBinary);
+    }
     else
+    {
         object[JS(node)] = *(output.node);
+    }
 
     jv = std::move(object);
 }
@@ -171,9 +181,13 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(binary)))

@@ -346,7 +346,7 @@ TEST_F(RPCBaseTest, CustomValidator)
 {
     // clang-format off
     auto customFormatCheck = CustomValidator{
-        [](json::value const& value, std::string_view key) -> MaybeError {
+        [](json::value const& value, std::string_view /* key */) -> MaybeError {
             return value.as_string().size() == 34 ? 
                 MaybeError{} : Error{rpc::Status{"Uh oh"}};
         }
@@ -473,6 +473,15 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     passingInput = json::parse(R"({ "currency": "0158415500000000C1F76FF6ECB0BAC600000000"})");
     ASSERT_TRUE(spec.process(passingInput));
 
+    passingInput = json::parse(R"({ "currency": "0158415500000000c1f76ff6ecb0bac600000000"})");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    for (const auto& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"})
+    {
+        passingInput = json::parse(fmt::format(R"({{ "currency" : "{}" }})", currency));
+        ASSERT_TRUE(spec.process(passingInput));
+    }
+
     auto failingInput = json::parse(R"({ "currency": 256})");
     auto err = spec.process(failingInput);
     ASSERT_FALSE(err);
@@ -567,4 +576,26 @@ TEST_F(RPCBaseTest, ClampingModifier)
     auto passingInput3 = json::parse(R"({ "amount": 25 })");
     ASSERT_TRUE(spec.process(passingInput3));
     ASSERT_EQ(passingInput3.at("amount").as_uint64(), 20u);  // clamped
+}
+
+TEST_F(RPCBaseTest, ToLowerModifier)
+{
+    auto spec = RpcSpec{
+        {"str", ToLower{}},
+    };
+
+    auto passingInput = json::parse(R"({ "str": "TesT" })");
+    ASSERT_TRUE(spec.process(passingInput));
+    ASSERT_EQ(passingInput.at("str").as_string(), "test");
+
+    auto passingInput2 = json::parse(R"({ "str2": "TesT" })");
+    ASSERT_TRUE(spec.process(passingInput2));  // no str no problem
+
+    auto passingInput3 = json::parse(R"({ "str": "already lower case" })");
+    ASSERT_TRUE(spec.process(passingInput3));
+    ASSERT_EQ(passingInput3.at("str").as_string(), "already lower case");
+
+    auto passingInput4 = json::parse(R"({ "str": "" })");
+    ASSERT_TRUE(spec.process(passingInput4));  // empty str no problem
+    ASSERT_EQ(passingInput4.at("str").as_string(), "");
 }

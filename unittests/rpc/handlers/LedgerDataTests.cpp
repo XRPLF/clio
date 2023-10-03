@@ -119,7 +119,8 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
 
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -143,7 +144,8 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -167,7 +169,8 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -191,7 +194,8 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 
 TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -234,7 +238,8 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
       "closed":true
    })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -250,14 +255,13 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(limitLine + limitTicket);
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limitLine--)
+    while ((limitLine--) != 0)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
-    while (limitTicket--)
+    while ((limitTicket--) != 0)
     {
         auto const ticket = CreateTicketLedgerObject(ACCOUNT, limitTicket);
         bbs.push_back(ticket.getSerializer().peekData());
@@ -298,7 +302,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
       "closed":true
    })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -313,14 +318,13 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(limitLine + limitTicket);
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limitLine--)
+    while ((limitLine--) != 0)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
-    while (limitTicket--)
+    while ((limitTicket--) != 0)
     {
         auto const ticket = CreateTicketLedgerObject(ACCOUNT, limitTicket);
         bbs.push_back(ticket.getSerializer().peekData());
@@ -365,7 +369,8 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
       "closed":true
    })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -381,8 +386,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(ripple::uint256{INDEX2}, RANGEMAX, _))
         .WillByDefault(Return(std::nullopt));
 
-    auto const line =
-        CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
     bbs.push_back(line.getSerializer().peekData());
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -405,7 +409,8 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 
 TEST_F(RPCLedgerDataHandlerTest, Marker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -416,7 +421,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillByDefault(
-            Return(CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123)
+            Return(CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123)
                        .getSerializer()
                        .peekData()));
 
@@ -428,10 +433,9 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(ripple::uint256{INDEX2}, RANGEMAX, _))
         .WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limit--)
+    while ((limit--) != 0)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -458,7 +462,8 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
 
 TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -472,10 +477,9 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff).Times(1);
 
-    while (limit--)
+    while ((limit--) != 0)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
         los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
     }
@@ -505,7 +509,8 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 
 TEST_F(RPCLedgerDataHandlerTest, Binary)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -519,10 +524,9 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(limit);
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limit--)
+    while ((limit--) != 0)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -549,7 +553,8 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
 
 TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -563,10 +568,9 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(LedgerDataHandler::LIMITBINARY);
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limit--)
+    while ((limit--) != 0u)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -594,7 +598,8 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 
 TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -608,10 +613,9 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(LedgerDataHandler::LIMITJSON);
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    while (limit--)
+    while ((limit--) != 0u)
     {
-        auto const line =
-            CreateRippleStateLedgerObject(ACCOUNT, "USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+        auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
     }
 

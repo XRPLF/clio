@@ -37,14 +37,14 @@ ForwardCache::freshen()
     {
         boost::asio::spawn(
             strand_, [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
-                boost::json::object request = {{"command", command}};
+                boost::json::object const request = {{"command", command}};
                 auto resp = source_.requestFromRippled(request, {}, yield);
 
                 if (!resp || resp->contains("error"))
                     resp = {};
 
                 {
-                    std::scoped_lock lk(mtx_);
+                    std::scoped_lock const lk(mtx_);
                     latestForwarded_[command] = resp;
                 }
             });
@@ -54,7 +54,7 @@ ForwardCache::freshen()
 void
 ForwardCache::clear()
 {
-    std::scoped_lock lk(mtx_);
+    std::scoped_lock const lk(mtx_);
     for (auto& cacheEntry : latestForwarded_)
         latestForwarded_[cacheEntry.first] = {};
 }
@@ -64,16 +64,20 @@ ForwardCache::get(boost::json::object const& request) const
 {
     std::optional<std::string> command = {};
     if (request.contains("command") && !request.contains("method") && request.at("command").is_string())
+    {
         command = request.at("command").as_string().c_str();
+    }
     else if (request.contains("method") && !request.contains("command") && request.at("method").is_string())
+    {
         command = request.at("method").as_string().c_str();
+    }
 
     if (!command)
         return {};
     if (rpc::specifiesCurrentOrClosedLedger(request))
         return {};
 
-    std::shared_lock lk(mtx_);
+    std::shared_lock const lk(mtx_);
     if (!latestForwarded_.contains(*command))
         return {};
 

@@ -36,9 +36,8 @@ public:
         if (rawPtr == nullptr)
             throw std::runtime_error("Could not create DB object - got nullptr");
     }
-    ManagedObject(ManagedObject&&) = default;
 
-    operator Managed* const() const
+    operator Managed*() const
     {
         return ptr_.get();
     }

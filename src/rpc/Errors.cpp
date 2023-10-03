@@ -146,8 +146,10 @@ makeError(Status const& status)
         status.code);
 
     if (status.extraInfo)
+    {
         for (auto& [key, value] : status.extraInfo.value())
             res[key] = value;
+    }
 
     return res;
 }

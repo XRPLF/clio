@@ -29,6 +29,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace web {
 
@@ -61,25 +62,25 @@ struct Context : util::Taggable
      */
     Context(
         boost::asio::yield_context yield,
-        std::string const& command,
+        std::string command,
         std::uint32_t apiVersion,
         boost::json::object params,
         std::shared_ptr<web::ConnectionBase> const& session,
         util::TagDecoratorFactory const& tagFactory,
         data::LedgerRange const& range,
-        std::string const& clientIp,
+        std::string clientIp,
         bool isAdmin)
         : Taggable(tagFactory)
-        , yield(yield)
-        , method(command)
+        , yield(std::move(yield))
+        , method(std::move(command))
         , apiVersion(apiVersion)
         , params(std::move(params))
         , session(session)
         , range(range)
-        , clientIp(clientIp)
+        , clientIp(std::move(clientIp))
         , isAdmin(isAdmin)
     {
-        static util::Logger perfLog{"Performance"};
+        static util::Logger const perfLog{"Performance"};
         LOG(perfLog.debug()) << tag() << "new Context created";
     }
 

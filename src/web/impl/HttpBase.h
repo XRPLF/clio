@@ -147,7 +147,7 @@ public:
         dosGuard_.get().increment(ip);
     }
 
-    virtual ~HttpBase()
+    ~HttpBase() override
     {
         LOG(perfLog_.debug()) << tag() << "http session closed";
         if (not upgraded)
@@ -239,9 +239,13 @@ public:
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
+            {
                 jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
+            }
             else
+            {
                 jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
+            }
 
             // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);

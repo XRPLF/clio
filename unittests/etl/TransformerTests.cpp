@@ -20,6 +20,7 @@
 #include <etl/impl/Transformer.h>
 #include <util/FakeFetchResponse.h>
 #include <util/Fixtures.h>
+#include <util/MockAmendmentBlockHandler.h>
 #include <util/MockExtractionDataPipe.h>
 #include <util/MockLedgerLoader.h>
 #include <util/MockLedgerPublisher.h>
@@ -47,11 +48,14 @@ protected:
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerLoaderType = MockLedgerLoader;
     using LedgerPublisherType = MockLedgerPublisher;
-    using TransformerType = etl::detail::Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType>;
+    using AmendmentBlockHandlerType = MockAmendmentBlockHandler;
+    using TransformerType = etl::detail::
+        Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
 
     ExtractionDataPipeType dataPipe_;
     LedgerLoaderType ledgerLoader_;
     LedgerPublisherType ledgerPublisher_;
+    AmendmentBlockHandlerType amendmentBlockHandler_;
     SystemState state_;
 
     std::unique_ptr<TransformerType> transformer_;
@@ -82,15 +86,16 @@ TEST_F(ETLTransformerTest, StopsOnWriteConflict)
     EXPECT_CALL(dataPipe_, popNext).Times(0);
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
-    transformer_ =
-        std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
+    transformer_ = std::make_unique<TransformerType>(
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
 
     transformer_->waitTillFinished();  // explicitly joins the thread
 }
 
 TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);
@@ -99,7 +104,7 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     ON_CALL(dataPipe_, popNext).WillByDefault([this, &response](auto) -> std::optional<FakeFetchResponse> {
         if (state_.isStopping)
             return std::nullopt;
-        return response;
+        return response;  // NOLINT (performance-no-automatic-move)
     });
     ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(true));
 
@@ -114,8 +119,8 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     EXPECT_CALL(*rawBackendPtr, doFinishWrites).Times(AtLeast(1));
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(AtLeast(1));
 
-    transformer_ =
-        std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
+    transformer_ = std::make_unique<TransformerType>(
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
 
     // after 10ms we start spitting out empty responses which means the extractor is finishing up
     // this is normally combined with stopping the entire thing by setting the isStopping flag.
@@ -125,7 +130,8 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 
 TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);
@@ -147,6 +153,8 @@ TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
     // should not call publish
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
-    transformer_ =
-        std::make_unique<TransformerType>(dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, 0, state_);
+    transformer_ = std::make_unique<TransformerType>(
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
 }
+
+// TODO: implement tests for amendment block. requires more refactoring

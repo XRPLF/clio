@@ -18,8 +18,11 @@
 //==============================================================================
 
 #include <etl/ETLService.h>
+#include <util/Constants.h>
 
 #include <ripple/protocol/LedgerHeader.h>
+
+#include <utility>
 
 namespace etl {
 // Database must be populated when this starts
@@ -44,10 +47,13 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     auto pipe = DataPipeType{numExtractors, startSequence};
 
     for (auto i = 0u; i < numExtractors; ++i)
+    {
         extractors.push_back(std::make_unique<ExtractorType>(
             pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_));
+    }
 
-    auto transformer = TransformerType{pipe, backend_, ledgerLoader_, ledgerPublisher_, startSequence, state_};
+    auto transformer =
+        TransformerType{pipe, backend_, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, startSequence, state_};
     transformer.waitTillFinished();  // suspend current thread until exit condition is met
     pipe.cleanup();                  // TODO: this should probably happen automatically using destructor
 
@@ -57,8 +63,9 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
 
     auto const end = std::chrono::system_clock::now();
     auto const lastPublishedSeq = ledgerPublisher_.getLastPublishedSequence();
+    static constexpr auto NANOSECONDS_PER_SECOND = 1'000'000'000.0;
     LOG(log_.debug()) << "Extracted and wrote " << lastPublishedSeq.value_or(startSequence) - startSequence << " in "
-                      << ((end - begin).count()) / 1000000000.0;
+                      << ((end - begin).count()) / NANOSECONDS_PER_SECOND;
 
     state_.isWriting = false;
 
@@ -110,12 +117,8 @@ ETLService::monitor()
         }
         catch (std::runtime_error const& e)
         {
-            setAmendmentBlocked();
-
-            log_.fatal()
-                << "Failed to load initial ledger, Exiting monitor loop: " << e.what()
-                << " Possible cause: The ETL node is not compatible with the version of the rippled lib Clio is using.";
-            return;
+            LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
+            return amendmentBlockHandler_.onAmendmentBlock();
         }
 
         if (ledger)
@@ -145,43 +148,50 @@ ETLService::monitor()
 
     while (true)
     {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= nextSequence)
+        nextSequence = publishNextSequence(nextSequence);
+    }
+}
+
+uint32_t
+ETLService::publishNextSequence(uint32_t nextSequence)
+{
+    if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= nextSequence)
+    {
+        ledgerPublisher_.publish(nextSequence, {});
+        ++nextSequence;
+    }
+    else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILLISECONDS_PER_SECOND))
+    {
+        LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
+                         << "Attempting to find in database and publish";
+
+        // Attempt to take over responsibility of ETL writer after 10 failed
+        // attempts to publish the ledger. publishLedger() fails if the
+        // ledger that has been validated by the network is not found in the
+        // database after the specified number of attempts. publishLedger()
+        // waits one second between each attempt to read the ledger from the
+        // database
+        constexpr size_t timeoutSeconds = 10;
+        bool const success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
+
+        if (!success)
         {
-            ledgerPublisher_.publish(nextSequence, {});
+            LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
+
+            // returns the most recent sequence published empty optional if no sequence was published
+            std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
+            LOG(log_.info()) << "Aborting ETL. Falling back to publishing";
+
+            // if no ledger was published, don't increment nextSequence
+            if (lastPublished)
+                nextSequence = *lastPublished + 1;
+        }
+        else
+        {
             ++nextSequence;
         }
-        else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, 1000))
-        {
-            LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
-                             << "Attempting to find in database and publish";
-
-            // Attempt to take over responsibility of ETL writer after 10 failed
-            // attempts to publish the ledger. publishLedger() fails if the
-            // ledger that has been validated by the network is not found in the
-            // database after the specified number of attempts. publishLedger()
-            // waits one second between each attempt to read the ledger from the
-            // database
-            constexpr size_t timeoutSeconds = 10;
-            bool success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
-
-            if (!success)
-            {
-                LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
-
-                // returns the most recent sequence published empty optional if no sequence was published
-                std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
-                LOG(log_.info()) << "Aborting ETL. Falling back to publishing";
-
-                // if no ledger was published, don't increment nextSequence
-                if (lastPublished)
-                    nextSequence = *lastPublished + 1;
-            }
-            else
-            {
-                ++nextSequence;
-            }
-        }
     }
+    return nextSequence;
 }
 
 void
@@ -189,20 +199,27 @@ ETLService::monitorReadOnly()
 {
     LOG(log_.debug()) << "Starting reporting in strict read only mode";
 
-    auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    uint32_t latestSequence;
+    const auto latestSequenceOpt = [this]() -> std::optional<uint32_t> {
+        auto rng = backend_->hardFetchLedgerRangeNoThrow();
 
-    if (!rng)
+        if (!rng)
+        {
+            if (auto net = networkValidatedLedgers_->getMostRecent())
+            {
+                return *net;
+            }
+            return std::nullopt;
+        }
+
+        return rng->maxSequence;
+    }();
+
+    if (!latestSequenceOpt.has_value())
     {
-        if (auto net = networkValidatedLedgers_->getMostRecent())
-            latestSequence = *net;
-        else
-            return;
+        return;
     }
-    else
-    {
-        latestSequence = rng->maxSequence;
-    }
+
+    uint32_t latestSequence = *latestSequenceOpt;
 
     cacheLoader_.load(latestSequence);
     latestSequence++;
@@ -218,7 +235,7 @@ ETLService::monitorReadOnly()
         {
             // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs first.
             // Even if we don't hear from rippled, if ledgers are being written to the db, we publish them.
-            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, 1000);
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILLISECONDS_PER_SECOND);
         }
     }
 }
@@ -239,9 +256,13 @@ ETLService::doWork()
         beast::setCurrentThreadName("ETLService worker");
 
         if (state_.isReadOnly)
+        {
             monitorReadOnly();
+        }
         else
+        {
             monitor();
+        }
     });
 }
 
@@ -254,11 +275,12 @@ ETLService::ETLService(
     std::shared_ptr<NetworkValidatedLedgersType> ledgers)
     : backend_(backend)
     , loadBalancer_(balancer)
-    , networkValidatedLedgers_(ledgers)
+    , networkValidatedLedgers_(std::move(ledgers))
     , cacheLoader_(config, ioc, backend, backend->cache())
     , ledgerFetcher_(backend, balancer)
     , ledgerLoader_(backend, balancer, ledgerFetcher_, state_)
     , ledgerPublisher_(ioc, backend, subscriptions, state_)
+    , amendmentBlockHandler_(ioc, state_)
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");

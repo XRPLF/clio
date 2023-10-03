@@ -42,6 +42,10 @@ namespace etl::detail {
 template <typename CacheType>
 class CacheLoader
 {
+    static constexpr size_t DEFAULT_NUM_CACHE_DIFFS = 32;
+    static constexpr size_t DEFAULT_NUM_CACHE_MARKERS = 48;
+    static constexpr size_t DEFAULT_CACHE_PAGE_FETCH_SIZE = 512;
+
     enum class LoadStyle { ASYNC, SYNC, NOT_AT_ALL };
 
     util::Logger log_{"ETL"};
@@ -52,22 +56,23 @@ class CacheLoader
     LoadStyle cacheLoadStyle_ = LoadStyle::ASYNC;
 
     // number of diffs to use to generate cursors to traverse the ledger in parallel during initial cache download
-    size_t numCacheDiffs_ = 32;
+    size_t numCacheDiffs_ = DEFAULT_NUM_CACHE_DIFFS;
 
     // number of markers to use at one time to traverse the ledger in parallel during initial cache download
-    size_t numCacheMarkers_ = 48;
+    size_t numCacheMarkers_ = DEFAULT_NUM_CACHE_MARKERS;
 
     // number of ledger objects to fetch concurrently per marker during cache download
-    size_t cachePageFetchSize_ = 512;
+    size_t cachePageFetchSize_ = DEFAULT_CACHE_PAGE_FETCH_SIZE;
 
     struct ClioPeer
     {
         std::string ip;
-        int port;
+        int port{};
     };
 
     std::vector<ClioPeer> clioPeers_;
 
+    std::thread thread_;
     std::atomic_bool stopping_ = false;
 
 public:
@@ -106,7 +111,7 @@ public:
                     clioPeers_.push_back({ip, port});
                 }
 
-                unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+                unsigned const seed = std::chrono::system_clock::now().time_since_epoch().count();
                 std::shuffle(std::begin(clioPeers_), std::end(clioPeers_), std::default_random_engine(seed));
             }
         }
@@ -115,6 +120,8 @@ public:
     ~CacheLoader()
     {
         stop();
+        if (thread_.joinable())
+            thread_.join();
     }
 
     /**
@@ -139,7 +146,7 @@ public:
             return;
         }
 
-        if (clioPeers_.size() > 0)
+        if (!clioPeers_.empty())
         {
             boost::asio::spawn(ioContext_.get(), [this, seq](boost::asio::yield_context yield) {
                 for (auto const& peer : clioPeers_)
@@ -154,16 +161,15 @@ public:
             });
             return;
         }
-        else
-        {
-            loadCacheFromDb(seq);
-        }
+
+        loadCacheFromDb(seq);
 
         // If loading synchronously, poll cache until full
+        static constexpr size_t SLEEP_TIME_SECONDS = 10;
         while (cacheLoadStyle_ == LoadStyle::SYNC && not cache_.get().isFull())
         {
             LOG(log_.debug()) << "Cache not full. Cache size = " << cache_.get().size() << ". Sleeping ...";
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME_SECONDS));
             if (cache_.get().isFull())
                 LOG(log_.info()) << "Cache is full. Cache size = " << cache_.get().size();
         }
@@ -185,13 +191,12 @@ private:
     {
         LOG(log_.info()) << "Loading cache from peer. ip = " << ip << " . port = " << port;
         namespace beast = boost::beast;          // from <boost/beast.hpp>
-        namespace http = beast::http;            // from <boost/beast/http.hpp>
         namespace websocket = beast::websocket;  // from
         namespace net = boost::asio;             // from
         using tcp = boost::asio::ip::tcp;        // from
         try
         {
-            boost::beast::error_code ec;
+            beast::error_code ec;
             // These objects perform our I/O
             tcp::resolver resolver{ioContext_.get()};
 
@@ -218,13 +223,14 @@ private:
             std::optional<boost::json::value> marker;
 
             LOG(log_.trace()) << "Sending request";
+            static constexpr int LIMIT = 2048;
             auto getRequest = [&](auto marker) {
                 boost::json::object request = {
                     {"command", "ledger_data"},
                     {"ledger_index", ledgerIndex},
                     {"binary", true},
                     {"out_of_order", true},
-                    {"limit", 2048}};
+                    {"limit", LIMIT}};
 
                 if (marker)
                     request["marker"] = *marker;
@@ -267,8 +273,9 @@ private:
                     auto const& err = response.at("error");
                     if (err.is_string() && err.as_string() == "lgrNotFound")
                     {
+                        static constexpr size_t MAX_ATTEMPTS = 5;
                         ++numAttempts;
-                        if (numAttempts >= 5)
+                        if (numAttempts >= MAX_ATTEMPTS)
                         {
                             LOG(log_.error()) << " ledger not found at peer after 5 attempts. "
                                                  "peer = "
@@ -292,9 +299,13 @@ private:
                     return false;
                 }
                 if (response.contains("marker"))
+                {
                     marker = response.at("marker");
+                }
                 else
+                {
                     marker = {};
+                }
 
                 auto const& state = response.at("state").as_array();
 
@@ -353,21 +364,25 @@ private:
 
         diff.erase(std::unique(diff.begin(), diff.end(), [](auto a, auto b) { return a.key == b.key; }), diff.end());
 
-        cursors.push_back({});
+        cursors.emplace_back();
         for (auto const& obj : diff)
-            if (obj.blob.size())
-                cursors.push_back({obj.key});
-        cursors.push_back({});
+        {
+            if (!obj.blob.empty())
+                cursors.emplace_back(obj.key);
+        }
+        cursors.emplace_back();
 
         std::stringstream cursorStr;
         for (auto const& c : cursors)
+        {
             if (c)
                 cursorStr << ripple::strHex(*c) << ", ";
+        }
 
         LOG(log_.info()) << "Loading cache. num cursors = " << cursors.size() - 1;
         LOG(log_.trace()) << "cursors = " << cursorStr.str();
 
-        boost::asio::post(ioContext_.get(), [this, seq, cursors = std::move(cursors)]() {
+        thread_ = std::thread{[this, seq, cursors = std::move(cursors)]() {
             auto startTime = std::chrono::system_clock::now();
             auto markers = std::make_shared<std::atomic_int>(0);
             auto numRemaining = std::make_shared<std::atomic_int>(cursors.size() - 1);
@@ -425,7 +440,7 @@ private:
                         }
                     });
             }
-        });
+        }};
     }
 };
 

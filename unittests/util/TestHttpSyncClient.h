@@ -22,6 +22,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/beast/ssl.hpp>
 
 #include <string>
 
@@ -76,7 +77,7 @@ struct HttpSyncClient
         boost::beast::error_code ec;
         stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
-        return std::string(res.body());
+        return res.body();
     }
 };
 
@@ -131,7 +132,7 @@ public:
 struct HttpsSyncClient
 {
     static bool
-    verify_certificate(bool preverified, boost::asio::ssl::verify_context& ctx)
+    verify_certificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
     {
         return true;
     }
@@ -147,7 +148,11 @@ struct HttpsSyncClient
         tcp::resolver resolver(ioc);
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream(ioc, ctx);
 
+// We can't fix this so have to ignore
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
         if (!SSL_set_tlsext_host_name(stream.native_handle(), host.c_str()))
+#pragma GCC diagnostic pop
         {
             boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
             throw boost::beast::system_error{ec};
@@ -171,7 +176,7 @@ struct HttpsSyncClient
         boost::beast::error_code ec;
         stream.shutdown(ec);
 
-        return std::string(res.body());
+        return res.body();
     }
 };
 

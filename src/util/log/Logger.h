@@ -93,12 +93,16 @@ using SourceLocationType = SourceLocation;
  *
  * Note: Currently this introduces potential shadowing (unlikely).
  */
+#ifndef COVERAGE_ENABLED
 #define LOG(x)                                 \
     if (auto clio_pump__ = x; not clio_pump__) \
     {                                          \
     }                                          \
     else                                       \
         clio_pump__
+#else
+#define LOG(x) x
+#endif
 
 /**
  * @brief Custom severity levels for @ref util::Logger.
@@ -194,8 +198,8 @@ class Logger final
         }
 
     private:
-        [[nodiscard]] std::string
-        pretty_path(SourceLocationType const& loc, size_t max_depth = 3) const;
+        [[nodiscard]] static std::string
+        pretty_path(SourceLocationType const& loc, size_t max_depth = 3);
 
         /**
          * @brief Custom JSON parser for @ref Severity.

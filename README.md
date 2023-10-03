@@ -224,16 +224,16 @@ a database in each region, and the Clio nodes in each region use their region's 
 This is effectively two systems.
 
 Clio supports API versioning as [described here](https://xrpl.org/request-formatting.html#api-versioning).
-It's possible to configure `minimum`, `maximum` and `default` version like so: 
+It's possible to configure `minimum`, `maximum` and `default` version like so:
 ```json
 "api_version": {
     "min": 1,
     "max": 2,
-    "default": 2 
+    "default": 1
 }
 ```
-All of the above are optional. 
-Clio will fallback to hardcoded defaults when not specified in the config file or configured values are outside 
+All of the above are optional.
+Clio will fallback to hardcoded defaults when not specified in the config file or configured values are outside
 of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVersion.h`.
 > **Note:** See `example-config.json` for more details. 
 
@@ -249,6 +249,21 @@ For a better security `admin_password` could be provided in the `server` section
 ```
 If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
 Exactly equal password gains admin rights for the request or a websocket connection.
+
+## Using clang-tidy for static analysis
+
+Minimum clang-tidy version required is 16.0.
+Clang-tidy could be run by cmake during building the project.
+For that provide the option `-o lint=True` for `conan install` command:
+```sh
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=True
+```
+By default cmake will try to find clang-tidy automatically in your system.
+To force cmake use desired binary set `CLIO_CLANG_TIDY_BIN` environment variable as path to clang-tidy binary.
+E.g.:
+```sh
+export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@16/bin/clang-tidy
+```
 
 ## Developing against `rippled` in standalone mode
 

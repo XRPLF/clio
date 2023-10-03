@@ -75,7 +75,7 @@ public:
     {
     }
 
-    ~SslHttpSession() = default;
+    ~SslHttpSession() override = default;
 
     /** @return The SSL stream. */
     boost::beast::ssl_stream<boost::beast::tcp_stream>&

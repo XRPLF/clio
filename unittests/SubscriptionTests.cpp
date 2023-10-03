@@ -25,7 +25,6 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
-namespace json = boost::json;
 using namespace feed;
 
 // io_context
@@ -44,8 +43,8 @@ class SubscriptionMapTest : public SubscriptionTest
 TEST_F(SubscriptionTest, SubscriptionCount)
 {
     Subscription sub(ctx);
-    std::shared_ptr<web::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     sub.subscribe(session1);
     sub.subscribe(session2);
     ctx.run();
@@ -74,8 +73,8 @@ TEST_F(SubscriptionTest, SubscriptionCount)
 TEST_F(SubscriptionTest, SubscriptionPublish)
 {
     Subscription sub(ctx);
-    std::shared_ptr<web::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     sub.subscribe(session1);
     sub.subscribe(session2);
     ctx.run();
@@ -83,9 +82,11 @@ TEST_F(SubscriptionTest, SubscriptionPublish)
     sub.publish(std::make_shared<std::string>("message"));
     ctx.restart();
     ctx.run();
-    MockSession* p1 = (MockSession*)(session1.get());
+    MockSession* p1 = dynamic_cast<MockSession*>(session1.get());
+    ASSERT_NE(p1, nullptr);
     EXPECT_EQ(p1->message, "message");
-    MockSession* p2 = (MockSession*)(session2.get());
+    MockSession* p2 = dynamic_cast<MockSession*>(session2.get());
+    ASSERT_NE(p2, nullptr);
     EXPECT_EQ(p2->message, "message");
     sub.unsubscribe(session1);
     ctx.restart();
@@ -101,7 +102,7 @@ TEST_F(SubscriptionTest, SubscriptionPublish)
 TEST_F(SubscriptionTest, SubscriptionDeadRemoveSubscriber)
 {
     Subscription sub(ctx);
-    std::shared_ptr<web::ConnectionBase> session1(new MockDeadSession(tagDecoratorFactory));
+    std::shared_ptr<web::ConnectionBase> const session1(new MockDeadSession(tagDecoratorFactory));
     sub.subscribe(session1);
     ctx.run();
     EXPECT_EQ(sub.count(), 1);
@@ -118,9 +119,9 @@ TEST_F(SubscriptionTest, SubscriptionDeadRemoveSubscriber)
 
 TEST_F(SubscriptionMapTest, SubscriptionMapCount)
 {
-    std::shared_ptr<web::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session3 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session3 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionMap<std::string> subMap(ctx);
     subMap.subscribe(session1, "topic1");
     subMap.subscribe(session2, "topic1");
@@ -150,8 +151,8 @@ TEST_F(SubscriptionMapTest, SubscriptionMapCount)
 
 TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
 {
-    std::shared_ptr<web::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionMap<std::string> subMap(ctx);
     const std::string topic1 = "topic1";
     const std::string topic2 = "topic2";
@@ -166,16 +167,18 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
     subMap.publish(std::make_shared<std::string>(topic2Message.data()), topic2);  // rvalue
     ctx.restart();
     ctx.run();
-    MockSession* p1 = (MockSession*)(session1.get());
+    MockSession* p1 = dynamic_cast<MockSession*>(session1.get());
+    ASSERT_NE(p1, nullptr);
     EXPECT_EQ(p1->message, topic1Message);
-    MockSession* p2 = (MockSession*)(session2.get());
+    MockSession* p2 = dynamic_cast<MockSession*>(session2.get());
+    ASSERT_NE(p2, nullptr);
     EXPECT_EQ(p2->message, topic2Message);
 }
 
 TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
 {
-    std::shared_ptr<web::ConnectionBase> session1(new MockDeadSession(tagDecoratorFactory));
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1(new MockDeadSession(tagDecoratorFactory));
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionMap<std::string> subMap(ctx);
     const std::string topic1 = "topic1";
     const std::string topic2 = "topic2";
@@ -190,9 +193,11 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
     subMap.publish(std::make_shared<std::string>(topic2Message), topic2);  // rvalue
     ctx.restart();
     ctx.run();
-    MockDeadSession* p1 = (MockDeadSession*)(session1.get());
+    MockDeadSession* p1 = dynamic_cast<MockDeadSession*>(session1.get());
+    ASSERT_NE(p1, nullptr);
     EXPECT_EQ(p1->dead(), true);
-    MockSession* p2 = (MockSession*)(session2.get());
+    MockSession* p2 = dynamic_cast<MockSession*>(session2.get());
+    ASSERT_NE(p2, nullptr);
     EXPECT_EQ(p2->message, topic2Message);
     subMap.publish(message1, topic1);
     ctx.restart();

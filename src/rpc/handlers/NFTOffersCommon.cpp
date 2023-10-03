@@ -132,7 +132,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
     std::move(std::begin(offers), std::end(offers), std::back_inserter(output.offers));
 
-    return std::move(output);
+    return output;
 }
 
 void
@@ -169,9 +169,13 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(marker)))

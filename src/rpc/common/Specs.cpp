@@ -33,8 +33,10 @@ FieldSpec::process(boost::json::value& value) const
 RpcSpec::process(boost::json::value& value) const
 {
     for (auto const& field : fields_)
+    {
         if (auto ret = field.process(value); not ret)
             return Error{ret.error()};
+    }
 
     return {};
 }

@@ -20,8 +20,8 @@
 #include <data/cassandra/impl/Result.h>
 
 namespace {
-static constexpr auto resultDeleter = [](CassResult const* ptr) { cass_result_free(ptr); };
-static constexpr auto resultIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
+constexpr auto resultDeleter = [](CassResult const* ptr) { cass_result_free(ptr); };
+constexpr auto resultIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::detail {
@@ -43,7 +43,7 @@ Result::hasRows() const
 }
 
 /* implicit */ ResultIterator::ResultIterator(CassIterator* ptr)
-    : ManagedObject{ptr, resultIteratorDeleter}, hasMore_{cass_iterator_next(ptr)}
+    : ManagedObject{ptr, resultIteratorDeleter}, hasMore_{cass_iterator_next(ptr) != 0u}
 {
 }
 
@@ -56,7 +56,7 @@ ResultIterator::fromResult(Result const& result)
 [[maybe_unused]] bool
 ResultIterator::moveForward()
 {
-    hasMore_ = cass_iterator_next(*this);
+    hasMore_ = (cass_iterator_next(*this) != 0u);
     return hasMore_;
 }
 

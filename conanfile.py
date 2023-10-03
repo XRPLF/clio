@@ -16,6 +16,7 @@ class Clio(ConanFile):
         'docs': [True, False],      # doxygen API docs; create custom target 'docs'
         'packaging': [True, False], # create distribution packages
         'coverage': [True, False],  # build for test coverage report; create custom target `clio_tests-ccov`
+        'lint': [True, False],      # run clang-tidy checks during compilation
     }
 
     requires = [
@@ -24,7 +25,7 @@ class Clio(ConanFile):
         'fmt/10.0.0',
         'grpc/1.50.1',
         'openssl/1.1.1u',
-        'xrpl/1.12.0-b2',
+        'xrpl/1.12.0',
     ]
 
     default_options = {
@@ -33,6 +34,7 @@ class Clio(ConanFile):
         'tests': False,
         'packaging': False,
         'coverage': False,
+        'lint': False,
         'docs': False,
         
         'xrpl/*:tests': False,
@@ -73,6 +75,7 @@ class Clio(ConanFile):
         tc.variables['verbose'] = self.options.verbose
         tc.variables['tests'] = self.options.tests
         tc.variables['coverage'] = self.options.coverage
+        tc.variables['lint'] = self.options.lint
         tc.variables['docs'] = self.options.docs
         tc.variables['packaging'] = self.options.packaging
         tc.generate()

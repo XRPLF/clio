@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/JsonBool.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
@@ -48,7 +49,7 @@ public:
     struct Output
     {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::vector<std::string> problems;
         // TODO: use better type than json
         std::optional<boost::json::array> transactions;
@@ -62,7 +63,7 @@ public:
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = LIMIT_DEFAULT;
-        bool transactions = false;
+        JsonBool transactions{false};
     };
 
     using Result = HandlerReturnType<Output>;
@@ -72,10 +73,10 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const rpcSpecV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(role),
              validation::Required{},
@@ -87,11 +88,15 @@ public:
             {JS(limit),
              validation::Type<uint32_t>(),
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(transactions), validation::Type<bool>()},
-        };
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}};
 
-        return rpcSpec;
+        static auto const rpcSpec = RpcSpec{
+            rpcSpecV1,
+            {
+                {JS(transactions), validation::Type<bool>()},
+            }};
+
+        return apiVersion == 1 ? rpcSpecV1 : rpcSpec;
     }
 
     Result

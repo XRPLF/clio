@@ -22,6 +22,7 @@
 #include <util/Taggable.h>
 
 #include <boost/beast/http.hpp>
+#include <utility>
 
 namespace web {
 
@@ -49,11 +50,12 @@ public:
      * @param ip The IP address of the connected peer
      * @param adminPassword The optional password to verify admin role in requests
      */
-    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
+    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip)
+        : Taggable(tagFactory), clientIp(std::move(ip))
     {
     }
 
-    virtual ~ConnectionBase() = default;
+    ~ConnectionBase() override = default;
 
     /**
      * @brief Send the response to the client.
@@ -68,12 +70,11 @@ public:
      * @brief Send via shared_ptr of string, that enables SubscriptionManager to publish to clients.
      *
      * @param msg The message to send
-     * @throws Not supported unless implemented in child classes. Will always throw std::runtime_error.
+     * @throws Not supported unless implemented in child classes. Will always throw std::logic_error.
      */
-    virtual void
-    send(std::shared_ptr<std::string> msg)
+    virtual void send(std::shared_ptr<std::string> /* msg */)
     {
-        throw std::runtime_error("web server can not send the shared payload");
+        throw std::logic_error("web server can not send the shared payload");
     }
 
     /**

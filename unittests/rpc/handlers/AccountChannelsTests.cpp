@@ -245,7 +245,8 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountNotString)
 // error case ledger non exist via hash
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     // mock fetchLedgerByHash return empty
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
@@ -272,7 +273,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -296,7 +298,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
 
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -322,7 +325,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
 // idk why this case will happen in reality
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
@@ -349,7 +353,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // no need to check from db,call fetchLedgerBySequence 0 time
@@ -374,7 +379,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case account not exist
 TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -432,7 +438,8 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
             }
         ]
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -447,7 +454,8 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+    ripple::STObject const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -455,7 +463,7 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -477,7 +485,8 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 // normal case : limit is used
 TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -496,10 +505,10 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
     std::vector<Blob> bbs;
 
     auto repetitions = 50;
-    while (repetitions--)
+    while ((repetitions--) != 0)
     {
-        indexes.push_back(ripple::uint256{INDEX1});
-        ripple::STObject channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+        indexes.emplace_back(INDEX1);
+        ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
@@ -555,7 +564,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 // normal case : destination is used
 TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -575,23 +585,23 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 
     // 10 pay channel to ACCOUNT2
     auto repetitions = 10;
-    while (repetitions--)
+    while ((repetitions--) != 0)
     {
-        indexes.push_back(ripple::uint256{INDEX1});
-        ripple::STObject channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+        indexes.emplace_back(INDEX1);
+        ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
 
     // 20 pay channel to ACCOUNT3
     repetitions = 20;
-    while (repetitions--)
+    while ((repetitions--) != 0)
     {
-        indexes.push_back(ripple::uint256{INDEX1});
-        ripple::STObject channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT3, 100, 10, 32, TXNID, 28);
+        indexes.emplace_back(INDEX1);
+        ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT3, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
 
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
+    ripple::STObject const ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
@@ -618,7 +628,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 // normal case : but the lines is emtpy
 TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -633,7 +644,7 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({}, INDEX1);
+    ripple::STObject const ownerDir = CreateOwnerDirLedgerObject({}, INDEX1);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -691,7 +702,8 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
             }
         ]
     })";
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -706,7 +718,8 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+    ripple::STObject const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -739,7 +752,8 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 // normal case : test marker output correct
 TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -757,14 +771,14 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     // owner dir contains 10 indexes
     int objectsCount = 10;
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     // return 15 objects
@@ -808,7 +822,8 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
 // normal case : handler marker correctly
 TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -825,13 +840,13 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     int objectsCount = limit;
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0)
     {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -867,7 +882,8 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
 
 TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -882,7 +898,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+    ripple::STObject const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -890,7 +907,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -914,7 +931,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -929,7 +947,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+    ripple::STObject const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -937,7 +956,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
