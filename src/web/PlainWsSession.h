@@ -46,6 +46,7 @@ public:
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
      * @param buffer Buffer with initial data received from the peer
+     * @param isAdmin Whether the connection has admin privileges
      */
     explicit PlainWsSession(
         boost::asio::ip::tcp::socket&& socket,
@@ -53,10 +54,12 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer&& buffer)
+        boost::beast::flat_buffer&& buffer,
+        bool isAdmin)
         : detail::WsBase<PlainWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(socket))
     {
+        ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
     ~PlainWsSession() override = default;
@@ -87,6 +90,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>>
     http::request<http::string_body> req_;
     std::string ip_;
     std::shared_ptr<HandlerType> const handler_;
+    bool isAdmin_;
 
 public:
     /**
@@ -99,6 +103,7 @@ public:
      * @param handler The server handler to use
      * @param buffer Buffer with initial data received from the peer. Ownership is transferred
      * @param request The request. Ownership is transferred
+     * @param isAdmin Whether the connection has admin privileges
      */
     WsUpgrader(
         boost::beast::tcp_stream&& stream,
@@ -107,7 +112,8 @@ public:
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
-        http::request<http::string_body> request)
+        http::request<http::string_body> request,
+        bool isAdmin)
         : http_(std::move(stream))
         , buffer_(std::move(buffer))
         , tagFactory_(tagFactory)
@@ -115,6 +121,7 @@ public:
         , req_(std::move(request))
         , ip_(std::move(ip))
         , handler_(handler)
+        , isAdmin_(isAdmin)
     {
     }
 
@@ -150,7 +157,7 @@ private:
         boost::beast::get_lowest_layer(http_).expires_never();
 
         std::make_shared<PlainWsSession<HandlerType>>(
-            http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
+            http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_)
             ->run(std::move(req_));
     }
 };

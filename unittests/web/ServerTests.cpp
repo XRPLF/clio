@@ -360,3 +360,76 @@ TEST_F(WebServerTest, WsPayloadOverload)
         res,
         R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
 }
+
+static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
+    {
+        "server":{
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "admin_password": "secret"
+        }
+    }
+)JSON";
+
+class AdminCheckExecutor
+{
+public:
+    void
+    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
+    {
+        auto response = fmt::format("{} {}", reqStr, ws->isAdmin() ? "admin" : "user");
+        ws->send(std::move(response), http::status::ok);
+    }
+
+    void
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
+    {
+    }
+};
+
+struct WebServerAdminTestParams
+{
+    std::vector<WebHeader> headers;
+    std::string expectedResponse;
+};
+
+class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams>
+{
+};
+
+TEST_P(WebServerAdminTest, WsAdminCheck)
+{
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
+    WebSocketSyncClient wsClient;
+    wsClient.connect("localhost", "8888", GetParam().headers);
+    std::string const request = "Why hello";
+    auto const res = wsClient.syncPost(request);
+    wsClient.disconnect();
+    EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
+}
+
+TEST_P(WebServerAdminTest, HttpAdminCheck)
+{
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
+    std::string const request = "Why hello";
+    auto const res = HttpSyncClient::syncPost("localhost", "8888", request, GetParam().headers);
+    EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    WebServerAdminTestsSuit,
+    WebServerAdminTest,
+    ::testing::Values(
+        WebServerAdminTestParams{.headers = {}, .expectedResponse = "user"},
+        WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "")}, .expectedResponse = "user"},
+        WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "s")}, .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .headers = {WebHeader(http::field::authorization, "secret")},
+            .expectedResponse = "admin"},
+        WebServerAdminTestParams{
+            .headers = {WebHeader(http::field::authentication_info, "secret")},
+            .expectedResponse = "user"}));

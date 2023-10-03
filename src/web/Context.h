@@ -45,6 +45,7 @@ struct Context : util::Taggable
     std::shared_ptr<web::ConnectionBase> session;
     data::LedgerRange range;
     std::string clientIp;
+    bool isAdmin;
 
     /**
      * @brief Create a new Context instance.
@@ -57,6 +58,7 @@ struct Context : util::Taggable
      * @param tagFactory A factory that is used to generate tags to track requests and connections
      * @param range The ledger range that is available at the time of the request
      * @param clientIp IP of the peer
+     * @param isAdmin Whether the peer has admin privileges
      */
     Context(
         boost::asio::yield_context yield,
@@ -66,7 +68,8 @@ struct Context : util::Taggable
         std::shared_ptr<web::ConnectionBase> const& session,
         util::TagDecoratorFactory const& tagFactory,
         data::LedgerRange const& range,
-        std::string clientIp)
+        std::string clientIp,
+        bool isAdmin)
         : Taggable(tagFactory)
         , yield(std::move(yield))
         , method(std::move(command))
@@ -75,6 +78,7 @@ struct Context : util::Taggable
         , session(session)
         , range(range)
         , clientIp(std::move(clientIp))
+        , isAdmin(isAdmin)
     {
         static util::Logger const perfLog{"Performance"};
         LOG(perfLog.debug()) << tag() << "new Context created";

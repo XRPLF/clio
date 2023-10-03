@@ -176,7 +176,8 @@ private:
                     tagFactory_.with(connection->tag()),
                     *range,
                     connection->clientIp,
-                    std::cref(apiVersionParser_));
+                    std::cref(apiVersionParser_),
+                    connection->isAdmin());
             }();
 
             if (!context)
