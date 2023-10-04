@@ -255,3 +255,85 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
         EXPECT_EQ(json::parse(OUTPUT), *output);
     });
 }
+
+TEST_F(RPCTransactionEntryHandlerTest, CTID)
+{
+    static auto constexpr OUTPUT = R"({
+                                        "metadata":{
+                                            "AffectedNodes":
+                                            [
+                                                {
+                                                    "CreatedNode":
+                                                    {
+                                                        "LedgerEntryType":"Offer",
+                                                        "NewFields":
+                                                        {
+                                                            "TakerGets":"200",
+                                                            "TakerPays":
+                                                            {
+                                                                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                                                "value":"300"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ],
+                                            "TransactionIndex":100,
+                                            "TransactionResult":"tesSUCCESS"
+                                        },
+                                        "tx_json":
+                                        {
+                                            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                            "Fee":"2",
+                                            "Sequence":100,
+                                            "SigningPubKey":"74657374",
+                                            "ctid": "C000001E00640002",
+                                            "TakerGets":
+                                            {
+                                                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                                "value":"200"
+                                            },
+                                            "TakerPays":"300",
+                                            "TransactionType":"OfferCreate",
+                                            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08"
+                                        },
+                                        "ledger_index":30,
+                                        "ledger_hash":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                                        "validated":true
+                                    })";
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 0x64, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 0x1e;
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+
+    mockBackendPtr->updateRange(10);                 // min
+    mockBackendPtr->updateRange(tx.ledgerSequence);  // max
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(2));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "tx_hash": "{}",
+                "ledger_index": {}
+            }})",
+            TXNID,
+            tx.ledgerSequence));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(OUTPUT), *output);
+    });
+}

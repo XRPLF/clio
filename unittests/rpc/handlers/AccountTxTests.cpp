@@ -1556,3 +1556,64 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
         EXPECT_EQ(jsonObject, transactions);
     });
 }
+
+TEST_F(RPCAccountTxHandlerTest, ReturnCTID)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
+    auto transactions = std::vector<TransactionAndMetadata>{};
+    auto trans1 = TransactionAndMetadata();
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    trans1.transaction = obj.getSerializer().peekData();
+    trans1.ledgerSequence = 0xA;
+    ripple::STObject const metaObj = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23, 2);
+    trans1.metadata = metaObj.getSerializer().peekData();
+    trans1.date = 1;
+    transactions.push_back(trans1);
+
+    auto trans2 = TransactionAndMetadata();
+    ripple::STObject const obj2 = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 1, 1, 32);
+    trans2.transaction = obj.getSerializer().peekData();
+    trans2.ledgerSequence = 0xB;
+    ripple::STObject const metaObj2 = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 22, 23, 3);
+    trans2.metadata = metaObj2.getSerializer().peekData();
+    trans2.date = 2;
+    transactions.push_back(trans2);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchAccountTransactions(
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
+            testing::_))
+        .Times(1);
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(2));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(2);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const static input = json::parse(fmt::format(
+            R"({{
+                "account": "{}"
+            }})",
+            ACCOUNT));
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
+        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
+        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output->at("transactions").as_array()[0].at("tx").at("ctid").as_string(), "C000000A00020002");
+        EXPECT_EQ(output->at("transactions").as_array()[1].at("tx").at("ctid").as_string(), "C000000B00030002");
+        EXPECT_FALSE(output->as_object().contains("limit"));
+    });
+}

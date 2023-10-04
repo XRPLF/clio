@@ -46,7 +46,6 @@ public:
         std::optional<boost::json::object> tx;
         std::optional<std::string> metaStr;
         std::optional<std::string> txStr;
-        std::optional<std::string> ctid;
         bool validated = true;
     };
 
@@ -148,7 +147,7 @@ public:
             return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
         }
 
-        auto const [txn, meta] = toExpandedJson(*dbResponse, NFTokenjson::ENABLE);
+        auto const [txn, meta] = toExpandedJson(*dbResponse, NFTokenjson::ENABLE, currentNetId);
 
         // clio does not implement 'inLedger' which is a deprecated field
         if (!input.binary)
@@ -168,21 +167,6 @@ public:
 
         output.date = dbResponse->date;
         output.ledgerIndex = dbResponse->ledgerSequence;
-
-        // add ctid
-        if (input.ctid)
-        {
-            output.ctid = input.ctid;  // obtain from input directly
-        }
-        else
-        {
-            auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
-            if (txnIdx <= 0xFFFFU && output.ledgerIndex < 0x0FFF'FFFFUL && currentNetId && *currentNetId <= 0xFFFFU)
-            {
-                output.ctid = rpc::encodeCTID(
-                    output.ledgerIndex, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId));
-            }
-        }
 
         return output;
     }
@@ -220,9 +204,6 @@ private:
             obj[JS(tx)] = *output.txStr;
             obj[JS(hash)] = output.hash;
         }
-
-        if (output.ctid)
-            obj[JS(ctid)] = *output.ctid;
 
         obj[JS(validated)] = output.validated;
         obj[JS(date)] = output.date;

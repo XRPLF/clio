@@ -450,7 +450,6 @@ TEST_F(RPCTxTest, NFTCancelOffer)
             }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
-        std::cout << "output: " << output.value() << std::endl;
         ASSERT_TRUE(output);
 
         for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
@@ -463,7 +462,6 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
         EXPECT_TRUE(ids.empty());
     });
-    std::cout << "After spawn" << std::endl;
 }
 
 TEST_F(RPCTxTest, NFTCreateOffer)
@@ -510,7 +508,6 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.error());
-        std::cout << err << std::endl;
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
