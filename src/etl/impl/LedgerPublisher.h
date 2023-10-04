@@ -171,6 +171,16 @@ public:
 
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
+                // order with transaction index
+                std::sort(transactions.begin(), transactions.end(), [](auto const& t1, auto const& t2) {
+                    ripple::SerialIter iter1{t1.metadata.data(), t1.metadata.size()};
+                    ripple::STObject const object1(iter1, ripple::sfMetadata);
+                    ripple::SerialIter iter2{t2.metadata.data(), t2.metadata.size()};
+                    ripple::STObject const object2(iter2, ripple::sfMetadata);
+                    return object1.getFieldU32(ripple::sfTransactionIndex) <
+                        object2.getFieldU32(ripple::sfTransactionIndex);
+                });
+
                 for (auto& txAndMeta : transactions)
                     subscriptions_->pubTransaction(txAndMeta, lgrInfo);
 

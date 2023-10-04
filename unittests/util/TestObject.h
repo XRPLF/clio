@@ -75,7 +75,8 @@ CreatePaymentTransactionMetaObject(
     std::string_view accountId1,
     std::string_view accountId2,
     int finalBalance1,
-    int finalBalance2);
+    int finalBalance2,
+    uint32_t transactionIndex = 0);
 
 /*
  * Create an account root ledger object
