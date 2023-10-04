@@ -25,8 +25,8 @@
 #include <gtest/gtest.h>
 
 namespace {
-constexpr static auto contactPoints = "127.0.0.1";
-constexpr static auto keyspace = "factory_test";
+constexpr auto contactPoints = "127.0.0.1";
+constexpr auto keyspace = "factory_test";
 }  // namespace
 
 class BackendCassandraFactoryTest : public SyncAsioContextTest
@@ -59,7 +59,7 @@ protected:
     {
         BackendCassandraFactoryTest::TearDown();
         // drop the keyspace for next test
-        data::cassandra::Handle handle{contactPoints};
+        data::cassandra::Handle const handle{contactPoints};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + std::string{keyspace});
     }
@@ -67,7 +67,7 @@ protected:
 
 TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 {
-    util::Config cfg{boost::json::parse(
+    util::Config const cfg{boost::json::parse(
         R"({
             "database":
             {
@@ -79,7 +79,7 @@ TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 {
-    util::Config cfg{boost::json::parse(fmt::format(
+    util::Config const cfg{boost::json::parse(fmt::format(
         R"({{
             "database":
             {{
@@ -99,7 +99,7 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
-    util::Config cfg{boost::json::parse(fmt::format(
+    util::Config const cfg{boost::json::parse(fmt::format(
         R"({{
             "database":
             {{
@@ -122,7 +122,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         EXPECT_FALSE(backend->fetchLedgerRange());
 
         // insert range table
-        data::cassandra::Handle handle{contactPoints};
+        data::cassandra::Handle const handle{contactPoints};
         EXPECT_TRUE(handle.connect());
         handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", keyspace));
         handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", keyspace));
@@ -140,7 +140,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
 {
-    util::Config cfg{boost::json::parse(fmt::format(
+    util::Config const cfg{boost::json::parse(fmt::format(
         R"({{
             "read_only": true,
             "database":
@@ -160,7 +160,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
 {
-    util::Config cfgReadOnly{boost::json::parse(fmt::format(
+    util::Config const cfgReadOnly{boost::json::parse(fmt::format(
         R"({{
             "read_only": true,
             "database":
@@ -176,7 +176,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
         contactPoints,
         keyspace))};
 
-    util::Config cfgWrite{boost::json::parse(fmt::format(
+    util::Config const cfgWrite{boost::json::parse(fmt::format(
         R"({{
             "read_only": false,
             "database":

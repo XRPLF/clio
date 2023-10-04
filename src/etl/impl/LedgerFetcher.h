@@ -27,6 +27,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <optional>
+#include <utility>
 
 namespace etl::detail {
 
@@ -50,7 +51,7 @@ public:
      * @brief Create an instance of the fetcher
      */
     LedgerFetcher(std::shared_ptr<BackendInterface> backend, std::shared_ptr<LoadBalancerType> balancer)
-        : backend_(backend), loadBalancer_(balancer)
+        : backend_(std::move(backend)), loadBalancer_(std::move(balancer))
     {
     }
 

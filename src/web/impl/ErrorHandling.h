@@ -116,24 +116,32 @@ public:
     sendTooBusyError() const
     {
         if (connection_->upgraded)
+        {
             connection_->send(
                 boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok);
+        }
         else
+        {
             connection_->send(
                 boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
                 boost::beast::http::status::service_unavailable);
+        }
     }
 
     void
     sendJsonParsingError(std::string_view reason) const
     {
         if (connection_->upgraded)
+        {
             connection_->send(
                 boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)),
                 boost::beast::http::status::ok);
+        }
         else
+        {
             connection_->send(
                 fmt::format("Unable to parse request: {}", reason), boost::beast::http::status::bad_request);
+        }
     }
 
     boost::json::object
@@ -152,9 +160,10 @@ public:
         }
 
         if (connection_->upgraded)
+        {
             return e;
-        else
-            return {{"result", e}};
+        }
+        return {{"result", e}};
     }
 };
 

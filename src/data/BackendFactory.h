@@ -34,10 +34,10 @@ namespace data {
  * @param config The clio config to use
  * @return A shared_ptr<BackendInterface> with the selected implementation
  */
-std::shared_ptr<BackendInterface>
+inline std::shared_ptr<BackendInterface>
 make_Backend(util::Config const& config)
 {
-    static util::Logger log{"Backend"};
+    static util::Logger const log{"Backend"};
     LOG(log.info()) << "Constructing BackendInterface";
 
     auto const readOnly = config.valueOr("read_only", false);

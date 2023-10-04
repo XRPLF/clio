@@ -27,6 +27,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 namespace rpc {
@@ -73,8 +74,8 @@ using CombinedError = std::variant<RippledError, ClioError>;
 struct Status
 {
     CombinedError code = RippledError::rpcSUCCESS;
-    std::string error = "";
-    std::string message = "";
+    std::string error;
+    std::string message;
     std::optional<boost::json::object> extraInfo;
 
     Status() = default;
@@ -83,15 +84,16 @@ struct Status
 
     // HACK. Some rippled handlers explicitly specify errors.
     // This means that we have to be able to duplicate this functionality.
-    explicit Status(std::string const& message) : code(ripple::rpcUNKNOWN), message(message)
+    explicit Status(std::string message) : code(ripple::rpcUNKNOWN), message(std::move(message))
     {
     }
 
-    Status(CombinedError code, std::string message) : code(code), message(message)
+    Status(CombinedError code, std::string message) : code(code), message(std::move(message))
     {
     }
 
-    Status(CombinedError code, std::string error, std::string message) : code(code), error(error), message(message)
+    Status(CombinedError code, std::string error, std::string message)
+        : code(code), error(std::move(error)), message(std::move(message))
     {
     }
 
@@ -156,7 +158,7 @@ class InvalidParamsError : public std::exception
     std::string msg;
 
 public:
-    explicit InvalidParamsError(std::string const& msg) : msg(msg)
+    explicit InvalidParamsError(std::string msg) : msg(std::move(msg))
     {
     }
 
@@ -173,7 +175,7 @@ class AccountNotFoundError : public std::exception
     std::string account;
 
 public:
-    explicit AccountNotFoundError(std::string const& acct) : account(acct)
+    explicit AccountNotFoundError(std::string acct) : account(std::move(acct))
     {
     }
 

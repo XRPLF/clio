@@ -96,7 +96,7 @@ CreatePaymentTransactionObject(
     obj.setAccountID(ripple::sfDestination, account2.value());
     obj.setFieldU32(ripple::sfSequence, seq);
     const char* key = "test";
-    ripple::Slice slice(key, 4);
+    ripple::Slice const slice(key, 4);
     obj.setFieldVL(ripple::sfSigningPubKey, slice);
     return obj;
 }
@@ -106,7 +106,8 @@ CreatePaymentTransactionMetaObject(
     std::string_view accountId1,
     std::string_view accountId2,
     int finalBalance1,
-    int finalBalance2)
+    int finalBalance2,
+    uint32_t transactionIndex)
 {
     ripple::STObject finalFields(ripple::sfFinalFields);
     finalFields.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId1));
@@ -128,7 +129,7 @@ CreatePaymentTransactionMetaObject(
     metaArray.push_back(node2);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
 
@@ -175,7 +176,7 @@ CreateCreateOfferTransactionObject(
     obj.setFieldAmount(ripple::sfFee, amount);
     obj.setFieldU32(ripple::sfSequence, seq);
     // add amount
-    ripple::Issue issue1(
+    ripple::Issue const issue1(
         ripple::Currency{currency}, ripple::parseBase58<ripple::AccountID>(std::string(issuer)).value());
     if (reverse)
     {
@@ -189,7 +190,7 @@ CreateCreateOfferTransactionObject(
     }
 
     auto key = "test";
-    ripple::Slice slice(key, 4);
+    ripple::Slice const slice(key, 4);
     obj.setFieldVL(ripple::sfSigningPubKey, slice);
     return obj;
 }
@@ -199,9 +200,11 @@ GetIssue(std::string_view currency, std::string_view issuerId)
 {
     // standard currency
     if (currency.size() == 3)
+    {
         return ripple::Issue(
             ripple::to_currency(std::string(currency)),
             ripple::parseBase58<ripple::AccountID>(std::string(issuerId)).value());
+    }
     return ripple::Issue(
         ripple::Currency{currency}, ripple::parseBase58<ripple::AccountID>(std::string(issuerId)).value());
 }
@@ -217,7 +220,7 @@ CreateMetaDataForBookChange(
     int perviousTakerPays)
 {
     ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::Issue issue1 = GetIssue(currency, issueId);
+    ripple::Issue const issue1 = GetIssue(currency, issueId);
     finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
     finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
     ripple::STObject previousFields(ripple::sfPreviousFields);
@@ -246,7 +249,7 @@ CreateMetaDataForCreateOffer(
     bool reverse)
 {
     ripple::STObject finalFields(ripple::sfNewFields);
-    ripple::Issue issue1 = GetIssue(currency, issueId);
+    ripple::Issue const issue1 = GetIssue(currency, issueId);
     if (reverse)
     {
         finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, finalTakerPays));
@@ -278,7 +281,7 @@ CreateMetaDataForCancelOffer(
     int finalTakerPays)
 {
     ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::Issue issue1 = GetIssue(currency, issueId);
+    ripple::Issue const issue1 = GetIssue(currency, issueId);
     finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
     finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
@@ -327,7 +330,7 @@ CreatePaymentChannelLedgerObject(
     channel.setFieldU32(ripple::sfFlags, 0);
     uint8_t key[33] = {0};
     key[0] = 2;  // KeyType::secp256k1
-    ripple::Slice slice(key, 33);
+    ripple::Slice const slice(key, 33);
     channel.setFieldVL(ripple::sfPublicKey, slice);
     return channel;
 }
@@ -372,9 +375,9 @@ CreateOfferLedgerObject(
     offer.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
     offer.setFieldU32(ripple::sfSequence, 0);
     offer.setFieldU32(ripple::sfFlags, 0);
-    ripple::Issue issue1 = GetIssue(getsCurrency, getsIssueId);
+    ripple::Issue const issue1 = GetIssue(getsCurrency, getsIssueId);
     offer.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
-    ripple::Issue issue2 = GetIssue(paysCurrency, paysIssueId);
+    ripple::Issue const issue2 = GetIssue(paysCurrency, paysIssueId);
     offer.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue2, takerPays));
     offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{});
     offer.setFieldU64(ripple::sfBookNode, 0);
@@ -551,7 +554,7 @@ CreateMintNFTTxWithMetadata(
     tx.setFieldU32(ripple::sfNFTokenTaxon, nfTokenTaxon);
     tx.setFieldU32(ripple::sfSequence, seq);
     const char* key = "test";
-    ripple::Slice slice(key, 4);
+    ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
     // meta
@@ -607,7 +610,7 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
     tx.setFieldU32(ripple::sfSequence, seq);
     tx.setFieldH256(ripple::sfNFTokenBuyOffer, ripple::uint256{INDEX1});
     const char* key = "test";
-    ripple::Slice slice(key, 4);
+    ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
     // meta
@@ -655,7 +658,7 @@ CreateCancelNFTOffersTxWithMetadata(
     });
     tx.setFieldV256(ripple::sfNFTokenOffers, offers);
     const char* key = "test";
-    ripple::Slice slice(key, 4);
+    ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
     // meta
@@ -706,7 +709,7 @@ CreateCreateNFTOfferTxWithMetadata(
     tx.setFieldU32(ripple::sfSequence, seq);
     tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
     const char* key = "test";
-    ripple::Slice slice(key, 4);
+    ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
     // meta
@@ -735,7 +738,7 @@ CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments)
     auto amendments = ripple::STObject(ripple::sfLedgerEntry);
     amendments.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMENDMENTS);
     amendments.setFieldU32(ripple::sfFlags, 0);
-    ripple::STVector256 list(enabledAmendments);
+    ripple::STVector256 const list(enabledAmendments);
     amendments.setFieldV256(ripple::sfAmendments, list);
     return amendments;
 }

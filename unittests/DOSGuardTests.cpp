@@ -33,7 +33,7 @@ using namespace web;
 namespace json = boost::json;
 
 namespace {
-constexpr static auto JSONData = R"JSON(
+constexpr auto JSONData = R"JSON(
     {
         "dos_guard": {
             "max_fetches": 100,
@@ -47,7 +47,7 @@ constexpr static auto JSONData = R"JSON(
     }
 )JSON";
 
-constexpr static auto IP = "127.0.0.2";
+constexpr auto IP = "127.0.0.2";
 
 struct MockWhitelistHandler
 {
@@ -81,7 +81,7 @@ class DOSGuardTest : public NoLoggerFixture
 {
 protected:
     Config cfg{json::parse(JSONData)};
-    FakeSweepHandler sweepHandler;
+    FakeSweepHandler sweepHandler{};
     MockWhitelistHandlerType whitelistHandler;
     BasicDOSGuard<MockWhitelistHandlerType, FakeSweepHandler> guard{cfg, whitelistHandler, sweepHandler};
 };

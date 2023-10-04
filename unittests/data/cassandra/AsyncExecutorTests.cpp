@@ -35,12 +35,11 @@ class BackendCassandraAsyncExecutorTest : public SyncAsioContextTest
 
 TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 {
-    auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this](auto const&, auto&& cb) {
-            ctx.post([cb = std::move(cb)]() { cb({}); });
+            ctx.post([cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
@@ -49,7 +48,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
     auto called = std::atomic_bool{false};
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, std::move(statement), [&called, &work](auto&&) {
+    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, FakeStatement{}, [&called, &work](auto&&) {
         called = true;
         work.reset();
     });
@@ -61,7 +60,6 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMainThread)
 {
     auto callCount = std::atomic_int{0};
-    auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
     // emulate successfull execution after some attempts
@@ -69,9 +67,13 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3)
+            {
                 cb({});
+            }
             else
+            {
                 cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
+            }
 
             return FakeFutureWithCallback{};
         });
@@ -81,7 +83,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     auto called = std::atomic_bool{false};
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
-    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, std::move(statement), [&called, &work](auto&&) {
+    AsyncExecutor<FakeStatement, MockHandle>::run(ctx, handle, FakeStatement{}, [&called, &work](auto&&) {
         called = true;
         work.reset();
     });
@@ -94,7 +96,6 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
 TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOtherThread)
 {
     auto callCount = std::atomic_int{0};
-    auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
     auto threadedCtx = boost::asio::io_context{};
@@ -106,9 +107,13 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3)
+            {
                 cb({});
+            }
             else
+            {
                 cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
+            }
 
             return FakeFutureWithCallback{};
         });
@@ -119,7 +124,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     auto work2 = std::optional<boost::asio::io_context::work>{ctx};
 
     AsyncExecutor<FakeStatement, MockHandle>::run(
-        threadedCtx, handle, std::move(statement), [&called, &work, &work2](auto&&) {
+        threadedCtx, handle, FakeStatement{}, [&called, &work, &work2](auto&&) {
             called = true;
             work.reset();
             work2.reset();
@@ -134,7 +139,6 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
 
 TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCountExceeded)
 {
-    auto statement = FakeStatement{};
     auto handle = MockHandle{};
 
     // FakeRetryPolicy returns false for shouldRetry in which case we should
@@ -151,7 +155,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
     auto work = std::optional<boost::asio::io_context::work>{ctx};
 
     AsyncExecutor<FakeStatement, MockHandle, FakeRetryPolicy>::run(
-        ctx, handle, std::move(statement), [&called, &work](auto&& res) {
+        ctx, handle, FakeStatement{}, [&called, &work](auto&& res) {
             EXPECT_FALSE(res);
             EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_INTERNAL_ERROR);
             EXPECT_EQ(res.error().message(), "not a timeout");

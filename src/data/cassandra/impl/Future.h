@@ -38,7 +38,7 @@ struct Future : public ManagedObject<CassFuture>
 };
 
 void
-invokeHelper(CassFuture* ptr, void* self);
+invokeHelper(CassFuture* ptr, void* cbPtr);
 
 class FutureWithCallback : public Future
 {

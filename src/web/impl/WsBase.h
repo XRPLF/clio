@@ -78,11 +78,11 @@ public:
         boost::beast::flat_buffer&& buffer)
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
-        upgraded = true;
+        upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
         LOG(perfLog_.debug()) << tag() << "session created";
     }
 
-    virtual ~WsBase()
+    ~WsBase() override
     {
         LOG(perfLog_.debug()) << tag() << "session closed";
         dosGuard_.get().decrement(clientIp);
@@ -142,7 +142,7 @@ public:
     {
         boost::asio::dispatch(
             derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
-                messages_.push(std::move(msg));
+                messages_.push(msg);
                 maybeSendNext();
             });
     }
@@ -162,9 +162,13 @@ public:
             jsonResponse["warning"] = "load";
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
+            {
                 jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
+            }
             else
+            {
                 jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
+            }
 
             // Reserialize when we need to include this warning
             msg = boost::json::serialize(jsonResponse);

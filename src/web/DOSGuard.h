@@ -79,6 +79,9 @@ class BasicDOSGuard : public BaseDOSGuard
     util::Logger log_{"RPC"};
 
 public:
+    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u;
+    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;
+    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;
     /**
      * @brief Constructs a new DOS guard.
      *
@@ -91,9 +94,9 @@ public:
         WhitelistHandlerType const& whitelistHandler,
         SweepHandlerType& sweepHandler)
         : whitelistHandler_{std::cref(whitelistHandler)}
-        , maxFetches_{config.valueOr("dos_guard.max_fetches", 1000000u)}
-        , maxConnCount_{config.valueOr("dos_guard.max_connections", 20u)}
-        , maxRequestCount_{config.valueOr("dos_guard.max_requests", 20u)}
+        , maxFetches_{config.valueOr("dos_guard.max_fetches", DEFAULT_MAX_FETCHES)}
+        , maxConnCount_{config.valueOr("dos_guard.max_connections", DEFAULT_MAX_CONNECTIONS)}
+        , maxRequestCount_{config.valueOr("dos_guard.max_requests", DEFAULT_MAX_REQUESTS)}
     {
         sweepHandler.setup(this);
     }
@@ -125,7 +128,7 @@ public:
             return true;
 
         {
-            std::scoped_lock lck(mtx_);
+            std::scoped_lock const lck(mtx_);
             if (ipState_.find(ip) != ipState_.end())
             {
                 auto [transferedByte, requests] = ipState_.at(ip);
@@ -160,7 +163,7 @@ public:
     {
         if (whitelistHandler_.get().isWhiteListed(ip))
             return;
-        std::scoped_lock lck{mtx_};
+        std::scoped_lock const lck{mtx_};
         ipConnCount_[ip]++;
     }
 
@@ -174,7 +177,7 @@ public:
     {
         if (whitelistHandler_.get().isWhiteListed(ip))
             return;
-        std::scoped_lock lck{mtx_};
+        std::scoped_lock const lck{mtx_};
         assert(ipConnCount_[ip] > 0);
         ipConnCount_[ip]--;
         if (ipConnCount_[ip] == 0)
@@ -200,7 +203,7 @@ public:
             return true;
 
         {
-            std::scoped_lock lck(mtx_);
+            std::scoped_lock const lck(mtx_);
             ipState_[ip].transferedByte += numObjects;
         }
 
@@ -225,7 +228,7 @@ public:
             return true;
 
         {
-            std::scoped_lock lck(mtx_);
+            std::scoped_lock const lck(mtx_);
             ipState_[ip].requestsCount++;
         }
 
@@ -238,12 +241,12 @@ public:
     void
     clear() noexcept override
     {
-        std::scoped_lock lck(mtx_);
+        std::scoped_lock const lck(mtx_);
         ipState_.clear();
     }
 
 private:
-    [[nodiscard]] std::unordered_set<std::string> const
+    [[nodiscard]] std::unordered_set<std::string>
     getWhitelist(util::Config const& config) const
     {
         using T = std::unordered_set<std::string> const;

@@ -64,7 +64,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     // mock fetchLedgerByHash return empty
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{INDEX}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
@@ -90,7 +91,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -114,7 +116,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 
 TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
@@ -139,7 +142,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 
 TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -216,7 +220,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                                         "ledger_hash":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                                         "validated":true
                                     })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =

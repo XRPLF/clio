@@ -44,7 +44,7 @@ public:
     struct Output
     {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::set<std::string> receiveCurrencies;
         std::set<std::string> sendCurrencies;
         // validated should be sent via framework
@@ -65,8 +65,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},

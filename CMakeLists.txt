@@ -9,6 +9,7 @@ option (tests     "Build tests"                                       FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
+option (lint      "Run clang-tidy checks during compilation"          FALSE)
 # ========================================================================== #
 set (san "" CACHE STRING "Add sanitizer instrumentation")
 set (CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -18,6 +19,7 @@ set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # Include required modules
 include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
+include (CMake/ClangTidy.cmake)
 
 if (verbose)
   set (CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -92,6 +94,7 @@ target_sources (clio PRIVATE
   ## Feed
   src/feed/SubscriptionManager.cpp
   ## Web
+  src/web/impl/AdminVerificationStrategy.cpp
   src/web/IntervalSweepHandler.cpp
   ## RPC
   src/rpc/Errors.cpp
@@ -165,12 +168,12 @@ if (tests)
     unittests/etl/TransformerTests.cpp
     unittests/etl/CacheLoaderTests.cpp
     unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/LedgerPublisherTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTests.cpp
     unittests/rpc/CountersTests.cpp
-    unittests/rpc/AdminVerificationTests.cpp
     unittests/rpc/APIVersionTests.cpp
     unittests/rpc/ForwardingProxyTests.cpp
     unittests/rpc/WorkQueueTests.cpp
@@ -217,6 +220,7 @@ if (tests)
     unittests/data/cassandra/ExecutionStrategyTests.cpp
     unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
+    unittests/web/AdminVerificationTests.cpp
     unittests/web/ServerTests.cpp
     unittests/web/RPCServerHandlerTests.cpp
     unittests/web/WhitelistHandlerTests.cpp

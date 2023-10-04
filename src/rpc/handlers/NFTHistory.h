@@ -54,8 +54,8 @@ public:
     struct Output
     {
         std::string nftID;
-        uint32_t ledgerIndexMin;
-        uint32_t ledgerIndexMax;
+        uint32_t ledgerIndexMin{0};
+        uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         // TODO: use a better type than json
@@ -85,8 +85,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},

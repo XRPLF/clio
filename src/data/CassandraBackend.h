@@ -112,11 +112,11 @@ public:
         if (!rng)
             return {{}, {}};
 
-        Statement statement = [this, forward, &account]() {
+        Statement const statement = [this, forward, &account]() {
             if (forward)
                 return schema_->selectAccountTxForward.bind(account);
-            else
-                return schema_->selectAccountTx.bind(account);
+
+            return schema_->selectAccountTx.bind(account);
         }();
 
         auto cursor = cursorIn;
@@ -288,7 +288,8 @@ public:
     std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context yield) const override
     {
-        if (auto const res = executor_.read(yield, schema_->selectLedgerRange); res)
+        auto const res = executor_.read(yield, schema_->selectLedgerRange);
+        if (res)
         {
             auto const& results = res.value();
             if (not results.hasRows())
@@ -305,9 +306,13 @@ public:
             for (auto [seq] : extract<uint32_t>(results))
             {
                 if (idx == 0)
+                {
                     range.maxSequence = range.minSequence = seq;
+                }
                 else if (idx == 1)
+                {
                     range.maxSequence = seq;
+                }
 
                 ++idx;
             }
@@ -319,10 +324,7 @@ public:
                               << range.maxSequence;
             return range;
         }
-        else
-        {
-            LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
-        }
+        LOG(log_.error()) << "Could not fetch ledger range: " << res.error();
 
         return std::nullopt;
     }
@@ -417,11 +419,11 @@ public:
         if (!rng)
             return {{}, {}};
 
-        Statement statement = [this, forward, &tokenID]() {
+        Statement const statement = [this, forward, &tokenID]() {
             if (forward)
                 return schema_->selectNFTTxForward.bind(tokenID);
-            else
-                return schema_->selectNFTTx.bind(tokenID);
+
+            return schema_->selectNFTTx.bind(tokenID);
         }();
 
         auto cursor = cursorIn;
@@ -517,10 +519,8 @@ public:
                 auto [transaction, meta, seq, date] = *maybeValue;
                 return std::make_optional<TransactionAndMetadata>(transaction, meta, seq, date);
             }
-            else
-            {
-                LOG(log_.debug()) << "Could not fetch transaction - no rows";
-            }
+
+            LOG(log_.debug()) << "Could not fetch transaction - no rows";
         }
         else
         {
@@ -542,10 +542,8 @@ public:
                     return std::nullopt;
                 return *result;
             }
-            else
-            {
-                LOG(log_.debug()) << "Could not fetch successor - no rows";
-            }
+
+            LOG(log_.debug()) << "Could not fetch successor - no rows";
         }
         else
         {
@@ -558,7 +556,7 @@ public:
     std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context yield) const override
     {
-        if (hashes.size() == 0)
+        if (hashes.empty())
             return {};
 
         auto const numHashes = hashes.size();
@@ -583,8 +581,8 @@ public:
                 [](auto const& res) -> TransactionAndMetadata {
                     if (auto const maybeRow = res.template get<Blob, Blob, uint32_t, uint32_t>(); maybeRow)
                         return *maybeRow;
-                    else
-                        return {};
+
+                    return {};
                 });
         });
 
@@ -600,7 +598,7 @@ public:
         std::uint32_t const sequence,
         boost::asio::yield_context yield) const override
     {
-        if (keys.size() == 0)
+        if (keys.empty())
             return {};
 
         auto const numKeys = keys.size();
@@ -623,8 +621,8 @@ public:
             std::cbegin(entries), std::cend(entries), std::back_inserter(results), [](auto const& res) -> Blob {
                 if (auto const maybeValue = res.template get<Blob>(); maybeValue)
                     return *maybeValue;
-                else
-                    return {};
+
+                return {};
             });
 
         LOG(log_.trace()) << "Fetched " << numKeys << " objects";
@@ -715,7 +713,7 @@ public:
                 std::back_inserter(statements),
                 [this, &record](auto&& account) {
                     return schema_->insertAccountTx.bind(
-                        std::move(account),
+                        std::forward<decltype(account)>(account),
                         std::make_tuple(record.ledgerSequence, record.transactionIndex),
                         record.txHash);
                 });

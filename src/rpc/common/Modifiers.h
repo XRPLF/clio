@@ -85,8 +85,8 @@ struct ToLower final
      * @param key The key used to retrieve the modified value from the outer object
      * @return Possibly an error
      */
-    [[nodiscard]] MaybeError
-    modify(boost::json::value& value, std::string_view key) const
+    [[nodiscard]] static MaybeError
+    modify(boost::json::value& value, std::string_view key)
     {
         if (not value.is_object() or not value.as_object().contains(key.data()))
             return {};  // ignore. field does not exist, let 'required' fail instead

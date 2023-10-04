@@ -58,6 +58,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     std::reference_wrapper<web::DOSGuard> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
+    std::optional<std::string> adminPassword_;
 
 public:
     /**
@@ -68,18 +69,21 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
+     * @param adminPassword The optional password to verify admin role in requests
      */
     Detector(
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<HandlerType> const& handler)
+        std::shared_ptr<HandlerType> const& handler,
+        std::optional<std::string> adminPassword)
         : stream_(std::move(socket))
         , ctx_(ctx)
         , tagFactory_(std::cref(tagFactory))
         , dosGuard_(dosGuard)
         , handler_(handler)
+        , adminPassword_(std::move(adminPassword))
     {
     }
 
@@ -134,13 +138,20 @@ public:
                 return fail(ec, "SSL is not supported by this server");
 
             std::make_shared<SslSessionType<HandlerType>>(
-                stream_.release_socket(), ip, *ctx_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
+                stream_.release_socket(),
+                ip,
+                adminPassword_,
+                *ctx_,
+                tagFactory_,
+                dosGuard_,
+                handler_,
+                std::move(buffer_))
                 ->run();
             return;
         }
 
         std::make_shared<PlainSessionType<HandlerType>>(
-            stream_.release_socket(), ip, tagFactory_, dosGuard_, handler_, std::move(buffer_))
+            stream_.release_socket(), ip, adminPassword_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
             ->run();
     }
 };
@@ -166,6 +177,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
+    std::optional<std::string> adminPassword_;
 
 public:
     /**
@@ -177,6 +189,7 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
+     * @param adminPassword The optional password to verify admin role in requests
      */
     Server(
         boost::asio::io_context& ioc,
@@ -184,13 +197,15 @@ public:
         tcp::endpoint endpoint,
         util::TagDecoratorFactory tagFactory,
         web::DOSGuard& dosGuard,
-        std::shared_ptr<HandlerType> const& handler)
+        std::shared_ptr<HandlerType> const& handler,
+        std::optional<std::string> adminPassword)
         : ioc_(std::ref(ioc))
         , ctx_(ctx)
-        , tagFactory_(std::move(tagFactory))
+        , tagFactory_(tagFactory)
         , dosGuard_(std::ref(dosGuard))
         , handler_(handler)
         , acceptor_(boost::asio::make_strand(ioc))
+        , adminPassword_(std::move(adminPassword))
     {
         boost::beast::error_code ec;
 
@@ -244,7 +259,7 @@ private:
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
-                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_)
+                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminPassword_)
                 ->run();
         }
 
@@ -275,16 +290,23 @@ make_HttpServer(
     web::DOSGuard& dosGuard,
     std::shared_ptr<HandlerType> const& handler)
 {
-    static util::Logger log{"WebServer"};
+    static util::Logger const log{"WebServer"};
     if (!config.contains("server"))
         return nullptr;
 
     auto const serverConfig = config.section("server");
     auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
     auto const port = serverConfig.value<unsigned short>("port");
+    auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
-        ioc, ctx, boost::asio::ip::tcp::endpoint{address, port}, util::TagDecoratorFactory(config), dosGuard, handler);
+        ioc,
+        ctx,
+        boost::asio::ip::tcp::endpoint{address, port},
+        util::TagDecoratorFactory(config),
+        dosGuard,
+        handler,
+        std::move(adminPassword));
 
     server->run();
     return server;

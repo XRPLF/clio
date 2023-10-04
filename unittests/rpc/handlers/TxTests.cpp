@@ -83,7 +83,8 @@ TEST_F(RPCTxTest, InvalidLgrRange)
 
 TEST_F(RPCTxTest, TxnNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
@@ -106,7 +107,8 @@ TEST_F(RPCTxTest, TxnNotFound)
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
@@ -134,7 +136,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(1);     // min
     mockBackendPtr->updateRange(1000);  // max
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
@@ -198,7 +201,8 @@ TEST_F(RPCTxTest, DefaultParameter)
             "ledger_index":100,
             "validated": true
     })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -231,7 +235,8 @@ TEST_F(RPCTxTest, ReturnBinary)
         "ledger_index":100,
         "validated": true
     })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -314,7 +319,8 @@ TEST_F(RPCTxTest, MintNFT)
         NFTID,
         NFTID);
     TransactionAndMetadata tx = CreateMintNFTTxWithMetadata(ACCOUNT, 1, 50, 123, NFTID);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     tx.date = 123456;
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
@@ -336,7 +342,8 @@ TEST_F(RPCTxTest, MintNFT)
 TEST_F(RPCTxTest, NFTAcceptOffer)
 {
     TransactionAndMetadata tx = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     tx.date = 123456;
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
@@ -359,7 +366,8 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 {
     std::vector<std::string> ids{NFTID, NFTID2};
     TransactionAndMetadata tx = CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 50, ids);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     tx.date = 123456;
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
@@ -373,22 +381,27 @@ TEST_F(RPCTxTest, NFTCancelOffer)
             }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
+        std::cout << "output: " << output.value() << std::endl;
         ASSERT_TRUE(output);
 
         for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
         {
             auto const idStr = id.as_string();
-            ids.erase(std::find(ids.begin(), ids.end(), std::string{idStr.c_str(), idStr.size()}));
+            const auto it = std::find(ids.begin(), ids.end(), idStr);
+            ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
+            ids.erase(it);
         }
 
         EXPECT_TRUE(ids.empty());
     });
+    std::cout << "After spawn" << std::endl;
 }
 
 TEST_F(RPCTxTest, NFTCreateOffer)
 {
     TransactionAndMetadata tx = CreateCreateNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID, 123, NFTID2);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     tx.date = 123456;
     tx.ledgerSequence = 100;
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));

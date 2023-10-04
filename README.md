@@ -237,6 +237,34 @@ Clio will fallback to hardcoded defaults when not specified in the config file o
 of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVersion.h`.
 > **Note:** See `example-config.json` for more details. 
 
+## Admin rights for requests
+
+By default clio checks admin privileges by IP address from request (only `127.0.0.1` is considered to be an admin).
+It is not very secure because the IP could be spoofed.
+For a better security `admin_password` could be provided in the `server` section of clio's config:
+```json
+"server": {
+    "admin_password": "secret"
+}
+```
+If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
+Exactly equal password gains admin rights for the request or a websocket connection.
+
+## Using clang-tidy for static analysis
+
+Minimum clang-tidy version required is 16.0.
+Clang-tidy could be run by cmake during building the project.
+For that provide the option `-o lint=True` for `conan install` command:
+```sh
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=True
+```
+By default cmake will try to find clang-tidy automatically in your system.
+To force cmake use desired binary set `CLIO_CLANG_TIDY_BIN` environment variable as path to clang-tidy binary.
+E.g.:
+```sh
+export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@16/bin/clang-tidy
+```
+
 ## Developing against `rippled` in standalone mode
 
 If you wish you develop against a `rippled` instance running in standalone

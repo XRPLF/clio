@@ -156,7 +156,8 @@ TEST_P(AccountOfferParameterTest, InvalidParams)
 
 TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -184,7 +185,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
 TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -211,7 +213,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
 TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -237,7 +240,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
 
 TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -291,7 +295,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         ACCOUNT,
         ACCOUNT2);
     auto constexpr ledgerSeq = 30;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);         // min
     mockBackendPtr->updateRange(ledgerSeq);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
@@ -340,7 +345,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
 TEST_F(RPCAccountOffersHandlerTest, Limit)
 {
     auto constexpr ledgerSeq = 30;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);         // min
     mockBackendPtr->updateRange(ledgerSeq);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
@@ -392,7 +398,8 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
 TEST_F(RPCAccountOffersHandlerTest, Marker)
 {
     auto constexpr ledgerSeq = 30;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);         // min
     mockBackendPtr->updateRange(ledgerSeq);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
@@ -449,7 +456,8 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
 TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
 {
     auto constexpr ledgerSeq = 30;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);         // min
     mockBackendPtr->updateRange(ledgerSeq);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
@@ -488,7 +496,8 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
 TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
 {
     auto constexpr ledgerSeq = 30;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);         // min
     mockBackendPtr->updateRange(ledgerSeq);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
@@ -518,6 +527,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
         INDEX1);
     offer.setFieldU32(ripple::sfExpiration, 123);
 
+    bbs.reserve(AccountOffersHandler::LIMIT_MIN + 1);
     for (auto i = 0; i < AccountOffersHandler::LIMIT_MIN + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
 
@@ -542,7 +552,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
 TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
 {
     auto constexpr ledgerSeq = 30;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);         // min
     mockBackendPtr->updateRange(ledgerSeq);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, ledgerSeq);
@@ -572,6 +583,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
         toBase58(ripple::xrpAccount()),
         INDEX1);
     offer.setFieldU32(ripple::sfExpiration, 123);
+    bbs.reserve(AccountOffersHandler::LIMIT_MAX + 1);
     for (auto i = 0; i < AccountOffersHandler::LIMIT_MAX + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
 

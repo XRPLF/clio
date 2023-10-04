@@ -188,8 +188,8 @@ private:
                 handleAffectedNode(node);
         }
 
-        std::optional<uint32_t>
-        shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx) const
+        static std::optional<uint32_t>
+        shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx)
         {
             switch (tx->getFieldU16(ripple::sfTransactionType))
             {
@@ -242,7 +242,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
  * @param lgrInfo The ledger header
  * @param transactions The vector of transactions with heir metadata
  */
-[[nodiscard]] boost::json::object const
+[[nodiscard]] boost::json::object
 computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
 
 }  // namespace rpc

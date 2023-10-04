@@ -219,10 +219,14 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
-            if (callCount == 1)  // error happens on one of the entries
+            if (callCount == 1)
+            {  // error happens on one of the entries
                 cb({CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}});
+            }
             else
+            {
                 cb({});  // pretend we got data
+            }
             ++callCount;
             return FakeFutureWithCallback{};
         });
@@ -282,7 +286,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
         handle, asyncExecute(An<std::vector<FakeStatement> const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this, &callCount](auto const&, auto&& cb) {
             // run on thread to emulate concurrency model of real asyncExecute
-            boost::asio::post(ctx, [&callCount, cb = std::move(cb)] {
+            boost::asio::post(ctx, [&callCount, cb = std::forward<decltype(cb)>(cb)] {
                 ++callCount;
                 cb({});  // pretend we got data
             });

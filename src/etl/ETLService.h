@@ -46,7 +46,7 @@ struct NFTTransactionsData;
 struct NFTsData;
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 /**
  * @brief This namespace contains everything to do with the ETL and ETL sources.
@@ -73,11 +73,12 @@ class ETLService
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using CacheLoaderType = etl::detail::CacheLoader<data::LedgerCache>;
+    using CacheType = data::LedgerCache;
+    using CacheLoaderType = etl::detail::CacheLoader<CacheType>;
     using LedgerFetcherType = etl::detail::LedgerFetcher<LoadBalancerType>;
     using ExtractorType = etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
     using LedgerLoaderType = etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType>;
+    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType, CacheType>;
     using AmendmentBlockHandlerType = etl::detail::AmendmentBlockHandler<>;
     using TransformerType =
         etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
@@ -252,7 +253,7 @@ private:
      * @return true if stopping; false otherwise
      */
     bool
-    isStopping()
+    isStopping() const
     {
         return state_.isStopping;
     }
@@ -265,7 +266,7 @@ private:
      * @return the number of markers
      */
     std::uint32_t
-    getNumMarkers()
+    getNumMarkers() const
     {
         return numMarkers_;
     }

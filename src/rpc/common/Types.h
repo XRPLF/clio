@@ -28,13 +28,15 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 
+namespace etl {
 class LoadBalancer;
+}  // namespace etl
 namespace web {
 struct ConnectionBase;
-}
+}  // namespace web
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 namespace rpc {
 
@@ -100,7 +102,7 @@ using Result = std::variant<Status, boost::json::object>;
 struct AccountCursor
 {
     ripple::uint256 index;
-    std::uint32_t hint;
+    std::uint32_t hint{};
 
     std::string
     toString() const

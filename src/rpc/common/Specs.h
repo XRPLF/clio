@@ -85,7 +85,7 @@ struct RpcSpec final
     RpcSpec(const RpcSpec& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
     {
         for (auto& f : additionalFields)
-            fields_.push_back(std::move(f));
+            fields_.push_back(f);
     }
 
     /**

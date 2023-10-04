@@ -49,7 +49,7 @@ public:
     struct Output
     {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::vector<std::string> problems;
         // TODO: use better type than json
         std::optional<boost::json::array> transactions;
@@ -73,8 +73,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpecV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},

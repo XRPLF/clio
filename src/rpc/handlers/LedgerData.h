@@ -53,7 +53,7 @@ public:
 
     struct Output
     {
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         std::optional<boost::json::object> header;
         boost::json::array states;
@@ -84,8 +84,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static const auto rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
