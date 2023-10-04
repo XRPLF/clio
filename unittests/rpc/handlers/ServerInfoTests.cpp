@@ -35,7 +35,6 @@ constexpr static auto CLIENTIP = "1.1.1.1";
 class RPCServerInfoHandlerTest : public HandlerBaseTest,
                                  public MockLoadBalancerTest,
                                  public MockSubscriptionManagerTest,
-                                 public MockETLServiceTest,
                                  public MockCountersTest
 {
 protected:
@@ -45,7 +44,6 @@ protected:
         HandlerBaseTest::SetUp();
         MockLoadBalancerTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        MockETLServiceTest::SetUp();
         MockCountersTest::SetUp();
     }
 
@@ -53,7 +51,6 @@ protected:
     TearDown() override
     {
         MockCountersTest::TearDown();
-        MockETLServiceTest::TearDown();
         MockSubscriptionManagerTest::TearDown();
         MockLoadBalancerTest::TearDown();
         HandlerBaseTest::TearDown();

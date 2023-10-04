@@ -20,6 +20,7 @@
 #pragma once
 
 #include <data/BackendInterface.h>
+#include <etl/ETLService.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
@@ -27,19 +28,16 @@
 
 namespace rpc {
 
-/**
- * @brief The transaction_entry method retrieves information on a single transaction from a specific ledger version.
- *
- * For more details see: https://xrpl.org/transaction_entry.html
- */
-class TransactionEntryHandler
+template <typename ETLServiceType>
+class BaseTransactionEntryHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<ETLServiceType const> etl_;
 
 public:
     struct Output
     {
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         // TODO: use a better type for this
         boost::json::object metadata;
@@ -57,8 +55,10 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
-    TransactionEntryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    BaseTransactionEntryHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<ETLServiceType const> const& etl)
+        : sharedPtrBackend_(sharedPtrBackend), etl_(etl)
     {
     }
 
@@ -77,14 +77,85 @@ public:
     }
 
     Result
-    process(Input input, Context const& ctx) const;
+    process(Input input, Context const& ctx) const
+    {
+        auto const range = sharedPtrBackend_->fetchLedgerRange();
+        auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+
+        if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+            return Error{*status};
+
+        auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+        auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
+        // Note: transaction_entry is meant to only search a specified ledger for
+        // the specified transaction. tx searches the entire range of history. For
+        // rippled, having two separate commands made sense, as tx would use SQLite
+        // and transaction_entry used the nodestore. For clio though, there is no
+        // difference between the implementation of these two, as clio only stores
+        // transactions in a transactions table, where the key is the hash. However,
+        // the API for transaction_entry says the method only searches the specified
+        // ledger; we simulate that here by returning not found if the transaction
+        // is in a different ledger than the one specified.
+        if (!dbRet || dbRet->ledgerSequence != lgrInfo.seq)
+            return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
+
+        auto output = BaseTransactionEntryHandler::Output{};
+        auto [txn, meta] = toExpandedJson(*dbRet, NFTokenjson::DISABLE, etl_->getNetworkID());
+
+        output.tx = std::move(txn);
+        output.metadata = std::move(meta);
+        output.ledgerIndex = lgrInfo.seq;
+        output.ledgerHash = ripple::strHex(lgrInfo.hash);
+
+        return output;
+    }
 
 private:
     friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
+    {
+        jv = {
+            {JS(validated), output.validated},
+            {JS(metadata), output.metadata},
+            {JS(tx_json), output.tx},
+            {JS(ledger_index), output.ledgerIndex},
+            {JS(ledger_hash), output.ledgerHash},
+        };
+    }
 
     friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
+    {
+        auto input = BaseTransactionEntryHandler::Input{};
+        auto const& jsonObject = jv.as_object();
+
+        input.txHash = jv.at(JS(tx_hash)).as_string().c_str();
+
+        if (jsonObject.contains(JS(ledger_hash)))
+            input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+
+        if (jsonObject.contains(JS(ledger_index)))
+        {
+            if (!jsonObject.at(JS(ledger_index)).is_string())
+            {
+                input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+            }
+            else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            {
+                input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            }
+        }
+
+        return input;
+    }
 };
+
+/**
+ * @brief The transaction_entry method retrieves information on a single transaction from a specific ledger version.
+ *
+ * For more details see: https://xrpl.org/transaction_entry.html
+ */
+using TransactionEntryHandler = BaseTransactionEntryHandler<etl::ETLService>;
 
 }  // namespace rpc

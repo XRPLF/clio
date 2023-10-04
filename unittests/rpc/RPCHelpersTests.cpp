@@ -328,10 +328,10 @@ TEST_F(RPCHelpersTest, DecodeCTIDString)
 
 TEST_F(RPCHelpersTest, DecodeCTIDInt)
 {
-    auto const ctid = decodeCTID(0xC000123400670089);
+    auto const ctid = decodeCTID(0xC000123400670089ULL);
     EXPECT_TRUE(ctid);
     EXPECT_EQ(*ctid, std::make_tuple(0x1234, 0x67, 0x89));
-    EXPECT_FALSE(decodeCTID(0xF000123400670089));
+    EXPECT_FALSE(decodeCTID(0xF000123400670089ULL));
 }
 
 TEST_F(RPCHelpersTest, DecodeInvalidCTID)

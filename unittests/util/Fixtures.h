@@ -289,7 +289,7 @@ protected:
  * @brief Fixture with an mock backend and an embedded boost::asio context
  * Handler unittest base class
  */
-struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest
+struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest, public MockETLServiceTest
 {
 protected:
     void
@@ -297,10 +297,12 @@ protected:
     {
         MockBackendTest::SetUp();
         SyncAsioContextTest::SetUp();
+        MockETLServiceTest::SetUp();
     }
     void
     TearDown() override
     {
+        MockETLServiceTest::TearDown();
         SyncAsioContextTest::TearDown();
         MockBackendTest::TearDown();
     }

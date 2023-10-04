@@ -115,7 +115,6 @@ target_sources (clio PRIVATE
   src/rpc/handlers/AccountNFTs.cpp
   src/rpc/handlers/AccountObjects.cpp
   src/rpc/handlers/AccountOffers.cpp
-  src/rpc/handlers/AccountTx.cpp
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
   src/rpc/handlers/DepositAuthorized.cpp
@@ -131,7 +130,6 @@ target_sources (clio PRIVATE
   src/rpc/handlers/NFTSellOffers.cpp
   src/rpc/handlers/NoRippleCheck.cpp
   src/rpc/handlers/Random.cpp
-  src/rpc/handlers/TransactionEntry.cpp
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp

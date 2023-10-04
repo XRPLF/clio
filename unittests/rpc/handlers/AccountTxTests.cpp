@@ -37,6 +37,8 @@ constexpr static auto NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C9
 constexpr static auto NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr static auto NFTID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 
+using TestAccountTxHandler = BaseAccountTxHandler<MockETLService>;
+
 class RPCAccountTxHandlerTest : public HandlerBaseTest
 {
 };
@@ -355,15 +357,13 @@ TEST_P(AccountTxParameterTest, CheckParams)
     auto const testBundle = GetParam();
     auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
-    std::cout << "Before parse" << std::endl;
     auto const req = json::parse(testBundle.testJson);
-    std::cout << "After parse" << std::endl;
     if (testBundle.expectedError.has_value())
     {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
         runSpawn([&, this](auto yield) {
-            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
             auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
             ASSERT_FALSE(output);
             auto const err = rpc::makeError(output.error());
@@ -384,7 +384,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
         EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
-            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
             auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
             EXPECT_TRUE(output);
         });
@@ -464,8 +464,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(2);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -506,8 +510,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(2);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -548,8 +556,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(2);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -590,8 +602,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(2);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -633,7 +649,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -682,8 +698,12 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(2);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -731,8 +751,12 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -762,7 +786,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -789,7 +813,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -829,8 +853,12 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -873,8 +901,12 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -911,8 +943,12 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -953,8 +989,12 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1183,8 +1223,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
         .Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(transactions.size());
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1496,9 +1540,13 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestAccountTxHandler{mockBackendPtr, mockETLServicePtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         EXPECT_TRUE(output);

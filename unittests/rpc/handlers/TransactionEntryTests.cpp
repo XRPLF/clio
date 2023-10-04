@@ -27,6 +27,7 @@
 using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
+using TestTransactionEntryHandler = BaseTransactionEntryHandler<MockETLService>;
 
 constexpr static auto INDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
@@ -41,7 +42,7 @@ class RPCTransactionEntryHandlerTest : public HandlerBaseTest
 TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const output = handler.process(json::parse("{}"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -53,7 +54,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const output = handler.process(json::parse(R"({"tx_hash":"123"})"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -79,7 +80,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
         INDEX,
         TXNID));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -105,7 +106,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
         }})",
         TXNID));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -126,7 +127,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}"
@@ -159,7 +160,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}",
@@ -236,8 +237,12 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TestTransactionEntryHandler{mockBackendPtr, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}",

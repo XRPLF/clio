@@ -39,20 +39,18 @@ constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 constexpr static auto CTID = "C002807000010002";  // seq 163952 txindex 1 netid 2
 constexpr static auto SEQ_FROM_CTID = 163952;
 
-class RPCTxTest : public HandlerBaseTest, public MockETLServiceTest
+class RPCTxTest : public HandlerBaseTest
 {
 protected:
     void
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        MockETLServiceTest::SetUp();
     }
 
     void
     TearDown() override
     {
-        MockETLServiceTest::TearDown();
         HandlerBaseTest::TearDown();
     }
 };
