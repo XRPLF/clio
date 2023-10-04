@@ -106,7 +106,8 @@ CreatePaymentTransactionMetaObject(
     std::string_view accountId1,
     std::string_view accountId2,
     int finalBalance1,
-    int finalBalance2)
+    int finalBalance2,
+    uint32_t transactionIndex)
 {
     ripple::STObject finalFields(ripple::sfFinalFields);
     finalFields.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId1));
@@ -128,7 +129,7 @@ CreatePaymentTransactionMetaObject(
     metaArray.push_back(node2);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
 

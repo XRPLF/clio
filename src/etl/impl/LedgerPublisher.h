@@ -163,7 +163,7 @@ public:
                     [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
                 assert(fees);
 
-                std::vector<data::TransactionAndMetadata> const transactions = data::synchronousAndRetryOnTimeout(
+                std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
                     [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
 
                 auto const ledgerRange = backend_->fetchLedgerRange();
@@ -174,7 +174,17 @@ public:
 
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
-                for (auto const& txAndMeta : transactions)
+                // order with transaction index
+                std::sort(transactions.begin(), transactions.end(), [](auto const& t1, auto const& t2) {
+                    ripple::SerialIter iter1{t1.metadata.data(), t1.metadata.size()};
+                    ripple::STObject const object1(iter1, ripple::sfMetadata);
+                    ripple::SerialIter iter2{t2.metadata.data(), t2.metadata.size()};
+                    ripple::STObject const object2(iter2, ripple::sfMetadata);
+                    return object1.getFieldU32(ripple::sfTransactionIndex) <
+                        object2.getFieldU32(ripple::sfTransactionIndex);
+                });
+
+                for (auto& txAndMeta : transactions)
                     subscriptions_->pubTransaction(txAndMeta, lgrInfo);
 
                 subscriptions_->pubBookChanges(lgrInfo, transactions);
