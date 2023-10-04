@@ -39,9 +39,9 @@ class BaseTxHandler
 public:
     struct Output
     {
-        uint32_t date;
+        uint32_t date{};
         std::string hash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::optional<boost::json::object> meta;
         std::optional<boost::json::object> tx;
         std::optional<std::string> metaStr;
@@ -116,10 +116,12 @@ public:
             auto const [lgrSeq, txnIdx, netId] = *ctid;
             // when current network id is available, let us check the network id from parameter
             if (currentNetId && netId != *currentNetId)
+            {
                 return Error{Status{
                     RippledError::rpcWRONG_NETWORK,
                     fmt::format(
                         "Wrong network. You should submit this request to a node running on NetworkID: {}", netId)}};
+            }
 
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
         }
@@ -176,7 +178,10 @@ public:
         {
             auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
             if (txnIdx <= 0xFFFFU && output.ledgerIndex < 0x0FFF'FFFFUL && currentNetId && *currentNetId <= 0xFFFFU)
-                output.ctid = rpc::encodeCTID(output.ledgerIndex, (uint16_t)txnIdx, (uint16_t)*currentNetId);
+            {
+                output.ctid = rpc::encodeCTID(
+                    output.ledgerIndex, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId));
+            }
         }
 
         return output;

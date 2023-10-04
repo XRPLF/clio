@@ -107,7 +107,7 @@ TEST_F(RPCTxTest, TxnNotFound)
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -138,7 +138,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -172,7 +172,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -251,7 +251,7 @@ TEST_F(RPCTxTest, ViaTransaction)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -290,7 +290,7 @@ TEST_F(RPCTxTest, ReturnBinary)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -382,7 +382,7 @@ TEST_F(RPCTxTest, MintNFT)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -410,7 +410,7 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -439,7 +439,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -478,7 +478,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -548,7 +548,7 @@ TEST_F(RPCTxTest, CTIDInvalidType)
 
 TEST_F(RPCTxTest, CTIDInvalidString)
 {
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(5));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -566,7 +566,7 @@ TEST_F(RPCTxTest, CTIDInvalidString)
 
 TEST_F(RPCTxTest, CTIDNotMatch)
 {
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(5));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -634,7 +634,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
             "ledger_index":100,
             "validated": true
     })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -644,7 +644,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(2));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 
@@ -710,7 +710,7 @@ TEST_F(RPCTxTest, ViaCTID)
     }})",
         CTID,
         SEQ_FROM_CTID);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx1;
     tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
@@ -727,7 +727,7 @@ TEST_F(RPCTxTest, ViaCTID)
     ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _))
         .WillByDefault(Return(std::vector{tx1, tx2}));
 
-    auto const rawETLPtr = static_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ON_CALL(*rawETLPtr, getNetworkID).WillByDefault(Return(2));
     EXPECT_CALL(*rawETLPtr, getNetworkID).Times(1);
 

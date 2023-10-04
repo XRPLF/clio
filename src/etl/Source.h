@@ -345,11 +345,13 @@ public:
             // for RPC resources. See "secure_gateway" in
             // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
             if (clientIp)
+            {
                 ws->set_option(websocket::stream_base::decorator([&clientIp](websocket::request_type& req) {
                     req.set(
                         http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
                     req.set(http::field::forwarded, "for=" + *clientIp);
                 }));
+            }
 
             ws->async_handshake(ip_, "/", yield[ec]);
             if (ec)

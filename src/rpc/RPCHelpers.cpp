@@ -198,12 +198,20 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled)
+toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled, std::optional<uint16_t> networkId)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
+
+    if (networkId)
+    {  // networkId is available, insert ctid field to tx
+        if (auto const ctid = rpc::encodeCTID(meta->getLgrSeq(), meta->getIndex(), *networkId))
+        {
+            txnJson[JS(ctid)] = *ctid;
+        }
+    }
 
     if (nftEnabled == NFTokenjson::ENABLE)
     {
@@ -1393,7 +1401,7 @@ encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
     if (ledgerSeq > 0x0FFF'FFFF)
         return {};
 
-    uint64_t ctidValue = ((0xC000'0000ULL + static_cast<uint64_t>(ledgerSeq)) << 32) +
+    uint64_t const ctidValue = ((0xC000'0000ULL + static_cast<uint64_t>(ledgerSeq)) << 32) +
         (static_cast<uint64_t>(txnIndex) << 16) + networkId;
 
     std::stringstream buffer;

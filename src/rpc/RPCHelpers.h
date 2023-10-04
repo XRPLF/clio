@@ -64,7 +64,10 @@ std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta co
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled = NFTokenjson::DISABLE);
+toExpandedJson(
+    data::TransactionAndMetadata const& blobs,
+    NFTokenjson nftEnabled = NFTokenjson::DISABLE,
+    std::optional<uint16_t> networkId = std::nullopt);
 
 bool
 insertDeliveredAmount(
@@ -231,35 +234,42 @@ encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept;
 
 template <typename T>
 inline std::optional<std::tuple<uint32_t, uint16_t, uint16_t>>
-decodeCTID(const T ctid) noexcept
+decodeCTID(T const ctid) noexcept
 {
-    uint64_t ctidValue{0};
-    if constexpr (
-        std::is_same_v<T, std::string> || std::is_same_v<T, char*> || std::is_same_v<T, const char*> ||
-        std::is_same_v<T, std::string_view>)
-    {
-        std::string const ctidString(ctid);
+    auto const getCTID64 = [](T const ctid) noexcept -> std::optional<uint64_t> {
+        if constexpr (
+            std::is_same_v<T, std::string> || std::is_same_v<T, char*> || std::is_same_v<T, const char*> ||
+            std::is_same_v<T, std::string_view>)
+        {
+            std::string const ctidString(ctid);
 
-        if (ctidString.length() != 16)
+            if (ctidString.length() != 16)
+                return {};
+
+            if (!boost::regex_match(ctidString, boost::regex("^[0-9A-F]+$")))
+                return {};
+
+            return std::stoull(ctidString, nullptr, 16);
+        }
+        else if constexpr (std::is_same_v<T, uint64_t>)
+        {
+            return ctid;
+        }
+        else
+        {
             return {};
+        }
+    };
 
-        if (!boost::regex_match(ctidString, boost::regex("^[0-9A-F]+$")))
-            return {};
-
-        ctidValue = std::stoull(ctidString, nullptr, 16);
-    }
-    else if constexpr (std::is_integral_v<T>)
-        ctidValue = ctid;
-    else
-        return {};
+    auto const ctidValue = getCTID64(ctid).value_or(0);
 
     if ((ctidValue & 0xF000'0000'0000'0000ULL) != 0xC000'0000'0000'0000ULL)
         return {};
 
-    uint32_t ledger_seq = (ctidValue >> 32) & 0xFFFF'FFFUL;
-    uint16_t txn_index = (ctidValue >> 16) & 0xFFFFU;
-    uint16_t network_id = ctidValue & 0xFFFFU;
-    return {{ledger_seq, txn_index, network_id}};
+    uint32_t const ledgerSeq = (ctidValue >> 32) & 0xFFFF'FFFUL;
+    uint16_t const txnIndex = (ctidValue >> 16) & 0xFFFFU;
+    uint16_t const networkId = ctidValue & 0xFFFFU;
+    return {{ledgerSeq, txnIndex, networkId}};
 }
 
 template <class T>
