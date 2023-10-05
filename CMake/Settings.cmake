@@ -17,11 +17,9 @@ set(COMPILER_FLAGS
   -pedantic
   -Wpedantic
   -Wunused
-  -Wreorder-init-list
 )
 
-# TODO: use is_gcc instead
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT lint)
+if (is_gcc AND NOT lint)
   list(APPEND COMPILER_FLAGS
     -Wduplicated-branches
     -Wduplicated-cond
@@ -30,10 +28,15 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT lint)
   )
 endif ()
 
-# TODO: use is_clang/is_appleclang instead
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (is_clang)
   list(APPEND COMPILER_FLAGS
     -Wshadow # gcc is to aggressive with shadowing https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
+  )
+endif ()
+
+if (is_appleclang)
+  list(APPEND COMPILER_FLAGS
+    -Wreorder-init-list
   )
 endif ()
 
