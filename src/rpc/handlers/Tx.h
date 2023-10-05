@@ -39,12 +39,12 @@ public:
     struct Output
     {
         uint32_t date = 0u;
-        std::string hash;
+        std::string hash{};
         uint32_t ledgerIndex = 0u;
-        std::optional<boost::json::object> meta;
-        std::optional<boost::json::object> tx;
-        std::optional<std::string> metaStr;
-        std::optional<std::string> txStr;
+        std::optional<boost::json::object> meta{};
+        std::optional<boost::json::object> tx{};
+        std::optional<std::string> metaStr{};
+        std::optional<std::string> txStr{};
         uint32_t apiVersion = 0u;
         bool validated = true;
     };
