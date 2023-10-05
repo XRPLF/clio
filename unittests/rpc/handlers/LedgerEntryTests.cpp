@@ -103,7 +103,7 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "ledgerIndexMalformed"},
 
-        ParamTestCaseBundle{"UnknownOption", R"({})", "unknownOption", "Unknown option."},
+        ParamTestCaseBundle{"UnknownOption", R"({})", "invalidParams", "Invalid parameters."},
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthType",
@@ -1094,8 +1094,8 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "unknownOption");
-        EXPECT_EQ(err.at("error_message").as_string(), "Unknown option.");
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
 }
 
@@ -1107,7 +1107,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion1)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
+        EXPECT_EQ(err.at("error").as_string(), "unknownOption");
+        EXPECT_EQ(err.at("error_message").as_string(), "Unknown option.");
     });
 }
