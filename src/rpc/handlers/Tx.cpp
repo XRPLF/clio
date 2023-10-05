@@ -36,7 +36,7 @@ TxHandler::process(Input input, Context const& ctx) const
             return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
     }
 
-    auto output = TxHandler::Output{};
+    auto output = TxHandler::Output{.apiVersion = ctx.apiVersion};
     auto const dbResponse =
         sharedPtrBackend_->fetchTransaction(ripple::uint256{std::string_view(input.transaction)}, ctx.yield);
 
@@ -55,7 +55,6 @@ TxHandler::process(Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
     }
 
-    // clio does not implement 'inLedger' which is a deprecated field
     if (!input.binary)
     {
         auto const [txn, meta] = toExpandedJson(*dbResponse, NFTokenjson::ENABLE);
@@ -94,6 +93,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Outpu
     obj[JS(validated)] = output.validated;
     obj[JS(date)] = output.date;
     obj[JS(ledger_index)] = output.ledgerIndex;
+
+    if (output.apiVersion < 2)
+        obj[JS(inLedger)] = output.ledgerIndex;
 
     jv = std::move(obj);
 }

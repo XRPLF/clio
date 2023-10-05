@@ -355,9 +355,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
     auto const testBundle = GetParam();
     auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
-    std::cout << "Before parse" << std::endl;
     auto const req = json::parse(testBundle.testJson);
-    std::cout << "After parse" << std::endl;
     if (testBundle.expectedError.has_value())
     {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());

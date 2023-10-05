@@ -45,6 +45,7 @@ public:
         std::optional<boost::json::object> tx;
         std::optional<std::string> metaStr;
         std::optional<std::string> txStr;
+        uint32_t apiVersion;
         bool validated = true;
     };
 
