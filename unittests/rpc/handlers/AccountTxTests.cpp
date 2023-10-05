@@ -1424,7 +1424,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{.apiVersion = 2u, .yield = yield});
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
@@ -1780,7 +1780,7 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{.apiVersion = testBundle.apiVersion, .yield = yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
         EXPECT_TRUE(output);
 
         auto const transactions = output->at("transactions").as_array();

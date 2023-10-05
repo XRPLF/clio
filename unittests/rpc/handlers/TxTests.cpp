@@ -223,7 +223,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
                 "transaction": "{}"
             }})",
             TXNID));
-        auto const output = handler.process(req, Context{.apiVersion = 1u, .yield = yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
         auto v1Output = json::parse(DEFAULT_OUT);
@@ -255,7 +255,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
                 "transaction": "{}"
             }})",
             TXNID));
-        auto const output = handler.process(req, Context{.apiVersion = 2u, .yield = yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(DEFAULT_OUT));
     });
