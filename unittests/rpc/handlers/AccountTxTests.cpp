@@ -47,7 +47,7 @@ struct AccountTxParamTestCaseBundle
     std::string testJson;
     std::optional<std::string> expectedError;
     std::optional<std::string> expectedErrorMessage;
-    std::uint32_t apiVersion = 2;
+    std::uint32_t apiVersion = 2u;
 };
 
 // parameterized test cases for parameters check
@@ -353,10 +353,9 @@ TEST_P(AccountTxParameterTest, CheckParams)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const testBundle = GetParam();
-    auto* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    std::cout << "Before parse" << std::endl;
+    auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     auto const req = json::parse(testBundle.testJson);
-    std::cout << "After parse" << std::endl;
     if (testBundle.expectedError.has_value())
     {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
@@ -962,200 +961,204 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
     });
 }
 
-TEST_F(RPCAccountTxHandlerTest, NFTTxs)
+TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
 {
     auto const OUT = R"({
-                            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                            "ledger_index_min": 10,
-                            "ledger_index_max": 30,
-                            "transactions": [
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "ledger_index_min": 10,
+            "ledger_index_max": 30,
+            "transactions": [
+                {
+                    "meta": {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "ModifiedNode": 
                                 {
-                                    "meta": {
-                                        "AffectedNodes": 
+                                    "FinalFields": 
+                                    {
+                                        "NFTokens": 
                                         [
                                             {
-                                                "ModifiedNode": 
+                                                "NFToken": 
                                                 {
-                                                    "FinalFields": 
-                                                    {
-                                                        "NFTokens": 
-                                                        [
-                                                            {
-                                                                "NFToken": 
-                                                                {
-                                                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
-                                                                    "URI": "7465737475726C"
-                                                                }
-                                                            },
-                                                            {
-                                                                "NFToken": 
-                                                                {
-                                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                                                    "URI": "7465737475726C"
-                                                                }
-                                                            }
-                                                        ]
-                                                    },
-                                                    "LedgerEntryType": "NFTokenPage",
-                                                    "PreviousFields": 
-                                                    {
-                                                        "NFTokens": 
-                                                        [
-                                                            {
-                                                                "NFToken": 
-                                                                {
-                                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                                                    "URI": "7465737475726C"
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "TransactionIndex": 0,
-                                        "TransactionResult": "tesSUCCESS",
-                                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                                    },
-                                    "tx": 
-                                    {
-                                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                        "Fee": "50",
-                                        "NFTokenTaxon": 123,
-                                        "Sequence": 1,
-                                        "SigningPubKey": "74657374",
-                                        "TransactionType": "NFTokenMint",
-                                        "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
-                                        "ledger_index": 11,
-                                        "date": 1
-                                    },
-                                    "validated": true
-                                },
-                                {
-                                    "meta": 
-                                    {
-                                        "AffectedNodes": 
-                                        [
-                                            {
-                                                "DeletedNode": 
-                                                {
-                                                    "FinalFields": 
-                                                    {
-                                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                                    },
-                                                    "LedgerEntryType": "NFTokenOffer"
-                                                }
-                                            }
-                                        ],
-                                        "TransactionIndex": 0,
-                                        "TransactionResult": "tesSUCCESS",
-                                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                    },
-                                    "tx": 
-                                    {
-                                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                        "Fee": "50",
-                                        "NFTokenBuyOffer": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                        "Sequence": 1,
-                                        "SigningPubKey": "74657374",
-                                        "TransactionType": "NFTokenAcceptOffer",
-                                        "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
-                                        "ledger_index": 11,
-                                        "date": 2
-                                    },
-                                    "validated": true
-                                },
-                                {
-                                    "meta": 
-                                    {
-                                        "AffectedNodes": 
-                                        [
-                                            {
-                                                "DeletedNode": {
-                                                    "FinalFields": 
-                                                    {
-                                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                                    },
-                                                    "LedgerEntryType": "NFTokenOffer"
+                                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                                                    "URI": "7465737475726C"
                                                 }
                                             },
                                             {
-                                                "DeletedNode": 
+                                                "NFToken": 
                                                 {
-                                                    "FinalFields": 
-                                                    {
-                                                        "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                                                    },
-                                                    "LedgerEntryType": "NFTokenOffer"
+                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                    "URI": "7465737475726C"
                                                 }
                                             }
-                                        ],
-                                        "TransactionIndex": 0,
-                                        "TransactionResult": "tesSUCCESS",
-                                        "nftoken_ids": 
-                                        [
-                                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                                         ]
                                     },
-                                    "tx": 
+                                    "LedgerEntryType": "NFTokenPage",
+                                    "PreviousFields": 
                                     {
-                                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                        "Fee": "50",
-                                        "NFTokenOffers": 
-                                        [
-                                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                                        ],
-                                        "Sequence": 1,
-                                        "SigningPubKey": "74657374",
-                                        "TransactionType": "NFTokenCancelOffer",
-                                        "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
-                                        "ledger_index": 11,
-                                        "date": 3
-                                    },
-                                    "validated": true
-                                },
-                                {
-                                    "meta": 
-                                    {
-                                        "AffectedNodes": 
+                                        "NFTokens": 
                                         [
                                             {
-                                                "CreatedNode": 
+                                                "NFToken": 
                                                 {
-                                                    "LedgerEntryType": "NFTokenOffer",
-                                                    "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                    "URI": "7465737475726C"
                                                 }
                                             }
-                                        ],
-                                        "TransactionIndex": 0,
-                                        "TransactionResult": "tesSUCCESS",
-                                        "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                    },
-                                    "tx": 
-                                    {
-                                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                        "Amount": "123",
-                                        "Fee": "50",
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
-                                        "Sequence": 1,
-                                        "SigningPubKey": "74657374",
-                                        "TransactionType": "NFTokenCreateOffer",
-                                        "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
-                                        "ledger_index": 11,
-                                        "date": 4
-                                    },
-                                    "validated": true
+                                        ]
+                                    }
                                 }
-                            ],
-                            "validated": true,
-                            "marker": 
-                            {
-                                "ledger": 12,
-                                "seq": 34
                             }
-                        })";
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": "50",
+                        "NFTokenTaxon": 123,
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenMint",
+                        "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
+                        "ledger_index": 11,
+                        "inLedger": 11,
+                        "date": 1
+                    },
+                    "validated": true
+                },
+                {
+                    "meta": 
+                    {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "DeletedNode": 
+                                {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                    },
+                                    "LedgerEntryType": "NFTokenOffer"
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": "50",
+                        "NFTokenBuyOffer": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenAcceptOffer",
+                        "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
+                        "ledger_index": 11,
+                        "inLedger": 11,
+                        "date": 2
+                    },
+                    "validated": true
+                },
+                {
+                    "meta": 
+                    {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "DeletedNode": {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                    },
+                                    "LedgerEntryType": "NFTokenOffer"
+                                }
+                            },
+                            {
+                                "DeletedNode": 
+                                {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                                    },
+                                    "LedgerEntryType": "NFTokenOffer"
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "nftoken_ids": 
+                        [
+                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                        ]
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": "50",
+                        "NFTokenOffers": 
+                        [
+                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                        ],
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenCancelOffer",
+                        "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
+                        "ledger_index": 11,
+                        "inLedger": 11,
+                        "date": 3
+                    },
+                    "validated": true
+                },
+                {
+                    "meta": 
+                    {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "CreatedNode": 
+                                {
+                                    "LedgerEntryType": "NFTokenOffer",
+                                    "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Amount": "123",
+                        "Fee": "50",
+                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenCreateOffer",
+                        "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
+                        "ledger_index": 11,
+                        "inLedger": 11,
+                        "date": 4
+                    },
+                    "validated": true
+                }
+            ],
+            "validated": true,
+            "marker": 
+            {
+                "ledger": 12,
+                "seq": 34
+            }
+        })";
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
@@ -1181,7 +1184,233 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 1u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
+{
+    auto const OUT = R"({
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "ledger_index_min": 10,
+            "ledger_index_max": 30,
+            "transactions": [
+                {
+                    "meta": {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "ModifiedNode": 
+                                {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokens": 
+                                        [
+                                            {
+                                                "NFToken": 
+                                                {
+                                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                                                    "URI": "7465737475726C"
+                                                }
+                                            },
+                                            {
+                                                "NFToken": 
+                                                {
+                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                    "URI": "7465737475726C"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "LedgerEntryType": "NFTokenPage",
+                                    "PreviousFields": 
+                                    {
+                                        "NFTokens": 
+                                        [
+                                            {
+                                                "NFToken": 
+                                                {
+                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                    "URI": "7465737475726C"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": "50",
+                        "NFTokenTaxon": 123,
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenMint",
+                        "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
+                        "ledger_index": 11,
+                        "date": 1
+                    },
+                    "validated": true
+                },
+                {
+                    "meta": 
+                    {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "DeletedNode": 
+                                {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                    },
+                                    "LedgerEntryType": "NFTokenOffer"
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": "50",
+                        "NFTokenBuyOffer": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenAcceptOffer",
+                        "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
+                        "ledger_index": 11,
+                        "date": 2
+                    },
+                    "validated": true
+                },
+                {
+                    "meta": 
+                    {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "DeletedNode": {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                    },
+                                    "LedgerEntryType": "NFTokenOffer"
+                                }
+                            },
+                            {
+                                "DeletedNode": 
+                                {
+                                    "FinalFields": 
+                                    {
+                                        "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                                    },
+                                    "LedgerEntryType": "NFTokenOffer"
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "nftoken_ids": 
+                        [
+                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                        ]
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": "50",
+                        "NFTokenOffers": 
+                        [
+                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                        ],
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenCancelOffer",
+                        "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
+                        "ledger_index": 11,
+                        "date": 3
+                    },
+                    "validated": true
+                },
+                {
+                    "meta": 
+                    {
+                        "AffectedNodes": 
+                        [
+                            {
+                                "CreatedNode": 
+                                {
+                                    "LedgerEntryType": "NFTokenOffer",
+                                    "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                }
+                            }
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                    },
+                    "tx": 
+                    {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Amount": "123",
+                        "Fee": "50",
+                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "NFTokenCreateOffer",
+                        "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
+                        "ledger_index": 11,
+                        "date": 4
+                    },
+                    "validated": true
+                }
+            ],
+            "validated": true,
+            "marker": 
+            {
+                "ledger": 12,
+                "seq": 34
+            }
+        })";
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    auto const transactions = genNFTTransactions(MINSEQ + 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchAccountTransactions(
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
+        .Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const static input = json::parse(fmt::format(
+            R"({{
+                "account": "{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "forward": false,
+                "marker": {{"ledger": 10, "seq": 11}}
+            }})",
+            ACCOUNT,
+            -1,
+            -1));
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
@@ -1192,6 +1421,7 @@ struct AccountTxTransactionBundle
     std::string testName;
     std::string testJson;
     std::string result;
+    std::uint32_t apiVersion = 2u;
 };
 
 // parameterized test cases for parameters check
@@ -1351,7 +1581,57 @@ generateTransactionTypeTestValues()
             })",
             "[]"},
         AccountTxTransactionBundle{
-            "Payment",
+            "Payment_API_v1",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "Payment"
+            })",
+            R"([
+                {
+                    "meta": {
+                        "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "22"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        },
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "23"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        }],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "delivered_amount": "unavailable"
+                    },
+                    "tx": {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Amount": "1",
+                        "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "Fee": "1",
+                        "Sequence": 32,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "Payment",
+                        "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                        "ledger_index": 30,
+                        "inLedger": 30,
+                        "date": 1
+                    },
+                    "validated": true
+                }
+            ])",
+            1u},
+        AccountTxTransactionBundle{
+            "Payment_API_v2",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
@@ -1397,7 +1677,8 @@ generateTransactionTypeTestValues()
                 },
                 "validated": true
                 }
-            ])"},
+            ])",
+            2u},
         AccountTxTransactionBundle{
             "PaymentChannelClaim",
             R"({
@@ -1484,7 +1765,7 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
         EXPECT_TRUE(output);
 
         auto const transactions = output->at("transactions").as_array();

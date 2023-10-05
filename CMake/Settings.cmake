@@ -19,18 +19,24 @@ set(COMPILER_FLAGS
   -Wunused
 )
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  list(APPEND COMPILER_FLAGS
-    -Wshadow # gcc is to aggressive with shadowing https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
-  )
-endif ()
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if (is_gcc AND NOT lint)
   list(APPEND COMPILER_FLAGS
     -Wduplicated-branches
     -Wduplicated-cond
     -Wlogical-op
     -Wuseless-cast
+  )
+endif ()
+
+if (is_clang)
+  list(APPEND COMPILER_FLAGS
+    -Wshadow # gcc is to aggressive with shadowing https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
+  )
+endif ()
+
+if (is_appleclang)
+  list(APPEND COMPILER_FLAGS
+    -Wreorder-init-list
   )
 endif ()
 

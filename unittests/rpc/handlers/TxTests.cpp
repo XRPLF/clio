@@ -28,12 +28,49 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
-constexpr static auto NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
-constexpr static auto NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
-constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
+auto constexpr static TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+auto constexpr static NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
+auto constexpr static NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
+auto constexpr static ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+auto constexpr static ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+auto constexpr static CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
+
+auto constexpr static DEFAULT_OUT = R"({
+    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+    "Fee": "2",
+    "Sequence": 100,
+    "SigningPubKey": "74657374",
+    "TakerGets": {
+        "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+        "value": "200"
+    },
+    "TakerPays": "300",
+    "TransactionType": "OfferCreate",
+    "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+    "meta": {
+        "AffectedNodes": [
+            {
+                "CreatedNode": {
+                    "LedgerEntryType": "Offer",
+                    "NewFields": {
+                        "TakerGets": "200",
+                        "TakerPays": {
+                            "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                            "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                            "value": "300"
+                        }
+                    }
+                }
+            }
+        ],
+        "TransactionIndex": 100,
+        "TransactionResult": "tesSUCCESS"
+    },
+    "date": 123456,
+    "ledger_index": 100,
+    "validated": true
+})";
 
 class RPCTxTest : public HandlerBaseTest
 {
@@ -48,8 +85,8 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
-                "max_ledger":1002
-                }})",
+                "max_ledger": 1002
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -70,7 +107,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
                 "transaction": "{}",
                 "max_ledger": 1,
                 "min_ledger": 10
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -93,7 +130,7 @@ TEST_F(RPCTxTest, TxnNotFound)
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -119,8 +156,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
-                "max_ledger":1000
-                }})",
+                "max_ledger": 1000
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -147,8 +184,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
-                "max_ledger":1000
-                }})",
+                "max_ledger": 1000
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -160,75 +197,77 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     });
 }
 
-TEST_F(RPCTxTest, DefaultParameter)
+TEST_F(RPCTxTest, DefaultParameter_API_v1)
 {
-    auto constexpr static OUT = R"({
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Fee":"2",
-            "Sequence":100,
-            "SigningPubKey":"74657374",
-            "TakerGets":{
-                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "value":"200"
-            },
-            "TakerPays":"300",
-            "TransactionType":"OfferCreate",
-            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
-            "meta":{
-                "AffectedNodes":[
-                    {
-                        "CreatedNode":{
-                        "LedgerEntryType":"Offer",
-                        "NewFields":{
-                            "TakerGets":"200",
-                            "TakerPays":{
-                                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"300"
-                            }
-                        }
-                        }
-                    }
-                ],
-                "TransactionIndex":100,
-                "TransactionResult":"tesSUCCESS"
-            },
-            "date":123456,
-            "ledger_index":100,
-            "validated": true
-    })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
+
     ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
-                }})",
+            }})",
             TXNID));
-        auto const output = handler.process(req, Context{yield});
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+
+        auto v1Output = json::parse(DEFAULT_OUT);
+        v1Output.as_object()[JS(inLedger)] = v1Output.as_object()[JS(ledger_index)];
+        EXPECT_EQ(*output, v1Output);
+    });
+}
+
+TEST_F(RPCTxTest, DefaultParameter_API_v2)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+
+    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TxHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID));
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(DEFAULT_OUT));
     });
 }
 
 TEST_F(RPCTxTest, ReturnBinary)
 {
+    // Note: `inLedger` is API v1 only. See DefaultOutput_*
     auto constexpr static OUT = R"({
-        "meta":"201C00000064F8E311006FE864D50AA87BEE5380000158415500000000C1F76FF6ECB0BAC6000000004B4E9C06F24296074F7BC48F92A97916C6DC5EA96540000000000000C8E1E1F1031000",
-        "tx":"120007240000006464400000000000012C65D5071AFD498D00000158415500000000C1F76FF6ECB0BAC600000000D31252CF902EF8DD8451243869B38667CBD89DF368400000000000000273047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
-        "hash":"05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
-        "date":123456,
-        "ledger_index":100,
+        "meta": "201C00000064F8E311006FE864D50AA87BEE5380000158415500000000C1F76FF6ECB0BAC6000000004B4E9C06F24296074F7BC48F92A97916C6DC5EA96540000000000000C8E1E1F1031000",
+        "tx": "120007240000006464400000000000012C65D5071AFD498D00000158415500000000C1F76FF6ECB0BAC600000000D31252CF902EF8DD8451243869B38667CBD89DF368400000000000000273047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
+        "hash": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "date": 123456,
+        "ledger_index": 100,
+        "inLedger": 100,
         "validated": true
     })";
     auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
@@ -247,7 +286,7 @@ TEST_F(RPCTxTest, ReturnBinary)
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
-                }})",
+            }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -257,6 +296,7 @@ TEST_F(RPCTxTest, ReturnBinary)
 
 TEST_F(RPCTxTest, MintNFT)
 {
+    // Note: `inLedger` is API v1 only. See DefaultOutput_*
     auto const static OUT = fmt::format(
         R"({{
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -307,9 +347,10 @@ TEST_F(RPCTxTest, MintNFT)
                 "TransactionResult": "tesSUCCESS",
                 "nftoken_id": "{}"
             }},
-            "validated": true,
             "date": 123456,
-            "ledger_index": 100
+            "ledger_index": 100,
+            "inLedger": 100,
+            "validated": true
         }})",
         NFTID,
         NFTID);

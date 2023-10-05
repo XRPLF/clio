@@ -180,14 +180,20 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                     continue;
             }
 
-            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
+            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+
+            if (ctx.apiVersion < 2u)
+                obj[JS(tx)].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
         }
         else
         {
             obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
             obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+
+            if (ctx.apiVersion < 2u)
+                obj[JS(inLedger)] = txnPlusMeta.ledgerSequence;
         }
 
         obj[JS(validated)] = true;
