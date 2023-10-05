@@ -1198,7 +1198,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
             ACCOUNT,
             -1,
             -1));
-        auto const output = handler.process(input, Context{.apiVersion = 1u, .yield = yield});
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
