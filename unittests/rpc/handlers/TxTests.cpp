@@ -200,7 +200,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     });
 }
 
-TEST_F(RPCTxTest, DefaultParameter_v1)
+TEST_F(RPCTxTest, DefaultParameter_API_v1)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -223,7 +223,7 @@ TEST_F(RPCTxTest, DefaultParameter_v1)
                 "transaction": "{}"
             }})",
             TXNID));
-        auto const output = handler.process(req, Context{.apiVersion = 1, .yield = yield});
+        auto const output = handler.process(req, Context{.apiVersion = 1u, .yield = yield});
         ASSERT_TRUE(output);
 
         auto v1Output = json::parse(DEFAULT_OUT);
@@ -232,7 +232,7 @@ TEST_F(RPCTxTest, DefaultParameter_v1)
     });
 }
 
-TEST_F(RPCTxTest, DefaultParameter_v2)
+TEST_F(RPCTxTest, DefaultParameter_API_v2)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -255,7 +255,7 @@ TEST_F(RPCTxTest, DefaultParameter_v2)
                 "transaction": "{}"
             }})",
             TXNID));
-        auto const output = handler.process(req, Context{.apiVersion = 2, .yield = yield});
+        auto const output = handler.process(req, Context{.apiVersion = 2u, .yield = yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(DEFAULT_OUT));
     });
@@ -421,7 +421,6 @@ TEST_F(RPCTxTest, NFTCancelOffer)
             }})",
             TXNID));
         auto const output = handler.process(req, Context{yield});
-        std::cout << "output: " << output.value() << std::endl;
         ASSERT_TRUE(output);
 
         for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
@@ -434,7 +433,6 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
         EXPECT_TRUE(ids.empty());
     });
-    std::cout << "After spawn" << std::endl;
 }
 
 TEST_F(RPCTxTest, NFTCreateOffer)

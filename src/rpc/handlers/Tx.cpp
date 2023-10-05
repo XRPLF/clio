@@ -94,7 +94,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TxHandler::Outpu
     obj[JS(date)] = output.date;
     obj[JS(ledger_index)] = output.ledgerIndex;
 
-    if (output.apiVersion < 2)
+    if (output.apiVersion < 2u)
         obj[JS(inLedger)] = output.ledgerIndex;
 
     jv = std::move(obj);
