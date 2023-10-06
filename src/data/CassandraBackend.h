@@ -794,6 +794,12 @@ public:
         return executor_.isTooBusy();
     }
 
+    boost::json::object
+    stats() const override
+    {
+        return executor_.stats();
+    }
+
 private:
     bool
     executeSyncUpdate(Statement statement)

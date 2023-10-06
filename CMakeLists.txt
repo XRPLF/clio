@@ -74,6 +74,7 @@ target_sources (clio PRIVATE
   ## Main
   src/main/impl/Build.cpp
   ## Backend
+  src/data/BackendCounters.cpp
   src/data/BackendInterface.cpp
   src/data/LedgerCache.cpp
   src/data/cassandra/impl/Future.cpp
@@ -213,6 +214,7 @@ if (tests)
     unittests/rpc/handlers/VersionHandlerTests.cpp
     # Backend
     unittests/data/BackendFactoryTests.cpp
+    unittests/data/BackendCountersTests.cpp
     unittests/data/cassandra/BaseTests.cpp
     unittests/data/cassandra/BackendTests.cpp
     unittests/data/cassandra/RetryPolicyTests.cpp

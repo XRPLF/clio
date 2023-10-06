@@ -553,6 +553,12 @@ public:
     virtual bool
     isTooBusy() const = 0;
 
+    /**
+     * @return json object containing backend usage statistics
+     */
+    virtual boost::json::object
+    stats() const = 0;
+
 private:
     virtual void
     doWriteLedgerObject(std::string&& key, std::uint32_t seq, std::string&& blob) = 0;
