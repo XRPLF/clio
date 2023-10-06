@@ -19,19 +19,30 @@
 
 #pragma once
 
-#include <etl/ETLState.h>
-
 #include <boost/json.hpp>
-#include <gmock/gmock.h>
 
-#include <chrono>
+#include <cstdint>
+#include <optional>
 
-struct MockETLService
+namespace etl {
+
+class Source;
+
+/**
+ * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
+ */
+struct ETLState
 {
-    MOCK_METHOD(boost::json::object, getInfo, (), (const));
-    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
-    MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
-    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
-    MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
-    MOCK_METHOD(etl::ETLState, getETLState, (), (const));
+    std::optional<uint32_t> networkID;
+
+    /**
+     * @brief Fetch the ETL state from the rippled server
+     */
+    static ETLState
+    fetchETLStateFromSource(Source const& source) noexcept;
 };
+
+ETLState
+tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
+
+}  // namespace etl

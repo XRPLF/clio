@@ -205,6 +205,15 @@ public:
         return result;
     }
 
+    /**
+     * @brief Get the etl nodes' state
+     */
+    etl::ETLState
+    getETLState() const noexcept
+    {
+        return loadBalancer_->getETLState();
+    }
+
 private:
     /**
      * @brief Run the ETL pipeline.

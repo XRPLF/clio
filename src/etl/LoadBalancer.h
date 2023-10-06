@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
+#include <etl/ETLState.h>
 #include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
@@ -59,6 +60,7 @@ private:
 
     util::Logger log_{"ETL"};
     std::vector<std::unique_ptr<Source>> sources_;
+    std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
 
@@ -164,13 +166,21 @@ public:
      * @brief Forward a JSON RPC request to a randomly selected rippled node.
      *
      * @param request JSON-RPC request to forward
-     * @param clientIp The IP address of the peer
+     * @param clientIp The IP address of the peer, if known
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success; nullopt on failure
      */
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
-        const;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> clientIp,
+        boost::asio::yield_context yield) const;
+
+    /**
+     * @brief Return state of ETL nodes.
+     */
+    ETLState
+    getETLState() const noexcept;
 
 private:
     /**

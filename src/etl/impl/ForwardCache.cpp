@@ -38,7 +38,7 @@ ForwardCache::freshen()
         boost::asio::spawn(
             strand_, [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
                 boost::json::object const request = {{"command", command}};
-                auto resp = source_.requestFromRippled(request, {}, yield);
+                auto resp = source_.requestFromRippled(request, std::nullopt, yield);
 
                 if (!resp || resp->contains("error"))
                     resp = {};

@@ -123,18 +123,23 @@ ProbingSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNei
 std::optional<boost::json::object>
 ProbingSource::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
+    std::optional<std::string> clientIp,
     boost::asio::yield_context yield) const
 {
-    if (!currentSrc_)
-        return {};
+    if (!currentSrc_)  // Source may connect to rippled before the connection built to check the validity
+    {
+        if (auto res = plainSrc_->forwardToRippled(request, clientIp, yield))
+            return res;
+
+        return sslSrc_->forwardToRippled(request, clientIp, yield);
+    }
     return currentSrc_->forwardToRippled(request, clientIp, yield);
 }
 
 std::optional<boost::json::object>
 ProbingSource::requestFromRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
+    std::optional<std::string> clientIp,
     boost::asio::yield_context yield) const
 {
     if (!currentSrc_)

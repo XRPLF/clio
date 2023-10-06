@@ -51,6 +51,7 @@ class SubscriptionManager;
 // things into the base class instead.
 
 namespace etl {
+
 class ProbingSource;
 
 /**
@@ -124,13 +125,15 @@ public:
      * @brief Forward a request to rippled.
      *
      * @param request The request to forward
-     * @param clientIp IP of the client forwarding this request
+     * @param clientIp IP of the client forwarding this request if known
      * @param yield The coroutine context
      * @return Response wrapped in an optional on success; nullopt otherwise
      */
     virtual std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
-        const = 0;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> clientIp,
+        boost::asio::yield_context yield) const = 0;
 
     /**
      * @return A token that uniquely identifies this source instance.
@@ -162,7 +165,7 @@ private:
     virtual std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
-        std::string const& clientIp,
+        std::optional<std::string> clientIp,
         boost::asio::yield_context yield) const = 0;
 };
 
@@ -303,18 +306,12 @@ public:
     std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
-        std::string const& clientIp,
+        std::optional<std::string> clientIp,
         boost::asio::yield_context yield) const override
     {
-        LOG(log_.trace()) << "Attempting to forward request to tx. "
-                          << "request = " << boost::json::serialize(request);
+        LOG(log_.trace()) << "Attempting to forward request to tx. Request = " << boost::json::serialize(request);
 
         boost::json::object response;
-        if (!isConnected())
-        {
-            LOG(log_.error()) << "Attempted to proxy but failed to connect to tx";
-            return {};
-        }
 
         namespace beast = boost::beast;
         namespace http = boost::beast::http;
@@ -339,12 +336,15 @@ public:
             if (ec)
                 return {};
 
-            // Set a decorator to change the User-Agent of the handshake and to tell rippled to charge the client IP for
-            // RPC resources. See "secure_gateway" in
+            // if client ip is know, change the User-Agent of the handshake and to tell rippled to charge the client IP
+            // for RPC resources. See "secure_gateway" in
             // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
+
+            // TODO: user-agent can be clio-[version]
             ws->set_option(websocket::stream_base::decorator([&clientIp](websocket::request_type& req) {
                 req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
-                req.set(http::field::forwarded, "for=" + clientIp);
+                if (clientIp)
+                    req.set(http::field::forwarded, "for=" + *clientIp);
             }));
 
             ws->async_handshake(ip_, "/", yield[ec]);
@@ -536,8 +536,10 @@ public:
     }
 
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
-        const override
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> clientIp,
+        boost::asio::yield_context yield) const override
     {
         if (auto resp = forwardCache_.get(request); resp)
         {

@@ -89,6 +89,7 @@ target_sources (clio PRIVATE
   src/etl/ProbingSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ETLService.cpp
+  src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
   src/etl/impl/ForwardCache.cpp
   ## Feed
@@ -132,7 +133,6 @@ target_sources (clio PRIVATE
   src/rpc/handlers/NoRippleCheck.cpp
   src/rpc/handlers/Random.cpp
   src/rpc/handlers/TransactionEntry.cpp
-  src/rpc/handlers/Tx.cpp
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp
@@ -169,6 +169,7 @@ if (tests)
     unittests/etl/CacheLoaderTests.cpp
     unittests/etl/AmendmentBlockHandlerTests.cpp
     unittests/etl/LedgerPublisherTests.cpp
+    unittests/etl/ETLStateTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
