@@ -57,7 +57,7 @@ class Clio(ConanFile):
 
     def requirements(self):
         if self.options.tests:
-            self.requires('gtest/1.13.0')
+            self.requires('gtest/1.14.0')
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':
