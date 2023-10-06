@@ -312,12 +312,6 @@ public:
                           << "request = " << boost::json::serialize(request);
 
         boost::json::object response;
-        if (!isConnected())
-        {
-            LOG(log_.error()) << "Attempted to proxy but failed to connect to tx";
-            return {};
-        }
-
         namespace beast = boost::beast;
         namespace http = boost::beast::http;
         namespace websocket = beast::websocket;

@@ -237,9 +237,7 @@ inline std::optional<std::tuple<uint32_t, uint16_t, uint16_t>>
 decodeCTID(T const ctid) noexcept
 {
     auto const getCTID64 = [](T const ctid) noexcept -> std::optional<uint64_t> {
-        if constexpr (
-            std::is_same_v<T, std::string> || std::is_same_v<T, char*> || std::is_same_v<T, const char*> ||
-            std::is_same_v<T, std::string_view>)
+        if constexpr (std::is_convertible_v<T, std::string>)
         {
             std::string const ctidString(ctid);
 

@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <data/LedgerCache.h>
+#include <etl/ETLState.h>
 #include <etl/LoadBalancer.h>
 #include <etl/Source.h>
 #include <etl/SystemState.h>
@@ -100,6 +101,7 @@ class ETLService
     AmendmentBlockHandlerType amendmentBlockHandler_;
 
     SystemState state_;
+    ETLState<LoadBalancerType> etlState_;
 
     size_t numMarkers_ = 2;
     std::optional<uint32_t> startSequence_;
@@ -210,28 +212,9 @@ public:
      * @brief Get the network id of ETL lazily
      */
     std::optional<uint32_t>
-    getNetworkID() const
+    getNetworkID() const noexcept
     {
-        static std::optional<uint32_t> networkID;
-
-        if (networkID)
-            return *networkID;
-
-        auto const serverInfoRippled = data::synchronous([this](auto yield) {
-            return loadBalancer_->forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
-        });
-
-        if (serverInfoRippled && !serverInfoRippled->contains(JS(error)))
-        {
-            if (serverInfoRippled->contains(JS(result)) &&
-                serverInfoRippled->at(JS(result)).as_object().contains(JS(info)))
-            {
-                auto const rippledInfo = serverInfoRippled->at(JS(result)).as_object().at(JS(info)).as_object();
-                if (rippledInfo.contains(JS(network_id)))
-                    networkID.emplace(boost::json::value_to<int64_t>(rippledInfo.at(JS(network_id))));
-            }
-        }
-        return networkID;
+        return etlState_.getNetworkID();
     }
 
 private:

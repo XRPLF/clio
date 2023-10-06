@@ -255,6 +255,17 @@ ETLService::doWork()
     worker_ = std::thread([this]() {
         beast::setCurrentThreadName("ETLService worker");
 
+        // TODO: Good to have networkId from all sources and check its validity
+        if (etlState_.fetchETLState())
+        {
+            LOG(log_.info()) << "ETLState is fetched successfully";
+        }
+        else
+        {
+            // info from ETL is missing, but it does not affect clio running, maybe missing some field in response
+            LOG(log_.error()) << "Fail to fetch ETLState, Please check ETL configuration and network status";
+        }
+
         if (state_.isReadOnly)
         {
             monitorReadOnly();
@@ -281,6 +292,7 @@ ETLService::ETLService(
     , ledgerLoader_(backend, balancer, ledgerFetcher_, state_)
     , ledgerPublisher_(ioc, backend, backend->cache(), subscriptions, state_)
     , amendmentBlockHandler_(ioc, state_)
+    , etlState_(balancer)
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
