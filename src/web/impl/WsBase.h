@@ -208,8 +208,8 @@ public:
         if (dead())
             return;
 
-        // Clear the buffer
-        buffer_.consume(buffer_.size());
+        // Note: use entirely new buffer so previously used, potentially large, capacity is deallocated
+        buffer_ = boost::beast::flat_buffer{};
 
         derived().ws().async_read(buffer_, boost::beast::bind_front_handler(&WsBase::onRead, this->shared_from_this()));
     }
