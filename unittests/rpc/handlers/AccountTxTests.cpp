@@ -652,7 +652,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3");
         EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("date"));
-
+        EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("inLedger"));
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
 }
