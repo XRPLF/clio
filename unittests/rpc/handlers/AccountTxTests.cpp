@@ -371,14 +371,6 @@ TEST_P(AccountTxParameterTest, CheckParams)
     }
     else
     {
-        if (req.as_object().contains("ledger_hash"))
-        {
-            EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).WillOnce(testing::Return(ripple::LedgerHeader{}));
-        }
-        else if (req.as_object().contains("ledger_index"))
-        {
-            EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(testing::Return(ripple::LedgerHeader{}));
-        }
         EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
