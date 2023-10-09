@@ -109,8 +109,9 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
         }
         else if (!input.ledgerIndexMax && !input.ledgerIndexMin)
-        {  // mimic rippled, when both range and index specified, respect the range.
-           // take ledger from ledgerHash or ledgerIndex only when range is not specified
+        {
+            // mimic rippled, when both range and index specified, respect the range.
+            // take ledger from ledgerHash or ledgerIndex only when range is not specified
             auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
                 *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
