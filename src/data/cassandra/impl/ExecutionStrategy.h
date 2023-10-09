@@ -71,7 +71,7 @@ class DefaultExecutionStrategy
     std::reference_wrapper<HandleType const> handle_;
     std::thread thread_;
 
-    BackendCountersType::Ptr counters_;
+    typename BackendCountersType::Ptr counters_;
 
 public:
     using ResultOrErrorType = typename HandleType::ResultOrErrorType;
