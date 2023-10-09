@@ -87,7 +87,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static const auto rpcSpec = RpcSpec{
+        static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},

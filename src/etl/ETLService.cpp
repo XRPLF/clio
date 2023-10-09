@@ -199,7 +199,7 @@ ETLService::monitorReadOnly()
 {
     LOG(log_.debug()) << "Starting reporting in strict read only mode";
 
-    const auto latestSequenceOpt = [this]() -> std::optional<uint32_t> {
+    auto const latestSequenceOpt = [this]() -> std::optional<uint32_t> {
         auto rng = backend_->hardFetchLedgerRangeNoThrow();
 
         if (!rng)

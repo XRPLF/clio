@@ -103,63 +103,63 @@ private:
 };
 
 template <typename T>
-static constexpr const char*
+static constexpr char const*
 typeName()
 {
     return typeid(T).name();
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<uint64_t>()
 {
     return "uint64_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<int64_t>()
 {
     return "int64_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<uint32_t>()
 {
     return "uint32_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<int32_t>()
 {
     return "int32_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<bool>()
 {
     return "bool";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<std::string>()
 {
     return "std::string";
 }
 
 template <>
-constexpr const char*
-typeName<const char*>()
+constexpr char const*
+typeName<char const*>()
 {
     return "const char*";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<double>()
 {
     return "double";

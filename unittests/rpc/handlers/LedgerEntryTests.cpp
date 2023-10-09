@@ -55,7 +55,7 @@ struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInt
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<ParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -568,7 +568,7 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             return static_cast<std::string>(info.param);
         }
@@ -664,7 +664,7 @@ struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithPara
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<NormalPathTestBundle>(info.param);
             return bundle.testName;

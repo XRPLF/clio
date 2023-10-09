@@ -82,7 +82,7 @@ struct RpcSpec final
      * @param other The other spec to copy fields from
      * @param additionalFields The additional fields to add to the spec
      */
-    RpcSpec(const RpcSpec& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
+    RpcSpec(RpcSpec const& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
     {
         for (auto& f : additionalFields)
             fields_.push_back(f);

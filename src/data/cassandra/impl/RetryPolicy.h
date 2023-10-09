@@ -75,7 +75,7 @@ public:
     retry(Fn&& fn)
     {
         timer_.expires_after(calculateDelay(attempt_++));
-        timer_.async_wait([fn = std::forward<Fn>(fn)]([[maybe_unused]] const auto& err) {
+        timer_.async_wait([fn = std::forward<Fn>(fn)]([[maybe_unused]] auto const& err) {
             // todo: deal with cancellation (thru err)
             fn();
         });

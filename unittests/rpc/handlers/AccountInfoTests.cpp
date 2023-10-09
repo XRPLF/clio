@@ -55,7 +55,7 @@ struct AccountInfoParameterTest : public RPCAccountInfoHandlerTest,
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<AccountInfoParamTestCaseBundle>(info.param);
             return bundle.testName;

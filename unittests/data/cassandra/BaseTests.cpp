@@ -195,7 +195,7 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
         ASSERT_TRUE(rc);  // expect that we can still connect without keyspace
     }
     {
-        const auto query = fmt::format(
+        auto const query = fmt::format(
             R"(
                 CREATE KEYSPACE {} 
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 

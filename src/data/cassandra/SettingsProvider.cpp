@@ -37,9 +37,7 @@ tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::valu
 {
     if (not value.is_object())
     {
-        throw std::runtime_error(
-            "Feed entire Cassandra section to parse "
-            "Settings::ContactPoints instead");
+        throw std::runtime_error("Feed entire Cassandra section to parse Settings::ContactPoints instead");
     }
 
     util::Config const obj{value};

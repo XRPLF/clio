@@ -43,7 +43,8 @@ struct MockSession : public web::ConnectionBase
 
 struct MockDeadSession : public web::ConnectionBase
 {
-    void send(std::shared_ptr<std::string>) override
+    void
+    send(std::shared_ptr<std::string>) override
     {
         // err happen, the session should remove from subscribers
         ec_.assign(2, boost::system::system_category());

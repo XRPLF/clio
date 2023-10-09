@@ -234,9 +234,7 @@ private:
         if (boost::iequals(style, "uuid"))
             return TagDecoratorFactory::Type::UUID;
 
-        throw std::runtime_error(
-            "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
-            "`null`");
+        throw std::runtime_error("Could not parse `log_tag_style`: expected `uint`, `uuid` or `null`");
     }
 };
 

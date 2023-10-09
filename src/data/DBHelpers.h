@@ -252,7 +252,7 @@ getBookBase(T const& key)
 inline std::string
 uint256ToString(ripple::uint256 const& input)
 {
-    return {reinterpret_cast<const char*>(input.data()), ripple::uint256::size()};
+    return {reinterpret_cast<char const*>(input.data()), ripple::uint256::size()};
 }
 
 /** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */

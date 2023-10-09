@@ -230,7 +230,7 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
 
             if (field != nullptr)
             {
-                auto data = dynamic_cast<const ripple::STObject*>(node.peekAtPField(*field));
+                auto data = dynamic_cast<ripple::STObject const*>(node.peekAtPField(*field));
 
                 if ((data != nullptr) && data->isFieldPresent(ripple::sfTakerPays) &&
                     data->isFieldPresent(ripple::sfTakerGets))

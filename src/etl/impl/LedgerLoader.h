@@ -113,7 +113,7 @@ public:
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
             static constexpr std::size_t KEY_SIZE = 32;
-            std::string keyStr{reinterpret_cast<const char*>(sttx.getTransactionID().data()), KEY_SIZE};
+            std::string keyStr{reinterpret_cast<char const*>(sttx.getTransactionID().data()), KEY_SIZE};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,

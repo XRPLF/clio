@@ -113,7 +113,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHan
     if (offer.expiration)
         jsonObject[JS(expiration)] = *offer.expiration;
 
-    auto const convertAmount = [&](const char* field, ripple::STAmount const& amount) {
+    auto const convertAmount = [&](char const* field, ripple::STAmount const& amount) {
         if (amount.native())
         {
             jsonObject[field] = amount.getText();

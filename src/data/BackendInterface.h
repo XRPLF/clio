@@ -41,7 +41,7 @@ namespace data {
 class DatabaseTimeout : public std::exception
 {
 public:
-    const char*
+    char const*
     what() const throw() override
     {
         return "Database read timed out. Please retry the request";

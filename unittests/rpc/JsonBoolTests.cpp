@@ -39,7 +39,7 @@ public:
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<JsonBoolTestsCaseBundle>(info.param);
             return bundle.testName;
@@ -75,7 +75,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(JsonBoolTests, Parse)
 {
     auto const testBundle = GetParam();
-    const auto jv = json::parse(testBundle.json).as_object();
+    auto const jv = json::parse(testBundle.json).as_object();
     ASSERT_TRUE(jv.contains("test_bool"));
     EXPECT_EQ(testBundle.expectedBool, value_to<JsonBool>(jv.at("test_bool")).value);
 }

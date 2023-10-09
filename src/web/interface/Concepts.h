@@ -30,14 +30,17 @@ namespace web {
 /**
  * @brief Specifies the requirements a Webserver handler must fulfill.
  */
-// clang-format off
 template <typename T>
-concept SomeServerHandler = requires(T handler, std::string req, std::shared_ptr<ConnectionBase> ws, boost::beast::error_code ec) {
-    // the callback when server receives a request
-    { handler(req, ws) };
-    // the callback when there is an error
-    { handler(ec, ws) };
-};
-// clang-format on
+concept SomeServerHandler =
+    requires(T handler, std::string req, std::shared_ptr<ConnectionBase> ws, boost::beast::error_code ec) {
+        // the callback when server receives a request
+        {
+            handler(req, ws)
+        };
+        // the callback when there is an error
+        {
+            handler(ec, ws)
+        };
+    };
 
 }  // namespace web

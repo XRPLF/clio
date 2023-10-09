@@ -57,7 +57,7 @@ struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterf
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<LedgerParamTestCaseBundle>(info.param);
             return bundle.testName;

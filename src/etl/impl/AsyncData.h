@@ -94,8 +94,8 @@ public:
         }
         if (!next_->is_unlimited())
         {
-            LOG(log_.warn()) << "AsyncCallData is_unlimited is false. Make sure "
-                                "secure_gateway is set correctly at the ETL source";
+            LOG(log_.warn())
+                << "AsyncCallData is_unlimited is false. Make sure secure_gateway is set correctly at the ETL source";
         }
 
         std::swap(cur_, next_);

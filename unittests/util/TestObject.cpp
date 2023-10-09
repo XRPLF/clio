@@ -95,7 +95,7 @@ CreatePaymentTransactionObject(
     auto account2 = ripple::parseBase58<ripple::AccountID>(std::string(accountId2));
     obj.setAccountID(ripple::sfDestination, account2.value());
     obj.setFieldU32(ripple::sfSequence, seq);
-    const char* key = "test";
+    char const* key = "test";
     ripple::Slice const slice(key, 4);
     obj.setFieldVL(ripple::sfSigningPubKey, slice);
     return obj;
@@ -553,7 +553,7 @@ CreateMintNFTTxWithMetadata(
     // required field for ttNFTOKEN_MINT
     tx.setFieldU32(ripple::sfNFTokenTaxon, nfTokenTaxon);
     tx.setFieldU32(ripple::sfSequence, seq);
-    const char* key = "test";
+    char const* key = "test";
     ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
@@ -569,7 +569,7 @@ CreateMintNFTTxWithMetadata(
     // finalFields contain new NFT while previousFields does not
     auto entry = ripple::STObject(ripple::sfNFToken);
     entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
-    const char* url = "testurl";
+    char const* url = "testurl";
     entry.setFieldVL(ripple::sfURI, ripple::Slice(url, 7));
     NFTArray1.push_back(entry);
 
@@ -609,7 +609,7 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
     tx.setFieldAmount(ripple::sfFee, amount);
     tx.setFieldU32(ripple::sfSequence, seq);
     tx.setFieldH256(ripple::sfNFTokenBuyOffer, ripple::uint256{INDEX1});
-    const char* key = "test";
+    char const* key = "test";
     ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
@@ -657,7 +657,7 @@ CreateCancelNFTOffersTxWithMetadata(
         return ripple::uint256{nftId.c_str()};
     });
     tx.setFieldV256(ripple::sfNFTokenOffers, offers);
-    const char* key = "test";
+    char const* key = "test";
     ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 
@@ -708,7 +708,7 @@ CreateCreateNFTOfferTxWithMetadata(
     tx.setFieldAmount(ripple::sfAmount, price);
     tx.setFieldU32(ripple::sfSequence, seq);
     tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
-    const char* key = "test";
+    char const* key = "test";
     ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
 

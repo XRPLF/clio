@@ -40,23 +40,27 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
 
         // This expands in order of Requirements and stops evaluating after first failure which is stored in
         // `firstFailure` and can be checked later on to see whether the verification failed as a whole or not.
-        // clang-format off
-        ([&j, &key, &firstFailure, req = &proc]() {
-            if (firstFailure)
-                return; // already failed earlier - skip
+        (
+            [&j, &key, &firstFailure, req = &proc]() {
+                if (firstFailure)
+                    return;  // already failed earlier - skip
 
-            if constexpr (SomeRequirement<decltype(*req)>) {
-                if (auto const res = req->verify(j, key); not res)
-                    firstFailure = res.error();
-            } else if constexpr (SomeModifier<decltype(*req)>) {
-                if (auto const res = req->modify(j, key); not res)
-                    firstFailure = res.error();
-            } else {
-                static_assert(unsupported_v<decltype(*req)>);
-            }
-
-        }(), ...);
-        // clang-format on
+                if constexpr (SomeRequirement<decltype(*req)>)
+                {
+                    if (auto const res = req->verify(j, key); not res)
+                        firstFailure = res.error();
+                }
+                else if constexpr (SomeModifier<decltype(*req)>)
+                {
+                    if (auto const res = req->modify(j, key); not res)
+                        firstFailure = res.error();
+                }
+                else
+                {
+                    static_assert(unsupported_v<decltype(*req)>);
+                }
+            }(),
+            ...);
 
         if (firstFailure)
             return Error{firstFailure.value()};

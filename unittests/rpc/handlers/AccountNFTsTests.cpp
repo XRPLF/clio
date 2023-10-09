@@ -60,7 +60,7 @@ struct AccountNFTParameterTest : public RPCAccountNFTsHandlerTest,
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<AccountNFTParamTestCaseBundle>(info.param);
             return bundle.testName;

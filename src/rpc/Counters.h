@@ -59,7 +59,7 @@ class Counters
     std::atomic_uint64_t unknownCommandCounter_;
     std::atomic_uint64_t internalErrorCounter_;
 
-    std::reference_wrapper<const WorkQueue> workQueue_;
+    std::reference_wrapper<WorkQueue const> workQueue_;
     std::chrono::time_point<std::chrono::system_clock> startupTime_;
 
 public:

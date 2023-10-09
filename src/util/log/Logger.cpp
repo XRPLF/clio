@@ -32,7 +32,7 @@ Logger LogService::alert_log_ = Logger{"Alert"};
 std::ostream&
 operator<<(std::ostream& stream, Severity sev)
 {
-    static constexpr std::array<const char*, 6> labels = {
+    static constexpr std::array<char const*, 6> labels = {
         "TRC",
         "DBG",
         "NFO",
@@ -65,8 +65,7 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
         return Severity::FTL;
 
     throw std::runtime_error(
-        "Could not parse `log_level`: expected `trace`, `debug`, `info`, "
-        "`warning`, `error` or `fatal`");
+        "Could not parse `log_level`: expected `trace`, `debug`, `info`, `warning`, `error` or `fatal`");
 }
 
 void
@@ -77,9 +76,7 @@ LogService::init(util::Config const& config)
 
     boost::log::add_common_attributes();
     boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    auto const defaultFormat =
-        "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% "
-        "%Message%";
+    auto const defaultFormat = "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%";
     std::string format = config.valueOr<std::string>("log_format", defaultFormat);
 
     if (config.valueOr("log_to_console", false))
@@ -111,7 +108,7 @@ LogService::init(util::Config const& config)
 
     // get default severity, can be overridden per channel using the `log_channels` array
     auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
-    static constexpr std::array<const char*, 7> channels = {
+    static constexpr std::array<char const*, 7> channels = {
         "General",
         "WebServer",
         "Backend",

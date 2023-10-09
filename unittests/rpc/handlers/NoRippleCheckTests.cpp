@@ -55,7 +55,7 @@ struct NoRippleCheckParameterTest : public RPCNoRippleCheckTest, public WithPara
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<NoRippleParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -649,7 +649,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
 {
     constexpr auto seq = 30;
     constexpr auto transactionSeq = 123;
-    const auto expectedOutput = fmt::format(
+    auto const expectedOutput = fmt::format(
         R"({{
                 "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index":30,

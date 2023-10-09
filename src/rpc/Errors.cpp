@@ -44,9 +44,8 @@ getWarningInfo(WarningCode code)
     constexpr static WarningInfo infos[]{
         {warnUNKNOWN, "Unknown warning"},
         {warnRPC_CLIO,
-         "This is a clio server. clio only serves validated data. If you "
-         "want to talk to rippled, include 'ledger_index':'current' in your "
-         "request"},
+         "This is a clio server. clio only serves validated data. If you want to talk to rippled, include "
+         "'ledger_index':'current' in your request"},
         {warnRPC_OUTDATED, "This server may be out of date"},
         {warnRPC_RATE_LIMIT, "You are about to be rate limited"},
     };

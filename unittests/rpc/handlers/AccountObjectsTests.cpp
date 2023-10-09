@@ -60,7 +60,7 @@ struct AccountObjectsParameterTest : public RPCAccountObjectsHandlerTest,
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<AccountObjectsParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -1119,7 +1119,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     std::string first{INDEX1};
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
-    const auto marker = current;
+    auto const marker = current;
     sort(first.begin(), first.end());
     for (auto i = 0; i < 10; i++)
     {
@@ -1332,7 +1332,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     std::string first{INDEX1};
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
-    const auto marker = current;
+    auto const marker = current;
     sort(first.begin(), first.end());
     for (auto i = 0; i < 10; i++)
     {

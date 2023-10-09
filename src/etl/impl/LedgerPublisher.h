@@ -102,9 +102,7 @@ public:
             if (!range || range->maxSequence < ledgerSequence)
             {
                 ++numAttempts;
-                LOG(log_.debug()) << "Trying to publish. Could not find "
-                                     "ledger with sequence = "
-                                  << ledgerSequence;
+                LOG(log_.debug()) << "Trying to publish. Could not find ledger with sequence = " << ledgerSequence;
 
                 // We try maxAttempts times to publish the ledger, waiting one second in between each attempt.
                 if (maxAttempts && numAttempts >= maxAttempts)

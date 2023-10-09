@@ -766,7 +766,7 @@ keypairFromRequst(boost::json::object const& request)
     // Identify which secret type is in use.
     std::string secretType;
     int count = 0;
-    for (const auto& t : secretTypes)
+    for (auto const& t : secretTypes)
     {
         if (request.contains(t))
         {
@@ -782,8 +782,7 @@ keypairFromRequst(boost::json::object const& request)
     {
         return Status{
             RippledError::rpcINVALID_PARAMS,
-            "Exactly one of the following must be specified: "
-            " passphrase, secret, seed, or seed_hex"};
+            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"};
     }
 
     std::optional<ripple::KeyType> keyType;

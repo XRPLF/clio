@@ -162,7 +162,7 @@ public:
     {
     }
 
-    const char*
+    char const*
     what() const throw() override
     {
         return msg.c_str();
@@ -179,7 +179,7 @@ public:
     {
     }
 
-    const char*
+    char const*
     what() const throw() override
     {
         return account.c_str();

@@ -57,7 +57,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParam
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             return info.param.testName;
         }
@@ -1438,7 +1438,7 @@ struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<AccountTxTransactionBundle>(info.param);
             return bundle.testName;

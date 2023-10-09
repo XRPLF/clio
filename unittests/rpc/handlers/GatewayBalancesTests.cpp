@@ -55,7 +55,7 @@ struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInt
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<ParameterTestBundle>(info.param);
             return bundle.testName;
@@ -362,7 +362,7 @@ struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamIn
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<NormalTestBundle>(info.param);
             return bundle.testName;

@@ -57,7 +57,7 @@ struct LedgerDataParameterTest : public RPCLedgerDataHandlerTest,
     {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<LedgerDataParamTestCaseBundle>(info.param);
             return bundle.testName;

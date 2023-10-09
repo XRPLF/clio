@@ -78,7 +78,7 @@ public:
     {
         using namespace rpc::validation;
 
-        static const auto rpcSpec = rpc::RpcSpec{
+        static auto const rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
@@ -119,7 +119,7 @@ public:
     {
         using namespace rpc::validation;
 
-        static const auto rpcSpec = rpc::RpcSpec{
+        static auto const rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };

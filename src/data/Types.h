@@ -40,7 +40,7 @@ struct LedgerObject
     Blob blob;
 
     bool
-    operator==(const LedgerObject& other) const
+    operator==(LedgerObject const& other) const
     {
         return key == other.key && blob == other.blob;
     }
@@ -89,7 +89,7 @@ struct TransactionAndMetadata
     }
 
     bool
-    operator==(const TransactionAndMetadata& other) const
+    operator==(TransactionAndMetadata const& other) const
     {
         return transaction == other.transaction && metadata == other.metadata &&
             ledgerSequence == other.ledgerSequence && date == other.date;
