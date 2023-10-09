@@ -421,7 +421,7 @@ public:
 
         auto const res = value_to<Type>(value.as_object().at(key.data()));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
 
         return {};
     }

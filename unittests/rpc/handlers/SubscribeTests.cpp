@@ -410,8 +410,7 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Unneeded field 'taker_gets.issuer' for XRP currency "
-            "specification."},
+            "Unneeded field 'taker_gets.issuer' for XRP currency specification."},
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysXRPHasIssuer",
             R"({
@@ -430,8 +429,7 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Unneeded field 'taker_pays.issuer' for XRP currency "
-            "specification."},
+            "Unneeded field 'taker_pays.issuer' for XRP currency specification."},
         SubscribeParamTestCaseBundle{
             "BooksItemBadMartket",
             R"({
