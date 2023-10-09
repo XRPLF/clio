@@ -5,14 +5,14 @@ runs:
   steps:
     - name: Add llvm repo
       run: |
-        echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' >> /etc/apt/sources.list
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+        sudo echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' >> /etc/apt/sources.list
+        sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
       shell: bash
 
     - name: Install packages
       run: |
-        apt update -qq
-        apt install -y jq clang-format-16
+        sudo apt update -qq
+        sudo apt install -y jq clang-format-16
       shell: bash
 
     - name: Run formatter
