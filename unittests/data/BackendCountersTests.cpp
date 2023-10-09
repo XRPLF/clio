@@ -39,6 +39,7 @@ protected:
             "write_async_pending": 0,
             "write_async_completed": 0,
             "write_async_retry": 0,
+            "write_async_error": 0,
             "read_async_pending": 0,
             "read_async_completed": 0,
             "read_async_retry": 0,
@@ -165,5 +166,21 @@ TEST_F(BackendCountersTest, RegisterReadRetry)
     counters->registerReadRetry();
     auto expectedReport = emptyReport();
     expectedReport["read_async_retry"] = 2;
+    EXPECT_EQ(counters->report(), expectedReport);
+}
+
+TEST_F(BackendCountersTest, RegisterReadError)
+{
+    static constexpr auto OPERATIONS_STARTED = 7u;
+    static constexpr auto OPERATIONS_ERROR = 2u;
+    static constexpr auto OPERATIONS_COMPLETED = 1u;
+    auto const counters = BackendCounters::make();
+    counters->registerReadStarted(OPERATIONS_STARTED);
+    counters->registerReadError(OPERATIONS_ERROR);
+    counters->registerReadFinished(OPERATIONS_COMPLETED);
+    auto expectedReport = emptyReport();
+    expectedReport["read_async_pending"] = OPERATIONS_STARTED - OPERATIONS_COMPLETED - OPERATIONS_ERROR;
+    expectedReport["read_async_completed"] = OPERATIONS_COMPLETED;
+    expectedReport["read_async_error"] = OPERATIONS_ERROR;
     EXPECT_EQ(counters->report(), expectedReport);
 }

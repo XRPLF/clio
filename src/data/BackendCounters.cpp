@@ -21,7 +21,7 @@
 
 namespace data {
 
-BackendCountersPtr
+BackendCounters::Ptr
 BackendCounters::make()
 {
     struct EnableMakeShared : public BackendCounters
@@ -63,7 +63,7 @@ BackendCounters::registerWriteFinished()
 void
 BackendCounters::registerWriteRetry()
 {
-    asyncWriteCounters_.registerRetry();
+    asyncWriteCounters_.registerRetry(1u);
 }
 
 void
@@ -79,15 +79,15 @@ BackendCounters::registerReadFinished(std::uint64_t const count)
 }
 
 void
-BackendCounters::registerReadRetry()
+BackendCounters::registerReadRetry(std::uint64_t const count)
 {
-    asyncReadCounters_.registerRetry();
+    asyncReadCounters_.registerRetry(count);
 }
 
 void
 BackendCounters::registerReadError(std::uint64_t const count)
 {
-    asyncReadErrorCounter_ += count;
+    asyncReadCounters_.registerError(count);
 }
 
 boost::json::object
@@ -101,7 +101,6 @@ BackendCounters::report() const
         result[key] = value;
     for (auto const& [key, value] : asyncReadCounters_.report())
         result[key] = value;
-    result["read_async_error"] = asyncReadErrorCounter_;
     return result;
 }
 
@@ -124,9 +123,17 @@ BackendCounters::AsyncOperationCounters::registerFinished(std::uint64_t const co
 }
 
 void
-BackendCounters::AsyncOperationCounters::registerRetry()
+BackendCounters::AsyncOperationCounters::registerRetry(std::uint64_t count)
 {
-    ++retryCounter_;
+    retryCounter_ += count;
+}
+
+void
+BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
+{
+    assert(pendingCounter_ >= count);
+    pendingCounter_ -= count;
+    errorCounter_ += count;
 }
 
 boost::json::object
@@ -136,6 +143,7 @@ BackendCounters::AsyncOperationCounters::report() const
     result[name_ + "_pending"] = pendingCounter_;
     result[name_ + "_completed"] = completedCounter_;
     result[name_ + "_retry"] = retryCounter_;
+    result[name_ + "_error"] = errorCounter_;
     return result;
 }
 

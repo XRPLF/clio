@@ -27,8 +27,27 @@
 
 namespace data {
 
-class BackendCounters;
-using BackendCountersPtr = std::shared_ptr<BackendCounters>;
+/**
+ * @brief A concept for a class that can be used to count backend operations.
+ */
+// clang-format off
+template <typename T>
+concept SomeBackendCounters = requires(T a) {
+    typename T::Ptr;
+    { a.registerTooBusy() } -> std::same_as<void>;
+    { a.registerWriteSync() } -> std::same_as<void>;
+    { a.registerWriteSyncRetry() } -> std::same_as<void>;
+    { a.registerWriteStarted() } -> std::same_as<void>;
+    { a.registerWriteFinished() } -> std::same_as<void>;
+    { a.registerWriteRetry() } -> std::same_as<void>;
+    { a.registerReadStarted(std::uint64_t{}) } -> std::same_as<void>;
+    { a.registerReadFinished(std::uint64_t{}) } -> std::same_as<void>;
+    { a.registerReadRetry(std::uint64_t{}) } -> std::same_as<void>;
+    { a.registerReadError(std::uint64_t{}) } -> std::same_as<void>;
+    { a.report() } -> std::same_as<boost::json::object>;
+};
+// clang-format on
+
 /**
  * @brief Holds statistics about the backend.
  * @note This class is thread-safe.
@@ -36,7 +55,9 @@ using BackendCountersPtr = std::shared_ptr<BackendCounters>;
 class BackendCounters
 {
 public:
-    static BackendCountersPtr
+    using Ptr = std::shared_ptr<BackendCounters>;
+
+    static Ptr
     make();
 
     void
@@ -64,7 +85,7 @@ public:
     registerReadFinished(std::uint64_t count = 1u);
 
     void
-    registerReadRetry();
+    registerReadRetry(std::uint64_t count = 1u);
 
     void
     registerReadError(std::uint64_t count = 1u);
@@ -87,7 +108,10 @@ private:
         registerFinished(std::uint64_t count);
 
         void
-        registerRetry();
+        registerRetry(std::uint64_t count);
+
+        void
+        registerError(std::uint64_t count);
 
         boost::json::object
         report() const;
@@ -97,6 +121,7 @@ private:
         std::atomic_uint64_t pendingCounter_ = 0u;
         std::atomic_uint64_t completedCounter_ = 0u;
         std::atomic_uint64_t retryCounter_ = 0u;
+        std::atomic_uint64_t errorCounter_ = 0u;
     };
 
     std::atomic_uint64_t tooBusyCounter_ = 0u;
@@ -106,8 +131,6 @@ private:
 
     AsyncOperationCounters asyncWriteCounters_{"write_async"};
     AsyncOperationCounters asyncReadCounters_{"read_async"};
-
-    std::atomic_uint64_t asyncReadErrorCounter_ = 0u;
 };
 
 }  // namespace data
