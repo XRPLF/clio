@@ -89,8 +89,8 @@ public:
             auto req = boost::json::parse(request).as_object();
             LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
-            if (not connection->upgraded and not req.contains("params"))
-                req["params"] = boost::json::array({boost::json::object{}});
+            if (not connection->upgraded && shouldReplaceParams(req))
+                req[JS(params)] = boost::json::array({boost::json::object{}});
 
             if (!rpcEngine_->post(
                     [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
@@ -268,6 +268,27 @@ private:
             rpcEngine_->notifyInternalError();
             return web::detail::ErrorHelper(connection, request).sendInternalError();
         }
+    }
+
+    bool
+    shouldReplaceParams(boost::json::object const& req) const
+    {
+        auto const hasParams = req.contains(JS(params));
+        auto const paramsIsArray = hasParams and req.at(JS(params)).is_array();
+        auto const paramsIsEmptyString =
+            hasParams and req.at(JS(params)).is_string() and req.at(JS(params)).as_string().empty();
+        auto const paramsIsEmptyObject =
+            hasParams and req.at(JS(params)).is_object() and req.at(JS(params)).as_object().empty();
+        auto const paramsIsNull = hasParams and req.at(JS(params)).is_null();
+        auto const arrayIsEmpty = paramsIsArray and req.at(JS(params)).as_array().empty();
+        auto const arrayIsNotEmpty = paramsIsArray and not req.at(JS(params)).as_array().empty();
+        auto const firstArgIsNull = arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_null();
+        auto const firstArgIsEmptyString = arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_string() and
+            req.at(JS(params)).as_array().at(0).as_string().empty();
+
+        // Note: all this compatibility dance is to match `rippled` as close as possible
+        return not hasParams or paramsIsEmptyString or paramsIsNull or paramsIsEmptyObject or arrayIsEmpty or
+            firstArgIsEmptyString or firstArgIsNull;
     }
 };
 
