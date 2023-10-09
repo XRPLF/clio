@@ -85,7 +85,7 @@ generateTestValuesForParametersTest()
             "TypeInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"wrong"})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid field 'type'."},
         AccountObjectsParamTestCaseBundle{
             "LedgerHashInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",

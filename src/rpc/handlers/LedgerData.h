@@ -100,9 +100,7 @@ public:
              meta::WithCustomError{
                  validation::Type<std::string>{},
                  Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
-             meta::WithCustomError{
-                 validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
-                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type'."}}},
+             validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
 
         };
         return rpcSpec;
